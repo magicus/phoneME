@@ -903,7 +903,7 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
         // Wait for debugger to connect
         int timeout = -1;
 #if ENABLE_ISOLATES
-        if (Task::get_num_tasks() > 2) {
+        if (Task::more_than_one_task()) {
           // If this is not the only task in the VM, we do not block on 
           // connect to let other tasks run.
           timeout = 0;
@@ -931,7 +931,7 @@ bool JavaDebugger::sync_debugger(Transport *t)
   if (!ops->initialized(t)) {
     if (is_suspend(t)) {
 #if ENABLE_ISOLATES
-      if (Task::get_num_tasks() > 2) {
+      if (Task::more_than_one_task()) {
         // If this is not the only task in the VM, we connect in non-blocking
         // mode to let other tasks run. The connecting task is suspended
         // waiting for a connection from the debugger.

@@ -692,6 +692,11 @@ public:
     return _num_tasks;
   }
 
+  static bool more_than_one_task() {
+    // check for more than 2, as we count the system task
+    return get_num_tasks() > 2;
+  }
+
   void add_thread();
 
   // return true if this was the last thread
