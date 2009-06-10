@@ -533,6 +533,28 @@ public class X509Certificate implements Certificate {
      * @exception IOException if an error is encountered during parsing
      */ 
     private String getName(int end) throws IOException {
+        /* Supported scenario
+        SEQUENCE { // is already skipped
+            SET {
+                SEQUENCE {
+                    OBJECT IDENTIFIER 
+                    PrintableString 
+                }
+            }
+            SET {
+                SEQUENCE {
+                    OBJECT IDENTIFIER 
+                    PrintableString 
+                }
+                SEQUENCE {
+                    OBJECT IDENTIFIER 
+                    PrintableString 
+                }
+            }
+            SET {
+                SEQUENCE {
+                ......
+        */
         byte[] name = new byte[MAX_NAME_LENGTH];
         int nameLen = 0;
         int len = 0;
@@ -540,56 +562,79 @@ public class X509Certificate implements Certificate {
         int clen;   // Component length
         char[] label = null;
         int aidx;
+        int set_len = 0;
+        int seq_len = 0;
         
         while (idx < end) {
-            if (nameLen != 0) {
-                // this is not the first time so insert a separator
-                name[nameLen++] = (byte)';';
-            }
-            
-            getLen(SET_TYPE);
-            getLen(SEQUENCE_TYPE);
+            if (enc[idx] == SET_TYPE) {
+                set_len = getLen(SET_TYPE);
+                seq_len = 0; /* reset seq flag */
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.ERROR, LogChannels.LC_SECURITY,
+                                   "parse Name: set_len=" + set_len);
+                }
+                continue;
+            } else if ((set_len > 0) && (enc[idx] == SEQUENCE_TYPE)) {
+                seq_len = getLen(SEQUENCE_TYPE);
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.ERROR, LogChannels.LC_SECURITY,
+                                   "parse Name: seq_len=" + seq_len);
+                }
+                continue;
+            } else if ((set_len > 0) && (seq_len > 0) && (enc[idx] == OID_TYPE)) {
+                if (nameLen != 0) {
+                    // this is not the first time so insert a separator
+                    name[nameLen++] = (byte)';';
+                }
 
-            /*
-             * Save the start of name component, e.g CommonName
-             * ... and its length
-             */
-            clen = getLen(OID_TYPE);
-            cidx = idx;            
-            idx += clen;
+                /*
+                 * Save the start of name component, e.g CommonName
+                 * ... and its length
+                 */
+                clen = getLen(OID_TYPE);
+                cidx = idx;            
+                idx += clen;
 
-            /*
-             * At this point we tag the name component, e.g. C= or hex
-             * if unknown.
-             */
-            if ((clen == 3) && (enc[cidx] == 0x55) &&
-                    (enc[cidx + 1] == 0x04)) {
-                // begins with id-at, so try to see if we have a label
-                aidx = enc[cidx + 2] & 0xFF;
-                if ((aidx < nameAttr.length) && (nameAttr[aidx][0] != 0)) {
-                    label = nameAttr[aidx];
+                /*
+                 * At this point we tag the name component, e.g. C= or hex
+                 * if unknown.
+                 */
+                if ((clen == 3) && (enc[cidx] == 0x55) &&
+                        (enc[cidx + 1] == 0x04)) {
+                    // begins with id-at, so try to see if we have a label
+                    aidx = enc[cidx + 2] & 0xFF;
+                    if ((aidx < nameAttr.length) && (nameAttr[aidx][0] != 0)) {
+                        label = nameAttr[aidx];
+                    } else {
+                        label = Utils.hexEncodeToChars(enc, cidx, clen);
+                    }
+                } else if (Utils.byteMatch(enc, cidx, EMAIL_ATTR_OID, 0,
+                           EMAIL_ATTR_OID.length)) {
+                    label = EMAIL_ATTR_LABEL;
                 } else {
                     label = Utils.hexEncodeToChars(enc, cidx, clen);
                 }
-            } else if (Utils.byteMatch(enc, cidx, EMAIL_ATTR_OID, 0,
-                       EMAIL_ATTR_OID.length)) {
-                label = EMAIL_ATTR_LABEL;
-            } else {
-                label = Utils.hexEncodeToChars(enc, cidx, clen);
-            }
 
-            for (int i = 0; i < label.length; i++) {
-                name[nameLen++] = (byte)label[i];
-            }
-
-            name[nameLen++] = (byte)'=';
-
-            len = getLen(ANY_STRING_TYPE);
-
-            if (len > 0) {
-                for (int i = 0; i < len; i++) {
-                    name[nameLen++] = enc[idx++];
+                for (int i = 0; i < label.length; i++) {
+                    name[nameLen++] = (byte)label[i];
                 }
+
+                name[nameLen++] = (byte)'=';
+
+                len = getLen(ANY_STRING_TYPE);
+
+                if (len > 0) {
+                    for (int i = 0; i < len; i++) {
+                        name[nameLen++] = enc[idx++];
+                    }
+                }
+                seq_len = 0; /* reset seq flag, one pair per squence is allowed*/
+            } else {
+                if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                    Logging.report(Logging.ERROR, LogChannels.LC_SECURITY,
+                                   "Name parsing error");
+                }
+                throw new IOException("Name parsing error");
             }
         }
 
