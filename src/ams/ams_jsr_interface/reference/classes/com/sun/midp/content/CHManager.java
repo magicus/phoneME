@@ -40,10 +40,7 @@ import com.sun.midp.installer.InstallState;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
-import com.sun.midp.events.EventListener;
 import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.Event;
-import com.sun.midp.events.EventTypes;
 
 /**
  * Stub interface to handle ContentHandlers functions.
@@ -82,7 +79,7 @@ public class CHManager {
     /** The CHManager instance for this application context. */
     private static CHManager manager = null;
     
-    static final String implClass = "com.sun.j2me.content.CHManagerImpl";
+    private static final String implClass = "com.sun.j2me.content.CHManagerImpl";
     static {
         try {
             Class.forName(implClass);
@@ -132,16 +129,6 @@ public class CHManager {
     }
 
     /**
-     * Install the content handlers found and verified by preInstall.
-     * Register any content handlers parsed from the JAD/Manifest
-     * attributes.
-     * @exception InvalidJadException thrown if the application
-     *   descriptor is invalid
-     */
-    public void install() throws InvalidJadException {
-    }
-
-    /**
      * Parse the ContentHandler attributes and check for errors.
      * <ul>
      * <li> Parse attributes into set of ContentHandlers.
@@ -163,11 +150,21 @@ public class CHManager {
      * the option field is not "true", "false" or blank or if there are
      * more than five comma separated fields on the line.
      */
-    public void preInstall(Installer installer,
+    public Object preInstall(Installer installer,
 			   InstallState state,
 			   MIDletSuite msuite,
-			   String authority)
-	throws InvalidJadException {
+			   String authority) throws InvalidJadException {
+    	return null;
+    }
+
+    /**
+     * Install the content handlers found and verified by preInstall.
+     * Register any content handlers parsed from the JAD/Manifest
+     * attributes.
+     * @exception InvalidJadException thrown if the application
+     *   descriptor is invalid
+     */
+    public void install( Object preInstallResultObj ) throws InvalidJadException {
     }
 
     /**
@@ -176,28 +173,6 @@ public class CHManager {
      * @param suiteId the suite ID
      */
     public void uninstall(int suiteId) {
-    }
-
-    /**
-     * Check for a URL to install from the Invocation mechanism,
-     * if one has been queued.
-     * @param midlet the MIDlet that is the content handler.
-     * @return the URL to install; <code>null</code> if none is available
-     * @see com.sun.midp.content.CHInstallerImpl
-     */
-    public String getInstallURL(MIDlet midlet) {
-    	return null;
-    }
-
-    /**
-     * Notify the invocation mechanism that the install
-     * of the URL provided by {@link #getURLToInstall}
-     * succeeded or failed.
-     * @param success <code>true</code> if the install was a success;
-     *  <code>false</code> otherwise
-     * @see com.sun.midp.content.CHInstallerImpl
-     */
-    public void installDone(boolean success) {
     }
 
     /**
@@ -219,5 +194,44 @@ public class CHManager {
      * @see com.sun.midp.midlet.MIDletState
      */
     public void midletInit(int suiteId, String classname) {
+    }
+    
+    public InvocationProxy getInvocation(MIDlet midlet){
+    	return new InvocationProxy(){
+			public Object getInvocationProperty(String propName) {return null;}
+			public void installDone(boolean success, String errorMsg) {}
+		};
+    }
+    
+    public static interface InvocationProxy {
+        /**
+         * The method <code>getInstallProperty</code> returns URL of a suite to be installed 
+         * if the <code>propName</code> parameter equals to <code>PROP_URL</code>  
+         */
+        public static final String PROP_URL = "PROP_URL"; 
+        /**
+         * The method <code>getInstallProperty</code> returns an action name associated 
+         * with the current invocation if the <code>propName</code> parameter 
+         * equals to <code>PROP_ACTION</code>
+         */
+        public static final String PROP_ACTION = "PROP_ACTION"; 
+        /**
+         * Check for an install parameter from the Invocation mechanism,
+         * if one has been queued.
+         * @param midlet the MIDlet that is the content handler.
+         * @return the property of an install invocation; <code>null</code> if none is available
+         * @see com.sun.midp.content.CHInstallerImpl
+         */
+        public Object getInvocationProperty(String propName);
+
+        /**
+         * Notify the invocation mechanism that the install
+         * of the URL provided by {@link #getURLToInstall}
+         * succeeded or failed.
+         * @param success <code>true</code> if the install was a success;
+         *  <code>false</code> otherwise
+         * @see com.sun.midp.content.CHInstallerImpl
+         */
+        public void installDone(boolean success, String errorMsg);
     }
 }

@@ -82,7 +82,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
      */
     public void midletPreStart(MIDletSuite suite, String className) {
         /*
-         * Send a hint to VM about begining of a MIDlet startup phase within
+         * Send a hint to VM about beginning of a MIDlet startup phase within
          * current isolate to allow VM to adjust internal parameters for
          * better performance
          */
