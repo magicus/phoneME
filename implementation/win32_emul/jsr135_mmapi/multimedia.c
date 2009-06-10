@@ -509,6 +509,8 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_RTP_MPA:
     case JC_FMT_FLV:
     case JC_FMT_VIDEO_3GPP:
+    case JC_FMT_MPEG_4_SVP:
+    case JC_FMT_MPEG_1:
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
@@ -521,8 +523,6 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
         break;
 
 #ifdef ENABLE_MMAPI_LIME
-    case JC_FMT_MPEG_1:
-    case JC_FMT_MPEG_4_SVP:
     case JC_FMT_MPEG_4_AVC:
     case JC_FMT_MOV:
         return &g_video_itf;
@@ -620,10 +620,11 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".fxm",  JAVACALL_MEDIA_FORMAT_FLV },
         { L".3gp",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
         { L".3g2",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
+        { L".mp4",  JAVACALL_MEDIA_FORMAT_MPEG_4_SVP   },
+        { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
 #endif // mp3
 
 #ifdef ENABLE_MMAPI_LIME
-        { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
 #endif /* ENABLE_MMAPI_LIME */
         { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   },
