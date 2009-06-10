@@ -40,16 +40,17 @@ public class LCDUIEnvironment {
     /** Stores array of active displays for a MIDlet suite isolate. */
     private DisplayContainer displayContainer;
 
+    /** Orientation handler instance. */
+    private OrientationHandler orientHandler;
+
+    /** Orientation listener instance. */
+    private OrientationListener orientationListener;
+
     /**
      * Provides interface for display preemption, creation and other
      * functionality that can not be publicly added to a javax package.
      */
     private DisplayEventHandler displayEventHandler;
-
-    /**
-     * Saved instance of the event queue.
-     */
-    private EventQueue eventQueue;
 
     /**
      * Creates lcdui event producers/handlers/listeners.
@@ -134,10 +135,10 @@ public class LCDUIEnvironment {
         // Initialize a handler to process rotation events
         String orientClassName = Configuration.getProperty("com.sun.midp.orientClassName");
         if (orientClassName != null && orientClassName.length() > 0) {
-            OrientationHandler orientHandler = OrientationFactory.createOrientHandler(orientClassName);
+            orientHandler = OrientationFactory.createOrientHandler(orientClassName);
             if (orientHandler != null) {
-                this.eventQueue = eventQueue;
-                orientHandler.addListener(new OrientationListenerImpl());
+                orientationListener = new OrientationListenerImpl();
+                orientHandler.addListener(orientationListener);
             }
         }
     }
@@ -156,6 +157,9 @@ public class LCDUIEnvironment {
      */
     public void shutDown() {
 
+        if (orientHandler != null && orientationListener != null) {
+            orientHandler.removeListener(orientationListener);
+        }
         // shutdown any preempting
         displayEventHandler.donePreempting(null);
     }
@@ -172,7 +176,7 @@ public class LCDUIEnvironment {
     /** This is nested inside LCDUIEnvironment so that it can see the private fields. */
     private class OrientationListenerImpl implements OrientationListener {
     
-    /**
+        /**
          * Calls when orientation is changed. 
          *
          * @param orientation the orientation state
