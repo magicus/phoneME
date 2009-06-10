@@ -683,3 +683,8 @@ javacall_result javacall_chapi_send_response( int dataExchangeID, const unsigned
     return( JAVACALL_NOT_IMPLEMENTED );
 }
 
+javacall_result javacall_chapi_select_handler( int count, const javacall_chapi_handler_info * list, 
+                                                            /* OUT */ int * handler_idx ){
+    *handler_idx = 0;
+    return( JAVACALL_OK );
+}
