@@ -399,6 +399,10 @@ public class Timer {
         return userTime - userClockOffset;
     }
 
+    static long relativeTimeToUserTime(long relativeTime) {
+        return relativeTime + userClockOffset;
+    }
+
     static long monotonicTimeMillis() {
         return monotonicTimeFromStart(JVM.monotonicTimeMillis());
     }

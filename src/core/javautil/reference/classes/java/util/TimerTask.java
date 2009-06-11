@@ -157,9 +157,21 @@ public abstract class TimerTask implements Runnable {
      * @see Date#getTime()
      */
     public long scheduledExecutionTime() {
-        synchronized (lock) {
-            return (period < 0 ? nextExecutionTime + period
-                               : nextExecutionTime - period);
-        }
+      long nextExecutionTimeLocal;
+      long periodLocal;
+
+      synchronized (lock) {
+        nextExecutionTimeLocal = this.nextExecutionTime;
+        periodLocal = this.period;
+      }
+       
+      // The task's next execution time is stored in milliseconds from 
+      // the Timer class loading. We should translate it back to 
+      // the user clock 
+      nextExecutionTimeLocal = 
+        Timer.relativeTimeToUserTime(nextExecutionTimeLocal);
+
+      return (periodLocal < 0 ? nextExecutionTimeLocal + periodLocal
+                              : nextExecutionTimeLocal - periodLocal);
     }
 }
