@@ -1133,6 +1133,7 @@ javanotify_fluid_display_box (
     javacall_handle                       fluid_image,
     javacall_handle                       request,
     javacall_const_utf16_string           message,
+	javacall_const_utf16_string           defaultValue,
     const javacall_fluid_message_box_type type
     ) {
 
@@ -1142,6 +1143,7 @@ javanotify_fluid_display_box (
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
     e.data.jsr290FluidEvent.spare       = request;
     e.data.jsr290FluidEvent.text        = javautil_wcsdup(message);
+	e.data.jsr290FluidEvent.text        = javautil_wcsdup(defaultValue);
     e.data.jsr290FluidEvent.result      = type;
 
     midp_jc_event_send(&e);
