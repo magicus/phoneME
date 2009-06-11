@@ -28,7 +28,7 @@ package com.sun.satsa.acl;
 
 import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
-import com.sun.j2me.dialog.MessageDialog;
+import com.sun.j2me.dialog.PinMessageDialog;
 
 import com.sun.j2me.security.Token;
 
@@ -119,7 +119,7 @@ public class PINEntryDialog {
             pin2IsNumeric = pin2.isNumeric();
         }
 
-        data = MessageDialog.enterPins(title,
+        data = PinMessageDialog.enterPins(title,
                                        label1, pin1.isNumeric(), pin1.getMaxLength(),
                                        label2, pin2IsNumeric, pin2Length, token);
     }

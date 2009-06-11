@@ -28,6 +28,7 @@ package com.sun.satsa.pki;
 
 import com.sun.j2me.dialog.Dialog;
 import com.sun.j2me.dialog.MessageDialog;
+import com.sun.j2me.dialog.PinMessageDialog;
 import com.sun.cdc.io.j2me.apdu.APDUManager;
 import com.sun.cdc.io.j2me.apdu.Handle;
 import com.sun.satsa.acl.ACLPermissions;
@@ -1087,7 +1088,7 @@ class WIMApplication {
 
         if (nonRepudiation) {
             // must create new PIN
-            String[] pinInfo = MessageDialog.enterNewPIN(token);
+            String[] pinInfo = PinMessageDialog.enterNewPIN(token);
             if (pinInfo == null) {
                 return -1;
             }
