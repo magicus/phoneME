@@ -183,6 +183,7 @@ typedef enum {
     JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST,
     JSR290_JC_EVENT_COMPLETION_NOTIFICATION,
     JSR290_JC_EVENT_HANDLE_EVENT,
+    JSR290_JC_EVENT_DISPLAY_BOX,
 #endif /*ENABLE_JSR_290*/
 #ifdef ENABLE_JSR_257
     JSR257_JC_EVENT_CONTACTLESS,
@@ -367,7 +368,7 @@ typedef struct {
     javacall_utf16_string       text1;
     float                       percentage;
     javacall_int32              failure_type;
-    javacall_result             result;
+    javacall_int32              result;
 } jsr290_jc_event_fluid;
 
 typedef struct {
@@ -484,8 +485,8 @@ typedef struct {
 
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid                         jsr290FluidEvent;
-	jsr290_jc_event_completion_notification       jsr290NotificationEvent;
-	jsr290_jc_event_handle_event_request	      jsr290HandleEventRequest;
+        jsr290_jc_event_completion_notification       jsr290NotificationEvent;
+        jsr290_jc_event_handle_event_request	      jsr290HandleEventRequest;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_257

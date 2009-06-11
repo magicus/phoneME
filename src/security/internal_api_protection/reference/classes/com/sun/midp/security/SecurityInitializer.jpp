@@ -244,8 +244,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_211
 
         // #ifdef ENABLE_JSR_290
-        "com.sun.fluid.FluidMidpEventDispatcher$SecurityTrusted",
-        "com.sun.j2me.dom.DOMFactory$SecurityTrusted",
+        "com.sun.fluid.SecurityInitializer$SecurityTrusted",
         // #endif ENABLE_JSR_290
 
         // #ifdef ENABLE_JSR_257

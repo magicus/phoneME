@@ -987,7 +987,6 @@ javanotify_fluid_image_notify_dirty (
 
     e.eventType = JSR290_JC_EVENT_FLUID_INVALIDATE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.result      = 0;
 
     midp_jc_event_send(&e);
 }
@@ -1141,7 +1140,28 @@ void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
 
     REPORT_INFO(LC_CORE, "javanotify_fluid_event_request() >>\n");
     e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
-	e.data.jsr290HandleEventRequest.request_handle = request_handle;
+    e.data.jsr290HandleEventRequest.request_handle = request_handle;
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_display_box (
+    javacall_handle                       fluid_image,
+    javacall_handle                       request,
+    javacall_const_utf16_string           message,
+    javacall_const_utf16_string           defaultValue,
+    const javacall_fluid_message_box_type type
+    ) {
+
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_DISPLAY_BOX;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare       = request;
+    e.data.jsr290FluidEvent.text        = javautil_wcsdup(message);
+    e.data.jsr290FluidEvent.text1       = javautil_wcsdup(defaultValue);
+    e.data.jsr290FluidEvent.result      = type;
+
     midp_jc_event_send(&e);
 }
 
