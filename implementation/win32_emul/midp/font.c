@@ -53,8 +53,7 @@ static int getFontIndex(face, style, size)
         fontHashTable = malloc(FONTS_COUNT_LIMIT * sizeof(int) + 1);
         memset(fontHashTable, 0, FONTS_COUNT_LIMIT * sizeof(int) + 1);
     }
-    i = fontHashTable;
-    while (*i != hash && *(i++)); /* search the array for index */
+    for (i = fontHashTable ;*i != hash && *i; i++); /* search the array for index */
     *i = hash; /* add new or just overwrite the existing index  */
     return i - fontHashTable; /* return the index */
 }
