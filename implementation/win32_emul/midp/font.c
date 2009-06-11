@@ -66,6 +66,7 @@ static HFONT util_getFont(javacall_font_face face,
 	unsigned short* res;
     unsigned short tempKey[100];
 	int resLen, height;
+    int findex = FONT_ID(face, style, size); 
 	unsigned short system[8]={'s','y','s','t','e','m','.',0};
 	unsigned short monospace[11]={'m','o','n','o','s','p','a','c','e','.',0};
 	unsigned short proportional[14]={'p','r','o','p','o','r','t','i','o','n','a','l','.',0};
@@ -93,7 +94,7 @@ static HFONT util_getFont(javacall_font_face face,
     defaultFont = GetStockObject(DEFAULT_GUI_FONT);
 
 	if (f == NULL) {
-        memset(fontNameHash,0,100*0x60*sizeof(unsigned short));
+        memset(fontNameHash,0,100*FONTS_COUNT_LIMIT*sizeof(unsigned short));
 		f = NewLimeFunction(DEVICE_PACKAGE,
 							DEVICE_CLASS,
 							"getJ2SEProperty");
@@ -147,11 +148,11 @@ static HFONT util_getFont(javacall_font_face face,
     }
 
 	//Use hashtable to reduce calls to lime
-    if( fontNameHash[FONT_ID(face, style, size)][0] == 0 ) {
+    if( fontNameHash[findex][0] == 0 ) {
         f->call(f, &res, &resLen, key, wcslen(key));
 		if( res != NULL ) {
-			memcpy(fontNameHash[FONT_ID(face, style, size)],res,resLen*sizeof(unsigned short));
-            fontNameHash[FONT_ID(face, style, size)][resLen] = 0;
+			memcpy(fontNameHash[findex],res,resLen*sizeof(unsigned short));
+            fontNameHash[findex][resLen] = 0;
 		} else {
 			printf("Error reading font %ws\n",key);
 			ReleaseDC(hMainWindow, hdc);
@@ -160,7 +161,7 @@ static HFONT util_getFont(javacall_font_face face,
     }
 
     memset(tempKey, 0, 100*sizeof(unsigned short));
-    wcscpy(tempKey, fontNameHash[FONT_ID(face, style, size)]);
+    wcscpy(tempKey, fontNameHash[findex]);
 
 	/* Parse the font intormation face-style-height , for example SansSerif-bold-9 */
 	token = wcstok( tempKey, sep);	 /* the font face */
