@@ -38,48 +38,88 @@ import com.sun.midp.main.NativeForegroundState;
  * 
  */
 public class OpenGLEnvironment{
-    
+
+    private boolean midpIsRendering;
     /** 
      * Prepare openGL renderer to switch between lcdui and some exernal
      * API - can be either JSR226 or JSR239
      *
      */
-    public void flushOpengGL(DisplayContainer container) {
+    public void flushOpengGL(DisplayContainer container, Graphics bindTarget) {
+        int regionArray[];
+
+        while (midpIsRendering) {
+            try {
+                Thread.sleep(10);
+                //System.out.println("waiting for midp to finish rendering");
+            } catch (Exception e) {}
+        }
+        //System.out.println("in flushOpenGL - bindTarget is " + bindTarget);
+        if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
+                               bindTarget.getClipHeight())) {
+        //System.out.println("now checking for normal flush");
         int displayId = NativeForegroundState.getState();
         DisplayAccess da = container.findDisplayById(displayId);
-        Object[] dirtyRegions = da.getDirtyRegions();
-        int regionArray[] = new int[dirtyRegions.length*4];
-        int[] curRegion;
-        for (int i=0; i<dirtyRegions.length; i++) {
-            curRegion = (int[])dirtyRegions[i];
-            regionArray[i]=curRegion[0];
-            regionArray[i+1]=curRegion[1];
-            regionArray[i+2]=curRegion[2];
-            regionArray[i+3]=curRegion[3];
+        if (da != null) {
+            Object[] dirtyRegions = da.getDirtyRegions();
+            if (dirtyRegions.length <= 0)
+                return;
+            regionArray = new int[dirtyRegions.length*4];
+            int[] curRegion;
+            for (int i=0; i<dirtyRegions.length; i++) {
+             curRegion = (int[])dirtyRegions[i];
+                regionArray[i]=curRegion[0];
+                regionArray[i+1]=curRegion[1];
+                regionArray[i+2]=curRegion[2];
+                regionArray[i+3]=curRegion[3];
+            }
+            flushOpenGL0(regionArray, dirtyRegions.length, displayId);
         }
-        flushOpenGL0(regionArray, dirtyRegions.length, displayId);
+        }
     }
     
     public void createPbufferSurface(Image img) {
-        //System.out.println("OpenGLEnvironment: createPbufferSurface");
         createPbufferSurface0(img);
     }
     
     public void flushPbufferSurface(Image offscreen_buffer,
-                                    int ystart, int yend){
+                                    int x, int y, int width, int height){
         //System.out.println("offscreen buffer is " + offscreen_buffer);
-        flushPbufferSurface0(offscreen_buffer, ystart, yend);
+        flushPbufferSurface0(offscreen_buffer, x, y, width, height);
         //System.out.println("back from flushPbufferSurface0");
     }
     
     public void createPixmapSurface(Graphics g, Image img) {
         createPixmapSurface0(g, img);
     }
+
+    public void startMidpRendering() {
+        //System.out.println("*** startMidpRendering");
+        midpIsRendering=true;
+    }
+
+    public void endMidpRendering() {
+        //System.out.println("*** endMidpRendering");
+        midpIsRendering=false;
+    }
+    
+    /** 
+     * Return shared drawing surface for given Graphics targets
+     */
+    public int getDrawingSurface(Graphics bindTarget, int api) {
+        int retval;
+        retval = getDrawingSurface0(bindTarget, api);
+        return retval;
+    }
     
     private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);
     
     private native void createPbufferSurface0(Image img);
-    private native void flushPbufferSurface0(Image src, int ystart, int yend);
+    private native void flushPbufferSurface0(Image src, int x, int y,
+                                             int width, int height);
     private native void createPixmapSurface0(Graphics g, Image img);
+    private native boolean hasBackingSurface(Graphics bindTarget,
+                                             int width, int height);
+    private native int getDrawingSurface0(Graphics bindTarget, int api);
 }

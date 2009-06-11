@@ -36,12 +36,25 @@
 #include <commonKNIMacros.h>
 #include <midpEventUtil.h>
 #include "javacall_memory.h"
+#include "javacall_defs.h"
 #include "gxj_putpixel.h"
 #include "gxapi_graphics.h"
 #include "imgapi_image.h"
 
-extern void midpGL_flush(int dirtyRegions[], int numRegions);
+typedef struct {
+    javacall_pixel *buffer; // associated image data for this surface
+    int surface;
+    int context;
+    int jsrContext;
+    int textureName;
+} surface_info;
 
+extern surface_info* midpGL_getSurface(int handle);
+extern void midpGL_flush(int dirtyRegions[], int numRegions);
+extern void midpGL_createPbufferSurface(javacall_pixel *buffer);
+extern void midpGL_flushPbufferSurface(javacall_pixel *buffer,
+                                       int x, int y, int width, int height);
+                                
 /**
  *
  * Calls openGL function to prepare for switching from lcdui rendering
@@ -92,14 +105,21 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_createPbufferSurface0) {
     static jfieldID surface_fid = 0;
     jint surfaceId;
+    gxj_screen_buffer srcSBuf;
+    gxj_screen_buffer *psrcSBuf;
+    const java_imagedata *srcImageDataPtr;
 
     // call into midpGL_createPbufferSurface();
     KNI_StartHandles(1);
     KNI_DeclareHandle(imgHandle);
-    KNI_GetParameterAsObject(1, imgHandle);    
-    midpGL_createPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle));
-    //IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;
+    KNI_GetParameterAsObject(1, imgHandle);
+    srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
+    psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr,
+                                                &srcSBuf, NULL);
     KNI_EndHandles();
+//BREWprintf("opengl_environment_kni: creating pbuffer surface for %d\n",srcSBuf.pixelData);
+    //IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;
+    midpGL_createPbufferSurface(srcSBuf.pixelData);
     KNI_ReturnVoid();
 }
 
@@ -132,15 +152,17 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     byte *imgByteArray;
     jsize arrayLength;
     static jfieldID image_data_fid = 0;
+    gxj_screen_buffer srcSBuf;
+    gxj_screen_buffer *psrcSBuf;
+    const java_imagedata *srcImageDataPtr;
+    jint surfaceId;
     static jfieldID pixel_data_fid = 0;
     static jfieldID native_surface_id_fid = 0;
-    const java_imagedata *srcImageDataPtr;
-    gxj_screen_buffer srcSBuf;  
-    gxj_screen_buffer *psrcSBuf;
-    jint surfaceId;
 
-    jint ystart = KNI_GetParameterAsInt(2);
-    jint yend = KNI_GetParameterAsInt(3);
+    jint x = KNI_GetParameterAsInt(2);
+    jint y = KNI_GetParameterAsInt(3);
+    jint width = KNI_GetParameterAsInt(4);
+    jint height = KNI_GetParameterAsInt(5);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(imgHandle);
@@ -148,8 +170,91 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
     psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
                                                 &srcSBuf, NULL);
-    midpGL_flushPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle), 
-                               srcSBuf.pixelData, ystart, yend);
+//BREWprintf("opengl_environment_kni.c: flushPbufferSurface0: calling flushPbufferSurface %d %d %d %d %d\n",
+ //   x,y, width, height, srcSBuf.pixelData);
     KNI_EndHandles();
+    midpGL_flushPbufferSurface(srcSBuf.pixelData, x, y, width, height);
     KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_hasBackingSurface) {
+    static jfieldID image_fid = 0;
+    const java_imagedata *srcImageDataPtr;
+    gxj_screen_buffer srcSBuf;
+    gxj_screen_buffer *psrcSBuf;
+    jboolean retval;
+
+    jint width = KNI_GetParameterAsInt(2);
+    jint height = KNI_GetParameterAsInt(3);
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(graphicsHandle);
+    KNI_DeclareHandle(tmpHandle);
+    KNI_DeclareHandle(imgHandle);
+    KNI_GetParameterAsObject(1, graphicsHandle);
+    KNI_GetObjectClass(graphicsHandle, tmpHandle);
+    image_fid = KNI_GetFieldID(tmpHandle, "img", "Ljavax/microedition/lcdui/Image;");
+    if (image_fid == 0) {
+        retval = KNI_FALSE;
+    } else {
+        KNI_GetObjectField(graphicsHandle, image_fid, imgHandle);
+        if (KNI_IsNullHandle(imgHandle)) {
+            retval = KNI_FALSE;
+        }
+        else { // has a backing surface
+            srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
+            psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
+                                                       &srcSBuf, NULL);
+//BREWprintf("opengl_environment_kni.c: hasBackingSurface: calling flushPbufferSurface %d %d %d %d %d\n",
+//    0, 0, srcSBuf.width, srcSBuf.height, srcSBuf.pixelData);
+            retval = KNI_TRUE;
+        }
+    }
+    KNI_EndHandles();
+    if (retval == KNI_TRUE)
+        midpGL_flushPbufferSurface(srcSBuf.pixelData, 0, 0,
+                                   srcSBuf.width, srcSBuf.height);
+    return retval;
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_getDrawingSurface0) {
+    static jfieldID image_fid = 0;
+    const java_imagedata *srcImageDataPtr;
+    gxj_screen_buffer srcSBuf;
+    gxj_screen_buffer *psrcSBuf;
+    jint retval=0;
+    surface_info *sInfo;
+
+    jint api = KNI_GetParameterAsInt(2);
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(graphicsHandle);
+    KNI_DeclareHandle(tmpHandle);
+    KNI_DeclareHandle(imgHandle);
+    KNI_GetParameterAsObject(1, graphicsHandle);
+    KNI_GetObjectClass(graphicsHandle, tmpHandle);
+    image_fid = KNI_GetFieldID(tmpHandle, "img", "Ljavax/microedition/lcdui/Image;");
+    if (image_fid == 0) {
+        /* no image fid???  Error */
+        retval = 0;
+    } else {
+        KNI_GetObjectField(graphicsHandle, image_fid, imgHandle);
+        if (KNI_IsNullHandle(imgHandle)) {
+            retval = midpGL_getWindowSurface(api);
+        }
+        else { 
+            /* the graphics object has an image associated with it, so
+             * get the suface associated with that image
+             */
+            srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
+            psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
+                                                       &srcSBuf, NULL);
+        sInfo = midpGL_getSurface(srcSBuf.pixelData);
+        retval = (jint)sInfo->surface;
+        }
+    }
+    KNI_EndHandles();
+    KNI_ReturnInt(retval);
 }

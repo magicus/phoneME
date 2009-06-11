@@ -2300,6 +2300,11 @@ public class Display {
 		// #ifdef ENABLE_GCI
 		gciScreenWidget.getDrawingSurface().renderingBegin();
 		// #endif
+                // #ifdef ENABLE_OPENGL
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                ogl.startMidpRendering();
+                // #endif
 		// #ifdef ENABLE_CHAMELEON
 		if (window.setGraphicsForCanvas(screenGraphics)) {
 		    // If the window is not dirty and we are repainting it
@@ -2366,6 +2371,9 @@ public class Display {
 	}
 	finally {
                 // #ifdef ENABLE_OPENGL
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                ogl.endMidpRendering();
                 // This call to refresh a "zero" region is inserted to
                 // trigger display update on some platforms
                 displayDevice.refresh(displayId, 0, 0, 0, 0);
@@ -3194,7 +3202,8 @@ public class Display {
                             // flush the offscreen buffer to the backing surface
                             com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
                                 com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                            ogl.flushPbufferSurface(offscreen_buffer, y1, y2);
+                            ogl.flushPbufferSurface(offscreen_buffer, x1, y1,
+                                                    width, height);
                             //#else
 			    screenGraphics.drawImage(offscreen_buffer,
 				     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);

@@ -72,12 +72,21 @@ public class OpenGLEnvironmentProxy{
     }
     
     /** 
+     * Return shared drawing surface for given Graphics targets
+     */
+    public int getDrawingSurface(Object bindTarget, int api) {
+        int retval;
+        retval =  env.getDrawingSurface((Graphics)bindTarget, api);
+        return retval;
+    }
+    
+    /** 
      * Prepare openGL renderer to switch between lcdui and some exernal
      * API - can be either JSR226 or JSR239
      *
      */
-    public void flushOpengGL() {
-        env.flushOpengGL(container);
+    public void flushOpengGL(Object bindTarget) {
+        env.flushOpengGL(container, (Graphics)bindTarget);
     }
     
     public void createPbufferSurface(Image img) {
@@ -85,7 +94,15 @@ public class OpenGLEnvironmentProxy{
     }
     
     public void flushPbufferSurface(Image offscreen_buffer,
-                                    int ystart, int yend){
-        env.flushPbufferSurface(offscreen_buffer, ystart, yend);
+                                    int x, int y, int width, int height){
+        env.flushPbufferSurface(offscreen_buffer, x, y, width, height);
+    }
+
+    public void startMidpRendering() {
+        env.startMidpRendering();
+    }
+
+    public void endMidpRendering() {
+        env.endMidpRendering();
     }
 }
