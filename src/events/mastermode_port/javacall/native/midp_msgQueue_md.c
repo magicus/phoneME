@@ -442,6 +442,16 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                                            &pNewMidpEvent->stringParam1);
         }
         javacall_free(event->data.jsr290FluidEvent.text);
+
+        {
+            int len = 0;
+            if (JAVACALL_OK != javautil_unicode_utf16_ulength(event->data.jsr290FluidEvent.text1, &len)) {
+                len = 0;
+            }
+            pcsl_string_convert_from_utf16(event->data.jsr290FluidEvent.text1, len,
+                                           &pNewMidpEvent->stringParam2);
+        }
+        javacall_free(event->data.jsr290FluidEvent.text1);
     	break;
 #endif /* ENABLE_JSR_290 */
 
