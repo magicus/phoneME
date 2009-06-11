@@ -3737,7 +3737,6 @@ public class Display {
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
                 current_orientation = Display.this.width > Display.this.height;
-                System.out.println("CURRENT ORIENTATION STATUS is " + current_orientation);
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
             // #ifdef ENABLE_CHAMELEON
@@ -4015,8 +4014,7 @@ public class Display {
             } // synchronized
 
             if (current_orientation != restore_orientation) {
-                java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
-//                consumer.handleRotationEvent();
+                consumer.handleRotationEvent(-1);
             }
 
             // SYNC NOTE: The implementation of dsPaint() could call
@@ -4047,8 +4045,7 @@ public class Display {
             DisplayableLF currentCopy;
                 if (current_orientation != initial_orientation) {
                     restore_orientation = current_orientation;
-                    java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
-//                    consumer.handleRotationEvent();
+                    consumer.handleRotationEvent(-1);
                 }
 
             synchronized (LCDUILock) {
