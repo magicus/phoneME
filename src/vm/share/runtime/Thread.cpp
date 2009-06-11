@@ -42,15 +42,15 @@ static int _thread_creation_count;
 HANDLE_CHECK(Thread, is_jvm_thread())
 
 void Thread::append_pending_entry(EntryActivation* entry) {
-  EntryActivation::Raw current = pending_entries();
-  if (current.is_null()) {
+  OopDesc* next = pending_entries();
+  if (!next) {
     set_pending_entries(entry);
   } else {
-    EntryActivation::Raw next = current().next();
-    while (!next.is_null()) {
+    EntryActivation::Raw current;
+    do {
       current = next;
-      next    = current().next();
-    }
+      next = current().next();
+    } while (next);
     current().set_next(entry);
   }
 }
