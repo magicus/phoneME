@@ -113,7 +113,6 @@ public class Dialog implements CommandListener {
             if (preemptToken == null) {
                 return CANCELLED;
             }
-
             try {
                 wait();
             } catch (Throwable t) {
