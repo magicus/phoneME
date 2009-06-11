@@ -69,7 +69,7 @@ public class MessageDialog {
      * @throws InterruptedException  if interrupted
      */
     public static String promptMessage(String title,
-                           String message,
+                           String message, String defaultValue,
                            Token token)
             throws InterruptedException {
 
@@ -77,7 +77,7 @@ public class MessageDialog {
         d.append(new StringItem(message, null));
         
         TextField userInput = new TextField(" ",
-            "", 32, 0);
+            defaultValue, 32, 0);
         d.append(userInput);
 
         while (true) {
