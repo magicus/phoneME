@@ -126,6 +126,15 @@ CVM_TARGET_TOOLS_PREFIX=/opt/arm-linux/bin/arm-linux-
 #    CC_ARCH_FLAGS      += -mfloat-abi=softfp -mfpu=vfp
 #
 
+#
+# These are flags that are typically needed when using hardware VFP
+#
+ifeq ($(CVM_JIT_USE_FP_HARDWARE),true)
+ASM_ARCH_FLAGS += -mfpu=vfp
+CC_ARCH_FLAGS  += -mfloat-abi=softfp -mfpu=vfp
+USE_AAPCS	= true
+endif
+
 # Including top.mk is always done last. It will include all the required
 # CDC makefiles.
 include ../share/top.mk
