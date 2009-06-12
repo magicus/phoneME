@@ -86,12 +86,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         size[HEIGHT] = cg.cgElements[s].getFont().getHeight() + 
             (2 * ChoiceGroupSkin.PAD_V);
 
-        int imHeight =  ChoiceGroupSkin.HEIGHT_IMAGE;
-        if (imHeight > size[HEIGHT]) {
-            size[HEIGHT] = imHeight;
-        }
-        
-
         if (maxContentWidth < w) {
             size[WIDTH] = width - w + maxContentWidth;
         } else {
@@ -180,14 +174,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 textOffset = 0;
             }
 
-            int yOffset = height - 2 - cg.cgElements[s].imageEl.getHeight();
-            yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
-
-            g.clipRect(textOffset, yOffset,
+            g.clipRect(textOffset, 0,
                        ChoiceGroupSkin.WIDTH_IMAGE,
                        ChoiceGroupSkin.HEIGHT_IMAGE);
             g.drawImage(cg.cgElements[s].imageEl,
-                        textOffset, yOffset,
+                        textOffset, 0,
                         Graphics.LEFT | Graphics.TOP);
             g.setClip(iX, iY, iW, iH);
 
@@ -202,19 +193,14 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         }
 
 
-        Font font = cg.cgElements[s].getFont();
-        
-        int yOffset = height - 2 - font.getHeight();
-        yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
-
-        g.translate(textOffset, yOffset);
-
-        
-        Text.drawTruncString(g, cg.cgElements[s].stringEl, font,
-                             (hasFocus) ? ScreenSkin.COLOR_FG_HL :
-                             ChoiceGroupSkin.COLOR_FG,
-                             width);
-        g.translate(-textOffset, -yOffset);
+        g.translate(textOffset, 0);
+        Text.drawTruncString(g,
+                        cg.cgElements[s].stringEl,
+                        cg.cgElements[s].getFont(),
+                        (hasFocus) ? ScreenSkin.COLOR_FG_HL :
+                            ChoiceGroupSkin.COLOR_FG,
+                        width);
+        g.translate(-textOffset, 0);
 
         g.translate(-ChoiceGroupSkin.PAD_H, -ChoiceGroupSkin.PAD_V);
 
