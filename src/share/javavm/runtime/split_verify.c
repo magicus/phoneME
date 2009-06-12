@@ -1573,14 +1573,15 @@ CVMvfyLookupClass(
     VfyContext* cntxt,
     CVMClassTypeID targetClass)
 {
+    /* TODO: CVMvfyLookupClass isn't suppose to cause any class loading,
+       but calling CVMclassLookupByTypeFromClass will if necessary.
+       I don't believe causing class loading will result in incorrect
+       behavior, but we may want to consider instead using
+       CVMclassLookupClassWithoutLoading.
+    */
     CVMClassBlock* cb =
 	CVMclassLookupByTypeFromClass(cntxt->ee, targetClass, CVM_FALSE, 
 					cntxt->classBeingVerified);
-    /*
-     * I'd like to throw a verification error here, but
-     * the KVM verifier has no code for it, so I guess it cannot happen
-     */
-    CVMassert(cb != NULL);
     return cb;
 }
 
