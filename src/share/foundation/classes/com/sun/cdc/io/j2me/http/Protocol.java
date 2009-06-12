@@ -52,7 +52,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import javax.microedition.io.ConnectionNotFoundException;
 
-
 /**
  * This class implements the necessary functionality
  * for an HTTP connection. 
@@ -101,6 +100,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     private static String platformUserAgent;
     private static String platformWapProfile;
+
+    protected sun.misc.NetworkMetrics nm;
 
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
@@ -1016,7 +1017,26 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + httpVersion + "\r\n";
         }
-        // DEBUG:  System.out.print("Request: " + reqLine);
+        // DEBUG:
+        System.out.print("Request: " + reqLine);
+        final int methodType =
+            (method.equals(POST) ? sun.misc.NetworkMetrics.POST :
+             method.equals(HEAD) ? sun.misc.NetworkMetrics.HEAD :
+             sun.misc.NetworkMetrics.GET); 
+
+        java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+            public Object run() {
+                nm = new sun.misc.NetworkMetrics(sun.misc.NetworkMetrics.HTTP,
+                                                 getHost(),
+                                                 getPort(),
+                                                 getFile(),
+                                                 getRef(),
+                                                 getQuery());
+                nm.sendMetric0F(streamConnection, methodType);
+                return null;
+            }
+        });
+
         streamOutput.write((reqLine).getBytes());
 
 
@@ -1146,6 +1166,15 @@ malformed: {
             }
     
             responseMsg = line.substring(codeEnd + 1);
+
+            java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+                public Object run() {
+                    nm.setResponse(responseMsg);
+                    nm.sendMetric10(streamConnection, responseCode);
+                    return null;
+                }
+            });
+
             return;
         }
         disconnect();
