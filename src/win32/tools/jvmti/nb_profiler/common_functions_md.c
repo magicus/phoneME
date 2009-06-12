@@ -57,7 +57,7 @@ md_init(JavaVM *jvm)
 void 
 md_sleep(unsigned seconds)
 {
-    sleep(seconds);
+    Sleep((DWORD)seconds*1000);
 }
 
 
