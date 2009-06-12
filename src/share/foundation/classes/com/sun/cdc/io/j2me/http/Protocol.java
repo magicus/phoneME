@@ -1017,8 +1017,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + httpVersion + "\r\n";
         }
-        // DEBUG:
-        System.out.print("Request: " + reqLine);
+        // DEBUG: System.out.print("Request: " + reqLine);
         final int methodType =
             (method.equals(POST) ? sun.misc.NetworkMetrics.POST :
              method.equals(HEAD) ? sun.misc.NetworkMetrics.HEAD :
