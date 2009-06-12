@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,6 @@ public interface DisplayAccess {
      * @return Display height.
      */
     public int getDisplayHeight();
-    public boolean isDisplayForeground() ;
 
     /** Called to get the display to request the foreground. */
     public void requestForeground();

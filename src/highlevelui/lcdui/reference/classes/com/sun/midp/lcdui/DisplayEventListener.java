@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ public class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
         eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
         eventQueue.registerEventListener(EventTypes.DISPLAY_DEVICE_STATE_CHANGED_EVENT,this);
-        eventQueue.registerEventListener(EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT,this);    
+	eventQueue.registerEventListener(EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT,this);	
         eventQueue.registerEventListener(EventTypes.VIRTUAL_KEYBOARD_EVENT,this);
         eventQueue.registerEventListener(EventTypes.CHANGE_LOCALE_EVENT,this);
     }
@@ -128,14 +128,14 @@ public class DisplayEventListener implements EventListener {
         * and (if not null) call DisplayEventConsumer methods ...
         */
 
-        if (event.getType() ==  EventTypes.DISPLAY_DEVICE_STATE_CHANGED_EVENT) {
-            displayDeviceContainer.getDisplayDeviceById(nativeEvent.intParam1).setState(nativeEvent.intParam2);
-            DisplayAccess das[] =  displayContainer.findDisplaysByHardwareId(nativeEvent.intParam1);
-            for (int i = das.length; --i >= 0;) {
-                das[i].getDisplayEventConsumer().handleDisplayDeviceStateChangedEvent(nativeEvent.intParam2);
-            }
-            return;
-        }
+	if (event.getType() ==  EventTypes.DISPLAY_DEVICE_STATE_CHANGED_EVENT) {
+	    displayDeviceContainer.getDisplayDeviceById(nativeEvent.intParam1).setState(nativeEvent.intParam2);
+	    DisplayAccess das[] =  displayContainer.findDisplaysByHardwareId(nativeEvent.intParam1);
+	    for (int i = das.length; --i >= 0;) {
+		    das[i].getDisplayEventConsumer().handleDisplayDeviceStateChangedEvent(nativeEvent.intParam2);
+	    }
+	    return;
+	}
 
         DisplayEventConsumer dc =
                 displayContainer.findDisplayEventConsumer(nativeEvent.intParam4);
@@ -182,13 +182,13 @@ public class DisplayEventListener implements EventListener {
                     return;
 
                 case EventTypes.ROTATION_EVENT:
-                    dc.handleRotationEvent(-1);
+                    dc.handleRotationEvent();
                     return;
 
-                case EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT:
-                    dc.handleClamshellEvent();
-                    return;
-            
+	    case EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT:
+		    dc.handleClamshellEvent();
+		return;
+		    
 
                 case EventTypes.VIRTUAL_KEYBOARD_EVENT:
                     dc.handleVirtualKeyboardEvent();

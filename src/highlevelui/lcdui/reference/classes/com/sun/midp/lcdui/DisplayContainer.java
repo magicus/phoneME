@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ public class DisplayContainer {
      */ 
     public DisplayContainer(SecurityToken token, DisplayIdPolicy idPolicy) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
-        displayIdPolicy = idPolicy;
+	displayIdPolicy = idPolicy;
     }
 
     /**
@@ -79,10 +79,10 @@ public class DisplayContainer {
     public void requestForegroundForDisplay(Object owner) {
         DisplayAccess[] da = findDisplaysByOwner(owner, 0);
 
-    /** IMPL_NOTE: correct call ! */
-        if (da != null) {
-            da[0].requestForeground();
-        }
+	/** IMPL_NOTE: correct call ! */
+	if (da != null) {
+	    da[0].requestForeground();
+	}
     }
 
     /**
@@ -94,16 +94,16 @@ public class DisplayContainer {
      *         false, if display object has not been found in the container.
      */
     public synchronized boolean removeDisplaysByOwner(Object owner) {
-        int size = displays.size();
+	int size = displays.size();
 
         for (int i = size; --i >= 0;) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-        
-            if (current.getOwner() == owner) {
-                displays.removeElementAt(i);
+	    
+	    if (current.getOwner() == owner) {
+		displays.removeElementAt(i);
             }
         }
-        return (displays.size() < size);
+	return (displays.size() < size);
     }
 
     /**
@@ -116,9 +116,9 @@ public class DisplayContainer {
      */
     public synchronized boolean removeDisplayById(int displayId) {
         DisplayAccess da = findDisplayById(displayId);
-        if (da != null) {
-            return displays.removeElement(da);
-        }
+	if (da != null) {
+	    return displays.removeElement(da);
+	}
         return false;
     }
     
@@ -148,25 +148,6 @@ public class DisplayContainer {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 
             if (current.getDisplayId() == displayId) {
-                return current;
-            }
-        }
-
-        return null;
-    }
-    
-    /**
-     * Find the foreground display.
-     *
-     * @return a display access object or null if not found
-     */
-    public synchronized DisplayAccess findForegroundDisplay() {
-        int size = displays.size();
-        
-        for (int i = 0; i < size; i++) {
-            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-
-            if (current.isDisplayForeground()) {
                 return current;
             }
         }
@@ -204,24 +185,24 @@ public class DisplayContainer {
      */
     public synchronized DisplayAccess[] findDisplaysByOwner(Object owner) {
         int size = displays.size();
-        Vector v = new Vector(2, 2); 
-    
+	Vector v = new Vector(2, 2); 
+	
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-        
+	    
             if (current.getOwner() == owner) {
-                v.addElement(current);
+		v.addElement(current);
             }
         }
-    
-    DisplayAccess[] ret = null;
-    if (v.size() > 0) {
-        ret = new DisplayAccess[v.size()];
-        v.copyInto(ret);
-    }
-    
-    return ret;
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
+        return ret;
     }
 
     /**
@@ -234,25 +215,25 @@ public class DisplayContainer {
      */
     public synchronized DisplayAccess[] findDisplaysByOwner(Object owner, int capabilities) {
         int size = displays.size();
-        Vector v = new Vector(2, 2); 
-    
+	Vector v = new Vector(2, 2); 
+	
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-        
+	    
             if ((current.getOwner() == owner) && 
-                (current.getDisplayDevice().getCapabilities() & 
-                capabilities) == capabilities) {
-                v.addElement(current);
+		(current.getDisplayDevice().getCapabilities() & 
+		 capabilities) == capabilities) {
+		v.addElement(current);
             }
         }
-    
-        DisplayAccess[] ret = null;
-        if (v.size() > 0) {
-            ret = new DisplayAccess[v.size()];
-            v.copyInto(ret);
-        }
-    
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
         return ret;
     }
 
@@ -263,22 +244,23 @@ public class DisplayContainer {
      */
     public synchronized DisplayAccess[] findDisplaysByHardwareId(int hardwareId) {
         int size = displays.size();
-        Vector v = new Vector(2, 2); 
+	Vector v = new Vector(2, 2); 
+	System.out.println("size = " + size);
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-        
+	    
             if (current.getDisplayDevice().getHardwareId() == hardwareId) {
-                v.addElement(current);
+		v.addElement(current);
             }
         }
-    
-        DisplayAccess[] ret = null;
-        if (v.size() > 0) {
-            ret = new DisplayAccess[v.size()];
-            v.copyInto(ret);
-        }
-    
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
         return ret;
     }
 
@@ -291,18 +273,18 @@ public class DisplayContainer {
      */
     public synchronized DisplayAccess findPrimaryDisplayByOwner(Object owner) {
         int size = displays.size();
-        DisplayAccess d = null;
+	DisplayAccess d = null;
 
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
-        
+	    
             if ((current.getOwner() == owner) && 
-                current.getDisplayDevice().isPrimaryDisplay()) {
-                d = current;
-                break;
+		current.getDisplayDevice().isPrimaryDisplay()) {
+		d = current;
+		break;
             }
         }
-    
+	
         return d;
     }
     /**

@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -168,13 +168,10 @@ public interface DisplayEventConsumer {
      */
 
 
-    /*
-     * Called by event delivery when size of screen was changed.
-     *
-     * @param state The new state or -1 when state is not supported
-     * @see OrientationListener interface
-     */
-     public void handleRotationEvent(int state);
+     /*
+      * Called by event delivery when size of screen was changed.
+      */
+     public void handleRotationEvent();
 
      /*
       * Called by event delivery when clamshell event occurs.
