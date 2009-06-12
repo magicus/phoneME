@@ -73,7 +73,7 @@ $(CVM_JCOV_BUILDDIRS):
 
 $(CVM_JCOV_LIB): $(CVM_JCOV_OBJECTS)
 	@echo "Linking $@"
-	$(call SO_LINK_CMD, $(CVM_JCOV_LINKLIBS))
+	$(call SO_LINK_CMD, $^, $(CVM_JCOV_LINKLIBS))
 	@echo "Done Linking $@"
 
 # The following are used to build the .o files needed for $(CVM_JCOV_OBJECTS):

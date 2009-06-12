@@ -86,7 +86,7 @@ javadoc-api:
 
 $(JUMP_NATIVE_LIBRARY_PATHNAME) :: $(JUMP_NATIVE_LIB_OBJS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD)
+	$(call SO_LINK_CMD, $^,)
 	$(AT)cp $@ $(CVM_LIBDIR)
 
 #

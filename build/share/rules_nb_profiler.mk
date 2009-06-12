@@ -86,7 +86,7 @@ $(CVM_NB_PROFILER_LIB): $(CVM_NB_PROFILER_OBJECTS)
 ifeq ($(CVM_STATICLINK_TOOLS), true)
 	$(STATIC_LIB_LINK_CMD)
 else
-	$(call SO_LINK_CMD,$(CVM_JVMTI_LINKLIBS))
+	$(call SO_LINK_CMD, $^, $(CVM_JVMTI_LINKLIBS))
 endif
 	@echo "Done Linking $@"
 

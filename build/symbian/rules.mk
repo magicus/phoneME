@@ -162,7 +162,7 @@ $(TLS_LIB) : SO_LINKFLAGS += /nodefaultlib
 $(TLS_LIB) : SO_LINKFLAGS += /entry:_E32Dll /include:'?_E32Dll@@YGHPAXI0@Z'
 
 $(TLS_LIB) : $(CVM_OBJDIR)/threads_md_dll.o
-	$(AT)$(SO_LINK_CMD)
+	$(AT)$(call SO_LINK_CMD, $^,)
 
 $(CVM_OBJDIR)/threads_md_dll.o : threads_md.cpp
 	@echo "c++ $@"

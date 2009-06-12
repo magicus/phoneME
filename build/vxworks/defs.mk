@@ -134,5 +134,6 @@ ASM_FLAGS	+= $(CC_INCLUDE) $(CC_DEFINES)
 # override CVM_TZDATAFILE. vxworks doesn't have a tzmappings file
 CVM_TZDATAFILE =
 
+# LINK_CMD(objFiles, extraLibs)
 # Link cvm as a .o library, not as an executable
-LINK_CMD  = $(AT)$(TARGET_CC) -g -nostdlib -Wl,-r -o $@ $^ $(LINKLIBS)
+LINK_CMD  = $(AT)$(TARGET_CC) -g -nostdlib -Wl,-r -o $@ $(1) $(LINKLIBS)

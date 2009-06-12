@@ -998,11 +998,14 @@ endif
 
 $(CVM_BINDIR)/$(CVM) :: .generate.system_properties.c
 
+LINKCVM_OBJECTS = \
+	$(CVM_OBJECTS) $(CVM_OBJDIR)/$(CVM_ROMJAVA_O) $(CVM_FDLIB) \
+	$(CVM_SHA1OBJ) $(CVM_RESOURCES)
+
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
-$(CVM_BINDIR)/$(CVM) :: $(CVM_OBJECTS) $(CVM_OBJDIR)/$(CVM_ROMJAVA_O) $(CVM_FDLIB) \
-			$(CVM_SHA1OBJ) $(CVM_RESOURCES)
+$(CVM_BINDIR)/$(CVM) :: $(LINKCVM_OBJECTS) $(LINKCVM_EXTRA_DEPS)
 	@echo "Linking $@"
-	$(CVM_LINK_CMD)
+	$(call CVM_LINK_CMD, $(LINKCVM_OBJECTS), $(LINKCVM_LIBS))
 	@echo "Done Linking $@"
 endif
 

@@ -2338,21 +2338,22 @@ CC_CMD_SPACE	= $(call compileCC,$(CFLAGS_SPACE),$@,$<)
 CC_CMD_LOOP	= $(call compileCC,$(CFLAGS_LOOP) ,$@,$<)
 CC_CMD_FDLIB	= $(call compileCC,$(CFLAGS_FDLIB),$@,$<)
 
-# LINK_CMD(extraLibs)
-LINK_CMD	= $(AT)$(TARGET_LD)  $(LINKFLAGS) -o $@ $^ $(LINKLIBS) $(1)
+# LINK_CMD(objFiles, extraLibs)
+LINK_CMD	= $(AT)$(TARGET_LD) $(LINKFLAGS) -o $@ $(1) $(LINKLIBS) $(2)
 SO_ASM_CMD 	= $(ASM_CMD)
 SO_CC_CMD	= $(call compileCC,$(SO_CFLAGS),$@,$<)
 
-# SO_LINK_CMD(extraLibs)
-SO_LINK_CMD 	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $^ $(1)
+# SO_LINK_CMD(objFiles, extraLibs)
+SO_LINK_CMD 	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(2)
 JAVAC_CMD	= $(CVM_JAVAC) $(JAVAC_OPTIONS)
 JAR_CMD		= $(CVM_JAR)
 JAVA_CMD	= $(CVM_JAVA)
 
+# CVM_LINK_CMD(objFiles, extraLibs)
 ifeq ($(CVM_BUILD_SO),true)
-CVM_LINK_CMD   = $(call SO_LINK_CMD, $(LINKCVM_LIBS))
+CVM_LINK_CMD   = $(call SO_LINK_CMD, $(1), $(2))
 else
-CVM_LINK_CMD   = $(call LINK_CMD, $(LINKCVM_LIBS))
+CVM_LINK_CMD   = $(call LINK_CMD, $(1), $(2))
 endif
 
 

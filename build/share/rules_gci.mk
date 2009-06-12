@@ -43,7 +43,7 @@ ifneq ($(CVM_STATICLINK_LIBS), true)
 GCI_LIB_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(GCI_LIB_OBJS))
 $(GCI_LIB_PATHNAME) :: $(GCI_LIB_OBJECTS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD) $(GCI_LIB_LIBS)
+	$(call SO_LINK_CMD, $^, $(GCI_LIB_LIBS))
 endif
 
 #

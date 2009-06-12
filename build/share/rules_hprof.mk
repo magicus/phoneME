@@ -77,7 +77,7 @@ $(CVM_HPROF_BUILDDIRS):
 
 $(CVM_HPROF_LIB): $(CVM_HPROF_OBJECTS)
 	@echo "Linking $@"
-	$(call SO_LINK_CMD, $(CVM_HPROF_LINKLIBS))
+	$(call SO_LINK_CMD, $^, $(CVM_HPROF_LINKLIBS))
 	@echo "Done Linking $@"
 
 ifeq ($(CVM_JVMPI), true)

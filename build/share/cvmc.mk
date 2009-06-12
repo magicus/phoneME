@@ -77,7 +77,7 @@ cvmc: $(cvmc_build_list)
 
 $(CVM_CVMC_BINDIR)/$(CVMC): $(CVM_CVMC_OBJECTS)
 	@echo "Linking $@"
-	$(LINK_CMD) $(CVM_CVMC_LINKLIBS)
+	$(call LINK_CMD, $^, $(CVM_CVMC_LINKLIBS))
 	@echo "Done Linking $@"
 
 $(CVM_CVMC_OBJDIR)/%.o: %.c

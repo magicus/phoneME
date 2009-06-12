@@ -166,19 +166,19 @@ LINK_MANIFEST = \
 		"-outputresource:$(call POSIX2HOST,$@);\#2" ;\
 	fi;
 
-# LINK_CMD(extraLibs)
+# LINK_CMD(objFiles, extraLibs)
 LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
-	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
-	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(1); \
+	$(call POSIX2HOST_CMD,$(1)) > $(OUT).lst; \
+	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(2); \
 	$(LINK_MANIFEST)
 
-# SO_LINK_CMD(extraLibs)
+# SO_LINK_CMD(objFiles, extraLibs)
 SO_LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
-	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
+	$(call POSIX2HOST_CMD,$(1)) > $(OUT).lst; \
 	$(TARGET_LD) $(SO_LINKFLAGS) /out:$(OUT) @$(OUT).lst \
-		$(SO_LINKLIBS) $(1); \
+		$(SO_LINKLIBS) $(2); \
 	$(LINK_MANIFEST)
 
 # Don't let the default compiler compatibility check be done

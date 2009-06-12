@@ -90,7 +90,7 @@ $(CVM_CRW_LIB): $(CVM_CRW_OBJECTS)
 ifeq ($(CVM_STATICLINK_TOOLS), true)
 	$(STATIC_LIB_LINK_CMD)
 else
-	$(SO_LINK_CMD)
+	$(call SO_LINK_CMD, $^,)
 endif
 	@echo "Done Linking $@"
 

@@ -88,7 +88,7 @@ $(CVM_JDWP_LIB): $(CVM_JDWP_OBJECTS)
 ifeq ($(CVM_STATICLINK_TOOLS), true)
 	$(call STATIC_LIB_LINK_CMD, $(CVM_JDWP_LINKLIBS))
 else
-	$(call SO_LINK_CMD, $(CVM_JDWP_LINKLIBS))
+	$(call SO_LINK_CMD, $^, $(CVM_JDWP_LINKLIBS))
 endif
 	@echo "Done Linking $@"
 

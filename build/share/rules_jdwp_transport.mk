@@ -51,7 +51,7 @@ $(CVM_JDWP_DT_LIB): $(CVM_JDWP_DT_OBJECTS)
 ifeq ($(CVM_STATICLINK_TOOLS), true)
 	$(call STATIC_LIB_LINK_CMD, $(CVM_JDWP_DT_LINKLIBS))
 else
-	$(call SO_LINK_CMD,$(CVM_JDWP_DT_LINKLIBS))
+	$(call SO_LINK_CMD, $^, $(CVM_JDWP_DT_LINKLIBS))
 endif
 	@echo "Done Linking $@"
 
