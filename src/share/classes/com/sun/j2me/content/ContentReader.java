@@ -110,7 +110,6 @@ class ContentReader {
         	}
         	
             type = ((ContentConnection)conn).getType();
-            conn.close();
 
             if (type != null) {
                 // Check for and remove any parameters (rfc2616)
@@ -124,6 +123,7 @@ class ContentReader {
                 }
             }
         }
+        conn.close();
 
         return type;
     }

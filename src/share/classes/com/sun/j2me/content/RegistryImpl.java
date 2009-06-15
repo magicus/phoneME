@@ -596,7 +596,7 @@ public final class RegistryImpl {
 			return (ContentHandlerImpl)list[0];
 
 		int idx = gate.selectSingleHandler( (ContentHandlerRegData[])list, 
-												invocation.getAction());
+												invocation.getAction() );
 		if( idx == -1 )
             throw new ContentHandlerException("canceled",
                     ContentHandlerException.NO_REGISTERED_HANDLER);

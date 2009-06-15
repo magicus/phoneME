@@ -83,7 +83,7 @@ public class ContentHandlerRegData {
     protected ActionNameMap[] actionnames;
     public String getActionName( String action, String locale ){
     	for( int i = 0; i < actionnames.length; i++){
-    		if( locale.equals(actionnames[ i ].getLocale()) )
+    		if( actionnames[ i ].getLocale().equals(locale) )
     			return actionnames[ i ].getActionName(action);
     	}
     	return null;

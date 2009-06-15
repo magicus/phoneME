@@ -719,11 +719,12 @@ KNIDECL(com_sun_j2me_content_RegistryStore_loadFieldValues0) {
 }
 
 /*
- * private static native int selectSingleHandler0(String[] pairs);
+ * private static native int selectSingleHandler0(String action, String[] pairs);
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_j2me_content_RegistryStore_selectSingleHandler0) {
     int result = -1;
+    javacall_utf16_string action = NULL;
     jsize pairs_count;
     javacall_chapi_handler_info * list;
 
@@ -731,7 +732,10 @@ KNIDECL(com_sun_j2me_content_RegistryStore_selectSingleHandler0) {
     KNI_DeclareHandle(pairs);
     KNI_DeclareHandle(strObj);
 
-    KNI_GetParameterAsObject(1, pairs); /* String[] pairs */
+    KNI_GetParameterAsObject(1, strObj); /* String action */
+    if( !KNI_IsNullHandle(strObj) )
+        jsrop_jstring_to_utf16_string(strObj, &action);
+    KNI_GetParameterAsObject(2, pairs); /* String[] pairs */
     pairs_count = KNI_GetArrayLength(pairs) / 2;
     list = JAVAME_MALLOC( pairs_count * sizeof(list[0]) );
     if( list != NULL ){
@@ -745,7 +749,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_selectSingleHandler0) {
                 jsrop_jstring_to_utf16_string(strObj, &list[ i ].action_name);
         }
 
-        javacall_chapi_select_handler( pairs_count, list, &result );
+        javacall_chapi_select_handler( action, pairs_count, list, &result );
 
         // free list
         for( i = 0; i < pairs_count; i++){
@@ -757,6 +761,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_selectSingleHandler0) {
         KNI_ThrowNew(jsropOutOfMemoryError, 
                    "RegistryStore_selectSingleHandler0: no memory");
     }
+    if( action != NULL ) JAVAME_FREE(action);
     KNI_EndHandles();    
     KNI_ReturnInt( result );
 }

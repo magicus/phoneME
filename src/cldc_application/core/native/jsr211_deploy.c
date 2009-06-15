@@ -32,6 +32,12 @@
 #include <jsrop_memory.h>
 #include <jsrop_suitestore.h>
 
+#ifdef _DEBUG
+
+#include <stdio.h>
+
+#endif
+
 /** 
  * Include preinstalled content handlers data consisted of:
  *

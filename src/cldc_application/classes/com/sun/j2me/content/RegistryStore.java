@@ -205,7 +205,7 @@ class RegistryStore implements RegistryGate {
 			pairs[ i * 2 ] = list[ i ].getID();
 			pairs[ i * 2 + 1 ] = list[ i ].getActionName(action, locale);
 		}
-		return selectSingleHandler0(pairs);
+		return selectSingleHandler0(action, pairs);
 	}
 
     /**
@@ -350,7 +350,7 @@ class RegistryStore implements RegistryGate {
      * @param list array of pairs (handlerID, action name)
      * @return index of the selected handler
      */
-    private static native int selectSingleHandler0(String[] pairs);
+    private static native int selectSingleHandler0(String action, String[] pairs);
     
     /**
      * Initialize persistence storage.

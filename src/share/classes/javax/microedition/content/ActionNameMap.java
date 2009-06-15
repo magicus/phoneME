@@ -86,10 +86,9 @@ public final class ActionNameMap {
 			 String locale)
     {
 		if (locale.length() == 0) {	// trigger NullPointerException
-		    throw new IllegalArgumentException("empty string");
+		    throw new IllegalArgumentException("locale is empty string");
 		}
-		if (actions.length != actionnames.length ||
-		    actions.length == 0) {
+		if (actions.length != actionnames.length || actions.length == 0) {
 		    throw new IllegalArgumentException("lengths incorrect");
 		}
 	
