@@ -26,10 +26,7 @@
 
 package javax.microedition.io;
 
-import java.lang.String;
 import java.io.IOException;
-import javax.microedition.pki.Certificate;
-import javax.microedition.pki.CertificateException;
 
 /**
  * This interface defines the necessary methods
@@ -131,7 +128,7 @@ import javax.microedition.pki.CertificateException;
  *         }
  *     }
  * </PRE> </code>
- * @see CertificateException
+ * @see javax.microedition.pki.CertificateException
  */
 
 public interface HttpsConnection extends HttpConnection {
