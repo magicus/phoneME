@@ -187,7 +187,7 @@ static void process(JNIEnv *env, jclass classSublime) {
         callSharedBuffer->reset(callSharedBuffer); 
         (*env)->CallStaticVoidMethod(env, classSublime, mid_call, jbuffer);    
         (*env)->DeleteLocalRef(env, jbuffer); 
-        SetEvent(event1); 
+        LimeSetEvent(event1); 
     }
 }
 
@@ -227,7 +227,7 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(JNIEnv *e, jclass 
     returnSharedBuffer->setID(returnSharedBuffer, res_thread_id); 
     BufferPool_freeBuffer(e, bufferPool, jarr);
     /* notify the CVM process that a result has been sent, and wait for ack */ 
-    SetEvent(event2);
+    LimeSetEvent(event2);
     WaitForEvent(event3); 
     returnSharedBuffer->reset(returnSharedBuffer); 
 
@@ -239,10 +239,10 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(JNIEnv *e, jclass 
 
 int initEvents() {
     /* create named events to communicate between processes */
-    event0 = CreateEvent(NULL, FALSE, FALSE, names[2]);
-    event1 = CreateEvent(NULL, FALSE, FALSE, names[3]);
-    event2 = CreateEvent(NULL, FALSE, FALSE, names[4]);
-    event3 = CreateEvent(NULL, FALSE, FALSE, names[5]);
+    event0 = LimeCreateEvent(NULL, FALSE, FALSE, names[2]);
+    event1 = LimeCreateEvent(NULL, FALSE, FALSE, names[3]);
+    event2 = LimeCreateEvent(NULL, FALSE, FALSE, names[4]);
+    event3 = LimeCreateEvent(NULL, FALSE, FALSE, names[5]);
     if (event0 == NULL || event1 == NULL || event2 == NULL || event3 == NULL) {
         return -1; 
     }
@@ -316,6 +316,6 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_process(JNIEnv *env, jclass clz
 JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_stopProcess(JNIEnv *env, 
                                                              jclass clz) {
     stopProcess = 1;
-    SetEvent(event0);
+    LimeSetEvent(event0);
 }
 

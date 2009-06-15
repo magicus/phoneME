@@ -104,7 +104,7 @@ void WaitForMutex(MUTEX_HANDLE m){
     pthread_mutex_lock(m); 
 }
 
-void ReleaseMutex(MUTEX_HANDLE m){
+void LimeReleaseMutex(MUTEX_HANDLE m){
     pthread_mutex_unlock(m); 
 }
 
@@ -117,9 +117,9 @@ void WaitForEvent(EVENT_HANDLE e){
     e->waitForEvent(e);
 }
 
-void SetEvent(EVENT_HANDLE e){
+void LimeSetEvent(EVENT_HANDLE e){
     if (e == NULL){
-        fprintf(stderr,"SetEvent: EVENT_HANDLE is NULL\n");
+        fprintf(stderr,"LimeSetEvent: EVENT_HANDLE is NULL\n");
         fflush(stderr); 
         exit(1); 
     }
@@ -133,10 +133,10 @@ void SetEvent(EVENT_HANDLE e){
  * Sublime implementations, there will be a need to lock between processes - 
  * the mutex can be implemented with a semaphore (sys/sem.h)
  */
-MUTEX_HANDLE CreateMutex(void* sa, int initialState, char * name){
+MUTEX_HANDLE LimeCreateMutex(void* sa, int initialState, char * name){
     pthread_mutex_t * m =(pthread_mutex_t *) malloc (sizeof(pthread_mutex_t)); 
     if (m == NULL) { 
-        fprintf(stderr, "CreateMutex: malloc failed\n"); 
+        fprintf(stderr, "LimeCreateMutex: malloc failed\n"); 
         fflush(stderr); 
         exit(1); 
     }
@@ -171,7 +171,7 @@ static void sublime_event_waitForEvent(EVENT_HANDLE e){
     read(e->pipeDescriptor, &c, 1);  
 }
 
-EVENT_HANDLE CreateEvent(void* sa, int manualReset, int initialState, char * name){
+EVENT_HANDLE LimeCreateEvent(void* sa, int manualReset, int initialState, char * name){
     char * buf = (char *)malloc(sizeof(char)*PATH_MAX); 
     char * tmpDirBuf; 
     int fd; 
@@ -180,7 +180,7 @@ EVENT_HANDLE CreateEvent(void* sa, int manualReset, int initialState, char * nam
     static int nameCounter = 0;
     buf[0] = 0;
     if (e == NULL){
-        fprintf(stderr, "CreateEvent: malloc failed\n"); 
+        fprintf(stderr, "LimeCreateEvent: malloc failed\n"); 
         fflush(stderr); 
         exit(1); 
     }
@@ -208,7 +208,7 @@ EVENT_HANDLE CreateEvent(void* sa, int manualReset, int initialState, char * nam
     mkfifo(buf, S_IRWXO | S_IRWXU | S_IRWXG );
     
     if ((fd = open(buf, O_RDWR | O_CREAT, 0700)) == -1){
-        fprintf(stderr, "error: open failed in CreateEvent\n");
+        fprintf(stderr, "error: open failed in LimeCreateEvent\n");
         fflush(stderr);
 
         exit(1);

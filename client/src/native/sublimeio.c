@@ -130,7 +130,7 @@ static void sharedBuffer_unlock(SharedBuffer* sb){
     assert(sb->data->mutex != INVALID_HANDLE_VALUE);
 
 #endif
-    ReleaseMutex(sb->data->mutex);
+    LimeReleaseMutex(sb->data->mutex);
 }
 
 /* returns the buffer size (dataBuffer[0,3]) */ 
@@ -241,7 +241,7 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
     sb->data->write_pointer = sb->data->read_pointer = 0;
 
     mutexName = getMutexName(bufferName);
-    sb->data->mutex = CreateMutex(NULL, FALSE, mutexName);
+    sb->data->mutex = LimeCreateMutex(NULL, FALSE, mutexName);
     free(mutexName);
      
     if (sb->data->mutex == NULL){
@@ -558,7 +558,7 @@ if (sb->data->hMapFile == NULL)  {
     return NULL;
 } 
 mutexName = getMutexName(name); 
-sb->data->mutex = CreateMutex(NULL,FALSE,mutexName); 
+sb->data->mutex = LimeCreateMutex(NULL,FALSE,mutexName); 
 free(mutexName);
 
 if ( sharedBuffer_open(sb, size) != 0 ){

@@ -51,11 +51,11 @@ typedef struct sublimeEventStruct {
 
 /* security attributes are void * because the windows version 
    uses this argument as null, so the type does not matter */ 
-EVENT_HANDLE CreateEvent(void* sa,  int manualReset, int initialState, char * name); 
-MUTEX_HANDLE CreateMutex(void* sa, int initialState, char * name); 
+EVENT_HANDLE LimeCreateEvent(void* sa,  int manualReset, int initialState, char * name); 
+MUTEX_HANDLE LimeCreateMutex(void* sa, int initialState, char * name); 
 
-void SetEvent(EVENT_HANDLE event);
-void ReleaseMutex(MUTEX_HANDLE fd); 
+void LimeSetEvent(EVENT_HANDLE event);
+void LimeReleaseMutex(MUTEX_HANDLE fd); 
 
 int GetCurrentProcessId(void); 
 
@@ -73,7 +73,11 @@ char* getTempDirLocation(void);
 #define MUTEX_HANDLE HANDLE
 #define EVENT_HANDLE HANDLE
 
+#define LimeCreateEvent(A, B, C, D) CreateEvent((A), (B), (C), (D))
+#define LimeCreateMutex(A, B, C) CreateMutex((A), (B), (C))
 
+#define LimeSetEvent(A) SetEvent(A)
+#define LimeReleaseMutex(A) ReleaseMutex(A)
 
 #endif 
 

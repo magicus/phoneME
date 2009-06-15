@@ -277,15 +277,15 @@ LIMEEXPORT void StartLime(void) {
         error("SUBLIME: Could not open shared buffers\n"); 
     }
       
-    event0 = CreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT0, prID));
-    event1 = CreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT1, prID));
-    event2 = CreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT2, prID));
-    event3 = CreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT3, prID));
+    event0 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT0, prID));
+    event1 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT1, prID));
+    event2 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT2, prID));
+    event3 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT3, prID));
 
     if (event0 == NULL || event1 == NULL || event2 == NULL || event3 == NULL){
         error("SUBLIME: Could not create events\n"); 
     }
-    threadMapMutex = CreateMutex(NULL, FALSE, NULL); 
+    threadMapMutex = LimeCreateMutex(NULL, FALSE, NULL); 
     if (threadMapMutex == NULL) { 
         error("SUBLIME: Could not create mutex\n"); 
     }
@@ -752,7 +752,7 @@ static void lime_call(LimeFunction *f, void *result, ...) {
     callSharedBuffer->stampID(callSharedBuffer); 
     callSharedBuffer->write(callSharedBuffer, buffer->data, commandLength);
     /* notify JVM process (sublimeBridge) that a call has been placed in callSharedBuffer */ 
-    SetEvent(event0);
+    LimeSetEvent(event0);
     /* wait until the JVM process signals that the buffer is free */ 
     WaitForEvent(event1);
     /* the buffer is no longer needed. from now on the relevant buffer is returnSharedBuffer */ 
@@ -781,7 +781,7 @@ static void lime_call(LimeFunction *f, void *result, ...) {
     
     /* reset the buffer */ 
     returnSharedBuffer->reset(returnSharedBuffer); 
-    SetEvent(event3);
+    LimeSetEvent(event3);
     /* context switch - notify the JVM process that returnSharedBuffer is now free to use */ 
     yield();
 }
@@ -835,7 +835,7 @@ LIMEEXPORT LimeFunction *NewLimeFunction(const char *packageName,
 					    packageName, className, methodName);
     
     /* notify the JVM side that a call has been placed in callSharedBuffer */ 
-    SetEvent(event0);
+    LimeSetEvent(event0);
     /* waiting for the JVM process to finish reading the call */ 
     
     WaitForEvent(event1); 
@@ -864,7 +864,7 @@ LIMEEXPORT LimeFunction *NewLimeFunction(const char *packageName,
     
     returnSharedBuffer->readInt32(returnSharedBuffer, &d->returnType);
     returnSharedBuffer->reset(returnSharedBuffer); 
-    SetEvent(event3); 
+    LimeSetEvent(event3); 
     /* context switch - notify the JVM process that returnSharedBuffer is now free to use */ 
     //    sleep(0); 
     yield();
@@ -1131,7 +1131,7 @@ static EVENT_HANDLE acquireEvent(uint32_t tID) {
             event = availableMapping->event;
         } else {
             /* Create a new event */
-            event = CreateEvent(NULL, FALSE, FALSE, NULL); 
+            event = LimeCreateEvent(NULL, FALSE, FALSE, NULL); 
             if ( event == NULL){
                 error("Cannot create new event for SUBSUBLIME current thread\n");
             }
@@ -1162,7 +1162,7 @@ static EVENT_HANDLE acquireEvent(uint32_t tID) {
             threadMapLength++;
         }
     }
-    ReleaseMutex(threadMapMutex); 
+    LimeReleaseMutex(threadMapMutex); 
     return event;
 }
 
@@ -1177,7 +1177,7 @@ static void releaseEvent(SharedBuffer *sb) {
             break;
         }
     }
-    ReleaseMutex(threadMapMutex); 
+    LimeReleaseMutex(threadMapMutex); 
 }
 
 /* === Native functions === */
@@ -1219,7 +1219,7 @@ void waitForResults(void *p){
         event = acquireEvent(tID); 
         /* set the event for the specific thread 
            that is waiting for this result */ 
-        SetEvent(event); 
+        LimeSetEvent(event); 
    
     }
 }
@@ -1400,7 +1400,7 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
     callSharedBuffer->stampID(callSharedBuffer);
     callSharedBuffer->write(callSharedBuffer, buffer->data, commandLength);
     /* notify JVM process (sublimeBridge) that a call has been placed in callSharedBuffer */ 
-    SetEvent(event0);
+    LimeSetEvent(event0);
     /* wait until the JVM process signals that the buffer is free */ 
     WaitForEvent(event1);
     /* the buffer is no longer needed. from now on the relevant buffer is returnSharedBuffer */ 
@@ -1457,7 +1457,7 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
     
     /* reset the buffer */ 
     returnSharedBuffer->reset(returnSharedBuffer); 
-    SetEvent(event3);
+    LimeSetEvent(event3);
     /* context switch - notify the JVM process that returnSharedBuffer is now free to use */ 
     yield();
     return result;
