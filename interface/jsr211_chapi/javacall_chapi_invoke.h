@@ -192,12 +192,13 @@ typedef struct {
 
 /**
  * this function must return index of selected content handler. Returned value must be in <code>[-1, count - 1]</code>.
+ * @param action non-localized action string
  * @param count number of <code>javacall_chapi_handler_info</code> values in the <code>list</code>
  * @param list pointer to an array of handlers to select
  * @param handler_idx index of the selected handler or -1 if no handler found. Output parameter.
  * @return result of the operation
  */
-javacall_result javacall_chapi_select_handler( int count, const javacall_chapi_handler_info * list, 
+javacall_result javacall_chapi_select_handler( javacall_const_utf16_string action, int count, const javacall_chapi_handler_info * list, 
                                                             /* OUT */ int * handler_idx );
                                                 
 #ifdef __cplusplus

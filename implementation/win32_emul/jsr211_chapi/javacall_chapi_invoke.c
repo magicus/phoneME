@@ -121,7 +121,7 @@ javacall_result javacall_chapi_java_finish(int invoc_id,
 }
 */
 
-javacall_result javacall_chapi_select_handler( int count, const javacall_chapi_handler_info * list, 
+javacall_result javacall_chapi_select_handler( javacall_const_utf16_string action, int count, const javacall_chapi_handler_info * list, 
                                                             /* OUT */ int * handler_idx ){
     *handler_idx = 0;
     return( JAVACALL_OK );
