@@ -146,6 +146,7 @@ public class CHManager {
      * @param state the InstallState with the attributes and other context
      * @param msuite access to information about the suite
      * @param authority the authority, if any, that authorized the trust level
+     * @return object that will be used as a parameter of the <code>install</code> method
      * @exception InvalidJadException if there is no classname field,
      * the option field is not "true", "false" or blank or if there are
      * more than five comma separated fields on the line.
