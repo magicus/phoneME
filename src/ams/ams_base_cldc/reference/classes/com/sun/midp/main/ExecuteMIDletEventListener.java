@@ -35,9 +35,9 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.lcdui.DisplayEventHandler;
-
 import com.sun.midp.security.SecurityToken;
+
+import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -178,7 +178,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
         try {
             MIDletSuiteUtils.executeWithArgs(classSecurityToken,
                 externalAppId, id, midlet, displayName,
-                    arg0, arg1, arg2, false);
+                    arg0, arg1, arg2, Constants.MIDP_NO_DEBUG);
         } catch (Throwable t) {
             if (Logging.TRACE_ENABLED) {
                 Logging.trace(t,
