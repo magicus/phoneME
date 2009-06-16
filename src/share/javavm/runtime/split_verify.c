@@ -1712,10 +1712,13 @@ lookMoreDeeply:
     }
     CVMassert(CVMtypeidFieldIsRef(Vfy_toClassKey(fromKey)));
     CVMassert(CVMtypeidFieldIsRef(Vfy_toClassKey(toKey)));
+
     fromClass = CVMvfyLookupClass(cntxt, Vfy_toClassKey(fromKey));
-    toClass   = CVMvfyLookupClass(cntxt, Vfy_toClassKey(toKey));
-    
-    if (fromClass == NULL || toClass == NULL)
+    if (fromClass == NULL)
+	return CVM_FALSE; /* can't be -- a class not loaded? */
+
+    toClass = CVMvfyLookupClass(cntxt, Vfy_toClassKey(toKey));    
+    if (toClass == NULL)
 	return CVM_FALSE; /* can't be -- a class not loaded? */
 
     /* Interfaces are treated like java.lang.Object in the verifier. */
