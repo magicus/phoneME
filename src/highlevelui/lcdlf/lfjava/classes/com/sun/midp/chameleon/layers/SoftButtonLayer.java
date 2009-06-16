@@ -322,7 +322,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                             break;
                     }
                 } // if
-
             } // for
 
             // If we have a command for the left button, we pop it out
@@ -334,30 +333,15 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 System.arraycopy(screenCmds, index + 1,
                         scrCmds, index, numS - index);
             }
+
+	    /* If only BACK is active, hide it. */
+	    if ((type == Command.BACK) && (numS == 0)) {
+		soft1 = null ;
+	    }
         }
 
         // Now fill in the 'right' soft button, possibly with a menu
         // of Commands
-	/*
-	System.out.println("SoftButtonLayer.updateCommandSet=" 
-			   + " " + numI + " " + numS );
-	for (int j = 0; j < numI; j++ ) {
-	    System.out.println("items[" + j + "]=" 
-			       + this.itmCmds[j].getCommandType()
-			       + " " + this.itmCmds[j].getLabel()
-			       + " " + this.itmCmds[j].getLongLabel()
-			       + " " + this.itmCmds[j].getPriority()
-			       );
-	}
-	for (int j = 0; j < numS; j++ ) {
-	    System.out.println("scr[" + j + "]=" 
-			       + this.scrCmds[j].getCommandType()
-			       + " " + this.scrCmds[j].getLabel()
-			       + " " + this.scrCmds[j].getLongLabel()
-			       + " " + this.scrCmds[j].getPriority()
-			       );
-	}
-	*/
         switch (numI + numS) {
             case 0:
                 soft2 = null;
@@ -369,15 +353,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                     soft2 = new Command[1];
                     soft2[0] = (numI > 0) ? this.itmCmds[0] : this.scrCmds[0];
                 }
-		/* 
-		 * If only a BACK command is specified the soft button layer
-		 * can be hidden.
-		 */
-		if ((numS == 1) 
-		    && (this.scrCmds[0].getCommandType() == Command.BACK)) {
-		    super.setVisible(false);
-		    //		    System.out.println("visible(false)");
-		}
                 break;
             default:
                 soft2 = new Command[numI + numS];
@@ -473,7 +448,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 		int cmdCount = scrCmds.length;
 		for (int i = 0; i < cmdCount; i++) {
 		    if (scrCmds[i].getCommandType() == Command.BACK) {
-			// System.out.println ("scr " + i + " " + tunnel);
 			if (tunnel != null) {
 			    tunnel.callScreenListener(scrCmds[i], scrListener);
 			    return true;
@@ -483,7 +457,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 		cmdCount = itmCmds.length;
 		for (int i = 0; i < cmdCount; i++) {
 		    if (itmCmds[i].getCommandType() == Command.BACK) {
-			// System.out.println ("itm " + i + " " + tunnel);
 			if (tunnel != null) {
 			    tunnel.callItemListener(itmCmds[i], itemListener);
 			    return true;
