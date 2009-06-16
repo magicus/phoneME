@@ -5131,23 +5131,26 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
     // If the caller is Java or entry frame - IGNORE, RETRY and ABORT.
     // If the caller is Java and allocation redo is supported 
     // for the current bytecode - IGNORE, RETRY, ABORT and SUSPEND.
-    Frame frame(Thread::current());
-    if (frame.is_java_frame()) {
-      Method::Raw method = frame.as_JavaFrame().method();
-      if (!method().is_native()) {
-        flags |= JVMSPI_ABORT;
+    if( Thread::current()->last_java_fp() != NULL &&
+        Thread::current()->last_java_sp() != NULL ) {
+      Frame frame(Thread::current());
+      if (frame.is_java_frame()) {
+        Method::Raw method = frame.as_JavaFrame().method();
+        if (!method().is_native()) {
+          flags |= JVMSPI_ABORT;
 
-        {
-          const int bci = frame.as_JavaFrame().bci();
-          const Bytecodes::Code code = method().bytecode_at(bci);
+          {
+            const int bci = frame.as_JavaFrame().bci();
+            const Bytecodes::Code code = method().bytecode_at(bci);
 
-          if (Bytecodes::can_redo(code)) {
-            flags |= JVMSPI_SUSPEND;
+            if (Bytecodes::can_redo(code)) {
+              flags |= JVMSPI_SUSPEND;
+            }
           }
         }
+      } else {
+        flags |= JVMSPI_ABORT;
       }
-    } else {
-      flags |= JVMSPI_ABORT;
     }
 
     int exit_code = 0;
@@ -5167,13 +5170,15 @@ void ObjectHeap::handle_out_of_memory(const size_t alloc_size,
       break;
     case JVMSPI_SUSPEND:
 #if ENABLE_ISOLATES && ENABLE_ALLOCATION_REDO
-      GUARANTEE(frame.is_java_frame(), "Must be a Java frame");
+      {
+        Frame frame(Thread::current());
+        GUARANTEE(frame.is_java_frame(), "Must be a Java frame");
 
-      // Deoptimize the frame to handle suspend/redo in interpreter
-      if (frame.as_JavaFrame().is_compiled_frame()) {
-        frame.as_JavaFrame().deoptimize();
+        // Deoptimize the frame to handle suspend/redo in interpreter
+        if (frame.as_JavaFrame().is_compiled_frame()) {
+          frame.as_JavaFrame().deoptimize();
+        }
       }
-
       // Redo the allocation bytecode.
       Thread::current()->set_async_redo(1);
       JVM_SuspendIsolate(task_id);
