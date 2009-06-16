@@ -51,6 +51,7 @@
  *         <classname> -- if the handler's flag is NATIVE here is executive path
  *         <type1 type2 type3 ...> -- array of types devided by whitespases
  *         <suffix1 suffix2 suffix3 ...> -- suffixes (see types)
+ *         <action1 action2 action3 ...> -- actions
  *         <locale1 locale2 locale3 ...> -- locales (see types)
  *         <actionName11 actionName21 ...> -- action_name_i_j is for
  *                                                  action_i and locale_j
