@@ -974,7 +974,7 @@ void javanotify_chapi_java_invoke(
 javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExchangeID, 
                                                       int msg, const unsigned char * bytes, size_t count ) {
     midp_jc_event_union e;
-    jsr211_request_data * data = javacall_malloc( sizeof(*data) );
+    jsr211_request_data * data = (jsr211_request_data *)jsr211_malloc( sizeof(*data) );
 
     REPORT_INFO(LC_CORE, "javanotify_chapi_process_msg_request() >>\n");
 
@@ -984,7 +984,7 @@ javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExcha
     data->bytes = NULL;
     data->count = count;
     if( count > 0 ){
-        data->bytes = javacall_malloc( count );
+        data->bytes = (unsigned char *)jsr211_malloc( count );
         memcpy( data->bytes, bytes, count );
     } else if( bytes != NULL ){
         data->bytes = "";
@@ -998,7 +998,7 @@ javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExcha
 
 javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const unsigned char * bytes, size_t count ) {
     midp_jc_event_union e;
-    jsr211_response_data * data = javacall_malloc( sizeof(*data) );
+    jsr211_response_data * data = (jsr211_response_data *)jsr211_malloc( sizeof(*data) );
 
     REPORT_INFO(LC_CORE, "javanotify_chapi_process_msg_result() >>\n");
 
@@ -1006,7 +1006,7 @@ javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const u
     data->bytes = NULL;
     data->count = count;
     if( count > 0 ){
-        data->bytes = javacall_malloc( count );
+        data->bytes = (unsigned char *)jsr211_malloc( count );
         memcpy( data->bytes, bytes, count );
     } else if( bytes != NULL ){
         data->bytes = "";

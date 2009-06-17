@@ -44,7 +44,6 @@
 #endif
 
 #ifdef ENABLE_JSR_211
-#include "jsr211_constants.h"
 #include "jsr211_platform_invoc.h"
 #endif
 
@@ -257,11 +256,11 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         break;
     case JSR211_REQUEST_SIGNAL:
         jsr211_process_msg_request( (const jsr211_request_data *)newSignal.pResult );
-        javacall_free( newSignal.pResult );
+        jsr211_free( newSignal.pResult );
         break;
     case JSR211_RESPONSE_SIGNAL:
         jsr211_process_msg_result( (const jsr211_response_data *)newSignal.pResult );
-        javacall_free( newSignal.pResult );
+        jsr211_free( newSignal.pResult );
         break;
 #endif /*ENABLE_JSR_211  */
 
