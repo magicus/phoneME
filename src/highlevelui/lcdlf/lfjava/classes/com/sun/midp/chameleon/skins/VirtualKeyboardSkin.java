@@ -167,7 +167,70 @@ public class VirtualKeyboardSkin {
      */
     public static Font FONT;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAMEA_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMEA_SEL;
 
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAMEA_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMEA_UN;
+
+   /**
+     * This field corresponds to KEYBOARD_BTN_GAMEB_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMEB_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAMEB_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMEB_UN;
+   /**
+     * This field corresponds to KEYBOARD_BTN_GAMEC_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMEC_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAMEC_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMEC_UN;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAMED_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMED_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAMED_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAMED_UN;
+
+    /**
+     * This field corresponds to BTN_GAME_MODE skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAME_MODE;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_SB_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_SB_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_SB_UN skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_SB_UN;
 
     /** private constructor */
     private VirtualKeyboardSkin() {

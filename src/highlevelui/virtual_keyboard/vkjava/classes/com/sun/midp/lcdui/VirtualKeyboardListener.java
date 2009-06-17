@@ -45,6 +45,11 @@ public interface VirtualKeyboardListener {
      * @param keycode char selected by the user from the virtual keyboard
      */
     public void virtualKeyReleased(int keycode);
+    /**
+     * key repeated callback
+     * @param keycode char selected by the user from the virtual keyboard
+     */
+    public void virtualKeyRepeated(int keycode);
 
     /**
      * should trigger a requestRepaint() call to schedule a

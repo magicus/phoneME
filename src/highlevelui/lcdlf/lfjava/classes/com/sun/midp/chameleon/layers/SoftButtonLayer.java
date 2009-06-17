@@ -44,7 +44,7 @@ import com.sun.midp.i18n.ResourceConstants;
 /**
  * Soft button layer.
  */
-public class SoftButtonLayer extends CLayer implements CommandListener {
+public class SoftButtonLayer extends CLayer implements CommandListener, VirtualKeyListener {
 
     /**
      * Labels for each of the softbuttons.
@@ -172,6 +172,13 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         super.setSupportsInput(true);
         super.setVisible(true);
         this.tunnel = tunnel;
+
+        if (tunnel != null) {
+            VirtualKeyboardLayer vk = tunnel.getVirtualKeyboardPopup();
+            if (vk != null) {
+                vk.addVirtualKeyboardLayerListener(this);
+            }
+        }
 
         isNativeLayer = isNativeSoftButtonLayerSupported0();
 
@@ -967,5 +974,21 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             menuLayer.update(layers);
         }
     }
+
+    /**
+     *  VirtualKeyListener interface methods implementation
+     */
+    public boolean processKeyPressed(int keyCode) {
+        return keyInput(EventConstants.PRESSED, keyCode);
+    }
+    
+    public boolean processKeyReleased(int keyCode) {
+        return keyInput(EventConstants.RELEASED, keyCode);
+    }
+    
+    public boolean processKeyRepeated(int keyCode) {
+        return keyInput(EventConstants.REPEATED, keyCode);
+    }
+    
 }
 

@@ -2940,6 +2940,16 @@ public class Display {
                 ((CanvasLFImpl)currentCopy).uCallKeyReleased(keyCode);
             }
         }
+        /**
+         * Create popup layer that represents java virtual keyboard popup
+         *   associated with this Display
+         * @return VirtualKeyboard layer instance connected to the current input session
+         *   associated with this Display
+         **/
+        public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+            return Display.this.getVirtualKeyboardPopup();
+        }
+        
     }
     // #endif
  
@@ -3817,7 +3827,7 @@ public class Display {
             keyboardLayer = Display.this.getVirtualKeyboardPopup();
 
             if (keyboardLayer != null && listener != null) {
-                keyboardLayer.setVirtualKeyboardLayerListener(listener);
+                keyboardLayer.addVirtualKeyboardLayerListener(listener);
                 keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
                 if (keyboardLayer.isVirtualKeyboardVisible()) {
                     Display.this.hidePopup(keyboardLayer);

@@ -54,17 +54,36 @@ public class Key {
     public final static int SYMBOL_MODE_KEY = 4;
     /* key sets virtual keyboard into numeric mode */
     public final static int NUMERIC_MODE_KEY = 5;
+    /* key sets virtual keyboard into numeric mode */
+    public final static int GAME_MODE_KEY = 6;
     /* Left arrow canvas key */
-    public final static int LEFT_ARROW_KEY = 6;
+    public final static int LEFT_ARROW_KEY = 7;
     /* Right arrow canvas key */
-    public final static int RIGHT_ARROW_KEY = 7;
+    public final static int RIGHT_ARROW_KEY = 8;
     /* Up arrow canvas key */
-    public final static int UP_ARROW_KEY = 8;
+    public final static int UP_ARROW_KEY = 9;
     /* Down arrow canvas key */
-    public final static int DOWN_ARROW_KEY = 9;
+    public final static int DOWN_ARROW_KEY = 10;
+    /* Fire canvas key */
+    public final static int FIRE_KEY = 11;
     /* Enter key */
-    public final static int ENTER_KEY = 10;
+    public final static int ENTER_KEY = 12;
+    /* Soft button 1 (typicaly left) key */
+    public final static int SB1_KEY = 13;
+    /* Soft button 2 (typicly right) key */
+    public final static int SB2_KEY = 14;
+    /* Game A key */
+    public final static int GAMEA_KEY = 15;
+    /* Game B key */
+    public final static int GAMEB_KEY = 16;
+    /* Game C key */
+    public final static int GAMEC_KEY = 17;
+    /* Game D key */
+    public final static int GAMED_KEY = 18;
 
+
+
+    
     /*Key code*/
     private int key;
     /*Image for key background*/
@@ -115,7 +134,10 @@ public class Key {
             case NUMERIC_MODE_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_NUMERIC_MODE;
                 break;
-            case LEFT_ARROW_KEY:
+            case GAME_MODE_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_GAME_MODE;
+                break;
+           case LEFT_ARROW_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_LEFT_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_LEFT_SEL;
                 break;
@@ -127,12 +149,40 @@ public class Key {
                 keyImage = VirtualKeyboardSkin.BTN_UP_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_UP_SEL;
                 break;
-            case DOWN_ARROW_KEY:
+           case DOWN_ARROW_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_DOWN_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_DOWN_SEL;
                 break;
+           case FIRE_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_MID_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_MID_SEL;
+                break;
             case ENTER_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_ENTER;
+                break;
+            case SB1_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_SB_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_SB_SEL;
+                break;
+           case SB2_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_SB_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_SB_SEL;
+                break;
+           case GAMEA_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_GAMEA_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_GAMEA_SEL;
+                break;
+           case GAMEB_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_GAMEB_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_GAMEB_SEL;
+                break;
+           case GAMEC_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_GAMEC_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_GAMEC_SEL;
+                break;
+           case GAMED_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_GAMED_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_GAMED_SEL;
                 break;
             default:
                 keyImage = VirtualKeyboardSkin.KEY;

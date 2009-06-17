@@ -1346,11 +1346,17 @@ class TextFieldLFImpl extends ItemLFImpl implements
         uCallKeyPressed(keyCode);
     }
 
-    public void processKeyPressed(int keyCode) {
+    public boolean processKeyPressed(int keyCode) {
         cachedInputSession.processKey(keyCode, false);
+        return true; 
     }
 
-    public void processKeyReleased(int keyCode) {
+    public boolean processKeyReleased(int keyCode) {
+        return true; 
+    }
+
+    public boolean processKeyRepeated(int keyCode) { 
+        return true; 
     }
 
 
@@ -1953,7 +1959,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                if (d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
                     if (keyboardPopup != null ) {
-                        keyboardPopup.setVirtualKeyboardLayerListener(this);
+                        keyboardPopup.addVirtualKeyboardLayerListener(this);
                         keyboardPopup.setKeyboardType(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
                         d.showPopup(keyboardPopup);
                         vkb_popupOpen = true;
@@ -1964,7 +1970,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode)) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
                     if (keyboardPopup != null ) {
-                        keyboardPopup.setVirtualKeyboardLayerListener(null);
+                        keyboardPopup.removeVirtualKeyboardLayerListener(null);
                         d.hidePopup(keyboardPopup);
                         vkb_popupOpen = false;
                         lRequestInvalidate(true, true);
@@ -2000,7 +2006,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (vkb_popupOpen && d != null) {
             VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
             if (keyboardPopup != null ) {
-                keyboardPopup.setVirtualKeyboardLayerListener(null);
+                keyboardPopup.removeVirtualKeyboardLayerListener(null);
                 d.hidePopup(keyboardPopup);
                 vkb_popupOpen = false;
                 lRequestInvalidate(true, true);

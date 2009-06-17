@@ -33,6 +33,12 @@ import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import java.util.Hashtable;
+import java.util.TimerTask;
+import java.util.Timer;
+
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
+
 
 /**
  * This is a popup layer that show java virtual keyboard content
@@ -51,6 +57,8 @@ public class VirtualKeyboard {
      */
     public static final int KEYCODE_CLEAR = -8;
     public static final int KEYCODE_ENTER = -5;
+
+    
 
 
     /* Instance of VirtualKeyboard class */
@@ -80,6 +88,12 @@ public class VirtualKeyboard {
     /* The  coefficients of keyboard's shrink */
     private double shrinkX = 1;
     private double shrinkY = 1;
+
+
+    /** The Timer to service TimerTasks. */ 
+    protected Timer timer;
+    protected TimerKey timerKey;
+
 
     /**
      * Virtual Keyboard constructor.
@@ -116,67 +130,123 @@ public class VirtualKeyboard {
      * @param keyCode key code of key pressed
      */
     public boolean keyInput(int type, int keyCode) {
-
         boolean ret = false;
-
         if (type == EventConstants.RELEASED &&
-                keyCode != Constants.KEYCODE_SELECT) {
+            keyCode != Constants.KEYCODE_SELECT) {
             // in this case we don't want to traverse on key release
-
         } else {
-            switch (keyCode) {
-                case Constants.KEYCODE_SELECT:
-                    if (currentKey != null) {
-                        int key = currentKey.getKey();
-                        ret = true;
-                        switch (key) {
-                            case Key.CAPS_KEY:
-                                if (type == EventConstants.PRESSED) break;
-                                if (currentKeyboardType.equals(LOWER_ALPHABETIC_KEYBOARD)) {
-                                    changeKeyboad(UPPER_ALPHABETIC_KEYBOARD);
-                                } else if (currentKeyboardType.equals(UPPER_ALPHABETIC_KEYBOARD)) {
-                                    changeKeyboad(LOWER_ALPHABETIC_KEYBOARD);
-                                }
-                                break;
-                            case Key.SYMBOL_MODE_KEY:
-                                if (type == EventConstants.PRESSED) break;
-                                changeKeyboad(SYBOLIC_KEYBOARD);
-                                break;
-                            case Key.NUMERIC_MODE_KEY:
-                                if (type == EventConstants.PRESSED) break;
-                                changeKeyboad(NUMERIC_KEYBOARD);
-                                break;
-                            case Key.ALPHA_MODE_KEY:
-                                if (type == EventConstants.PRESSED) break;
+            if (keyCode == Constants.KEYCODE_SELECT) {
+                if (currentKey != null) {
+                    int key = currentKey.getKey();
+                    ret = true;
+                    switch (key) {
+                    case Key.CAPS_KEY:
+                        if (type == EventConstants.RELEASED) {
+                            if (currentKeyboardType.equals(LOWER_ALPHABETIC_KEYBOARD)) {
+                                changeKeyboad(UPPER_ALPHABETIC_KEYBOARD);
+                            } else if (currentKeyboardType.equals(UPPER_ALPHABETIC_KEYBOARD)) {
                                 changeKeyboad(LOWER_ALPHABETIC_KEYBOARD);
-                                break;
-                            case Key.BACKSPACE_KEY:
-                                if (type == EventConstants.RELEASED) break;
-
-                                vkl.virtualKeyPressed(KEYCODE_CLEAR);
-                                break;
-                            case Key.ENTER_KEY:
-                                if (type == EventConstants.RELEASED) break;
-
-                                vkl.virtualKeyPressed(KEYCODE_ENTER);
-                                break;
-
-                            default:
-                                if (type == EventConstants.PRESSED) {
-                                    vkl.virtualKeyPressed(key);
-                                } else {
-                                    vkl.virtualKeyReleased(currentKey.getKey());
-                                }
-                                ret = false;
+                            }
                         }
+                        break;
+                    case Key.SYMBOL_MODE_KEY:
+                        if (type == EventConstants.RELEASED) {
+                            changeKeyboad(SYBOLIC_KEYBOARD);
+                        }
+                        break;
+                    case Key.GAME_MODE_KEY:
+                        if (type == EventConstants.RELEASED) {
+                            changeKeyboad(GAME_KEYBOARD);
+                        }
+                        break;
+                    case Key.NUMERIC_MODE_KEY:
+                        if (type == EventConstants.RELEASED) {
+                            changeKeyboad(NUMERIC_KEYBOARD);
+                        }
+                        break;
+                    case Key.ALPHA_MODE_KEY:
+                        if (type == EventConstants.RELEASED) {
+                            changeKeyboad(LOWER_ALPHABETIC_KEYBOARD);
+                        }
+                        break;
+                    case Key.BACKSPACE_KEY:
+                        key = KEYCODE_CLEAR;
+                        processKey(type,key);
+                        break;
+                    case Key.ENTER_KEY:
+                        key = KEYCODE_ENTER;
+                        processKey(type, key);
+                        break;
+                    case Key.LEFT_ARROW_KEY:
+                        key = EventConstants.SYSTEM_KEY_LEFT;
+                        processKey(type, key);
+                        break;
+                    case Key.RIGHT_ARROW_KEY:
+                        key = EventConstants.SYSTEM_KEY_RIGHT;
+                        processKey(type, key);
+                        break;
+                    case Key.UP_ARROW_KEY:
+                        key = EventConstants.SYSTEM_KEY_UP;
+                        processKey(type, key);
+                        break;
+                    case Key.DOWN_ARROW_KEY:
+                        key = EventConstants.SYSTEM_KEY_DOWN;
+                        processKey(type, key);
+                        break;
+                    case Key.FIRE_KEY:
+                        key = EventConstants.SYSTEM_KEY_FIRE;
+                        processKey(type, key);
+                        break;
+                    case Key.SB2_KEY:
+                        key = EventConstants.SOFT_BUTTON2;
+                        processKey(type, key);
+                        break;
+                    case Key.SB1_KEY:
+                        key = EventConstants.SOFT_BUTTON1;
+                        processKey(type, key);
+                        break;
+                    case Key.GAMEA_KEY:
+                        key = EventConstants.SYSTEM_KEY_GAMEA;
+                        processKey(type, key);
+                        break;
+                    case Key.GAMEB_KEY:
+                        key = EventConstants.SYSTEM_KEY_GAMEB;
+                        processKey(type, key);
+                        break;
+                    case Key.GAMEC_KEY:
+                        key = EventConstants.SYSTEM_KEY_GAMEC;
+                        processKey(type, key);
+                        break;
+                    case Key.GAMED_KEY:
+                        key = EventConstants.SYSTEM_KEY_GAMED;
+                        processKey(type, key);
+                        break;
+                    default:
+                        processKey(type, key);
+                        ret = false;
                     }
+                }
             }
         }
-
+        
         if (ret) {
             vkl.repaintVirtualKeyboard();
         }
         return ret;
+    }
+
+    protected void processKey(int type, int keyCode) {
+        switch(type) {
+        case EventConstants.PRESSED:
+            vkl.virtualKeyPressed(keyCode);
+            break;
+        case EventConstants.RELEASED:
+            vkl.virtualKeyReleased(keyCode);
+            break;
+        case EventConstants.REPEATED:
+            vkl.virtualKeyRepeated(keyCode);
+            break;
+        }
     }
 
     /**
@@ -248,25 +318,54 @@ public class VirtualKeyboard {
 
         switch (type) {
             case EventConstants.PRESSED:
-
                 if (newKey != null) {
                     currentKey = newKey;
+                    if (Constants.REPEAT_SUPPORTED) {
+                        startTimerKey();
+                    }
+                    
                     // press on valid key
                     keyInput(type, Constants.KEYCODE_SELECT);
                 }
                 break;
             case EventConstants.RELEASED:
-                if (newKey != null) {
-                    currentKey = newKey;
-                    keyInput(type, Constants.KEYCODE_SELECT);
+                if (Constants.REPEAT_SUPPORTED) {
+                    releaseTimerKey();
                 }
-
+ 
+                if (currentKey != null) {
+                    keyInput(type, Constants.KEYCODE_SELECT);
+                    currentKey = null;
+                }
                 break;
         }
 
         return true;
     }
 
+    protected void startTimerKey() {
+        try {
+            if (timer == null) {
+                timer = new Timer();
+            }
+            timerKey = new TimerKey();
+            timer.schedule(timerKey, 700, 700); 
+        } catch (IllegalStateException e) { 
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) { 
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI, 
+                               "Exception caught in setTimer"); 
+            } 
+            releaseTimerKey(); 
+        }
+    }
+
+    protected void releaseTimerKey() {
+        if (timerKey != null) {
+            timerKey.cancel();
+            timerKey = null;
+        }
+    }
+    
     /**
      * Load keyboard structure from resources
      * @return
@@ -297,4 +396,19 @@ public class VirtualKeyboard {
     public static boolean isSupportJavaKeyboard() {
         return true;
     }
+
+    /** Timer to indicate long key press */ 
+    class TimerKey extends TimerTask {
+        /**
+         * As soon as timer occures uCallKeyPressed has to be called 
+         * and timer has to be stopped 
+         */ 
+        public final void run() {
+            if (currentKey != null) {
+                keyInput(EventConstants.REPEATED, Constants.KEYCODE_SELECT);
+            }
+        } 
+    }
+    
 }
+
