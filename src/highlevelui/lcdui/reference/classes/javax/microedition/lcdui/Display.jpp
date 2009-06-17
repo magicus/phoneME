@@ -65,6 +65,8 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
 import java.io.IOException;
+import com.sun.midp.main.MIDletSuiteUtils;
+
 // #endif ENABLE_CHAMELEON
 
 // #ifdef ENABLE_I3_TEST
@@ -1764,6 +1766,11 @@ public class Display {
      *   associated with this Display
      **/
     VirtualKeyboardLayer getVirtualKeyboardPopup() {
+        // IMPL_NOTE: VK should not appear for the System canvas based app
+        if (MIDletSuiteUtils.getAmsIsolateId() == MIDletSuiteUtils.getIsolateId()  &&
+            current instanceof CanvasLFImpl)
+            return null;
+        
         if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
             return null;
         }
