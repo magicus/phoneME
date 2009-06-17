@@ -44,6 +44,10 @@ typedef enum {
 , JSR211_WAIT_FOR_REQUEST = 0x0008
 } jsr211_wait_status;
 
+#ifdef _DEBUG
+void memory__dump( const char * p_title, const unsigned char * p_bytes, unsigned int p_count );
+#endif
+
 void blockThread( jsr211_wait_status status, int blockID );
 jboolean isThreadCancelled( void );
 

@@ -41,28 +41,6 @@
 #include "javacall_memory.h"
 #include "javacall_chapi_msg_exchange.h"
 
-#ifdef _DEBUG
-
-void memory__dump( const char * p_title, const unsigned char * p_bytes, size_t p_count ){
-    static char s_xd[] = "0123456789ABCDEF";
-    unsigned char a_line[ 32 * 4 + 10 ];
-    printf( "%s: bytes = %p, count = %u\n", p_title, p_bytes, p_count );
-    while( p_count ){
-        size_t a_l = (p_count < 32)? p_count : 32, i;
-        memset( a_line, ' ', sizeof(a_line) );
-        p_count -= a_l;
-        for( i = 0; i < a_l; i++, p_bytes++){
-            a_line[ i * 3 ] = s_xd[ (*p_bytes >> 4) & 0x0F ];
-            a_line[ i * 3 + 1 ] = s_xd[ *p_bytes & 0x0F ];
-            a_line[ 32 * 3 + 2 + i ] = (*p_bytes < ' ')? '.' : *p_bytes;
-        }
-        a_line[ 32 * 4 + 2 ] = '\0';
-        printf("  %s\n", a_line);
-    }
-}
-
-#endif
-
 typedef struct {
   MidpReentryData  m_midpRD;
   unsigned char *  m_bytes;
@@ -113,7 +91,7 @@ KNIDECL(com_sun_j2me_content_NativeMessageSender_send) {
 #endif
                 KNI_SetRawArrayRegion( data, 0, p->m_count, p->m_bytes );
             }
-            if( p->m_bytes != NULL && p->m_count > 0 ) javacall_free( p->m_bytes );
+            if( p->m_bytes != NULL && p->m_count > 0 ) jsr211_free( p->m_bytes );
             p->m_bytes = NULL;
         }
     }
@@ -196,7 +174,7 @@ KNIDECL(com_sun_j2me_content_NativeMessageReceiver_nextRequest) {
         s_tail = &s_head;
     s_head = r->m_next;
     // }
-    if( r->m_data.count > 0 ) javacall_free( r->m_data.bytes );
+    if( r->m_data.count > 0 ) jsr211_free( r->m_data.bytes );
     JAVAME_FREE( r );
     KNI_ReturnVoid();
 }
