@@ -1053,6 +1053,11 @@ CVMreflectMethods(CVMExecEnv* ee,
 
 	    /* All interface methods are public */
 	    WALK_INTERFACE_METHODS(cb, mb, cnt++);
+
+            if (cnt == 0) {
+                goto done;
+            }
+
             interfaceMBs = malloc(cnt * sizeof(CVMMethodBlock *));
             if (interfaceMBs == NULL) {
 	        CVMthrowOutOfMemoryError(ee, NULL);
@@ -1073,6 +1078,8 @@ CVMreflectMethods(CVMExecEnv* ee,
 		}
             });
             cnt = newCnt;
+        done:
+            ;
 
 	} else {
 	    /* Count public instance methods */
@@ -1113,7 +1120,7 @@ CVMreflectMethods(CVMExecEnv* ee,
 
 	    if (isInterface) {
                 int i;
-		CVMassert(interfaceMBs != NULL);
+		CVMassert(interfaceMBs != NULL || cnt == 0);
                 for(i =0; i < cnt; i++) {
 		    CVMMethodBlock *mb = interfaceMBs[i];
                     CVMassert(mb != NULL);
