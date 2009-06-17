@@ -68,7 +68,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             USE_MIDP_MALLOC=$(USE_MIDP_MALLOC) \
-                 MIDP_LIB=$(MIDP_STATIC_LIB) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+                 MIDP_OBJ_FILE_LIST=$(MIDP_OBJ_FILE_LIST) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
                  CVM_STATICLINK_LIBS=$(CVM_STATICLINK_LIBS) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
@@ -114,7 +114,7 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             USE_MIDP_MALLOC=$(USE_MIDP_MALLOC) \
-                 MIDP_LIB=$(MIDP_STATIC_LIB) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+                 MIDP_OBJ_FILE_LIST=$(MIDP_OBJ_FILE_LIST) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
                  CVM_STATICLINK_LIBS=$(CVM_STATICLINK_LIBS) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
@@ -147,14 +147,11 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 # Only one of MIDP_STATIC_LIB and MIDP_SHARED_LIB variables should be defined!
 #
 
-# Make $(CVM_BINDIR)/$(CVM) depend on $(MIDP_LIB)
-$(CVM_BINDIR)/$(CVM):: $(MIDP_LIB)
-
-# Ensure MIDP native lib is build after MIDP classes get compiled and 
+# Ensure MIDP natives is build after MIDP classes get compiled and 
 # JNI headers get generated
-$(MIDP_LIB): $(CVM_ROMJAVA_LIST) $(MIDP_CLASSLIST)
+$(MIDP_NATIVES): $(CVM_ROMJAVA_LIST) $(MIDP_CLASSLIST)
 
-$(MIDP_LIB): force_midp_build
+$(MIDP_NATIVES): force_midp_build
 	@echo "====> start building MIDP natives"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
@@ -162,7 +159,7 @@ $(MIDP_LIB): force_midp_build
 	             USE_DEBUG=$(USE_DEBUG) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
 	             USE_MIDP_MALLOC=$(USE_MIDP_MALLOC) \
-                 MIDP_LIB=$(MIDP_STATIC_LIB) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+                 MIDP_OBJ_FILE_LIST=$(MIDP_OBJ_FILE_LIST) MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
                  CVM_STATICLINK_LIBS=$(CVM_STATICLINK_LIBS) \
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
