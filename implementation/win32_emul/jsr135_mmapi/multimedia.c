@@ -621,6 +621,7 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".3gp",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
         { L".3g2",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
         { L".mp4",  JAVACALL_MEDIA_FORMAT_MPEG_4_SVP   },
+        { L".mpeg", JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
 #endif // mp3
 
