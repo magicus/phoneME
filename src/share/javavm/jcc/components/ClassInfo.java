@@ -68,6 +68,7 @@ class ClassInfo
     public MethodInfo		methods[];
     private static ConstantPool	nullCP =
 	new ConstantPool(new ConstantObject[0]);
+    private int                 sharedCPIdx = -1;
     private ConstantPool	cp = nullCP;
     private ConstantObject	oldConstants[];
     public ClassConstant	interfaces[];
@@ -126,6 +127,10 @@ class ClassInfo
     }
 
     private String genericNativeName;
+
+    public void setSharedCPIdx(int i) {
+        sharedCPIdx = i;
+    }
 
     public final String getGenericNativeName() { 
         if (genericNativeName == null) 
@@ -293,8 +298,10 @@ class ClassInfo
 	return cp;
     }
 
-    public void setConstantPool(ConstantPool c) {
-	cp = c;
+    public void setConstantPool(Vector cps) {
+        if (sharedCPIdx != -1) {
+            cp = (ConstantPool)cps.get(sharedCPIdx);
+        }
     }
 
 

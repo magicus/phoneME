@@ -28,6 +28,7 @@
 package runtime;
 import components.ConstantPool;
 import util.ClassnameFilterList;
+import java.util.Vector;
 
 /*
  * This is the interface that a machine-independent
@@ -56,13 +57,7 @@ interface CoreImageWriter {
 	 */
 
     boolean open( String filename );
-	/* 
-	 * Open the named file for writing output.
-	 * Return value: false: could not open. See printError.
-	 *		 true: otherwise.
-	 */
 
-    boolean writeClasses(boolean doWrite);
 	/*
 	 * Write class and other data structures to output file.
          * Parameter:
@@ -71,7 +66,7 @@ interface CoreImageWriter {
 	 *		 true: otherwise.
 	 */
 
-    boolean writeClasses( ConstantPool sharedconsts, boolean doWrite );
+    boolean writeClasses( Vector sharedconsts, boolean doWrite );
         /*
          * Write class and other data structures to output file.
          * Parameter:

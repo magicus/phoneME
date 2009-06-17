@@ -664,15 +664,15 @@ public class JavaCodeCompact extends LinkerUtil {
     }
 
     private void
-    validateClasses(ClassClass classes[], ConstantPool sharedConstant){
+    validateClasses(ClassClass classes[], Vector sharedConstantPools){
 	int totalclasses = classes.length;
 	for (int i = 0; i < totalclasses; i++){
 	    ClassInfo ci = classes[i].classInfo;
-	    ci.validate(sharedConstant);
+	    ci.validate(null);
 	}
     }
 
-    ConstantPool sharedConstant = null;
+    Vector sharedConstantPools = null;
 
     private boolean
     prepareClasses(ClassInfo classTable[]) throws Exception
@@ -691,29 +691,49 @@ public class JavaCodeCompact extends LinkerUtil {
 	// sharing calculation below. And because they don't have
 	// any code...
 
+        ConstantPool sharedConstant;
+        int i;
+
 	if (useSharedCP) {
+            int idx = 0;
 	    // create a shared constant pool
+            sharedConstantPools = new Vector();
 	    sharedConstant = new ConstantPool();
-	    for (int i = 0; i < classTable.length; i++) 
-		mergeConstantsIntoSharedPool(classTable[i], sharedConstant);
+            sharedConstantPools.add(sharedConstant);
+	    for (i = 0; i < classTable.length; i++) {
+                boolean needSplit = false;
+		needSplit = mergeConstantsIntoSharedPool(
+                                classTable[i], sharedConstant, idx);
+                if (needSplit) {
+                    idx ++;
+                    sharedConstant = new ConstantPool();
+                    sharedConstantPools.add(sharedConstant);
+                    mergeConstantsIntoSharedPool(
+                                classTable[i], sharedConstant, idx);
+                }
+            }
 	   
 	    // sort the reference count
-	    sharedConstant.doSort();
+            for (i = 0; i < sharedConstantPools.size(); i++) {
+                sharedConstant = (ConstantPool)sharedConstantPools.get(i);
+	        sharedConstant.doSort();
 
-	    // run via the shared constant pool once.
-	    if (ClassClass.isPartiallyResolved(sharedConstant)) {
-		sharedConstant = classMaker.makeResolvable(
-		    sharedConstant, missingObjects, "shared constant pool");
-	    }
+	        // run via the shared constant pool once.
+	        if (ClassClass.isPartiallyResolved(sharedConstant)) {
+		    sharedConstant = classMaker.makeResolvable(
+		        sharedConstant, missingObjects, "shared constant pool");
+	        }
+                sharedConstantPools.set(i, sharedConstant);
+            }
 	} else {
-	    for (int i = 0; i < totalclasses; i++){
+	    for (i = 0; i < totalclasses; i++){
 		if (! classes[i].adjustSymbolicConstants(missingObjects))
 		    anyMissingConstants = true;
 	    }
 	    if ( anyMissingConstants == true ){
 		System.err.println(Localizer.getString(
                     "javacodecompact.classes_referred_to_missing_classes"));
-		for (int i = 0; i < totalclasses; i++){
+		for (i = 0; i < totalclasses; i++){
 		    if ( classes[i].impureConstants ){
 			System.err.println("	" +
                                            classes[i].classInfo.className);
@@ -732,19 +752,22 @@ public class JavaCodeCompact extends LinkerUtil {
 	    }
 	}
 
-	for (int i = 0; i < totalclasses; i++) {
+	for (i = 0; i < totalclasses; i++) {
             classes[i].classInfo.relocateAndPackCode(noCodeCompaction);
 	    if (useSharedCP) {
-		classes[i].classInfo.setConstantPool(sharedConstant);
+		classes[i].classInfo.setConstantPool(sharedConstantPools);
 	    }
 	}
 
 	if ( ! good ) return false;
 	if ( validate ){
 	    if (useSharedCP){
-		sharedConstant.validate();
+                for (i = 0; i < sharedConstantPools.size(); i++) {
+                    sharedConstant = (ConstantPool)sharedConstantPools.get(i);
+		    sharedConstant.validate();
+                }
 	    }
-	    validateClasses(classes, sharedConstant);
+	    validateClasses(classes, sharedConstantPools);
 	}
 	return true;
     }
@@ -799,7 +822,7 @@ public class JavaCodeCompact extends LinkerUtil {
 	    w.printError(System.out);
 	    return false;
 	} else {
-	    boolean good = w.writeClasses(sharedConstant, doWrite);
+	    boolean good = w.writeClasses(sharedConstantPools, doWrite);
 	    w.printSpaceStats(System.out);
 	    if (doWrite) {
 		w.close();
@@ -909,8 +932,17 @@ public class JavaCodeCompact extends LinkerUtil {
 
     // This function updates the reference count and puts all constants
     // associated with a ClassInfo to the shared constant pool.
-    private void mergeConstantsIntoSharedPool(ClassInfo cinfo, 
-					      ConstantPool sharedCP) {
+    private boolean mergeConstantsIntoSharedPool(ClassInfo cinfo, 
+					         ConstantPool sharedCP,
+                                                 int sharedCPIdx) {
+        ConstantPool cp = cinfo.getConstantPool();
+
+        if (sharedCP.getLength() + cp.getLength() > 0xffff) {
+            return true;
+        }
+
+        cinfo.setSharedCPIdx(sharedCPIdx);
+
 	// Get the CP that is to be added to the shared CP:
 	ConstantObject[] constants = cinfo.getConstantPool().getConstants();
 
@@ -973,6 +1005,14 @@ public class JavaCodeCompact extends LinkerUtil {
 	    cinfo.signatureAttr.mergeConstantsIntoSharedPool(sharedCP);
 	}
 	// TODO :: END */
+
+        /* Just to make sure we are not exceeding the limit */
+        if (sharedCP.getLength() > 0xffff) {
+	    throw new Error("Constant pool overflow: 64k constants"+
+		            " allowed, have " + sharedCP.getLength());
+        }
+
+        return false; /* not need to split the shared constnat pool */
     }
 
     /*

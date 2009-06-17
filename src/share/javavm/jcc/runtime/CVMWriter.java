@@ -103,6 +103,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
     protected boolean			noPureCode = false;
 
     private boolean			doShared;
+    private Vector			sharedConstantPools;
     private String			sharedConstantPoolName;
     private int				sharedConstantPoolSize;
 
@@ -2304,8 +2305,11 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	    constantPoolSize = 0;
 	} else {
 	    if ( doShared ) {
-		constantPoolName = sharedConstantPoolName + "_cp";
-		constantPoolSize = sharedConstantPoolSize;
+                ConstantPool cpool = c.classInfo.getConstantPool();
+
+                int i = sharedConstantPools.indexOf(cpool);
+		constantPoolName = sharedConstantPoolName + Integer.toString(i)+ "_cp";
+		constantPoolSize = cpool.getLength();
 	    } else {
 		ConstantPool cpool = c.classInfo.getConstantPool();
 		constantPoolName = writeConstants(cpool, c.getNativeName(),
@@ -3138,25 +3142,33 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	auxOut.println("};");
     }
     
-    public boolean writeClasses(ConstantPool sharedconsts, boolean doWrite){
+    public boolean writeClasses(Vector sharedCPs, boolean doWrite){
+        int i;
 
 	// getClassVector sorts the classes with
 	// super before sub, for reasonable processing without recursion.
 	ClassClass arrayOfClasses[] = ClassClass.getClassVector( classMaker );
 	ClassClass.setTypes();
 	int nClasses = arrayOfClasses.length;
+        ConstantPool sharedconsts;
 
 	classes = new CVMClass[nClasses];
 
-	if (sharedconsts != null) {
+	if (sharedCPs != null) {
 	    doShared = true;
+            sharedConstantPools = sharedCPs;
 	    sharedConstantPoolName = "CVMSharedConstantPool";
-	    sharedConstantPoolSize = sharedconsts.getLength();
-	    if (sharedConstantPoolSize > 0xffff) {
-		// More than 64K constants are not allowed
-		throw new Error("Constant pool overflow: 64k constants"+
-				" allowed, have "+sharedConstantPoolSize);
-	    }
+
+            for (i = 0; i < sharedCPs.size(); i++) {
+                int cpSize;
+                sharedconsts = (ConstantPool)sharedCPs.get(i);
+	        cpSize = sharedconsts.getLength();
+	        if (cpSize > 0xffff) {
+		    // More than 64K constants are not allowed
+		    throw new Error("Constant pool overflow: 64k constants"+
+				" allowed, have "+cpSize);
+	        }
+           }
 	}
 	
 	/*
@@ -3175,9 +3187,12 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
         // after all classes processed once by classMaker
         // ... but before we write the classes.
 	if (doShared) {
-	    lookupUnresolvedMethodSignatures(sharedconsts);
+            for (i = 0; i < sharedCPs.size(); i++) {
+                sharedconsts = (ConstantPool)sharedCPs.get(i);
+	        lookupUnresolvedMethodSignatures(sharedconsts);
+            }
 	} else {
-	    for (int i = 0; i < nClasses; ++i) {
+	    for (i = 0; i < nClasses; ++i) {
 		ConstantPool cp = classes[i].classInfo.getConstantPool();
 		lookupUnresolvedMethodSignatures(cp);
 	    }
@@ -3187,14 +3202,19 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	// write out some constant pool stuff here,
 	// if we're doing one big shared one...
 	// gutted out for now...
-	if ( doShared ) processStrings( sharedconsts );
+	if ( doShared ) {
+            for (i = 0; i < sharedCPs.size(); i++) {
+                sharedconsts = (ConstantPool)sharedCPs.get(i);
+                processStrings( sharedconsts );
+            }
+        }
 
 	if (verbose && doWrite) {
 	    System.out.println(Localizer.getString("cwriter.writing_classes"));
 	}
 	try {
 	    //mungeAllIDsAndWriteExternals(classes);
-	    for ( int i = 0; i < nClasses; i++ ){
+	    for ( i = 0; i < nClasses; i++ ){
 		classProcessStrings(classes[i].classInfo, doShared);
 	    }
 
@@ -3212,7 +3232,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 		 * First off, check compression opportunities. Look over all
 		 * methods to see variations
 		 */
-		for ( int i = 0; i < nClasses; i++ ){
+		for ( i = 0; i < nClasses; i++ ){
 		    CVMClass c = classes[i];
 		    analyzeMethodsForCompression( c );
 		}
@@ -3227,7 +3247,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 		/*
 		 * Now do the writing 
 		 */
-		for ( int i = 0; i < nClasses; i++ ){
+		for ( i = 0; i < nClasses; i++ ){
 		    CVMClass c = classes[i];
 		    int clinitIdx = c.hasStaticInitializer ? maxClinitIdx++ : 0;
 		    writeClass( i, c, clinitIdx, nStaticWords );
@@ -3239,9 +3259,14 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 
 		if (doShared) {
 		    // Dump the shared constant pool
-		    writeConstants(sharedconsts, 
-				   sharedConstantPoolName,
+                    for (i = 0; i < sharedCPs.size(); i++) {
+                        String cpName = sharedConstantPoolName +
+                                            Integer.toString(i);
+                        sharedconsts = (ConstantPool)sharedCPs.get(i);
+		        writeConstants(sharedconsts, 
+				   cpName,
 				   true /* export c.p. ref */);
+                    }
 		}
 
 		writeClassList();
@@ -3276,11 +3301,6 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
                (!doWrite ||
                 (!classOut.checkError() && !headerOut.checkError()));
     }
-
-    public boolean writeClasses(boolean doWrite) {
-	return writeClasses(null, doWrite);
-    }
-
 
     public void printSpaceStats(java.io.PrintStream o) {
         //ClassClass classes[] = ClassClass.getClassVector(classMaker);
