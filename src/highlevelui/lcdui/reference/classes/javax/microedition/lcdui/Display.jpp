@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -78,6 +78,8 @@ import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
 // #endif
+
+import com.sun.midp.orientation.OrientationListener;
 
 /**
  * <code>Display</code> represents the manager of the display and
@@ -610,7 +612,7 @@ public class Display {
     /** Current active queue for serially repainted operations. */
     private static java.util.Vector currentQueue = queue1;
 
-    // #ifdef ENABLE_GCI        
+    // #ifdef ENABLE_GCI
     /** GCIDisplay that incapsulates information about the display device */
     private GCIDisplay gciDisplay;
   
@@ -3036,6 +3038,15 @@ public class Display {
         }
 
         /**
+         * Checks is the display is foregroud.
+         *
+         * @return true when display is foreground
+         */
+        public boolean isDisplayForeground() {
+            return hasForeground;
+        }
+
+        /**
          * Called to get key mask of all the keys that were pressed.
          * DisplayAccess I/F method.
          *
@@ -3691,8 +3702,26 @@ public class Display {
 
         /**
          * Called by event delivery when size of screen was changed.
+         *
+         * @param state The new state or -1 when state is not supported
+         * @see OrientationListener interface
          */
-        public void handleRotationEvent() {
+        public void handleRotationEvent(int state) {
+            // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
+            boolean isPortrait = !Display.this.displayDevice.getReverseOrientation();
+            if (
+                (isPortrait && 
+                    (state == 
+                        OrientationListener.FODDER_BANK ||
+                        state == OrientationListener.BOW_ROLL)
+                ) || (!isPortrait &&
+                    (state == 
+                        OrientationListener.LEFT_BANK ||
+                        state == OrientationListener.RIGHT_BANK)
+                )) {
+                return;
+            }
+                    
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
                 wantRotation = Display.this.displayDevice.reverseOrientation();
@@ -3987,7 +4016,7 @@ public class Display {
 
             if (current_orientation != restore_orientation) {
                 java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
-                consumer.handleRotationEvent();
+                consumer.handleRotationEvent(-1);
             }
 
             // SYNC NOTE: The implementation of dsPaint() could call
@@ -4019,7 +4048,7 @@ public class Display {
                 if (current_orientation != initial_orientation) {
                     restore_orientation = current_orientation;
                     java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
-                    consumer.handleRotationEvent();
+                    consumer.handleRotationEvent(-1);
                 }
 
             synchronized (LCDUILock) {

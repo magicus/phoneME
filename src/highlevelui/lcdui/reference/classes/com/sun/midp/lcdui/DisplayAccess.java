@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -157,6 +157,13 @@ public interface DisplayAccess {
     * @param m MIDPWindow display mode
     */
     public void setMode(int m);
+
+    /**
+     * Checks is the display is foregroud.
+     *
+     * @return true when display is foreground
+     */
+    public boolean isDisplayForeground();
 
     /**
      * Called to get the list of current dirty screen regions which
