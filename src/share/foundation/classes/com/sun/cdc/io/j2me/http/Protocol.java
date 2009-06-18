@@ -334,7 +334,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected void open1(String url, int mode, boolean timeouts)
         throws IOException {
 
-        // DEBUG: System.out.println ("open " + url);
+        // Debug: System.out.println(this + ".open(" + url + ")");
+        
         if (opens > 0) {
             throw new IOException("already connected");
         }
@@ -375,7 +376,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public void close() throws IOException {
-        // DEBUG: System.out.println ("close " + opens + " " + connected ); 
+        // Debug: System.out.println ("close " + opens + " " + connected ); 
+
         /*
          Decrement opens only once - there could be multiple close() calls
          */
@@ -395,7 +397,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * opened for writing
      */
     public InputStream openInputStream() throws IOException {
-         // DEBUG: System.out.println ("open input stream");
+        // Debug: System.out.println ("open input stream");
+
         inputStreamPermissionCheck();
 
         /*
@@ -444,7 +447,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         
         outputStreamPermissionCheck();
 
-         // DEBUG: System.out.println ("open data output stream");
+        // Debug: System.out.println ("open data output stream");
+
         if (mode != Connector.WRITE && mode != Connector.READ_WRITE) {
             throw new IOException("read-only connection");
         }
@@ -535,7 +539,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          */
         public int available()
             throws IOException {
-             // System.out.println("available " + bytesleft + " " + connected);
+
+            // Debug: System.out.println("available " + bytesleft + " " + connected);
 
             if (connected) {
                 if (bytesleft > 0) {
@@ -691,7 +696,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
         
         public void close() throws IOException {
-            // System.out.println("close input stream "+opens+" " + connected);
+            // Debug: System.out.println("close input stream "+opens+" " + connected);
             if (opens == 0)
                 return;
 
@@ -707,6 +712,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected class PrivateOutputStream extends ByteArrayOutputStream {
 
         public void flush() throws IOException {
+            // Debug: System.out.println("flush output stream");
             super.flush();
             if (size() > 0) {
                 connect();
@@ -714,7 +720,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         public void close() throws IOException {
-            // System.out.println("close output stream"+opens + " "+connected);
+            // Debug: System.out.println("close output stream"+opens + " "+connected);
 
             // CR 6216611: If the connection is already closed, just return
             if (opens == 0)
@@ -764,6 +770,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public void setRequestMethod(String method) throws IOException {
+        // Debug: System.out.println("setRequestMethod("+ method + ")");
         ensureOpen();
         if (connected)
             throw new IOException("connection already open");
@@ -779,6 +786,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public String getRequestProperty(String key) {
+        // Debug: System.out.println("getRequestProperty("+ key + ")");
         return (String)reqProperties.get(key);
     }
     
@@ -801,6 +809,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
     public void setRequestProperty(String key, String value)
         throws IOException {
+
+        // Debug: System.out.println("setRequestProperty("+ key + ", " + value + ")");
+
         ensureOpen();
         if (connected)
             throw new IOException("connection already open");
@@ -820,18 +831,21 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public int getResponseCode() throws IOException {
+        // Debug: System.out.println("getResponseCode");
         ensureOpen();
         connect();
         return responseCode;
     }
 
     public String getResponseMessage() throws IOException {
+        // Debug: System.out.println("getResponseMessage");
         ensureOpen();
         connect();
         return responseMsg;
     }
 
     public long getLength() {
+        // Debug: System.out.println("getLength");
         try { connect(); }
         catch (IOException x) {
             return -1;
@@ -844,6 +858,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public String getType() {
+        // Debug: System.out.println("getType");
         try { connect(); }
         catch (IOException x) {
             return null;
@@ -856,6 +871,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public String getEncoding() {
+        // Debug: System.out.println("getEncoding");
         try { connect(); }
         catch (IOException x) {
             return null;
@@ -868,18 +884,22 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public long getExpiration() throws IOException {
+        // Debug: System.out.println("getExpiration");
         return getHeaderFieldDate("expires", 0);
     }
 
     public long getDate() throws IOException {
+        // Debug: System.out.println("getDate");
         return getHeaderFieldDate("date", 0);
     }
 
     public long getLastModified() throws IOException {
+        // Debug: System.out.println("getLastModified");
         return getHeaderFieldDate("last-modified", 0);
     }
 
     public String getHeaderField(String name) throws IOException {
+        // Debug: System.out.println("getHeaderField(" + name + ")");
         ensureOpen();
         try { connect(); }
         catch (IOException x) {
@@ -889,6 +909,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
     
     public String getHeaderField(int index) throws IOException {
+        // Debug: System.out.println("getHeaderField(" + index + ")");
         ensureOpen();
         try { connect(); }
         catch (IOException x) {
@@ -906,6 +927,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public String getHeaderFieldKey(int index) throws IOException {
+        // Debug: System.out.println("getHeaderFieldKey(" + index + ")");
         ensureOpen();
         try { connect(); }
         catch (IOException x) {
@@ -949,6 +971,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public long getHeaderFieldDate(String name, long def) throws IOException {
+        // Debug: System.out.println("getHeaderFieldDate(" + name + ", " + def + ")");
         ensureOpen();
         try { connect(); }
         catch (IOException x) {
@@ -993,6 +1016,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     protected void sendRequest() throws IOException {
+        // Debug: System.out.println("sendRequest");
 
         streamOutput = streamConnection.openDataOutputStream();
 
@@ -1017,7 +1041,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + httpVersion + "\r\n";
         }
-        // DEBUG: System.out.print("Request: " + reqLine);
+
         final int methodType =
             (method.equals(POST) ? sun.misc.NetworkMetrics.POST :
              method.equals(HEAD) ? sun.misc.NetworkMetrics.HEAD :
@@ -1036,8 +1060,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             }
         });
 
+        // DEBUG: System.out.print("Request: " + reqLine);
         streamOutput.write((reqLine).getBytes());
-
 
         // HTTP 1/1 requests require the Host header to distinguish virtual
         // host locations.
@@ -1047,16 +1071,19 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         while (reqKeys.hasMoreElements()) {
             String key = (String)reqKeys.nextElement();
             String reqPropLine = key + ": " + reqProperties.get(key) + "\r\n";
+            // Debug: System.out.print("  " + reqPropLine);
             streamOutput.write((reqPropLine).getBytes());
         }
+
+        // Debug: System.out.println("");
         streamOutput.write("\r\n".getBytes());
 
         if (privateOut != null) {
-    	    streamOutput.write(privateOut.toByteArray());
+            byte[] temp = privateOut.toByteArray();
+    	    streamOutput.write(temp);
             // ***Bug 4485901*** streamOutput.write("\r\n".getBytes());
-            /*
-             DEBUG: System.out.println("Request: "
-                 + new String(out.toByteArray())); */
+            // Debug: System.out.print("  privateOut: ");
+            // Debug: System.out.println(binaryToTraceString(temp));
         }
 
         streamOutput.flush();
@@ -1104,6 +1131,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             reqProperties.put("network-type", platformNetworkType);
         }
 
+        // Debug: System.out.println("Calling sendRequest");
         sendRequest();
         try {
             readResponseMessage();
@@ -1112,6 +1140,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 // Most probably the server has closed its end by timeout.
                 // Here we have to reconnect and resend the request
                 getStreamConnection();
+                // Debug: System.out.println("Calling sendRequest again");
                 sendRequest();
                 readResponseMessage();
             } else {
@@ -1135,7 +1164,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         responseMsg = null;
         responseProtocol = null;
 
-        // DEBUG: System.out.println ("Response: " + line);
+        // Debug: System.out.println ("Response: " + line);
 
 malformed: {
             if (line == null)
@@ -1186,7 +1215,7 @@ malformed: {
 
         for (;;) {
             line = readLine(streamInput);
-            // DEBUG: System.out.println ("Response: " + line);
+            // Debug: System.out.println ("  " + line);
             
             if (line == null || line.equals(""))
                 break;
@@ -1366,5 +1395,22 @@ malformed: {
         }
 
         return stringbuffer.toString();
+    }
+
+    protected String binaryToTraceString(byte[] arg) {
+        StringBuffer temp = new StringBuffer();
+        temp.setLength(0);
+
+        for (int i = 0; i < arg.length; i++) {
+            char current = (char)arg[i];
+            if (current < ' ' || current > '~') {
+                temp.append('^');
+                continue;
+            }
+
+            temp.append(current);
+        }
+
+        return temp.toString();
     }
 }
