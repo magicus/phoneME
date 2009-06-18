@@ -1,0 +1,8 @@
+#
+# @(#)README	1.8 06/10/25
+#
+# Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+#
+
+Test is the "application" class. The static member main
+MUST BE the first method. 
