@@ -177,7 +177,7 @@ $(MIDP_NATIVES): force_midp_build
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_MAKEFILE_DIR) \
-                 $@
+                 midp
 	$(AT)if [ ! -f $@ ]; then exit 1; fi
 ifneq ($(USE_JUMP), true)
   ifeq ($(INCLUDE_SHELL_SCRIPTS), true)
