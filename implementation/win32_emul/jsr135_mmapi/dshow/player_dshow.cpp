@@ -35,17 +35,30 @@
 const nat32 null = 0;
 
 
-// #define ENABLE_MMAPI_CONT_AMR_DS_EXT // audio/amr; .amr
-// #define ENABLE_MMAPI_CONT_AVI_DS_EXT // video/avi; .avi
-// #define ENABLE_MMAPI_CONT_3GP_DS_EXT // video/3gpp; .3gp, .3g2
-// #define ENABLE_MMAPI_CONT_FLV_DS_EXT // video/x-flv; .flv, .f4v, .f4p, .f4a, .f4b
-// #define ENABLE_MMAPI_CONT_FLV_DS_ON2
-// #define ENABLE_MMAPI_CONT_MP3_DS_EXT // audio/mpeg; .mp3
-// #define ENABLE_MMAPI_CONT_MP4_DS_EXT // video/mp4; .mp4
-// #define ENABLE_MMAPI_CONT_MPG_DS_EXT // video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
-// #define ENABLE_MMAPI_CONT_WAV_DS_EXT // audio/wav; .wav
-// #define ENABLE_MMAPI_FMT_MPEG1L3_DS_EXT
-// #define ENABLE_MMAPI_FMT_VP6_DS_ON2
+// #define ENABLE_MMAPI_CONT_3G2_DS_EXT  // video/3gpp, audio/3gpp, video/3gpp2, audio/3gpp2; .3gp, .3g2
+// #define ENABLE_MMAPI_CONT_3GP_DS_EXT  // video/3gpp, audio/3gpp, video/3gpp2, audio/3gpp2; .3gp, .3g2
+// #define ENABLE_MMAPI_CONT_AMR_DS_EXT  // audio/amr; .amr
+// #define ENABLE_MMAPI_CONT_ASF_DS_EXT  // video/x-ms-asf, application/vnd.ms-asf; .asf
+// #define ENABLE_MMAPI_CONT_AVI_DS_EXT  // video/avi, video/msvideo, video/x-msvideo; .avi
+// #define ENABLE_MMAPI_CONT_FLV_DS_EXT  // video/x-flv, video/mp4, video/x-m4v, audio/mp4a-latm, video/3gpp, video/quicktime, audio/mp4; .flv, .f4v, .f4p, .f4a, .f4b
+// #define ENABLE_MMAPI_CONT_FLV_DS_INT
+// #define ENABLE_MMAPI_CONT_MKA_DS_EXT  // video/x-matroska, audio/x-matroska; .mkv, .mka, .mks
+// #define ENABLE_MMAPI_CONT_MKV_DS_EXT  // video/x-matroska, audio/x-matroska; .mkv, .mka, .mks
+// #define ENABLE_MMAPI_CONT_MOV_DS_EXT  // video/quicktime; .mov, .qt
+// #define ENABLE_MMAPI_CONT_MP2_DS_EXT  // audio/mpeg; .mp2
+// #define ENABLE_MMAPI_CONT_MP3_DS_EXT  // audio/mpeg; .mp3
+// #define ENABLE_MMAPI_CONT_MP4_DS_EXT  // video/mp4, audio/mp4, application/mp4; .mp4
+// #define ENABLE_MMAPI_CONT_MPEG_DS_EXT // audio/mpeg, video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
+// #define ENABLE_MMAPI_CONT_MPG_DS_EXT  // audio/mpeg, video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
+// #define ENABLE_MMAPI_CONT_OGA_DS_EXT  // audio/ogg; .ogg, .oga
+// #define ENABLE_MMAPI_CONT_OGG_DS_EXT  // video/ogg, audio/ogg, application/ogg; .ogv, .oga, .ogx, .ogg, .spx
+// #define ENABLE_MMAPI_CONT_OGV_DS_EXT  // video/ogg; .ogv
+// #define ENABLE_MMAPI_CONT_QT_DS_EXT   // video/quicktime; .mov, .qt
+// #define ENABLE_MMAPI_CONT_RMVB_DS_EXT // application/vnd.rn-realmedia-vbr; .rmvb
+// #define ENABLE_MMAPI_CONT_WAV_DS_EXT  // audio/wav, audio/wave, audio/x-wav; .wav
+// #define ENABLE_MMAPI_CONT_WMA_DS_EXT  // audio/x-ms-wma; .wma
+// #define ENABLE_MMAPI_CONT_WMV_DS_EXT  // video/x-ms-wmv; .wmv
+// #define ENABLE_MMAPI_FMT_VP6_DS_INT
 // #define ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
 // #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
 
@@ -58,32 +71,18 @@ const nat32 null = 0;
     0x08e22ada, 0xb715, 0x45ed, 0x9d, 0x20, 0x7b, 0x87, 0x75, 0x03, 0x01, 0xd4);
 #endif
 
-#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_ON2
+#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_INT
     // {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
     DEFINE_GUID(MEDIASUBTYPE_FLV,
     0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
 #endif
 
-#if defined ENABLE_MMAPI_CONT_FLV_DS_ON2 || defined ENABLE_MMAPI_FMT_VP6_DS_ON2
-    #include <stdio.h>
-
-    #pragma comment(lib, "winmm.lib")
-
-    #pragma comment(linker, "/nodefaultlib:libcmt")
-    #pragma comment(linker, "/nodefaultlib:msvcrt")
-
-    extern "C" FILE _iob[3] = {__iob_func()[0], __iob_func()[1], __iob_func()[2]};
-
-    namespace On2FlvSDK
-    {
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-        HRESULT FlvSplitCreateInstance(IUnknown *, const IID &, void **);
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+    HRESULT __stdcall flv_splitter_create(IUnknown *, const IID &, void **);
 #endif
 
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-        HRESULT FlvDecVP6CreateInstance(IUnknown *, const IID &, void **);
-#endif
-    }
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+    HRESULT __stdcall flv_decoder_create(IUnknown *, const IID &, void **);
 #endif
 
 
@@ -104,10 +103,10 @@ class player_dshow : public player
     filter_out *pfo_v;
 #endif
     IPin *pp;
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
     IBaseFilter *pbf_flv_split;
 #endif
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
     IBaseFilter *pbf_flv_dec;
 #endif
 
@@ -271,10 +270,10 @@ class player_dshow : public player
         {
             pmc->Stop();
             Sleep(100);
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
                 pbf_flv_dec->Release();
 #endif
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
                 pbf_flv_split->Release();
 #endif
             pp->Release();
@@ -422,6 +421,23 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
     {
         return false;
     }
+#ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
+    else if(len >= wcslen(L"video/3gpp") && !wcsncmp(pformat, L"video/3gpp", wcslen(L"video/3gpp")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = GUID_NULL;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
 #ifdef ENABLE_MMAPI_CONT_AMR_DS_EXT
     else if(len >= wcslen(L"audio/amr") && !wcsncmp(pformat, L"audio/amr", wcslen(L"audio/amr")))
     {
@@ -446,23 +462,6 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         if(!pplayer) return false;
 
         pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = MEDIASUBTYPE_Avi;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
-    else if(len >= wcslen(L"video/3gpp") && !wcsncmp(pformat, L"video/3gpp", wcslen(L"video/3gpp")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
         pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
@@ -473,7 +472,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_ON2
+#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_INT
     else if(len >= wcslen(L"video/x-flv") && !wcsncmp(pformat, L"video/x-flv", wcslen(L"video/x-flv")))
     {
         pplayer = new player_dshow;
@@ -532,6 +531,23 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
 
         pplayer->amt.majortype = MEDIATYPE_Stream;
         pplayer->amt.subtype = MEDIASUBTYPE_MPEG1System;
+        pplayer->amt.bFixedSizeSamples = TRUE;
+        pplayer->amt.bTemporalCompression = FALSE;
+        pplayer->amt.lSampleSize = 1;
+        pplayer->amt.formattype = GUID_NULL;
+        pplayer->amt.pUnk = null;
+        pplayer->amt.cbFormat = 0;
+        pplayer->amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_MMAPI_CONT_OGG_DS_EXT
+    else if(len >= wcslen(L"video/ogg") && !wcsncmp(pformat, L"video/ogg", wcslen(L"video/ogg")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        pplayer->amt.majortype = MEDIATYPE_Stream;
+        pplayer->amt.subtype = GUID_NULL;
         pplayer->amt.bFixedSizeSamples = TRUE;
         pplayer->amt.bTemporalCompression = FALSE;
         pplayer->amt.lSampleSize = 1;
@@ -647,8 +663,8 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                 }
                                 else
                                 {
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
-                                    hr = On2FlvSDK::FlvSplitCreateInstance(null, IID_IBaseFilter,
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+                                    hr = flv_splitter_create(null, IID_IBaseFilter,
                                         (void **)&pplayer->pbf_flv_split);
                                     if(hr != S_OK)
                                     {
@@ -657,8 +673,8 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                     else
 #endif
                                     {
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
-                                        hr = On2FlvSDK::FlvDecVP6CreateInstance(null, IID_IBaseFilter,
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+                                        hr = flv_decoder_create(null, IID_IBaseFilter,
                                             (void **)&pplayer->pbf_flv_dec);
                                         if(hr != S_OK)
                                         {
@@ -692,7 +708,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                     else
 #endif
                                                     {
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
                                                         hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
                                                         if(hr != S_OK)
                                                         {
@@ -701,7 +717,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                         else
 #endif
                                                         {
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
                                                             hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
                                                             if(hr != S_OK)
                                                             {
@@ -716,11 +732,11 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                     }
                                                 }
                                             }
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_ON2
+#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
                                             if(!r) pplayer->pbf_flv_dec->Release();
 #endif
                                         }
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_ON2
+#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
                                         if(!r) pplayer->pbf_flv_split->Release();
 #endif
                                     }
