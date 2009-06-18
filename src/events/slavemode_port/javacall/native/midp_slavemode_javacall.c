@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -415,6 +415,33 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
         break; 
 #endif /*ENABLE_JSR_179*/
+
+#ifdef ENABLE_JSR_211
+    case JSR211_JC_EVENT_PLATFORM_FINISH:
+        pNewSignal->waitingFor = JSR211_PLATFORM_FINISH_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr211PlatformEvent.invoc_id;
+        pNewSignal->pResult    = event->data.jsr211PlatformEvent.jsr211event;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+    case JSR211_JC_EVENT_JAVA_INVOKE:
+        pNewSignal->waitingFor = JSR211_JAVA_INVOKE_SIGNAL;
+        pNewSignal->descriptor = event->data.jsr211PlatformEvent.invoc_id;
+        pNewSignal->pResult    = event->data.jsr211PlatformEvent.jsr211event;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+    case JSR211_JC_EVENT_REQUEST_RECEIVED:
+        pNewSignal->waitingFor = JSR211_REQUEST_SIGNAL;
+        pNewSignal->pResult    = event->data.jsr211RequestEvent.data;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+    case JSR211_JC_EVENT_RESPONSE_RECEIVED:
+        pNewSignal->waitingFor = JSR211_RESPONSE_SIGNAL;
+        pNewSignal->pResult    = event->data.jsr211ResponseEvent.data;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+
+#endif /* ENABLE_JSR_211 */
+
 #ifdef ENABLE_JSR_177
     case MIDP_JC_EVENT_CARDDEVICE:
         switch (event->data.carddeviceEvent.eventType) {

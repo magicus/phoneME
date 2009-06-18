@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -281,6 +281,17 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->pResult    = event->data.jsr211PlatformEvent.jsr211event;
         pNewMidpEvent->type    = CHAPI_EVENT;
         break;
+    case JSR211_JC_EVENT_REQUEST_RECEIVED:
+        pNewSignal->waitingFor = JSR211_REQUEST_SIGNAL;
+        pNewSignal->pResult    = event->data.jsr211RequestEvent.data;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+    case JSR211_JC_EVENT_RESPONSE_RECEIVED:
+        pNewSignal->waitingFor = JSR211_RESPONSE_SIGNAL;
+        pNewSignal->pResult    = event->data.jsr211ResponseEvent.data;
+        pNewMidpEvent->type    = CHAPI_EVENT;
+        break;
+
 #endif /* ENABLE_JSR_211 */
 
 #ifdef ENABLE_JSR_290

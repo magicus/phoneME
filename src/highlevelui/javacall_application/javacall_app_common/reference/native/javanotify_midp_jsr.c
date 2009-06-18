@@ -857,6 +857,7 @@ void /*OPTIONAL*/javanotify_location_proximity(
 #endif /* ENABLE_JSR_179 */
 
 #ifdef ENABLE_JSR_211
+
 /*
  * Called by platform to notify java VM that invocation of native handler
  * is finished. This is <code>ContentHandlerServer.finish()</code> substitute
@@ -970,6 +971,53 @@ void javanotify_chapi_java_invoke(
         }
         inv->responseRequired  = invocation->responseRequired;
     }
+
+    midp_jc_event_send(&e);
+}
+
+javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExchangeID, 
+                                                      int msg, const unsigned char * bytes, size_t count ) {
+    midp_jc_event_union e;
+    jsr211_request_data * data = (jsr211_request_data *)jsr211_malloc( sizeof(*data) );
+
+    REPORT_INFO(LC_CORE, "javanotify_chapi_process_msg_request() >>\n");
+
+    data->queueID = queueID;
+    data->msg = msg;
+    data->dataExchangeID = dataExchangeID;
+    data->bytes = NULL;
+    data->count = count;
+    if( count > 0 ){
+        data->bytes = (unsigned char *)jsr211_malloc( count );
+        memcpy( data->bytes, bytes, count );
+    } else if( bytes != NULL ){
+        data->bytes = "";
+    }
+
+    e.eventType = JSR211_JC_EVENT_REQUEST_RECEIVED;
+    e.data.jsr211RequestEvent.data = data;
+
+    midp_jc_event_send(&e);
+}
+
+javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const unsigned char * bytes, size_t count ) {
+    midp_jc_event_union e;
+    jsr211_response_data * data = (jsr211_response_data *)jsr211_malloc( sizeof(*data) );
+
+    REPORT_INFO(LC_CORE, "javanotify_chapi_process_msg_result() >>\n");
+
+    data->dataExchangeID = dataExchangeID;
+    data->bytes = NULL;
+    data->count = count;
+    if( count > 0 ){
+        data->bytes = (unsigned char *)jsr211_malloc( count );
+        memcpy( data->bytes, bytes, count );
+    } else if( bytes != NULL ){
+        data->bytes = "";
+    }
+
+    e.eventType = JSR211_JC_EVENT_RESPONSE_RECEIVED;
+    e.data.jsr211ResponseEvent.data = data;
 
     midp_jc_event_send(&e);
 }
