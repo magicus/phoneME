@@ -157,21 +157,12 @@ private:
 
 #if USE_SOURCE_IMAGE_GENERATOR
 
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-#define MPS_SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
-  template(bool,         config_parsing_in_profile, "")
-#else
-#define MPS_SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template)
-#endif
-
 #define SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
-  MPS_SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
   template(bool,                config_parsing_active, "") \
   template(int,                 config_parsing_line_number, "") \
   template(const JvmPathChar *, config_parsing_file, "")  
 #else
 #define SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template)
-
 #endif
 
 #define ROMOPTIMIZER_INT_FIELDS_DO(template) \
@@ -197,6 +188,9 @@ private:
 #define ROMOPTIMIZER_DECLARE_OOP_SETTER(type, name, comment) \
   static void set_ ## name(type* value) { \
     _romoptimizer_oops[name ## _index] = value->obj(); \
+  } \
+  static void set_ ## name(OopDesc* value) { \
+    _romoptimizer_oops[name ## _index] = value; \
   }
 
 #define ROMOPTIMIZER_DECLARE_INT(type, name, comment) \
@@ -357,11 +351,21 @@ private:
   int  get_max_alternate_constant_pool_count();
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
+  static bool config_parsing_in_profile( void ) {
+    return current_profile()->not_null();
+  }
+
   void create_profiles_hidden_bitmap(JVM_SINGLE_ARG_TRAPS);
   int find_profile(const char name[]);
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR
+  static void clear_current_profile( void ) {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+    set_current_profile( (OopDesc*) NULL );
+#endif
+  }
+
   void read_config_file(JVM_SINGLE_ARG_TRAPS);
   void read_config_file(const JvmPathChar* config_file JVM_TRAPS);
   void read_hardcoded_config(JVM_SINGLE_ARG_TRAPS);

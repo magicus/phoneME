@@ -153,21 +153,21 @@ extern const unsigned int     _rom_compiled_methods_count;
 #endif // ENABLE_APPENDED_CALLINFO
 
 #if  !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
-extern const int               _rom_system_symbols_src[];
-extern const OriginalClassInfo _rom_original_class_info[];
-extern const int               _rom_original_class_info_count;
-extern const char*             _rom_alternate_constant_pool_src[];
-extern const int               _rom_alternate_constant_pool_count;
-extern const int*              _rom_text_klass_table[];
-extern const int               _rom_text_klass_table_size;
+extern const int                _rom_system_symbols_src[];
+extern const OriginalClassInfo  _rom_original_class_info[];
+extern const int                _rom_original_class_info_count;
+extern const char* const        _rom_alternate_constant_pool_src[];
+extern const int                _rom_alternate_constant_pool_count;
+extern const int*  const        _rom_text_klass_table[];
+extern const int                _rom_text_klass_table_size;
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-extern const int               _rom_profile_bitmap_row_size;
-extern const int               _rom_profiles_count;
-extern const char*             _rom_profiles_names[];
-extern const unsigned char     _rom_hidden_classes_bitmaps[];
-extern const char**            _rom_profiles_restricted_packages[];
+extern const int                _rom_profile_bitmap_row_size;
+extern const int                _rom_profiles_count;
+extern const char* const        _rom_profiles_names[];
+extern const unsigned char      _rom_hidden_classes_bitmaps[];
+extern const char* const* const _rom_profiles_restricted_packages[];
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 /*
  * Flags that describes the options used by this the ROM image.

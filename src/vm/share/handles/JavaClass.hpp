@@ -291,24 +291,22 @@ public:
     return access_flags().is_array_class();
   }
 
-  bool is_interface()      const { return access_flags().is_interface(); }
-  bool is_final()          const { return access_flags().is_final();     }
-  bool is_abstract()       const { return access_flags().is_abstract();  }
-  bool is_super()          const { return access_flags().is_super();     }
-  bool is_public()         const { return access_flags().is_public();    }
-  bool is_private()        const { return access_flags().is_private();   }
-  bool is_preloaded()      const { return access_flags().is_preloaded(); }
-  bool is_converted()      const { return access_flags().is_converted(); }
-  bool is_romized()        const { return access_flags().is_romized();   }
-  bool is_optimizable()    const { return access_flags().is_optimizable();}
-  bool is_fake_class()     const { return access_flags().is_fake_class();}  
-  bool is_hidden()         const { return access_flags().is_hidden() || 
-                                          is_hidden_in_profile();        }
+  bool is_interface   (void) const { return access_flags().is_interface();   }
+  bool is_final       (void) const { return access_flags().is_final();       }
+  bool is_abstract    (void) const { return access_flags().is_abstract();    }
+  bool is_super       (void) const { return access_flags().is_super();       }
+  bool is_public      (void) const { return access_flags().is_public();      }
+  bool is_private     (void) const { return access_flags().is_private();     }
+  bool is_preloaded   (void) const { return access_flags().is_preloaded();   }
+  bool is_converted   (void) const { return access_flags().is_converted();   }
+  bool is_romized     (void) const { return access_flags().is_romized();     }
+  bool is_optimizable (void) const { return access_flags().is_optimizable(); }
+  bool is_fake_class  (void) const { return access_flags().is_fake_class();  }  
+  bool is_hidden      (void) const { return access_flags().is_hidden()
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  bool is_hidden_in_profile() const;
-#else
-  bool is_hidden_in_profile() const { return false; }
+                             || ROM::is_hidden_class_in_profile(class_id())
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+                                   ; }
 
 #if ENABLE_COMPILER_TYPE_INFO
   // Returns true if this class doesn't have any subtypes except for itself

@@ -195,8 +195,11 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
     return;
   }
   
-  read_hardcoded_config(JVM_SINGLE_ARG_CHECK);
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  ROMProfile::create( "DEFAULT_PROFILE" JVM_CHECK );
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
+  read_hardcoded_config(JVM_SINGLE_ARG_CHECK);
   read_config_file(config_file JVM_CHECK);
 
 #if USE_ROM_LOGGING
@@ -232,9 +235,7 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
   set_config_parsing_file(config_file);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  set_config_parsing_in_profile(false);
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  clear_current_profile();
 
   for (;;) {
     // Read a single line from the file, up to 1024 bytes. We don't have
@@ -270,9 +271,7 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
   set_config_parsing_file(NULL);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  set_config_parsing_in_profile(false);
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  clear_current_profile();
 
   OsFile_close(f);
   JVM_DELAYED_CHECK;
@@ -296,9 +295,7 @@ void ROMOptimizer::read_hardcoded_config(JVM_SINGLE_ARG_TRAPS) {
   set_config_parsing_file(hardcoded_configuration);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  set_config_parsing_in_profile(false);
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  clear_current_profile();
 
   for (int index = 0; index < ARRAY_SIZE(hardcoded_rom_config); index++) {
     // Make a copy to avoid modification of the source.
@@ -310,9 +307,7 @@ void ROMOptimizer::read_hardcoded_config(JVM_SINGLE_ARG_TRAPS) {
   set_config_parsing_file(NULL);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  set_config_parsing_in_profile(false);
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  clear_current_profile();
 }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
@@ -325,7 +320,7 @@ int ROMOptimizer::find_profile(const char name[] ) {
       return p;
     }
   }
-  return Universe::DEFAULT_PROFILE_ID;
+  return Universe::UNKNOWN_PROFILE_ID;
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
@@ -370,16 +365,17 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT       
     if (jvm_strcmp(name, "BeginProfile") == 0) {      
-      set_config_parsing_in_profile(true);      
       const int profile_ind = find_profile(value);
-      if (profile_ind == Universe::DEFAULT_PROFILE_ID) {
-        current_profile()->initialize(value JVM_CHECK);
-        profiles_vector()->add_element(current_profile() JVM_CHECK);
+      OopDesc* profile;
+      if (profile_ind == Universe::UNKNOWN_PROFILE_ID) {
+        profile = ROMProfile::create(value JVM_CHECK);
       } else {
-        ROMProfile::Raw existing_profile = 
-          profiles_vector()->element_at(profile_ind);
-        set_current_profile(&existing_profile);
+        profile = profiles_vector()->element_at(profile_ind);
       }
+      set_current_profile(profile);
+    }
+    else if (jvm_strcmp(name, "EndProfile") == 0) {
+      clear_current_profile();
     }
     else if (jvm_strcmp(name, "HiddenClass") == 0) {
       if (!config_parsing_in_profile()) {
@@ -390,14 +386,12 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
         JVM::exit(0);
       }
       UsingFastOops fastOops;
-      Symbol::Fast class_pattern = SymbolTable::slashified_symbol_for(value JVM_CHECK);
+      Symbol::Fast class_pattern =
+        SymbolTable::slashified_symbol_for(value JVM_CHECK);
       ROMVector::Fast this_profile_hidden_classes = 
         current_profile()->hidden_classes();
       this_profile_hidden_classes().add_element(&class_pattern JVM_CHECK);
       GUARANTEE(this_profile_hidden_classes().contains(&class_pattern), "Sanity");
-    }
-    else if (jvm_strcmp(name, "EndProfile") == 0) {
-      set_config_parsing_in_profile(false);
     } else 
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT      
     if (jvm_strcmp(name, "Include") == 0) {

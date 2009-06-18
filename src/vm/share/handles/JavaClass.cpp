@@ -537,12 +537,6 @@ int JavaClass::generate_fieldmap(TypeArray* field_map) {
 }
 #endif /* #if ENABLE_ROM_GENERATOR */
 
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-bool JavaClass::is_hidden_in_profile() const {
-  return ROM::class_is_hidden_in_profile(this);
-}
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-
 #if ENABLE_COMPILER_TYPE_INFO
 // Returns true if this class doesn't have any subtypes except for itself
 bool JavaClass::is_final_type() const {

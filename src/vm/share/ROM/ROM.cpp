@@ -1233,57 +1233,39 @@ void ROM::ROM_print_hrticks(void print_hrticks(const char *name,
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-bool ROM::is_restricted_package_in_profile(const char *name, int name_len) {
-  const int current_profile_id = Universe::current_profile_id();  
-  if (current_profile_id == Universe::DEFAULT_PROFILE_ID) {
-    return false;
-  }
+bool ROM::is_restricted_package_in_profile(const char* name, int name_len) {
+  const int current_profile_id = Universe::current_profile_id();
+  GUARANTEE(unsigned(current_profile_id) < unsigned(_rom_profiles_count),
+            "Sanity");
 
-  GUARANTEE(current_profile_id >= 0 && 
-            current_profile_id < _rom_profiles_count, "Sanity");
-
-  const char** profile_wildcards = 
+  const char* const* profile_wildcards = 
     _rom_profiles_restricted_packages[current_profile_id];  
   GUARANTEE(profile_wildcards != NULL, "Sanity");
 
-  int ind = 0;
-  const char* wildcard = profile_wildcards[ind++];
-  while (wildcard != NULL) {
-    int wildcard_len = jvm_strlen(wildcard);
+  for( const char* wildcard; (wildcard = *profile_wildcards++) != NULL; ) {
+    const int wildcard_len = jvm_strlen(wildcard);
     const bool name_matches_pattern = 
-      Universe::name_matches_pattern(name, name_len,
-        wildcard, wildcard_len);
+      Universe::name_matches_pattern(name, name_len, wildcard, wildcard_len);
     if (name_matches_pattern) {
       return true;
     }
-    wildcard = profile_wildcards[ind++];
   }
   return false;  
 }
 
-bool ROM::class_is_hidden_in_profile(const JavaClass* const jc) {  
-  GUARANTEE((jc != NULL) && jc->not_null(), "Sanity");
-  const int profile_id = Universe::current_profile_id();
-  
-  if (profile_id == Universe::DEFAULT_PROFILE_ID) {
+bool ROM::is_hidden_class_in_profile(const jushort class_id) {  
+  const int index = class_id / BitsPerByte;
+  const int shift = class_id % BitsPerByte;
+
+  if (index >= _rom_profile_bitmap_row_size) {
     return false;
   }
-  GUARANTEE(profile_id >= 0 && 
-            profile_id < _rom_profiles_count, "Sanity");
+
+  const int profile_id = Universe::current_profile_id();  
+  GUARANTEE(unsigned(profile_id) < unsigned(_rom_profiles_count), "Sanity");  
   
-  const jushort class_id = jc->class_id();
-  if (class_id >= _rom_profile_bitmap_row_size * BitsPerByte) {
-    return false;
-  }
-  
-  const int ind = 
-    profile_id * _rom_profile_bitmap_row_size + class_id / BitsPerByte;
-  
-  const int shift = (class_id % BitsPerByte);
-  if (((_rom_hidden_classes_bitmaps[ind] >> shift) & 1) == 1) {    
-    return true;        
-  }
-  return false;
+  const int i = profile_id * _rom_profile_bitmap_row_size + index;
+  return (_rom_hidden_classes_bitmaps[i] >> shift) & 1;
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 

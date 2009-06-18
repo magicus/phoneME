@@ -451,7 +451,7 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
 
   // Print the table, which points to all the buckets.
   main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", num_buckets);
-  main_stream()->print_cr("const int* _rom_text_klass_table[] = {");
+  main_stream()->print_cr("const int* const _rom_text_klass_table[] = {");
   for (i=0; i<num_buckets; i++) {
     main_stream()->print_cr("\t(const int*)klass_table_%d, ", i);
   }
@@ -1251,7 +1251,7 @@ void SourceROMWriter::write_original_class_info_table(JVM_SINGLE_ARG_TRAPS) {
   write_original_info_strings(JVM_SINGLE_ARG_CHECK);
 
   // (1) Print ROM::_alternate_constant_pool
-  main_stream()->print_cr("const char * _rom_alternate_constant_pool_src[] = {");
+  main_stream()->print_cr("const char* const _rom_alternate_constant_pool_src[] = {");
   int total_written = 0;
   Symbol::Fast symbol;
   for (i=0; ; i++) {
@@ -1552,7 +1552,7 @@ void SourceROMWriter::write_restricted_in_profiles() {
     main_stream()->cr();
   }
 
-  main_stream()->print_cr("const char **_rom_profiles_restricted_packages[] = {");
+  main_stream()->print_cr("const char* const* const _rom_profiles_restricted_packages[] = {");
   for (p = 0; p < profiles_count; p++) {    
     rom_profile = rom_profiles_table->element_at(p);
     profile_name = rom_profile().profile_name();
@@ -1569,12 +1569,9 @@ void SourceROMWriter::write_restricted_in_profiles() {
 
 // Writes hidden classes for specified profiles information.
 void SourceROMWriter::write_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops usingFastOops;
-
   ROMVector *rom_profiles_table = _optimizer.profiles_vector();
   GUARANTEE(rom_profiles_table != NULL, "Sanity");
 
-  int p, byte;
   const int profiles_count = rom_profiles_table->size();
 
   const int class_count = number_of_romized_java_classes();
@@ -1582,49 +1579,43 @@ void SourceROMWriter::write_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
 
   // Writing _profile_bitmap_row_size
   main_stream()->print_cr(
-    "const int _rom_profile_bitmap_row_size = %d;", bitmap_row_size);
-  main_stream()->cr();
+    "const int _rom_profile_bitmap_row_size = %d;\n", bitmap_row_size);
 
   // Writing profiles count...  
-  main_stream()->print_cr("const int _rom_profiles_count = %d;", profiles_count);
-  main_stream()->cr();
-
-  ROMProfile::Fast rom_profile;
+  main_stream()->print_cr("const int _rom_profiles_count = %d;\n", profiles_count);
 
   // Writing profiles names...
-  Symbol::Fast profile_name;
-  main_stream()->print_cr("const char *_rom_profiles_names[] = {");  
-  for (p = 0; p < profiles_count; p++) {
-    rom_profile = rom_profiles_table->element_at(p);
-    profile_name = rom_profile().profile_name();
-    main_stream()->print("  \"");
-    profile_name().print_symbol_on(main_stream());
-    main_stream()->print_cr("\",");
-  }
-  if (profiles_count == 0) {
+  {
+    main_stream()->print_cr("const char* const _rom_profiles_names[] = {");
+    for (int p = 0; p < profiles_count; p++) {
+      main_stream()->print("  \"");
+      ROMProfile::Raw rom_profile( rom_profiles_table->element_at(p) );
+      Symbol::Raw profile_name( rom_profile().profile_name() );
+      profile_name().print_symbol_on(main_stream());
+      main_stream()->print_cr("\",");
+    }
     main_stream()->print_cr("  0");    
+    main_stream()->print_cr("}; // _rom_profiles_names\n");
   }
-  main_stream()->print_cr("}; // _rom_profiles_names\n");
 
   // Writing profiles bitmaps  
-  ROMVector::Fast patterns;
-  ObjArray::Fast array;
-  main_stream()->print_cr(
-    "const unsigned char _rom_hidden_classes_bitmaps[] = {");
-  for (p = 0; p < profiles_count; p++) {
-    main_stream()->print("  ");
-    for (byte = 0; byte < bitmap_row_size; byte++) {
-      const int ind = bitmap_row_size * p + byte;
-      jubyte c = _optimizer.profile_hidden_bitmap()->ubyte_at(ind);
-      main_stream()->print("0x%x, ", c);
+  {
+    main_stream()->print_cr(
+      "const unsigned char _rom_hidden_classes_bitmaps[] = {");
+    for (int p = 0; p < profiles_count; p++) {
+      main_stream()->print("  ");
+      for (int byte = 0; byte < bitmap_row_size; byte++) {
+        const int ind = bitmap_row_size * p + byte;
+        jubyte c = _optimizer.profile_hidden_bitmap()->ubyte_at(ind);
+        main_stream()->print("0x%x, ", c);
+      }
+      main_stream()->cr();
     }
-    main_stream()->cr();
+    if (profiles_count == 0) {
+      main_stream()->print_cr("  0");    
+    }
+    main_stream()->print_cr("}; // _rom_hidden_classes_bitmaps\n");  
   }
-  if (profiles_count == 0) {
-    main_stream()->print_cr("  0");    
-  }
-  main_stream()->print_cr("}; // _rom_hidden_classes_bitmaps");  
-  main_stream()->cr();
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 

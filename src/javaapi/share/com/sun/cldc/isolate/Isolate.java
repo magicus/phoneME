@@ -318,7 +318,7 @@ public final class Isolate {
      /**
       * ID of default profile.
       */
-    private final static int DEFAULT_PROFILE_ID = -1;
+    private final static int DEFAULT_PROFILE_ID = 0;
      /**
      * A special priority level to indicate that an Isolate is suspended.
      */

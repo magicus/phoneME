@@ -40,10 +40,9 @@ jint Universe::_number_of_java_methods;
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-int  Universe::_profile_id = DEFAULT_PROFILE_ID; 
+int  Universe::_profile_id;
 
-
-int Universe::current_profile_id() {
+int Universe::current_profile_id( void ) {
 #if ENABLE_ISOLATES
   Task::Raw task = Task::current();
   GUARANTEE(task.not_null(), "Sanity");
@@ -54,18 +53,18 @@ int Universe::current_profile_id() {
 } 
 
 void Universe::set_profile_id(const int id) { 
-  GUARANTEE((id >= 0) && (id < ROM::profiles_count()), "Sanity");  
+  GUARANTEE( unsigned(id) < unsigned(ROM::profiles_count()), "Sanity" );
   _profile_id = id; 
 } 
 
-int Universe::profile_id_by_name(const char * profile) {
-  const char ** profiles_names = ROM::profiles_names();
+int Universe::profile_id_by_name(const char* profile) {
+  const char* const* const profiles_names = ROM::profiles_names();
   for (int i = 0; i < ROM::profiles_count(); i++) {
     if (jvm_strcmp(profile, profiles_names[i]) == 0) {            
       return i;
     }
   }  
-  return DEFAULT_PROFILE_ID;
+  return UNKNOWN_PROFILE_ID;
 }
 
 #if USE_SOURCE_IMAGE_GENERATOR
@@ -565,6 +564,10 @@ bool Universe::bootstrap(const JvmPathChar* classpath) {
       return false;
     }
   }
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  set_profile_id( DEFAULT_PROFILE_ID );
+#endif
 
   SETUP_ERROR_CHECKER_ARG;
 
