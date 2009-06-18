@@ -63,7 +63,7 @@ import com.sun.midp.ams.VMUtils;
 /**
  * The Graphical MIDlet suite installer.
  * <p>
- * The graphical installer is implements the installer requirements of the
+ * The graphical installer implements the installer requirements of the
  * MIDP OTA specification.</p>
  * <p>
  * If the Content Handler API (CHAPI) is present the GraphicalInstaller will
@@ -116,7 +116,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private int progressUrlIndex;
     /** Keeps track of when the display last changed, in milliseconds. */
     private long lastDisplayChange;
-    /** What to display to the user when the current action is cancelled. */
+    /** What to display to the user when the current action is canceled. */
     private String cancelledMessage;
     /** What to display to the user when the current action is finishing. */
     private String finishingMessage;
@@ -126,7 +126,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private int storageId = Constants.INTERNAL_STORAGE_ID;
 
     /** Content handler specific install functions. */
-    CHManager chmanager;
+    CHManager.InvocationProxy iproxy;
 
     /** Command object for "Stop" command for progress form. */
     private Command stopCmd = new Command(Resource.getString
@@ -170,7 +170,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private boolean forceUpdate = false;
     /** true if user confirmation should be presented */
     private boolean noConfirmation = false;
-    /** true if runnning midlets from the suite being updated must be killed */
+    /** true if running midlets from the suite being updated must be killed */
     private boolean killRunningMIDletIfUpdate = false;
 
     /**
@@ -430,15 +430,17 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         GraphicalInstaller.initSettings();
         
         // Establish Content handler installer context
-        chmanager = CHManager.getManager(null);
-        
-         // Get the URL, if any, provided from the invocation mechanism.
-        url = chmanager.getInstallURL(this);
+        CHManager chmanager = CHManager.getManager(null);
+        iproxy = chmanager.getInvocation(this);
+        // Get the URL, if any, provided from the invocation mechanism.
+        url = (String)iproxy.getInvocationProperty(CHManager.InvocationProxy.PROP_URL);
         
         if (url != null) {
+            String action = (String)iproxy.getInvocationProperty(CHManager.InvocationProxy.PROP_ACTION);
+            
             label = Resource.getString(ResourceConstants.APPLICATION);
             forceUpdate = false;
-            noConfirmation = false;
+            noConfirmation = "install_only".equals(action);
         } else {
             arg0 = getAppProperty("arg-0");
             if (arg0 == null) {
@@ -574,8 +576,6 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      *  <code>false</code> otherwise.
      */
     void exit(boolean success) {
-        chmanager.installDone(success);
-
         notifyDestroyed();
     }
 
@@ -607,22 +607,21 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                  * the "Finishing" message
                  *
                  * also we need to prevent the BackgroundInstaller from
-                 * re-displaying the list before the cancelled message is
+                 * re-displaying the list before the canceled message is
                  * displayed
                  */
                 synchronized (this) {
                     if (installer.stopInstalling()) {
-                        InstallerResultHandler.notifyRequestCanceled();
+                        notifyCanceled();
                         displayCancelledMessage(cancelledMessage);
                     }
                 }
             } else {
-                // goto back to the manager midlet
-                InstallerResultHandler.notifyRequestCanceled();
+                notifyCanceled();
                 exit(false);
             }
         } else if (c == cancelCmd) {
-            InstallerResultHandler.notifyRequestCanceled();
+            notifyCanceled();
             displayCancelledMessage(cancelledMessage);
             cancelBackgroundInstall();
         } else if (c == Alert.DISMISS_COMMAND) {
@@ -630,6 +629,21 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             exit(false);
         }
     }
+    
+	void notifySuccess(int lastInstalledMIDletId) {
+		InstallerResultHandler.notifyRequestSucceeded(lastInstalledMIDletId);
+        iproxy.installDone(true, null);
+	}
+
+	void notifyFailed(Exception e, String msg) {
+		InstallerResultHandler.notifyRequestFailed(e);
+        iproxy.installDone(false, msg);
+	}
+
+	void notifyCanceled() {
+		InstallerResultHandler.notifyRequestCanceled();
+        iproxy.installDone(false, null);
+	}
 
      /**
      * Initialize the settings database if it doesn't exist. This may create
@@ -1668,7 +1682,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
 
     /** A class to install a suite in a background thread. */
-    private class BackgroundInstaller implements Runnable, InstallListener {
+    private static class BackgroundInstaller implements Runnable, InstallListener {
         /** Parent installer. */
         private GraphicalInstaller parent;
         /** URL to install from. */
@@ -1685,7 +1699,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         private String successMessage;
         /** Flag to update the current suite. */
         private boolean update;
-        /** Flag for user confiramtion. */
+        /** Flag for user confirmation. */
         private boolean noConfirmation;
         /** State of the install. */
         InstallState installState;
@@ -1766,7 +1780,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                          */
                         parent.preventScreenFlash();
 
-                        InstallerResultHandler.notifyRequestSucceeded(lastInstalledMIDletId);
+                        parent.notifySuccess(lastInstalledMIDletId);
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
                         int reason = ije.getReason();
@@ -1797,11 +1811,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             break;
                         }
 
-                        InstallerResultHandler.notifyRequestFailed(ije);
                         msg = GraphicalInstaller.translateJadException(
                             ije, name, null, null, url);
+                        parent.notifyFailed(ije, msg);
                     } catch (MIDletSuiteLockedException msle) {
-                        if (!killRunningMIDletIfUpdate) {
+                        if (!parent.killRunningMIDletIfUpdate) {
                             String[] values = new String[1];
                             values[0] = name;
 
@@ -1814,7 +1828,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                     ResourceConstants.AMS_GRA_INTLR_LOCKED,
                                         values);
                             }
-                            InstallerResultHandler.notifyRequestFailed(msle);
+                            parent.notifyFailed(msle, msg);
                         } else {
                              /*
                               * Kill running midlets from the suite being
@@ -1896,22 +1910,22 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             // or over, than we will show user correct path to
                             // jar and not path to jad
                             if (parent.installer.state.nextStep >= 5)
-                                urlToShow = installer.state.installInfo.jarUrl;
+                                urlToShow = parent.installer.state.installInfo.jarUrl;
                             
                             msg = InstallerResource.getString(
                                 parent.installer,
                                 InstallerResource.IO_EXCEPTION_MESSAGE)
                                     + ":" + urlToShow;
                              }
-                        InstallerResultHandler.notifyRequestFailed(ioe);
-                    } catch (Throwable ex) {
+                        parent.notifyFailed(ioe, msg);
+                    } catch (Exception ex) {
                         if (Logging.TRACE_ENABLED) {
                             Logging.trace(ex, "Exception caught " +
                                 "while installing");
                         }
 
                         msg = ex.getClass().getName() + ": " + ex.getMessage();
-                        InstallerResultHandler.notifyRequestFailed(ex);
+                        parent.notifyFailed(ex, msg);
                     }
 
                 } while (tryAgain);
@@ -1926,7 +1940,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             } finally {
                 if (lastInstalledMIDletId == MIDletSuite.UNUSED_SUITE_ID) {
                     // Reset an ID of the last successfully installed midlet
-                    // because an error has occured.
+                    // because an error has occurred.
                     GraphicalInstaller.saveSettings(null,
                         MIDletSuite.UNUSED_SUITE_ID);
                 }
@@ -2137,7 +2151,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
          * and then display the list of suites.
          */
         private void displayListAfterCancelMessage() {
-            // wait for the parent to display "cancelled"
+            // wait for the parent to display "canceled"
             synchronized (parent) {
                 /*
                  * We need to prevent "flashing" on fast
