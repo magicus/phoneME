@@ -557,6 +557,11 @@ public final class InvocationImpl {
         	default:
         		throw new IllegalArgumentException();
         }
+        if( arguments != null ){ // CHAPI 1.0.1
+        	for( int i = 0; i < arguments.length; i++)
+        		if( arguments[ i ] == null )
+        			throw new IllegalArgumentException();
+        }
 
         setStatus(status);
 
@@ -710,7 +715,7 @@ public final class InvocationImpl {
             ContentReader reader = new ContentReader(url, username, password);
             String type = reader.findType();
             if (type != null) {
-                this.type = type;
+                setType( type );
                 return type;
             }
         } else if (data.length > 0) {

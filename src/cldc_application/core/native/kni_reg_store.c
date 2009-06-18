@@ -31,10 +31,13 @@
 #include <jsrop_suitestore.h>
 
 #include <javautil_unicode.h>
+#include <javacall_chapi_invoke.h>
 
-#include <jsr211_invoc.h>
+#include "jsr211_invoc.h"
 
 #ifdef _DEBUG
+#include <stdio.h>
+
 #define TRACE_REGISTER
 #define TRACE_TRANSFER_DATA
 //#define TRACE_MALLOC
@@ -713,6 +716,54 @@ KNIDECL(com_sun_j2me_content_RegistryStore_loadFieldValues0) {
     }
 
     KNI_EndHandlesAndReturnObject(strObj);
+}
+
+/*
+ * private static native int selectSingleHandler0(String action, String[] pairs);
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_j2me_content_RegistryStore_selectSingleHandler0) {
+    int result = -1;
+    javacall_utf16_string action = NULL;
+    jsize pairs_count;
+    javacall_chapi_handler_info * list;
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(pairs);
+    KNI_DeclareHandle(strObj);
+
+    KNI_GetParameterAsObject(1, strObj); /* String action */
+    if( !KNI_IsNullHandle(strObj) )
+        jsrop_jstring_to_utf16_string(strObj, &action);
+    KNI_GetParameterAsObject(2, pairs); /* String[] pairs */
+    pairs_count = KNI_GetArrayLength(pairs) / 2;
+    list = JAVAME_MALLOC( pairs_count * sizeof(list[0]) );
+    if( list != NULL ){
+        jsize i;
+        for( i = 0; i < pairs_count; i++){
+            KNI_GetObjectArrayElement( pairs, i * 2, strObj );
+            jsrop_jstring_to_utf16_string(strObj, &list[ i ].handler_id);
+            list[ i ].action_name = NULL;
+            KNI_GetObjectArrayElement( pairs, i * 2 + 1, strObj );
+            if( !KNI_IsNullHandle(strObj) )
+                jsrop_jstring_to_utf16_string(strObj, &list[ i ].action_name);
+        }
+
+        javacall_chapi_select_handler( action, pairs_count, list, &result );
+
+        // free list
+        for( i = 0; i < pairs_count; i++){
+            if( list[ i ].handler_id != NULL ) JAVAME_FREE(list[ i ].handler_id);
+            if( list[ i ].action_name != NULL ) JAVAME_FREE(list[ i ].action_name);
+        }       
+        JAVAME_FREE( list );
+    } else {
+        KNI_ThrowNew(jsropOutOfMemoryError, 
+                   "RegistryStore_selectSingleHandler0: no memory");
+    }
+    if( action != NULL ) JAVAME_FREE(action);
+    KNI_EndHandles();    
+    KNI_ReturnInt( result );
 }
 
 /**

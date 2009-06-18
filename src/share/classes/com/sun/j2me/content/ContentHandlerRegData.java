@@ -81,6 +81,13 @@ public class ContentHandlerRegData {
      * The action names that are defined by this content handler.
      */
     protected ActionNameMap[] actionnames;
+    public String getActionName( String action, String locale ){
+    	for( int i = 0; i < actionnames.length; i++){
+    		if( actionnames[ i ].getLocale().equals(locale) )
+    			return actionnames[ i ].getActionName(action);
+    	}
+    	return null;
+    }
     
     /**
      * The accessRestrictions for this ContentHandler.

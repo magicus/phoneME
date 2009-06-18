@@ -59,6 +59,14 @@ public class ContentHandlerException extends IOException {
     public final static int AMBIGUOUS = 3;
 
     /**
+     * The reason is <code>CAPACITY_EXCEEDED</code> in a ContentHandlerException when 
+     * the implementation does not support longer IDs, or more actions, 
+     * more types, or more suffixes than the minimums and the application 
+     * exceeds the minimums.
+     */
+    public final static int CAPACITY_EXCEEDED = 4;
+    
+    /**
      * Constructs a <code>ContentHandlerException</code> with a reason
      * and error code.
      * The error message string <code>reason</code> can later be

@@ -37,6 +37,7 @@ import com.sun.midp.security.ImplicitlyTrustedClass;
 
 import javax.microedition.midlet.MIDlet;
 
+import com.sun.midp.content.CHManager;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InvalidJadException;
@@ -47,8 +48,6 @@ import com.sun.midp.midlet.MIDletSuite;
  * Called at by the installer at the appropriate times to
  * {@link #preInstall parse and verify the JAD/Manifest attributes} and
  * {@link #install remove old content handlers and register new ones}.
- * If the installation fails the old handlers are
- * {@link #restore restored}.
  * When a suite is to be removed the content handlers are
  * {@link #uninstall uninstalled}.
  *
@@ -79,15 +78,6 @@ public class CHManagerImpl extends CHManagerBase {
         if( Logger.LOGGER != null ) Logger.LOGGER.println( "Invocation class has loaded" );
     }
 
-    /** Installed handlers accumulator. */
-    private RegistryInstaller regInstaller;
-
-    /** The Invocation in progress for an install. */
-    private Invocation installInvoc;
-
-    /** The ContentHandler for the Installer. */
-    ContentHandlerServer handler;
-
     /**
      * Creates a new instance of CHManagerImpl.
      * Always initialize the Access to the Registry as if the
@@ -96,19 +86,6 @@ public class CHManagerImpl extends CHManagerBase {
     private CHManagerImpl() {
         super();
         if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl()" );
-    }
-
-    /**
-     * Install the content handlers found and verified by preinstall.
-     * Register any content handlers parsed from the JAD/Manifest
-     * attributes.
-     */
-    public void install() {
-        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.install" );
-        if (regInstaller != null) {
-            regInstaller.install();
-            regInstaller = null; // Let GC take it.
-        }
     }
 
     /**
@@ -132,10 +109,11 @@ public class CHManagerImpl extends CHManagerBase {
      * @exception InvalidJadException if there is no classname field,
      *   or if there are more than five comma separated fields on the line.
      */
-    public void preInstall(Installer installer, InstallState state,
+    public Object preInstall(Installer installer, InstallState state,
 					MIDletSuite msuite, String authority) throws InvalidJadException
     {
-        if( Logger.LOGGER != null ) 
+    	RegistryInstaller regInstaller = null;
+    	if( Logger.LOGGER != null ) 
         	Logger.LOGGER.println( "CHManagerImpl.preInstall(): installer = " + 
         			installer + ", state = " + state + ", msuite = " + msuite + 
         			"\n\tauthority = '" + authority + "'" );
@@ -162,6 +140,19 @@ public class CHManagerImpl extends CHManagerBase {
 						  cnfe.getMessage());
 		}
         if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.preInstall() exit" );
+        return regInstaller;
+    }
+
+    /**
+     * Install the content handlers found and verified by preinstall.
+     * Register any content handlers parsed from the JAD/Manifest
+     * attributes.
+     */
+    public void install( Object regInstaller ) {
+        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.install" );
+        if (regInstaller != null) {
+            ((RegistryInstaller)regInstaller).install();
+        }
     }
 
     /**
@@ -173,54 +164,53 @@ public class CHManagerImpl extends CHManagerBase {
         if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.uninstall()" );
         RegistryInstaller.uninstallAll(suiteId, false);
     }
-
-
-    /**
-     * The content handler registrations are restored to the previous
-     * state.
-     */
-    public void restore() {
+    
+    public InvocationProxy getInvocation(MIDlet midlet){
+    	return new InvocationProxyImpl( midlet );
     }
 
-    /**
-     * Get a URL to install from the Invocation mechanism, if one
-     * has been queued.
-     * @param midlet to check for an invocation
-     * @return the URL to install; <code>null</code> if none available.
-     * @see com.sun.midp.content.CHManagerImpl
-     */
-    public String getInstallURL(MIDlet midlet) {
-		try {
-		    handler = Registry.getServer(midlet.getClass().getName());
-		} catch (ContentHandlerException che) {
-	        return null;
+    private static class InvocationProxyImpl implements CHManager.InvocationProxy {
+        /** The ContentHandler for the Installer. */
+        private ContentHandlerServer handler = null;
+        /** The Invocation in progress for an install. */
+        private Invocation installInvoc = null;
+
+    	InvocationProxyImpl( MIDlet midlet ){
+    		try {
+    		    handler = Registry.getServer(midlet.getClass().getName());
+                installInvoc = handler.getRequest(false);
+    		} catch (ContentHandlerException che) {
+    	    }
+    	}
+    	
+	    public Object getInvocationProperty(String propName) {
+	    	if( installInvoc != null ){
+	    		if( PROP_URL.equals(propName) ){
+	    			return installInvoc.getURL();
+	    		} else if( PROP_ACTION.equals(propName) ){
+	    			return installInvoc.getAction();
+	    		}
+	    	}
+	    	return null;
 	    }
-
-        installInvoc = handler.getRequest(false);
-        if (installInvoc != null) {
-            String url = installInvoc.getURL();
-            if (url != null && url.length() > 0) {
-                return url;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Complete the installation of the URL provided by
-     * {@link #getInstallURL} with the success/failure status
-     * provided.
-     * @param success <code>true</code> if the install was a success
-     * @see com.sun.midp.content.CHManagerImpl
-     */
-    public void installDone(boolean success) {
-        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.installDone()" );
-        if (installInvoc != null) {
-		    handler.finish(installInvoc,
-				   success ? Invocation.OK : Invocation.CANCELLED);
-            installInvoc = null;
-            regInstaller = null; // Double-clean.
-        }
+	
+	    /**
+	     * Complete the installation of the URL provided by
+	     * {@link #getInstallURL} with the success/failure status
+	     * provided.
+	     * @param success <code>true</code> if the install was a success
+	     * @see com.sun.midp.content.CHManagerImpl
+	     */
+	    public void installDone(boolean success, String errorMsg) {
+	        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.installDone()" );
+	        if (installInvoc != null) {
+	        	if( !success && errorMsg != null )
+	        		installInvoc.setArgs(new String[] {errorMsg} );
+			    handler.finish(installInvoc,
+					   success ? Invocation.OK : (errorMsg == null ? Invocation.CANCELLED : Invocation.ERROR));
+	            installInvoc = null;
+	        }
+	    }
     }
 
 }

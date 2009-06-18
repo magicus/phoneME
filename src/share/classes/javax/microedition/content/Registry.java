@@ -324,9 +324,9 @@ public class Registry {
         // Find the RegistryImpl instance and get/create the Registry
         try {
             return findRegistryImpl(classname).getRegistry();
-		} catch (ContentHandlerException che) {
-		    throw new IllegalArgumentException(che.getMessage());
-		}
+        } catch (ContentHandlerException che) {
+            throw new IllegalArgumentException(che.getMessage());
+        }
     }
 
     /**
@@ -345,7 +345,7 @@ public class Registry {
     {
         synchronized (mutex) {
             RegistryImpl impl = 
-                RegistryImpl.getRegistryImpl(classname,	classSecurityToken);
+                RegistryImpl.getRegistryImpl(classname, classSecurityToken);
             // Make sure there is a Registry; 
             if (impl.getRegistry() == null) {
                 impl.setRegistry(new Registry(impl));
@@ -385,25 +385,25 @@ public class Registry {
      *  application package
      */
     public static ContentHandlerServer getServer(String classname)
-						throws ContentHandlerException
+                        throws ContentHandlerException
     {
-		RegistryImpl registryImpl = findRegistryImpl(classname);
-		// Insure only one thread promotes to ContentHandlerServer
-		ContentHandlerImpl server = null;
-		synchronized (mutex) {
-		    server = registryImpl.getServer();
-		    if (server == null) {
-				throw new ContentHandlerException("No registered handler",
-								ContentHandlerException.NO_REGISTERED_HANDLER);
-		    }
-	
-		    if (!(server instanceof ContentHandlerServer)) {
-				// Not already a ContentHandlerServer; replace
-				server = new ContentHandlerServerImpl(server);
-				registryImpl.setServer(server);
-		    }
-		}
-		return (ContentHandlerServer)server; 
+        RegistryImpl registryImpl = findRegistryImpl(classname);
+        // Insure only one thread promotes to ContentHandlerServer
+        ContentHandlerImpl server = null;
+        synchronized (mutex) {
+            server = registryImpl.getServer();
+            if (server == null) {
+                throw new ContentHandlerException("No registered handler",
+                                ContentHandlerException.NO_REGISTERED_HANDLER);
+            }
+    
+            if (!(server instanceof ContentHandlerServer)) {
+                // Not already a ContentHandlerServer; replace
+                server = new ContentHandlerServerImpl(server);
+                registryImpl.setServer(server);
+            }
+        }
+        return (ContentHandlerServer)server; 
     }
 
     /**
@@ -438,7 +438,7 @@ public class Registry {
      * @param classname the name of an application class or
      *  content handler in this application package;
      *  the value MUST NOT be <code>null</code>;
-     *	and the handler MUST implement the lifecycle of the Java runtime
+     *  and the handler MUST implement the lifecycle of the Java runtime
      *  environment
      * @param types an array of types to register;
      *   if <code>null</code> it is treated the same as an empty array
@@ -496,20 +496,20 @@ public class Registry {
      *   is not permitted
      */
     public ContentHandlerServer register(String classname,
-					 String[] types,
-					 String[] suffixes,
-					 String[] actions,
-					 ActionNameMap[] actionnames,
-					 String ID,
-					 String[] accessAllowed)
-	throws SecurityException, IllegalArgumentException,
-	       ClassNotFoundException, ContentHandlerException
+                     String[] types,
+                     String[] suffixes,
+                     String[] actions,
+                     ActionNameMap[] actionnames,
+                     String ID,
+                     String[] accessAllowed)
+                throws SecurityException, IllegalArgumentException,
+                       ClassNotFoundException, ContentHandlerException
     {
-	// First register the new/replacement handler
-	impl.register(classname, types, suffixes,
-		      actions, actionnames, ID, accessAllowed);
-	// Return the value from {#link #getServer(classname)}.
-	return getServer(classname);
+        // First register the new/replacement handler
+        impl.register(classname, types, suffixes,
+                  actions, actionnames, ID, accessAllowed);
+        // Return the value from {#link #getServer(classname)}.
+        return getServer(classname);
     }
 
     /**
@@ -671,7 +671,7 @@ public class Registry {
      *       handler requested 
      * @param exact <code>true</code> to require an exact match;
      * <code>false</code> to allow a registered content handler ID
-     * 		to match a prefix of the requested ID
+     * to match a prefix of the requested ID
      *
      * @return the content handler that matches the ID,
      *       otherwise <code>null</code>
@@ -680,7 +680,7 @@ public class Registry {
      *       <code>null</code>
      */
     public ContentHandler forID(String ID, boolean exact) {
-	return impl.forID(ID, exact);
+        return impl.forID(ID, exact);
     }
 
     /**
@@ -755,7 +755,7 @@ public class Registry {
      *  is not permitted
      */
     public ContentHandler[] findHandler(Invocation invocation)
-	throws IOException, ContentHandlerException, SecurityException
+                                throws IOException, ContentHandlerException, SecurityException
     { 
         return impl.findHandler(invocation.getInvocImpl());
     }
@@ -825,33 +825,33 @@ public class Registry {
      *          matches the requested ID, type, URL, and action
      *
      * @exception IllegalStateException is thrown if the status of this
-     *	Invocation is not <code>INIT</code> or if the status of the previous
-     *	Invocation, if any, is not <code>ACTIVE</code>
+     *    Invocation is not <code>INIT</code> or if the status of the previous
+     *    Invocation, if any, is not <code>ACTIVE</code>
      * @exception NullPointerException is thrown if the
      *  <code>invocation</code> is <code>null</code>
      * @exception SecurityException if access to the content is not permitted
      */
     public boolean invoke(Invocation invocation, Invocation previous)
-	throws IllegalArgumentException, IOException,
-	       ContentHandlerException, SecurityException
+                    throws IllegalArgumentException, IOException,
+                           ContentHandlerException, SecurityException
     {
-	if (invocation.getStatus() != Invocation.INIT) {
-	    throw new IllegalStateException();
-	}
-
-	if (previous != null &&
-            previous.getStatus() != Invocation.ACTIVE) {
-	    throw new IllegalStateException();
-	}
+        if (invocation.getStatus() != Invocation.INIT) {
+            throw new IllegalStateException();
+        }
+    
+        if (previous != null &&
+                previous.getStatus() != Invocation.ACTIVE) {
+            throw new IllegalStateException();
+        }
+            
+        InvocationImpl invocImpl = invocation.getInvocImpl();
         
-	InvocationImpl invocImpl = invocation.getInvocImpl();
-	
-	InvocationImpl prevImpl = null;
-	if (previous != null) {
-	    prevImpl = previous.getInvocImpl();
-	}
-
-	return impl.invoke(invocImpl, prevImpl);
+        InvocationImpl prevImpl = null;
+        if (previous != null) {
+            prevImpl = previous.getInvocImpl();
+        }
+    
+        return impl.invoke(invocImpl, prevImpl);
     }
 
 
@@ -886,16 +886,16 @@ public class Registry {
      *          matches the requested ID, type, URL, and action
      *
      * @exception IllegalStateException is thrown if the status of this
-     *	Invocation is not <code>INIT</code>
+     *    Invocation is not <code>INIT</code>
      * @exception NullPointerException is thrown if the
      *  <code>invocation</code> is <code>null</code>
      * @exception SecurityException if access to the content is not permitted
      */
     public boolean invoke(Invocation invocation)
-	throws IllegalArgumentException, IOException,
-	       ContentHandlerException, SecurityException
+                        throws IllegalArgumentException, IOException,
+                               ContentHandlerException, SecurityException
     {
-	return invoke(invocation, null);
+        return invoke(invocation, null);
     }
 
     /**
@@ -951,20 +951,20 @@ public class Registry {
      *          matches the requested ID, type, URL, and action
      *
      * @exception IllegalStateException is thrown if the status of this
-     *	Invocation is not <code>ACTIVE</code>
+     *    Invocation is not <code>ACTIVE</code>
      * @exception NullPointerException is thrown if the
      *  <code>invocation</code> is <code>null</code>
      * @exception SecurityException if access to the content is not permitted
      */
     public boolean reinvoke(Invocation invocation)
-	throws IllegalArgumentException, IOException,
-	       ContentHandlerException, SecurityException
+                        throws IllegalArgumentException, IOException,
+                               ContentHandlerException, SecurityException
     {
-	if (invocation.getStatus() != Invocation.ACTIVE) {
-	    throw new IllegalStateException();
-	}
-
-	return impl.reinvoke(invocation.getInvocImpl());
+        if (invocation.getStatus() != Invocation.ACTIVE) {
+            throw new IllegalStateException();
+        }
+    
+        return impl.reinvoke(invocation.getInvocImpl());
     }
 
     /**
