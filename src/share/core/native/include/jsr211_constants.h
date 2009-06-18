@@ -24,6 +24,9 @@
  * information or have any questions.
  */
 
+#ifndef JSR211_CONSTANTS_H
+#define JSR211_CONSTANTS_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif/*__cplusplus*/
@@ -40,6 +43,10 @@ typedef enum {
 , JSR211_WAIT_MSG         = 0x0004
 , JSR211_WAIT_FOR_REQUEST = 0x0008
 } jsr211_wait_status;
+
+#ifdef _DEBUG
+void memory__dump( const char * p_title, const unsigned char * p_bytes, unsigned int p_count );
+#endif
 
 void blockThread( jsr211_wait_status status, int blockID );
 jboolean isThreadCancelled( void );
@@ -99,7 +106,25 @@ void unblockWaitingThreads( jsr211_wait_status status, int blockID, jsr211_wait_
  */
 #define STATUS_DISPOSE 100
 
+/* strutures */
+
+typedef struct {
+    int queueID;
+    int msg;
+    int dataExchangeID;
+    unsigned char * bytes;
+    unsigned int count;
+} jsr211_request_data;
+
+typedef struct {
+    int dataExchangeID;
+    unsigned char * bytes;
+    unsigned int count;
+} jsr211_response_data;
+
+
 #ifdef __cplusplus
 }
 #endif/*__cplusplus*/
 
+#endif // JSR211_CONSTANTS_H

@@ -1,7 +1,7 @@
 /*
  * 
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -49,13 +49,18 @@ typedef struct {
     javacall_chapi_invocation invocation;
 } jsr211_platform_event;
 
-void
-jsr211_process_platform_finish_notification (int invoc_id, 
-                                             jsr211_platform_event *event);
+void jsr211_process_platform_finish_notification (int invoc_id, jsr211_platform_event *event);
 
-void 
-jsr211_process_java_invoke_notification (int invoc_id,
-                                         jsr211_platform_event *event);
+void jsr211_process_java_invoke_notification (int invoc_id, jsr211_platform_event *event);
+
+typedef jsr211_request_data;
+typedef jsr211_response_data;
+
+int jsr211_process_msg_request( const jsr211_request_data * data );
+void jsr211_process_msg_result( const jsr211_response_data * data );
+
+void * jsr211_malloc( unsigned int p_size );
+void jsr211_free( void * data );
 
 #ifdef __cplusplus
 }

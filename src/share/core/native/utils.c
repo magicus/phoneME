@@ -39,9 +39,40 @@ extern "C" {
 
 #include <sni.h>
 
+#include <jsrop_memory.h>
 #include <midpServices.h>
 
 #include "jsr211_constants.h"
+
+#ifdef _DEBUG
+
+void memory__dump( const char * p_title, const unsigned char * p_bytes, unsigned int p_count ){
+    static char s_xd[] = "0123456789ABCDEF";
+    unsigned char a_line[ 32 * 4 + 10 ];
+    printf( "%s: bytes = %p, count = %u\n", p_title, p_bytes, p_count );
+    while( p_count ){
+        unsigned int a_l = (p_count < 32)? p_count : 32, i;
+        memset( a_line, ' ', sizeof(a_line) );
+        p_count -= a_l;
+        for( i = 0; i < a_l; i++, p_bytes++){
+            a_line[ i * 3 ] = s_xd[ (*p_bytes >> 4) & 0x0F ];
+            a_line[ i * 3 + 1 ] = s_xd[ *p_bytes & 0x0F ];
+            a_line[ 32 * 3 + 2 + i ] = (*p_bytes < ' ')? '.' : *p_bytes;
+        }
+        a_line[ 32 * 4 + 2 ] = '\0';
+        printf("  %s\n", a_line);
+    }
+}
+
+#endif
+
+void * jsr211_malloc( unsigned int p_size ){
+    return( JAVAME_MALLOC( p_size ) );
+}
+
+void jsr211_free( void * data ){
+    JAVAME_FREE( data );
+}
 
 /**
  * Block this thread until unblocked.
