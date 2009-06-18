@@ -1,0 +1,134 @@
+#
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Generic compiler specific defines
+# MIDP specific directories and libraries defines are in vc-jtwi.gmk
+#
+######################################################################
+ifndef _VC8CE_GMK_
+_VC8CE_GMK_ =
+
+ifeq ($(VC8CE_ARCH_PATH),)
+$(error VC8CE_ARCH_PATH is not set.)
+endif
+
+ifeq ($(WINCE_LIB_PATH),)
+$(error WINCE_LIB_PATH is not set.)
+endif
+
+ifeq ($(VC8CE_ATLMFC_LIB_PATH),)
+$(error VC8CE_ATLMFC_LIB_PATH is not set.)
+endif
+
+ifeq ($(VC8CE_LIB_PATH),)
+$(error VC8CE_LIB_PATH is not set.)
+endif
+
+# Suffix
+LIB_SUFFIX  = .lib
+OBJ_SUFFIX  = obj
+LIB_PREFIX  = 
+
+# GCC
+USE_GCC		= false
+
+# Same defines when used as either TARGET or HOST COMPILER
+CC          = $(VC8CE_ARCH_PATH)/cl
+CPP         = $(VC8CE_ARCH_PATH)/cl
+CC_OUTPUT   = -Fo
+
+ASM		    = $(VC8CE_ARCH_PATH)/armasm
+ASM_FLAGS  += /nologo /c /coff /Zi
+ASM_OUTPUT	= -Fo
+
+RC          = $(VC8CE_ARCH_PATH)/../../../bin/rc.exe
+
+LD          = $(VC8CE_ARCH_PATH)/link
+LD_OUTPUT   = -out:
+LINKER_OUTPUT = $(LD_OUTPUT)
+
+AR          = $(VC8CE_ARCH_PATH)/lib.exe
+AR_FLAGS    = -nologo -MACHINE:arm
+AR_OUTPUT   = -out:
+
+# commands for AR (lib) script
+MRI_ADD =
+MRI_CREATE = /OUT:
+MRI_SAVE =
+MRI_OPT = /NOLOGO @
+
+# Libraries for WinCE generic port
+LIBS       += commctrl.lib cellcore.lib aygshell.lib Ws2.lib \
+	ddraw.lib Mmtimer.lib note_prj.lib \
+	dmoguids.lib strmbase.lib crypt32.lib \
+	strmiids.lib wap.lib
+ifeq ($(USE_JSR_179), true)
+LIBS += gpsapi.lib
+endif
+ifneq ($(TARGET_WINCE_PLATFORM), WM5_PPC)
+ifneq ($(TARGET_WINCE_PLATFORM), WM6_PPC)
+LIBS += sms.lib phone.lib
+endif
+endif
+
+#OLD	dmoguids.lib strmiids.lib strmbase.lib wap.lib crypt32.lib sms.lib phone.lib
+
+# please comment out this for link and add it to LIBS: VTInterface.lib
+
+LD_FLAGS   += /nologo /MAP /incremental:no /verbose:LIB
+LD_FLAGS   += /ERRORREPORT:PROMPT /STACK:65536,4096 /MANIFEST:NO
+LD_FLAGS   += /nodefaultlib:oldnames.lib
+LD_FLAGS   += /nodefaultlib:secchk.lib
+LD_FLAGS   += /libpath:$(PROJECT_JAVACALL_DIR)/implementation/wince_comm/drm
+LD_FLAGS   += /opt:REF /OPT:ICF
+
+# /wd4819 : disable C4819 warning
+# /Gy : package individual functions
+# /GF : string pooling
+# /MD : use the multithread- and DLL-specific version of the run-time library
+# /GS : Detects some buffer overruns
+# /GS- : Disable /GS
+# /Od : turn off optimization
+# /O1 : optimize for size
+# /Zi : Produces a program database (PDB)
+
+EXTRA_CFLAGS += /X -I"$(WINCE_INCLUDE_PATH)" -I"$(VC8CE_INCLUDE_PATH)"
+EXTRA_CFLAGS += /wd4819 /Gy /GF /Zi
+
+ifeq ($(USE_DEBUG), true)
+
+DEBUG_CFLAGS += /MTd /Od /GS
+LD_FLAGS 	 += /debug
+
+else
+
+EXTRA_CFLAGS += /MT /Ox /GS-
+
+endif
+
+CYGWIN_MIDP_OUTPUT_DIR = `$(call fixcygpath, $(MIDP_OUTPUT_DIR))`
+
+endif
