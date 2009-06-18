@@ -161,7 +161,16 @@ information or have any questions.
             <xs:all minOccurs="0">
                 <xs:element ref="label"/>
             </xs:all>
-            <xs:attribute name="id" type="id-type" use="required" />
+            <xs:attribute name="id" type="id-type" use="required"/>
+            <xs:attribute name="align">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
+                        <xs:enumeration value='left'/>
+                        <xs:enumeration value='right'/>
+                        <xs:enumeration value='center'/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
         </xs:complexType>
     </xs:element>
 
