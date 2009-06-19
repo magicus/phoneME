@@ -39,7 +39,7 @@ nb_profiler-clean:
 nb_profiler_build_list =
 ifeq ($(CVM_JVMTI), true)
     nb_profiler_build_list = nb_profiler_initbuild \
-                       $(CVM_NB_PROFILER_LIB) profiler_module jfluid_libs
+                       $(CVM_NB_PROFILER_LIB) jfluid_libs
 endif
 
 nb_profiler: $(nb_profiler_build_list)
