@@ -349,7 +349,7 @@ public class VirtualKeyboard {
                 timer = new Timer();
             }
             timerKey = new TimerKey();
-            timer.schedule(timerKey, 700, 700); 
+            timer.schedule(timerKey, Constants.REPEAT_TIMEOUT, Constants.REPEAT_PERIOD); 
         } catch (IllegalStateException e) { 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) { 
                 Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI, 

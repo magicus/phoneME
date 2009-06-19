@@ -65,7 +65,6 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
 import java.io.IOException;
-import com.sun.midp.main.MIDletSuiteUtils;
 
 // #endif ENABLE_CHAMELEON
 
@@ -1766,11 +1765,13 @@ public class Display {
      *   associated with this Display
      **/
     VirtualKeyboardLayer getVirtualKeyboardPopup() {
-        // IMPL_NOTE: VK should not appear for the System canvas based app
-        if (MIDletSuiteUtils.getAmsIsolateId() == MIDletSuiteUtils.getIsolateId()  &&
-            current instanceof CanvasLFImpl)
-            return null;
-        
+        // IMPL_NOTE: by default cvk is enabled for canvas-based screen. Use  midlet property
+        // microedition.canvasvk=FALSE to disable it 
+        if (owner instanceof MIDlet) {
+            String vk = ((MIDlet)owner).getAppProperty("microedition.canvasvk");
+            if ("FALSE".equals(vk))
+                return null;
+        } 
         if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
             return null;
         }
