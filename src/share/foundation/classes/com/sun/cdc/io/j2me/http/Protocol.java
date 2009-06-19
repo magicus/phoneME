@@ -1049,13 +1049,18 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
             public Object run() {
+                StreamConnection con = streamConnection;
+
                 nm = new sun.misc.NetworkMetrics(sun.misc.NetworkMetrics.HTTP,
                                                  getHost(),
                                                  getPort(),
                                                  getFile(),
                                                  getRef(),
                                                  getQuery());
-                nm.sendMetric0F(streamConnection, methodType);
+                if (con instanceof StreamConnectionElement) {
+                    con = ((StreamConnectionElement)con).getBaseConnection();
+                }
+                nm.sendMetric0F(con, methodType);
                 return null;
             }
         });
@@ -1197,8 +1202,14 @@ malformed: {
 
             java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
                 public Object run() {
+                    StreamConnection con = streamConnection;
+
                     nm.setResponse(responseMsg);
-                    nm.sendMetric10(streamConnection, responseCode);
+                    if (con instanceof StreamConnectionElement) {
+                        con =
+                            ((StreamConnectionElement)con).getBaseConnection();
+                    }
+                    nm.sendMetric10(con, responseCode);
                     return null;
                 }
             });
