@@ -99,6 +99,12 @@ public abstract class CWindow {
     protected int color;
     
     /**
+     * Construct a dummy CWindow without any layers.
+     */
+    CWindow() {
+    }
+
+    /**
      * Construct a new CWindow given the background image and color.
      * If the background image is null, the fill color will be used
      * instead. In the case null image and negative color are specified

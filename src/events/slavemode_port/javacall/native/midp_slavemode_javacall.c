@@ -358,31 +358,47 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
 #ifdef ENABLE_JSR_234
     case MIDP_JC_EVENT_ADVANCED_MULTIMEDIA:
-        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
+        pNewSignal->waitingFor = AMMS_EVENT_SIGNAL;
         pNewSignal->status     = JAVACALL_OK;
+        pNewSignal->pResult    = (void *)event->data.multimediaEvent.data.num32;
 
-        pNewMidpEvent->type         = AMMS_EVENT;
-        pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
-        pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
+        if (event->data.multimediaEvent.mediaType > 0 &&
+                event->data.multimediaEvent.mediaType <
+                        JAVACALL_EVENT_AMMS_JAVA_EVENTS_MARKER) {
+            pNewMidpEvent->type         = AMMS_EVENT;
+            pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
+            pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
+            pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
-        switch( event->data.multimediaEvent.mediaType )
-        {
-        case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
-        case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
+            switch( event->data.multimediaEvent.mediaType )
             {
-                int len = 0;
-                javacall_utf16_string str = event->data.multimediaEvent.data.str16;
-                while( str[len] != 0 ) len++;
-                pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
-                free( str );
+            case JAVACALL_EVENT_AMMS_SNAP_SHOOTING_STOPPED:
+            case JAVACALL_EVENT_AMMS_SNAP_STORAGE_ERROR:
+                {
+                    int len = 0;
+                    javacall_utf16_string str = event->data.multimediaEvent.data.str16;
+                    while( str[len] != 0 ) len++;
+                    pcsl_string_convert_from_utf16( str, len, &pNewMidpEvent->MM_STRING );
+                    free( str );
+                }
+                break;
+            default:
+                pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data.num32;
+                break;
             }
-            break;
-        default:
-            pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data.num32;
-            break;
         }
 
+        /* This event should simply unblock waiting thread. No Java event is needed */
+        if (event->data.multimediaEvent.mediaType > 
+                                    JAVACALL_EVENT_AMMS_JAVA_EVENTS_MARKER) {
+            pNewSignal->descriptor =
+                MAKE_PLAYER_AMMS_DESCRIPTOR(event->data.multimediaEvent.appId,
+                                       event->data.multimediaEvent.playerId,
+                                       event->data.multimediaEvent.mediaType);
+                
+        } else {
+            pNewSignal->descriptor = 0;
+        }
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type,
             event->data.multimediaEvent.appId,
@@ -571,9 +587,9 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
 
             break;
-#if (ENABLE_JSR_135 || ENABLE_JSR_234)
+#if ENABLE_JSR_135
     case MEDIA_EVENT_SIGNAL:
-        if (newMidpEvent.type == MMAPI_EVENT || newMidpEvent.type == AMMS_EVENT) {
+        if (newMidpEvent.type == MMAPI_EVENT) {
             StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
         }
         if (newSignal.descriptor != 0) {
@@ -588,6 +604,32 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
                     (pThreadReentryData->descriptor == newSignal.descriptor ||
                         (pThreadReentryData->descriptor & 
                             PLAYER_DESCRIPTOR_EVENT_MASK) == 
+                                                      newSignal.descriptor)) {
+                    pThreadReentryData->status = newSignal.status;
+                    pThreadReentryData->pResult = newSignal.pResult;
+                    midp_thread_unblock(blocked_threads[i].thread_id);
+                }
+            }
+        }
+        break;
+#endif
+#if ENABLE_JSR_234
+    case AMMS_EVENT_SIGNAL:
+        if (newMidpEvent.type == AMMS_EVENT) {
+            StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
+        }
+        if (newSignal.descriptor != 0) {
+            int i;
+
+            for (i = 0; i < blocked_threads_count; i++) {
+                MidpReentryData *pThreadReentryData =
+                    (MidpReentryData*)(blocked_threads[i].reentry_data);
+
+                if (pThreadReentryData != NULL &&
+                    pThreadReentryData->waitingFor == newSignal.waitingFor &&
+                    (pThreadReentryData->descriptor == newSignal.descriptor ||
+                        (pThreadReentryData->descriptor & 
+                            PLAYER_AMMS_DESCRIPTOR_EVENT_MASK) == 
                                                       newSignal.descriptor)) {
                     pThreadReentryData->status = newSignal.status;
                     pThreadReentryData->pResult = newSignal.pResult;

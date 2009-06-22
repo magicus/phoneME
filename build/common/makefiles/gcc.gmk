@@ -105,6 +105,7 @@ LD_START_GROUP ?= -Xlinker --start-group
 LD_END_GROUP ?= --end-group
 
 AR		= $(GNU_TOOLS_BINDIR)ar
+AR_FLAGS	= -rcs
 CREATE_LIB	= $(AR) -rcs
 LIB_OUTPUT      =
 RANLIB  = $(GNU_TOOLS_BINDIR)ranlib
@@ -158,7 +159,8 @@ EXTRA_CFLAGS	+= -O3 -fexpensive-optimizations
 EXTRA_CPPFLAGS	+= -fconserve-space
 endif
 ifeq ($(USE_NATIVE_PROFILER), false)
-EXTRA_CFLAGS	+= -s -fomit-frame-pointer
+GCC_OMIT_FRAME_POINTER ?= -fomit-frame-pointer
+EXTRA_CFLAGS	+= -s $(GCC_OMIT_FRAME_POINTER)
 endif
 endif
 

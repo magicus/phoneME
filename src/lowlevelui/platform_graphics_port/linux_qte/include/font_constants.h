@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,24 +22,12 @@
  * information or have any questions.
  */
 
-package com.sun.midp.lcdui;
+#ifndef _FONT_CONSTANTS_H_
+#define _FONT_CONSTANTS_H_
 
-import javax.microedition.lcdui.Font;
+#define OEM_FONT_SIZE_SMALL   9
+#define OEM_FONT_SIZE_MEDIUM  13
+#define OEM_FONT_SIZE_LARGE   17
 
-/**
- * The FontAccess interface to access package private API of
- * javax.microedition.lcdui.Font class needed for interaction
- * with OEM UI libraries.
- */
-public interface FontAccess {
-    
-    /**
-     * Get a Font class instance holding a font with speicied size in pixels.
-     *
-     * @param style style of the font. Use Font.STYLE_XXX constants
-     * @param size size of the font in pixels
-     * @return Font object
-     */ 
-    Font getOEMFont(int style, int size);
-}
+#endif /* _FONT_CONSTANTS_H_ */
 

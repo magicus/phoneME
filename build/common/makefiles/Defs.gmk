@@ -116,6 +116,10 @@ ifeq ($(TARGET_VM), cdc_vm)
       MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
       MIDP_SHARED_LIB_FILES += $(OBJ_FILES)
       CREATE_MIDP_SHARED_LIB = true
+   else
+      MIDP_LIB ?= $(BINDIR)/$(MIDP_LIB_NAME)$(LIB_SUFFIX)
+      MIDP_LIB_FILES += $(OBJ_FILES)
+      CREATE_MIDP_LIB = true
    endif
 else
    MIDP_LIB_NAME ?= $(LIB_PREFIX)midp

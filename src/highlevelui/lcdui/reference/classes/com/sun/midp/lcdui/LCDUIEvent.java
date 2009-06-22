@@ -139,6 +139,23 @@ class LCDUIEvent extends Event {
     static LCDUIEvent createScreenChangeEvent(
         DisplayEventConsumer parent, 
         Displayable d) {
+
+        if (d == null) {
+            /*
+             * The Display.callScreenChange method asserts that d != null,
+             * but because this event is put in a queue and the cause
+             * cannot be found in the event processing thread, it can only be
+             * in this thread.
+             */
+            Logging.report(Logging.ERROR, LogChannels.LC_CORE,
+                "Screen change event created with a null displayable target");
+
+            NullPointerException e = new NullPointerException(
+                "Screen change event created with a null displayable target");
+            e.printStackTrace();
+            throw e;
+        }
+
         LCDUIEvent e = new LCDUIEvent(EventTypes.SCREEN_CHANGE_EVENT);
         e.display = parent;
         e.nextScreen = d;

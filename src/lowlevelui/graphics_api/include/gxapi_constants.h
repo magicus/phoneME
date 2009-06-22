@@ -119,10 +119,21 @@
  * @name Translation of javax.microedition.lcdui.Font constants
  * @{
  */
-#define JAVACALL_FONT_SIZE(font_size) ( \
-    font_size == SIZE_SMALL ? JAVACALL_FONT_SIZE_SMALL : \
-    font_size == SIZE_LARGE ? JAVACALL_FONT_SIZE_LARGE : \
-    JAVACALL_FONT_SIZE_MEDIUM )
+#define OEM_FONT_SIZE(font_size) ( \
+    font_size == SIZE_SMALL ? OEM_FONT_SIZE_SMALL : \
+    font_size == SIZE_LARGE ? OEM_FONT_SIZE_LARGE : \
+    OEM_FONT_SIZE_MEDIUM )
+/** @} */
+
+/**
+ * @name Translation of OEM_FONT_SIZE_XXX constants to Font constants
+ * @{
+ */
+#define LCDUI_FONT_SIZE(font_size) ( \
+    font_size <= OEM_FONT_SIZE_SMALL ? SIZE_SMALL : \
+    font_size >= OEM_FONT_SIZE_LARGE ? SIZE_LARGE : \
+    SIZE_MEDIUM )
 /** @} */
 
 #endif /* _GXAPI_CONSTANTS_H_ */
+

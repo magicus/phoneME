@@ -30,6 +30,14 @@ import com.sun.midp.lcdui.DisplayContainer;
 import com.sun.midp.lcdui.ForegroundEventConsumer;
 import com.sun.midp.main.NativeForegroundState;
 
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.EventListener;
+
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+
 
 /**
  * Native virtual keyboard.
@@ -52,7 +60,53 @@ public class NativeVirtualKeyboard {
 
     private final static Object LOCK = new Object();
 
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    private static class SecurityTrusted implements ImplicitlyTrustedClass {}
+
+    private static EventQueue eventQueue;
+
     private static DisplayContainer displayContainer;
+
+
+    private static class NvkEvent extends Event {
+        String initialText;
+        int maxChars;
+        int modes;
+        int constraint;
+        String result;
+        boolean processed;
+
+        NvkEvent() {
+            super(EventTypes.NATIVE_VIRTUAL_KEYBOARD_EVENT);
+        }
+    }
+
+    private static class NvkEventListener implements EventListener {
+        public boolean preprocess(Event event, Event waitingEvent) {
+            return true;
+        }
+
+        public void process(Event event) {
+            NvkEvent nvkEvent = (NvkEvent)event;
+
+            synchronized (LOCK) {
+                try {
+                    nvkEvent.result =
+                        editTextImpl(nvkEvent.initialText, nvkEvent.maxChars,
+                                nvkEvent.modes, nvkEvent.constraint);
+                } catch (InterruptedException e) {
+                    nvkEvent.result = null;
+                } finally {
+                    // Notify blocked 'editText()'
+                    nvkEvent.processed = true;
+                    LOCK.notifyAll();
+                }
+            }
+        }
+    }
 
     static {
         // should initialize 'displayContainer' from
@@ -62,6 +116,13 @@ public class NativeVirtualKeyboard {
         if (displayContainer == null) {
             throw new IllegalStateException();
         }
+
+        eventQueue =
+            EventQueue.getEventQueue(
+                SecurityInitializer.requestToken(new SecurityTrusted()));
+
+        eventQueue.registerEventListener(
+            EventTypes.NATIVE_VIRTUAL_KEYBOARD_EVENT, new NvkEventListener());
     }
 
     /**
@@ -129,6 +190,44 @@ public class NativeVirtualKeyboard {
             throw new IllegalArgumentException();
         }
 
+        String resultText;
+        if (EventQueue.isDispatchThread()) {
+            // In MIDP event handling thread context
+            // launch native virtual keyboard immediatly
+            resultText = editTextImpl(text, maxChars, modes, constraint);
+        } else {
+            NvkEvent event = new NvkEvent();
+            event.initialText = text;
+            event.maxChars = maxChars;
+            event.modes = modes;
+            event.constraint = constraint;
+
+            synchronized (LOCK) {
+                eventQueue.post(event);
+                while (!event.processed) {
+                    LOCK.wait();
+                }
+            }
+
+            resultText = event.result;
+        }
+
+        if (null == resultText) {
+            // some internal error
+            throw new InterruptedException();
+        }
+
+        return resultText;
+    }
+
+    private static String editTextImpl(
+            String text, int maxChars,
+            int modes, int constraint) throws InterruptedException {
+
+        if (!EventQueue.isDispatchThread()) {
+            throw new IllegalStateException();
+        }
+
         ForegroundEventConsumer fc =
                 displayContainer.findForegroundEventConsumer(
                     NativeForegroundState.getState());
@@ -138,21 +237,14 @@ public class NativeVirtualKeyboard {
         }
 
         // Disable screen updates
+        // IMPORTANT: should be called from MIDP event handler thread only!
         fc.handleDisplayBackgroundNotifyEvent();
 
         try {
-            synchronized (LOCK) {
-                String res = editText0(text, maxChars, modes, constraint);
-
-                if (null == res) {
-                    // some internal error
-                    throw new InterruptedException();
-                }
-
-                return res;
-            }
+            return editText0(text, maxChars, modes, constraint);
         } finally {
             // Enable screen updates and redraw screen
+            // IMPORTANT: should be called from MIDP event handler thread only!
             fc.handleDisplayForegroundNotifyEvent();
         }
     }

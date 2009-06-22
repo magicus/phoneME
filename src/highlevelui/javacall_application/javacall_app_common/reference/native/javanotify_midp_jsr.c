@@ -1030,12 +1030,14 @@ javanotify_fluid_listener_percentage (
     
 void
 javanotify_fluid_listener_started (
-    javacall_handle                       fluid_image
+    javacall_handle                       fluid_image,
+    javacall_handle                       new_image
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_STARTED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare = new_image;
 
     midp_jc_event_send(&e);
 }
