@@ -165,4 +165,15 @@ public interface DisplayAccess {
      * @return Object[]  List of screen regions that need to be refreshed
      */
     public Object[] getDirtyRegions();
+    
+    /**
+     * Enable OpenGL rendering path instead of the default
+     * 
+     */
+    public void enableOpenGL();
+    
+    /**
+      * Called to enable default rendering path
+     */
+    public void disableOpenGL();
 }

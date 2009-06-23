@@ -610,7 +610,12 @@ public class Display {
     /** Current active queue for serially repainted operations. */
     private static java.util.Vector currentQueue = queue1;
 
-    // #ifdef ENABLE_GCI        
+    /** Indicates if special openGL rendering path should be used instead of 
+      * default
+     */
+    private boolean useOpenGL = false;
+
+    // #ifdef ENABLE_GCI	
     /** GCIDisplay that incapsulates information about the display device */
     private GCIDisplay gciDisplay;
   
@@ -2323,11 +2328,13 @@ public class Display {
 		// #ifdef ENABLE_GCI
 		gciScreenWidget.getDrawingSurface().renderingBegin();
 		// #endif
-                // #ifdef ENABLE_OPENGL
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                ogl.startMidpRendering();
-                // #endif
+
+                if (useOpenGL) {
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                      com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                    ogl.startMidpRendering();
+                }
+
 		// #ifdef ENABLE_CHAMELEON
 		if (window.setGraphicsForCanvas(screenGraphics)) {
 		    // If the window is not dirty and we are repainting it
@@ -2393,14 +2400,16 @@ public class Display {
                 // #endif ENABLE_CHAMELEON
         }
         finally {
-                // #ifdef ENABLE_OPENGL
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                ogl.endMidpRendering();
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
+                if (useOpenGL) {
+
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                    ogl.endMidpRendering();
+
+                    // This call to refresh a "zero" region is inserted to
+                    // trigger display update on some platforms
+                    displayDevice.refresh(displayId, 0, 0, 0, 0);
+                }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x1,y1,x2,y2};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -3069,6 +3078,22 @@ public class Display {
             return Display.this.graphicsQ.getRefreshRegions();
         }
 
+        /**
+         * Called to enable OpenGL rendering path instead of default
+         */
+        public void enableOpenGL() {
+System.out.println("Display: enabling openGL");
+            useOpenGL = true;
+        }
+
+        /**
+         * Called to enable default rendering path
+         */
+        public void disableOpenGL() {
+System.out.println("Display: disabling openGL");
+            useOpenGL = false;
+        }
+
         private long lastFlushTime = 0;
 
         /**
@@ -3221,32 +3246,31 @@ public class Display {
                             screenGraphics.translate(-tranX, -tranY);
                             screenGraphics.setClip(x1, y1, width, height);
                             
-                            //#ifdef ENABLE_OPENGL
-                            // flush the offscreen buffer to the backing surface
-                            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                            ogl.flushPbufferSurface(offscreen_buffer, x1, y1,
-                                                    width, height);
-                            //#else
-                            screenGraphics.drawImage(offscreen_buffer,
-                                     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
-                            //#endif
+                            if (useOpenGL) {
+                                // flush the offscreen buffer to the backing surface
+                                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                                ogl.flushPbufferSurface(offscreen_buffer, x1, y1,
+                                                        width, height);
+                            }
+                            else {
+                                screenGraphics.drawImage(offscreen_buffer,
+                                      anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
+                            }
                             // restore initial clip area and translation
                             screenGraphics.translate(tranX, tranY);
                             screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
                         }
-                        // #ifdef ENABLE_OPENGL
-                        // #else
-                        displayDevice.refresh(displayId, x1, y1, x2, y2);
-                        // #endif
+                        if (!useOpenGL)
+                            displayDevice.refresh(displayId, x1, y1, x2, y2);
                     }
             }
             finally {
-                // #ifdef ENABLE_OPENGL
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
+                if (useOpenGL) {
+                    // This call to refresh a "zero" region is inserted to
+                    // trigger display update on some platforms
+                    displayDevice.refresh(displayId, 0, 0, 0, 0);
+                }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x,y,x+width,y+height};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);

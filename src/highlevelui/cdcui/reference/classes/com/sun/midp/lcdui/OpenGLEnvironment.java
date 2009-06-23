@@ -47,17 +47,16 @@ public class OpenGLEnvironment{
      */
     public void flushOpengGL(DisplayContainer container, Graphics bindTarget) {
         int regionArray[];
-
+        System.out.println("in flushOpenGL - bindTarget is " + bindTarget);
         while (midpIsRendering) {
             try {
+                System.out.println("waiting for midp to finish rendering");
                 Thread.sleep(10);
-                //System.out.println("waiting for midp to finish rendering");
             } catch (Exception e) {}
         }
-        //System.out.println("in flushOpenGL - bindTarget is " + bindTarget);
         if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
                                bindTarget.getClipHeight())) {
-        //System.out.println("now checking for normal flush");
+        System.out.println("now checking for normal flush");
         int displayId = NativeForegroundState.getState();
         DisplayAccess da = container.findDisplayById(displayId);
         if (da != null) {
@@ -84,7 +83,7 @@ public class OpenGLEnvironment{
     
     public void flushPbufferSurface(Image offscreen_buffer,
                                     int x, int y, int width, int height){
-        //System.out.println("offscreen buffer is " + offscreen_buffer);
+        System.out.println("offscreen buffer is " + offscreen_buffer);
         flushPbufferSurface0(offscreen_buffer, x, y, width, height);
         //System.out.println("back from flushPbufferSurface0");
     }
@@ -94,12 +93,12 @@ public class OpenGLEnvironment{
     }
 
     public void startMidpRendering() {
-        //System.out.println("*** startMidpRendering");
+        System.out.println("*** startMidpRendering");
         midpIsRendering=true;
     }
 
     public void endMidpRendering() {
-        //System.out.println("*** endMidpRendering");
+        System.out.println("*** endMidpRendering");
         midpIsRendering=false;
     }
     
@@ -112,6 +111,22 @@ public class OpenGLEnvironment{
         return retval;
     }
     
+    public void enableOpenGL(DisplayContainer container) {
+        System.out.println("OpenGLEnvironmentProxy: enabling OpenGL");
+        int displayId = NativeForegroundState.getState();
+        DisplayAccess da = container.findDisplayById(displayId);
+        initMidpGL(da.getDisplayWidth(), da.getDisplayHeight());
+        da.enableOpenGL();
+    }
+    
+    public void disableOpenGL(DisplayContainer container) {
+        System.out.println("OpenGLEnvironmentProxy: disabling OpenGL");
+        int displayId = NativeForegroundState.getState();
+        DisplayAccess da = container.findDisplayById(displayId);
+        da.disableOpenGL();
+        disableOpenGL0();
+    }
+    
     private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);
     
@@ -122,4 +137,6 @@ public class OpenGLEnvironment{
     private native boolean hasBackingSurface(Graphics bindTarget,
                                              int width, int height);
     private native int getDrawingSurface0(Graphics bindTarget, int api);
+    private native void initMidpGL(int screenWidth, int screenHeight);
+    private native void disableOpenGL0();
 }
