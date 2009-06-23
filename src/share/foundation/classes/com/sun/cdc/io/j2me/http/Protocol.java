@@ -52,6 +52,9 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import javax.microedition.io.ConnectionNotFoundException;
 
+import sun.misc.NetworkMetrics;
+import sun.misc.NetworkMetricsInf;
+
 /**
  * This class implements the necessary functionality
  * for an HTTP connection. 
@@ -101,7 +104,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private static String platformUserAgent;
     private static String platformWapProfile;
 
-    protected sun.misc.NetworkMetrics nm;
+    protected NetworkMetricsInf nm;
 
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
@@ -1042,29 +1045,40 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 + " " + httpVersion + "\r\n";
         }
 
-        final int methodType =
-            (method.equals(POST) ? sun.misc.NetworkMetrics.POST :
-             method.equals(HEAD) ? sun.misc.NetworkMetrics.HEAD :
-             sun.misc.NetworkMetrics.GET); 
 
-        java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
-            public Object run() {
-                StreamConnection con = streamConnection;
+            java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+                    public Object run() {
+                        if (NetworkMetrics.metricsAvailable()) {
+                            StreamConnection con = streamConnection;
 
-                nm = new sun.misc.NetworkMetrics(sun.misc.NetworkMetrics.HTTP,
-                                                 getHost(),
-                                                 getPort(),
-                                                 getFile(),
-                                                 getRef(),
-                                                 getQuery());
-                if (con instanceof StreamConnectionElement) {
-                    con = ((StreamConnectionElement)con).getBaseConnection();
-                }
-                nm.sendMetric0F(con, methodType);
-                return null;
-            }
-        });
-
+                            int methodType =
+                                (method.equals(POST) ? NetworkMetricsInf.POST :
+                                 method.equals(HEAD) ? NetworkMetricsInf.HEAD :
+                                 NetworkMetricsInf.GET);
+                            Class nmClass = NetworkMetrics.getImpl();
+                            if (nmClass == null) {
+                                return null;
+                            }
+                            try {
+                                nm = (NetworkMetricsInf) nmClass.newInstance();
+                            } catch (Exception e) {
+                                return null;
+                            }
+                            nm.initReq(NetworkMetricsInf.HTTP,
+                                       getHost(),
+                                       getPort(),
+                                       getFile(),
+                                       getRef(),
+                                       getQuery());
+                            if (con instanceof StreamConnectionElement) {
+                                con =
+                                    ((StreamConnectionElement)con).getBaseConnection();
+                            }
+                            nm.sendMetricReq(con, methodType);
+                        }
+                        return null;
+                    }
+                });
         // DEBUG: System.out.print("Request: " + reqLine);
         streamOutput.write((reqLine).getBytes());
 
@@ -1200,19 +1214,23 @@ malformed: {
     
             responseMsg = line.substring(codeEnd + 1);
 
-            java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
-                public Object run() {
-                    StreamConnection con = streamConnection;
+            if (NetworkMetrics.metricsAvailable()) {
+                java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+                        public Object run() {
+                            try {
+                                StreamConnection con = streamConnection;
 
-                    nm.setResponse(responseMsg);
-                    if (con instanceof StreamConnectionElement) {
-                        con =
-                            ((StreamConnectionElement)con).getBaseConnection();
-                    }
-                    nm.sendMetric10(con, responseCode);
-                    return null;
-                }
-            });
+                                nm.setResponse(responseMsg);
+                                if (con instanceof StreamConnectionElement) {
+                                    con =
+                                        ((StreamConnectionElement)con).getBaseConnection();
+                                }
+                                nm.sendMetricResponse(con, responseCode);
+                            } catch (NullPointerException e) {}
+                            return null;
+                        }
+                    });
+            }
 
             return;
         }

@@ -179,6 +179,8 @@ CVM_BUILDTIME_CLASSES += \
    sun.text.ComposeData \
    sun.text.CompactByteArray \
    sun.text.CompactCharArray \
+   sun.misc.NetworkMetrics \
+   sun.misc.NetworkMetricsInf \
 
 #
 # The following are the public classes in the Foundation specification.
