@@ -475,7 +475,7 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
 
     else {
       tty->print_cr("Unknown command \"%s\" on line %d of %s", name, 
-                    config_parsing_line_number, config_parsing_file());
+                    config_parsing_line_number(), config_parsing_file());
       tty->print_cr("Note: ROM configuration commands are case sensitive.");
       JVM::exit(0);
     }
