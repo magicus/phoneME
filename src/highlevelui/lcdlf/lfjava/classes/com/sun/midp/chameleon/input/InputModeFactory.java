@@ -26,6 +26,8 @@
 package com.sun.midp.chameleon.input;
 
 
+import com.sun.midp.configurator.Constants;
+
 public class InputModeFactory {
     public static final int KEYBOARD_INPUT_MODE = 1;
     public static final int NUMERIC_INPUT_MODE = 2;
@@ -43,13 +45,23 @@ public class InputModeFactory {
         if (id < NATIVE_INPUT_MODE_START) {
             InputMode im;
             switch(id) {
-                case KEYBOARD_INPUT_MODE: im = new KeyboardInputMode(); break;
-                case NUMERIC_INPUT_MODE: im = new NumericInputMode(); break;
-                case ALPHANUMERIC_INPUT_MODE: im = new AlphaNumericInputMode(); break;
-                case PREDICTIVE_TEXT_INPUT_MODE: im = new PredictiveTextInputMode(); break;
-                case SYMBOL_INPUT_MODE: im = new SymbolInputMode(); break;
-                case VIRTUAL_INPUT_MODE: im = new VirtualKeyboardInputMode(); break;
-                default: throw new IllegalArgumentException("bad java input mode id: "+id);
+            case KEYBOARD_INPUT_MODE: im = new KeyboardInputMode(); break;
+            case NUMERIC_INPUT_MODE: im = new NumericInputMode(); break;
+            case ALPHANUMERIC_INPUT_MODE: im = new AlphaNumericInputMode(); break;
+            case PREDICTIVE_TEXT_INPUT_MODE: im = new PredictiveTextInputMode(); break;
+            case SYMBOL_INPUT_MODE: im = new SymbolInputMode(); break;
+            case VIRTUAL_INPUT_MODE: {
+                if (Constants.TEXT_INPUT_JAVAVK_SUPPORTED) {
+                    im = new JavaVirtualKeyboardInputMode();
+                } else if (Constants.TEXT_INPUT_NATIVEVK_SUPPORTED) {
+                    im = new NativeVirtualKeyboardInputMode();
+                } else {
+                    throw new IllegalArgumentException("java input mode is not supported: "+id);
+                }
+                break;
+            }
+                
+            default: throw new IllegalArgumentException("bad java input mode id: "+id);
             }
             return im;
         } else {
@@ -60,7 +72,7 @@ public class InputModeFactory {
             return nim;
         }
     }
-
+    
     public static InputMode[] createInputModes() {
         final int nModes = inputModeIds.length;
         InputMode[] ims = new InputMode[nModes];

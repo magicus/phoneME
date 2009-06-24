@@ -44,7 +44,6 @@ import com.sun.midp.chameleon.skins.resources.PTIResources;
 import com.sun.midp.chameleon.skins.resources.InputModeResources;
 import com.sun.midp.configurator.Constants;
 
-
 import java.util.*;
 
 /**
@@ -1956,7 +1955,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
         if (d != null) {
             if (!vkb_popupOpen) {
-               if (d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode) {
+               if (d.getInputSession().getCurrentInputMode() instanceof JavaVirtualKeyboardInputMode) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
                     if (keyboardPopup != null ) {
                         keyboardPopup.addVirtualKeyboardLayerListener(this);
@@ -1967,7 +1966,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                     }
                 }
             } else {
-                if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode)) {
+                if (!(d.getInputSession().getCurrentInputMode() instanceof JavaVirtualKeyboardInputMode)) {
                     VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
                     if (keyboardPopup != null ) {
                         keyboardPopup.removeVirtualKeyboardLayerListener(null);

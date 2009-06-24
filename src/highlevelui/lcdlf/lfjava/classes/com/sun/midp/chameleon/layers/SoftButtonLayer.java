@@ -174,10 +174,10 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         this.tunnel = tunnel;
 
         if (tunnel != null) {
-            VirtualKeyboardLayer vk = tunnel.getVirtualKeyboardPopup();
-            if (vk != null) {
-                vk.addVirtualKeyboardLayerListener(this);
-            }
+            //            VirtualKeyboardLayer vk = tunnel.getVirtualKeyboardPopup();
+            //if (vk != null) {
+            //   vk.addVirtualKeyboardLayerListener(this);
+            // }
         }
 
         isNativeLayer = isNativeSoftButtonLayerSupported0();

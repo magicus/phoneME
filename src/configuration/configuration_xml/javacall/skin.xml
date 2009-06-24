@@ -1117,6 +1117,61 @@
         Key="KEYBOARD_BTN_DOWN_UN"
       Value="keyboard.btn_down_un"
     Romized="false"/>
+  <image
+     Key="KEYBOARD_BTN_SB_SEL"
+     Value="keyboard.btn_sb_sel"
+     Romized="false"/>
+
+  <image
+     Key="KEYBOARD_BTN_SB_UN"
+     Value="keyboard.btn_sb_un"
+     Romized="false"/>
+  
+  <image
+     Key="KEYBOARD_BTN_GAME_MODE"
+     Value="keyboard.btn_game"
+     Romized="false"/>
+
+  <image
+     Key="KEYBOARD_BTN_GAMEA_SEL"
+     Value="keyboard.btn_gamea_sel"
+     Romized="false"/>
+  
+  <image
+     Key="KEYBOARD_BTN_GAMEA_UN"
+     Value="keyboard.btn_gamea_un"
+     Romized="false"/>
+
+  <image
+     Key="KEYBOARD_BTN_GAMEB_SEL"
+     Value="keyboard.btn_gameb_sel"
+     Romized="false"/>
+
+  <image
+     Key="KEYBOARD_BTN_GAMEB_UN"
+     Value="keyboard.btn_gameb_un"
+     Romized="false"/>
+
+  <image
+     Key="KEYBOARD_BTN_GAMEC_SEL"
+     Value="keyboard.btn_gamec_sel"
+     Romized="false"/>
+  
+  <image
+     Key="KEYBOARD_BTN_GAMEC_UN"
+     Value="keyboard.btn_gamec_un"
+
+     Romized="false"/>
+
+  <image
+     Key="KEYBOARD_BTN_GAMED_SEL"
+     Value="keyboard.btn_gamed_sel"
+     Romized="false"/>
+  
+  <image
+     Key="KEYBOARD_BTN_GAMED_UN"
+     Value="keyboard.btn_gamed_un"
+     Romized="false"/>
 
   <font
         Key="KEYBOARD_FONT"

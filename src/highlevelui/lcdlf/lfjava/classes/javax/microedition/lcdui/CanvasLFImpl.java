@@ -35,6 +35,7 @@ import com.sun.midp.i18n.ResourceConstants;
 
 import java.util.Vector;
 import java.util.Enumeration;
+import com.sun.midp.configurator.Constants;
 
 /**
 * This is the look amps; feel implementation for Canvas.
@@ -105,19 +106,23 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      * Show virtual keyboard popap
      */
     protected void showKeyboardLayer() {
-        if (currentDisplay != null) {
-            if (!vkb_popupOpen) {
-                VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
-                if (keyboardPopup != null ) {
-                    keyboardPopup.addVirtualKeyboardLayerListener(this);
-                    keyboardPopup.setKeyboardType(com.sun.midp.lcdui.VirtualKeyboard.GAME_KEYBOARD);
-                    currentDisplay.showPopup(keyboardPopup);
-                    vkb_popupOpen = true;
-                    synchronized (Display.calloutLock) {
-                        lRequestInvalidate();
+        if (Constants.CANVAS_JAVAVK_SUPPORTED) {
+            if (currentDisplay != null) {
+                if (!vkb_popupOpen) {
+                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
+                    if (keyboardPopup != null ) {
+                        keyboardPopup.addVirtualKeyboardLayerListener(this);
+                        keyboardPopup.setKeyboardType(com.sun.midp.lcdui.VirtualKeyboard.GAME_KEYBOARD);
+                        currentDisplay.showPopup(keyboardPopup);
+                        vkb_popupOpen = true;
+                        synchronized (Display.calloutLock) {
+                            lRequestInvalidate();
+                        }
                     }
-                }
-            } 
+                } 
+            }
+        } else if (Constants.CANVAS_NATIVEVK_SUPPORTED) {
+            // native keyboard impl
         }
     }
 
@@ -126,16 +131,20 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      * Hide virtual keyboard popap
      */
     protected void hideKeyboardLayer() {
-        if (vkb_popupOpen && currentDisplay != null) {
-            VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
-            if (keyboardPopup != null ) {
-                keyboardPopup.removeVirtualKeyboardLayerListener(this);
-                currentDisplay.hidePopup(keyboardPopup);
-                vkb_popupOpen = false;
-                synchronized (Display.calloutLock) {
-                    lRequestInvalidate();
+        if (Constants.CANVAS_JAVAVK_SUPPORTED) {
+            if (vkb_popupOpen && currentDisplay != null) {
+                VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
+                if (keyboardPopup != null ) {
+                    keyboardPopup.removeVirtualKeyboardLayerListener(this);
+                    currentDisplay.hidePopup(keyboardPopup);
+                    vkb_popupOpen = false;
+                    synchronized (Display.calloutLock) {
+                        lRequestInvalidate();
+                    }
                 }
             }
+        } else if (Constants.CANVAS_NATIVEVK_SUPPORTED) {
+            // native keyboard impl
         }
     }
     
@@ -163,6 +172,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
                 Display.handleThrowable(t);
             }
         }
+
         showKeyboardLayer();
     }
 

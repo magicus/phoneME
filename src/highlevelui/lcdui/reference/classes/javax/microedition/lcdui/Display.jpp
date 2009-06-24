@@ -1765,25 +1765,25 @@ public class Display {
      *   associated with this Display
      **/
     VirtualKeyboardLayer getVirtualKeyboardPopup() {
-        // IMPL_NOTE: by default cvk is enabled for canvas-based screen. Use  midlet property
+        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
         // microedition.canvasvk=FALSE to disable it 
         if (current != null && current.lGetDisplayable() instanceof Canvas) {
             if (owner instanceof MIDlet) {
                 String vk = ((MIDlet)owner).getAppProperty("microedition.canvasvk");
-                if ("FALSE".equals(vk))
+                if ("FALSE".equals(vk)) {
                     return null;
+                } 
             } else {
                 // IMPL_NOTE: don't show virtual keyboard for non-midlet apps 
                 return null;
             }
-        }
-        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
-            return null;
-        }
+        } 
+        
         if (keyboardLayer == null) {
-          VirtualKeyboardResources.load();
-          keyboardLayer = new VirtualKeyboardLayer();
-          keyboardLayer.init();
+            VirtualKeyboardResources.load();
+            if (VirtualKeyboardLayer.init()) {
+                  keyboardLayer = new VirtualKeyboardLayer();
+            }
         }
         return keyboardLayer;
     }

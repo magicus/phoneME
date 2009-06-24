@@ -61,26 +61,21 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      */
     public VirtualKeyboardLayer() {
         super(VirtualKeyboardSkin.BG, VirtualKeyboardSkin.COLOR_BG);
+        if (vk != null) {
+            vk.setListener(this);
+        }
         listeners = new VirtualKeyListener[LIST_INC];
-    }
-
-    /**
-     * Method return true if current virtual keybpard implementation supports java virtual keyboard
-     * @return status of java virtual keyboard support
-     */
-    public static boolean isSupportJavaKeyboard() {
-        return VirtualKeyboard.isSupportJavaKeyboard();
     }
 
     /**
      * Return standalone instance of VirtualKeyboardLayer
      * @return
      */
-    public void init() {
-
-        if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
-            vk = VirtualKeyboard.getVirtualKeyboard(this);
-         }
+    public static  boolean init() {
+        if (vk == null) {
+            vk = VirtualKeyboardFactory.getVirtualKeyboard(VirtualKeyboardFactory.JAVA_VK, null);
+        }
+        return (vk != null);
     }
 
     /**
@@ -145,19 +140,19 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      * @param keyboard
      */
     public void setKeyboardType(String keyboard) {
-        vk.changeKeyboad(keyboard);
+        vk.changeKeyboard(keyboard);
     }
 
     /**
      * Toggle the visibility state of this layer within its containing
      * window.
      *
-     * @param visible If true, this layer will be painted as part of its
+     * @param visible If true, this layer will \be painted as part of its
      *                containing window, as well as receive events if it
      *                supports input.
      */
     public void setVisible(boolean visible) {
-        if (vk != null && vk.isSupportJavaKeyboard()) {
+        if (vk != null) {
             this.visible = visible;
         } else {
             this.setVisible(false);

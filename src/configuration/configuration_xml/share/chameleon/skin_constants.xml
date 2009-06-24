@@ -1758,7 +1758,42 @@
   <constant Type="int"
             Name="KEYBOARD_FONT"
             Comment="Virtual keyboard font"/>
-    <constant Type="int"
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAME_MODE"
+          Comment="Image for virtual keyboard key"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_SB_SEL"
+          Comment="Image for virtual keyboard key with selected soft
+                   button"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_SB_UN"
+          Comment="Image for virtual keyboard key with unselected
+                   soft buton"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMEA_SEL"
+          Comment="Image for virtual keyboard key with selected gameA"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMEA_UN"
+          Comment="Image for virtual keyboard key with unselected gameA"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMEB_SEL"
+          Comment="Image for virtual keyboard key with selected gameB"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMEB_UN"
+          Comment="Image for virtual keyboard key with unselected gameB"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMEC_SEL"
+          Comment="Image for virtual keyboard key with selected gameC"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMEC_UN"
+          Comment="Image for virtual keyboard key with unselected gameC"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMED_SEL"
+          Comment="Image for virtual keyboard key with selected gameD"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMED_UN"
+          Comment="Image for virtual keyboard key with unselected gameD"/>
+<constant Type="int"
               Name="TOUCH_RADIUS"
            Comment="Radius of finger if finger support is on,
                     if finger support is off than this constant should be 0" />
