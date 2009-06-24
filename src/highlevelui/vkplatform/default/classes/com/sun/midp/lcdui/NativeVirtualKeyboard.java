@@ -87,26 +87,4 @@ public class NativeVirtualKeyboard implements VirtualKeyboard {
      */
     public void resize(double kshrinkX, double kshrinkY) {
     }
-        /**
-     * Runs native virtual keyboard to edit the given text.
-     * Blocks until edit session is not complete.
-     * Returns changed text.
-     * @param text
-     *  initial text or <code>null</code>;
-     * @param maxChars
-     *  maximum number of characters in the return string;
-     * @param constraint
-     *  text editing constraint id;
-     * @throws IllegalArgumentException
-     *  if number of characters in the initial text is larger then <code>maxChars</code> value;
-     *  if <code>maxChars</code> is zero;
-     *  if <code>modes</code> or <code>constraint</code> are not recognized;
-     * @throws RuntimeException
-     *  if editing session was interrupted; e.g. if vm is suspended editing session is interrupted.
-     */
-    public String editText(String text, int maxChars,
-                           int constraints) throws InterruptedException {
-        return null;
-        
-    }
 }
