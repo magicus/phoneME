@@ -43,6 +43,7 @@ import com.sun.midp.chameleon.skins.resources.TextFieldResources;
 import com.sun.midp.chameleon.skins.resources.PTIResources;
 import com.sun.midp.chameleon.skins.resources.InputModeResources;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.lcdui.EventConstants;
 
 import java.util.*;
 
@@ -1346,16 +1347,32 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
 
     public boolean processKeyPressed(int keyCode) {
-        cachedInputSession.processKey(keyCode, false);
-        return true; 
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            cachedInputSession.processKey(keyCode, false);
+        }
+        return ret; 
     }
 
     public boolean processKeyReleased(int keyCode) {
-        return true; 
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } 
+        return ret; 
     }
 
     public boolean processKeyRepeated(int keyCode) { 
-        return true; 
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } 
+        return ret; 
     }
 
 

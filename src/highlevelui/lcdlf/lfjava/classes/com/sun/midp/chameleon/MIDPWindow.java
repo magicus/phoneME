@@ -355,6 +355,7 @@ public class MIDPWindow extends CWindow {
 	    } else if (layer instanceof VirtualKeyboardLayer) {
 		keyboardLayer = (VirtualKeyboardLayer)layer;
 		mainLayers[KEYBOARD_LAYER] = layer;
+        setVirtualKeyboardLayerListeners();
 		resize();
 	    } else {
 		layer.update(mainLayers);
@@ -900,6 +901,13 @@ public class MIDPWindow extends CWindow {
             }
         }
         return null;
+    }
+
+
+    private void setVirtualKeyboardLayerListeners() {
+        if (keyboardLayer != null) {
+             keyboardLayer.addVirtualKeyboardLayerListener(buttonLayer);
+        }
     }
 
     /**

@@ -36,6 +36,7 @@ import com.sun.midp.i18n.ResourceConstants;
 import java.util.Vector;
 import java.util.Enumeration;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.lcdui.EventConstants;
 
 /**
 * This is the look amps; feel implementation for Canvas.
@@ -512,17 +513,35 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
     private boolean vkb_popupOpen; 
 
     public boolean processKeyPressed(int keyCode) {
-        uCallKeyPressed(keyCode);
-        return true;
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            uCallKeyPressed(keyCode);
+        }
+        return ret;
     }
 
     public boolean processKeyReleased(int keyCode) {
-        uCallKeyReleased(keyCode);
-        return true;
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            uCallKeyReleased(keyCode);
+        }
+        return ret;
     }
 
     public boolean processKeyRepeated(int keyCode) {
-        uCallKeyRepeated(keyCode);
-        return true;
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            uCallKeyRepeated(keyCode);
+        }
+        return ret;
     }
 }

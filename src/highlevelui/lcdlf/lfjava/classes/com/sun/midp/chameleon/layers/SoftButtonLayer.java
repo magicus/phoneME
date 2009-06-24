@@ -173,13 +173,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         super.setVisible(true);
         this.tunnel = tunnel;
 
-        if (tunnel != null) {
-            //            VirtualKeyboardLayer vk = tunnel.getVirtualKeyboardPopup();
-            //if (vk != null) {
-            //   vk.addVirtualKeyboardLayerListener(this);
-            // }
-        }
-
         isNativeLayer = isNativeSoftButtonLayerSupported0();
 
         labels = new String[SoftButtonSkin.NUM_BUTTONS];
