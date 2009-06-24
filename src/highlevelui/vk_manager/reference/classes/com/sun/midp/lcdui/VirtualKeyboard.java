@@ -88,9 +88,7 @@ public interface VirtualKeyboard {
      *  initial text or <code>null</code>;
      * @param maxChars
      *  maximum number of characters in the return string;
-     * @param modes
-     *  text editing mode ids;
-     * @param constraint
+     * @param constraints
      *  text editing constraint id;
      * @throws IllegalArgumentException
      *  if number of characters in the initial text is larger then <code>maxChars</code> value;
@@ -100,7 +98,7 @@ public interface VirtualKeyboard {
      *  if editing session was interrupted; e.g. if vm is suspended editing session is interrupted.
      */
     public String editText(String text, int maxChars,
-                           int modes, int constraint) throws InterruptedException;
+                           int constraints) throws InterruptedException;
 
 }
 

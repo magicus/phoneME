@@ -94,8 +94,6 @@ public class JavaVirtualKeyboard implements VirtualKeyboard {
      *  initial text or <code>null</code>;
      * @param maxChars
      *  maximum number of characters in the return string;
-     * @param modes
-     *  text editing mode ids;
      * @param constraint
      *  text editing constraint id;
      * @throws IllegalArgumentException
@@ -106,7 +104,7 @@ public class JavaVirtualKeyboard implements VirtualKeyboard {
      *  if editing session was interrupted; e.g. if vm is suspended editing session is interrupted.
      */
     public String editText(String text, int maxChars,
-                           int modes, int constraint) throws InterruptedException {
+                           int constraints) throws InterruptedException {
         return null;
     }
 }
