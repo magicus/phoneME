@@ -28,15 +28,12 @@
 #include "incls/_ROMProfile.cpp.incl"
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-ReturnOop ROMProfile::create(const char name[] JVM_TRAPS) {
+ReturnOop ROMProfile::create(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   ROMProfile::Fast profile =
     Universe::new_profile(JVM_SINGLE_ARG_OZCHECK(profile));
 
-  OopDesc* p = SymbolTable::symbol_for(name JVM_ZCHECK_0(p));
-  profile().set_profile_name(p);  
-
-  p = Universe::new_vector(JVM_SINGLE_ARG_ZCHECK_0(p));
+  OopDesc* p = Universe::new_vector(JVM_SINGLE_ARG_ZCHECK_0(p));
   profile().set_hidden_classes(p);
 
   p = Universe::new_vector(JVM_SINGLE_ARG_ZCHECK_0(p));
@@ -44,15 +41,24 @@ ReturnOop ROMProfile::create(const char name[] JVM_TRAPS) {
 
   p = Universe::new_vector(JVM_SINGLE_ARG_ZCHECK_0(p));
   profile().set_restricted_packages(p);
+  return profile().obj();
+}
+
+ReturnOop ROMProfile::create(const char name[] JVM_TRAPS) {
+  UsingFastOops fast_oops;
+  ROMProfile::Fast profile = create(JVM_SINGLE_ARG_OZCHECK(profile));
+
+  OopDesc* p = SymbolTable::symbol_for(name JVM_ZCHECK_0(p));
+  profile().set_profile_name(p);  
 
   ROMOptimizer::profiles_vector()->add_element(&profile JVM_CHECK_0);
   return profile().obj();
 }
 
-int ROMProfile::calc_bitmap_raw_size() {
+int ROMProfile::calc_bitmap_raw_size( void ) {
   const int class_count = ROMWriter::number_of_romized_java_classes();
   // Division with rounding up to the higher integer value.
-  return (class_count - 1) / BitsPerByte + 1;
+  return (class_count + (BitsPerByte - 1)) / BitsPerByte;
 }
 
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR

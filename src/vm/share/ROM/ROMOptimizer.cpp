@@ -326,9 +326,10 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
   for (SystemClassStream st; st.has_next();) {
     UsingFastOops fast_oops;
     InstanceClass::Fast klass = st.next();
-    AccessFlags flags = klass().access_flags();
-    bool hidden = is_in_hidden_package(&klass JVM_CHECK);
+    const bool hidden = class_matches_classes_list(&klass, hidden_classes()) ||
+                        is_in_hidden_package(&klass JVM_CHECK);
     if (hidden) {
+      AccessFlags flags = klass().access_flags();
       flags.set_is_hidden();
       klass().set_access_flags(flags);
 #if USE_ROM_LOGGING
@@ -376,7 +377,6 @@ void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
   // - original names (symbols are not renamed in Monet non-product modes)
 
   int cnt = Universe::class_list()->length() + 20;
-  int alt_const_count = get_max_alternate_constant_pool_count();
 
   *init_at_build_classes()      = Universe::new_obj_array(cnt JVM_CHECK);
   *init_at_load_classes()       = Universe::new_obj_array(cnt JVM_CHECK);
@@ -384,19 +384,29 @@ void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
   *dont_rename_methods_classes()= Universe::new_obj_array(cnt JVM_CHECK);
   *dont_rename_classes()        = Universe::new_obj_array(cnt JVM_CHECK);
                                                                
-  hidden_packages()->initialize(JVM_SINGLE_ARG_CHECK);
-  restricted_packages()->initialize(JVM_SINGLE_ARG_CHECK);
-  reserved_words()->initialize(JVM_SINGLE_ARG_CHECK);
-
   *romizer_original_class_name_list() = Universe::new_obj_array(cnt JVM_CHECK);
   *romizer_original_method_info()     = Universe::new_obj_array(cnt JVM_CHECK);
   *romizer_original_fields_list()     = Universe::new_obj_array(cnt JVM_CHECK);
+
+  int alt_const_count = get_max_alternate_constant_pool_count();
   *romizer_alternate_constant_pool()  = Universe::new_constant_pool(
                                                alt_const_count JVM_CHECK);
+  reserved_words()->initialize(JVM_SINGLE_ARG_CHECK);
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  {
+    OopDesc* p = ROMProfile::create( JVM_SINGLE_ARG_ZCHECK(p) );
+    set_global_profile( p );
+    set_profile( p );
+  }
   profiles_vector()->initialize(JVM_SINGLE_ARG_CHECK);  
-#endif
+  ROMProfile::create( "DEFAULT_PROFILE" JVM_CHECK );
+#else
+  hidden_classes()->initialize(JVM_SINGLE_ARG_CHECK);
+  hidden_packages()->initialize(JVM_SINGLE_ARG_CHECK);
+  restricted_packages()->initialize(JVM_SINGLE_ARG_CHECK);
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
   read_config_file(JVM_SINGLE_ARG_CHECK);
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT

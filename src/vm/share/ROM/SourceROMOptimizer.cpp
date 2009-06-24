@@ -195,10 +195,6 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
     return;
   }
   
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  ROMProfile::create( "DEFAULT_PROFILE" JVM_CHECK );
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-
   read_hardcoded_config(JVM_SINGLE_ARG_CHECK);
   read_config_file(config_file JVM_CHECK);
 
@@ -235,7 +231,7 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
   set_config_parsing_file(config_file);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-  clear_current_profile();
+  set_global_profile();
 
   for (;;) {
     // Read a single line from the file, up to 1024 bytes. We don't have
@@ -271,7 +267,7 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
   set_config_parsing_file(NULL);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-  clear_current_profile();
+  set_global_profile();
 
   OsFile_close(f);
   JVM_DELAYED_CHECK;
@@ -295,7 +291,7 @@ void ROMOptimizer::read_hardcoded_config(JVM_SINGLE_ARG_TRAPS) {
   set_config_parsing_file(hardcoded_configuration);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-  clear_current_profile();
+  set_global_profile();
 
   for (int index = 0; index < ARRAY_SIZE(hardcoded_rom_config); index++) {
     // Make a copy to avoid modification of the source.
@@ -307,7 +303,7 @@ void ROMOptimizer::read_hardcoded_config(JVM_SINGLE_ARG_TRAPS) {
   set_config_parsing_file(NULL);
   set_config_parsing_line_number(0);
   set_config_parsing_active(true);
-  clear_current_profile();
+  set_global_profile();
 }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
@@ -323,6 +319,8 @@ int ROMOptimizer::find_profile(const char name[] ) {
   return Universe::UNKNOWN_PROFILE_ID;
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+
 
 // Parse and process the config line.
 void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
@@ -372,28 +370,19 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
       } else {
         profile = profiles_vector()->element_at(profile_ind);
       }
-      set_current_profile(profile);
+      set_profile(profile);
     }
     else if (jvm_strcmp(name, "EndProfile") == 0) {
-      clear_current_profile();
-    }
-    else if (jvm_strcmp(name, "HiddenClass") == 0) {
-      if (!config_parsing_in_profile()) {
-        tty->print_cr("Error: line %d in %s", 
-                      config_parsing_line_number(), config_parsing_file());
-        tty->print_cr("       HiddenClass only in BeginProfile-EndProfile "
-                      "scope is allowed");
-        JVM::exit(0);
-      }
+      set_global_profile();
+    } else
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT      
+    if (jvm_strcmp(name, "HiddenClass") == 0) {
       UsingFastOops fastOops;
       Symbol::Fast class_pattern =
         SymbolTable::slashified_symbol_for(value JVM_CHECK);
-      ROMVector::Fast this_profile_hidden_classes = 
-        current_profile()->hidden_classes();
-      this_profile_hidden_classes().add_element(&class_pattern JVM_CHECK);
-      GUARANTEE(this_profile_hidden_classes().contains(&class_pattern), "Sanity");
+      hidden_classes()->add_element(&class_pattern JVM_CHECK);
+      GUARANTEE(hidden_classes()->contains(&class_pattern), "Sanity");
     } else 
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT      
     if (jvm_strcmp(name, "Include") == 0) {
       include_config_file(value JVM_CHECK);
     }
@@ -413,47 +402,20 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
       add_class_to_list(dont_rename_methods_classes(), name,value JVM_CHECK);
     }
     else if (jvm_strcmp(name, "HiddenPackage") == 0) {
-      UsingFastOops fastOops;
-      ROMVector::Fast hidden_list;
-      ROMVector::Fast restricted_list;
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-      if (config_parsing_in_profile()) {        
-        hidden_list = current_profile()->hidden_packages();        
-        restricted_list = current_profile()->restricted_packages();
-      } else 
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-      {
-        hidden_list = hidden_packages();
-        restricted_list = restricted_packages();
-      }
-
       // Hidden packages are also restricted.
-      add_package_to_list(&hidden_list, value JVM_CHECK);
-      add_package_to_list(&restricted_list, value JVM_CHECK);
+      add_package_to_list(hidden_packages(), value JVM_CHECK);
+      add_package_to_list(restricted_packages(), value JVM_CHECK);
     }
     else if (jvm_strcmp(name, "ReservedWord") == 0) {
       UsingFastOops fastOops;
-      ROMVector::Fast reserved_words_list = reserved_words();
-
-      Symbol::Fast word = 
-                 SymbolTable::slashified_symbol_for(value JVM_CHECK);      
-      if (!reserved_words_list().contains(&word)) {
-        reserved_words_list().add_element(&word JVM_CHECK);
+      Symbol::Fast word =
+        SymbolTable::slashified_symbol_for(value JVM_ZCHECK(word));
+      if (!reserved_words()->contains(&word)) {
+        reserved_words()->add_element(&word JVM_CHECK);
       }
     }
     else if (jvm_strcmp(name, "RestrictedPackage") == 0) {
-      UsingFastOops fastOops;
-      ROMVector::Fast packages_list;
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-      if (config_parsing_in_profile()) {
-        packages_list = current_profile()->restricted_packages();
-      } else 
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-      {
-        packages_list = restricted_packages();        
-      }
-
-      add_package_to_list(&packages_list, value JVM_CHECK);
+      add_package_to_list(restricted_packages(), value JVM_CHECK);
     }
     else if (jvm_strcmp(name, "DontCompile") == 0) {
       disable_compilation(value JVM_CHECK);

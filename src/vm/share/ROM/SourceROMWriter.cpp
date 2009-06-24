@@ -1494,15 +1494,16 @@ void SourceROMWriter::write_restricted_packages(JVM_SINGLE_ARG_TRAPS) {
 }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
+void SourceROMWriter::print_profile_name( const int profile_id ) {
+  ROMProfile::Raw rom_profile = _optimizer.profiles_vector()->element_at(profile_id);
+  Symbol::Raw profile_name = rom_profile().profile_name();
+  profile_name().print_symbol_on(main_stream());
+}
 
 /**
  * Returns the number of printed items.
  */
 void SourceROMWriter::print_packages_list(ROMVector* patterns) {
-  UsingFastOops usingFastOops;
-
-  Symbol::Fast restricted_package;
-
   GUARANTEE(patterns != NULL, "Sanity");  
   if (patterns->is_null()) {
     return;
@@ -1510,41 +1511,36 @@ void SourceROMWriter::print_packages_list(ROMVector* patterns) {
   GUARANTEE(patterns->not_null(), "Sanity");  
 
   const int patterns_count = patterns->size();  
-  for (int pat = 0; pat < patterns_count; pat++) {
-    restricted_package = patterns->element_at(pat);
-    
+  for (int pat = 0; pat < patterns_count; pat++) {  
     main_stream()->print("  \"");
-    restricted_package().print_symbol_on(main_stream());
+    Symbol::Raw package( patterns->element_at(pat) );
+    package().print_symbol_on(main_stream());
     main_stream()->print_cr("\",");
   } 
 }
 
 void SourceROMWriter::write_restricted_in_profiles() {
-  UsingFastOops usingFastOops;
-  ROMProfile::Fast rom_profile;
-  ROMVector::Fast patterns;
-  Symbol::Fast profile_name;  
-
-  ROMVector* rom_profiles_table = _optimizer.profiles_vector();
+  ROMVector* const rom_profiles_table = _optimizer.profiles_vector();
   GUARANTEE(rom_profiles_table != NULL, "Sanity");
   const int profiles_count = rom_profiles_table->size();
   int p;
 
   for (p = 0; p < profiles_count; p++ ) {
-    rom_profile = rom_profiles_table->element_at(p);    
-    profile_name = rom_profile().profile_name();
+    ROMProfile::Raw profile = rom_profiles_table->element_at(p);
+    Symbol::Raw profile_name = profile().profile_name();
     GUARANTEE(profile_name.not_null(), "Sanity");
 
     main_stream()->print(
-      "const char *_rom_restricted_packages_");    
-    main_stream()->print("%d[] = { // ", p);
+      "const char* const _rom_restricted_packages_%d[] = { // ", p);
     profile_name().print_symbol_on(main_stream());
     main_stream()->cr();
 
     // Writing restricted packages list.
-    patterns = rom_profile().restricted_packages();
-    GUARANTEE(profile_name.not_null(), "Sanity");
-    print_packages_list(&patterns);
+    {
+      ROMVector::Raw patterns = profile().restricted_packages();
+      GUARANTEE(profile_name.not_null(), "Sanity");
+      print_packages_list(&patterns);
+    }
 
     main_stream()->print("  0\n}; // ");
     profile_name().print_symbol_on(main_stream());
@@ -1553,17 +1549,11 @@ void SourceROMWriter::write_restricted_in_profiles() {
   }
 
   main_stream()->print_cr("const char* const* const _rom_profiles_restricted_packages[] = {");
-  for (p = 0; p < profiles_count; p++) {    
-    rom_profile = rom_profiles_table->element_at(p);
-    profile_name = rom_profile().profile_name();
-    main_stream()->print_cr(
-      "  _rom_restricted_packages_%d,", p);    
-  }
-
-  if (profiles_count == 0) {
-    main_stream()->print_cr("  0");
+  for (p = 0; p < profiles_count; p++ ) {
+    main_stream()->print_cr("  _rom_restricted_packages_%d,", p);    
   }
   main_stream()->print_cr("}; // _rom_restricted_packages");
+
   main_stream()->cr();
 }
 
@@ -1573,9 +1563,7 @@ void SourceROMWriter::write_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
   GUARANTEE(rom_profiles_table != NULL, "Sanity");
 
   const int profiles_count = rom_profiles_table->size();
-
-  const int class_count = number_of_romized_java_classes();
-  const int bitmap_row_size = (class_count - 1) / BitsPerByte + 1;
+  const int bitmap_row_size = ROMProfile::calc_bitmap_raw_size();
 
   // Writing _profile_bitmap_row_size
   main_stream()->print_cr(
@@ -1589,31 +1577,54 @@ void SourceROMWriter::write_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
     main_stream()->print_cr("const char* const _rom_profiles_names[] = {");
     for (int p = 0; p < profiles_count; p++) {
       main_stream()->print("  \"");
-      ROMProfile::Raw rom_profile( rom_profiles_table->element_at(p) );
-      Symbol::Raw profile_name( rom_profile().profile_name() );
-      profile_name().print_symbol_on(main_stream());
+      print_profile_name(p);
       main_stream()->print_cr("\",");
     }
-    main_stream()->print_cr("  0");    
-    main_stream()->print_cr("}; // _rom_profiles_names\n");
+    main_stream()->print_cr("  0\n}; // _rom_profiles_names\n");
   }
 
   // Writing profiles bitmaps  
   {
     main_stream()->print_cr(
       "const unsigned char _rom_hidden_classes_bitmaps[] = {");
-    for (int p = 0; p < profiles_count; p++) {
+    for (int p = 0;; main_stream()->cr()) {
+      main_stream()->print( "  // Profile " );
+      print_profile_name(p);
+      main_stream()->cr();
+
+      const int base = bitmap_row_size * p;
+      {
+        for (SystemClassStream st(false); st.has_next();) {
+          InstanceClass::Raw klass = st.next();
+          GUARANTEE(klass.not_null(), "Sanity");
+
+          if (klass().is_instance_class()) {
+            const int class_id = klass().class_id();
+            const int byte = class_id / BitsPerByte;
+            const int bit  = class_id % BitsPerByte;
+            const jubyte c =
+              _optimizer.profile_hidden_bitmap()->ubyte_at(base + byte);
+
+            if ((c >> bit) & 1) {
+              main_stream()->print("  // Hidden ");
+              klass().print_name_on( main_stream() );
+              main_stream()->cr();
+            }
+          }
+        }
+      }
+
       main_stream()->print("  ");
       for (int byte = 0; byte < bitmap_row_size; byte++) {
-        const int ind = bitmap_row_size * p + byte;
-        jubyte c = _optimizer.profile_hidden_bitmap()->ubyte_at(ind);
+        const jubyte c =
+          _optimizer.profile_hidden_bitmap()->ubyte_at(base + byte);
         main_stream()->print("0x%x, ", c);
       }
       main_stream()->cr();
-    }
-    if (profiles_count == 0) {
-      main_stream()->print_cr("  0");    
-    }
+      if( ++p >= profiles_count ) {
+        break;
+      }
+    } 
     main_stream()->print_cr("}; // _rom_hidden_classes_bitmaps\n");  
   }
 }

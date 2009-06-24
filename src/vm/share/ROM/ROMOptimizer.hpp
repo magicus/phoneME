@@ -103,17 +103,29 @@ private:
   int _embedded_strings_offset;
 };
 
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-#define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
-  template(ROMVector,profiles_vector, "") \
-  template(ROMProfile,current_profile, "") \
-  template(TypeArray,profile_hidden_bitmap, "")
+class ROMOptimizer {
+#if USE_SOURCE_IMAGE_GENERATOR
+  #if ENABLE_MULTIPLE_PROFILES_SUPPORT
+    #define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)  \
+      template(ROMProfile, global_profile,  "")       \
+      template(ROMProfile, current_profile, "")       \
+      template(ROMVector,  profiles_vector, "")       \
+      template(TypeArray,  profile_hidden_bitmap, "")
+  #else 
+    #define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)
+  #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+  #define SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
+    MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)          \
+    template(ROMVector, hidden_classes, "")           \
+    template(ROMVector, hidden_packages, "")          \
+    template(ROMVector, restricted_packages, "")
 #else 
-#define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)
-#endif
+  #define SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template)
+#endif // USE_SOURCE_IMAGE_GENERATOR
 
 #define ROMOPTIMIZER_OOP_FIELDS_DO(template) \
-  MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
+  SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
   template(TypeArray,empty_short_array, "") \
   template(ObjArray, empty_obj_array, "") \
   template(ObjArray, init_at_build_classes, "Classes that should be " \
@@ -127,8 +139,6 @@ private:
   template(ObjArray, dont_rename_classes,   "Don't rename these classes," \
                                             "even if they belong to a hidden" \
                                             "package") \
-  template(ROMVector, hidden_packages, "") \
-  template(ROMVector, restricted_packages, "") \
   template(ObjArray ,romizer_original_class_name_list, "Original names of" \
                                             "classes we've renamed.") \
   template(ObjArray, romizer_original_method_info, "Original names/signatures"\
@@ -156,7 +166,6 @@ private:
                                       multiple classes")
 
 #if USE_SOURCE_IMAGE_GENERATOR
-
 #define SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
   template(bool,                config_parsing_active, "") \
   template(int,                 config_parsing_line_number, "") \
@@ -212,7 +221,6 @@ private:
 #define ROMOPTIMIZER_COUNT_FIELDS(type, name, comment) \
   name ## _index,
 
-class ROMOptimizer {
   // Count the number of integer and oop fields in the ROMOptimizer class
   enum {
     ROMOPTIMIZER_OOP_FIELDS_DO(ROMOPTIMIZER_COUNT_FIELDS)
@@ -351,8 +359,11 @@ private:
   int  get_max_alternate_constant_pool_count();
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-  static bool config_parsing_in_profile( void ) {
-    return current_profile()->not_null();
+  void set_profile( OopDesc* profile ) {
+    set_current_profile( profile );
+    set_hidden_classes( current_profile()->hidden_classes()  );
+    set_hidden_packages( current_profile()->hidden_packages() );
+    set_restricted_packages( current_profile()->restricted_packages() );
   }
 
   void create_profiles_hidden_bitmap(JVM_SINGLE_ARG_TRAPS);
@@ -360,9 +371,9 @@ private:
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR
-  static void clear_current_profile( void ) {
+  void set_global_profile( void ) {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-    set_current_profile( (OopDesc*) NULL );
+    set_profile( global_profile()->obj() );
 #endif
   }
 

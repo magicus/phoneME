@@ -163,6 +163,7 @@ public:
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   virtual void write_hidden_classes(JVM_SINGLE_ARG_TRAPS);
   virtual void write_restricted_in_profiles();
+  void print_profile_name( const int profile_id );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS);
   virtual void write_link_checks();
