@@ -72,6 +72,8 @@ public abstract class BaseScreen {
         this.strings = strings;
     }
 
+    public abstract void update();
+
     private static void test(String format, String expected) {
         String res =
             BaseScreen.printfImpl(format, new Object[] { "One", "Two" });
