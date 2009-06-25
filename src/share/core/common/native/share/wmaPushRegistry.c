@@ -548,13 +548,13 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_wma_PushConnectionsPool_waitPushEvent) {
     int handle = 0;
     int port = 0;
-    int WMA_SMS_READ_SIGNAL = 0;
+    int PUSH_SIGNAL=3;
     SmsMessage *psmsData = NULL;
     filter_struct* ptr;
 
     do {
         CVMD_gcSafeExec(_ee, {
-           jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+           jsr120_wait_for_signal(handle, PUSH_SIGNAL);
         });
 
         for (ptr=filter_list; ptr; ptr=ptr->next) {
