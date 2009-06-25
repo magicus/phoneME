@@ -246,6 +246,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
                 needRepaintBackground = true;
            }
         }
+        hideKeyboardLayer();
     }
 
     /**

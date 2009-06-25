@@ -1758,6 +1758,31 @@ public class Display {
         return pt_popup;
     }
 
+    private boolean isSIWL(Displayable d) {
+        return false;//d != null && d.lGetDisplayable() instanceof com.sprintpcs.lcdui.widget.Frame;
+    }
+
+    private boolean isVirtualKeyboardAllowed(Displayable d) {
+        boolean ret = false;
+        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
+        // microedition.canvasvk=FALSE to disable it
+        if (owner instanceof MIDlet) {
+            if (!isSIWL(d)) {
+                if (d != null &&
+                    d.lGetDisplayable() instanceof Canvas) {
+                    
+                    String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+                    if (!"no".equals(showVirtualKeyboard)) {
+                        ret = true;
+                    }
+                } else {
+                    ret = true;
+                }
+            } 
+        }
+        return ret;
+    }
+    
     /**
      * Create popup layer that represents java virtual keyboard popup
      *   associated with this Display
@@ -1765,27 +1790,17 @@ public class Display {
      *   associated with this Display
      **/
     VirtualKeyboardLayer getVirtualKeyboardPopup() {
-        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
-        // microedition.canvasvk=FALSE to disable it 
-        if (current != null && current.lGetDisplayable() instanceof Canvas) {
-            if (owner instanceof MIDlet) {
-                String vk = ((MIDlet)owner).getAppProperty("microedition.canvasvk");
-                if ("FALSE".equals(vk)) {
-                    return null;
-                } 
-            } else {
-                // IMPL_NOTE: don't show virtual keyboard for non-midlet apps 
-                return null;
+        VirtualKeyboardLayer ret = null;
+        if (isVirtualKeyboardAllowed(current)) {
+            if (keyboardLayer == null) {
+                VirtualKeyboardResources.load();
+                if (VirtualKeyboardLayer.init()) {
+                    keyboardLayer = new VirtualKeyboardLayer();
+                }
             }
+            ret = keyboardLayer;
         } 
-        
-        if (keyboardLayer == null) {
-            VirtualKeyboardResources.load();
-            if (VirtualKeyboardLayer.init()) {
-                  keyboardLayer = new VirtualKeyboardLayer();
-            }
-        }
-        return keyboardLayer;
+        return ret;
     }
 
     // #endif ENABLE_CHAMELEON
