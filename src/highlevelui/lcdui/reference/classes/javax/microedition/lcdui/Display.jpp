@@ -1759,26 +1759,27 @@ public class Display {
     }
 
     private boolean isSIWL(Displayable d) {
-        return false;//d != null && d.lGetDisplayable() instanceof com.sprintpcs.lcdui.widget.Frame;
+        return false;//d instanceof com.sprintpcs.lcdui.widget.Frame;
     }
 
-    private boolean isVirtualKeyboardAllowed(Displayable d) {
-        boolean ret = false;
+    private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
+        boolean ret = true;
         // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
         // microedition.canvasvk=FALSE to disable it
         if (owner instanceof MIDlet) {
-            if (!isSIWL(d)) {
-                if (d != null &&
-                    d.lGetDisplayable() instanceof Canvas) {
-                    
+            if (d != null) {
+                Displayable displayable = d.lGetDisplayable();
+                if (isSIWL(displayable)) {
+                    ret = false;
+                } else if (displayable instanceof Canvas) {
                     String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
-                    if (!"no".equals(showVirtualKeyboard)) {
-                        ret = true;
+                    if ("no".equals(showVirtualKeyboard)) {
+                        ret = false;
                     }
-                } else {
-                    ret = true;
                 }
-            } 
+            }            
+        } else {
+            ret = false;
         }
         return ret;
     }
