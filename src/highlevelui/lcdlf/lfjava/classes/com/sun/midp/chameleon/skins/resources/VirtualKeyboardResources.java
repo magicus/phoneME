@@ -121,7 +121,35 @@ public class VirtualKeyboardResources {
 
         VirtualKeyboardSkin.FONT = SkinLoader.getFont(
                 SkinPropertiesIDs.KEYBOARD_FONT);
-        
+
+        VirtualKeyboardSkin.BTN_GAME_MODE = SkinLoader.getImage(
+                                                                SkinPropertiesIDs.KEYBOARD_BTN_GAME_MODE);
+
+        VirtualKeyboardSkin.BTN_GAMEA_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMEA_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMEA_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMEA_UN);
+        VirtualKeyboardSkin.BTN_GAMEB_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMEB_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMEB_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMEB_UN);
+        VirtualKeyboardSkin.BTN_GAMEC_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMEC_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMEC_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMEC_UN);
+        VirtualKeyboardSkin.BTN_GAMED_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMED_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMED_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMED_UN);
+        VirtualKeyboardSkin.BTN_SB_SEL = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_SB_SEL);
+        VirtualKeyboardSkin.BTN_SB_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_SB_UN);
+       
         init = true;
     }
 }

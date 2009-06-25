@@ -113,7 +113,21 @@ endif
 # Description: Optional for certain platforms
 #####################################################################
 
-include $(SUBSYSTEM_HIGHUI_DIR)/virtual_keyboard/lib.gmk
+include $(SUBSYSTEM_HIGHUI_DIR)/vk_manager/lib.gmk
+
+#####################################################################
+# Java Virtual keyboard Subsystem
+# Description: java virtual keyboard 
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/vkjava/lib.gmk
+
+#####################################################################
+# Platform Virtual keyboard Subsystem
+# Description: java virtual keyboard 
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/vkplatform/lib.gmk
 
 
 #####################################################################

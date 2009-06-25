@@ -35,13 +35,18 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
+
 // #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
 
 import com.sun.midp.i18n.ResourceConstants;
+
+
+
 // #else
+//import com.sprintpcs.lcdui.widget.Frame;
 import java.lang.*;
 import java.lang.reflect.*;
 // #endif ENABLE_CDC
@@ -66,6 +71,7 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
 import java.io.IOException;
+
 // #endif ENABLE_CHAMELEON
 
 // #ifdef ENABLE_I3_TEST
@@ -1774,6 +1780,32 @@ public class Display {
         return pt_popup;
     }
 
+    private boolean isSIWL(Displayable d) {
+        return false;//d instanceof com.sprintpcs.lcdui.widget.Frame;
+    }
+
+    private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
+        boolean ret = true;
+        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
+        // microedition.canvasvk=FALSE to disable it
+        if (owner instanceof MIDlet) {
+            if (d != null) {
+                Displayable displayable = d.lGetDisplayable();
+                if (isSIWL(displayable)) {
+                    ret = false;
+                } else if (displayable instanceof Canvas) {
+                    String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+                    if ("no".equals(showVirtualKeyboard)) {
+                        ret = false;
+                    }
+                }
+            }            
+        } else {
+            ret = false;
+        }
+        return ret;
+    }
+    
     /**
      * Create popup layer that represents java virtual keyboard popup
      *   associated with this Display
@@ -1781,15 +1813,17 @@ public class Display {
      *   associated with this Display
      **/
     VirtualKeyboardLayer getVirtualKeyboardPopup() {
-        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
-            return null;
-        }
-        if (keyboardLayer == null) {
-          VirtualKeyboardResources.load();
-          keyboardLayer = new VirtualKeyboardLayer();
-          keyboardLayer.init();
-        }
-        return keyboardLayer;
+        VirtualKeyboardLayer ret = null;
+        if (isVirtualKeyboardAllowed(current)) {
+            if (keyboardLayer == null) {
+                VirtualKeyboardResources.load();
+                if (VirtualKeyboardLayer.init()) {
+                    keyboardLayer = new VirtualKeyboardLayer();
+                }
+            }
+            ret = keyboardLayer;
+        } 
+        return ret;
     }
 
     // #endif ENABLE_CHAMELEON
@@ -2975,6 +3009,16 @@ public class Display {
                 ((CanvasLFImpl)currentCopy).uCallKeyReleased(keyCode);
             }
         }
+        /**
+         * Create popup layer that represents java virtual keyboard popup
+         *   associated with this Display
+         * @return VirtualKeyboard layer instance connected to the current input session
+         *   associated with this Display
+         **/
+        public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+            return Display.this.getVirtualKeyboardPopup();
+        }
+        
     }
     // #endif
  
@@ -3877,7 +3921,7 @@ public class Display {
             keyboardLayer = Display.this.getVirtualKeyboardPopup();
 
             if (keyboardLayer != null && listener != null) {
-                keyboardLayer.setVirtualKeyboardLayerListener(listener);
+                keyboardLayer.addVirtualKeyboardLayerListener(listener);
                 keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
                 if (keyboardLayer.isVirtualKeyboardVisible()) {
                     Display.this.hidePopup(keyboardLayer);

@@ -32,13 +32,16 @@ import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
 import javax.microedition.lcdui.*;
 
+
 /**
  * This is a popup layer 
  */
 public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardListener {
 
     /** Instance of current displayable */
-    private VirtualKeyListener listener;
+    private VirtualKeyListener[] listeners;
+    private int numberOfListeners = 0;
+    private static final int LIST_INC = 2;
 
     /** the instance of the virtual keyboard */
     private static VirtualKeyboard vk = null;
@@ -58,33 +61,78 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      */
     public VirtualKeyboardLayer() {
         super(VirtualKeyboardSkin.BG, VirtualKeyboardSkin.COLOR_BG);
-    }
-
-    /**
-     * Method return true if current virtual keybpard implementation supports java virtual keyboard
-     * @return status of java virtual keyboard support
-     */
-    public static boolean isSupportJavaKeyboard() {
-        return VirtualKeyboard.isSupportJavaKeyboard();
+        if (vk != null) {
+            vk.setListener(this);
+        }
+        listeners = new VirtualKeyListener[LIST_INC];
     }
 
     /**
      * Return standalone instance of VirtualKeyboardLayer
      * @return
      */
-    public void init() {
-
-        if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
-            vk = VirtualKeyboard.getVirtualKeyboard(this);
-         }
+    public static  boolean init() {
+        if (vk == null) {
+            vk = VirtualKeyboardFactory.getVirtualKeyboard(VirtualKeyboardFactory.JAVA_VK, null);
+        }
+        return (vk != null);
     }
 
     /**
-     * Set initial keyboard mode depend on current listener
-     * @param listener - current layer 
+     * Add new virtual key listener 
+     * @param listener - key layer
+     * @return true if new listener has ben added successfully, false otherwise
      */
-    public void setVirtualKeyboardLayerListener(VirtualKeyListener listener) {
-        this.listener = listener;
+    public boolean addVirtualKeyboardLayerListener(VirtualKeyListener listener) {
+        boolean ret = true;
+        if (listener == null) {
+            ret = false;
+        } else {
+            for (int i = 0; i < numberOfListeners; i++) {
+                if (listeners[i] == listener) {
+                    ret = false;
+                    break;
+                }
+            }
+        }
+        if (ret) {
+            if (numberOfListeners == listeners.length) {
+                VirtualKeyListener[] a = new  VirtualKeyListener[numberOfListeners + LIST_INC];
+                System.arraycopy(listeners, 0, a, 0, numberOfListeners);
+                listeners = a;
+            }
+            listeners[numberOfListeners] = listener;
+            numberOfListeners++;
+        }
+        return ret;
+    }
+
+    /**
+     * Remove virtual key listener 
+     * @param listener - current layer 
+     * @return true if the listener has ben removed successfully, false otherwise
+     */
+    public boolean removeVirtualKeyboardLayerListener(VirtualKeyListener listener) {
+        boolean ret = false;
+        if (listener != null) {
+            for (int i = 0; i < numberOfListeners; i++) {
+                if (listeners[i] == listener) {
+                    ret = true;
+                    numberOfListeners--;
+                    VirtualKeyListener[] a;
+                    if (listeners.length - numberOfListeners == 2 * LIST_INC) {
+                        a =  new  VirtualKeyListener[listeners.length - LIST_INC];
+                        System.arraycopy(listeners, 0, a, 0, i);
+                    } else {
+                        a = listeners;
+                    }
+                    System.arraycopy(listeners, i + 1, a, 0, numberOfListeners - i);
+                    listeners = a;
+                    break;
+                }
+            }
+        }
+        return ret;
     }
 
     /**
@@ -92,19 +140,19 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      * @param keyboard
      */
     public void setKeyboardType(String keyboard) {
-        vk.changeKeyboad(keyboard);
+        vk.changeKeyboard(keyboard);
     }
 
     /**
      * Toggle the visibility state of this layer within its containing
      * window.
      *
-     * @param visible If true, this layer will be painted as part of its
+     * @param visible If true, this layer will \be painted as part of its
      *                containing window, as well as receive events if it
      *                supports input.
      */
     public void setVisible(boolean visible) {
-        if (vk != null && vk.isSupportJavaKeyboard()) {
+        if (vk != null) {
             this.visible = visible;
         } else {
             this.setVisible(false);
@@ -216,9 +264,10 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      *
      */
     public void virtualKeyPressed(int keyCode) {
-
-        if (listener != null) {
-            listener.processKeyPressed(keyCode);
+        for (int i = 0; i < numberOfListeners; i++) {
+            if (listeners[i].processKeyPressed(keyCode)) {
+                break;
+            }
         }
     }
 
@@ -231,8 +280,26 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      *
      */
     public void virtualKeyReleased(int keyCode) {
-        if (listener != null) {
-            listener.processKeyReleased(keyCode);
+        for (int i = 0; i < numberOfListeners; i++) {
+            if (listeners[i].processKeyReleased(keyCode)) {
+                break;
+            }
+        }
+    }
+
+        /**
+     * key repeated callback
+     * MIDlet that wants the receive events from the virtual
+     * keyboard needs to implement this interface, and register as
+     * a listener.
+     * @param keyCode char selected by the user from the virtual keyboard
+     *
+     */
+    public void virtualKeyRepeated(int keyCode) {
+        for (int i = 0; i < numberOfListeners; i++) {
+            if (listeners[i].processKeyRepeated(keyCode)) {
+                break;
+            }
         }
     }
 

@@ -45,7 +45,7 @@ import com.sun.midp.lcdui.TactileFeedback;
 /**
  * Soft button layer.
  */
-public class SoftButtonLayer extends CLayer implements CommandListener {
+public class SoftButtonLayer extends CLayer implements CommandListener, VirtualKeyListener {
 
     /**
      * Labels for each of the softbuttons.
@@ -1000,5 +1000,21 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             menuLayer.update(layers);
         }
     }
+
+    /**
+     *  VirtualKeyListener interface methods implementation
+     */
+    public boolean processKeyPressed(int keyCode) {
+        return keyInput(EventConstants.PRESSED, keyCode);
+    }
+    
+    public boolean processKeyReleased(int keyCode) {
+        return keyInput(EventConstants.RELEASED, keyCode);
+    }
+    
+    public boolean processKeyRepeated(int keyCode) {
+        return keyInput(EventConstants.REPEATED, keyCode);
+    }
+    
 }
 
