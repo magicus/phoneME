@@ -198,17 +198,35 @@ public class GameCanvasLFImpl {
      * @param height the height of the region to be flushed
      */
     public void flushGraphics(int x, int y, int width, int height) {
-        // check the region bounds 
-        int diff = 0;
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
+        if (width < 1 || height < 1) {
+            return;
+        }
         
-        diff = x + width - owner.getWidth();
-        if (diff > 0) width -= diff;
+        int ownerW = owner.getWidth();
+        int ownerH = owner.getHeight();
+        
+        if (x >= ownerW || y >= ownerH) {
+            return;
+        }
+        
+        if (x < 0) {
+            width += x;
+            x = 0;
+        }
+        
+        if (y < 0) {
+            height += y;
+            y = 0;
+        }
+        
+        if (y + height > ownerH) {
+            height = ownerH - y;
+        }
 
-        diff = y + height - owner.getHeight();
-        if (diff > 0) height -= diff;
-        
+        if (x + width > ownerW) {
+            width = ownerW - x;
+        }
+
         if (width < 1 || height < 1) {
             return;
         }
