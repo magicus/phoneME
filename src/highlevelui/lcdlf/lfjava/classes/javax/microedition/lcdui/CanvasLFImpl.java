@@ -107,6 +107,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      * Show virtual keyboard popap
      */
     protected void showKeyboardLayer() {
+        if (Constants.CANVAS_JAVAVK_SUPPORTED) {
             if (currentDisplay != null) {
                 if (!vkb_popupOpen) {
                     VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
