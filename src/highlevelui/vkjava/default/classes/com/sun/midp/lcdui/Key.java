@@ -80,6 +80,14 @@ public class Key {
     public final static int GAMEC_KEY = 17;
     /* Game D key */
     public final static int GAMED_KEY = 18;
+    /* Game Soft Buton 1 key */
+    public final static int GAME_SB1_KEY = 19;
+    /* Game Soft Buton 2 key */
+    public final static int GAME_SB2_KEY = 20;
+   /* Numeric key, type 1 */
+    public final static int NUM1_KEY = 21;
+   /* Numeric key, type 2 */
+    public final static int NUM2_KEY = 22;
 
 
 
@@ -130,11 +138,13 @@ public class Key {
             case SYMBOL_MODE_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_SYMBOL_MODE;
                 break;
-            case NUMERIC_MODE_KEY:
-                keyImage = VirtualKeyboardSkin.BTN_NUMERIC_MODE;
+           case NUMERIC_MODE_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_NUMERIC_MODE_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_NUMERIC_MODE_SEL;
                 break;
             case GAME_MODE_KEY:
-                keyImage = VirtualKeyboardSkin.BTN_GAME_MODE;
+                keyImage = VirtualKeyboardSkin.BTN_GAME_MODE_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_GAME_MODE_SEL;
                 break;
            case LEFT_ARROW_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_LEFT_UN;
@@ -167,6 +177,14 @@ public class Key {
                 keyImage = VirtualKeyboardSkin.BTN_SB_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_SB_SEL;
                 break;
+            case GAME_SB1_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_GAME_SB_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_GAME_SB_SEL;
+                break;
+           case GAME_SB2_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_GAME_SB_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_GAME_SB_SEL;
+                break;
            case GAMEA_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_GAMEA_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_GAMEA_SEL;
@@ -183,6 +201,14 @@ public class Key {
                 keyImage = VirtualKeyboardSkin.BTN_GAMED_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_GAMED_SEL;
                 break;
+           case NUM1_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_NUM1_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_NUM1_SEL;
+                break;
+           case NUM2_KEY:
+                keyImage = VirtualKeyboardSkin.BTN_NUM2_UN;
+                keyImageSelected = VirtualKeyboardSkin.BTN_NUM2_SEL;
+                break;
             default:
                 keyImage = VirtualKeyboardSkin.KEY;
                 break;
@@ -198,28 +224,29 @@ public class Key {
     void paint(Graphics g, boolean selected) {
 
         g.setFont(VirtualKeyboardSkin.FONT);
-
+        int color = g.getColor();
         if (selected) {
-
-          if (keyImageSelected != null) {
+            g.setColor(VirtualKeyboardSkin.COLOR_SEL);
+            if (keyImageSelected != null) {
                 g.drawImage(keyImageSelected, x, y, Graphics.TOP | Graphics.LEFT);
-          } else {
-              if (keyImage != null) {
-                 g.drawImage(keyImage, x, y, Graphics.TOP | Graphics.LEFT);
-              }
-              g.drawRect(x,y,width,height);
-          }
+            } else {
+                if (keyImage != null) {
+                    g.drawImage(keyImage, x, y, Graphics.TOP | Graphics.LEFT);
+                }
+                g.drawRect(x,y,width,height);
+            }
         } else {
+            g.setColor(VirtualKeyboardSkin.COLOR_UN);
             if (keyImage != null) {
                 g.drawImage(keyImage, x, y, Graphics.TOP | Graphics.LEFT);
             }
         }
-
+        
         if (key > 0) {
             // Draw text version
             g.drawChar((char) key, x + 4, y + 4, Graphics.TOP | Graphics.LEFT);
         }
-
+        g.setColor(color);
     }
 
     /**

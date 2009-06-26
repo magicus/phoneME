@@ -1792,7 +1792,61 @@
           Comment="Image for virtual keyboard key with selected gameD"/>
 <constant Type="int"
           Name="KEYBOARD_BTN_GAMED_UN"
+          Comment="Image for virtual keyboard key with unselected
+            gameD"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAMED_UN"
           Comment="Image for virtual keyboard key with unselected gameD"/>
+
+<constant Type="int"
+            Name="KEYBOARD_COLOR_SEL"
+            Comment="Color for virtual keyboard to paint the key label
+            in selected state"/>
+<constant Type="int"
+            Name="KEYBOARD_COLOR_UN"
+            Comment="Color for virtual keyboard to paint the key label
+            in unselected state"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAME_SB_SEL"
+          Comment="Image for virtual keyboard key with selected game
+            soft buton"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAME_SB_UN"
+          Comment="Image for virtual keyboard key with unselected game
+            soft buton"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_NUMERIC_MODE_SEL"
+          Comment="Image for virtual keyboard key with selected
+            numeric mode"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_NUMERIC_MODE_UN"
+          Comment="Image for virtual keyboard key with unselected
+            numeric mode"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAME_MODE_SEL"
+          Comment="Image for virtual keyboard key with selected
+            game mode"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_GAME_MODE_UN"
+          Comment="Image for virtual keyboard key with unselected
+           game mode"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_NUM1_SEL"
+          Comment="Image for virtual keyboard key with selected
+           numeric key type 1"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_NUM1_UN"
+          Comment="Image for virtual keyboard key with unselected
+           numeric key type 1"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_NUM2_SEL"
+          Comment="Image for virtual keyboard key with selected
+           numeric key type 2"/>
+<constant Type="int"
+          Name="KEYBOARD_BTN_NUM2_UN"
+          Comment="Image for virtual keyboard key with unselected
+           numeric key type 2"/>
+
 <constant Type="int"
               Name="TOUCH_RADIUS"
            Comment="Radius of finger if finger support is on,

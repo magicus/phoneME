@@ -232,6 +232,79 @@ public class VirtualKeyboardSkin {
      */
     public static Image BTN_SB_UN;
 
+    /**
+     * This field corresponds to KEYBOARD_COLOR_SEL skin property.
+     * See its comment for further details.
+     */
+    public static int COLOR_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_COLOR_UN skin property.
+     * See its comment for further details.
+     */
+    public static int COLOR_UN;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAME_SB_UN skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAME_SB_UN;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAME_SB_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAME_SB_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_NUMERIC_MODE_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_NUMERIC_MODE_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_NUMERIC_MODE_UN skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_NUMERIC_MODE_UN;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAME_MODE_UN skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAME_MODE_UN;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_GAME_MODE_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_GAME_MODE_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_NUM1_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_NUM1_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_NUM1_UN skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_NUM1_UN;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_NUM2_SEL skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_NUM2_SEL;
+
+    /**
+     * This field corresponds to KEYBOARD_BTN_NUM2_UN skin property.
+     * See its comment for further details.
+     */
+    public static Image BTN_NUM2_UN;
+
+
     /** private constructor */
     private VirtualKeyboardSkin() {
     }
