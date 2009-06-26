@@ -98,10 +98,12 @@ public class MIDletClassLoader extends URLClassLoader {
 
         /* Register the classloader */
         String p = base[0].getPath();
-        String name = p.substring(
-            p.lastIndexOf(File.separatorChar)+1,
-            p.lastIndexOf('.'));
-        CVM.Preloader.registerClassLoader(name, this);
+        int idx = p.lastIndexOf('.');
+        if (idx != -1) {
+            String name = p.substring(
+                p.lastIndexOf(File.separatorChar)+1, idx);
+            CVM.Preloader.registerClassLoader(name, this);
+        }
     }
 
     protected PermissionCollection getPermissions(CodeSource cs){
