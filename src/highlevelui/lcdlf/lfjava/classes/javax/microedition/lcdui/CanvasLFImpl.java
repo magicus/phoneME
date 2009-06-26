@@ -107,7 +107,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      * Show virtual keyboard popap
      */
     protected void showKeyboardLayer() {
-        if (Constants.CANVAS_JAVAVK_SUPPORTED) {
             if (currentDisplay != null) {
                 if (!vkb_popupOpen) {
                     VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
@@ -133,14 +132,16 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      */
     protected void hideKeyboardLayer() {
         if (Constants.CANVAS_JAVAVK_SUPPORTED) {
-            if (vkb_popupOpen && currentDisplay != null) {
-                VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
-                if (keyboardPopup != null ) {
-                    keyboardPopup.removeVirtualKeyboardLayerListener(this);
-                    currentDisplay.hidePopup(keyboardPopup);
-                    vkb_popupOpen = false;
-                    synchronized (Display.calloutLock) {
-                        lRequestInvalidate();
+            if (vkb_popupOpen) {
+                vkb_popupOpen = false;
+                if (currentDisplay != null) {
+                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
+                    if (keyboardPopup != null) {
+                        keyboardPopup.removeVirtualKeyboardLayerListener(this);
+                        currentDisplay.hidePopup(keyboardPopup);
+                        synchronized (Display.calloutLock) {
+                            lRequestInvalidate();
+                        }
                     }
                 }
             }
@@ -519,7 +520,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
             keyCode == EventConstants.SOFT_BUTTON2) {
             ret = false;
         } else {
-            uCallKeyPressed(keyCode);
+            uCallKeyEvent(EventConstants.PRESSED, keyCode);
         }
         return ret;
     }
@@ -530,7 +531,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
             keyCode == EventConstants.SOFT_BUTTON2) {
             ret = false;
         } else {
-            uCallKeyReleased(keyCode);
+            uCallKeyEvent(EventConstants.RELEASED, keyCode);
         }
         return ret;
     }
@@ -541,7 +542,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
             keyCode == EventConstants.SOFT_BUTTON2) {
             ret = false;
         } else {
-            uCallKeyRepeated(keyCode);
+            uCallKeyEvent(EventConstants.REPEATED, keyCode);
         }
         return ret;
     }

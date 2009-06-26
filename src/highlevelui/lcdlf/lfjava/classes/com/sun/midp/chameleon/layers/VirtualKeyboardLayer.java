@@ -317,5 +317,8 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void setVirtualKeyboardVisible(boolean visible) {
         virtualKeyboardVisible = visible;
     }
-
+    public void removeNotify(MIDPWindow owner) {
+        // remove all listeners from the list
+        listeners = new VirtualKeyListener[LIST_INC];
+    }
 }

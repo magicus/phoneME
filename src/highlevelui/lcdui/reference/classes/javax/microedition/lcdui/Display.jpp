@@ -46,7 +46,6 @@ import com.sun.midp.i18n.ResourceConstants;
 
 
 // #else
-//import com.sprintpcs.lcdui.widget.Frame;
 import java.lang.*;
 import java.lang.reflect.*;
 // #endif ENABLE_CDC
@@ -1781,7 +1780,7 @@ public class Display {
     }
 
     private boolean isSIWL(Displayable d) {
-        return false;//d instanceof com.sprintpcs.lcdui.widget.Frame;
+        return (window != null && window.getMode() == MIDPWindow. NO_SOFT_BUTTON_MODE);
     }
 
     private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
