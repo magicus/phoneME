@@ -177,7 +177,7 @@ public class Key {
                 keyImage = VirtualKeyboardSkin.BTN_SB_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_SB_SEL;
                 break;
-            case GAME_SB1_KEY:
+           case GAME_SB1_KEY:
                 keyImage = VirtualKeyboardSkin.BTN_GAME_SB_UN;
                 keyImageSelected = VirtualKeyboardSkin.BTN_GAME_SB_SEL;
                 break;
@@ -304,9 +304,9 @@ public class Key {
         }
     }
     
-    public void resize(double newX, double newY) {
-        this.x = (int)(startX*newX);
-    	this.y = (int)(startY*newY);       
+    public void resize(double dX, double dY) {
+        this.x = startX + (int)dX;
+    	this.y = startY + (int)dY;       
     }
 
 }

@@ -76,8 +76,8 @@ public class JavaVirtualKeyboard implements VirtualKeyboard {
     String currentKeyboardType;
    
     /* The  coefficients of keyboard's shrink */
-    private double shrinkX = 1;
-    private double shrinkY = 1;
+    private double dX = 0;
+    private double dY = 0;
 
 
     /** The Timer to service TimerTasks. */ 
@@ -185,10 +185,12 @@ public class JavaVirtualKeyboard implements VirtualKeyboard {
                         processKey(type, key);
                         break;
                     case Key.SB2_KEY:
+                    case Key.GAME_SB2_KEY:
                         key = EventConstants.SOFT_BUTTON2;
                         processKey(type, key);
                         break;
                     case Key.SB1_KEY:
+                    case Key.GAME_SB1_KEY:
                         key = EventConstants.SOFT_BUTTON1;
                         processKey(type, key);
                         break;
@@ -269,9 +271,9 @@ public class JavaVirtualKeyboard implements VirtualKeyboard {
      * @param kshrinkX - coefficient of shrink on X-dimension
      * @param kshrinkY - coefficient of shrink on Y-dimension
      */
-    public void resize(double kshrinkX, double kshrinkY) {
-        shrinkX = kshrinkX;
-        shrinkY = kshrinkY; 
+    public void resize(double dX, double dY) {
+        this.dX = dX;
+        this.dY = dY; 
         resize();       
     }
     
@@ -283,7 +285,7 @@ public class JavaVirtualKeyboard implements VirtualKeyboard {
             for (int i = 0; i < currentKeyboard.length; i++) {
                 for (int j = 0; j < currentKeyboard[i].length; j++) {
                     Key key = currentKeyboard[i][j];
-                    key.resize(shrinkX, shrinkY);
+                    key.resize(dX, dY);
                 } 
             }
         }

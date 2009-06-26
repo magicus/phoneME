@@ -1792,12 +1792,7 @@
           Comment="Image for virtual keyboard key with selected gameD"/>
 <constant Type="int"
           Name="KEYBOARD_BTN_GAMED_UN"
-          Comment="Image for virtual keyboard key with unselected
-            gameD"/>
-<constant Type="int"
-          Name="KEYBOARD_BTN_GAMED_UN"
           Comment="Image for virtual keyboard key with unselected gameD"/>
-
 <constant Type="int"
             Name="KEYBOARD_COLOR_SEL"
             Comment="Color for virtual keyboard to paint the key label
