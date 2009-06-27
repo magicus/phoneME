@@ -212,7 +212,7 @@ public class JavaVirtualKeyboard implements VirtualKeyboard {
                         break;
                     default:
                         processKey(type, key);
-                        ret = false;
+                        break;
                     }
                 }
             }

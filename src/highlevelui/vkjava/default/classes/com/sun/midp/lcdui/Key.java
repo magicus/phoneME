@@ -243,8 +243,17 @@ public class Key {
         }
         
         if (key > 0) {
-            // Draw text version
-            g.drawChar((char) key, x + 4, y + 4, Graphics.TOP | Graphics.LEFT);
+                        // Draw text version
+            int startY = (height - VirtualKeyboardSkin.FONT.getHeight()) >> 1;
+            int startX = (width - VirtualKeyboardSkin.FONT.charWidth((char)key)) >> 1;
+            if (startY < 0) {
+                startY = 0;
+            }
+            if (startX < 0) {
+                startX = 0;
+            }
+            
+            g.drawChar((char) key, x + startX, y + startY, Graphics.TOP | Graphics.LEFT);
         }
         g.setColor(color);
     }
@@ -297,7 +306,9 @@ public class Key {
      * @return key code
      */
     int getKey() {
-        if (keyType == 0) {
+        if (keyType == GENERAL_KEY ||
+            keyType == NUM1_KEY ||
+            keyType == NUM2_KEY) {
             return key;
         } else {
             return keyType;

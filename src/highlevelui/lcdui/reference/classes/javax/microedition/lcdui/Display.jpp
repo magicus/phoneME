@@ -1779,7 +1779,7 @@ public class Display {
         return pt_popup;
     }
 
-    private boolean isSIWL(Displayable d) {
+    private boolean isSIWL() {
         return (window != null && window.getMode() == MIDPWindow. NO_SOFT_BUTTON_MODE);
     }
 
@@ -1788,17 +1788,14 @@ public class Display {
         // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
         // microedition.canvasvk=FALSE to disable it
         if (owner instanceof MIDlet) {
-            if (d != null) {
-                Displayable displayable = d.lGetDisplayable();
-                if (isSIWL(displayable)) {
+            if (isSIWL()) {
+                ret = false;
+            } else if (d != null && d.lGetDisplayable() instanceof Canvas) {
+                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+                if ("no".equals(showVirtualKeyboard)) {
                     ret = false;
-                } else if (displayable instanceof Canvas) {
-                    String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
-                    if ("no".equals(showVirtualKeyboard)) {
-                        ret = false;
-                    }
                 }
-            }            
+            }
         } else {
             ret = false;
         }
