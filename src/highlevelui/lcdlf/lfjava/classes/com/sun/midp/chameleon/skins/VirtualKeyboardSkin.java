@@ -93,7 +93,7 @@ public class VirtualKeyboardSkin {
      * This field corresponds to KEYBOARD_BG skin property.
      * See its comment for further details.
      */
-    public static Image[] BG;
+    public static Image BG;
 
     /**
      * This field corresponds to KEYBOARD_COLOR_BG skin property.

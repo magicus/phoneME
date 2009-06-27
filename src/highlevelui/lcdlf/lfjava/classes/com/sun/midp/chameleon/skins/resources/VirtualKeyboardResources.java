@@ -83,8 +83,8 @@ public class VirtualKeyboardResources {
         VirtualKeyboardSkin.BTN_NUMERIC_MODE = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_NUMERIC_MODE);
 
-        VirtualKeyboardSkin.BG = SkinLoader.getCompositeImage(
-                SkinPropertiesIDs.KEYBOARD_BG,9);
+        VirtualKeyboardSkin.BG = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BG);
 
         VirtualKeyboardSkin.COLOR_BG = SkinLoader.getInt(
                         SkinPropertiesIDs.KEYBOARD_COLOR_BG);
