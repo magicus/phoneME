@@ -239,13 +239,13 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
             if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
                 screenBounds -= layers[MIDPWindow.BTN_LAYER].bounds[H];
             }
-            bounds[H] = (int) (VirtualKeyboardSkin.COEFFICIENT * screenBounds);
-            bounds[H] = (bounds[H] > VirtualKeyboardSkin.HEIGHT) ?
-                    VirtualKeyboardSkin.HEIGHT : bounds[H];
+            bounds[H] = VirtualKeyboardSkin.HEIGHT;
             bounds[Y] += (screenBounds - bounds[H]);
-            double khrinkX = ((double) bounds[W]) / defaultWidth;
-            double kshrinkY = ((double) bounds[H]) / VirtualKeyboardSkin.HEIGHT;
-            this.vk.resize(khrinkX, kshrinkY);
+
+            double dX = (bounds[W] - defaultWidth) >> 1;
+            double dY = (bounds[H] - VirtualKeyboardSkin.HEIGHT) >> 1;
+ 
+            this.vk.resize(dX, dY);
         }
 
     }
@@ -317,5 +317,8 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void setVirtualKeyboardVisible(boolean visible) {
         virtualKeyboardVisible = visible;
     }
-
+    public void removeNotify(MIDPWindow owner) {
+        // remove all listeners from the list
+        listeners = new VirtualKeyListener[LIST_INC];
+    }
 }

@@ -508,6 +508,16 @@ public class MIDPWindow extends CWindow {
         updateLayout();
     }
 
+
+        /**
+     * Changes layout mode.
+     *
+     * @param mode the mode to be set
+     */
+    public int getMode() {
+	    return softButtonMode;
+    }
+
     /**
      * Determines if window is in full screen mode.
      * 
