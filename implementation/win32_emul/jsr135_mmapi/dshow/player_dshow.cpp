@@ -29,59 +29,60 @@
 #include "player.hpp"
 #include "writer.hpp"
 
+#pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "strmiids.lib")
 
 
 const nat32 null = 0;
 
 
-// #define ENABLE_MMAPI_CONT_3G2_DS_EXT  // video/3gpp, audio/3gpp, video/3gpp2, audio/3gpp2; .3gp, .3g2
-// #define ENABLE_MMAPI_CONT_3GP_DS_EXT  // video/3gpp, audio/3gpp, video/3gpp2, audio/3gpp2; .3gp, .3g2
-// #define ENABLE_MMAPI_CONT_AMR_DS_EXT  // audio/amr; .amr
-// #define ENABLE_MMAPI_CONT_ASF_DS_EXT  // video/x-ms-asf, application/vnd.ms-asf; .asf
-// #define ENABLE_MMAPI_CONT_AVI_DS_EXT  // video/avi, video/msvideo, video/x-msvideo; .avi
-// #define ENABLE_MMAPI_CONT_FLV_DS_EXT  // video/x-flv, video/mp4, video/x-m4v, audio/mp4a-latm, video/3gpp, video/quicktime, audio/mp4; .flv, .f4v, .f4p, .f4a, .f4b
-// #define ENABLE_MMAPI_CONT_FLV_DS_INT
-// #define ENABLE_MMAPI_CONT_MKA_DS_EXT  // video/x-matroska, audio/x-matroska; .mkv, .mka, .mks
-// #define ENABLE_MMAPI_CONT_MKV_DS_EXT  // video/x-matroska, audio/x-matroska; .mkv, .mka, .mks
-// #define ENABLE_MMAPI_CONT_MOV_DS_EXT  // video/quicktime; .mov, .qt
-// #define ENABLE_MMAPI_CONT_MP2_DS_EXT  // audio/mpeg; .mp2
-// #define ENABLE_MMAPI_CONT_MP3_DS_EXT  // audio/mpeg; .mp3
-// #define ENABLE_MMAPI_CONT_MP4_DS_EXT  // video/mp4, audio/mp4, application/mp4; .mp4
-// #define ENABLE_MMAPI_CONT_MPEG_DS_EXT // audio/mpeg, video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
-// #define ENABLE_MMAPI_CONT_MPG_DS_EXT  // audio/mpeg, video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
-// #define ENABLE_MMAPI_CONT_OGA_DS_EXT  // audio/ogg; .ogg, .oga
-// #define ENABLE_MMAPI_CONT_OGG_DS_EXT  // video/ogg, audio/ogg, application/ogg; .ogv, .oga, .ogx, .ogg, .spx
-// #define ENABLE_MMAPI_CONT_OGV_DS_EXT  // video/ogg; .ogv
-// #define ENABLE_MMAPI_CONT_QT_DS_EXT   // video/quicktime; .mov, .qt
-// #define ENABLE_MMAPI_CONT_RMVB_DS_EXT // application/vnd.rn-realmedia-vbr; .rmvb
-// #define ENABLE_MMAPI_CONT_WAV_DS_EXT  // audio/wav, audio/wave, audio/x-wav; .wav
-// #define ENABLE_MMAPI_CONT_WMA_DS_EXT  // audio/x-ms-wma; .wma
-// #define ENABLE_MMAPI_CONT_WMV_DS_EXT  // video/x-ms-wmv; .wmv
-// #define ENABLE_MMAPI_FMT_VP6_DS_INT
-// #define ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
-// #define ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+// #define ENABLE_JSR_135_CONT_3G2_DSHOW_EXT  // video/3gpp, audio/3gpp, video/3gpp2, audio/3gpp2; .3gp, .3g2
+// #define ENABLE_JSR_135_CONT_3GP_DSHOW_EXT  // video/3gpp, audio/3gpp, video/3gpp2, audio/3gpp2; .3gp, .3g2
+// #define ENABLE_JSR_135_CONT_AMR_DSHOW_EXT  // audio/amr; .amr
+// #define ENABLE_JSR_135_CONT_ASF_DSHOW_EXT  // video/x-ms-asf, application/vnd.ms-asf; .asf
+// #define ENABLE_JSR_135_CONT_AVI_DSHOW_EXT  // video/avi, video/msvideo, video/x-msvideo; .avi
+// #define ENABLE_JSR_135_CONT_FLV_DSHOW_EXT  // video/x-flv, video/mp4, video/x-m4v, audio/mp4a-latm, video/3gpp, video/quicktime, audio/mp4; .flv, .f4v, .f4p, .f4a, .f4b
+// #define ENABLE_JSR_135_CONT_FLV_DSHOW_INT
+// #define ENABLE_JSR_135_CONT_MKA_DSHOW_EXT  // video/x-matroska, audio/x-matroska; .mkv, .mka, .mks
+// #define ENABLE_JSR_135_CONT_MKV_DSHOW_EXT  // video/x-matroska, audio/x-matroska; .mkv, .mka, .mks
+// #define ENABLE_JSR_135_CONT_MOV_DSHOW_EXT  // video/quicktime; .mov, .qt
+// #define ENABLE_JSR_135_CONT_MP2_DSHOW_EXT  // audio/mpeg; .mp2
+// #define ENABLE_JSR_135_CONT_MP3_DSHOW_EXT  // audio/mpeg; .mp3
+// #define ENABLE_JSR_135_CONT_MP4_DSHOW_EXT  // video/mp4, audio/mp4, application/mp4; .mp4
+// #define ENABLE_JSR_135_CONT_MPEG_DSHOW_EXT // audio/mpeg, video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
+// #define ENABLE_JSR_135_CONT_MPG_DSHOW_EXT  // audio/mpeg, video/mpeg; .mpg, .mpeg, .mp1, .mp2, .mp3, .m1v, .m1a, .m2a, .mpa, .mpv
+// #define ENABLE_JSR_135_CONT_OGA_DSHOW_EXT  // audio/ogg; .ogg, .oga
+// #define ENABLE_JSR_135_CONT_OGG_DSHOW_EXT  // video/ogg, audio/ogg, application/ogg; .ogv, .oga, .ogx, .ogg, .spx
+// #define ENABLE_JSR_135_CONT_OGV_DSHOW_EXT  // video/ogg; .ogv
+// #define ENABLE_JSR_135_CONT_QT_DSHOW_EXT   // video/quicktime; .mov, .qt
+// #define ENABLE_JSR_135_CONT_RMVB_DSHOW_EXT // application/vnd.rn-realmedia-vbr; .rmvb
+// #define ENABLE_JSR_135_CONT_WAV_DSHOW_EXT  // audio/wav, audio/wave, audio/x-wav; .wav
+// #define ENABLE_JSR_135_CONT_WMA_DSHOW_EXT  // audio/x-ms-wma; .wma
+// #define ENABLE_JSR_135_CONT_WMV_DSHOW_EXT  // video/x-ms-wmv; .wmv
+// #define ENABLE_JSR_135_FMT_VP6_DSHOW_INT
+// #define ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
+// #define ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
 
 
 // #include <initguid.h>
 
-#ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_3GP_DSHOW_EXT
     // {08e22ada-b715-45ed-9d20-7b87750301d4}
     DEFINE_GUID(MEDIASUBTYPE_MP4,
     0x08e22ada, 0xb715, 0x45ed, 0x9d, 0x20, 0x7b, 0x87, 0x75, 0x03, 0x01, 0xd4);
 #endif
 
-#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_INT
+#if defined ENABLE_JSR_135_CONT_FLV_DSHOW_EXT || defined ENABLE_JSR_135_CONT_FLV_DSHOW_INT
     // {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
     DEFINE_GUID(MEDIASUBTYPE_FLV,
     0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
 #endif
 
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
     HRESULT __stdcall flv_splitter_create(IUnknown *, const IID &, void **);
 #endif
 
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
     HRESULT __stdcall flv_decoder_create(IUnknown *, const IID &, void **);
 #endif
 
@@ -96,17 +97,17 @@ class player_dshow : public player
     IMediaControl *pmc;
     IMediaSeeking *pms;
     filter_in *pfi;
-#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
     filter_out *pfo_a;
 #endif
-#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
     filter_out *pfo_v;
 #endif
     IPin *pp;
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
     IBaseFilter *pbf_flv_split;
 #endif
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
     IBaseFilter *pbf_flv_dec;
 #endif
 
@@ -270,17 +271,17 @@ class player_dshow : public player
         {
             pmc->Stop();
             Sleep(100);
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
                 pbf_flv_dec->Release();
 #endif
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
                 pbf_flv_split->Release();
 #endif
             pp->Release();
-#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
                 pfo_v->Release();
 #endif
-#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
                 pfo_a->Release();
 #endif
             pfi->Release();
@@ -421,7 +422,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
     {
         return false;
     }
-#ifdef ENABLE_MMAPI_CONT_3GP_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_3GP_DSHOW_EXT
     else if(len >= wcslen(L"video/3gpp") && !wcsncmp(pformat, L"video/3gpp", wcslen(L"video/3gpp")))
     {
         pplayer = new player_dshow;
@@ -438,7 +439,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#ifdef ENABLE_MMAPI_CONT_AMR_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_AMR_DSHOW_EXT
     else if(len >= wcslen(L"audio/amr") && !wcsncmp(pformat, L"audio/amr", wcslen(L"audio/amr")))
     {
         pplayer = new player_dshow;
@@ -455,7 +456,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#ifdef ENABLE_MMAPI_CONT_AVI_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_AVI_DSHOW_EXT
     else if(len >= wcslen(L"video/avi") && !wcsncmp(pformat, L"video/avi", wcslen(L"video/avi")))
     {
         pplayer = new player_dshow;
@@ -472,7 +473,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#if defined ENABLE_MMAPI_CONT_FLV_DS_EXT || defined ENABLE_MMAPI_CONT_FLV_DS_INT
+#if defined ENABLE_JSR_135_CONT_FLV_DSHOW_EXT || defined ENABLE_JSR_135_CONT_FLV_DSHOW_INT
     else if(len >= wcslen(L"video/x-flv") && !wcsncmp(pformat, L"video/x-flv", wcslen(L"video/x-flv")))
     {
         pplayer = new player_dshow;
@@ -489,7 +490,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#ifdef ENABLE_MMAPI_CONT_MP3_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_MP3_DSHOW_EXT
     else if(len >= wcslen(L"audio/mpeg") && !wcsncmp(pformat, L"audio/mpeg", wcslen(L"audio/mpeg")))
     {
         pplayer = new player_dshow;
@@ -506,7 +507,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#ifdef ENABLE_MMAPI_CONT_MP4_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_MP4_DSHOW_EXT
     else if(len >= wcslen(L"video/mp4") && !wcsncmp(pformat, L"video/mp4", wcslen(L"video/mp4")))
     {
         pplayer = new player_dshow;
@@ -523,7 +524,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#ifdef ENABLE_MMAPI_CONT_MPG_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_MPG_DSHOW_EXT
     else if(len >= wcslen(L"video/mpeg") && !wcsncmp(pformat, L"video/mpeg", wcslen(L"video/mpeg")))
     {
         pplayer = new player_dshow;
@@ -540,7 +541,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#ifdef ENABLE_MMAPI_CONT_OGG_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_OGG_DSHOW_EXT
     else if(len >= wcslen(L"video/ogg") && !wcsncmp(pformat, L"video/ogg", wcslen(L"video/ogg")))
     {
         pplayer = new player_dshow;
@@ -557,7 +558,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
         pplayer->amt.pbFormat = null;
     }
 #endif
-#ifdef ENABLE_MMAPI_CONT_WAV_DS_EXT
+#ifdef ENABLE_JSR_135_CONT_WAV_DSHOW_EXT
     else if(len >= wcslen(L"audio/wav") && !wcsncmp(pformat, L"audio/wav", wcslen(L"audio/wav")))
     {
         pplayer = new player_dshow;
@@ -620,7 +621,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                     }
                     else
                     {
-#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
                         AM_MEDIA_TYPE amt_a;
                         amt_a.majortype = MEDIATYPE_Audio;
                         amt_a.subtype = MEDIASUBTYPE_PCM;
@@ -638,7 +639,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                         else
 #endif
                         {
-#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
                             AM_MEDIA_TYPE amt2;
                             amt2.majortype = MEDIATYPE_Video;
                             amt2.subtype = MEDIASUBTYPE_RGB565;
@@ -663,7 +664,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                 }
                                 else
                                 {
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
                                     hr = flv_splitter_create(null, IID_IBaseFilter,
                                         (void **)&pplayer->pbf_flv_split);
                                     if(hr != S_OK)
@@ -673,7 +674,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                     else
 #endif
                                     {
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
                                         hr = flv_decoder_create(null, IID_IBaseFilter,
                                             (void **)&pplayer->pbf_flv_dec);
                                         if(hr != S_OK)
@@ -690,7 +691,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                             }
                                             else
                                             {
-#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
                                                 hr = pplayer->pgb->AddFilter(pplayer->pfo_a, L"Output audio filter");
                                                 if(hr != S_OK)
                                                 {
@@ -699,7 +700,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                 else
 #endif
                                                 {
-#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
                                                     hr = pplayer->pgb->AddFilter(pplayer->pfo_v, L"Output video filter");
                                                     if(hr != S_OK)
                                                     {
@@ -708,7 +709,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                     else
 #endif
                                                     {
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
                                                         hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
                                                         if(hr != S_OK)
                                                         {
@@ -717,7 +718,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                         else
 #endif
                                                         {
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
                                                             hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
                                                             if(hr != S_OK)
                                                             {
@@ -732,21 +733,21 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                     }
                                                 }
                                             }
-#ifdef ENABLE_MMAPI_FMT_VP6_DS_INT
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
                                             if(!r) pplayer->pbf_flv_dec->Release();
 #endif
                                         }
-#ifdef ENABLE_MMAPI_CONT_FLV_DS_INT
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
                                         if(!r) pplayer->pbf_flv_split->Release();
 #endif
                                     }
                                     if(!r) pplayer->pp->Release();
                                 }
-#ifdef ENABLE_MMAPI_VIDEO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
                                 if(!r) pplayer->pfo_v->Release();
 #endif
                             }
-#ifdef ENABLE_MMAPI_AUDIO_OUTPUT_FILTER
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
                             if(!r) pplayer->pfo_a->Release();
 #endif
                         }
