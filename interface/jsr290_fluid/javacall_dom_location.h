@@ -118,7 +118,7 @@ javacall_dom_location_get_href_finish(void *context,
  * OR returns the value of the <code>hash</code> attribute. 
  *
  * <p>If the absolute URI reference 
- * [<a href="http://www.ietf.org/rfc/rfc2396.txt">RFC2396</a>RFC2396</a>]
+ * [<a href="http://www.ietf.org/rfc/rfc2396.txt">RFC2396</a>]
  * for the Location's current location has a fragment identifier, then the
  * value of the <code>hash</code> attribute the value of this attribute
  * <span class="rfc2119">must</span> be the string concatenation of the
@@ -160,7 +160,7 @@ javacall_dom_location_get_hash_start(javacall_handle handle,
  * OR returns the value of the <code>hash</code> attribute. 
  *
  * <p>If the absolute URI reference 
- * [<a href="http://www.ietf.org/rfc/rfc2396.txt">RFC2396</a>RFC2396</a>]
+ * [<a href="http://www.ietf.org/rfc/rfc2396.txt">RFC2396</a>]
  * for the Location's current location has a fragment identifier, then the
  * value of the <code>hash</code> attribute the value of this attribute
  * <span class="rfc2119">must</span> be the string concatenation of the

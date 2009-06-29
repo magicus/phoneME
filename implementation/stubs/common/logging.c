@@ -30,12 +30,20 @@ extern "C" {
 #endif
     
 /**
- * Prints out a string to a system specific output strream
+ * Prints out a string to a system specific output stream
  *
  * @param s a NULL terminated character buffer to be printed
 */
-void javacall_print(const char *s) {
-   
+void javacall_print(const char *s) {   
+}
+ 
+/**
+ * Prints out an array of characters to a system specific output stream
+ *
+ * @param s address of the first character to print
+ * @param length number of characters to print
+*/
+void javacall_print_chars(const char* s, int length) {   
 }
  
 /*

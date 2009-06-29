@@ -58,9 +58,9 @@ typedef struct _InvocParams {
     javacall_utf16_string action;            /**< The action of the request */
     javacall_utf16_string invokingAppName;   /**< The invoking name */
     javacall_utf16_string invokingAuthority; /**< The invoking authority string */
-    javacall_utf16_string username;	     /**< The username provided as credentials */
-    javacall_utf16_string password;	     /**< The password provided as credentials */
-    int                   argsLen;	     /**< The length of the argument array */
+    javacall_utf16_string username;          /**< The username provided as credentials */
+    javacall_utf16_string password;          /**< The password provided as credentials */
+    int                   argsLen;           /**< The length of the argument array */
     javacall_utf16_string* args;             /**< The arguments */
     int                   dataLen;           /**< The length of the data in bytes */
     void*                 data;              /**< The data; may be NULL */
@@ -128,7 +128,7 @@ javacall_result javacall_chapi_platform_invoke(int invoc_id,
         /* OUT */ javacall_bool* should_exit);
 
 
-/*
+/**
  * Called by platform to notify java VM that invocation of native handler 
  * is finished. This is <code>ContentHandlerServer.finish()</code> substitute 
  * after platform handler completes invocation processing.
@@ -152,7 +152,7 @@ void javanotify_chapi_platform_finish(int invoc_id,
  * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
  * @param handler_id target Java handler Id
  * @param invocation filled out structure with invocation params
- * @param invoc_id invocation Id for further references, should be positive
+ * @param invoc_id unique invocation Id for further references, must be positive
  */
 void javanotify_chapi_java_invoke(
         const javacall_utf16_string handler_id, 
@@ -160,7 +160,7 @@ void javanotify_chapi_java_invoke(
         int invoc_id);
 
 
-/*
+/**
  * Called by Java to notify platform that requested invocation processing
  * is completed by Java handler.
  * This is <code>ContentHandlerServer.finish()</code> substitute 
@@ -182,7 +182,25 @@ javacall_result javacall_chapi_java_finish(int invoc_id,
         int dataLen, void* data, javacall_chapi_invocation_status status,
         /* OUT */ javacall_bool* should_exit);
 
+/**
+ * This structure is used to select one handler from a list of handlers to process an invocation
+ */
+typedef struct {
+    javacall_const_utf16_string handler_id;
+    javacall_const_utf16_string action_name;
+} javacall_chapi_handler_info;
 
+/**
+ * this function must return index of selected content handler. Returned value must be in <code>[-1, count - 1]</code>.
+ * @param action non-localized action string
+ * @param count number of <code>javacall_chapi_handler_info</code> values in the <code>list</code>
+ * @param list pointer to an array of handlers to select
+ * @param handler_idx index of the selected handler or -1 if no handler found. Output parameter.
+ * @return result of the operation
+ */
+javacall_result javacall_chapi_select_handler( javacall_const_utf16_string action, int count, const javacall_chapi_handler_info * list, 
+                                                            /* OUT */ int * handler_idx );
+                                                
 #ifdef __cplusplus
 }
 #endif/*__cplusplus*/

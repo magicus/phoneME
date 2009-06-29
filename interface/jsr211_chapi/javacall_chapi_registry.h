@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ extern "C" {
 #endif/*__cplusplus*/
 
 /** not enough memory to complete operation **/
-#define JAVACALL_CHAPI_ERROR_NO_MEMORY	-3L
+#define JAVACALL_CHAPI_ERROR_NO_MEMORY  -3L
 
 /** parameters passed to function are invalid **/
 #define JAVACALL_CHAPI_ERROR_BAD_PARAMS -4L
@@ -60,7 +60,7 @@ extern "C" {
 /** operation can not be completed due to access restrictions 
  *  can be returned during request of update or unregister the system protected native handler 
 **/
-#define JAVACALL_CHAPI_ERROR_ACCESS_DENIED	-16L
+#define JAVACALL_CHAPI_ERROR_ACCESS_DENIED    -16L
 
 /** enumeration function has no more values to return **/
 #define JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS -17L
@@ -76,7 +76,7 @@ extern "C" {
 typedef enum {
 /* value of javacall_chapi_handler_registration_type MUST not be 0 (it is stored in zero-terminated strings) */
 /** Content handler statically/dynamically registered during installation */
-	REGISTERED_STATIC_FLAG = 0x0001
+    REGISTERED_STATIC_FLAG = 0x0001
 } javacall_chapi_handler_registration_type;
 
 
@@ -128,12 +128,12 @@ javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string suite_id,
         javacall_const_utf16_string class_name,
         javacall_chapi_handler_registration_type flag,
-        javacall_const_utf16_string* content_types,     int nTypes,
-        javacall_const_utf16_string* suffixes,  int nSuffixes,
-        javacall_const_utf16_string* actions,   int nActions,  
-        javacall_const_utf16_string* locales,   int nLocales,
+        javacall_const_utf16_string* content_types, int nTypes,
+        javacall_const_utf16_string* suffixes, int nSuffixes,
+        javacall_const_utf16_string* actions, int nActions,  
+        javacall_const_utf16_string* locales, int nLocales,
         javacall_const_utf16_string* action_names, int nActionNames,
-        javacall_const_utf16_string* access_allowed_ids,  int nAccesses
+        javacall_const_utf16_string* access_allowed_ids, int nAccesses
 );
 
 
@@ -149,7 +149,7 @@ javacall_result javacall_chapi_register_handler(
  *                its value should not be interpreted by caller in any way
  *                Method javacall_chapi_enum_finish is called after last enum method call allowing implementation to clean allocated data
  *                If function returns error value pointed by pos_id MUST not be updated
- *				  
+ *                  
  * @param handler_id_out memory buffer receiving zero terminated string containing single handler id 
  * @param length pointer to integer initialized by caller to length of buffer,
  *               on return it set to length of data passing to buffer including the terminating zero
@@ -160,7 +160,7 @@ javacall_result javacall_chapi_register_handler(
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16* handler_id_out, int* length);
 
 /**
  * Enumerate registered content handlers that can handle files with given suffix
@@ -186,7 +186,8 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* handler_id_out, int* length);
 
 /**
  * Enumerate registered content handlers that can handle content with given content type
@@ -212,7 +213,8 @@ javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_stri
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string content_type, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string content_type, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16*  handler_id_out, int* length);
 
 /**
  * Enumerate registered content handlers that can perform given action
@@ -238,7 +240,8 @@ javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_string action, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_string action, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* handler_id_out, int* length);
 
 /**
  * Enumerate registered content handlers located in suite (bundle) with given suite id
@@ -264,11 +267,8 @@ javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_stri
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_by_suite_id(
-        javacall_const_utf16_string suite_id,
-        int* pos_id, 
-        /*OUT*/ javacall_utf16*  handler_id_out,
-        int* length);
+javacall_result javacall_chapi_enum_handlers_by_suite_id(javacall_const_utf16_string suite_id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* handler_id_out, int* length);
 
 
 /**
@@ -295,8 +295,8 @@ javacall_result javacall_chapi_enum_handlers_by_suite_id(
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_by_prefix(javacall_const_utf16_string id, 
-												int* pos_id, /*OUT*/ javacall_utf16* handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_by_prefix(javacall_const_utf16_string id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* handler_id_out, int* length);
 
 /**
  * Enumerate registered content handler IDs that are a prefix of the 'id' parameter.
@@ -323,8 +323,8 @@ javacall_result javacall_chapi_enum_handlers_by_prefix(javacall_const_utf16_stri
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_string id, 
-												int* pos_id, /*OUT*/ javacall_utf16* handler_id_out, int* length);
+javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_string id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* handler_id_out, int* length);
 
 /**
  * Enumerate all suffixes of content type data files that can be handled by given content handler or all suffixes 
@@ -351,7 +351,8 @@ javacall_result javacall_chapi_enum_handlers_prefixes_of(javacall_const_utf16_st
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content_handler_id, int* pos_id, /*OUT*/ javacall_utf16*  suffix_out, int* length);
+javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content_handler_id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* suffix_out, int* length);
 
 /**
  * Enumerate all content data types that can be handled by given content handler or all content types
@@ -378,7 +379,8 @@ javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16*  type_out, int* length);
+javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_handler_id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* type_out, int* length);
 
 /**
  * Enumerate all actions that can be performed by given content handler with any acceptable content
@@ -405,7 +407,8 @@ javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_ha
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16*  action_out, int* length);
+javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_handler_id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* action_out, int* length);
 
 /**
  * Enumerate all locales for witch localized names of actions that can be performed by given handler exist in registry.
@@ -431,7 +434,8 @@ javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16* locale_out, int* length);
+javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string content_handler_id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* locale_out, int* length);
 
 /**
  * Get localized name of actions that can be performed by given handler
@@ -449,7 +453,8 @@ javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string c
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action, javacall_const_utf16_string locale, javacall_utf16*  local_action_out, int* length);
+javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action, javacall_const_utf16_string locale, 
+                                                            /*OUT*/ javacall_utf16* local_action_out, int* length);
 
 /**
  * Enumerate all caller names that accessible to invoke given handler
@@ -475,7 +480,8 @@ javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_string content_handler_id, int* pos_id, /*OUT*/ javacall_utf16*  access_allowed_out, int* length);
+javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_string content_handler_id, int* pos_id, 
+                                                            /*OUT*/ javacall_utf16* access_allowed_out, int* length);
 
 
 /**
@@ -491,7 +497,8 @@ javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if buffer too small to keep result
  *         error code if failure occurs
  */
-javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_const_utf16_string content_handler_id, /*OUT*/ javacall_utf16*  handler_frienfly_appname_out, int* length);
+javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_const_utf16_string content_handler_id, 
+                                                            /*OUT*/ javacall_utf16* handler_frienfly_appname_out, int* length);
 
 /**
  * Get the combined location information of given content handler
@@ -513,10 +520,10 @@ javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_con
  *         error code if failure occurs
  */
 javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string content_handler_id,
-				   /*OUT*/
-				   javacall_utf16*  suite_id_out, int* suite_id_len,
-				   javacall_utf16*  classname_out, int* classname_len,
-				   javacall_chapi_handler_registration_type *flag_out);
+                   /*OUT*/
+                   javacall_utf16* suite_id_out, int* suite_id_len,
+                   javacall_utf16* classname_out, int* classname_len,
+                   javacall_chapi_handler_registration_type * flag_out);
 
 /**
  * Check if given caller has allowed access to invoke content handler

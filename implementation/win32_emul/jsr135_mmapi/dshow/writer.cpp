@@ -39,7 +39,7 @@
 #include "types.hpp"
 
 
-void print(char8 const *fmt, ...)
+void print(const char8 *fmt, ...)
 {
     char str8[1024];
     va_list args;
@@ -48,11 +48,12 @@ void print(char8 const *fmt, ...)
     vsprintf_s(str8, 1024, fmt, args);
     va_end(args);
 
-    //printf("%s", str8);
-    OutputDebugStringA(str8);
+    // printf("%s", str8);
+    // printf("%x %s", GetCurrentThreadId(), str8);
+    // OutputDebugStringA(str8);
 }
 
-void print(char16 const *fmt, ...)
+void print(const char16 *fmt, ...)
 {
     WCHAR str16[1024];
     va_list args;
@@ -61,8 +62,9 @@ void print(char16 const *fmt, ...)
     vswprintf_s(str16, 1024, fmt, args);
     va_end(args);
 
-    //wprintf(L"%s", str16);
-    OutputDebugStringW(str16);
+    // wprintf(L"%s", str16);
+    // wprintf(L"%x %s", GetCurrentThreadId(), str16);
+    // OutputDebugStringW(str16);
 }
 
 void error(HRESULT hr)
@@ -71,7 +73,7 @@ void error(HRESULT hr)
     WCHAR *buf;
     DWORD l = FormatMessageW(
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_IGNORE_INSERTS | 
+        FORMAT_MESSAGE_IGNORE_INSERTS |
         FORMAT_MESSAGE_FROM_SYSTEM,
         NULL, hr, 0, (WCHAR *)&buf, 0, NULL);
     if(l)
@@ -86,7 +88,7 @@ void error(HRESULT hr)
     print("\n");
 }
 
-void error(char8 const *str, HRESULT hr)
+void error(const char8 *str, HRESULT hr)
 {
     print("%s. Errorcode: %x.", str, hr);
     WCHAR *buf;
@@ -112,6 +114,18 @@ void error(char8 const *str, HRESULT hr)
 DEFINE_GUID(IID_IDirectVobSub,
 0xebe1fb08, 0x3957, 0x47ca, 0xaf, 0x13, 0x58, 0x27, 0xe5, 0x44, 0x2e, 0x56);
 
+// {da395fa3-4a3e-4d85-805e-0beff53d4bcd}
+DEFINE_GUID(IID_IStreamSwitcherInputPin,
+0xda395fa3, 0x4a3e, 0x4d85, 0x80, 0x5e, 0x0b, 0xef, 0xf5, 0x3d, 0x4b, 0xcd);
+
+// {6ddb4ee7-45a0-4459-a508-bd77b32c91b2}
+DEFINE_GUID(IID_ISyncReader,
+0x6ddb4ee7, 0x45a0, 0x4459, 0xa5, 0x08, 0xbd, 0x77, 0xb3, 0x2c, 0x91, 0xb2);
+
+// {08e22ada-b715-45ed-9d20-7b87750301d4}
+DEFINE_GUID(MEDIASUBTYPE_MP4,
+0x08e22ada, 0xb715, 0x45ed, 0x9d, 0x20, 0x7b, 0x87, 0x75, 0x03, 0x01, 0xd4);
+
 // {59333afb-9992-4aa3-8c31-7fb03f6ffdf3}
 DEFINE_GUID(MEDIASUBTYPE_FLV,
 0x59333afb, 0x9992, 0x4aa3, 0x8c, 0x31, 0x7f, 0xb0, 0x3f, 0x6f, 0xfd, 0xf3);
@@ -128,16 +142,28 @@ DEFINE_GUID(MEDIASUBTYPE_FLV4,
 DEFINE_GUID(MEDIASUBTYPE_FLV5,
 0x35564c46, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
+// {35564c46-0000-0010-8000-00aa00389b71}
+DEFINE_GUID(MEDIASUBTYPE_S263,
+0x33363253, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
+// {35564c46-0000-0010-8000-00aa00389b71}
+DEFINE_GUID(MEDIASUBTYPE_s263,
+0x33363273, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
+// {726d6173-0000-0010-8000-00aa00389b71}
+DEFINE_GUID(MEDIASUBTYPE_samr,
+0x726d6173, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+
 
 struct guid_item
 {
     GUID guid;
-    CHAR const *name;
+    const CHAR *name;
 };
 
 #define define_guid_item(name) name, #name
 
-guid_item const static guid_items[]=
+static const guid_item guid_items[]=
 {
     define_guid_item(DXVA_ModeWMV9_A                ),
     define_guid_item(DXVA_ModeWMV9_B                ),
@@ -152,6 +178,7 @@ guid_item const static guid_items[]=
     define_guid_item(IID_IAMFilterMiscFlags         ),
     define_guid_item(IID_IAMOpenProgress            ),
     define_guid_item(IID_IAMPushSource              ),
+    define_guid_item(IID_IAMVfwCaptureDialogs       ),
     define_guid_item(IID_IAsyncReader               ),
     define_guid_item(IID_IBasicAudio                ),
     define_guid_item(IID_IBasicVideo                ),
@@ -162,8 +189,12 @@ guid_item const static guid_items[]=
     define_guid_item(IID_IMediaSeeking              ),
     define_guid_item(IID_IMemInputPin               ),
     define_guid_item(IID_IPersist                   ),
+    define_guid_item(IID_IReferenceClock            ),
     define_guid_item(IID_IStream                    ),
     define_guid_item(IID_IStreamBuilder             ),
+    define_guid_item(IID_IStreamSwitcherInputPin    ),
+    define_guid_item(IID_ISyncReader                ),
+    define_guid_item(IID_IUnknown                   ),
     define_guid_item(IID_IVideoWindow               ),
     define_guid_item(MEDIASUBTYPE_AIFF              ),
     define_guid_item(MEDIASUBTYPE_ARGB32            ),
@@ -182,6 +213,7 @@ guid_item const static guid_items[]=
     define_guid_item(MEDIASUBTYPE_FLV4              ),
     define_guid_item(MEDIASUBTYPE_FLV5              ),
     define_guid_item(MEDIASUBTYPE_IEEE_FLOAT        ),
+    define_guid_item(MEDIASUBTYPE_MP4               ),
     define_guid_item(MEDIASUBTYPE_MPEG1Audio        ),
     define_guid_item(MEDIASUBTYPE_MPEG1AudioPayload ),
     define_guid_item(MEDIASUBTYPE_MPEG1Packet       ),
@@ -201,7 +233,9 @@ guid_item const static guid_items[]=
     define_guid_item(MEDIASUBTYPE_RGB555            ),
     define_guid_item(MEDIASUBTYPE_RGB565            ),
     define_guid_item(MEDIASUBTYPE_RGB8              ),
+    define_guid_item(MEDIASUBTYPE_S263              ),
     define_guid_item(MEDIASUBTYPE_SPDIF_TAG_241h    ),
+    define_guid_item(MEDIASUBTYPE_samr              ),
     define_guid_item(MEDIASUBTYPE_UYVY              ),
     define_guid_item(MEDIASUBTYPE_WAVE              ),
     define_guid_item(MEDIASUBTYPE_WMVR              ),
@@ -209,6 +243,7 @@ guid_item const static guid_items[]=
     define_guid_item(MEDIASUBTYPE_YUY2              ),
     define_guid_item(MEDIASUBTYPE_YV12              ),
     define_guid_item(MEDIASUBTYPE_YVYU              ),
+    define_guid_item(MEDIASUBTYPE_s263              ),
     define_guid_item(MEDIATYPE_AUXLine21Data        ),
     define_guid_item(MEDIATYPE_AnalogAudio          ),
     define_guid_item(MEDIATYPE_AnalogVideo          ),
@@ -257,7 +292,7 @@ void print(GUID guid)
 }
 
 
-void dump_media_type(AM_MEDIA_TYPE const *pamt)
+void dump_media_type(const AM_MEDIA_TYPE *pamt)
 {
     print("majortype=");
     print(pamt->majortype);
@@ -273,10 +308,10 @@ void dump_media_type(AM_MEDIA_TYPE const *pamt)
     print(", pbFormat=0x%08x", UINT32(UINT64(pamt->pbFormat)));
     if(pamt->formattype == FORMAT_WaveFormatEx && pamt->cbFormat >= sizeof(WAVEFORMATEX) && pamt->pbFormat)
     {
-        WAVEFORMATEX *pwfe = (WAVEFORMATEX *) pamt->pbFormat;
+        const WAVEFORMATEX *pwfe = (const WAVEFORMATEX *)pamt->pbFormat;
         if(pwfe->wFormatTag == WAVE_FORMAT_MPEG && pamt->cbFormat >= sizeof(MPEG1WAVEFORMAT))
         {
-            MPEG1WAVEFORMAT *pm1wf = (MPEG1WAVEFORMAT *) pamt->pbFormat;
+            const MPEG1WAVEFORMAT *pm1wf = (const MPEG1WAVEFORMAT *)pamt->pbFormat;
             print(", wFormatTag=WAVE_FORMAT_MPEG");
             print(", nChannels=%u"      , pm1wf->wfx.nChannels      );
             print(", nSamplesPerSec=%u" , pm1wf->wfx.nSamplesPerSec );
@@ -295,7 +330,7 @@ void dump_media_type(AM_MEDIA_TYPE const *pamt)
         }
         else if(pwfe->wFormatTag == WAVE_FORMAT_MPEGLAYER3 && pamt->cbFormat >= sizeof(MPEGLAYER3WAVEFORMAT))
         {
-            MPEGLAYER3WAVEFORMAT *pml3wf = (MPEGLAYER3WAVEFORMAT *) pamt->pbFormat;
+            const MPEGLAYER3WAVEFORMAT *pml3wf = (const MPEGLAYER3WAVEFORMAT *)pamt->pbFormat;
             print(", wFormatTag=WAVE_FORMAT_MPEGLAYER3");
             print(", nChannels=%u"      , pml3wf->wfx.nChannels      );
             print(", nSamplesPerSec=%u" , pml3wf->wfx.nSamplesPerSec );
@@ -341,7 +376,7 @@ bool dump_media_types(IPin *pp, nat32 indent)
     hr = pp->EnumMediaTypes(&pemt);
     if(hr != S_OK)
     {
-        //error("IPin::EnumMediaTypes failed", hr);
+        // error("IPin::EnumMediaTypes failed", hr);
         r = true;
     }
     else
@@ -396,11 +431,47 @@ bool dump_pin(IPin *pp, nat32 indent)
             for(UINT32 i = 0; i < indent; i++) print(" ");
             print("0x%08x ", UINT32(UINT64(pp)));
             print(L"%s", id);
+            IAMFilterMiscFlags *pamfmf;
+            if(pp->QueryInterface(IID_IAMFilterMiscFlags, (void **)&pamfmf) == S_OK)
+            {
+                print(" IAMFilterMiscFlags");
+                pamfmf->Release();
+            }
             IAsyncReader *par;
             if(pp->QueryInterface(IID_IAsyncReader, (void **)&par) == S_OK)
             {
                 par->Release();
                 print(" IAsyncReader");
+            }
+            IBasicAudio *pba;
+            if(pp->QueryInterface(IID_IBasicAudio, (void **)&pba) == S_OK)
+            {
+                print(" IBasicAudio");
+                pba->Release();
+            }
+            IBasicVideo *pbv;
+            if(pp->QueryInterface(IID_IBasicVideo, (void **)&pbv) == S_OK)
+            {
+                print(" IBasicVideo");
+                pbv->Release();
+            }
+            IKsPropertySet *pkps;
+            if(pp->QueryInterface(IID_IKsPropertySet, (void **)&pkps) == S_OK)
+            {
+                print(" IKsPropertySet");
+                pkps->Release();
+            }
+            IMediaPosition *pmp;
+            if(pp->QueryInterface(IID_IMediaPosition, (void **)&pmp) == S_OK)
+            {
+                print(" IMediaPosition");
+                pmp->Release();
+            }
+            IMediaSeeking *pms;
+            if(pp->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+            {
+                print(" IMediaSeeking");
+                pms->Release();
             }
             IMemInputPin *pmip;
             if(pp->QueryInterface(IID_IMemInputPin, (void **)&pmip) == S_OK)
@@ -408,6 +479,18 @@ bool dump_pin(IPin *pp, nat32 indent)
                 print(" IMemInputPin");
                 if(pmip->ReceiveCanBlock() == S_OK) print("(blocking)");
                 pmip->Release();
+            }
+            IReferenceClock *prc;
+            if(pp->QueryInterface(IID_IReferenceClock, (void **)&prc) == S_OK)
+            {
+                print(" IReferenceClock");
+                prc->Release();
+            }
+            IVideoWindow *pvw;
+            if(pp->QueryInterface(IID_IVideoWindow, (void **)&pvw) == S_OK)
+            {
+                print(" IVideoWindow");
+                pvw->Release();
             }
             print(" 0x%08x", UINT32(UINT64(pi.pFilter)));
             print(" %u ", pi.dir);
@@ -496,6 +579,67 @@ bool dump_filter(IBaseFilter *pbf, nat32 indent)
         {
             print(" ");
             print(clsid);
+        }
+        IAMFilterMiscFlags *pamfmf;
+        if(pbf->QueryInterface(IID_IAMFilterMiscFlags, (void **)&pamfmf) == S_OK)
+        {
+            print(" IAMFilterMiscFlags");
+            pamfmf->Release();
+        }
+        IAsyncReader *par;
+        if(pbf->QueryInterface(IID_IAsyncReader, (void **)&par) == S_OK)
+        {
+            par->Release();
+            print(" IAsyncReader");
+        }
+        IBasicAudio *pba;
+        if(pbf->QueryInterface(IID_IBasicAudio, (void **)&pba) == S_OK)
+        {
+            print(" IBasicAudio");
+            pba->Release();
+        }
+        IBasicVideo *pbv;
+        if(pbf->QueryInterface(IID_IBasicVideo, (void **)&pbv) == S_OK)
+        {
+            print(" IBasicVideo");
+            pbv->Release();
+        }
+        IKsPropertySet *pkps;
+        if(pbf->QueryInterface(IID_IKsPropertySet, (void **)&pkps) == S_OK)
+        {
+            print(" IKsPropertySet");
+            pkps->Release();
+        }
+        IMediaPosition *pmp;
+        if(pbf->QueryInterface(IID_IMediaPosition, (void **)&pmp) == S_OK)
+        {
+            print(" IMediaPosition");
+            pmp->Release();
+        }
+        IMediaSeeking *pms;
+        if(pbf->QueryInterface(IID_IMediaSeeking, (void **)&pms) == S_OK)
+        {
+            print(" IMediaSeeking");
+            pms->Release();
+        }
+        IMemInputPin *pmip;
+        if(pbf->QueryInterface(IID_IMemInputPin, (void **)&pmip) == S_OK)
+        {
+            print(" IMemInputPin");
+            if(pmip->ReceiveCanBlock() == S_OK) print("(blocking)");
+            pmip->Release();
+        }
+        IReferenceClock *prc;
+        if(pbf->QueryInterface(IID_IReferenceClock, (void **)&prc) == S_OK)
+        {
+            print(" IReferenceClock");
+            prc->Release();
+        }
+        IVideoWindow *pvw;
+        if(pbf->QueryInterface(IID_IVideoWindow, (void **)&pvw) == S_OK)
+        {
+            print(" IVideoWindow");
+            pvw->Release();
         }
         print(" 0x%08x", UINT32(UINT64(fi.pGraph)));
         if(fi.pGraph) fi.pGraph->Release();

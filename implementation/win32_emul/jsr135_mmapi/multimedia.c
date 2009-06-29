@@ -50,9 +50,7 @@ static javacall_media_caps g_caps[] =
     { JAVACALL_MEDIA_FORMAT_MIDI,    "audio/midi audio/mid audio/x-midi", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",                     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
     { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-    { JAVACALL_MEDIA_FORMAT_RTP_L16, "audio/L16",                         0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
 #ifdef ENABLE_MMAPI_DSHOW
-    { JAVACALL_MEDIA_FORMAT_RTP_MPA, "audio/X-MP3-draft-00",              0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
     { JAVACALL_MEDIA_FORMAT_FLV,     "video/x-flv",                       0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
 #endif //ENABLE_MMAPI_DSHOW
     { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
@@ -510,6 +508,12 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MPEG1_LAYER3_PRO:
     case JC_FMT_RTP_MPA:
     case JC_FMT_FLV:
+    case JC_FMT_VIDEO_3GPP:
+    case JC_FMT_MPEG_4_SVP:
+    case JC_FMT_MPEG_1:
+    case JC_FMT_AMR:
+    case JC_FMT_AMR_WB:
+    case JC_FMT_AMR_WB_PLUS:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_MMAPI_DSHOW
@@ -519,16 +523,14 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
         break;
 
 #ifdef ENABLE_MMAPI_LIME
-    case JC_FMT_MPEG_1:
-    case JC_FMT_MPEG_4_SVP:
     case JC_FMT_MPEG_4_AVC:
-    case JC_FMT_VIDEO_3GPP:
     case JC_FMT_MOV:
         return &g_video_itf;
 
 #ifndef ENABLE_MMAPI_DSHOW // if both DSHOW and LIME are enabled, DSHOW overrides LIME
     case JC_FMT_MPEG1_LAYER3:
     case JC_FMT_MPEG1_LAYER3_PRO:
+    case JC_FMT_VIDEO_3GPP:
 #endif // ENABLE_MMAPI_DSHOW
 
     case JC_FMT_MPEG2_AAC:
@@ -542,7 +544,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_MS_PCM:
         return &g_qsound_itf;
 
-#if( defined( ENABLE_AMR ) )
+#if( defined( ENABLE_AMR ) && !defined( ENABLE_MMAPI_DSHOW ) )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
@@ -608,7 +610,7 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".midi", JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   },
-#ifdef ENABLE_AMR
+#if defined( ENABLE_AMR ) || defined( ENABLE_MMAPI_DSHOW )
         { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
 #endif // ENABLE_AMR
 
@@ -616,12 +618,15 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
         { L".flv",  JAVACALL_MEDIA_FORMAT_FLV },
         { L".fxm",  JAVACALL_MEDIA_FORMAT_FLV },
+        { L".3gp",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
+        { L".3g2",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
+        { L".mp4",  JAVACALL_MEDIA_FORMAT_MPEG_4_SVP   },
+        { L".mpeg", JAVACALL_MEDIA_FORMAT_MPEG_1       },
+        { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
 #endif // mp3
 
 #ifdef ENABLE_MMAPI_LIME
-        { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
-        { L".3gp",  JAVACALL_MEDIA_FORMAT_VIDEO_3GPP   },
 #endif /* ENABLE_MMAPI_LIME */
         { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   },
         { L".wmv",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }

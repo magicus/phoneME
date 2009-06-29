@@ -29,12 +29,34 @@
 
 #define DEVICE_PACKAGE "com.sun.kvem"
 #define DEVICE_CLASS "Device"
+#define FONT_ID(face, style, size) getFontIndex(face, style, size)
 
 static HWND hMainWindow;
 static HFONT currentFont = NULL;
 
+#define FONTS_COUNT_LIMIT 0x60
+
 //Hashtable for storing font names
-static unsigned short fontNameHash[0x60][100];
+static unsigned short fontNameHash[FONTS_COUNT_LIMIT][100];
+
+/*
+ * Returns the index of the fontNameHash array where to find the font specified
+ * by face, style and size
+ */
+static int getFontIndex(face, style, size)
+{
+    static int* fontHashTable = NULL;
+    int hash = ((face << 16) | (style << 8) | size) + 1; /* prevent 0 */
+    int* i;
+    if (!fontHashTable) {
+        /* zero-terminated array */
+        fontHashTable = malloc(FONTS_COUNT_LIMIT * sizeof(int) + 1);
+        memset(fontHashTable, 0, FONTS_COUNT_LIMIT * sizeof(int) + 1);
+    }
+    for (i = fontHashTable ;*i != hash && *i; i++); /* search the array for index */
+    *i = hash; /* add new or just overwrite the existing index  */
+    return i - fontHashTable; /* return the index */
+}
 
 static HFONT util_getFont(javacall_font_face face,
                           javacall_font_style style,
@@ -44,6 +66,7 @@ static HFONT util_getFont(javacall_font_face face,
 	unsigned short* res;
     unsigned short tempKey[100];
 	int resLen, height;
+    int findex = FONT_ID(face, style, size); 
 	unsigned short system[8]={'s','y','s','t','e','m','.',0};
 	unsigned short monospace[11]={'m','o','n','o','s','p','a','c','e','.',0};
 	unsigned short proportional[14]={'p','r','o','p','o','r','t','i','o','n','a','l','.',0};
@@ -71,7 +94,7 @@ static HFONT util_getFont(javacall_font_face face,
     defaultFont = GetStockObject(DEFAULT_GUI_FONT);
 
 	if (f == NULL) {
-        memset(fontNameHash,0,100*0x60*sizeof(unsigned short));
+        memset(fontNameHash,0,100*FONTS_COUNT_LIMIT*sizeof(unsigned short));
 		f = NewLimeFunction(DEVICE_PACKAGE,
 							DEVICE_CLASS,
 							"getJ2SEProperty");
@@ -101,6 +124,10 @@ static HFONT util_getFont(javacall_font_face face,
 			wcscat(key, italic);
             newFont.lfItalic = TRUE;
         }
+        if (!(style & (JAVACALL_FONT_STYLE_BOLD | JAVACALL_FONT_STYLE_ITALIC))){
+            wcscat(key, plain);
+            newFont.lfWeight = FW_NORMAL;
+        }
         if (style & JAVACALL_FONT_STYLE_UNDERLINE) {
             newFont.lfUnderline = TRUE;
         }
@@ -121,10 +148,11 @@ static HFONT util_getFont(javacall_font_face face,
     }
 
 	//Use hashtable to reduce calls to lime
-    if( fontNameHash[face+style+size][0] == 0 ) {
+    if( fontNameHash[findex][0] == 0 ) {
         f->call(f, &res, &resLen, key, wcslen(key));
 		if( res != NULL ) {
-			memcpy(fontNameHash[face+style+size],res,resLen*sizeof(unsigned short));
+			memcpy(fontNameHash[findex],res,resLen*sizeof(unsigned short));
+            fontNameHash[findex][resLen] = 0;
 		} else {
 			printf("Error reading font %ws\n",key);
 			ReleaseDC(hMainWindow, hdc);
@@ -133,7 +161,7 @@ static HFONT util_getFont(javacall_font_face face,
     }
 
     memset(tempKey, 0, 100*sizeof(unsigned short));
-    wcscpy(tempKey,fontNameHash[face+style+size]);
+    wcscpy(tempKey, fontNameHash[findex]);
 
 	/* Parse the font intormation face-style-height , for example SansSerif-bold-9 */
 	token = wcstok( tempKey, sep);	 /* the font face */

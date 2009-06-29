@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include "javacall_chapi_invoke.h"
 #include "javacall_chapi_registry.h"
+#include "javacall_chapi_msg_exchange.h"
 
 
 /**
@@ -674,8 +675,16 @@ javacall_result javacall_chapi_java_finish(int invoc_id,
      return JAVACALL_NOT_IMPLEMENTED;
 }
 
+javacall_result javacall_chapi_post_message( int queueId, int msgCode, const unsigned char * bytes, size_t bytesCount, int * dataExchangeID ){
+    return( JAVACALL_NOT_IMPLEMENTED );
+}
 
- 
- 
+javacall_result javacall_chapi_send_response( int dataExchangeID, const unsigned char * bytes, size_t bytesCount ){
+    return( JAVACALL_NOT_IMPLEMENTED );
+}
 
-
+javacall_result javacall_chapi_select_handler( javacall_const_utf16_string action, int count, const javacall_chapi_handler_info * list, 
+                                                            /* OUT */ int * handler_idx ){
+    *handler_idx = 0;
+    return( JAVACALL_OK );
+}

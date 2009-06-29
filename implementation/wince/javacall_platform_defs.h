@@ -148,6 +148,22 @@ typedef unsigned __int64 javacall_uint64;
  */
 #define JAVACALL_PIM_MAX_FIELDS         (19)
 
+/** 
+ * @def JAVACALL_FONT_SIZE_SMALL
+ *  
+ */
+#define JAVACALL_FONT_SIZE_SMALL    8
+/** 
+ * @def JAVACALL_FONT_SIZE_MEDIUM
+ *  
+ */
+#define JAVACALL_FONT_SIZE_MEDIUM   12
+/** 
+ * @def JAVACALL_FONT_SIZE_LARGE
+ *  
+ */
+#define JAVACALL_FONT_SIZE_LARGE    16
+
 /**
  * @}
  */
