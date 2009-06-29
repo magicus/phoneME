@@ -60,7 +60,7 @@ public final class NativeSurface extends AbstractSurface {
 
     private native void initialize(int dataType, int width, int height);
     public native void clean();
-    public native void draw(Graphics g, int x, int y, int w, int h,
+    public native void draw(Object g, int x, int y, int w, int h,
                              float alpha);
     
     protected int width;
