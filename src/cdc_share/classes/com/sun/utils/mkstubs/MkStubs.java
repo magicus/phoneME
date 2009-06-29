@@ -1471,7 +1471,7 @@ wr.pld(4,"System.out.println(\"Trying to call __callback" + i + " " + mems[i].to
         }
         if (clazz.isInterface() && !isIface) {
             String className = translateClassNamePkg(fullClsName);
-            wr.pl(1, "/* package protected */ static Object __getProxyClass(" + className + " instance) {");
+            wr.pl(1, "public static Object __getProxyClass(" + className + " instance) {");
 wr.pld(4,"System.out.println(\"" + stubClsName + ".__getProxyClass()\");");
             wr.pl(2, "__init();");
             if (!isInherit) {
