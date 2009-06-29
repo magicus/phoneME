@@ -54,9 +54,7 @@ class DirectVolume {
     private VolumeControl volumeControl = null;
     private static boolean tryCustomClass = true;
 
-    protected DirectVolume() {} // protect from improper instantiation
-    
-    private void init(HighLevelPlayer player, int hNative) {
+    protected void init(HighLevelPlayer player, int hNative) {
         _player = player;
         _hNative = hNative;
         if (_hNative != 0) {

@@ -1,0 +1,74 @@
+/*
+ *
+ *  Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *  
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License version
+ *  2 only, as published by the Free Software Foundation. 
+ *  
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  General Public License version 2 for more details (a copy is
+ *  included at /legal/license.txt). 
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  version 2 along with this work; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ *  02110-1301 USA 
+ *  
+ *  Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ *  Clara, CA 95054 or visit www.sun.com if you need additional
+ *  information or have any questions. 
+ */
+package com.sun.mmedia;
+import java.lang.ref.*;
+// #ifdef ENABLE_CDC [
+import com.sun.j2me.proxy.midlet.*;
+import com.sun.j2me.proxy.suite.*;
+// #else ][
+import com.sun.midp.midlet.*;
+import com.sun.midp.suite.*;
+// #endif ]
+
+class PlayerWrapper {
+// #ifdef ENABLE_CDC [
+    private WeakReference ref;
+// #else ][
+    private HighLevelPlayer player;
+// #endif ]
+    private int suiteId;
+    private String midletClassname;
+    
+    PlayerWrapper(HighLevelPlayer p) {
+        if (p == null) {
+            throw new IllegalArgumentException("player");
+        }
+// #ifdef ENABLE_CDC [
+        ref = new WeakReference(p);
+// #else ][
+        this.player = p;
+// #endif ]
+        MIDletStateHandler msh = MIDletStateHandler.getMidletStateHandler();
+        if (msh == null) {
+            throw new IllegalArgumentException("msh");
+        }
+        suiteId = msh.getMIDletSuite().getID();
+        midletClassname = msh.getMIDletClassname();
+    }
+    
+    boolean isTheSameMidlet(int suiteId, String midletClassname) {
+        return this.suiteId == suiteId && 
+            this.midletClassname.equals(midletClassname);
+    }
+    
+    HighLevelPlayer getPlayer() {
+// #ifdef ENABLE_CDC [
+        return (HighLevelPlayer) ref.get();
+// #else ][
+        return player;
+// #endif ]
+    }
+}
+
