@@ -2268,12 +2268,14 @@ endif
 # for creating gnumake .d files
 CCDEPEND   	= -MM
 
-ASM_FLAGS	= -c -fno-common $(ASM_ARCH_FLAGS)
+# CVM_EXTRA_XXX_FLAGS usually come from the make command line
+ASM_FLAGS	= -c -fno-common $(ASM_ARCH_FLAGS) $(CVM_EXTRA_ASM_FLAGS)
 CCFLAGS     	= -c -fno-common -Wall \
 			$(EXTRA_CC_WARNINGS) \
 			-fno-strict-aliasing \
 			$(GCC_VERSION_SPECIFIC_FLAGS) \
-			$(CC_ARCH_FLAGS)
+			$(CC_ARCH_FLAGS) \
+			$(CVM_EXTRA_CC_FLAGS)
 CCCFLAGS 	= -fno-rtti
 ifeq ($(CVM_OPTIMIZED), true)
 CCFLAGS_SPEED_OPTIONS ?= -O4 
