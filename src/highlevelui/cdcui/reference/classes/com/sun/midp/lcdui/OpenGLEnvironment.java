@@ -48,12 +48,14 @@ public class OpenGLEnvironment{
     public void flushOpengGL(DisplayContainer container, Graphics bindTarget) {
         int regionArray[];
         System.out.println("in flushOpenGL - bindTarget is " + bindTarget);
+        /*
         while (midpIsRendering) {
             try {
                 System.out.println("waiting for midp to finish rendering");
                 Thread.sleep(10);
             } catch (Exception e) {}
         }
+         */
         if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
                                bindTarget.getClipHeight())) {
         System.out.println("now checking for normal flush");
@@ -111,20 +113,21 @@ public class OpenGLEnvironment{
         return retval;
     }
     
-    public void enableOpenGL(DisplayContainer container) {
+    public void enableOpenGL(int width, int height) {
         System.out.println("OpenGLEnvironmentProxy: enabling OpenGL");
-        int displayId = NativeForegroundState.getState();
-        DisplayAccess da = container.findDisplayById(displayId);
-        initMidpGL(da.getDisplayWidth(), da.getDisplayHeight());
-        da.enableOpenGL();
+        initMidpGL(width, height);
     }
     
-    public void disableOpenGL(DisplayContainer container) {
+    public void disableOpenGL() {
         System.out.println("OpenGLEnvironmentProxy: disabling OpenGL");
-        int displayId = NativeForegroundState.getState();
-        DisplayAccess da = container.findDisplayById(displayId);
-        da.disableOpenGL();
         disableOpenGL0();
+    }
+    
+    public void raiseOpenGL() {
+        raiseOpenGL0();
+    }    
+    public void lowerOpenGL() {
+        lowerOpenGL0();;
     }
     
     private native void flushOpenGL0(int[] regionArray,
@@ -139,4 +142,6 @@ public class OpenGLEnvironment{
     private native int getDrawingSurface0(Graphics bindTarget, int api);
     private native void initMidpGL(int screenWidth, int screenHeight);
     private native void disableOpenGL0();
+    private native void raiseOpenGL0();
+    private native void lowerOpenGL0();
 }

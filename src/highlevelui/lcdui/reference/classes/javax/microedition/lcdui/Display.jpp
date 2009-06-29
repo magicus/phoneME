@@ -703,6 +703,14 @@ public class Display {
     private void close() {
         displayClosed = true;
 
+        if (useOpenGL) {
+System.out.println("Display.close: disabling OpenGL");
+            com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().disableOpenGL();
+            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+           ogl.endMidpRendering();
+        }
+
         // #ifdef ENABLE_CHAMELEON
         /*
          * "Free" the window to allow it to GC, but there too many places
@@ -777,6 +785,20 @@ public class Display {
         // #endif ENABLE_GCI
         current_orientation = initial_orientation;
         restore_orientation = initial_orientation;
+
+        com.sun.midp.midlet.MIDletStateHandler handler = 
+            com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
+        if (handler != null) {
+            String propval = handler.getMIDletSuite().getProperty(RUNTIME_OPENGL_PROPERTY);
+            if (String.valueOf("YES").equals(propval)) {
+System.out.println("Display.constructor: enabling OpenGL for " + this);
+                useOpenGL = true;
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().enableOpenGL(width, height);
+            }
+        }
+        else
+            System.out.println("System dialog " + this);
+
         /**
          * Sets this Display as creator of screen Graphics instance to
          * provide internal Graphics users with extended information
@@ -2318,6 +2340,7 @@ public class Display {
 
         synchronized (LCDUILock) {
             if (paintSuspended || !hasForeground || current == null) {
+System.out.println("Display: " + this + " returning from callPaint");
                 return;
             }
 
@@ -2361,7 +2384,8 @@ public class Display {
                     // translate is present
                     screenGraphics.translate(-screenGraphics.getTranslateX(),
                                              -screenGraphics.getTranslateY());
-                    displayDevice.refresh(displayId, region[0], region[1], region[2], region[3]);
+                    displayDevice.refresh(displayId, region[0], region[1], 
+                                          region[2], region[3], useOpenGL);
                 } else {
                     // Chameleon redirects the paint call through its layer logic,
                     // eventually resulting in a call back to the Chameleon Display
@@ -2385,7 +2409,7 @@ public class Display {
                         // x1, y1, x2, y2
                         displayDevice.refresh(displayId, subregion[0], subregion[1],
                                  subregion[0] + subregion[2],
-                                 subregion[1] + subregion[3]);
+                                 subregion[1] + subregion[3], useOpenGL);
                     }
                 }
                 // #else
@@ -2395,7 +2419,7 @@ public class Display {
                 } else {
                     screenGraphics.reset(x1, y1, x2, y2);
                     currentCopy.uCallPaint(screenGraphics, target);
-                    displayDevice.refresh(displayId, x1, y1, x2, y2);
+                    displayDevice.refresh(displayId, x1, y1, x2, y2, useOpenGL);
                 }
                 // #endif ENABLE_CHAMELEON
         }
@@ -2408,7 +2432,7 @@ public class Display {
 
                     // This call to refresh a "zero" region is inserted to
                     // trigger display update on some platforms
-                    displayDevice.refresh(displayId, 0, 0, 0, 0);
+                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
                 }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x1,y1,x2,y2};
@@ -3262,14 +3286,15 @@ System.out.println("Display: disabling openGL");
                             screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
                         }
                         if (!useOpenGL)
-                            displayDevice.refresh(displayId, x1, y1, x2, y2);
+                            displayDevice.refresh(displayId, x1, y1, x2, y2, 
+                                                  useOpenGL);
                     }
             }
             finally {
                 if (useOpenGL) {
                     // This call to refresh a "zero" region is inserted to
                     // trigger display update on some platforms
-                    displayDevice.refresh(displayId, 0, 0, 0, 0);
+                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
                 }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x,y,x+width,y+height};
@@ -3946,6 +3971,11 @@ System.out.println("Display: disabling openGL");
                     return;
                 }
 
+                if (useOpenGL) {
+System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL");
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().raiseOpenGL();
+                }
+
                 currentCopy = current;
                 // When foreground-background state changes we loose control
                 // under the current display mode on the device
@@ -4059,6 +4089,12 @@ System.out.println("Display: disabling openGL");
                 if (!hasForeground) {
                     return;
                 }
+                if (useOpenGL) {
+System.out.println(this + " : handleBackgroundNotifyEvent: calling lowerOpenGL");
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
+                }
+                else
+                    System.out.println(this + " : handleBackgroundNotifyEvent: NOT calling lowerOpenGL");
 
                 currentCopy = current;
 

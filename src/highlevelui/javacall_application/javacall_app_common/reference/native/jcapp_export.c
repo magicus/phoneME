@@ -185,14 +185,14 @@ void jcapp_finalize() {
  * @param y2 bottom-right y coordinate of the area to refresh
  */
 #define TRACE_LCD_REFRESH
-void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
+void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2, boolean useOpenGL)
 {
     /*block any refresh calls in case of native master volume*/
     if(disableRefresh==KNI_TRUE){
         return;
     }
 
-    javacall_lcd_flush_partial (hardwareId, y1, y2);
+    javacall_lcd_flush_partial (hardwareId, y1, y2, useOpenGL);
 }
 
 /**

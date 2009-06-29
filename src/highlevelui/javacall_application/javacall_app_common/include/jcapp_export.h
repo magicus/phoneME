@@ -60,7 +60,7 @@ extern void jcapp_finalize();
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h);
+extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h, boolean useOpenGL);
 
 /**
  * set the screen mode either to fullscreen or normal.

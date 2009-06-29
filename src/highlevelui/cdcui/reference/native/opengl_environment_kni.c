@@ -276,3 +276,17 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_disableOpenGL0) {
     midpGL_disableOpenGL();
     KNI_ReturnVoid();
 }
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_raiseOpenGL0) {
+
+    midpGL_raiseOpenGL();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_lowerOpenGL0) {
+
+    midpGL_lowerOpenGL();
+    KNI_ReturnVoid();
+}

@@ -109,11 +109,18 @@ public class OpenGLEnvironmentProxy{
         env.endMidpRendering();
     }
     
-    public void enableOpenGL() {
-        env.enableOpenGL(container);
+    public void enableOpenGL(int width, int height) {
+        env.enableOpenGL(width, height);
     }
     
     public void disableOpenGL() {
-        env.disableOpenGL(container);
+        env.disableOpenGL();
+    }
+    
+    public void raiseOpenGL() {
+        env.raiseOpenGL();
+    }    
+    public void lowerOpenGL() {
+        env.lowerOpenGL();
     }
 }

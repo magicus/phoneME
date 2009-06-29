@@ -256,8 +256,8 @@ public class DisplayDevice {
      * @param y2 lower right corner y-coordinat
      */
     public void refresh(int displayId,
-				int x1, int y1, int x2, int y2) {
-	refresh0(hardwareId, displayId, x1, y1, x2, y2); 
+				int x1, int y1, int x2, int y2, boolean useOpenGL) {
+	refresh0(hardwareId, displayId, x1, y1, x2, y2, useOpenGL); 
     }
 
     /**
@@ -312,7 +312,7 @@ public class DisplayDevice {
     private native boolean getReverseOrientation0(int hardwareId);
     private native boolean reverseOrientation0(int hardwareId);
     private native void refresh0(int hardwareId, int displayId,
-                                 int x1, int y1, int x2, int y2);
+                                 int x1, int y1, int x2, int y2, boolean useOpenGL);
     private native void setFullScreen0(int hardwareId, int displayId, boolean mode);
     private native boolean directFlush0(int hardwareId, Graphics graphics, 
 					Image offscreen_buffer, int height);
