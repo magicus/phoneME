@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 package com.sun.midp.lcdui;
 
@@ -43,24 +43,14 @@ public class DisplayDeviceAccess {
     private static Timer timerService = new Timer();
 
     /** 
-     * A TimerTask. 
+     * A TimerTask for backlight. 
      */
     private TimerTask task = null;
 
-    /**
-     * mode to turn off the backlight
+    /** 
+     * A TimerTask for vibrate.
      */
-    private static int BACKLIGHT_OFF = 0;
-
-    /**
-     * mode to toggle the backlight
-     */
-    private static int BACKLIGHT_TOGGLE = 2;
-
-    /**
-     * mode to do nothing (see if backlight control is supported
-     */
-    private static int BACKLIGHT_IS_SUPPORTED = 3;
+    private TimerTask vibrateTask = null;
 
     /**
      * The interval, in microseconds between backlight 
@@ -89,7 +79,7 @@ public class DisplayDeviceAccess {
      *
      * @return true if the backlight can be controlled
      */
-    public boolean flashBacklight(int displayId, int duration) {
+    public synchronized boolean flashBacklight(int displayId, int duration) {
 
         // Test for negative of duration is in public class
 
@@ -97,14 +87,14 @@ public class DisplayDeviceAccess {
             cancelTimer();
             if (isLit) {
                 isLit = !isLit;
-                return showBacklight0(displayId, BACKLIGHT_TOGGLE);
+                return toggleBacklight0(displayId);
             } else {
-                return showBacklight0(displayId, BACKLIGHT_IS_SUPPORTED);
+                return isBacklightSupported0(displayId);
             }
         } else {
             setTimer(displayId, duration);
             isLit = !isLit;
-            return showBacklight0(displayId, BACKLIGHT_TOGGLE);
+            return toggleBacklight0(displayId);
         }
     }
     
@@ -164,11 +154,11 @@ public class DisplayDeviceAccess {
             if (flashCount > 0) {
                 flashCount--;
                 isLit = !isLit;
-                showBacklight0(displayId, BACKLIGHT_TOGGLE);
+                toggleBacklight0(displayId);
             } else {
                 if (isLit) {
                     isLit = !isLit;
-                    showBacklight0(displayId, BACKLIGHT_TOGGLE);
+                    toggleBacklight0(displayId);
                 }
                 this.cancel();
             }
@@ -178,12 +168,107 @@ public class DisplayDeviceAccess {
     }
 
     /**
-     * Show backlight.  Turn it on, turn it off, or toggle it.
+     * Toggles backlight.
      *  
      * @param displayId The display ID associated with the caller Display
-     * @param mode 1 to turn on the backlight, 0 to turn off the backlight,
-     *             or -1 to toggle the backlight.
      * @return true if backlight control is supported, false otherwise        
      */
-    private native boolean showBacklight0(int displayId, int mode);
+    private native boolean toggleBacklight0(int displayId);
+
+    /**
+     * Tests if backlight is supported.
+     *  
+     * @param displayId The display ID associated with the caller Display
+     * @return true if backlight control is supported, false otherwise        
+     */
+    private native boolean isBacklightSupported0(int displayId);
+
+     /**
+      * Requests for the device's vibrating.
+      *
+      * @param displayId The display ID associated with this Display
+      * @param duration the number of milliseconds the vibration should be  
+      * on, or zero if the flashing should be stopped
+      *
+      * @return true if the vibration can be controlled
+      */
+     public synchronized boolean vibrate(int displayId, int duration) {
+ 
+         // Test for negative of duration is in public class
+ 
+         if (duration == 0) {
+             cancelVibrateTimer();
+             return vibrate0(displayId, false);
+         } else {
+             setVibrateTimer(displayId, duration);
+             return vibrate0(displayId, true);
+         }
+     }
+ 
+     /**
+      * Set a new vibration timer.  
+      * The timerTask will be executed after <code>duration</code> milliseconds.
+      * 
+      * @param displayId The display ID associated with this Display
+      * @param duration the number of milliseconds the timer should be run
+      */
+     private void setVibrateTimer(int displayId, int duration) {
+         cancelVibrateTimer();
+         try {
+             vibrateTask = new VibrateTimerClient(displayId);
+             timerService.schedule(vibrateTask, duration);
+         } catch (IllegalStateException e) {
+             cancelVibrateTimer();
+         }
+     }
+ 
+     /**
+      * Cancel any running vibration Timer.
+      */ 
+     private void cancelVibrateTimer() {
+         if (vibrateTask != null) {
+             vibrateTask.cancel();
+             vibrateTask = null;
+         }
+     }
+ 
+     /**
+      * Inner class TimerTask
+      *
+      * Used to stop the device's vibration when
+      * the duration of the timer is up
+      */
+     class VibrateTimerClient extends TimerTask {
+  
+         /**
+          * Creates VibrateTimerClient to stop vibration for 
+          * Display with passed displayId.
+          *
+          * @param displayId The display ID associated with the caller Display
+          */
+         VibrateTimerClient(int displayId) {
+             this.displayId = displayId;
+         }
+ 
+         /**
+          * simply stop the vibration.
+          *
+          */
+         public final void run() {
+             vibrate0(displayId, false);
+             this.cancel();
+         }
+         /** The display ID associated with the caller Display */
+         private int displayId;
+     }
+ 
+     /**
+      * Show vibration.  Turn it on or  turn it off.
+      *  
+      * @param displayId The display ID associated with the caller Display
+      * @param turnVibrateOn true to turn on the vibration, 
+      *             or false to turn off it.
+      * @return true if vibration control is supported, false otherwise
+      */ 
+     private native boolean vibrate0(int displayId, boolean turnVibrateOn);
 }

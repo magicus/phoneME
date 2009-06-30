@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -31,6 +31,9 @@ import java.io.InterruptedIOException;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
+
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
@@ -40,6 +43,9 @@ import com.sun.midp.security.Permissions;
  * PushRegistry implementation that checks parameters.
  */
 public final class PushRegistryImpl {
+    /** Name of the permission permission. */
+    static final String PUSH_PERMISSION_NAME =
+        "javax.microedition.io.PushRegistry";
 
     /**
      * Hides the default constructor.
@@ -104,7 +110,7 @@ public final class PushRegistryImpl {
          *  subclass javax.microedition.midlet.MIDlet, therefore we
          *  need this check
          */
-        final Class midletCls = Class.forName(midlet);
+        final Class midletCls = ConnectionRegistry.loadApplicationClass(midlet);
         final boolean isMIDlet = javax.microedition.midlet.MIDlet.class
             .isAssignableFrom(midletCls);
 
@@ -153,8 +159,10 @@ public final class PushRegistryImpl {
             final String filter)
             throws ClassNotFoundException,
                 ConnectionNotFoundException, IOException {
-
-        final Connection c = Connection.parse(connection);
+        // Quick check of connection to be spec complaint
+        if (connection == null) {
+            throw new IllegalArgumentException("connection is null");
+        }
 
         // Quick check of filter to be spec complaint
         if (filter == null) {
@@ -173,23 +181,18 @@ public final class PushRegistryImpl {
          */
         checkMidlet(midletSuite, midlet);
         /*
-         * IMPL_NOTE: as checkRegistration will need to parse
-         *  connection and filter anyway, it might be a good
-         *  idea to save the results
-         */
-        ConnectionRegistry.checkRegistration(c, midlet, filter);
-
-        /*
          * Check permissions.
          */
         try {
-            midletSuite.checkForPermission(Permissions.PUSH, null);
-        } catch (InterruptedException ie) {
+            AccessController.
+                checkPermission(PUSH_PERMISSION_NAME);
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
         }
 
-        ConnectionRegistry.registerConnection(midletSuite, c, midlet, filter);
+        ConnectionRegistry.registerConnection(
+                midletSuite, connection, midlet, filter);
     }
 
     /**
@@ -258,7 +261,12 @@ public final class PushRegistryImpl {
             return null;
         }
 
-        return ConnectionRegistry.getMIDlet(connection);
+        final MIDletSuite midletSuite = getMIDletSuite();
+        if (midletSuite == null) {
+            throw new IllegalStateException("Not in a MIDlet context");
+        }
+
+        return ConnectionRegistry.getMIDlet(midletSuite, connection);
     }
 
     /**
@@ -281,7 +289,12 @@ public final class PushRegistryImpl {
             return null;
         }
 
-        return ConnectionRegistry.getFilter(connection);
+        final MIDletSuite midletSuite = getMIDletSuite();
+        if (midletSuite == null) {
+            throw new IllegalStateException("Not in a MIDlet context");
+        }
+
+        return ConnectionRegistry.getFilter(midletSuite, connection);
     }
 
     /**
@@ -323,12 +336,8 @@ public final class PushRegistryImpl {
         }
 
         checkMidlet(midletSuite, midlet);
-        try {
-            midletSuite.checkForPermission(Permissions.PUSH, null);
-        } catch (InterruptedException ie) {
-            throw new RuntimeException(
-                "Interrupted while trying to ask the user permission");
-        }
+
+        AccessController.checkPermission(PUSH_PERMISSION_NAME);
 
         return ConnectionRegistry.registerAlarm(midletSuite, midlet, time);
     }

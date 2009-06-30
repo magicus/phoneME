@@ -1,33 +1,32 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.https;
 
-import java.util.Hashtable;
-import java.util.Enumeration;
+import java.util.Vector;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -38,6 +37,8 @@ import javax.microedition.io.*;
 
 import javax.microedition.pki.*;
 
+import com.sun.j2me.security.*;
+
 import com.sun.midp.pki.*;
 
 import com.sun.midp.ssl.*;
@@ -47,8 +48,6 @@ import com.sun.midp.main.Configuration;
 import com.sun.midp.io.*;
 
 import com.sun.midp.io.j2me.http.*;
-
-import com.sun.midp.midlet.*;
 
 import com.sun.midp.publickeystore.WebPublicKeyStore;
 
@@ -97,6 +96,10 @@ import com.sun.midp.util.Properties;
 public class Protocol extends com.sun.midp.io.j2me.http.Protocol
     implements HttpsConnection {
 
+    /** HTTP permission name. */
+    private static final String HTTPS_PERMISSION_NAME =
+        "javax.microedition.io.Connector.https";
+
     /** Common name label. */
     private static final String COMMON_NAME_LABEL = "CN=";
 
@@ -109,20 +112,11 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
      * SecurityInitializer should be able to check this inner class name.
      */
     static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+        implements ImplicitlyTrustedClass {}
 
     /** This class has a different security domain than the MIDlet suite */
     private static SecurityToken classSecurityToken =
         SecurityInitializer.requestToken(new SecurityTrusted());
-
-    /**
-     * The methods other than openPrim need to know that the
-     * permission occurred.
-     */
-    private boolean permissionChecked;
-
-    /** True if the owner of this connection is trusted. */
-    private boolean ownerTrusted;
 
     /**
      * Parse the common name out of a distinguished name.
@@ -277,27 +271,24 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
      */
     private void checkForPermission(String name)
             throws InterruptedIOException {
-        MIDletStateHandler midletStateHandler;
-        MIDletSuite midletSuite;
-
-        midletStateHandler = MIDletStateHandler.getMidletStateHandler();
-        midletSuite = midletStateHandler.getMIDletSuite();
-
-        if (midletSuite == null) {
-            throw new IllegalStateException("This class can't be used " +
-                "before a suite is started.");
-        }
 
         name = protocol + ":" + name;
 
         try {
-            midletSuite.checkForPermission(Permissions.HTTPS, name);
-            ownerTrusted = midletSuite.isTrusted();
+            AccessController.checkPermission(HTTPS_PERMISSION_NAME, name);
             permissionChecked = true;
-        } catch (InterruptedException ie) {
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
         }
+
+        try {
+            AccessController.
+                checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+            ownerTrusted = true;
+        } catch (SecurityException se) {
+            ownerTrusted = false;
+        } 
     }
 
     /** 
@@ -430,14 +421,39 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
             serverCert = sslConnection.getServerCertificate();
 
             /*
-             * if the subject alternate name is a DNS name,
-             * then use that instead of the common name for a
-             * site name match
+             * if the subject alternate name is a DNS name or an IP address,
+             * then use that instead of the common name for a site name match
              */
-            if (serverCert.getSubjectAltNameType() ==
-                X509Certificate.TYPE_DNS_NAME) {
-                if (!checkSiteName(url.host,
-                        (String)serverCert.getSubjectAltName())) {
+            int i;
+            Vector v = serverCert.getSubjectAltNames();
+            boolean altNamePresent = false;
+
+            for (i = 0; i < v.size(); i++) {
+                SubjectAlternativeName altName =
+                        (SubjectAlternativeName) v.elementAt(i);
+
+                // For IP address, it needs to be exact match
+                if (altName.getSubjectAltNameType() ==
+                        X509Certificate.TYPE_IP_ADDRESS) {
+                    String ipAddress = (String)altName.getSubjectAltName();
+                    altNamePresent = true;
+                    if (url.host.equalsIgnoreCase(ipAddress)) {
+                        break;
+                    }
+                } else if (altName.getSubjectAltNameType() ==
+                            X509Certificate.TYPE_DNS_NAME) {
+                    // compare DNS Name with host in url
+                    String dnsName =
+                        ((String)altName.getSubjectAltName()).toLowerCase();
+                    altNamePresent = true;
+                    if (checkSiteName(url.host, dnsName)) {
+                        break;
+                    }
+                }
+            }
+
+            if (altNamePresent) {
+                if (i == v.size()) {
                     throw new CertificateException(
                         "Subject alternative name did not match site name",
                         serverCert, CertificateException.SITENAME_MISMATCH);

@@ -3,8 +3,27 @@
 <!--
 
 
-  Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+  Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+  
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License version
+  2 only, as published by the Free Software Foundation.
+  
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License version 2 for more details (a copy is
+  included at /legal/license.txt).
+  
+  You should have received a copy of the GNU General Public License
+  version 2 along with this work; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301 USA
+  
+  Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+  Clara, CA 95054 or visit www.sun.com if you need additional
+  information or have any questions.
 -->
 <configuration>
 <localized_strings Package="com.sun.midp.l10n" 
@@ -22,6 +41,8 @@
                 Value="Exit"/>
 <localized_string Key="OK"
                 Value="OK"/>
+<localized_string Key="SELECT"
+                Value="Select"/>
 <localized_string Key="YES"
                 Value="Yes"/>
 <localized_string Key="NO"
@@ -70,16 +91,24 @@
                 Value="Applications"/>
 <localized_string Key="INSTALL_APPLICATION"
                 Value="Install Application"/>
+<localized_string Key="ODT_AGENT_MIDLET"
+                Value="ODT Agent"/>
 <localized_string Key="CLASS_VERIFIER_APPLICATION"
                 Value="Class Verifier Application"/>
 <localized_string Key="CA_MANAGER_APP"
                 Value="Manage Certificate Authorities"/>
+<localized_string Key="COMP_MANAGER_APP"
+                Value="Manage Dynamically Loaded Components"/>
 <localized_string Key="FOREGROUND"
                 Value="Bring to foreground"/>
 <localized_string Key="END"
                 Value="End"/>
 <localized_string Key="OPTIONS"
                 Value="Options"/>
+<localized_string Key="OPEN"
+                Value="Open"/>
+<localized_string Key="VIEW_COMP"
+                Value="View Components"/>
 
 <localized_string Key="MANUFACTURER"
                 Value="Manufacturer"/>
@@ -209,12 +238,22 @@
                 Value="predict"/>
 <localized_string Key="LCDUI_TF_CAPS_ON_LB_PTI"
                 Value="PREDICT"/>
+<localized_string Key="PUSH_TITLE"
+                Value="Push Dialog Title"/>
+<localized_string Key="PUSH_CONTENT"
+                Value="Push Dialog content"/>
+<localized_string Key="LCDUI_TF_NATIVE_VKBD"
+                Value="Virtual"/>
+<localized_string Key="AMS_SELECT_FOLDER"
+                Value="Select folder"/>
+<localized_string Key="AMS_CHANGE_FOLDER"
+                Value="Change folder"/>
 <localized_string Key="AMS_NO_CA_FOUND"
                 Value="No certificate authorities found."/>
 <localized_string Key="AMS_COPYRIGHT_SHORT"
-                Value="Copyright 2006 Sun Microsystems, Inc. All rights reserved."/>
+                Value="Copyright 2007 Sun Microsystems, Inc. All rights reserved."/>
 <localized_string Key="AMS_COPYRIGHT_LONG"
-                Value="Copyright 2006 Sun Microsystems, Inc.aux Etats-Unis et dans d'autres pays."/>
+                Value="Copyright 2007 Sun Microsystems, Inc.aux Etats-Unis et dans d'autres pays."/>
 <localized_string Key="AMS_CANNOT_START"
                 Value="Cannot start: "/>
 <localized_string Key="AMS_CONFIRMATION"
@@ -249,8 +288,14 @@
                 Value="This application is disabled because the authority that certifies it is disabled."/>
 <localized_string Key="AMS_SUITES_TO_BE_DISABLED"
                 Value="This action will disable these applications:&#010;&#010;"/>
+<localized_string Key="AMS_INTERNAL_STORAGE_NAME"
+                Value="Phone memory"/>
+<localized_string Key="AMS_MOVE_TO_INTERNAL_STORAGE"
+                Value="Move to phone"/>
+<localized_string Key="AMS_EXTRENAL_STORAGE_NAME"
+                Value="Memory card "/>
 <localized_string Key="AMS_MGR_TITLE"
-                  Value="Java MIDlets"/>
+                 Value="Java MIDlets"/>
 <localized_string Key="AMS_MGR_SETTINGS"
                 Value="Settings"/>
 <localized_string Key="AMS_MGR_PREFERENCES"
@@ -267,6 +312,8 @@
                 Value="This suite contains"/>
 <localized_string Key="AMS_MGR_SUITE_RECORD_STORES"
                 Value="The following record stores will be removed"/>
+<localized_string Key="AMS_MGR_SUITE_PRIVATE_DATA"
+                Value="All data in the private work directory of the suite will be removed."/>
 <localized_string Key="AMS_MGR_REM_REINSTALL"
                 Value="Once removed, %1 will have to be reinstalled."/>
 <localized_string Key="AMS_MGR_INTRUPT"
@@ -370,12 +417,38 @@
                 Value="How often should %1 ask for permission to open a restricted network connection?"/>
 <localized_string Key="AMS_MGR_CALL_CONTROL_SETTINGS_QUE_DONT"
                 Value="Don't open any restricted connections and don't ask"/>
+<localized_string Key="AMS_MGR_SENSOR_SETTINGS"
+                Value="Sensor Connections"/>
+<localized_string Key="AMS_MGR_SENSOR_SETTINGS_QUE"
+                Value="How often should %1 ask for permission to open a sensor connection?"/>
+<localized_string Key="AMS_MGR_SENSOR_SETTINGS_QUE_DONT"
+                Value="Don't open any sensor connections and don't ask"/>
+<localized_string Key="AMS_MGR_CONTACTLESS_SETTINGS"
+                Value="Contactless Connections"/>
+<localized_string Key="AMS_MGR_CONTACTLESS_SETTINGS_QUE"
+                Value="How often should %1 ask for permission to open a contactless connection?"/>
+<localized_string Key="AMS_MGR_CONTACTLESS_SETTINGS_QUE_DONT"
+                Value="Don't open any contactless connections and don't ask"/>
 <localized_string Key="AMS_MGR_UPDATE_IS_RUNNING"
                 Value="You started an update for the application %1.  Please cancel or finish the update before you change its settings, get info or launch the application"/>
+<localized_string Key="AMS_MGR_INSTALLER_IS_RUNNING"
+                Value="The suite can not be updated because the installer is already running. Please exit the installer and then proceed with the update."/>
 <localized_string Key="AMS_MGR_RUN_THE_NEW_SUITE_TITLE"
                 Value="Launch"/>
 <localized_string Key="AMS_MGR_RUN_THE_NEW_SUITE"
                 Value="A new midlet suite was installed. Do you want to launch it now?"/>
+<localized_string Key="AMS_MGR_ENABLE_ON_DEVICE_DEBUG_TITLE"
+                Value="Enable ODD"/>
+<localized_string Key="AMS_MGR_ENABLE_ON_DEVICE_DEBUG"
+                Value="On Device Debug is a potentially dangerous feature that may compromise the security of the system. Do you really want to enable it?"/>
+<localized_string Key="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
+                Value=" was successfully moved to phone memory"/>
+<localized_string Key="AMS_MGR_SUITE_DB_ALERT_TITLE"
+                Value="Application Manager"/>
+<localized_string Key="AMS_MGR_SUITE_DB_FATAL_ERROR"
+                Value="The suite database cannot be loaded. Try to quit some other application and then start Java again."/>
+<localized_string Key="AMS_MGR_SUITE_DB_REPAIRED"
+                Value="The suite database was corrupted and has been repaired, some suites may be lost and need to be reinstalled."/>
 <localized_string Key="AMS_DISC_APP_WEBSITE_INSTALL"
                 Value="Enter a website to Install From:"/>
 <localized_string Key="AMS_DISC_APP_SELECT_INSTALL"
@@ -392,6 +465,8 @@
                 Value="Downloading..."/>
 <localized_string Key="AMS_DISC_APP_LOCKED"
                 Value="The application you are installing, %1, is already installed and already running on this phone. Installation can not proceed unless the application is not running. Please exit %1 and start the installation again."/>
+<localized_string Key="AMS_GRA_INTLR_SELECT_STORAGE"
+                Value="Select storage"/>
 <localized_string Key="AMS_GRA_INTLR_UPD_CAN"
                 Value="Update cancelled."/>
 <localized_string Key="AMS_GRA_INTLR_FIN_UPD"
@@ -407,11 +482,11 @@
 <localized_string Key="AMS_GRA_INTLR_PASSWORD_FORM_FIREWALL_TITLE"
                 Value="Firewall Authentication"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_OLD_VERSION"
-                Value="An OLDER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
+                Value="An OLDER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_ALREADY_INSTALLED"
-                Value="This version of %1 is already installed on your phone. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
+                Value="This version of %1 is already installed on your phone. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Version found: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_NEW_VERSION"
-                Value="A NEWER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Latest available: %3&#010;Vendor: %2&#010;Website: %4&#010;&#010;Would you like to continue?"/>
+                Value="A NEWER version of %1 has been found. Continuing will replace the version installed on your phone.&#010;&#010;Currently installed: %5&#010;Latest available: %3&#010;Vendor: %2&#010;URI: %4&#010;&#010;Would you like to continue?"/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_INVALID_JAD_URL"
                 Value="%1 cannot be found at this URL. Contact the application provider for more information."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_INVALID_JAD_TYPE"
@@ -446,6 +521,10 @@
                 Value="%1 cannot be installed. The trusted certificate used to authorize the application has expired. Contact your application provider to correct this situation."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_EXPIRED_CA_KEY"
                 Value="%1 cannot be installed. The public key used for authorization has expired. Contact your service provider to correct this situation."/>
+<localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_REVOKED_PROVIDER_CERT"
+                Value="%1 cannot be installed. The trusted certificate used to authorize the application has been revoked. Contact your application provider to correct this situation."/>
+<localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNKNOWN_PROVIDER_CERT_STATUS"
+                Value="%1 cannot be installed. Status of the trusted certificate used to authorize the application is unknown. Contact your application provider to correct this situation."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_AUTHORIZATION_FAILURE"
                 Value="%1 cannot be installed because it does not have permission to the operation it requires."/>
 <localized_string Key="AMS_GRA_INTLR_INVALIDJADEXCEPTION_PUSH_DUP_FAILURE"
@@ -472,6 +551,8 @@
                 Value="The password has not been entered."/>
 <localized_string Key="AMS_GRA_INTLR_WANT_INSTALL"
                 Value="Are you sure you want to install &quot;%1&quot;?"/>
+<localized_string Key="AMS_GRA_INTLR_CONFIRM_REDIRECT"
+                Value="Installation request was redirected to the following URL: &quot;%1&quot;. Are you sure you want to install from this location?"/>
 <localized_string Key="AMS_GRA_INTLR_NEW_OLD_VERSION"
                 Value="Do you want the new version of %1 to be able to use the information stored by the old version of %1?"/>
 <localized_string Key="AMS_GRA_INTLR_NO_INFO"
@@ -507,6 +588,14 @@
 <localized_string Key="AMS_GRA_INTLR_LOCKED"
                 Value="You can not update the application %1 because it is currently running.   Please exit %1 and then update it."/>
 
+<localized_string Key="AMS_CMGR_INSTALL_COMPONENT"
+                Value="Install Component"/>
+<localized_string Key="AMS_CMGR_ENTER_URL_TO_INSTALL_FROM"
+                Value="Enter URL to install from:"/>
+<localized_string Key="AMS_CMGR_ENTER_DESCRIPTIVE_NAME"
+                Value="Leave blank or enter a descriptive name"/>
+
+
 <localized_string Key="AMS_CLASS_VERIFIER_TITLE"
                 Value="Class Verifier"/>
 <localized_string Key="AMS_CLASS_VERIFIER_GAUGE_LABEL"
@@ -526,12 +615,18 @@
                 Value="URL:"/>
 <localized_string Key="AMS_AUTO_TESTER_UNSIGN_SECURITY_DOMAIN"
                 Value="Security domain if suite not signed:"/>
+<localized_string Key="AMS_AUTO_TESTER_BLANKET_PERMISSIONS"
+                Value="Set the following permission groups of the test suite to blanket granted:"/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_URL_MSG"
                 Value="The URL has not been entered."/>
 <localized_string Key="AMS_AUTO_TESTER_ERROR_SECURITY_DOMAIN_MSG"
                 Value="The security domain has not been entered."/>
 <localized_string Key="PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE"
                 Value="%1 can't be set to not ask because it is not secure when %2 is set to not ask."/>
+<localized_string Key="PERMISSION_MUTUALLY_EXCLUSIVE_SELECT_MESSAGE"
+                Value="It is not secure when %1 and %2 both are set to not ask. Press YES to set %1 to not ask and %2 to ask once per application use. Press NO to do vice versa."/>
+<localized_string Key="PERMISSION_SECURITY_WARNING_ERROR_MESSAGE"
+                Value="It is not secure when %1 and %2 are allowed simultaneously. Proceed anyway?"/>
 <localized_string Key="PERMISSION_NET_ACCESS_DIALOG_TITLE"
                 Value="Is it OK to Use Airtime?"/>
 <localized_string Key="PERMISSION_NET_ACCESS_QUE"
@@ -586,6 +681,10 @@
                 Value="Is it OK to open a restricted network connection?"/>
 <localized_string Key="PERMISSION_CALL_CONTROL_QUE"
                 Value="%1 wants to open a restricted network connection.&#010;&#010;Is it OK to open a restricted network connection?"/>
+<localized_string Key="PERMISSION_SENSOR_TITLE"
+                Value="Is it OK to open a sensor connection?"/>
+<localized_string Key="PERMISSION_SENSOR_QUE"
+                Value="%1 wants to open a sensor connection.&#010;&#010;Is it OK to open a sensor connection?"/>
 <localized_string Key="AMS_PERMISSION_PAYMENT_DELETION_QUESTION"
                 Value="ATTENTION!&#010;There are pending payment transactions that will be deleted:&#010;"/>
 <localized_string Key="AMS_SELECTOR_SEL_TO_LAUNCH"
@@ -694,5 +793,32 @@
                 Value="Java applications stopped"/>
 <localized_string Key="SR_ALL_KILLED_ALERT_MSG"
                 Value="All MIDlets were destroyed during last system pause operation."/>
+<localized_string Key="SR_SUSPEND_ALERT_TITLE"
+                Value="Suspending java..."/>
+<localized_string Key="SR_SUSPEND_ALERT_MSG"
+                Value="Java VM is suspended by system request. Applications may be either paused or destroyed."/>
+
+<localized_string Key="AMS_DISC_APP_INSTALL_FROM_FILE"
+                Value="Storage"/>
+<localized_string Key="AMS_DISC_APP_INSTALL_FROM_HTTP"
+                Value="HTTP"/>
+<localized_string Key="AMS_DISC_APP_START_FILE_INSTALL"
+                Value="Install"/>
+<localized_string Key="AMS_DISC_APP_STORAGE_INSTALL"
+                Value="Enter a file path to install from:"/>
+<localized_string Key="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
+                Value="Prepairing to install from storage..."/>
+<localized_string Key="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
+                Value="Searching..."/>
+<localized_string Key="AMS_DISC_APP_GAUGE_LABEL_STORAGE"
+                Value="Searching..."/>
+<localized_string Key="AMS_FILE_PATH"
+                Value="Path to file"/>
+<localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE"
+                Value="Loading the application description file..."/>
+<localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
+                Value="Loading the application file..."/>
+<localized_string Key="AMS_GRA_INTLR_FILE_NOT_FOUND"
+                Value="File not found in the current path"/>       
 </localized_strings>
 </configuration>

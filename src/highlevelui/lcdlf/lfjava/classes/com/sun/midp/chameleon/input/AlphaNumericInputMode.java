@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 package com.sun.midp.chameleon.input;
 
@@ -29,6 +29,8 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.TextField;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 
 /**
@@ -156,7 +158,10 @@ public class AlphaNumericInputMode extends BasicInputMode {
      * Set the next capital mode for this input method
      */
     protected void nextCapsMode() {
-        log("[A.nextCapsMode]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[A.nextCapsMode]");
+        }
         capsModePointer++;
         if (capsModePointer == CAPS_MODES.length) {
             capsModePointer = 0;
@@ -259,7 +264,7 @@ public class AlphaNumericInputMode extends BasicInputMode {
         { false, false, false, false, false, false }, // IS_TRADITIONAL_HANZI
         { true,  true,  false, false, true,  false }, // MIDP_UPPERCASE_LATIN
         { true,  true,  false, false, true,  false }, // MIDP_LOWERCASE_LATIN
-        { false, false, false, false, false, false }  // NULL
+        { true,  true,  false, false, true,  false }  // NULL
     };
     
     /**

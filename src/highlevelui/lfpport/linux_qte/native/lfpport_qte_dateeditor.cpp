@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
@@ -516,7 +516,7 @@ DateTimeEditor::DateTimeEditor(QWidget *parent, int dmode, long initialTime) :
     TRACE_DE(  DateTimeEditor::DateTimeEditor..);
 
     // allows the item to be selected by clicking on the label
-    setFocusPolicy(QWidget::NoFocus);
+    setFocusPolicy(QWidget::StrongFocus);
 
     QVBoxLayout *vb = new QVBoxLayout( this, 5 );
 
@@ -915,6 +915,7 @@ static QDate addYears(const QDate &date, int nyears) {
 void DatePicker::acceptDay() {
     if (de != NULL) {
       de->setDate(currentDay);
+      de->setFocus();
     }
     accept();
   }
@@ -962,18 +963,21 @@ void DatePicker::mouseDoubleClickEvent(QMouseEvent *) {
 void DatePicker::keyPressEvent(QKeyEvent *event) {
     QDate day = currentDay;
     switch (event->key()) {
-        case Key_Left:      day = currentDay.addDays(-1); break;
-        case Key_Right:     day = currentDay.addDays(1); break;
-        case Key_Up:        day = currentDay.addDays(-COLUMNS); break;
-        case Key_Down:      day = currentDay.addDays(COLUMNS); break;
-        case Key_PageUp:    day = addMonths(currentDay, -1); break;
-        case Key_PageDown:  day = addMonths(currentDay, 1); break;
-        case Key_Home:      day = addYears(currentDay, -1); break;
-        case Key_End:       day = addYears(currentDay, 1); break;
-        case Key_Escape:    currentDay = startDay; accept(); break;
-        case Key_Space:
-        case Key_Enter:
-        case Key_Return:    acceptDay(); return;
+        case Qt::Key_Left:      day = currentDay.addDays(-1); break;
+        case Qt::Key_Right:     day = currentDay.addDays(1); break;
+        case Qt::Key_Up:        day = currentDay.addDays(-COLUMNS); break;
+        case Qt::Key_Down:      day = currentDay.addDays(COLUMNS); break;
+        case Qt::Key_PageUp:    day = addMonths(currentDay, -1); break;
+        case Qt::Key_PageDown:  day = addMonths(currentDay, 1); break;
+        case Qt::Key_Home:      day = addYears(currentDay, -1); break;
+        case Qt::Key_End:       day = addYears(currentDay, 1); break;
+        case Qt::Key_Escape:    currentDay = startDay; accept(); break;
+#ifdef QT_KEYPAD_MODE
+        case Qt::Key_Select:
+#endif
+        case Qt::Key_Space:
+        case Qt::Key_Enter:
+        case Qt::Key_Return:    acceptDay(); return;
         default:            QDialog::keyPressEvent(event); return;
     }
     if (day != currentDay) {

@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -29,15 +29,20 @@ package com.sun.midp.installer;
 import com.sun.cldc.isolate.*;
 
 import com.sun.midp.i18n.Resource;
-
 import com.sun.midp.i18n.ResourceConstants;
 
 import com.sun.midp.main.AmsUtil;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
+
+import com.sun.midp.events.*;
+import com.sun.midp.services.*;
+import com.sun.midp.security.*;
+import java.io.*;
 
 /**
  * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
@@ -63,18 +68,35 @@ import com.sun.midp.configurator.Constants;
  * If arg-0 is not given then a form will be used to query the tester for
  * the arguments.</p>
  */
-public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
+public final class AutoTester extends AutoTesterBase 
+    implements Runnable, EventListener {
+
+    /** We need security token for connecting to AutoTester service */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    private static SecurityToken token = null;
+
+    /** Client-side data exchange protocol instance */
+    private AutoTesterServiceProtocolClient protocol = null;
 
     /**
-     * Create and initialize a new auto tester MIDlet.
+     * Creates and initializes a new auto tester MIDlet.
      */
     public AutoTester() {
         super();
 
+        /**
+         * When running AutoTester MIDlet with ODD enabled we will receive
+         * these events. Handle them to avoid "no event listener" errors.
+         */
+        EventQueue eq = EventQueue.getEventQueue();
+        eq.registerEventListener(
+                EventTypes.MIDP_ODD_SUITE_INSTALLED_EVENT, this);
+        eq.registerEventListener(
+                EventTypes.MIDP_ODD_SUITE_REMOVED_EVENT, this);
+
         if (url != null) {
-            startBackgroundTester();
-        } else if (restoreSession()) {
-            // continuation of a previous session
             startBackgroundTester();
         } else {
             /**
@@ -86,69 +108,80 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
         }
     }
 
-    /** Run the installer. */
+    /**
+     * Preprocess an event that is being posted to the event queue.
+     * This method will get called in the thread that posted the event.
+     *
+     * @param event event being posted
+     *
+     * @param waitingEvent previous event of this type waiting in the
+     *     queue to be processed
+     *
+     * @return true to allow the post to continue, false to not post the
+     *     event to the queue
+     */
+    public boolean preprocess(Event event, Event waitingEvent) {
+        return true;
+    }
+
+    /**
+     * Process an event.
+     * This method will get called in the event queue processing thread.
+     *
+     * @param event event to process
+     */
+    public void process(Event event) {
+        /**
+         * Do nothing. We aren't interested in ODD events.
+         * We just want to avoid unhandled events situation.
+         */
+    }
+
+    /** 
+     * Runs the installer.
+     */
     public void run() {
-        installAndPerformTests(midletSuiteStorage, installer, url);
-    }
-
-    /**
-     * Restore the data from the last session, since this version of the
-     * autotester does not have sessions it just returns false.
-     *
-     * @return true if there was data saved from the last session
-     */
-    public boolean restoreSession() {
-        return false;
-    }
-
-    /**
-     * Installs and performs the tests.
-     *
-     * @param midletSuiteStorage MIDletSuiteStorage object
-     * @param inp_installer Installer object
-     * @param inp_url URL of the test suite
-     */
-    public void installAndPerformTests(
-        MIDletSuiteStorage midletSuiteStorage,
-        Installer inp_installer, String inp_url) {
-
-        MIDletInfo midletInfo;
-        int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        String status;
 
         try {
-            Isolate testIsolate;
+            protocol.sendTestRunParams(url, domain, loopCount);
+            status = protocol.receiveStatus();
 
-            for (; loopCount != 0; ) {
-                // force an overwrite and remove the RMS data
-                suiteId = inp_installer.installJad(inp_url,
-                    Constants.INTERNAL_STORAGE_ID, true, true, installListener);
-
-                midletInfo = getFirstMIDletOfSuite(suiteId,
-                                                   midletSuiteStorage);
-                testIsolate =
-                    AmsUtil.startMidletInNewIsolate(suiteId,
-                        midletInfo.classname, midletInfo.name, null,
-                        null, null);
-
-                testIsolate.waitForExit();
-
-                if (loopCount > 0) {
-                    loopCount -= 1;
-                }
+            if (!status.equals(AutoTesterServiceProtocolClient.STATUS_OK)) {
+                displayInstallerError(status);
             }
-        } catch (Throwable t) {
-            handleInstallerException(suiteId, t);
+        } catch (SystemServiceConnectionClosedException ccex) {
+            displayError(Resource.getString(ResourceConstants.EXCEPTION), 
+                    "Connection to AutoTester service closed unexpectedly");
+        } catch (Exception ex) {
+            String message = ex.getMessage();
+            displayError(Resource.getString(ResourceConstants.EXCEPTION), 
+                    message);
+        } finally {
+            notifyDestroyed();
+        }
+    }
+
+    /**
+     * Starts the background tester.
+     */
+    void startBackgroundTester() {
+        protocol = AutoTesterServiceProtocolClient.connectToService(
+                getSecurityToken());
+
+        if (protocol != null) {
+            new Thread(this).start();
+        } else {
+            displayError(Resource.getString(ResourceConstants.EXCEPTION),
+                "Failed to connect to AutoTester service");
+        }
+    }
+
+    private static SecurityToken getSecurityToken() {
+        if (token == null) {
+            token = SecurityInitializer.requestToken(new SecurityTrusted());
         }
 
-        if (midletSuiteStorage != null &&
-                suiteId != MIDletSuite.UNUSED_SUITE_ID) {
-            try {
-                midletSuiteStorage.remove(suiteId);
-            } catch (Throwable ex) {
-                // ignore
-            }
-        }
-
-        notifyDestroyed();
+        return token;
     }
 }

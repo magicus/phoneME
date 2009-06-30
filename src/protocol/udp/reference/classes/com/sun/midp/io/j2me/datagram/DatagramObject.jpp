@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.datagram;
@@ -162,7 +162,7 @@ public class DatagramObject implements Datagram {
             throw new IllegalArgumentException("Missing port");
         }
 
-        temp = Protocol.getIpNumber(Util.toCString(url.host));
+        temp = Protocol.getIpNumber(url.host);
         if (temp == -1) {
             throw new IllegalArgumentException("Invalid host");
         }
@@ -820,14 +820,4 @@ public class DatagramObject implements Datagram {
     }
 
 // #endif ENABLE_CLDC_11
-
-// #ifdef ENABLE_CDC
-    public void writeBytes(String s) throws IOException {
-        throw new IOException("unimplemented");
-    }
-
-    public String readLine() throws IOException {
-        throw new IOException("unimplemented");
-    }
-// #endif
 }

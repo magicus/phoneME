@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -43,13 +43,37 @@
 #include <midp_runtime_info.h>
 
 /*
- * Defines the heap requirement to use when initializing the VM.
+ * Definitions of the events that may cause a call of listener.
  */
-#if ENABLE_MULTIPLE_ISOLATES
-    #define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
-#else
-    #define MIDP_HEAP_REQUIREMENT (1024 * 1024)
-#endif
+/**
+ * @def MIDP_NAMS_EVENT_STATE_CHANGED 1
+ * state of the MIDP system or of a midlet was changed
+ */
+#define MIDP_NAMS_EVENT_STATE_CHANGED 1
+
+/**
+ * @def MIDP_NAMS_EVENT_OPERATION_COMPLETED 2
+ * previously initiated asynchronous operation has completed
+ */
+#define MIDP_NAMS_EVENT_OPERATION_COMPLETED 2
+
+/**
+ * @def MIDP_NAMS_EVENT_ERROR 3
+ * some error occured
+ */
+#define MIDP_NAMS_EVENT_ERROR 3
+
+/**
+ * @def MIDP_NAMS_EVENT_UNCAUGHT_EXCEPTION 4
+ * an uncaught exception has occured in a MIDlet
+ */
+#define MIDP_NAMS_EVENT_UNCAUGHT_EXCEPTION 4
+
+/**
+ * @def MIDP_NAMS_EVENT_OUT_OF_MEMORY 5
+ * VM can't fulfill a memory allocation request
+ */
+#define MIDP_NAMS_EVENT_OUT_OF_MEMORY 5
 
 /*
  * Defines for Java platform system states.
@@ -59,10 +83,10 @@
  *            otherwise, please change NamsTestService.getStateByValue().
  */
 /**
- * @def MIDP_SYSTEM_STATE_STARTED
+ * @def MIDP_SYSTEM_STATE_ACTIVE
  * when system is started up and ready to serve any MIDlet requests
  */
-#define MIDP_SYSTEM_STATE_STARTED    1
+#define MIDP_SYSTEM_STATE_ACTIVE     1
 
 /**
  * @def MIDP_SYSTEM_STATE_SUSPENDED
@@ -85,7 +109,7 @@
 /**
  * Defines for MIDlet states
  */
-#define MIDP_MIDLET_STATE_STARTED    1
+#define MIDP_MIDLET_STATE_ACTIVE     1
 #define MIDP_MIDLET_STATE_PAUSED     2
 #define MIDP_MIDLET_STATE_DESTROYED  3
 #define MIDP_MIDLET_STATE_ERROR      4
@@ -106,6 +130,55 @@
  * An ID value that an isolate never has.
  */
 #define MIDP_INVALID_ISOLATE_ID -1
+
+/**
+ * Structure with information about uncaught exception thrown from the MIDlet.
+ */
+typedef struct _midletExceptionInfo {
+    /**
+     * Name of the MIDlet from where the exception was thrown.
+     */
+    pcsl_string midletName;
+
+    /**
+     * Name of the class containing the method that threw the exception.
+     */
+    pcsl_string exceptionClassName;
+
+    /**
+     * Exception message.
+     */
+    pcsl_string exceptionMessage;
+
+    /**
+     * KNI_TRUE if this is the last thread of the MIDlet,
+     * KNI_FALSE otherwise
+     */
+    jboolean isLastThread;
+
+    /**
+     * In SVM mode - heap capacity, in MVM mode - memory limit for the isolate,
+     * i.e. the max amount of heap memory that can possibly be allocated.
+     */
+    jint memoryLimit;
+
+    /**
+     * In SVM mode - heap capacity, in MVM mode - memory reservation for the
+     * isolate, i.e. the max amount of heap memory guaranteed to be available.
+     */
+    jint memoryReserved;
+
+    /**
+     * How much memory is already allocated on behalf of this isolate
+     * in MVM mode, or for the whole VM in SVM mode.
+     */
+    jint memoryUsed;
+
+    /**
+     * The requested amount of memory that the VM failed to allocate.
+     */
+    jint allocSize;
+} MidletExceptionInfo;
 
 /**
  * A structure containing all information about the event that caused
@@ -137,6 +210,10 @@ typedef struct _namsEventData {
     jint state;
     /** information about the midlet suite corresponding to this application */
     MidletSuiteData* pSuiteData;
+    /** runtime information about the application */
+    MidletRuntimeInfo* pRuntimeInfo;
+    /** information about the uncaught exception thrown from this application */
+    MidletExceptionInfo* pExceptionInfo;
 } NamsEventData;
 
 /**
@@ -268,14 +345,18 @@ MIDPError midp_midlet_pause(jint appId);
 /**
  * Stop the specified MIDlet.
  *
+ * If the midlet is not terminated within the given number of milliseconds,
+ * it will be forcefully terminated.
+ *
  * If appId is invalid, this call has no effect, but the MIDlet state change
  * listener will be called anyway.
  *
  * @param appId The ID used to identify the application
+ * @param timeout Timeout in milliseconds
  *
  * @return error code: ALL_OK if the operation was started successfully
  */
-MIDPError midp_midlet_destroy(jint appId);
+MIDPError midp_midlet_destroy(jint appId, jint timeout);
 
 /**
  * Select which running MIDlet should have the foreground.  If appId is a
@@ -295,20 +376,31 @@ MIDPError midp_midlet_destroy(jint appId);
 MIDPError midp_midlet_set_foreground(jint appId);
 
 /**
- * Gets information about the specified MIDlet.
+ * Gets ID of the suite containing the specified running MIDlet.
+ * This call is synchronous.
  *
- * @param appId The ID used to identify the application
- * @param pRuntimeInfo [out] pointer to a structure where run-time
- *                           information about the midlet will be stored
- * @param pSuiteData [out] pointer to a structure where static information
- *                         about the midlet will be stored
+ * @param appId    [in]  The ID used to identify the application
+ * @param pSuiteId [out] On exit will hold an ID of the suite the midlet
+ *                       belongs to
  *
  * @return error code: ALL_OK if successful,
  *                     NOT_FOUND if the application was not found,
- *                     BAD_PARAMS if both pRuntimeInfo and pSuiteData are null
+ *                     BAD_PARAMS if pSuiteId is null
  */
-MIDPError midp_midlet_get_info(jint appId, MidletRuntimeInfo* pRuntimeInfo,
-                               MidletSuiteData* pSuiteData);
+MIDPError midp_midlet_get_suite_id(jint appId, SuiteIdType* pSuiteId);
+
+/**
+ * Gets runtime information about the specified MIDlet.
+ *
+ * This call is asynchronous, the result will be reported later through
+ * passing a MIDLET_INFO_READY_EVENT event to SYSTEM_EVENT_LISTENER.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if successful (operation started),
+ *                     NOT_FOUND if the application was not found
+ */
+MIDPError midp_midlet_request_runtime_info(jint appId);
 
 /* ------------------- API to control listeners ------------------- */
 

@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -163,7 +163,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
     public InstallInfo previousInstallInfo;
 
     /** The ContentHandler installer state. */
-    //public CHManager chmanager;
+    // public CHManager chmanager;
 
     /** Constructor. */
     public InstallStateImpl() {
@@ -300,9 +300,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permission name of the permission to check
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      *
@@ -312,7 +310,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource)
+    public void checkForPermission(String permission, String resource)
             throws InterruptedException {
         checkForPermission(permission, resource, null);
     }
@@ -321,9 +319,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permissionStr the permission name to check for,
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
      * @param extraValue string to insert into the question,
@@ -335,15 +331,16 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource,
+    public void checkForPermission(String permissionStr, String resource,
             String extraValue) throws InterruptedException {
 
-        securityHandler.checkForPermission(permission,
+		int permission = Permissions.getId(permissionStr);
+        securityHandler.checkForPermission(permissionStr,
             Permissions.getTitle(permission),
             Permissions.getQuestion(permission),
             Permissions.getOneshotQuestion(permission),
             installInfo.suiteName, resource, extraValue,
-            Permissions.getName(permission));
+            permissionStr);
     }
 
     /**
@@ -511,6 +508,17 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
     }
 
     /**
+     * Gets the MIDlet number as specified in the MIDlet-n entry in the JAD
+     * file based on the MIDlet's class name.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className) {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    /**
      * Checks to see the suite has the ALLOW level for specific permission.
      * This is used for by internal APIs that only provide access to
      * trusted system applications.
@@ -518,13 +526,12 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      * Only trust this method if the object has been obtained from the
      * MIDletStateHandler of the suite.
      *
-     * @param permission permission ID from
-     *      {@link com.sun.midp.security.Permissions}
+     * @param permission permission name
      *
      * @exception SecurityException if the suite is not
      *            allowed to perform the specified action
      */
-    public void checkIfPermissionAllowed(int permission) {
+    public void checkIfPermissionAllowed(String permission) {
         throw new RuntimeException("Not Implemented");
     }
 
@@ -576,6 +583,17 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
      * @return true if suite is enabled, false otherwise
      */
     public boolean isEnabled() {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    /**
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     *
+     * @return secure filename base for this suite
+     */
+    public String getSecureFilenameBase() {
         throw new RuntimeException("Not Implemented");
     }
 

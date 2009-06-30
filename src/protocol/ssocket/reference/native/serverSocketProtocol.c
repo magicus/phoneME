@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -105,7 +105,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_open0(void) {
 
         pushReturn = pushcheckout("socket", port,
                                   (char*)midp_suiteid2chars(suiteId));
-
+                                  
         /*
          * pushcheckout() returns -1 if the handle wasn't found, -2 if it's
          * already in use by another suite, otherwise a valid checked-out
@@ -183,6 +183,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
     int status = PCSL_NET_INVALID;
     void* context = NULL;
     MidpReentryData* info;
+    int resUpdate = 0;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
@@ -191,7 +192,8 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
     if (info == NULL) {
         /* initial invocation */
-        serverSocketHandle = getMidpServerSocketProtocolPtr(thisObject)->nativeHandle;
+        serverSocketHandle =
+            getMidpServerSocketProtocolPtr(thisObject)->nativeHandle;
 
         /*
          * If serverSocketHandle is invalid, the socket has already been closed,
@@ -209,11 +211,15 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
              * IMPL NOTE: how to do resource accounting for the push case?
              */
             if (pushcheckin(serverSocketHandle) == -1) {
-                status = pcsl_socket_close_start((void*)serverSocketHandle, &context);
-
-                /* Server socket should be monitored for read events only */
-                midp_thread_signal(NETWORK_READ_SIGNAL, serverSocketHandle, 0);
+                status = pcsl_socket_close_start((void*)serverSocketHandle,
+                                                 &context);
+                resUpdate = 1;
+            } else {
+                status = PCSL_NET_SUCCESS;
             }
+            /* Server socket should be monitored for read events only */
+            midp_thread_signal(NETWORK_READ_SIGNAL, serverSocketHandle, 0);
+
             getMidpServerSocketProtocolPtr(thisObject)->nativeHandle =
                 (jint)INVALID_HANDLE;
         }
@@ -228,10 +234,12 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
 
     if (serverSocketHandle != (int)INVALID_HANDLE) {
         if (status == PCSL_NET_SUCCESS) {
+          if (resUpdate) {
             if (midpDecResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
                 REPORT_INFO(LC_PROTOCOL,
                             "TCP Server: Resource limit update error");
             }
+          }
         } else if (status == PCSL_NET_WOULDBLOCK) {
             REPORT_INFO1(LC_PROTOCOL, "serversocket::close = 0x%x blocked\n",
                          serverSocketHandle);

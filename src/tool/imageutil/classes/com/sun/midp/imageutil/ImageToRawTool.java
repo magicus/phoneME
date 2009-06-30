@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  *
  */
 
@@ -109,6 +109,8 @@ public class ImageToRawTool {
             // raw file formats
             "Putpixel",
             "ARGB",
+            "RGBA",
+            "ABGR",
             // endianess
             "Little",
             "Big",
@@ -124,6 +126,8 @@ public class ImageToRawTool {
             // raw file formats
             ImageToRawConverter.RAW_FORMAT_PP,
             ImageToRawConverter.RAW_FORMAT_ARGB,
+            ImageToRawConverter.RAW_FORMAT_RGBA,
+            ImageToRawConverter.RAW_FORMAT_ABGR,
             // endianess
             ImageToRawConverter.INT_FORMAT_LITTLE_ENDIAN,
             ImageToRawConverter.INT_FORMAT_BIG_ENDIAN,
@@ -327,12 +331,10 @@ public class ImageToRawTool {
                 javax.imageio.ImageIO.read(new File(sourceName));
         int width = image.getWidth(null);
         int height = image.getHeight(null);
-        boolean hasAlpha = image.getColorModel().hasAlpha();
         int[] imageData = getBufferedImageData(image);
 
         // convert image
-        byte[] rawData = converter.convertToRaw(
-                imageData, width, height, hasAlpha);
+        byte[] rawData = converter.convertToRaw(imageData, width, height);
 
         // save image
         if (new File(destName).exists())

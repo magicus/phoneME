@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef _GXPPORT_IMMUTABLEIMAGE_H_
@@ -34,7 +34,7 @@
  * @brief Porting Interface for immutable image handling 
  */
 
-#include <gxutl_image_errorcodes.h> 
+#include <img_errorcodes.h> 
 #include <gxpport_mutableimage.h>
 
 #ifdef __cplusplus
@@ -57,7 +57,7 @@ typedef void* gxpport_image_native_handle;
 void gxpport_createimmutable_from_mutable
 (gxpport_mutableimage_native_handle srcMutableImage,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Creates an immutable image that is a copy of a region
@@ -81,7 +81,7 @@ gxpport_createimmutable_from_immutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Creates an immutable image that is a copy of a region
@@ -105,7 +105,7 @@ gxpport_createimmutable_from_mutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Decodes the given input data into a storage format used by immutable
@@ -129,7 +129,7 @@ gxpport_decodeimmutable_from_selfidentifying
 (unsigned char* srcBuffer, int length, 
  int* ret_imgWidth, int* ret_imgHeight,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Decodes the ARGB input data into a storage format used by immutable images.
@@ -149,7 +149,7 @@ gxpport_decodeimmutable_from_argb
  int width, int height,
  jboolean processAlpha,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Renders the contents of the specified immutable image
@@ -216,7 +216,7 @@ gxpport_get_immutable_argb
 (gxpport_image_native_handle imutableImage,
  jint* rgbBuffer, int offset, int scanLength,
  int x, int y, int width, int height,
- gxutl_native_image_error_codes* errorPtr);
+ img_native_error_codes* errorPtr);
   
 /**
  * Cleans up any native resources to prepare the image to be garbage collected.
@@ -241,7 +241,7 @@ void gxpport_destroy_immutable(gxpport_image_native_handle immutableImage);
 void gxpport_decodeimmutable_to_platformbuffer
 (unsigned char* srcBuffer, long length,
  unsigned char** ret_dataBuffer, long* ret_length,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Loads the given input data into a storage format used by immutable
@@ -264,7 +264,7 @@ gxpport_loadimmutable_from_platformbuffer
 (unsigned char* srcBuffer, int length, jboolean isStatic,
  int* ret_imgWidth, int* ret_imgHeight,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 #ifdef __cplusplus
 } /* extern C */

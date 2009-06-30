@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -33,6 +33,7 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.resources.ChoiceGroupResources;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.layers.ScrollIndLayer;
+import com.sun.midp.chameleon.CGraphicsUtil;
 
 /**
  * This is the look &amps; feel implementation for ChoiceGroup.
@@ -54,7 +55,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 selectedIndex = 0;
                 cg.cgElements[selectedIndex].setSelected(true);        
             }
-            hilightedIndex = 0;
+            hilightedIndex = -1;
         }
         contentX = getContentX(cg.choiceType);
         elHeights = new int[cg.numOfEls + ChoiceGroup.GROW_FACTOR];
@@ -128,7 +129,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         }
 
         // set hilighted index (it always exists)
-        if (elementNum <= hilightedIndex || hilightedIndex == -1) {
+        if (hasFocus && (elementNum <= hilightedIndex || hilightedIndex == -1)) {
             hilightedIndex++;
         }
         
@@ -142,7 +143,6 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             System.arraycopy(elHeights, elementNum, newArray, elementNum + 1, 
                              cg.numOfEls - elementNum - 1);
             elHeights = newArray; // swap them
-
         } else if (elementNum != cg.numOfEls - 1) {
             // if we're not appending
             System.arraycopy(elHeights, elementNum, elHeights, elementNum + 1,
@@ -210,6 +210,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         selectedIndex = hilightedIndex = -1;
         elHeights = new int[ChoiceGroup.GROW_FACTOR]; // initial size
         lRequestInvalidate(true, true);
+        
     }
 
     /**
@@ -226,6 +227,21 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      */
     public void lSet(int elementNum, String stringPart, Image imagePart) {
         lRequestInvalidate(true, true);
+    }
+
+
+    /**
+     * Notify this itemLF that its owner screen has changed.
+     * Clear internal state if its new owner is null.
+     *
+     * @param oldOwner old owner screen before this change. New owner
+     *                 can be found in Item model.
+     */
+    public void lSetOwner(Screen oldOwner) {
+        super.lSetOwner(oldOwner);
+        if (item.owner != null && item.owner instanceof List) {
+            drawsTraversalIndicator = false;
+        }
     }
 
     /**
@@ -365,8 +381,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         boolean ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
         // all choice items are out of viewport.
         // Probably justr the label (if it's present) is visible on the screen
-        int contentY = contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS;
-        int contentH = contentBounds[HEIGHT] - 2 * ScreenSkin.PAD_FORM_ITEMS;
+        int contentY = contentBounds[Y];
+        int contentH = contentBounds[HEIGHT];
 
 
         if (contentY > visRect[Y] + visRect[HEIGHT] ||
@@ -379,6 +395,15 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         if (cg.numOfEls > 0) {
             int newHeight = visRect[HEIGHT];
             int newHilightedIndex = hilightedIndex;
+            if (isInternalCycle) {
+                if (hilightedIndex == (cg.numOfEls-1) && Canvas.DOWN == dir) {
+                    newHilightedIndex = 0;
+                    lScrollToItem(visRect, newHilightedIndex); 
+                } else if (newHilightedIndex == 0 && Canvas.UP == dir) {
+                    newHilightedIndex = cg.numOfEls-1;
+                    lScrollToItem(visRect, newHilightedIndex); 
+                } 
+            }
             int newY = contentY;
             boolean resetVisRect = false;
 
@@ -388,6 +413,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 }
                 newHeight = elHeights[newHilightedIndex];
 
+                
                 // highlighted index is out of visible rect
                 // move highlight to the best place
                 if (newY + newHeight > visRect[Y] + visRect[HEIGHT]) {
@@ -429,17 +455,21 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     }
                 }
             } else {
+
                 if (cg.choiceType == Choice.IMPLICIT &&
                     pendingIndex == -1) {
                     pendingIndex = selectedIndex;
                 }
-                
-                newHilightedIndex = pendingIndex != -1 ?
-                    pendingIndex :
-                    getIndexByPointer(contentBounds[X], dir == Canvas.UP ?
+
+                if (pendingIndex != -1) {
+                    newHilightedIndex = pendingIndex;
+                    pendingIndex = -1;
+                } else if (newHilightedIndex == -1) {
+                    newHilightedIndex = getIndexByPointer(contentBounds[X], dir == Canvas.UP ?
                                       contentY + contentH - 1 :
                                       contentY);
-                pendingIndex = -1;
+                }
+                
                 if (newHilightedIndex != -1) {
                     traversedIn = true;
                     ret = cg.numOfEls > 1;
@@ -470,11 +500,48 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
     }
 
     /**
+     *  If hilighted element of item is not completely visible should make it visible
+     * @param viewport
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return
+     */
+    boolean lScrollToItem(int[] viewport, int[] visRect) {
+        return lScrollToItem(visRect, hilightedIndex ); 
+    }
+
+    /**
+     *  Set visRect as need to pHilightedIndex
+     * @param pHighlightedIndex the index of the highlighted element
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return true if 
+     */
+    boolean lScrollToItem(int[] visRect, int pHilightedIndex ) {
+        int contentY = contentBounds[Y];
+
+        if (cg.numOfEls > 0) {
+            int newY = contentY + ChoiceGroupSkin.PAD_H;
+            if (traversedIn) {
+                for (int i = 0; i < pHilightedIndex; i++) {
+                    newY += elHeights[i];
+                }
+             
+                if (newY + elHeights[pHilightedIndex] > visRect[Y] + visRect[HEIGHT] || newY < visRect[Y]) {
+                    visRect[Y] = bounds[Y] + newY;
+                    visRect[HEIGHT] = elHeights[pHilightedIndex];
+                    return true;
+                }
+            }
+        }
+        return false; 
+    }
+
+    /**
      * Traverse out of this ChoiceGroup
      */
     void lCallTraverseOut() {
         super.lCallTraverseOut();
         traversedIn = false;
+        hilightedIndex = -1;
     }
 
     /**
@@ -495,8 +562,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      * @param x the x coordinate of the pointer
      * @param y the y coordinate of the pointer
      * @return the index of choice item
-     */
+     */      
     int getIndexByPointer(int x, int y) {
+
         int id = -1;
         if (cg.numOfEls > 0) {
             //if pointer was dragged outside the item.
@@ -504,8 +572,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 x <= contentBounds[X] + contentBounds[WIDTH] &&
                 contentBounds[Y] <= y &&
                 y <= contentBounds[Y] + contentBounds[HEIGHT]) { 
-                int visY = contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS;
-                for (int i = 0; i < cg.numOfEls; i++) { 
+                int visY = contentBounds[Y];
+                for (int i = 0; i < cg.numOfEls; i++) {
                     visY += elHeights[i];
                     if (visY >= y) {
                         id = i;
@@ -580,9 +648,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 return;
             }
 
-            switch (cg.choiceType) {            
+            switch (cg.choiceType) {
                 case Choice.EXCLUSIVE:
-                    if (hilightedIndex == selectedIndex) {
+                    if (hilightedIndex == selectedIndex || hilightedIndex < 0) {
                         return;
                     }
                     setSelectedIndex(hilightedIndex, true);
@@ -592,6 +660,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     break;
 
                 case Choice.MULTIPLE:
+                    if (hilightedIndex < 0) {
+                        return;
+                    }
                     setSelectedIndex(hilightedIndex,
                         !cg.cgElements[hilightedIndex].selected);
                     if (cg.owner instanceof Form) {
@@ -707,7 +778,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             cg.cgElements[selectedIndex].setSelected(true);
         }
     }
-
+    
     /**
      * Paints the content area of this ChoiceGroup. 
      * Graphics is translated to contents origin.
@@ -767,20 +838,30 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                                            i == selectedIndex);
             
             if (choiceImg != null) {
-                g.drawImage(choiceImg, 0, 0,
+
+                int yOffset = elHeights[i] - choiceImg.getHeight();
+                yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
+                if (ScreenSkin.RL_DIRECTION) {
+                    g.drawImage(choiceImg, bounds[WIDTH]
+                            - 2 * ChoiceGroupSkin.PAD_H - choiceImg.getWidth(),
+                            yOffset, Graphics.LEFT | Graphics.TOP);
+                    offSetX = ChoiceGroupSkin.PAD_H;
+                } else {
+                    g.drawImage(choiceImg, 0, yOffset,
                             Graphics.LEFT | Graphics.TOP);
-                offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
+                    offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
+                }
             } else {
                 g.setColor(ChoiceGroupSkin.COLOR_FG);
                 switch (cType) {
                     case Choice.MULTIPLE:
                         offSetX = ChoiceGroupSkin.PAD_H +
                             ChoiceGroupSkin.WIDTH_IMAGE;
-                        g.drawRect(1, 1, 
+                        g.drawRect(1, 1,
                                    ChoiceGroupSkin.WIDTH_IMAGE - 3,
                                    ChoiceGroupSkin.HEIGHT_IMAGE - 3);
                         if (cg.cgElements[i].selected) {
-                            g.fillRect(3, 3, 
+                            g.fillRect(3, 3,
                                 ChoiceGroupSkin.WIDTH_IMAGE - 6,
                                 ChoiceGroupSkin.HEIGHT_IMAGE - 6);
                         }
@@ -788,11 +869,11 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     case Choice.EXCLUSIVE:
                         offSetX = ChoiceGroupSkin.PAD_H +
                             ChoiceGroupSkin.WIDTH_IMAGE;
-                        g.drawArc(1, 1, 
+                        g.drawArc(1, 1,
                             ChoiceGroupSkin.WIDTH_IMAGE - 2,
                             ChoiceGroupSkin.HEIGHT_IMAGE - 2, 0, 360);
                         if (i == selectedIndex) {
-                            g.fillArc(3, 3, 
+                            g.fillArc(3, 3,
                                 ChoiceGroupSkin.WIDTH_IMAGE - 5,
                                 ChoiceGroupSkin.HEIGHT_IMAGE - 5, 0, 360);
                         }
@@ -804,45 +885,91 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             hilighted = (i == hilightedIndex && hasFocus);
 
             if (hilighted) {
-                g.setColor(ScreenSkin.COLOR_BG_HL);
-                g.fillRect(-ChoiceGroupSkin.PAD_H, 0, 
-                           ChoiceGroupSkin.PAD_H + contentW + 
-                           ChoiceGroupSkin.PAD_H, 
+                //Rache load image if available 
+                Image bgImages []= ScreenSkin.IMAGE_BG_HL;
+                if (bgImages != null){
+                    /* System.out.println("ChoiceGroupLFImpl bgImages != null"); */
+                    this.bgImage = new Image[bgImages.length];
+                    System.arraycopy(bgImages, 0, this.bgImage, 0, bgImages.length);
+                    if (bgImage.length == 3) {
+                        /* System.out.println("ChoiceGroupLFImpl callin draw3pcsBackground"); */
+                        CGraphicsUtil.draw3pcsBackground(g, 0, 0, bounds[WIDTH], bgImage);
+                    }
+                }else{//no image available draw a rect with color as background
+                     /* System.out.println("ChoiceGroupLFImpl drawing filled rect as background"); */
+                     g.setColor(ScreenSkin.COLOR_BG_HL);
+                     g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
+                           ChoiceGroupSkin.PAD_H + contentW +
+                           ChoiceGroupSkin.PAD_H,
                            elHeights[i]);
+                }
             }
 
-            if (cg.cgElements[i].imageEl == null) {
-                textOffset = 0;
-            } else {
+            textOffset = 0;
+            if (cg.cgElements[i].imageEl != null) {
+
+
                 iX = g.getClipX();
                 iY = g.getClipY();
                 iW = g.getClipWidth();
                 iH = g.getClipHeight();
 
-                g.clipRect(0, 0,
-                           ChoiceGroupSkin.WIDTH_IMAGE, 
-                           ChoiceGroupSkin.HEIGHT_IMAGE);
-                g.drawImage(cg.cgElements[i].imageEl, 
-                            0, 0, 
+                if (ScreenSkin.RL_DIRECTION) {
+                    if (choiceImg != null) {
+                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - choiceImg.getWidth() - 2 * ChoiceGroupSkin.PAD_H;
+                    } else {
+                        textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - ChoiceGroupSkin.PAD_H;                        
+                    }
+                }
+                int yOffset = elHeights[i] - cg.cgElements[i].imageEl.getHeight();
+                yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
+
+                
+                g.clipRect(textOffset, yOffset,
+                           ChoiceGroupSkin.WIDTH_IMAGE, ChoiceGroupSkin.HEIGHT_IMAGE);
+
+                g.drawImage(cg.cgElements[i].imageEl,
+                            textOffset , yOffset,
                             Graphics.LEFT | Graphics.TOP);
                 g.setClip(iX, iY, iW, iH);
                 textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
-                    ChoiceGroupSkin.PAD_H;
+                        ChoiceGroupSkin.PAD_H;
             }
-           
+
             g.translate(0, -1);
-            Text.paint(g, cg.cgElements[i].stringEl, 
-                       cg.cgElements[i].getFont(),
-                       ChoiceGroupSkin.COLOR_FG, 
+            
+
+            int textHeight = 0;
+            String str = cg.cgElements[i].stringEl;
+            Font font = cg.cgElements[i].getFont();
+            
+            textHeight = cg.fitPolicy == ChoiceGroup.TEXT_WRAP_OFF ?
+                font.getHeight() :
+                Text.getHeightForWidth(str, font, contentW, textOffset);
+
+            int yOffset = elHeights[i] - textHeight;
+            int  contentH = elHeights[i];
+
+            if (yOffset > 0) {
+                contentH = textHeight;
+                yOffset >>= 1;
+            } else if (yOffset < 0) {
+                yOffset = 0;
+            }
+
+            g.translate(0, yOffset);
+
+            Text.paint(g, str, font,
+                       ChoiceGroupSkin.COLOR_FG,
                        ScreenSkin.COLOR_FG_HL,
-                       contentW, elHeights[i], textOffset, 
+                       contentW, contentH, textOffset,
                        (hilighted) ? mode | Text.INVERT : mode, null);
-            g.translate(-offSetX, elHeights[i] + 1);
+            g.translate(-offSetX, elHeights[i] + 1 - yOffset);
             translatedY += elHeights[i];
 
         } // end for
 
-        g.translate(0, -translatedY); 
+        g.translate(0, -translatedY);
     }
 
     /**
@@ -969,21 +1096,25 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         // IMPL_NOTE there is an assumption here that text height is always
         // taller then the choice image and taller then the content image
 
-        elHeights[i] = 0;
-
+        elHeights[i] = 20;
         int textOffset = (cgEl.imageEl == null) ? 0 : 
             ChoiceGroupSkin.WIDTH_IMAGE + 
             ChoiceGroupSkin.PAD_H;
         
         Font fnt = cgEl.getFont();
+        int imHeight =  ChoiceGroupSkin.HEIGHT_IMAGE;
         
         if (cg.fitPolicy == ChoiceGroup.TEXT_WRAP_OFF) {
             elHeights[i] += fnt.getHeight();
         } else {
+ 
             elHeights[i] += Text.getHeightForWidth(cgEl.stringEl, fnt,
                                                     availableWidth, textOffset);
         }
- 
+
+        if (elHeights[i] < imHeight) {
+            elHeights[i] = imHeight;
+        }
         return elHeights[i];
     }
 
@@ -1013,6 +1144,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      */
     int[] elHeights;
 
+
     /**
      * A flag indicating if traversal has occurred into this
      * CG on a prior lCallTraverse. Its reset to false again
@@ -1020,5 +1152,11 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      */
     boolean traversedIn;
 
-    boolean hasFocusWhenPressed; // = false
+    boolean hasFocusWhenPressed; // = false 
+
+     /**
+     * The image to use as a background for this layer if this layer
+     * is not transparent and does not use a fill color.
+     */
+    protected Image[] bgImage;
 }

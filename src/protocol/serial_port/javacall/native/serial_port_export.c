@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <javacall_serial.h>
@@ -32,9 +32,9 @@
 #include <sni.h>
 
 /**
- * Open a serial port by system dependent device name.
+ * Open a serial port by logical device name.
  *
- * @param pszDeviceName device name of the port
+ * @param pszDeviceName logical name of the port (for example, COM1)
  * @param baudRate baud rate to set the port at
  * @param options options for the serial port
  * bit 0: 0 - 1 stop bit, 1 - 2 stop bits 
@@ -72,6 +72,7 @@ openPortByNameStart(char* pszDeviceName, int baudRate,
 		case JAVACALL_WOULD_BLOCK:
 			returnStatus = PCSL_NET_WOULDBLOCK;
 			break;
+        default: break;
 	}
 
 	return returnStatus;
@@ -106,6 +107,9 @@ int openPortByNameFinish(char* pszDeviceName, int baudRate,
 
     /* Javacall implementation never uses contect */
     (void)context;
+    (void)pszDeviceName;
+    (void)baudRate;
+    (void)options;
 
     ret = javacall_serial_open_finish(hPort);
 
@@ -116,6 +120,7 @@ int openPortByNameFinish(char* pszDeviceName, int baudRate,
 		case JAVACALL_WOULD_BLOCK:
 			returnStatus = PCSL_NET_WOULDBLOCK;
 			break;
+        default: break;
 	}
 
 	return returnStatus;
@@ -208,9 +213,10 @@ int writeToPortStart(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }
 
 /**
@@ -249,9 +255,10 @@ int writeToPortFinish(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }
 
 /**
@@ -294,9 +301,10 @@ int readFromPortStart(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }
 
 /**
@@ -337,7 +345,8 @@ int readFromPortFinish(int hPort, char* pBuffer,
 			case JAVACALL_WOULD_BLOCK:
 				status = PCSL_NET_WOULDBLOCK;
 				break;
+            default: break;
 		}
-		return status;
 	}
+    return status;
 }

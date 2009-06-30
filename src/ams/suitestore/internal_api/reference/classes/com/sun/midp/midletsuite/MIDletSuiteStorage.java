@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -26,18 +26,18 @@
 
 package com.sun.midp.midletsuite;
 
-import java.util.Vector;
-
 import java.io.IOException;
+
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.content.CHManager;
 
+import com.sun.midp.jarutil.JarReader;
 import com.sun.midp.util.Properties;
 
 import com.sun.midp.configurator.Constants;
@@ -79,6 +79,8 @@ public class MIDletSuiteStorage {
 
     /**
      * Returns a reference to the singleton MIDlet suite storage object.
+     * <p>
+     * Method requires the com.sun.midp.ams permission.
      *
      * @return the storage reference
      *
@@ -87,16 +89,7 @@ public class MIDletSuiteStorage {
      */
     public static MIDletSuiteStorage getMIDletSuiteStorage()
             throws SecurityException {
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        if (midletSuite == null) {
-            throw new
-                IllegalStateException("This method can't be called before " +
-                                      "a suite is started.");
-        }
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         return getMasterStorage();
     }
@@ -135,6 +128,14 @@ public class MIDletSuiteStorage {
     private static MIDletSuiteStorage getMasterStorage() {
         if (masterStorage == null) {
             masterStorage = new MIDletSuiteStorage();
+
+            int status = loadSuitesIcons0();
+            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                if (status != 0) {
+                    Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                        "Can't load the cached icons, error code: " + status);
+                }
+            }
         }
 
         return masterStorage;
@@ -156,8 +157,9 @@ public class MIDletSuiteStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked; MIDletSuiteCorruptedException is thrown if the MIDletSuite is
      * corrupted
+     * @exception MIDletSuiteCorruptedException if the suite is corrupted
      *
-     * @return MIDlet Suite reference
+     * @return MIDlet Suite reference or null if the suite doesn't exist
      */
     public synchronized MIDletSuiteImpl getMIDletSuite(int id,
             boolean update)
@@ -195,6 +197,42 @@ public class MIDletSuiteStorage {
     }
 
     /**
+     * Retrieves an icon for the given midlet suite.
+     *
+     * @param suiteId unique identifier of the suite
+     * @param iconName the name of the icon to retrieve
+     *
+     * @return image of the icon as a byte array
+     */
+    public synchronized byte[] getMIDletSuiteIcon(int suiteId,
+                                                  String iconName) {
+        byte[] iconBytes = null;
+
+        if (iconName == null) {
+            return null;
+        }
+
+        try {
+            iconBytes = getMIDletSuiteIcon0(suiteId, iconName);
+
+            if (iconBytes == null) {
+                /* Search for icon in the image cache */
+                iconBytes = loadCachedIcon0(suiteId, iconName);
+            }
+
+            if (iconBytes == null) {
+                /* Search for icon in the suite JAR */
+                iconBytes = JarReader.readJarEntry(
+                    getMidletSuiteJarPath(suiteId), iconName);
+            }
+        } catch (Exception e) {
+            iconBytes = null;
+        }
+
+        return iconBytes;
+    }
+
+    /**
      * Get the midlet suite's class path including a path to the MONET
      * image of the specified suite and a path to the suite's jar file.
      *
@@ -207,10 +245,39 @@ public class MIDletSuiteStorage {
 
         if (Constants.MONET_ENABLED && id != MIDletSuite.INTERNAL_SUITE_ID) {
             String bunFile = getMidletSuiteAppImagePath(id);
-            return new String[]{bunFile, jarFile};
+            return new String[] {bunFile, jarFile};
         }
-        return new String[]{jarFile};
+
+        return new String[] {jarFile};
     }
+
+    /**
+     * Loads the cached icons from the permanent storage into memory.
+     *
+     * @return status code (0 if no errors) 
+     */
+    public static native int loadSuitesIcons0();
+
+    /**
+     * Retrieves the cached icon from the icon cache.
+     *
+     * @param suiteId unique identifier of the suite
+     * @param iconName the name of the icon to retrieve
+     *
+     * @return cached image data if available, otherwise null
+     */
+    private static native byte[] getMIDletSuiteIcon0(int suiteId,
+                                                     String iconName);
+
+    /**
+     * Loads suite icon data from image cache.
+     *
+     * @param suiteId the ID of suite the icon belongs to
+     * @param iconName the name of the icon to be loaded
+     *
+     * @return cached image data if available, otherwise null
+     */
+    private static native byte[] loadCachedIcon0(int suiteId, String iconName);
 
     /**
      * Reads the basic information about the midlet suite from the storage.
@@ -243,17 +310,34 @@ public class MIDletSuiteStorage {
     public synchronized native String getMidletSuiteJarPath(int id);
 
     /**
+     * Get the storage id for a suite.
+     *
+     * @param id unique ID of the suite
+     *
+     * @return storage id or null if the suite does not exist
+     */
+    public native static int getMidletSuiteStorageId(int id);
+
+    /**
+     * Get the folder id for a suite.
+     *
+     * @param id unique ID of the suite
+     *
+     * @return folder id or -1 if the suite does not exist
+     */
+    public native static int getMidletSuiteFolderId(int id);
+
+    /**
      * Gets the unique identifier of MIDlet suite.
      *
      * @param vendor name of the vendor that created the application, as
-     *          given in a JAD file
+     *        given in a JAD file
      * @param name name of the suite, as given in a JAD file
      *
      * @return suite ID of the midlet suite given by vendor and name
      *         or MIDletSuite.UNUSED_SUITE_ID if the suite does not exist
      */
-    public native static int getSuiteID(String vendor, String name);
-
+    public static native int getSuiteID(String vendor, String name);
 
     // -------------- Installer related functionality ---------------
 
@@ -287,9 +371,6 @@ public class MIDletSuiteStorage {
 
     /**
      * Returns a unique identifier of MIDlet suite.
-     * Constructed from the combination
-     * of the values of the <code>MIDlet-Name</code> and
-     * <code>MIDlet-Vendor</code> attributes.
      *
      * @return the platform-specific storage name of the application
      *          given by vendorName and appName
@@ -358,7 +439,7 @@ public class MIDletSuiteStorage {
         String[] strJadProperties = getPropertiesStrings(jadProps);
         String[] strJarProperties = getPropertiesStrings(jarProps);
 
-        nativeStoreSuite(installInfo, suiteSettings, msi,
+        nativeStoreSuite(installInfo, suiteSettings, msi, null,
             strJadProperties, strJarProperties);
     }
 
@@ -424,7 +505,66 @@ public class MIDletSuiteStorage {
     }
 
     /**
-     * Stores or updates a midlet suite.
+     * Moves a software package with given suite ID to the specified storage.
+     *
+     * @param suiteId suite ID for the installed package
+     * @param newStorageId new storage ID
+     *
+     * @exception IllegalArgumentException if the suite cannot be found or
+     * invalid storage ID specified 
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * locked
+     * @exception IOException if an I/O error occurred
+     * @exception OutOfMemoryError if out of memory
+     */
+    public native void changeStorage(int suiteId, int newStorageId)
+            throws IllegalArgumentException, MIDletSuiteLockedException,
+                   IOException, OutOfMemoryError;
+
+    /**
+     * Native method void moveSuiteToFolder(...) of
+     * com.sun.midp.midletsuite.MIDletSuiteStorage.
+     * <p>
+     * Moves a software package with given suite ID to the specified folder.
+     *
+     * @param suiteId suite ID for the installed package
+     * @param newFolderId folder ID
+     *
+     * @exception IllegalArgumentException if the suite cannot be found or
+     *                                     invalid folder ID specified
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     *                                       locked
+     * @exception IOException if an I/O error occurred
+     * @exception OutOfMemoryError if out of memory
+     */
+    public native void moveSuiteToFolder(int suiteId, int newFolderId)
+            throws IllegalArgumentException, MIDletSuiteLockedException,
+                   IOException, OutOfMemoryError;
+
+    /**
+     * Removes all suites with the temporary flag set to true.
+     */
+    public synchronized void removeTemporarySuites() {
+        final int[] suiteIds = getListOfSuites();
+        
+        for (int i = 0; i < suiteIds.length; ++i) {
+            try {
+                final MIDletSuiteInfo suiteInfo = 
+                        getMIDletSuiteInfo(suiteIds[i]);
+                if (suiteInfo.temporary) {
+                    remove(suiteIds[i]);
+                }
+            } catch (final IOException e) {
+                // skip this suite
+            } catch (final MIDletSuiteLockedException e) {
+                // skip this suite
+            }
+        }
+    }
+    
+    /**
+     * Implementation for storeSuite() and storeSuiteComponent().
+     * Stores or updates a midlet suite or a dynamic component.
      *
      * @param installInfo structure containing the following information:<br>
      * <pre>
@@ -434,6 +574,7 @@ public class MIDletSuiteStorage {
      *     jarFilename - name of the downloaded MIDlet suite jar file;
      *     suiteName - name of the suite;
      *     suiteVendor - vendor of the suite;
+     *     suiteVersion - version of the suite;
      *     authPath - authPath if signed, the authorization path starting
      *                with the most trusted authority;
      *     domain - security domain of the suite;
@@ -464,6 +605,19 @@ public class MIDletSuiteStorage {
      *                            only one midlet, ignored otherwise;
      *     iconName - name of the icon for this suite.
      * </pre>
+     * msi is null if a dynamic component rather than a suite is being saved
+     *
+     * @param ci structure containing the following information:<br>
+     * <pre>
+     *     componentId - unique ID of the component being saved
+     *     suiteId - unique ID of the suite that the component belongs to,
+     *               must be equal to the value given in installInfo and
+     *               suiteSettings parameters;
+     *     trusted - true if component is trusted, must be equal to the
+     *               value given in installInfo;
+     *     displayName - the suite's name to display to the user.
+     * </pre>
+     * ci is null if a suite rather than a dynamic component is being saved
      *
      * @param jadProps properties the JAD as an array of strings in
      *        key/value pair order, can be null if jadUrl is null
@@ -476,8 +630,8 @@ public class MIDletSuiteStorage {
      * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
      * locked
      */
-    private native void nativeStoreSuite(InstallInfo installInfo,
-        SuiteSettings suiteSettings, MIDletSuiteInfo msi,
+    native void nativeStoreSuite(InstallInfo installInfo,
+        SuiteSettings suiteSettings, MIDletSuiteInfo msi, Object ci,
             String[] jadProps, String[] jarProps)
                 throws IOException, MIDletSuiteLockedException;
 
@@ -563,7 +717,7 @@ public class MIDletSuiteStorage {
         if (n < 0) {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                 Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                    "Error in getNumberOfSuites0(): returned -1!");
+                    "Error in getNumberOfSuites(): returned " + n);
             }
             n = 0;
         }
@@ -610,4 +764,33 @@ public class MIDletSuiteStorage {
      *     getNumberOfSuites to know how big to make the array
      */
     private native void getSuiteList(int[] suites);
+    
+    /**
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     *
+     * @param suiteId unique ID of the suite
+     *
+     * @return secure filename base for the suite having the given ID
+     */
+    public native String getSecureFilenameBase(int suiteId);
+
+    /**
+     * Checks the integrity of the suite storage database and of the
+     * installed suites.
+     *
+     * @param fullCheck 0 to check just an integrity of the database,
+     *                    other value for full check
+     * @param delCorruptedSuites != 0 to delete the corrupted suites,
+     *                           0 - to keep them (for re-installation).
+     *
+     * @return 0 if no errors,
+     *         1 if the suite database was corrupted but has been successfully
+     *           repaired,
+     *         a negative value if the database is corrupted and could not
+     *         be repaired
+     */
+    public native int checkSuitesIntegrity(boolean fullCheck,
+                                           boolean delCorruptedSuites);
 }

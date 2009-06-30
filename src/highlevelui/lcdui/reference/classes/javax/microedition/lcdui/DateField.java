@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -247,6 +247,7 @@ public class DateField extends Item {
      * @see #getInputMode
      */
     public void setInputMode(int mode) {
+
         if ((mode != DATE) && (mode != TIME) && (mode != DATE_TIME)) {
             throw new IllegalArgumentException("Invalid input mode");
         }
@@ -282,29 +283,22 @@ public class DateField extends Item {
      * @param date the date value to set to.
      */
     void setDateImpl(java.util.Date date) {
+
         if (date == null) {
             initialized = false;
         } else {
             currentDate.setTime(date);
             
             if (mode == TIME) {
-                // NOTE:
-                // It is unclear from the spec what should happen 
-                // when DateField with TIME mode is set to
-                // a value that is on a day other than 1/1/1970.
-                //
-                // Two possible interpretations of the spec are:
-                // 1. DateField is put into the "uninitialized" state; or
-                // 2. The time portion of the DateField is set to the 
-                //    time-of-day portion of the Date object passed in, 
-                //    and the date portion of the DateField is set 
-                //    to 1/1/1970.
-                //
-                // Currently we are using the first approach.
-                initialized =
-                    (currentDate.get(Calendar.YEAR)  == 1970) &&
-                    (currentDate.get(Calendar.MONTH) == Calendar.JANUARY)
-                    && (currentDate.get(Calendar.DATE)   == 1);
+
+                if (currentDate.getTime().getTime() >= 24*60*60*1000) {
+                    initialized = false;
+                } else {
+                    currentDate.set(Calendar.YEAR, 1970);
+                    currentDate.set(Calendar.MONTH, Calendar.JANUARY);
+                    currentDate.set(Calendar.DATE, 1);
+                    initialized = true;
+                }
             } else {
                 // Currently spec does not prohibit from losing
                 // irrelevant for that mode information
@@ -316,12 +310,12 @@ public class DateField extends Item {
                 // hours and minutes.
                 if (mode == DATE) {
                     currentDate.set(Calendar.HOUR, 0);
-		    currentDate.set(Calendar.HOUR_OF_DAY, 0);
+		            currentDate.set(Calendar.HOUR_OF_DAY, 0);
                     currentDate.set(Calendar.MINUTE, 0);
                 }
                 initialized = true;
             }
-            
+
             // always ignore seconds and milliseconds
             currentDate.set(Calendar.SECOND, 0);
             currentDate.set(Calendar.MILLISECOND, 0);

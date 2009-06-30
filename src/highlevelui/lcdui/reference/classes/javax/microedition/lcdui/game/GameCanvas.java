@@ -1,37 +1,37 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui.game;
 
-import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Canvas;
-import com.sun.midp.lcdui.DisplayAccess;
 import com.sun.midp.lcdui.GameMap;
-import com.sun.midp.configurator.Constants;
+import com.sun.midp.lcdui.GameCanvasLFImpl;
+import com.sun.midp.lcdui.GameAccess;
+
 
 /**
  * The GameCanvas class provides the basis for a game user interface.  In
@@ -91,12 +91,18 @@ import com.sun.midp.configurator.Constants;
 
 public abstract class GameCanvas extends Canvas
 {
+    /** The look&feel implementation associated with this GameCanvas */
+    private GameCanvasLFImpl gameCanvasLF;
+
+    /** Implementor of GameAccess interface handed out to external packages */ 
+    private static GameAccess gameAccess;
+
     /**
      * The bit representing the UP key.  This constant has a value of 
      * <code>0x0002</code> (1 << Canvas.UP).
      */
     public static final int UP_PRESSED = 1 << Canvas.UP;
-    
+
     /**
      * The bit representing the DOWN key.  This constant has a value of 
      * <code>0x0040</code> (1 << Canvas.DOWN).
@@ -149,12 +155,6 @@ public abstract class GameCanvas extends Canvas
      */
     public static final int GAME_D_PRESSED = 1 << Canvas.GAME_D;
 
-    /** 
-     * currently every GameCanvas has one offscreen buffer
-     * can be optimized so that we put a limit on no of offscreen buffers
-     * an application can have
-     */
-    private Image offscreen_buffer;
 
     /**
      * Creates a new instance of a GameCanvas.  A new buffer is also created
@@ -185,18 +185,28 @@ public abstract class GameCanvas extends Canvas
      * key event mechanism for game keys, otherwise <code>false</code>.
      */
     protected GameCanvas(boolean suppressKeyEvents) {
-	// Create and offscreen Image object that 
-	// acts as the offscreen buffer to which we draw to.
-	// the contents of this buffer are flushed to the display 
+        // Create and offscreen Image object that
+        // acts as the offscreen buffer to which we draw to.
+        // the contents of this buffer are flushed to the display
         // only when flushGraphics() has been called.
+        super();
+        setSuppressKeyEvents((Canvas)this, suppressKeyEvents);
+        gameCanvasLF = new GameCanvasLFImpl(this);
 
-	offscreen_buffer = 
-	    Image.createImage(Constants.GAMECANVAS_FULLWIDTH,
-                              Constants.GAMECANVAS_FULLHEIGHT);
-
-	setSuppressKeyEvents((Canvas)this, suppressKeyEvents);
+        // Create and hand out game accessor tunnel instance
+        if (gameAccess == null) {
+            gameAccess = new GameAccessImpl();
+            GameMap.registerGameAccess(gameAccess);
+        }
     }
-    
+
+    /**
+     * Gets look&feel implementation associated with this GameCanvas
+     * @return GameCanvasLFImpl instance of this GameCanvas
+     */
+    GameCanvasLFImpl getLFImpl() {
+        return gameCanvasLF;
+    }
 
     /**
      * Obtains the Graphics object for rendering a GameCanvas.  The returned 
@@ -208,7 +218,7 @@ public abstract class GameCanvas extends Canvas
      * are not cleared as a result of the flushing operation).
      * <p>
      * A new Graphics object is created and returned each time this method is
-     * called; therefore, the needed Graphics object(s) should be obtained 
+     * called; therefore, the needed Graphics object(s) should be obtained
      * before the game starts then re-used while the game is running.  
      * For each GameCanvas instance, all of the provided graphics objects will
      * render to the same off-screen buffer. 
@@ -220,7 +230,7 @@ public abstract class GameCanvas extends Canvas
      * <LI>the clip region encompasses the entire buffer;
      * <LI>the current color is black;
      * <LI>the font is the same as the font returned by
-     * {@link javax.microedition.lcdui.Font#getDefaultFont 
+     * {@link javax.microedition.lcdui.Font#getDefaultFont
      * Font.getDefaultFont()};
      * <LI>the stroke style is {@link Graphics#SOLID SOLID}; and
      * <LI>the origin of the coordinate system is located at the upper-left
@@ -230,10 +240,10 @@ public abstract class GameCanvas extends Canvas
      * @return the Graphics object that renders to this GameCanvas' 
      * off-screen buffer
      * @see #flushGraphics()
-     * @see #flushGraphics(int, int, int, int)	 
+     * @see #flushGraphics(int, int, int, int)
      */
     protected Graphics getGraphics() {
-	return offscreen_buffer.getGraphics();
+        return gameCanvasLF.getGraphics();
     }
 
     /**
@@ -292,11 +302,7 @@ public abstract class GameCanvas extends Canvas
      * key), or 0 if the GameCanvas is not currently shown.
      */
     public int getKeyStates() {
-        DisplayAccess displayAccess = GameMap.get(this);
-	if (displayAccess != null) {
-	    return displayAccess.getKeyMask();
-	} 
-	return 0;
+        return gameCanvasLF.getKeyStates();
     }
 
     /**
@@ -308,8 +314,7 @@ public abstract class GameCanvas extends Canvas
      * @throws NullPointerException if <code>g</code> is <code>null</code>
      */
     public void paint(Graphics g) {
-        // NullPointerException will be thrown in drawImage if g == null
-	g.drawImage(offscreen_buffer, 0, 0, Graphics.TOP|Graphics.LEFT);
+        gameCanvasLF.drawBuffer(g);
     }
 
     /**
@@ -333,17 +338,9 @@ public abstract class GameCanvas extends Canvas
      * @param width the width of the region to be flushed
      * @param height the height of the region to be flushed
      */
-    public void flushGraphics(int x, int y, 
-    					int width, int height) {
-	if (width < 1 || height < 1) {
-	    return;
-	}
-
-        DisplayAccess displayAccess = GameMap.get(this);
-        if (displayAccess != null) {
-            displayAccess.flush(this, offscreen_buffer, 
-    			  x, y,	width, height);
-        }
+    public void flushGraphics(int x, int y,
+                              int width, int height) {
+        gameCanvasLF.flushGraphics(x, y, width, height);
     }
 
     /**
@@ -358,15 +355,10 @@ public abstract class GameCanvas extends Canvas
      * not currently shown or the flush request cannot be honored because the
      * system is busy.
      * <p>
-     * @see #flushGraphics(int,int,int,int)	  
+     * @see #flushGraphics(int,int,int,int)
      */
     public void flushGraphics() {
-
-        DisplayAccess displayAccess = GameMap.get(this);
-        if (displayAccess != null) {
-	    displayAccess.flush(this, offscreen_buffer,
-			      0, 0, getWidth(), getHeight());
-        }
+        gameCanvasLF.flushGraphics();
     }
 
     /**
@@ -375,7 +367,6 @@ public abstract class GameCanvas extends Canvas
      * @param c this <code>GameCanvas</code> cast to a <code>Canvas</code>
      * @param suppressKeyEvents whether or not to suppress key events
      */
-    private native void setSuppressKeyEvents(Canvas c, 
-					     boolean suppressKeyEvents);
+    private native void setSuppressKeyEvents(Canvas c,
+                                             boolean suppressKeyEvents);
 }
-

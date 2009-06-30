@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -39,13 +39,6 @@ import com.sun.midp.security.SecurityToken;
  *  sources refactoring
  */
 public final class PushRegistryInternal {
-
-    /**
-     * Push option to only launch this suite when not other applications
-     * are running.
-     */
-    public static final int PUSH_OPT_WHEN_ONLY_APP = 1;
-
     /**
      * Hides the default constructor.
      */
@@ -100,33 +93,6 @@ public final class PushRegistryInternal {
             final boolean bypassChecks)
             throws ClassNotFoundException, IOException {
         throw new ConnectionNotFoundException();
-    }
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public static void initSecurityToken(final SecurityToken token) { }
-
-    /**
-     * Return a list of registered connections for given
-     * <code>MIDlet</code> suite.
-     *
-     * @param id identifies the specific <code>MIDlet</code>
-     *               suite to be launched
-     * @param available if <code>true</code>, only return the list of
-     *      connections with input available
-     *
-     * @return array of connection strings, where each connection is
-     *       represented by the generic connection <em>protocol</em>,
-     *       <em>host</em> and <em>port number</em> identification
-     */
-    public static String listConnections(
-            final int id,
-            final boolean available) {
-        return null;
     }
 
     /**

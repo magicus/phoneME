@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.lcdui;
@@ -57,6 +57,13 @@ public interface DisplayAccess {
 
     /** Called to get the display to request the foreground. */
     public void requestForeground();
+
+	/**
+	* Called to release internal resources.
+	* This should only be called after a display
+	* has been released.
+	 */
+	public void close();
 
     // API's for accessing Display from Games Package
 
@@ -101,12 +108,12 @@ public interface DisplayAccess {
     // void resumePainting();
 
     /**
-     * Get the class name of the MIDlet that owns this display.
+     * Get the object that owns this display.
      * DisplayAccess I/F method.
      *
-     * @return name of the MIDlet that owns this Display
+     * @return object that owns this Display
      */
-    public String getNameOfOwner();
+    public Object getOwner();
 
     /**
      * Get the ID of this display.
@@ -114,6 +121,13 @@ public interface DisplayAccess {
      * @return Display ID
      */
     public int getDisplayId();
+
+    /**
+     * Get the display device object.
+     *
+     * @return Hardware display object
+     */
+    public DisplayDevice getDisplayDevice();
 
     /**
      * Sets the ID of this display.
@@ -137,4 +151,18 @@ public interface DisplayAccess {
      * @return Consumer of foreground events that go through this display
      */
     public ForegroundEventConsumer getForegroundEventConsumer();
+
+   /**
+    * Sets the display mode.
+    * @param m MIDPWindow display mode
+    */
+    public void setMode(int m);
+
+    /**
+     * Called to get the list of current dirty screen regions which
+     * need to be refreshed
+     *
+     * @return Object[]  List of screen regions that need to be refreshed
+     */
+    public Object[] getDirtyRegions();
 }

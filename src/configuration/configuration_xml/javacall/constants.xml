@@ -1,30 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
-        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
 -->
 <configuration>
 <constants>
 <constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
   <constant Type="int"
             Name="IMAGE_CACHE_THRESHOLD"
-            Value="(100*1024)"
+            Value="(500*1024)"
             Comment="Threshold for image cache storage"/>
   <constant Type="boolean"
             Name="PORTING_NO_FILESYSTEM"
             Value="false"
             Comment="Whether your platform supports File System. Set to true when File System is not supported; set to false when File System is supported."/>
-<!-- Package javax.microedition.lcdui.game -->
-  <constant Type="int"
-            Name="GAMECANVAS_FULLWIDTH"
-            Value="180"
-            Comment="(Fixed) full display width"/>
-  <constant Type="int"
-            Name="GAMECANVAS_FULLHEIGHT"
-            Value="198" 
-            Comment="(Fixed) full display height"/>
-
 <!-- Package javax.microedition.lcdui -->
   <constant Type="boolean"
             Name="CHAM_USE_IMAGES"
@@ -36,15 +45,15 @@
             Comment="When false, Chameleon will not even attempt to load romized images for the UI."/>
   <constant Type="int"
             Name="CHAM_WIDTH"
-            Value="180"
+            Value="240"
             Comment="(Chameleon Only) display width"/>
   <constant Type="int"
             Name="CHAM_HEIGHT"
-            Value="198"
+            Value="320"
             Comment="(Chameleon Only) display height"/>
   <constant Type="int"
             Name="CHAM_FULLHEIGHT"
-            Value="198"
+            Value="320"
             Comment="(Chameleon Only) full display height"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
@@ -56,19 +65,19 @@
             Comment="The maximum number of events in the event queue"/>
   <constant Type="int"
             Name="FULLWIDTH"
-            Value="180"
+            Value="240"
             Comment="(Fixed) full display width"/>
   <constant Type="int"
             Name="FULLHEIGHT"
-            Value="198" 
+            Value="320" 
             Comment="(Fixed) full display height"/>
   <constant Type="int"
             Name="NORMALWIDTH"
-            Value="180" 
+            Value="240" 
             Comment="(Fixed) normal width"/>
   <constant Type="int"
             Name="NORMALHEIGHT"
-            Value="179" 
+            Value="320" 
             Comment="(Fixed) normal height"/>
   <constant Type="int"
             Name="VERT_SCROLLBAR_WIDTH"

@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.security;
@@ -30,9 +30,9 @@ import javax.microedition.io.*;
 
 import javax.microedition.lcdui.*;
 
-import com.sun.midp.lcdui.*;
+import com.sun.j2me.security.AccessController;
 
-import com.sun.midp.midlet.*;
+import com.sun.midp.lcdui.*;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -91,11 +91,7 @@ public final class SecurityHandler {
      *            method
      */
     public SecurityHandler(byte[] apiPermissions, String domain) {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         init(apiPermissions, domain);
     }
 
@@ -131,10 +127,6 @@ public final class SecurityHandler {
      *            method
      */
     private void init(byte[] apiPermissions, String domain) {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
         maxPermissionLevels =
             (Permissions.forDomain(domain))[Permissions.MAX_LEVELS];
 
@@ -157,20 +149,13 @@ public final class SecurityHandler {
      *  -1 if the status is unknown
      */
     public int checkPermission(String permission) {
-        boolean found = false;
         int i;
 
         synchronized (this) {
-            for (i = 0; i < Permissions.NUMBER_OF_PERMISSIONS; i++) {
-                if (Permissions.getName(i).equals(permission)) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                // report denied
-                return 0;
+            try {
+                i = Permissions.getId(permission);
+            } catch (SecurityException e) {
+                return 0;  //not found, report denied
             }
 
             switch (permissions[i]) {
@@ -242,8 +227,8 @@ public final class SecurityHandler {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public boolean checkForPermission(int permission, int title, int question,
-        int oneshotQuestion, String app, String resource, String extraValue)
+    public boolean checkForPermission(String permission, String title, String question,
+        String oneshotQuestion, String app, String resource, String extraValue)
         throws InterruptedException {
 
         return checkForPermission(permission, title, question,
@@ -288,8 +273,8 @@ public final class SecurityHandler {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public boolean checkForPermission(int permission, int title, int question,
-        int oneShotQuestion, String app, String resource, String extraValue,
+    public boolean checkForPermission(String permissionStr, String title, String question,
+        String oneShotQuestion, String app, String resource, String extraValue,
         String exceptionMsg) throws InterruptedException {
 
         if (permissions == null) {
@@ -298,6 +283,12 @@ public final class SecurityHandler {
         }
 
         synchronized (this) {
+			int permission;
+			try {
+				permission = Permissions.getId(permissionStr);
+			} catch (SecurityException e) {
+				throw new SecurityException(exceptionMsg);
+			}
             if (permission >= 0 && permission < permissions.length) {
                 switch (permissions[permission]) {
                 case Permissions.ALLOW:
@@ -390,7 +381,7 @@ public final class SecurityHandler {
      *   display.
      */
     public static boolean askUserForPermission(SecurityToken token,
-            boolean trusted, int title, int question, String app,
+            boolean trusted, String title, String question, String app,
             String resource, String extraValue) throws InterruptedException {
 
         PermissionDialog dialog =
@@ -465,8 +456,8 @@ class PermissionDialog implements CommandListener {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    PermissionDialog(SecurityToken token, boolean trusted, int title,
-            int question, String app, String resource, String extraValue)
+    PermissionDialog(SecurityToken token, boolean trusted, String title,
+            String question, String app, String resource, String extraValue)
             throws InterruptedException {
         String[] substitutions = {app, resource, extraValue};
         String iconFilename;

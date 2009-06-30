@@ -1,10 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+        Stylesheet for presenting nicely formatted content of this skin XML 
+        file in Web browser. That is, just open this skin file in your Web 
+        browser to get more visual view of it.
+-->
+<?xml-stylesheet type="text/xsl" href="../share/chameleon/skin.xsl"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
         	
 
-        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
 -->
 <configuration>
 <skin>
@@ -327,6 +352,32 @@
       Value="ticker.image_au_bg"
      Pieces="3"
     Romized="false"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_BG"
+      Value="0xA3E2F8"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_BDR"
+      Value="0x336699"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_FG"
+      Value="0x000000"/>
+
+  <composite_image
+        Key="INPUT_MODE_IMAGE_BG"
+      Value=""
+     Pieces="3"
+     Romized="false"/>
+
+  <integer
+        Key="INPUT_MODE_MARGIN"
+      Value="3"/>
+
+  <font
+        Key="INPUT_MODE_FONT"
+      Value="FontResources.SYS_B_S"/>
 
   <integer
         Key="PTI_HEIGHT"
@@ -742,6 +793,11 @@
     Romized="false"/>
 
   <image
+        Key="DATEEDITOR_IMAGE_DAYS"
+      Value="dateeditor.image_days"
+    Romized="false"/>
+
+  <image
         Key="DATEEDITOR_IMAGE_TIME_BG"
       Value="dateeditor.image_time_bg"
     Romized="false"/>
@@ -958,6 +1014,117 @@
       Value="imageitem.image_btn"
      Pieces="9"
     Romized="false"/>
+    
+   <integer
+        Key="KEYBOARD_HEIGHT"
+      Value="125"/>
+
+   <integer
+        Key="KEYBOARD_COEFFICIENT"
+      Value="-1"/>
+
+   <image
+        Key="KEYBOARD_KEY"
+      Value="keyboard.key"
+    Romized="false"/>
+
+   <image
+        Key="KEYBOARD_BTN_BACKSPACE"
+      Value="keyboard.btn_backspace"
+    Romized="false"/>
+
+   <image
+        Key="KEYBOARD_BTN_CAPS"
+      Value="keyboard.btn_caps"
+    Romized="false"/>
+
+   <image
+        Key="KEYBOARD_BTN_ENTER"
+      Value="keyboard.btn_enter"
+    Romized="false"/>
+
+   <image
+        Key="KEYBOARD_BTN_ALPHA_MODE"
+      Value="keyboard.btn_alpha"
+    Romized="false"/>
+
+   <image
+        Key="KEYBOARD_BTN_SYMBOL_MODE"
+      Value="keyboard.btn_symbol"
+    Romized="false"/>
+
+   <image
+        Key="KEYBOARD_BTN_NUMERIC_MODE"
+      Value="keyboard.btn_numeric"
+    Romized="false"/>
+
+   <composite_image
+        Key="KEYBOARD_BG"
+      Value="alert.image_bg"
+     Pieces="9"
+    Romized="false"/>
+
+   <integer
+        Key="KEYBOARD_COLOR_BG"
+      Value="0xFFCC33"/>
+
+  <image
+        Key="KEYBOARD_BTN_UP_SEL"
+      Value="keyboard.btn_up_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_UP_UN"
+      Value="keyboard.btn_up_un"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_LEFT_SEL"
+      Value="keyboard.btn_left_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_LEFT_UN"
+      Value="keyboard.btn_left_un"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_MID_SEL"
+      Value="keyboard.btn_mid_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_MID_UN"
+      Value="keyboard.btn_mid_un"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_RIGHT_SEL"
+      Value="keyboard.btn_right_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_RIGHT_UN"
+      Value="keyboard.btn_right_un"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_DOWN_SEL"
+      Value="keyboard.btn_down_sel"
+    Romized="false"/>
+
+  <image
+        Key="KEYBOARD_BTN_DOWN_UN"
+      Value="keyboard.btn_down_un"
+    Romized="false"/>
+
+  <font
+        Key="KEYBOARD_FONT"
+      Value="FontResources.SYS_B_M"/>
+
+  <integer
+        Key="TOUCH_RADIUS"
+      Value="10" />
 
   <integer
         Key="MENU_WIDTH"
@@ -1314,7 +1481,26 @@
 
   <integer_seq
         Key="SOFTBTN_BUTTON_ANCHOR_Y"
-      Value="0,0"/>
+      Value="1,1"/>
+  <image
+         Key="DATEEDITOR_IMAGE_MON_HE_BG"
+       Value="dateeditor.image_mon_he_bg"
+     Romized="true"/>
+
+   <image
+         Key="DATEEDITOR_IMAGE_DAY_HE_BG"
+       Value=""
+     Romized="true"/>
+
+   <image
+         Key="DATEEDITOR_IMAGE_YR_HE_BG"
+       Value="dateeditor.image_yr_he_bg"
+     Romized="true"/>
+
+   <image
+         Key="DATEEDITOR_IMAGE_TIME_HE_BG"
+       Value="dateeditor.image_time_he_bg"
+     Romized="true"/>
 
 </skin_properties>
 </skin>

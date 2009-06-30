@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -31,15 +31,13 @@ import java.util.Date;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
-import com.sun.midp.lcdui.Text;
-import com.sun.midp.lcdui.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.skins.DateFieldSkin;
 import com.sun.midp.chameleon.skins.resources.DateFieldResources;
 import com.sun.midp.chameleon.skins.DateEditorSkin;
-import com.sun.midp.chameleon.skins.resources.DateEditorResources;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.resources.DateEditorResources;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -225,16 +223,11 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                 DateFieldSkin.COLOR_BORDER,
                 DateFieldSkin.COLOR_BORDER_SHD, 
                 DateFieldSkin.COLOR_BG);
-        }
-        
-        if (hasFocus && !editor.isPopupOpen()) {
-            // hilight the background
-            g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-            g.fillRect(1, 2, width - 2, height - 3);
-        } 
+        }       
                     
         // draw icon
         int iconWidth = 0;
+        int btnOffset = 0;
         switch (mode) {
             case DateField.DATE:
                 if (DateFieldSkin.IMAGE_ICON_DATE != null) {
@@ -246,9 +239,12 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    drawButtonBG(g, width - iconWidth, 0, iconWidth, height);
+                    if (!ScreenSkin.RL_DIRECTION) {
+                        btnOffset = width - iconWidth;
+                    }
+                    drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_DATE,
-                                width - iconWidth, yOffset, 
+                                btnOffset, yOffset, 
                                 Graphics.LEFT | Graphics.TOP);
                 }
                 break;
@@ -262,9 +258,12 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    drawButtonBG(g, width - iconWidth, 0, iconWidth, height);
+                    if (!ScreenSkin.RL_DIRECTION) {
+                        btnOffset = width - iconWidth;
+                    }
+                    drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_TIME,
-                                width - iconWidth, yOffset, 
+                                btnOffset, yOffset,
                                 Graphics.LEFT | Graphics.TOP);
                 }
                 break;
@@ -278,9 +277,12 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                     } else {
                         yOffset = 0;
                     }
-                    drawButtonBG(g, width - iconWidth, 0, iconWidth, height);
+                    if (!ScreenSkin.RL_DIRECTION) {
+                        btnOffset = width - iconWidth;
+                    }
+                    drawButtonBG(g, btnOffset, 0, iconWidth, height);
                     g.drawImage(DateFieldSkin.IMAGE_ICON_DATETIME,
-                                width - iconWidth, yOffset, 
+                                btnOffset, yOffset, 
                                 Graphics.LEFT | Graphics.TOP);
                 }
                 break;
@@ -291,22 +293,33 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                 break;
         }
 
+
+        int textOffset = DateFieldSkin.PAD_H;
+        if (ScreenSkin.RL_DIRECTION) {
+            textOffset = width - DateFieldSkin.PAD_H;
+        }
         // we clip in case our text is too long
-        g.setClip(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V,
+        g.clipRect(ScreenSkin.RL_DIRECTION ? DateFieldSkin.PAD_H + iconWidth : DateFieldSkin.PAD_H,
+            DateFieldSkin.PAD_V,
             width - (2 * DateFieldSkin.PAD_H) - iconWidth,
             height - (2 * DateFieldSkin.PAD_V));
 
-        g.translate(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V);        
+        if (!ScreenSkin.RL_DIRECTION) {
+            g.translate(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V);
+            textOffset = 0;
+        }
         
         // paint value
         g.setFont(DateFieldSkin.FONT);
         g.setColor(DateFieldSkin.COLOR_FG);
-        g.drawString(toString(currentDate, mode, df.initialized), 
-                     0, 0, Graphics.LEFT | Graphics.TOP);
-        
-        g.translate(-DateFieldSkin.PAD_H, -DateFieldSkin.PAD_V);
+        g.drawString(toString(currentDate, mode, df.initialized),
+                     textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+
+        if (!ScreenSkin.RL_DIRECTION) {
+            g.translate(-DateFieldSkin.PAD_H, -DateFieldSkin.PAD_V);
+        }
         if (editor.isPopupOpen() && editor.isSizeChanged()) {
-            setLocation();
+            setPopupLocation();
         }
     }
 
@@ -339,9 +352,13 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
     boolean lCallTraverse(int dir, int viewportWidth, int viewportHeight,
                           int[] visRect) 
     {
-
         super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
-        
+
+        visRect[X] = 0;
+        visRect[Y] = 0;
+        visRect[HEIGHT] = bounds[HEIGHT];
+        visRect[WIDTH] = bounds[WIDTH];
+
         if (!editor.isPopupOpen()) {
             if (!traversedIn) {
                 traversedIn = true;
@@ -375,7 +392,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         
         synchronized (Display.LCDUILock) {
             if (!editor.isPopupOpen()) {
-                setLocation();
+                setPopupLocation();
                 editor.show();
             } else {
                 editor.hideAllPopups();
@@ -388,7 +405,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
     /**
      * Set location of popup layer
      */
-    private void setLocation() {
+    private void setPopupLocation() {
         ScreenLFImpl sLF = (ScreenLFImpl)df.owner.getLF();
         // decide where to show popup: above, below or in
         // the middle of the screen (if both above/below don't

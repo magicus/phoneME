@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.appmanager;
@@ -73,6 +73,10 @@ public class SMMManager extends MIDlet
     private static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
 
+    /** Constant for the Component manager class name. */
+    private static final String COMP_MANAGER =
+        "com.sun.midp.appmanager.ComponentManager";
+
     /** True until constructed for the first time. */
     private static boolean first = true;
 
@@ -80,7 +84,7 @@ public class SMMManager extends MIDlet
     private MIDletSuiteStorage midletSuiteStorage;
 
     /** Screen that displays all installed midlets and installer */
-    private AppManagerUI appManagerUI;
+    private AppManagerPeer appManager;
 
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
@@ -125,13 +129,7 @@ public class SMMManager extends MIDlet
     public SMMManager() {
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-        /*
-         * Listen to the MIDlet proxy list.
-         * this allows us to notify the Application Selector
-         * of any changes whenever switch back to the AMS.
-         */
         midletProxyList = MIDletProxyList.getMIDletProxyList();
-        midletProxyList.addListener(this);
         midletProxyList.setDisplayController(
             new SMMDisplayController(midletProxyList,
                 MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName()));
@@ -140,17 +138,26 @@ public class SMMManager extends MIDlet
 
         GraphicalInstaller.initSettings();
 
-	first = (getAppProperty("logo-displayed") == null);
+        first = (getAppProperty("logo-displayed") == null);
 
-	Display display = Display.getDisplay(this);
-	displayError = new DisplayError(display);
+        Display display = Display.getDisplay(this);
+        displayError = new DisplayError(display);
 
-	// AppSelector will be set to be current at the end of its constructor
-        appManagerUI = new AppManagerUI(this, display, displayError, first, null);
+        // AppSelector will be set to be current at the end of its constructor
+        appManager = new AppManagerPeer(this, display, displayError, first, null);
 
         if (first) {
             first = false;
         }
+
+        /*
+         * Listen to the MIDlet proxy list.
+         * This allows us to notify the Application Selector
+         * of any changes whenever switch back to the AMS.
+         * The listener must be set up after finishing all
+         * initialization in the constructor.
+         */
+        midletProxyList.addListener(this);
     }
 
     /**
@@ -175,6 +182,8 @@ public class SMMManager extends MIDlet
         // IMPL_NOTE: remove this:
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
+        appManager.cleanUp();
+
         // Ending this MIDlet ends all others.
         midletProxyList.shutdown();
     }
@@ -188,7 +197,7 @@ public class SMMManager extends MIDlet
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
-        appManagerUI.notifyMidletStarted(midlet);
+        appManager.notifyMidletStarted(midlet);
     }
 
     /**
@@ -198,7 +207,7 @@ public class SMMManager extends MIDlet
      * @param fieldId code for which field of the proxy was updated
      */
     public void midletUpdated(MIDletProxy midlet, int fieldId) {
-        appManagerUI.notifyMidletStateChanged(midlet);
+        appManager.notifyMidletStateChanged(midlet);
     }
 
     /**
@@ -207,7 +216,7 @@ public class SMMManager extends MIDlet
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        appManagerUI.notifyMidletExited(midlet);
+        appManager.notifyMidletExited(midlet);
     }
 
     /**
@@ -216,12 +225,15 @@ public class SMMManager extends MIDlet
      * @param externalAppId ID assigned by the external application manager
      * @param suiteId Suite ID of the MIDlet
      * @param className Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error code
      */
     public void midletStartError(int externalAppId, int suiteId,
-                                 String className, int error) {
+                                 String className, int errorCode,
+                                 String errorDetails) {
         allowMidletLaunch = true;
-        appManagerUI.notifyMidletStartError(suiteId, className, error);
+        appManager.notifyMidletStartError(suiteId, className,
+                errorCode, errorDetails);
     }
 
 
@@ -271,6 +283,23 @@ public class SMMManager extends MIDlet
             displayError.showErrorAlert(Resource.getString(
                 ResourceConstants.CA_MANAGER_APP), ex, null, null);
         }
+    }
+
+    /**
+     * Launch the component manager.
+     */
+    public void launchComponentManager() {
+        try {
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID, COMP_MANAGER,
+                Resource.getString(ResourceConstants.COMP_MANAGER_APP));
+        } catch (Exception ex) {
+            displayError.showErrorAlert(Resource.getString(
+                ResourceConstants.COMP_MANAGER_APP), ex, null, null);
+        }
+    }
+
+    /** Launch ODT Agent. */
+    public void launchODTAgent() {
     }
 
     /**
@@ -325,18 +354,34 @@ public class SMMManager extends MIDlet
      * foreground.
      *
      * @param suiteInfo information for the midlet to be put to foreground
+     * @param className the running MIDlet class name
      */
-    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {}
+    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo, String className) {}
 
 
     /**
      * Exit the midlet with the passed in midlet suite info.
      *
      * @param suiteInfo information for the midlet to be terminated
+     * @param className the running MIDlet class name
      */
-    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {}
+    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo, String className) {}
 
 
+    /**
+     * Handle exit of MIDlet suite (the only MIDlet in sute exited or MIDlet
+     * selector exited).
+     * @param suiteInfo Containing ID of exited suite
+     * @param className the running MIDlet class name
+     */
+    public void notifySuiteExited(RunningMIDletSuiteInfo suiteInfo, String className) {}
+
+    /**
+     * Handle exit of MIDlet selector.
+     * @param suiteInfo Containing ID of suite
+     */
+    public void notifyMIDletSelectorExited(RunningMIDletSuiteInfo suiteInfo) {}
+    
     // ==============================================================
     // ----------------- PRIVATE methods ---------------------------
 

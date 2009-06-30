@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef _ANC_INDICATORS_H_
@@ -59,40 +59,17 @@ extern "C" {
  */ 
 void anc_show_trusted_indicator(jboolean trusted);
 
-/**
- * Value passed to midpLCDUIShowBacklight to turn the backlight off 
- */
-#define BACKLIGHT_OFF 0
 
 /**
- * Value passed to midpLCDUIShowBacklight to turn the backlight on 
- */
-#define BACKLIGHT_ON 1
-
-/**
- * Value passed to midpLCDUIShowBacklight to toggle the backlight 
- */
-#define BACKLIGHT_TOGGLE 2
-
-/**
- * Value passed to midpLCDUIShowBacklight to determine if the
- * system supports backlight control without changing the state
- * of the backlight 
- */
-#define BACKLIGHT_IS_SUPPORTED 3
-
-/**
- * Operations on network indicator.
- * The function anc_set_network_indicator() requires one of these values.
- *
- * The network indicator support is enabled by compiling with
- * ENABLE_NETWORK_INDICATOR set to true.
+ * Operations with backlight.
+ * The function anc_show_backlight() requires one of these values.
  */
 typedef enum {
-  NETWORK_INDICATOR_ON     = 1, /**< Turns on indicator        */
-  NETWORK_INDICATOR_OFF    = 2, /**< Turns off indicator       */
-  NETWORK_INDICATOR_TOGGLE = 3  /**< Toggles the current state */
-} MIDPNetworkIndicatorState;
+    ANC_BACKLIGHT_OFF           = 0, /**< Turns off backlight          */
+    ANC_BACKLIGHT_ON            = 1, /**< Turns on backlight           */
+    ANC_BACKLIGHT_TOGGLE        = 2, /**< Toggles the current state    */
+    ANC_BACKLIGHT_SUPPORTED     = 3  /**< Tests if backlight supported */
+} AncBacklightState;
 
 /**
  * Control the device's backlight.  Turn it on or off, 
@@ -100,17 +77,18 @@ typedef enum {
  * is supported by the system without changing the light's 
  * state.
  *
- * @param mode BACKLIGHT_ON to turn on the backlight, 
- *             BACKLIGHT_OFF to turn off the backlight,
- *             BACKLIGHT_TOGGLE to toggle the backlight, and
- *             BACKLIGHT_IS_SUPPORTED to see if the system
+ * @param mode One of the constants from AncBacklightState enumeration. 
+ *             ANC_BACKLIGHT_ON to turn on the backlight, 
+ *             ANC_BACKLIGHT_OFF to turn off the backlight,
+ *             ANC_BACKLIGHT_TOGGLE to toggle the backlight, and
+ *             ANC_BACKLIGHT_SUPPORTED to see if the system
  *             supports this function without changing the
  *             state of the backlight.  <code>mode</code>
  *             values not listed above are ignored.
  * @return KNI_TRUE if the device supports backlight
  *         control or KNI_FALSE otherwise
  */
-jboolean anc_show_backlight(int mode);
+jboolean anc_show_backlight(AncBacklightState mode);
 
 /**
  * @name Network Indicator Support
@@ -153,41 +131,28 @@ jboolean anc_show_backlight(int mode);
  *
  * @param status What the status of the indicator should be.
  */
-void anc_set_network_indicator(MIDPNetworkIndicatorState status);
+void anc_set_network_indicator(int counter);
 
-extern int MIDPNetworkIndicatorCount;
+extern int gAncNetworkIndicatorCount;
 
-extern jboolean enableMIDPNetworkIndicator;
+#define ANC_INC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount++; };
+#define ANC_DEC_NETWORK_INDICATOR     { if (gAncNetworkIndicatorCount > 0) \
+                                            gAncNetworkIndicatorCount--; \
+                                        else  { REPORT_WARN(LC_PROTOCOL, \
+                                   "Network connection is closed without opening"); ((void)0); } };
 
-#define INIT_NETWORK_INDICATOR    { MIDPNetworkIndicatorCount = 0; };
-#define INC_NETWORK_INDICATOR     { MIDPNetworkIndicatorCount++; };
-#define DEC_NETWORK_INDICATOR     { MIDPNetworkIndicatorCount--; };
-#define FINISH_NETWORK_INDICATOR  { MIDPNetworkIndicatorCount = 0; };
-
-#define START_NETWORK_INDICATOR   { if (MIDPNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(NETWORK_INDICATOR_ON); }
-#define STOP_NETWORK_INDICATOR    { if (MIDPNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(NETWORK_INDICATOR_OFF); }
-#define TOGGLE_NETWORK_INDICATOR  { if (MIDPNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(NETWORK_INDICATOR_TOGGLE); }
+/** deploy the network indicator count */
+#define ANC_IND_NETWORK_INDICATOR    {  anc_set_network_indicator( \
+                                          gAncNetworkIndicatorCount); };
 
 #else
 
-/** reset the network indicator count */
-#define INIT_NETWORK_INDICATOR
 /** increment the network indicator count */
-#define INC_NETWORK_INDICATOR
+#define ANC_INC_NETWORK_INDICATOR
 /** decrement the network indicator count */
-#define DEC_NETWORK_INDICATOR
-/** reset the network indicator count */
-#define FINISH_NETWORK_INDICATOR
-/** show the network indicator */
-#define START_NETWORK_INDICATOR
-/** hide the network indicator */
-#define STOP_NETWORK_INDICATOR
-/** toggle the network indicator */
-#define TOGGLE_NETWORK_INDICATOR
-
+#define ANC_DEC_NETWORK_INDICATOR
+/** deploy the network indicator count */
+#define ANC_IND_NETWORK_INDICATOR
 #endif /* ENABLE_NETWORK_INDICATOR */
 /** @} */
 

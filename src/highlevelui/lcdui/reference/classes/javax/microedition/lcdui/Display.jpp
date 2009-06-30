@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -29,27 +29,38 @@ package javax.microedition.lcdui;
 /* This is used to implement the communication between MIDlet and Display */
 import javax.microedition.midlet.MIDlet;
 
+import com.sun.midp.lcdui.DisplayFactory;
+
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
-import com.sun.midp.security.Permissions;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
 // #ifndef ENABLE_CDC
-import com.sun.midp.i18n.Resource;
+import javax.microedition.media.Manager;
+import javax.microedition.media.MediaException;
+import javax.microedition.media.control.ToneControl;
+
 import com.sun.midp.i18n.ResourceConstants;
+// #else
+import java.lang.*;
+import java.lang.reflect.*;
 // #endif ENABLE_CDC
 
 import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
-import com.sun.midp.util.ResourceHandler;
 
 // #ifdef ENABLE_CHAMELEON
 import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.CGraphicsQ;
-import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.ChamDisplayTunnel;
+import com.sun.midp.chameleon.input.TextInputSession;
+import com.sun.midp.chameleon.input.BasicTextInputSession;
+import com.sun.midp.chameleon.layers.PopupLayer;
+import com.sun.midp.chameleon.layers.PTILayer;
+import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+import com.sun.midp.chameleon.layers.VirtualKeyListener;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
@@ -59,6 +70,13 @@ import java.io.IOException;
 // #ifdef ENABLE_I3_TEST
 import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
+
+// #ifdef ENABLE_GCI
+
+import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
+import com.sun.me.gci.windowsystem.GCIDisplay;
+import com.sun.me.gci.windowsystem.GCIScreenWidget;
+// #endif
 
 /**
  * <code>Display</code> represents the manager of the display and
@@ -383,11 +401,19 @@ public class Display {
     /** Static lock object for making calls into application code. */
     static final Object calloutLock = new Object();
 
-    /** Current display width. */
+
+    /** Primary display width. */
     static int WIDTH;
 
-    /** Current display height. */
+    /** Primary display height. */
     static int HEIGHT;
+
+    /** Current display width. */
+    int width;
+
+    /** Current display height. */
+    int height;
+
 
     /**
      * True, if this displays need to draw the trusted icon
@@ -398,8 +424,8 @@ public class Display {
     /** ID of this Display. */
     int displayId;
 
-    /** Class name of the MIDlet that owns this Display. */
-    String nameOfOwner;
+    /** Owner of the Display, can be any class. */
+    Object owner;
 
     /** If the current display mode is known. 
      * We don't know it before the lSetFullScreen is
@@ -412,7 +438,7 @@ public class Display {
      * Set to false after display changing
      */
     boolean isRotatedKnown = false;
-
+                                                
     /**
      * Current display orientation
      */
@@ -423,6 +449,9 @@ public class Display {
 
     /** Display access helper class. */
     DisplayAccessImpl accessor;
+
+    /** Display device class. */
+    DisplayDevice displayDevice;
 
     /** Display event consumer helper class. */
     DisplayEventConsumerImpl consumer;
@@ -435,13 +464,23 @@ public class Display {
     ChamDisplayTunnel cham_tunnel;
     /** Chameleon loop variable for holding the refresh region */
     int[] region;
+
+    /** The TextInputMediator which handles translating key presses */
+    TextInputSession inputSession;
+
+    /** The PopupLayer that represents open state of predicitve text input popup. */
+    PTILayer pt_popup;
+
+    /** The PopupLayer that represents java virtual keyboard */
+    VirtualKeyboardLayer keyboardLayer;
+
     // #endif ENABLE_CHAMELEON
 
     /** Producer of midlet lifecycle events. */
     ForegroundController foregroundController;
 
     /** Display event handler with private methods. */
-    /* private */ static DisplayEventHandlerImpl displayEventHandlerImpl;
+    static DisplayEventHandlerImpl displayEventHandlerImpl;
 
     /**
      * <code>true</code>, if the <code>Display</code> is the foreground
@@ -449,10 +488,27 @@ public class Display {
      */
     boolean hasForeground; //  = false;
 
+    /**
+     * <code>true</code>, if the <code>DisplayDevice</code> was disabled
+     * while the <code>Display<code> object has been in foreground state
+     */
+    boolean disabledForeground; //  = false;
+
 
 /*
  * ************* private member variables
  */
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {}
+
+    /** Security token to allow access to implementation APIs */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /** Device Access manager. */
     private static DisplayDeviceAccess deviceAccess;
@@ -470,10 +526,8 @@ public class Display {
     /** Cached reference to Active Displays Container. */
     private static DisplayContainer displayContainer;
 
-    // #ifndef ENABLE_CDC
-    /** About abstract command. */
-    private static Command aboutCommand;
-    // #endif ENABLE_CDC
+    /** Cached reference to Display Devices Container. */
+    private static DisplayDeviceContainer displayDeviceContainer;
 
     /** Device <code>Graphics</code> associated with this Display. */
     private Graphics screenGraphics;
@@ -533,10 +587,10 @@ public class Display {
 
     /** Chameleon graphics queue */
     private CGraphicsQ graphicsQ;
-
-    /** Chameleon tunnel to romized Image constructor */
-    private static ChamImageTunnel chamImageTunnel;
     // #endif ENABLE_CHAMELEON
+
+    /** Accessor to extended Image API needed for Chameleon and GameCanvas */
+    private static GraphicsAccessImpl graphicsAccessor;
 
     /**
      * <code>True</code> if a system screen, like menu, is up.
@@ -552,39 +606,45 @@ public class Display {
     /** Current active queue for serially repainted operations. */
     private static java.util.Vector currentQueue = queue1;
 
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+    // #ifdef ENABLE_GCI	
+    /** GCIDisplay that incapsulates information about the display device */
+    private GCIDisplay gciDisplay;
+  
+    /** GCIScreenWidget that represents a device screen */
+    private static GCIScreenWidget gciScreenWidget;
 
-    /** Security token to allow access to implementation APIs */
-    private static SecurityToken classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
-
+    // #endif ENABLE_GCI
 /*
  * ************* Static initializer, constructor
  */
     static {
-        WIDTH               = getScreenWidth0();
-        HEIGHT              = getScreenHeight0();
+
+        // #ifdef ENABLE_GCI
+        java.security.AccessController.doPrivileged(
+                 new sun.security.action.LoadLibraryAction("gci"));
+
+        GCIDisplay gciDisplay =
+                GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
+        WIDTH               = gciDisplay.getWidth();
+        HEIGHT              = gciDisplay.getHeight();
+        // #endif ENABLE_GCI
+
+        graphicsAccessor = new GraphicsAccessImpl();
+        GameMap.registerGraphicsAccess(graphicsAccessor);
 
         // #ifdef ENABLE_CHAMELEON
 
-        chamImageTunnel = new ChamImageTunnel();
-        SkinResources.initImageTunnel(chamImageTunnel);
-        SkinResources.setScreenSize(WIDTH, HEIGHT);
+        SkinLoader.initGraphicsAccess(graphicsAccessor);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
         //   skin resources loading from the AMS isolate, since they
         //   are shared between all working isolates.
         try {
-            SkinResources.loadSkin(false);
+            SkinLoader.loadSkin(false);
         } catch (IOException e) {
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                 Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
-                        "IOException while loading skin");
+                        "IOException while loading skin: " + e.getMessage());
             }
 
             throw new RuntimeException("IOException while loading skin");
@@ -598,28 +658,59 @@ public class Display {
                                    displayEventHandlerImpl);
         deviceAccess = new DisplayDeviceAccess();
 
-        // #ifndef ENABLE_CDC
-        aboutCommand = new Command(Resource.getString(ResourceConstants.ABOUT),
-                                   Command.HELP, 3);
-        aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
-        // #endif ENABLE_CDC
+        DisplayStaticAccess displayStaticAccess = 
+            new DisplayStaticAccess () {
+                public Display getDisplay(Object owner) {
+                    return Display.getDisplay(owner);
+                }
+                public boolean freeDisplay(Object owner) {
+                    return Display.freeDisplays(owner);
+                }
+            };
+
+        DisplayFactory.setStaticDisplayAccess(classSecurityToken, 
+                                              displayStaticAccess);
     }
 
 
     /**
+     * Initializes the display for the primary hardware display
+     *
+     * @param theOwner class of the MIDlet that owns this Display
+     */
+    Display(Object theOwner) {
+	this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
+    }
+
+    private boolean initial_orientation = false;
+    private boolean current_orientation = false;
+    private boolean restore_orientation = false;
+    
+    /**
+    * Release any resources, such as threads, which migth refer
+    * back to the application-level, which in turn may have
+    * a reference to the Display.
+    */
+	private void close()
+	{
+        // #ifdef ENABLE_CHAMELEON
+        // Free the window to allow it to GC.
+		window = null;
+	    // #endif ENABLE_CHAMELEON
+	}
+
+    /**
      * Initializes the display with an accessor helper class.
      *
-     * @param ownerName class name of the MIDlet that owns this Display
+     * @param theOwner object that owns this Display
+     * @param dd display device object for this display
      */
-    Display(String ownerName) {
-        nameOfOwner = ownerName;
+    Display(Object theOwner, DisplayDevice dd) {
+        owner = theOwner;
+	displayDevice = dd;
 
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
-
-        // #ifdef ENABLE_CHAMELEON
-        SkinResources.initDisplayAccess(accessor);
-        // #endif ENABLE_CHAMELEON
 
         /** create DisplayEventConsumer I/F implementor */
         consumer = new DisplayEventConsumerImpl();
@@ -642,16 +733,44 @@ public class Display {
         displayContainer.addDisplay(accessor);
 
         Displayable temp = foregroundController.registerDisplay(displayId,
-                                                                nameOfOwner);
+                           owner.getClass().getName());
         if (temp == null) {
             initialDisplayable = new Form(null).displayableLF;
         } else {
             initialDisplayable = temp.displayableLF;
         }
 
+        // #ifdef ENABLE_GCI
+        if (gciScreenWidget == null) {
+            GCIDisplay gciDisplay =
+                GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
+            gciScreenWidget = gciDisplay.createScreenWidget(0, 0,
+                                                            WIDTH, HEIGHT,
+                                                            null, null);
+        }
+
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    WIDTH,
-                                                    HEIGHT);
+                                                    WIDTH, HEIGHT,
+                             gciScreenWidget.getDrawingSurface());
+        initial_orientation = (WIDTH > HEIGHT);
+
+        // #else
+	width = displayDevice.getWidth();
+	height = displayDevice.getHeight();
+        screenGraphics = Graphics.getScreenGraphics(displayId,
+                                                    width,
+                                                    height);
+        initial_orientation = (width > height);
+        // #endif ENABLE_GCI
+        current_orientation = initial_orientation;
+        restore_orientation = initial_orientation;
+        /**
+         * Sets this Display as creator of screen Graphics instance to
+         * provide internal Graphics users with extended information
+         * on the instance. Graphics has not enough information on its
+         * own for such complex users as e.g. JSR239.
+         */
+        screenGraphics.setCreator(this);
 
         // #ifdef ENABLE_CHAMELEON
         graphicsQ = new CGraphicsQ();
@@ -675,28 +794,36 @@ public class Display {
      * @param theDisplayEventProducer producer for display events
      * @param theRepaintEventProducer producer for repaint events
      * @param theDisplayContainer container for displays
+     * @param theDisplayDeviceContainer container for display devices
      */
     static void initClass(
         ForegroundController theForegroundController,
         DisplayEventProducer theDisplayEventProducer,
         RepaintEventProducer theRepaintEventProducer,
-        DisplayContainer theDisplayContainer) {
+        DisplayContainer theDisplayContainer,
+        DisplayDeviceContainer theDisplayDeviceContainer
+	) {
 
         defaultForegroundController =
             theForegroundController;
         displayEventProducer = theDisplayEventProducer;
         repaintEventProducer = theRepaintEventProducer;
         displayContainer = theDisplayContainer;
+        displayDeviceContainer = theDisplayDeviceContainer;
+        // #ifndef ENABLE_GCI
+        WIDTH               = displayDeviceContainer.getPrimaryDisplayDevice().getWidth();
+        HEIGHT              = displayDeviceContainer.getPrimaryDisplayDevice().getHeight();
+        // #endif
     }
 
     /**
-     * Initialize per suite data of the display class. Shall be called only
+     * Sets the trusted state of the display class. Shall be called only
      * from displayEventHandlerImpl initialization methods.
      *
      * @param drawTrustedIcon true, to draw the trusted icon in the upper
      *                status bar for every display of this suite
      */
-    static void initSuiteData(boolean drawTrustedIcon) {
+    static void setTrustedState(boolean drawTrustedIcon) {
         drawSuiteTrustedIcon = drawTrustedIcon;
     }
 
@@ -714,17 +841,41 @@ public class Display {
      * @throws NullPointerException if <code>m</code> is <code>null</code>
      */
     public static Display getDisplay(MIDlet m) {
-        String owner = m.getClass().getName();
-        DisplayAccess da = displayContainer.findDisplayByOwner(owner);
-
-        if (da != null) {
-            return da.getDisplay();
-        }
-       
-        Display display = new Display(owner);
-
-        return display;
+        return getDisplay((Object)m);
     }
+
+
+    // #ifdef ENABLE_MULTIPLE_DISPLAYS
+    /**
+     * Gets the <code>Display</code> objects unique to this
+     * <code>MIDlet</code>.
+     * @param m <code>MIDlet</code> of the application
+     * @param capabilities capabilities of the displays
+     * @return the display objects that application can use for its user
+     * interface
+     *
+     * @throws NullPointerException if <code>m</code> is <code>null</code>
+     * @throws IllegalArgumentException if <code>capabilities</code> is not valid
+     */
+    public static Display[] getDisplays(MIDlet m, int capabilities) {
+	int full_capabilities = DisplayDevice.DISPLAY_DEVICE_SUPPORTS_INPUT_EVENTS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_COMMANDS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FORMS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TICKER |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TITLE |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_ALERTS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_LISTS |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TEXTBOXES |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TABBEDPANES |
+	    DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FILESELECTORS;
+	
+	if ((full_capabilities | capabilities) != full_capabilities) {
+	    throw new IllegalArgumentException("Display capabilities is not valid = " + capabilities);
+	}
+	
+	return getDisplays((Object)m, capabilities);
+    }
+    // #endif ENABLE_MULTIPLE_DISPLAYS
 
     /**
      * Returns one of the colors from the high level user interface
@@ -993,7 +1144,37 @@ public class Display {
      */
     public void setCurrent(Displayable nextDisplayable) {
         synchronized (LCDUILock) {
+	    
+		// Handle null right away, to avoid risk of NullPointerException below.
+		if (nextDisplayable == null) {
+			setCurrentImpl(null, null);
+			return;
+		}
+			
+	    /** Check display capabilities. IllegalArgumentException is thrown 
+		if at least one displayable capability is not supported by the display */
+	    
+	    int displayCapabilities = displayDevice.getCapabilities();
+
+	    if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TITLE) == 0 &&
+		(nextDisplayable.getTitle() != null)) {
+		throw new IllegalArgumentException("This display does not support title");
+	    }
+
+	    if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TICKER) == 0 && 
+		(nextDisplayable.getTicker() != null)) {
+		throw new IllegalArgumentException("This display does not support ticker");
+	    }
+
+	    if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_COMMANDS) == 0 &&
+		(nextDisplayable.numCommands > 0)) {
+		throw new IllegalArgumentException("This display does not support commands");
+	    }
+	    
             if (nextDisplayable instanceof Alert) {
+		if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_ALERTS) == 0) {
+		    throw new IllegalArgumentException("This display does not support alerts");
+		} 
                 /*
                  * This implicitly goes back to the current screen, or to a
                  * pending screen, if there is one. We disallow stacking of
@@ -1018,6 +1199,24 @@ public class Display {
                     ((Alert)nextDisplayable).setReturnScreen(returnScreen);
                 }
             }
+	    
+	    if ((nextDisplayable instanceof Form) && 
+		(displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FORMS) == 0) {
+		throw new IllegalArgumentException("This display does not support forms");
+	    } 
+
+	    if ((nextDisplayable instanceof List) && 
+		(displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_LISTS) == 0) {
+		throw new IllegalArgumentException("This display does not support lists");
+	    } 
+
+	    if ((nextDisplayable instanceof TextBox) && 
+		(displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TEXTBOXES) == 0) {
+		throw new IllegalArgumentException("This display does not support textboxes");
+	    } 
+	    
+	    /** IMPL_NOTE: Check for TABBEDPANES and FILESELECTORS should be added as 
+		as soon as these types of screen are implemented */
 
             setCurrentImpl(nextDisplayable, null);
         } // synchronized
@@ -1224,6 +1423,7 @@ public class Display {
         }
     }
 
+
     /**
      * Requests a flashing effect for the device's backlight.  The flashing
      * effect is intended to be used to attract the user's attention or as a
@@ -1323,8 +1523,8 @@ public class Display {
         if (!hasForeground) {
             return false;
         }
-
-        return vibrate0(displayId, duration);
+        
+        return deviceAccess.vibrate(displayId, duration);
     }
 
     /**
@@ -1350,7 +1550,7 @@ public class Display {
             // #endif ENABLE_CHAMELEON
         case ALERT:
             // #ifdef ENABLE_CHAMELEON
-            return WIDTH; // IMPL NOTE: this is wrong
+            return width; // IMPL NOTE: this is wrong
             // #else
             // return max height ignoring title and ticker and
             // allow for 2 lines of Text to be visible without scrolling
@@ -1398,6 +1598,108 @@ public class Display {
 /*
  * ************* package private methods
  */
+    /**
+     * Gets the <code>Display</code> object by owner.
+     *
+     * @param owner the owner of the display, the owner can be any class
+     * 
+     * @return the display object that application can use for its user
+     * interface
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    static Display getDisplay(Object owner) {
+	Display ret = null;
+	DisplayAccess da = displayContainer.findPrimaryDisplayByOwner(owner);
+	if (da == null) {
+	    addDisplays(owner);
+	    da = displayContainer.findPrimaryDisplayByOwner(owner);
+	}
+	if (da != null) {
+	    ret =  da.getDisplay();
+	}		
+	return ret;
+    }
+
+    // #ifdef ENABLE_MULTIPLE_DISPLAYS
+    /**
+     * Gets the <code>Display</code> objects by owner name.
+     *
+     * @param owner name of the owner of the display, the owner can be
+     * @param capabilities capabilities of the display device
+     * 
+     * @return the display objects that application can use for its user
+     * interface. First element in the list is the primary display. 
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    static Display[] getDisplays(Object owner, int capabilities) {
+	DisplayAccess[] das = displayContainer.findDisplaysByOwner(owner, capabilities);
+	if (das == null)    {
+	    addDisplays(owner);
+	    das = displayContainer.findDisplaysByOwner(owner, capabilities);
+	}
+	Display[] ds = new Display[das.length];
+	for (int i = 0, shift = 1; i < ds.length; i++) {
+	    if (das[i].getDisplayDevice().isPrimaryDisplay()) {
+		ds[0] = das[i].getDisplay();
+		shift = 0;
+            } else {
+		ds[i + shift] = das[i].getDisplay();
+	    }
+	}
+        return ds;
+    }
+    // #endif ENABLE_MULTIPLE_DISPLAYS
+
+    /**
+     * Create and registaer the <code>Display</code> objects for the given owner.
+     *
+     * @param owner name of the owner of the display, the owner can be
+     * 
+     * @return the display access objects that application can use for its user
+     * interface
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    static void addDisplays(Object owner) {
+	DisplayDevice[] dds = displayDeviceContainer.getDisplayDevices();
+        for (int i = 0; i < dds.length; i++) {
+	    if (dds[i].getState() != DisplayDevice.DISPLAY_DEVICE_ABSENT) {
+		    new Display(owner, dds[i]);
+	    }
+	}
+        // enable primary display
+	dds[0].setState(DisplayDevice.DISPLAY_DEVICE_ENABLED);
+    }
+
+    /**
+     * Free a <code>Display</code> no longer in use.
+     *
+     * @param owner the owner of the display, the owner can be any class
+     * 
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found.
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    static boolean freeDisplays(Object owner) {
+        DisplayAccess[] das = displayContainer.findDisplaysByOwner(owner, 0);
+	boolean ret = false; 
+        if (das != null) {
+	    for (int i = das.length; --i >= 0;) {
+		// Give up the foreground
+		das[i].getDisplay().setCurrent(null);
+		// Close the display to clean-up internal resources that otherwise
+		// prevent GC of application class loaders.
+		das[i].close();
+		ret = displayContainer.removeDisplay(das[i]);
+	    }	
+	}
+
+        return ret;
+    }
+
     // #ifdef ENABLE_CHAMELEON
     void lSetTitle(DisplayableLF d, String title) {
         if (isShown(d)) {
@@ -1432,6 +1734,52 @@ public class Display {
     int[] getBodyLayerBounds() {
         return window.getBodyLayerBounds();
     }
+
+    /**
+     * Create text input session associated with this Display or
+     * return the existing instance created on earlier request
+     * @return TextInputSession instance
+     **/
+    TextInputSession getInputSession() {
+        if (inputSession == null) {
+            inputSession =
+                new BasicTextInputSession();
+        }
+        return inputSession;
+    }
+
+    /**
+     * Create popup layer that represents predicitve text input popup
+     *   associated with this Display
+     * @return PTI layer instance connected to the current input session 
+     *   associated with this Display
+     **/
+    PTILayer getPTIPopup() {
+        if (pt_popup == null) {
+            pt_popup = new PTILayer(
+                getInputSession());
+        }
+        return pt_popup;
+    }
+
+    /**
+     * Create popup layer that represents java virtual keyboard popup
+     *   associated with this Display
+     * @return VirtualKeyboard layer instance connected to the current input session
+     *   associated with this Display
+     **/
+    VirtualKeyboardLayer getVirtualKeyboardPopup() {
+        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
+            return null;
+        }
+        if (keyboardLayer == null) {
+          VirtualKeyboardResources.load();
+          keyboardLayer = new VirtualKeyboardLayer();
+          keyboardLayer.init();
+        }
+        return keyboardLayer;
+    }
+
     // #endif ENABLE_CHAMELEON
 
     /**
@@ -1467,17 +1815,18 @@ public class Display {
 
         if (nextDisplayable instanceof Alert) {
             if (wantsForeground != WANTS_FOREGROUND_FOR_ALERT) {
-                // A non-alert or null was replaced by an alert
-                wantsForeground = WANTS_FOREGROUND_FOR_ALERT;
-
-                foregroundController.requestForeground(displayId, true);
+		// A non-alert or null was replaced by an alert
+		wantsForeground = WANTS_FOREGROUND_FOR_ALERT;
+		
+		foregroundController.requestForeground(displayId, true);
             }
         } else {
             if (wantsForeground != WANTS_FOREGROUND) {
-                // An alert or null was replaced by non-alert
-                wantsForeground = WANTS_FOREGROUND;
 
-                foregroundController.requestForeground(displayId, false);
+		// An alert or null was replaced by non-alert
+		wantsForeground = WANTS_FOREGROUND;
+		
+		foregroundController.requestForeground(displayId, false);
             }
         }
 
@@ -1523,6 +1872,15 @@ public class Display {
         pendingCurrent = nextDisplayable.displayableLF;
         displayEventProducer.sendScreenChangeEvent(consumer, nextDisplayable);
     }
+
+    /**
+     * Posts an event to repaint the screen.
+     */
+    void requestScreenRepaint() {
+        displayEventProducer.sendScreenRepaintEvent(consumer);
+    }
+
+
 
     /**
      * Called by <code>DisplayEventConsumer</code> when screen change event
@@ -1668,21 +2026,27 @@ public class Display {
 
         if (newCurrent != null) {
             if (!isRotatedKnown) {
-                    wantRotation = getReverseOrientation0();
-                    isRotatedKnown = true;
-                }
-                da.displayableLF.uSetRotatedStatus(wantRotation);
+		wantRotation = displayDevice.getReverseOrientation();
+		isRotatedKnown = true;
+	    }
+
+            // Postponed notification of screen rotation
+            if (da.displayableLF.uSetRotatedStatus(wantRotation)) {
+                da.displayableLF.uCallSizeChanged(
+                        width, height);
+            };
+            
             if (hasForegroundCopy) {
-                newCurrent.uCallShow();
                 // #ifdef ENABLE_CHAMELEON
                 // We need to establish the new title and ticker so that
                 // the new displayable can lay itself out properly in its
                 // callShow() routine.
                 // This call will not result in any call into application code
                 window.showDisplayable(
-                    newCurrent.lGetDisplayable(),
-                    newCurrent.lGetDisplayable().getHeight());
+				       newCurrent.lGetDisplayable(),
+				       newCurrent.lGetDisplayable().getHeight());
                 // #endif ENABLE_CHAMELEON
+                newCurrent.uCallShow();
             } else {
                 newCurrent.uCallFreeze();
             }
@@ -1706,7 +2070,7 @@ public class Display {
             updateCommandSet();
 
         } // synchronized
-        
+
 
         // SYNC NOTE: The implementation of dsPaint() could call
         // out to MIDlet's paint() function. So we have to call it
@@ -1716,7 +2080,7 @@ public class Display {
         // At this point, current screen has been changed.
         // newCurrent.isShown() is true.
 
-        callPaint(0, 0, Display.WIDTH, Display.HEIGHT, null);
+        callPaint(0, 0, width, height, null);
 
         if (Constants.MEASURE_STARTUP) {
             if (oldCurrent == null && current != null) {
@@ -1744,8 +2108,8 @@ public class Display {
         return window.setVerticalScroll(scrollPosition, scrollProportion);
         // #else
         // Does nothing since Platform Form widget manages
-	// scrolling internally
-	return false;
+	    // scrolling internally
+	    return false;
         // #endif ENABLE_CHAMELEON
     }
 
@@ -1757,11 +2121,44 @@ public class Display {
      * @return <code>true</code>, if sound was played.
      */
     boolean playAlertSound(AlertType t) {
-
+        
         if (!paintSuspended && hasForeground) {
-            // SYNC NOTE: playAlertSound is a native method, no locking
+            int note = 9 + 3 * t.getType();
+            int duration = 1000;
+            int volume = 80;
+// #ifndef ENABLE_CDC
+            // SYNC NOTE: playing tones in parallel is okay, no locking
             // necessary
-            return playAlertSound0(displayId, t.getType());
+            try
+            {
+                Manager.playTone(ToneControl.C4 + note, duration, volume);
+            }
+            catch( MediaException me )
+            {
+                return false;
+            }
+            return true;
+// #else
+            Class managerClass = null;
+            Class toneControlClass = null;
+            Method playToneMethod = null;
+	    try {
+                managerClass = Class.forName("javax.microedition.media.Manager");
+                playToneMethod = managerClass.getMethod("playTone", new Class[] { int.class, int.class, int.class });
+                toneControlClass = Class.forName("javax.microedition.media.control.ToneControl");
+                Field f = toneControlClass.getField("C4");
+                note += f.getInt(null);
+                playToneMethod.invoke(null, new Object[] { new Integer(note), new Integer(duration), new Integer(volume) });       
+                return true;
+            } catch (InvocationTargetException ite){
+            } catch (ClassNotFoundException cnfe) {
+            } catch (NoSuchFieldException nsf) {
+            } catch (NoSuchMethodException nsme) {
+            } catch (IllegalArgumentException iare) {
+            } catch (IllegalAccessException iace) {
+	    } 
+
+// #endif ENABLE_CDC
         }
 
         return false;
@@ -1899,69 +2296,93 @@ public class Display {
             currentCopy = current;
         }
 
-        // #ifdef ENABLE_CHAMELEON
-        if (window.setGraphicsForCanvas(screenGraphics)) {
-            // If the window is not dirty and we are repainting it
-            // is likely the optimization whereby there is a canvas
-            // performing repaints and we can bypass chameleon
+	try {
+		// #ifdef ENABLE_GCI
+		gciScreenWidget.getDrawingSurface().renderingBegin();
+		// #endif
+                // #ifdef ENABLE_OPENGL
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                ogl.startMidpRendering();
+                // #endif
+		// #ifdef ENABLE_CHAMELEON
+		if (window.setGraphicsForCanvas(screenGraphics)) {
+		    // If the window is not dirty and we are repainting it
+		    // is likely the optimization whereby there is a canvas
+		    // performing repaints and we can bypass chameleon
 
-            // Copy the clip now (before the application has a chance
-            // to modify it in its paint method) for later use as the
-            // dirty region for refresh0(). The getClip() method
-            // returns the clip in translated coordinates, so we need
-            // to untranslate it before passing to refresh0(), which
-            // requires absolute coordinates.
+		    // Copy the clip now (before the application has a chance
+		    // to modify it in its paint method) for later use as the
+		    // dirty region for displayDevice.refresh(). The getClip() method
+		    // returns the clip in translated coordinates, so we need
+		    // to untranslate it before passing to displayDevice.refresh(), which
+		    // requires absolute coordinates.
 
-            screenGraphics.getClip(region); /* x1, y1, x2, y2 */
-            int tx = screenGraphics.getTranslateX();
-            int ty = screenGraphics.getTranslateY();
-            region[0] += tx;
-            region[1] += ty;
-            region[2] += tx;
-            region[3] += ty;
+		    screenGraphics.getClip(region); /* x1, y1, x2, y2 */
+		    int tx = screenGraphics.getTranslateX();
+		    int ty = screenGraphics.getTranslateY();
+		    region[0] += tx;
+		    region[1] += ty;
+		    region[2] += tx;
+		    region[3] += ty;
 
-            currentCopy.uCallPaint(screenGraphics, null);
-            // SetFullScreenMode TCK test fails unless the following
-            // translate is present
-            screenGraphics.translate(-screenGraphics.getTranslateX(),
-	                             -screenGraphics.getTranslateY());
-            refresh0(displayId, region[0], region[1], region[2], region[3]);
-        } else {
-            // Chameleon redirects the paint call through its layer logic,
-            // eventually resulting in a call back to the Chameleon Display
-            // Tunnel, and possible into application code if the current
-            // displayable is a canvas or gamecanvas.
-            window.callPaint(screenGraphics, graphicsQ);
+		    currentCopy.uCallPaint(screenGraphics, null);
+		    // SetFullScreenMode TCK test fails unless the following
+		    // translate is present
+		    screenGraphics.translate(-screenGraphics.getTranslateX(),
+					     -screenGraphics.getTranslateY());
+		    displayDevice.refresh(displayId, region[0], region[1], region[2], region[3]);
+		} else {
+		    // Chameleon redirects the paint call through its layer logic,
+		    // eventually resulting in a call back to the Chameleon Display
+		    // Tunnel, and possible into application code if the current
+		    // displayable is a canvas or gamecanvas.
+		    window.callPaint(screenGraphics, graphicsQ);
 
-            // IMPL NOTE: This code block should really be a method inside CGraphics
-            // with its own native call to the refresh function. Until that
-            // can be refactored, we'll do it here.
-            Object[] refreshQ = graphicsQ.getRefreshRegions();
-            int[] subregion;
-            for (int i = 0; i < refreshQ.length; i++) {
-                subregion = (int[])refreshQ[i]; /* x, y, w, h */
-                if (CGraphicsQ.DEBUG) {
-                    System.err.println("Refresh(): "
-			+ subregion[0] + ", " + subregion[1] + ", "
-			+ subregion[2] + ", " + subregion[3]);
-                }
-                // Be sure to convert the regions which are x,y,w,h to
-                // x1, y1, x2, y2
-                refresh0(displayId, subregion[0], subregion[1],
-			 subregion[0] + subregion[2],
-			 subregion[1] + subregion[3]);
-            }
-        }
-        // #else
-        if (currentCopy.uIsScrollNative()) {
-            screenGraphics.reset();
-            currentCopy.uCallPaint(screenGraphics, target);
-        } else {
-            screenGraphics.reset(x1, y1, x2, y2);
-            currentCopy.uCallPaint(screenGraphics, target);
-            refresh0(displayId, x1, y1, x2, y2);
-        }
-        // #endif ENABLE_CHAMELEON
+		    // IMPL NOTE: This code block should really be a method inside CGraphics
+		    // with its own native call to the refresh function. Until that
+		    // can be refactored, we'll do it here.
+		    Object[] refreshQ = graphicsQ.getRefreshRegions();
+		    int[] subregion;
+		    for (int i = 0; i < refreshQ.length; i++) {
+			subregion = (int[])refreshQ[i]; /* x, y, w, h */
+			if (CGraphicsQ.DEBUG) {
+			    System.err.println("Refresh(): "
+				+ subregion[0] + ", " + subregion[1] + ", "
+				+ subregion[2] + ", " + subregion[3]);
+			}
+			// Be sure to convert the regions which are x,y,w,h to
+			// x1, y1, x2, y2
+			displayDevice.refresh(displayId, subregion[0], subregion[1],
+				 subregion[0] + subregion[2],
+				 subregion[1] + subregion[3]);
+		    }
+		}
+		// #else
+		if (currentCopy.uIsScrollNative()) {
+		    screenGraphics.reset();
+		    currentCopy.uCallPaint(screenGraphics, target);
+		} else {
+		    screenGraphics.reset(x1, y1, x2, y2);
+		    currentCopy.uCallPaint(screenGraphics, target);
+		    displayDevice.refresh(displayId, x1, y1, x2, y2);
+		}
+		// #endif ENABLE_CHAMELEON
+	}
+	finally {
+                // #ifdef ENABLE_OPENGL
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                ogl.endMidpRendering();
+                // This call to refresh a "zero" region is inserted to
+                // trigger display update on some platforms
+                displayDevice.refresh(displayId, 0, 0, 0, 0);
+                // #endif
+		// #ifdef ENABLE_GCI
+		int[] bounds = {x1,y1,x2,y2};
+		gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
+		// #endif
+	}
     }
 
     /**
@@ -1982,20 +2403,37 @@ public class Display {
         }
         lastFullScnMode = wantFullScnMode;
 
-        setFullScreen0(displayId, wantFullScnMode);
+        // #ifndef ENABLE_GCI
+        displayDevice.setFullScreen(displayId, wantFullScnMode);
+        width = displayDevice.getWidth(); 
+        height = displayDevice.getHeight();
+        if (displayDevice.isPrimaryDisplay()) {
+            WIDTH = width;
+            HEIGHT = height;
+        }
 
-        Display.WIDTH = getScreenWidth0();
-        Display.HEIGHT = getScreenHeight0();
+        // #else
+        // TBD: not implemented for GCI yet
+        // #endif ENABLE_GCI
 
-        screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
+        screenGraphics.setDimensions(width, height);
         screenGraphics.reset();
 
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.adjustScreen();
         // Notify Chameleon that the current displayable should be shown
         // in fullscreen mode.
         // This call will not result in any call into application code
         window.setFullScreen(wantFullScnMode);
+        // #endif ENABLE_CHAMELEON
+    }
+    /**
+     * Sets the display mode.
+     * @param m MIDPWindow display mode
+     */
+    void lSetMode(int m) {
+        // #ifdef ENABLE_CHAMELEON
+        // This call will not result in any call into application code
+        window.setMode(m);
         // #endif ENABLE_CHAMELEON
     }
 
@@ -2055,22 +2493,6 @@ public class Display {
             screenCommands[i].setInternalID(i);
         }
 
-        // #ifndef ENABLE_CDC
-        // Piggy back AboutBox command to all Displayable except Alert
-        if (!(d instanceof Alert)) {
-            if (screenCommands == null) {
-                screenCommands = new Command[1];
-            } else if (screenCommands.length == screenComCount) {
-                screenCommands = new Command[screenComCount+1];
-                System.arraycopy(d.commands, 0, screenCommands, 0,
-                                 d.numCommands);
-            }
-
-            screenCommands[screenComCount] = aboutCommand;
-            screenComCount++;
-        }
-        // #endif ENABLE_CDC
-
         // Item commands
         Item curItem = (current instanceof FormLF)
                             ? ((FormLF)current).lGetCurrentItem()
@@ -2109,31 +2531,6 @@ public class Display {
     }
 
     /**
-     * Create an ImmutableImage from the named system icon resource.
-     * The icons are stored in the configuration directory ($MIDP_HOME/lib).
-     * If the named resource can not be found a placeholder
-     * image is used instead.
-     * @param imageName name of the image
-     * @return a new ImmutableImage
-     * @throws IllegalArgumentException if imageName contains a "/" or "\\",
-     *        or imageName is null or imageName is empty
-     */
-    static Image getSystemImage(String imageName) {
-        byte[] imageData = ResourceHandler.getAmsResource(
-                               classSecurityToken, imageName + ".raw");
-        if (imageData == null) {
-            imageData = ResourceHandler.getAmsResource(
-                               classSecurityToken, imageName + ".png");
-        }
-        if (imageData != null) {
-            return Image.createImage(imageData, 0, imageData.length);
-        } else {
-            // Use a empty immutable image as placeholder
-            return Image.createImage(Image.createImage(16, 16));
-        }
-    }
-
-    /**
      * This is a utility method used to handle any Throwables
      * caught while calling application code. The default
      * implementation will simply call Logging.trace on
@@ -2152,18 +2549,8 @@ public class Display {
 /*
  * ************* private methods
  */
-    /**
-     * Resets native resources on a foreground change
-     *
-     * @param displayId The display ID associated with this Display
-     */
-    private native void gainedForeground0(int displayId);
 
-/*
- * ************* private methods
- */
-
-    /**
+     /**
      * Control the drawing of the trusted <code>MIDlet<code> icon in native.
      *
      * @param displayId The display ID associated with this Display
@@ -2199,23 +2586,6 @@ public class Display {
         q.removeAllElements();
     }
 
-    // #ifndef ENABLE_CDC
-    /**
-     * Show about box as a preempting alert.
-     */
-    private void showAboutBox() {
-
-        // Shows About Box as a preempting Alert
-        SystemAlert about = new SystemAlert(displayEventHandlerImpl,
-                                            aboutCommand.getLabel(),
-          Resource.getString(ResourceConstants.AMS_PROJECT_NAME) + "\n\n"
-          + Resource.getString(ResourceConstants.AMS_COPYRIGHT_LONG),
-                               null, null);
-
-        about.run();
-    }
-    // #endif ENABLE_CDC
-
     // #ifdef ENABLE_CHAMELEON
     /**
      * Get a handle to the Chameleon MIDPWindow object doing
@@ -2226,31 +2596,110 @@ public class Display {
     MIDPWindow getWindow() {
         return window;
     }
+
+    /**
+     * Get the width of the current displayable layer.
+     *
+     * @return the width of the current displayable layer
+     */
+    int getDisplayableWidth() {
+        return  (current instanceof AlertLF) ? window.getAlertWidth() : window.getBodyWidth();
+    }
+
+    /**
+     * Get the height of the current displayable layer.
+     *
+     * @return the width of the current displayable layer
+     */
+    int getDisplayableHeight() {
+        return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
+    }
+
+    /** Get the width of some default displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full screen is set for the displayable      
+     * @param withScrollBar true if the scroll bar is in use for the  displayable
+     * @return width of the paticular displayable
+     */
+    static int getDefaultDisplayableWidth(boolean isFullScn, boolean withScrollBar) {
+	return MIDPWindow.getDefaultBodyWidth(WIDTH, isFullScn, withScrollBar);
+    }
+    
+    /** Get the width of some default alert depending on the layers attached to the screen 
+     * @param withScrollBar true if the scroll bar is in use for the  displayable
+     * @return width of the paticular displayable
+     */
+    static int getDefaultAlertWidth(boolean withScrollBar) {
+	return MIDPWindow.getDefaultAlertWidth(WIDTH, withScrollBar);
+    }
+
+    /** 
+     * Get the height of some default displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full screen is set for the body layer      
+     * @param withTitle true if the title is attached      
+     * @param withTicker true if the ticker is attached 
+     * @param withCmds true if command layer is visible
+     * @return height of the paticular body layer
+     */
+    static int getDefaultDisplayableHeight(boolean isFullScn, 
+					   boolean withTitle, 
+					   boolean withTicker, 
+					   boolean withCmds) {
+	return MIDPWindow.getDefaultBodyHeight(HEIGHT, isFullScn, withTitle, withTicker, withCmds);
+    }
+    
+    /** 
+     * Get the height of some default alert 
+     * @return height of the paticular body layer
+     */
+    static int getDefaultAlertHeight() {
+	return MIDPWindow.getDefaultAlertHeight(HEIGHT);
+    }
+
     // #endif ENABLE_CHAMELEON
 
     /**
-     * Redraw a portion of the display.
-     *
-     * @param displayId The display ID associated with this Display
-     * @param x1 upper left corner x-coordinate
-     * @param y1 upper left corner y-coordinate
-     * @param x2 lower right corner x-coordinate
-     * @param y2 lower right corner y-coordinat
+     * Called to get current display width.
+     * @return Display width.
      */
-    private native void refresh0(int displayId,
-                                 int x1, int y1, int x2, int y2);
+    int getDisplayWidth() {
+        // #ifdef ENABLE_GCI
+        return WIDTH;
+        // #else
+        return width;
+        // #endif
+    }
 
-    /*
-     * Invert screen orientation
+    /**
+     * Called to get current display height.
+     * @return Display height.
      */
-    private native boolean reverseOrientation0();
+    int getDisplayHeight() {
+        // #ifdef ENABLE_GCI
+        return HEIGHT;
+        // #else
+        return height;
+        // #endif
+    }
 
-    private native boolean getReverseOrientation0();
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    static int getPrimaryDisplayWidth() {
+        return WIDTH;
+    }
 
-    static native int getScreenWidth0();
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    static int getPrimaryDisplayHeight() {
+        return HEIGHT;
+    }
 
-    static native int getScreenHeight0();
-
+// #ifdef ENABLE_CDC
     /**
      * Play an Alert sound.
      *
@@ -2260,28 +2709,8 @@ public class Display {
      * @return <code>true</code>, if sound was played.
      */
     private native boolean playAlertSound0(int displayId, int alertType);
+// #endif ENABLE_CDC
 
-    /**
-     * Plays the vibration if this Display is current and in foreground
-     * and device has vibration capability.
-     *
-     * @param displayId The display ID of this Display
-     * @param dur the duration in milli seconds
-     *
-     * @return if it's successful, return <code>true</code>,
-     *         othewise return <code>false</code>
-     *
-     */
-    private native boolean vibrate0(int displayId, int dur);
-
-
-    /**
-     * Sets full screen on the device.
-     * @param mode The new screen size mode to be set. True if all
-     *             available space should be given to content; false -
-     *             some areas can be reserved for ticker, title, commands.
-     */
-    private native void setFullScreen0(int displayId, boolean mode);
 
     // #ifdef ENABLE_CHAMELEON
     /**
@@ -2392,7 +2821,49 @@ public class Display {
         }
         
         /**
-         * This method is used by Chameleon to invoke 
+         * This method is used by Chameleon to invoke
+         * hideNotify() method from Canvas. This may call into
+         * application code if the current displayable
+         * is a canvas or canvas subclass.
+         */
+        public void callHideNotify() {
+            // A copy of current LF object            
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLF) {
+                CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
+                try {
+                    synchronized (Display.calloutLock) {
+                        canvasLF.canvas.hideNotify();
+                    }
+                } catch (Throwable thr) {
+                    Display.handleThrowable(thr);
+                }
+            }
+        } 
+
+        /**
+         * This method is used by Chameleon to invoke
+         * showNotify methos from Canvas. This may call into
+         * application code if the current displayable
+         * is a canvas or canvas subclass.
+         */
+        public void callShowNotify() {
+            // A copy of current LF object
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLF) {
+                CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
+                try {
+                    synchronized (Display.calloutLock) {
+                        canvasLF.canvas.showNotify();
+                    }
+                } catch (Throwable thr) {
+                    Display.handleThrowable(thr);
+                }
+           }
+        }  
+
+        /**
+         * This method is used by Chameleon to invoke
          * Displayable.uCallScrollContent() method.
          *
          * @param scrollType scrollType
@@ -2404,7 +2875,36 @@ public class Display {
                 currentCopy.uCallScrollContent(scrollType, thumbPosition);
             }
         }
-        
+
+        /**
+         * Checks whether it is allowed to start content dragging from
+         * this point
+         * @param x the x coordinate of the point to check
+         * @param y the y coordinate of the point to check
+         */
+        public boolean callIsDraggable(int x, int y) {
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null) {
+                return currentCopy.uIsDraggable(x,y);
+            }
+            return false;
+        }
+
+        /**
+         * This method is used by Chameleon to invoke
+         * Displayable.uCallDragContent() method.
+         *
+         * @param deltaY
+         * @return desired drag amount to become stable
+         */
+        public int callDragContent(int deltaY) {
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null) {
+                return currentCopy.uCallDragContent(deltaY);
+            }
+            return 0;
+        }
+
         /**
          * Updates the scroll indicator.
          */
@@ -2416,9 +2916,51 @@ public class Display {
                           currentCopy.getVerticalScrollProportion());
             }
         }
+
+	/**
+	 * Called to get current display width.
+	 * @return Display width.
+	 */
+        public int getDisplayWidth() {
+	    return Display.this.width;
+        }
+	
+        /**
+	 * Called to get current display height.
+	 * @return Display height.
+	 */
+        public int getDisplayHeight() {
+	    return Display.this.height;
+        }
+	
+        /**
+         * This method is used by Chameleon to invoke
+         * CanvasLFImpl.uCallKeyPressed() method.
+         *
+         * @param keyCode key code
+         */
+        public void callKeyPressed(int keyCode) {
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLFImpl) {
+                ((CanvasLFImpl)currentCopy).uCallKeyPressed(keyCode);
+            }
+        }
+
+        /**
+         * This method is used by Chameleon to invoke
+         * CanvasLFImpl.uCallKeyReleased() method.
+         *
+         * @param keyCode key code
+         */
+        public void callKeyReleased(int keyCode) {
+            DisplayableLF currentCopy = Display.this.current;
+            if (currentCopy != null && currentCopy instanceof CanvasLFImpl) {
+                ((CanvasLFImpl)currentCopy).uCallKeyReleased(keyCode);
+            }
+        }
     }
     // #endif
-
+ 
     /**
      * ************* Inner Class, DisplayAccesImpl
      */
@@ -2436,32 +2978,46 @@ public class Display {
             // return display;
             return Display.this;
         }
+        
+        /**
+        * Called to release internal resources.
+        * This should only be called after a display
+        * has been released.
+        */
+        public void close() {
+			Display.this.close();
+        }
 
         /**
         * Called to get current display width.
         * @return Display width.
         */
         public int getDisplayWidth() {
-          return Display.WIDTH;
+          return Display.this.width;
         }
-    
+
         /**
         * Called to get current display height.
         * @return Display height.
         */
         public int getDisplayHeight() {
-          return Display.HEIGHT;
+          return Display.this.height;
         }
 
         /** Called to get the display to request the foreground. */
         public void requestForeground() {
             synchronized (LCDUILock) {
-                if (wantsForeground == WANTS_BACKGROUND) {
-                    wantsForeground = WANTS_FOREGROUND;
-
-                    foregroundController.requestForeground(displayId, false);
-                }
+		if (displayDevice.getState() == DisplayDevice.DISPLAY_DEVICE_ENABLED) {
+		    if (wantsForeground == WANTS_BACKGROUND) {
+			wantsForeground = WANTS_FOREGROUND;
+			
+			foregroundController.requestForeground(displayId, false);
+		    }
+		} else {
+		    disabledForeground = true;
+		}
             }
+
         }
 
         /**
@@ -2481,6 +3037,63 @@ public class Display {
         }
 
         /**
+         * Called to get the list of current dirty screen regions which
+         * need to be refreshed
+         *
+         * @return Object[]  List of screen regions that need to be refreshed
+         */
+        public Object[] getDirtyRegions() {
+            return Display.this.graphicsQ.getRefreshRegions();
+        }
+
+        private long lastFlushTime = 0;
+
+        /**
+         * Timer to schedule delayed flushing
+         */
+        private FlushTimer flushTimer = new FlushTimer(LCDUILock);
+
+        /**
+         * FlushTimer is desined to perform delayed flushing.
+         */
+        class FlushTimer extends LFTimer {
+
+            private Displayable d;
+            private Image offscreenBuffer;
+            private int x;
+            private int y;
+            private int width;
+            private int height;
+
+            public FlushTimer(Object monitor) {
+                super(monitor);
+            }
+
+            protected void perform() {
+                // remember new flushing time
+                lastFlushTime = System.currentTimeMillis();
+                // perform flushing
+                doFlush(this.d, this.offscreenBuffer, this.x, this.y, this.width, this.height);
+
+                // release references
+                this.d = null;
+                this.offscreenBuffer = null;
+            }
+
+            void schedule(long time, Displayable d, Image offscreenBuffer,
+                          int x, int y, int width, int height) {
+                this.d = d;
+                this.offscreenBuffer = offscreenBuffer;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+
+                super.schedule(time);
+            }
+        }
+
+        /**
          * Flushes the entire off-screen buffer to the display.
          * DisplayAccess I/F method.
          *
@@ -2492,58 +3105,141 @@ public class Display {
          * @param height The height of the region to be flushed
          */
         public void flush(Displayable d, Image offscreen_buffer,
-                   int x, int y, int width, int height) {
-
-            synchronized (LCDUILock) {
-                // #ifdef ENABLE_CHAMELEON
-                if (paintSuspended
-                    || !hasForeground
-                    || d.displayableLF != current
-                    || ((Display.this.window).systemMenuUp())) {
-                    return;
+                          int x, int y, int width, int height) {
+            if (Constants.MINIMUM_FLUSH_INTERVAL > 0) {
+                long timePassed = System.currentTimeMillis() - lastFlushTime;
+                if (timePassed >= Constants.MINIMUM_FLUSH_INTERVAL) {
+                    flushTimer.cancel();
+                    doFlush(d, offscreen_buffer, x, y, width, height);
+                    lastFlushTime += timePassed;
+                } else {
+                    flushTimer.schedule(Constants.DELAYED_FLUSH_PERIOD - timePassed,
+                                        d, offscreen_buffer, x, y, width, height);
                 }
-                // #else
-                if (paintSuspended
-                    || !hasForeground
-                    || d.displayableLF != current) {
-                    return;
-                }
-                // #endif ENABLE_CHAMELEON
-
-                // keep the initial clip area
-                int[] reg = new int[4];
-                screenGraphics.getClip(reg);
-
-                int x2 = x + width;
-                int y2 = y + height;
-
-                screenGraphics.reset(x, y, x2, y2);
-                // #ifdef ENABLE_CHAMELEON
-                // Draw the off-screen buffer into the area that takes the title
-                // and ticker bar heights into account.
-                screenGraphics.drawImage(offscreen_buffer,
-                                         (Display.this.window).getBodyAnchorX(),
-                                         (Display.this.window).getBodyAnchorY(),
-                                         Graphics.TOP|Graphics.LEFT);
-                // #else
-                screenGraphics.drawImage(offscreen_buffer, 0, 0,
-                                         Graphics.TOP|Graphics.LEFT);
-                // #endif ENABLE_CHAMELEON
-
-                // restore initial clip area
-                screenGraphics.reset(reg[0], reg[1], reg[2], reg[3]);
-                refresh0(displayId, x, y, x2, y2);
+            } else {
+                doFlush(d, offscreen_buffer, x, y, width, height);
             }
         }
 
         /**
-         * Get the class name of the MIDlet that owns this display.
+         * Flushes the entire off-screen buffer to the display.
+         *
+         * @param d The Displayable
+         * @param offscreen_buffer The image buffer
+         * @param x The left edge of the region to be flushed
+         * @param y The top edge of the region to be flushed
+         * @param width The width of the region to be flushed
+         * @param height The height of the region to be flushed
+         */
+        private void doFlush(Displayable d, Image offscreen_buffer,
+                   int x, int y, int width, int height) {
+
+	    try {
+		// #ifdef ENABLE_GCI
+		gciScreenWidget.getDrawingSurface().renderingBegin();
+		// #endif
+		    synchronized (LCDUILock) {
+			// #ifdef ENABLE_CHAMELEON
+			if (paintSuspended
+			    || !hasForeground
+			    || d.displayableLF != current
+			    || ((Display.this.window).systemMenuUp())) {
+			    return;
+			}
+			// #else
+			if (paintSuspended
+			    || !hasForeground
+			    || d.displayableLF != current) {
+			    return;
+			}
+			// #endif ENABLE_CHAMELEON
+
+			int x1 = x;
+			int y1 = y;
+			int anchorX = 0;
+			int anchorY = 0;
+
+			// #ifdef ENABLE_CHAMELEON
+			// Draw the off-screen buffer into the area that takes the title
+			// and ticker bar heights into account.
+			anchorX = (Display.this.window).getBodyAnchorX();
+			anchorY = (Display.this.window).getBodyAnchorY();
+			x1 += anchorX;
+			y1 += anchorY;
+			// #endif ENABLE_CHAMELEON
+
+			int x2 = x1 + width;
+			int y2 = y1 + height;
+			// set clip area and init graphics
+			synchronized (screenGraphics) {
+			    // keep the initial clip area
+			    int[] reg = new int[4];
+			    screenGraphics.getClip(reg);
+			    
+			   // #ifdef ENABLE_DIRECT_DRAW 
+			    if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
+				if (x == 0 && x2 == Display.this.width && y == 0 &&
+				    offscreen_buffer.getWidth() == Display.this.width && 
+				    offscreen_buffer.getHeight() == Display.this.height &&
+				    //check offscreen_buffer whether rotated
+				    anchorX == 0 && anchorY == 0) {
+				   if (displayDevice.directFlush(screenGraphics, offscreen_buffer, y2)) {
+					// No need to draw to the back buffer. We have
+					// directly flushed to the front buffer.
+				       return;
+				   }
+				}
+			    }
+			    // #endif ENABLE_DIRECT_DRAW
+
+			    int tranX = screenGraphics.getTranslateX();
+			    int tranY = screenGraphics.getTranslateY();
+
+			    screenGraphics.translate(-tranX, -tranY);
+			    screenGraphics.setClip(x1, y1, width, height);
+			    
+                            //#ifdef ENABLE_OPENGL
+                            // flush the offscreen buffer to the backing surface
+                            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                            ogl.flushPbufferSurface(offscreen_buffer, x1, y1,
+                                                    width, height);
+                            //#else
+			    screenGraphics.drawImage(offscreen_buffer,
+				     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
+                            //#endif
+			    // restore initial clip area and translation
+			    screenGraphics.translate(tranX, tranY);
+			    screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
+			}
+                        // #ifdef ENABLE_OPENGL
+                        // #else
+			displayDevice.refresh(displayId, x1, y1, x2, y2);
+                        // #endif
+		    }
+	    }
+	    finally {
+                // #ifdef ENABLE_OPENGL
+                // This call to refresh a "zero" region is inserted to
+                // trigger display update on some platforms
+                displayDevice.refresh(displayId, 0, 0, 0, 0);
+                // #endif
+		// #ifdef ENABLE_GCI
+		int[] bounds = {x,y,x+width,y+height};
+		gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
+		// #endif
+	    }
+	
+        }
+
+        /**
+         * Get the object that owns this display.
          * DisplayAccess I/F method.
          *
-         * @return name of the MIDlet that owns this Display
+         * @return object that owns this Display
          */
-        public String getNameOfOwner() {
-            return Display.this.nameOfOwner;
+        public Object getOwner() {
+            return Display.this.owner;
         }
 
         /**
@@ -2555,6 +3251,20 @@ public class Display {
         public int getDisplayId() {
             return Display.this.displayId;
         }
+
+
+        /**
+         * Get the hardware display.
+         * DisplayAccess I/F method.
+         *
+         * @return Hardware display object
+	 * !IMPL_NOTE 	
+         */
+        public DisplayDevice getDisplayDevice() {
+            return Display.this.displayDevice;
+        }
+
+
 
         /**
          * Sets the ID of this display.
@@ -2586,6 +3296,16 @@ public class Display {
          */
         public ForegroundEventConsumer getForegroundEventConsumer() {
             return Display.this.foregroundConsumer;
+        }
+
+       /**
+        * Sets the display mode.
+        * @param m MIDPWindow display mode
+        */
+        public void setMode(int m) {
+            synchronized (LCDUILock) {
+	        Display.this.lSetMode(m);
+            }
         }
     } // END DisplayAccessImpl Class
 
@@ -2652,7 +3372,7 @@ public class Display {
             //
             // SYNC NOTE: could call into app's paint().
             // So do it outside the LCDUILock
-            callPaint(0, 0, Display.WIDTH, Display.HEIGHT, null);
+            callPaint(0, 0, Display.this.width, Display.this.height, null);
         }
 
         /**
@@ -2690,6 +3410,9 @@ public class Display {
          *
          * @param inputText input text string
          */
+
+        // Modified to handle Keyboard events properly
+        // Handle keyboard event only if in Keyboard Input mode
         public void handleInputMethodEvent(String inputText) {
             TextBox textBoxCopy = null;
 
@@ -2733,6 +3456,7 @@ public class Display {
                                               x - window.getBodyAnchorX(),
                                               y - window.getBodyAnchorY());
             }
+
             // #else
             if (currentCopy != null) {
                 currentCopy.uCallPointerEvent(pointerType, x, y);
@@ -2786,14 +3510,6 @@ public class Display {
             Command c = null;
             Displayable currentDisplayable = null;
             Item curItem = null;
-
-            // #ifndef ENABLE_CDC
-            // Check for About box command
-            if (cmdId == EventConstants.ABOUT_REQUESTED) {
-                showAboutBox();
-                return;
-            }
-            // #endif ENABLE_CDC
 
             synchronized (LCDUILock) {
                 if (current == null) {
@@ -2875,17 +3591,17 @@ public class Display {
          * DisplayEventConsumer I/F method.
          *
          * @param modelVersion the version of the peer's data model
+         * @param subType sub type of the peer change that happened
          * @param itemPeerId the id of the ItemLF's peer whose state has changed
          * @param hint some value that is interpretted only between the peers
          */
-        public void handlePeerStateChangeEvent(int modelVersion,
-                                         int itemPeerId, int hint) {
+        public void handlePeerStateChangeEvent(int modelVersion, int subType,
+                                                int itemPeerId, int hint) {
             DisplayableLF currentCopy = Display.this.current;
 
             if (currentCopy instanceof FormLF) {
-                ((FormLF)currentCopy).uCallPeerStateChanged(modelVersion,
-                                                            itemPeerId,
-                                                            hint);
+                ((FormLF)currentCopy).uCallPeerStateChanged(modelVersion, subType,
+                                                            itemPeerId, hint);
             }
         }
 
@@ -2917,32 +3633,165 @@ public class Display {
          */
         public void handleScreenChangeEvent(
                 Displayable screen) {
-            Display.this.callScreenChange(screen);
+                Display.this.callScreenChange(screen);
         }
+
+        /**
+         * Called by event delivery when the entire screen repaint is needed.
+         * DisplayEventConsumer I/F method.
+         */
+        public void handleScreenRepaintEvent() {
+            // #ifdef ENABLE_CHAMELEON
+            window.setAllDirty();
+            callPaint(0,0,Display.this.width,Display.this.height, null);
+            // #endif
+        }
+
+	/**
+	 * Called by event delivery when state of display device was changed.
+	 * @param int new state of the display 
+	 */
+        public void handleDisplayDeviceStateChangedEvent(int state) {
+	    switch(state) {
+	    case DisplayDevice.DISPLAY_DEVICE_ENABLED:
+		if (disabledForeground) {
+		    if (wantsForeground != WANTS_FOREGROUND) {
+			wantsForeground = WANTS_FOREGROUND;
+			foregroundController.requestForeground(displayId, false);
+		    }
+		    disabledForeground = false;
+		}
+		break;
+	    case DisplayDevice.DISPLAY_DEVICE_DISABLED:
+		if (hasForeground) {
+		    if (wantsForeground != WANTS_BACKGROUND) {
+			wantsForeground = WANTS_BACKGROUND;
+			foregroundController.requestBackground(displayId);
+		    }
+		    disabledForeground = true;
+		}
+		break;
+	    }
+    }
+
 
         /**
          * Called by event delivery when size of screen was changed.
          */
         public void handleRotationEvent() {
-
-            wantRotation = reverseOrientation0();
-            isRotatedKnown = true;
-            Display.WIDTH = getScreenWidth0();
-            Display.HEIGHT = getScreenHeight0();
-            screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
-            screenGraphics.reset();
-            // #ifdef ENABLE_CHAMELEON
-                SkinResources.adjustScreen();
-                window.resize();
-                callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
-            // #else
-                DisplayableLF currentCopy = getCurrent().displayableLF;
-                if (currentCopy != null) {
-                    currentCopy.uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
+            synchronized (LCDUILock) {
+                // #ifndef ENABLE_GCI
+                wantRotation = Display.this.displayDevice.reverseOrientation();
+                isRotatedKnown = true;
+                Display.this.width = Display.this.displayDevice.getWidth(); 
+                Display.this.height = Display.this.displayDevice.getHeight();
+                if (Display.this.displayDevice.isPrimaryDisplay()) {
+                    Display.this.WIDTH = Display.this.width;
+                    Display.this.HEIGHT = Display.this.height;
                 }
+                
+                // #else
+                // TBD: not implemented for GCI yet
+                // #endif ENABLE_GCI
+                current_orientation = Display.this.width > Display.this.height;
+                System.out.println("CURRENT ORIENTATION STATUS is " + current_orientation);
+                screenGraphics.setDimensions(Display.this.width, Display.this.height);
+            }
+            // #ifdef ENABLE_CHAMELEON
+            MIDPWindow windowCopy;
+            DisplayableLF currentCopy;
+            synchronized (LCDUILock) {
+                windowCopy = window;
+                currentCopy = Display.this.current;
+            }
+
+            windowCopy.setVerticalScroll(0,100);
+            windowCopy.resize();
+            if (currentCopy != null) {
+            // IMPL_NOTE: uCallSizeChanged was added to prevent form content reculculation before size changing of
+            // Displayable (Form)
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+                currentCopy.uCallInvalidate();
+            }
+
+            // IMPL_NOTE: The entire screen repaint is requested instead
+            //   of usual repaint of the current Displayable over callPaint().
+            //   It is done so because various layers can logically belong
+            //   to the Displayable, but be beyond of its area. For instance,
+            //   date editor popup dialogs can intersect with soft buttons
+            //   layer, thus require repaint for all layers involved.
+            requestScreenRepaint();
+
+            // #else
+            DisplayableLF currentCopy = getCurrent().displayableLF;
+            if (currentCopy != null) {
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+            }
+            // #endif ENABLE_CHAMELEON
+        }
+
+      /**
+      * Called by event delivery when clamshell event occurs.
+      */
+        public void handleClamshellEvent() {
+            synchronized (LCDUILock) {
+                // #ifndef ENABLE_GCI
+		Display.this.displayDevice.clamshellHandling();
+
+		Display.this.width = Display.this.displayDevice.getWidth(); 
+                Display.this.height = Display.this.displayDevice.getHeight();
+
+		if (Display.this.displayDevice.isPrimaryDisplay()){
+                Display.this.WIDTH = Display.this.width;
+                Display.this.HEIGHT = Display.this.height;
+		}
+          
+                // #else
+                // TBD: not implemented for GCI yet
+                // #endif ENABLE_GCI
+                
+                screenGraphics.setDimensions(Display.this.width, Display.this.height);
+            }
+            // #ifdef ENABLE_CHAMELEON
+
+            MIDPWindow windowCopy;
+            DisplayableLF currentCopy;
+            synchronized (LCDUILock) {
+                windowCopy = window;
+                currentCopy = Display.this.current;
+            }
+
+            windowCopy.resize();
+            if (currentCopy != null) {
+            // IMPL_NOTE: uCallSizeChanged was added to prevent form content reculculation before size changing of
+            // Displayable (Form)
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+                currentCopy.uCallInvalidate();
+            }
+
+            // IMPL_NOTE: The entire screen repaint is requested instead
+            //   of usual repaint of the current Displayable over callPaint().
+            //   It is done so because various layers can logically belong
+            //   to the Displayable, but be beyond of its area. For instance,
+            //   date editor popup dialogs can intersect with soft buttons
+            //   layer, thus require repaint for all layers involved.
+            requestScreenRepaint();
+
+            // #else
+            DisplayableLF currentCopy = getCurrent().displayableLF;
+            if (currentCopy != null) {
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+            }
+	    /*This will result in calls to MIDlet code*/
+	    //Displayable currentDisplayable = getCurrent();
+	    //if (currentDisplayable instanceof Canvas){
+		//currentDisplayable.sizeChanged(Display.this.width, Display.this.height);
+	    //}
+	    
             // #endif ENABLE_CHAMELEON
 
         }
+	    
 
         /**
          * Called by event delivery to process a Form invalidation.
@@ -2967,6 +3816,66 @@ public class Display {
             // the callSerially() event.
             // repaintEventProducer.serviceRepaints();
             getCallSerially();
+        }
+
+        /*
+         * Called by event delivery when need to show or hide virtual keyboard
+         */
+        public void handleVirtualKeyboardEvent() {
+
+            // #ifdef ENABLE_CHAMELEON
+
+            if (!(Display.this.current instanceof CanvasLFImpl)) {
+                return;
+            }
+
+            VirtualKeyListener listener = (VirtualKeyListener)Display.this.current;
+
+            keyboardLayer = Display.this.getVirtualKeyboardPopup();
+
+            if (keyboardLayer != null && listener != null) {
+                keyboardLayer.setVirtualKeyboardLayerListener(listener);
+                keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
+                if (keyboardLayer.isVirtualKeyboardVisible()) {
+                    Display.this.hidePopup(keyboardLayer);
+                    keyboardLayer.setVirtualKeyboardVisible(false);
+                } else {
+                    Display.this.showPopup(keyboardLayer);
+                    keyboardLayer.setVirtualKeyboardVisible(true);
+                }
+            }
+            // #endif ENABLE_CHAMELEON
+        }
+
+        /*
+         * Called by event delivery when locale is changed
+         */
+        public void handleChangeLocaleEvent() {
+
+            // #ifdef ENABLE_CHAMELEON
+            SkinLoader.checkLocale();
+            AlertResources.checkLocale();
+
+
+            if (hasForeground) {
+                MIDPWindow windowCopy;
+                DisplayableLF currentCopy;
+                synchronized (LCDUILock) {
+                    currentCopy = Display.this.current;
+                    windowCopy = window;
+                }
+
+                windowCopy.setVerticalScroll(0, 100);
+                windowCopy.resize();
+                if (currentCopy != null) {
+                    currentCopy.uCallInvalidate();
+                }
+            }
+
+            // #endif ENABLE_CHAMELEON
+            if (hasForeground) {
+                requestScreenRepaint();
+            }
         }
     } // END DisplayEventConsumerImpl Class
 
@@ -3018,8 +3927,15 @@ public class Display {
                 // Update hasForeground after uCallShow to allow
                 // isShown() to return false unitl now
                 hasForeground = true;
+                wantsForeground = WANTS_FOREGROUND;
 
-                gainedForeground0(displayId);
+                displayDevice.gainedForeground(displayId);
+
+                // #ifdef ENABLE_GCI
+                gciScreenWidget.setPeerEventTarget(accessor);
+                gciScreenWidget.show();
+
+                // #endif ENABLE_GCI
 
                 // #ifndef ENABLE_CHAMELEON
                 // NOTE: Chameleon does not need to do any screen erasing
@@ -3030,10 +3946,10 @@ public class Display {
                  * could have a displayable smaller than
                  * the current display.
                  */
-                screenGraphics.reset(0, 0, Display.WIDTH, Display.HEIGHT);
+                screenGraphics.reset(0, 0, Display.this.width, Display.this.height);
                 screenGraphics.setColor(Constants.ERASE_COLOR);
                 screenGraphics.fillRect(0, 0,
-                                        Display.WIDTH, Display.HEIGHT);
+                                        Display.this.width, Display.this.height);
                 // #endif ENABLE_CHAMELEON
 
                 // update the command set after uCallShow()
@@ -3042,7 +3958,7 @@ public class Display {
                 updateCommandSet();
 
                 // reset the vibrator and blacklight
-                vibrate0(displayId, 0);
+                deviceAccess.vibrate(displayId, 0);
                 deviceAccess.flashBacklight(displayId, 0);
 
                 // draw correct trusted icon
@@ -3055,12 +3971,16 @@ public class Display {
 
             } // synchronized
 
+            if (current_orientation != restore_orientation) {
+                java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
+                consumer.handleRotationEvent();
+            }
 
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
             // outside LCDUILock. dsPaint will use LCDUILock to lock
             // around its internal handling.
-            callPaint(0, 0, Display.WIDTH, Display.HEIGHT, null);
+            callPaint(0, 0, Display.this.width, Display.this.height, null);
 
             if (Constants.MEASURE_STARTUP) {
                 if (current != null) {
@@ -3082,6 +4002,11 @@ public class Display {
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
+                if (current_orientation != initial_orientation) {
+                    restore_orientation = current_orientation;
+                    java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
+                    consumer.handleRotationEvent();
+                }
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
@@ -3109,6 +4034,7 @@ public class Display {
                 // #endif ENABLE_CHAMELEON
                 currentCopy.uCallFreeze();
             }
+            displayEventHandlerImpl.onDisplayBackgroundProcessed(displayId);
         }
     } // END ForegroundEventConsumerImpl Class
 
@@ -3127,19 +4053,3 @@ public class Display {
 
     // #endif ENABLE_I3_TEST
 }
-
-// #ifdef ENABLE_CHAMELEON
-/**
- * ************* Class for Chameleon Image access
- */
-class ChamImageTunnel implements
-    com.sun.midp.chameleon.skins.resources.ImageTunnel
-{
-
-    public Image getRomizedImage(int imageDataArrayPtr,
-            int imageDataArrayLength) {
-        return Image.getRomizedImage(imageDataArrayPtr, imageDataArrayLength);
-    }
-}
-// #endif
-

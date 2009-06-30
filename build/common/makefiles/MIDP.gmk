@@ -1,27 +1,25 @@
 #
-#
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
-# 
+# 2 only, as published by the Free Software Foundation.
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
-# 
+# included at /legal/license.txt).
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
-# 
+# 02110-1301 USA
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 ######################################################################
 #
@@ -44,7 +42,7 @@ include $(MIDP_DIR)/build/common/makefiles/CancelImplicits.gmk
 include $(MIDP_DIR)/build/common/makefiles/Tools.gmk
 
 # Build system
-# We make the output directory as one of the vpaths 
+# We make the output directory as one of the vpaths
 # since generated code will go there.
 #
 vpath % $(MIDP_OUTPUT_DIR)
@@ -56,8 +54,8 @@ vpath % $(MIDP_OUTPUT_DIR)
 # other rule for classes.zip so that the message is emitted and the
 # list files are removed first.  Evaulation of subsequent dependencies
 # will have the side effect of populating the list files.
-# 
-$(MIDP_OUTPUT_DIR)/classes.zip::
+#
+$(MIDP_CLASSES_ZIP) ::
 	@echo " ... searching updated .java files" $(LOG)
 	$(remove_filelist)
 	$(remove_genfilelist)
@@ -86,7 +84,7 @@ I3_TEST_REPOSITORY_DIR=$(GENERATED_DIR)/classes/com/sun/midp/i3test
 I3_TEST_REPOSITORY_FILE=Repository.java
 I3_TEST_REPOSITORY=$(I3_TEST_REPOSITORY_DIR)/$(I3_TEST_REPOSITORY_FILE)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(JTWI_I3TEST_JAVA_FILES)
+$(MIDP_CLASSES_ZIP) :: $(JTWI_I3TEST_JAVA_FILES)
 	@echo $? >> $(REBUILD_JAVA_LIST)
 	@echo " ... generating I3 test repository " $(LOG)
 	@mkdir -p $(I3_TEST_REPOSITORY_DIR)
@@ -114,17 +112,33 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(JTWI_I3TEST_JAVA_FILES)
 	    cp $(I3_TEMP2) $(I3_TEST_REPOSITORY) ; \
 	fi
 	@rm -f $(I3_TEMP1) $(I3_TEMP2)
+	@echo $(JTWI_I3TEST_JAVA_FILES) >> $(ALL_JAVA_LIST)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(I3_TEST_REPOSITORY)
+$(MIDP_CLASSES_ZIP):: $(I3_TEST_REPOSITORY)
 	    @echo $(I3_TEST_REPOSITORY) >> $(GENERATED_JAVA_LIST)
+endif
 
+ifeq ($(USE_JUNIT_TEST), true)
+$(MIDP_JUNIT_CLASSES_ZIP): $(MIDP_CLASSES_ZIP) $(JTWI_JUNIT_JAVA_FILES)
+ifneq ($(strip $(JTWI_JUNIT_JAVA_FILES)),)
+	@# TBD: better integration with the rest of the system, e.g. no check below + regenerate classes.zip when one of tests get rebuild
+	@if [ '!' -d $(JAVAC_OUT_DIR) ]; then \
+		mkdir -p $(JAVAC_OUT_DIR); \
+	fi
+	@$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
+		-source 1.4 -target 1.4 \
+		-bootclasspath $(BOOTCLASSPATH) \
+		-classpath $(CLASSBINDIR)$(PATHSEP)$(JUNIT_JAR) $(JTWI_JUNIT_JAVA_FILES)
+	@rm -f $@
+	@$(JAR_CMD) -cf $@ -C $(JAVAC_OUT_DIR) .
+endif
 endif
 
 # ================================================================
 # Post-Java-Dependency-Search for classes.zip
 # Creates classes.zip
 #
-$(MIDP_OUTPUT_DIR)/classes.zip::$(GENERATED_JAVA_FILES) \
+$(MIDP_CLASSES_ZIP)::$(GENERATED_JAVA_FILES) \
 				$(PREVERIFY_CMD) \
                                 $(CONFIGURATOR_JAR_FILE) \
                                 $(UNCOMPRESSED_VM_CLASSES) \
@@ -135,8 +149,9 @@ $(MIDP_OUTPUT_DIR)/classes.zip::$(GENERATED_JAVA_FILES) \
 	$(compilefiles)
 	$(remove_filelist)
 	$(remove_genfilelist)
+	$(split_midpclasses_zip)
 
-try_build_classes:: $(MIDP_OUTPUT_DIR)/classes.zip
+try_build_classes:: $(MIDP_CLASSES_ZIP)
 
 build_classes:
 	$(A)$(MAKE) try_build_classes
@@ -156,7 +171,7 @@ rom: $(ROM_DEPS)
 
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
-ifneq ($(MIDP_USE_ABB), true)
+ifneq ($(USE_MIDP_ABB), true)
 MMAPI_TARGET = mmapi
 endif
 endif
@@ -166,6 +181,9 @@ MIDP_RESOURCES += ams_resources
 MIDP_DEPS += $(ROM_DEPS) $(MMAPI_TARGET) $(OBJ_FILES) $(KDP_CMD) \
              all_tools not_yet_implemented
 
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+MIDP_DEPS += $(MEMPROF_CMD)
+endif
 
 not_yet_implemented::
 
@@ -186,10 +204,22 @@ parallel_all:: $(VERIFY_BUILD_ENV) $(DISPLAY_BUILD_ENV) rom
 	@$(MAKE) -j $(NUM_JOBS) IN_PARALLEL_BUILD=true
 	@echo "Finished building in parallel mode with $(NUM_JOBS) jobs"
 
-# If use static properties flag is false, we just merely 
+# If use static properties flag is false, we just merely
 # copy the config files with properties for dynamic usage.
 #
 ifeq ($(USE_STATIC_PROPERTIES), false)
+ifeq ($(USE_JAVACALL_PROPERTIES), true)
+
+MIDP_DEPS += $(BINDIR)/jwc_properties.ini
+
+$(BINDIR)/jwc_properties.ini: $(BINDIR) $(SUBSYSTEM_CONFIGURATION_CONFIG_FILES)
+	if [ -f $@ ];then \
+		rm -f $@; \
+	fi $(LOG)
+	-(cp $(GENERATED_DIR)/jwc_properties.ini $@) $(LOG)
+	-(chmod +w $@) $(LOG)
+
+else
 MIDP_DEPS += $(LIBDIR)/internal.config $(LIBDIR)/system.config
 
 $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGURATION_CONFIG_FILES)
@@ -198,6 +228,14 @@ $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGU
 	fi $(LOG)
 	-(cp $(GENERATED_DIR)/$(subst $(MIDP_OUTPUT_DIR),,$@) $@) $(LOG)
 	-(chmod +w $@) $(LOG)
+
+endif
+endif
+
+ifeq ($(TARGET_VM), cdc_vm)
+   ifneq ($(CVM_STATICLINK_LIBS), true)
+      MIDP_DEPS += $(MIDP_SHARED_LIB)
+   endif
 endif
 
 # All object files
@@ -220,7 +258,7 @@ $(OBJ_DIR)/%.o: %.cpp
 	@echo " ... $@" $(LOG)
 	$(A)$(CPP) $(CPPFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
 
-$(MIDP_OUTPUT_DIR) $(OBJ_DIR) $(CLASSBINDIR) $(BINDIR) $(LIBDIR) $(VERIFYDIR) $(STORAGEDIR) $(CLASSBINDIR)/icons $(CLASSBINDIR)/audio:
+$(MIDP_OUTPUT_DIR) $(OBJ_DIR) $(CLASSBINDIR) $(BINDIR) $(LIBDIR) $(VERIFYDIR) $(STORAGEDIR) $(EXTSTORAGEDIR) $(CLASSBINDIR)/icons $(CLASSBINDIR)/audio:
 	@echo " ... creating directories $@ " $(LOG)
 	$(A)mkdir -p $@ $(LOG)
 
@@ -235,9 +273,33 @@ clean::
 	    rm -rf "$(MIDP_OUTPUT_DIR)"; \
 	 fi $(LOG)
 
-midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
+ifneq ($(MIDP_LIB),)
+$(MIDP_LIB): $(MIDP_LIB_FILES)
+	@echo " ... libing $@ " $(LOG)
+	$(AR) $(LIB_OUTPUT)`$(call fixcygpath,$@ \
+	     $(LD_START_GROUP) $(MIDP_LIB_FILES) $(LIBS))` $(LD_END_GROUP) $(LOG)
 
+ifeq ($(CREATE_MIDP_LIB),true)
+MIDP_DEPS += $(MIDP_LIB)
+endif
+endif
+
+ifneq ($(MIDP_SHARED_LIB),)
+$(MIDP_SHARED_LIB): $(MIDP_SHARED_LIB_FILES)
+	@echo " ... linking $@ " $(LOG)
+	$(AT)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	  $(MIDP_SHARED_LIB_FILES) $(LIBS))` $(LOG)
+# Provide embedded manifest required by VS.NET, enabled when USE_VS2005=true
+	@echo " ... embedding manifest into $@ " $(LOG)
+	$(AT)$(VC_MANIFEST_EMBED_DLL)
+	  
+ifeq ($(CREATE_MIDP_SHARED_LIB),true)
+MIDP_DEPS += $(MIDP_SHARED_LIB)
+endif
+endif
+
+midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
 
 # Phonies to avoid accidents.
 #
-.PHONY: all midp clean run_configurator ams_resources rom FORCE
+.PHONY: all midp clean run_configurator merge_configurations_uncond ams_resources rom FORCE

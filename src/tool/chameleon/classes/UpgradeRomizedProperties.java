@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 
@@ -233,6 +233,13 @@ class SkinProperty {
         new SkinProperty("pti.left_arrow", "pti.left_arrow", "PTI_LEFT_ARROW", IMAGE_T), 
         new SkinProperty("pti.right_arrow", "pti.right_arrow", "PTI_RIGHT_ARROW", IMAGE_T), 
 
+        new SkinProperty("inputmode.margin", "-1", "INPUT_MODE_MARGIN", INT_T), 
+        new SkinProperty("inputmode.color_bg", "-1", "INPUT_MODE_COLOR_BG", INT_T), 
+        new SkinProperty("inputmode.color_fg", "-1", "INPUT_MODE_COLOR_FG", INT_T), 
+        new SkinProperty("inputmode.color_bdr", "-1", "INPUT_MODE_COLOR_BDR", INT_T), 
+        new SkinProperty("inputmode.font", "500", "INPUT_MODE_FONT", FONT_T), 
+        new SkinProperty("inputmode.image_bg", "inputmode.image_bg", "INPUT_MODE_IMAGE_BG", C_IMAGE_T), 
+
         new SkinProperty("title.height", "-1", "TITLE_HEIGHT", INT_T), 
         new SkinProperty("title.margin", "-1", "TITLE_MARGIN", INT_T), 
         new SkinProperty("title.text_align_x", "-1", "TITLE_TEXT_ALIGN_X", INT_T), 
@@ -316,7 +323,8 @@ class SkinProperty {
         new SkinProperty("dateeditor.image_mon_bg", "dateeditor.image_mon_bg", "DATEEDITOR_IMAGE_MON_BG", IMAGE_T), 
         new SkinProperty("dateeditor.image_yr_bg", "dateeditor.image_yr_bg", "DATEEDITOR_IMAGE_YR_BG", IMAGE_T), 
         new SkinProperty("dateeditor.image_cal_bg", "dateeditor.image_cal_bg", "DATEEDITOR_IMAGE_CAL_BG", IMAGE_T), 
-        new SkinProperty("dateeditor.image_dates", "dateeditor.image_dates", "DATEEDITOR_IMAGE_DATES", IMAGE_T), 
+        new SkinProperty("dateeditor.image_dates", "dateeditor.image_dates", "DATEEDITOR_IMAGE_DATES", IMAGE_T),    
+	new SkinProperty("dateeditor.image_days", "dateeditor.image_days", "DATEEDITOR_IMAGE_DAYS", IMAGE_T), 
         new SkinProperty("dateeditor.image_time_bg", "dateeditor.image_time_bg", "DATEEDITOR_IMAGE_TIME_BG", IMAGE_T), 
         new SkinProperty("dateeditor.image_radio", "dateeditor.image_radio", "DATEEDITOR_IMAGE_RADIO", C_IMAGE_T), 
         new SkinProperty("dateeditor.image_ampm", "dateeditor.image_ampm", "DATEEDITOR_IMAGE_AMPM", IMAGE_T), 
@@ -848,27 +856,27 @@ public class UpgradeRomizedProperties {
         pl("<!--");
         pl("        	");
         pl("");
-        pl("        Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.");
+        pl("        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
         pl("        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
         pl("        ");
         pl("        This program is free software; you can redistribute it and/or");
         pl("        modify it under the terms of the GNU General Public License version");
-        pl("        2 only, as published by the Free Software Foundation. ");
+        pl("        2 only, as published by the Free Software Foundation.");
         pl("        ");
         pl("        This program is distributed in the hope that it will be useful, but");
         pl("        WITHOUT ANY WARRANTY; without even the implied warranty of");
         pl("        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU");
         pl("        General Public License version 2 for more details (a copy is");
-        pl("        included at /legal/license.txt). ");
+        pl("        included at /legal/license.txt).");
         pl("        ");
         pl("        You should have received a copy of the GNU General Public License");
         pl("        version 2 along with this work; if not, write to the Free Software");
         pl("        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
-        pl("        02110-1301 USA ");
+        pl("        02110-1301 USA");
         pl("        ");
         pl("        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa");
         pl("        Clara, CA 95054 or visit www.sun.com if you need additional");
-        pl("        information or have any questions. ");
+        pl("        information or have any questions.");
         pl("-->");
         pl("<configuration>");
         pl("<skin>");

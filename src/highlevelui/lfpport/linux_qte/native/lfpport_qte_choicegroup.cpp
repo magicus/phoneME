@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
@@ -66,9 +66,9 @@ static PopupBody *cachedPopupBody;
  * @param fitPolicy wrapping or not wrapping
  */
 void drawElement(QPainter *p,
-		 int x, int y, int w, int h, int hPad, int vPad,
-		 QString string, QPixmap *pixmap, QFont font, 
-		 int fitPolicy) {
+         int x, int y, int w, int h, int hPad, int vPad,
+         QString string, QPixmap *pixmap, QFont font, 
+         int fitPolicy) {
 
   x += hPad/2;
   y += vPad/2;
@@ -86,7 +86,7 @@ void drawElement(QPainter *p,
     } else {
       imgWidth = pixmap->width();
       if (imgWidth > PREF_IMG_WIDTH) {
-	imgWidth = PREF_IMG_WIDTH;
+    imgWidth = PREF_IMG_WIDTH;
       }
       p->drawPixmap(x, y, *pixmap, 0, 0, imgWidth, pixmap->height());
       imgWidth += 3;
@@ -94,10 +94,10 @@ void drawElement(QPainter *p,
   }
 
   p->drawText(x + imgWidth, y, w - imgWidth, h, 
-	      fitPolicy == TEXT_WRAP_OFF ?
-	          Qt::AlignLeft | Qt::AlignTop : 
+          fitPolicy == TEXT_WRAP_OFF ?
+              Qt::AlignLeft | Qt::AlignTop : 
                   Qt::AlignLeft | Qt::AlignTop | Qt::WordBreak, 
-	      string);
+          string);
 
 }
 
@@ -114,7 +114,7 @@ void drawElement(QPainter *p,
  * @return size of an element with the given contents
  */ 
 QSize sizeElement(QString string, QPixmap *pixmap, QFont font, 
-		  int fitPolicy, int parentWidth, int hPad, int vPad) {
+          int fitPolicy, int parentWidth, int hPad, int vPad) {
 
   int x = hPad/2;
   int y = vPad/2;
@@ -133,10 +133,10 @@ QSize sizeElement(QString string, QPixmap *pixmap, QFont font,
   }
 
   QRect rect = QFontMetrics(font).boundingRect(x+imgWidth, y, w-imgWidth, h,
-	           fitPolicy == TEXT_WRAP_OFF ? 
-		       Qt::AlignLeft | Qt::AlignTop : 
+               fitPolicy == TEXT_WRAP_OFF ? 
+               Qt::AlignLeft | Qt::AlignTop : 
                        Qt::AlignLeft | Qt::AlignTop | Qt::WordBreak,
-	           string);
+               string);
 
   QSize s = rect.size();
   s.rwidth() += hPad;
@@ -160,11 +160,11 @@ QSize sizeElement(QString string, QPixmap *pixmap, QFont font,
  * @param layout layout directive associated with this item
  * @param fitPolicy wrapping or not wrapping
  * @param alwaysVertLayout whether label and body should always be on
- *		separated lines
+ *      separated lines
  */
 Choice::Choice(QWidget *parent, const QString &label, 
-	       int layout, int fitPolicy,
-	       bool alwaysVertLayout) : 
+           int layout, int fitPolicy,
+           bool alwaysVertLayout) : 
   Item(parent, label, layout, alwaysVertLayout) {
   this->fitPolicy = fitPolicy;
 }
@@ -200,7 +200,7 @@ jboolean Choice::handleEvent(QEvent *eventPtr) {
  * @param fitPolicy wrapping or not wrapping the label text
  */
 ChoiceButton::ChoiceButton(const QString &str, QPixmap* img, QWidget *parent,
-			   bool isExclusive, int fitPolicy) 
+               bool isExclusive, int fitPolicy) 
   : QButton( parent, 0, WRepaintNoErase | WResizeNoErase | WMouseNoMask ) {
 
   this->isExclusive = isExclusive;
@@ -262,7 +262,10 @@ void ChoiceButton::keyPressEvent(QKeyEvent *keyEvent) {
     ChoiceButtonBoxBody *qGroup = (ChoiceButtonBoxBody *)QButton::parentWidget();
 
     switch(keyEvent->key()) {
-    case Key_Return:
+#ifdef QT_KEYPAD_MODE
+        case Qt::Key_Select:
+#endif
+    case Qt::Key_Return:
     {
         if (isExclusive) { // radio button
             if (qGroup->selected() != this) {
@@ -278,8 +281,8 @@ void ChoiceButton::keyPressEvent(QKeyEvent *keyEvent) {
         }
     }
     break;
-    case Key_Up:
-    case Key_Left:
+    case Qt::Key_Up:
+    case Qt::Key_Left:
         if (qGroup->find(0)->hasFocus()) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyPressEvent(keyEvent);
@@ -287,8 +290,8 @@ void ChoiceButton::keyPressEvent(QKeyEvent *keyEvent) {
             QButton::keyPressEvent(keyEvent);
         }
         break;
-    case Key_Down:
-    case Key_Right:
+    case Qt::Key_Down:
+    case Qt::Key_Right:
         if (qGroup->find(qGroup->count() - 1)->hasFocus()) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyPressEvent(keyEvent);
@@ -311,8 +314,8 @@ void ChoiceButton::keyReleaseEvent(QKeyEvent *keyEvent) {
     ChoiceButtonBoxBody *qGroup = (ChoiceButtonBoxBody *)QButton::parentWidget();
     
     switch(keyEvent->key()) {
-    case Key_Up:
-    case Key_Left:
+    case Qt::Key_Up:
+    case Qt::Key_Left:
         if (qGroup->find(0)->hasFocus()) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyReleaseEvent(keyEvent);
@@ -320,8 +323,8 @@ void ChoiceButton::keyReleaseEvent(QKeyEvent *keyEvent) {
             QButton::keyReleaseEvent(keyEvent);
         }
         break;
-    case Key_Down:
-    case Key_Right:
+    case Qt::Key_Down:
+    case Qt::Key_Right:
         if (qGroup->find(qGroup->count() - 1)->hasFocus()) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyReleaseEvent(keyEvent);
@@ -379,13 +382,13 @@ QSize ChoiceButton::sizeHint(int w) const {
 
     if (img != NULL) {
       if (mySize.height() < imgSize.height()) {
-	mySize.setHeight(imgSize.height());
+    mySize.setHeight(imgSize.height());
       }
       mySize.rwidth() += imgSize.width(); 
       
       if (!text().isEmpty()) {
-	// 2 pixel pad afterimage
-	mySize.rwidth() += 2;
+    // 2 pixel pad afterimage
+    mySize.rwidth() += 2;
       }
     }
 
@@ -393,21 +396,21 @@ QSize ChoiceButton::sizeHint(int w) const {
       w -= mySize.width();
 
       QRect textRect = 
-	QFontMetrics(font()).boundingRect(mySize.width(), 0, 
-					  w, qteapp_get_mscreen()->getScreenHeight(),
-					  fitPolicy == TEXT_WRAP_OFF ? 
-					  AlignLeft | AlignTop :
-					  AlignLeft | AlignTop | WordBreak,
-					  text()); 
-	
+    QFontMetrics(font()).boundingRect(mySize.width(), 0, 
+                      w, qteapp_get_mscreen()->getScreenHeight(),
+                      fitPolicy == TEXT_WRAP_OFF ? 
+                      AlignLeft | AlignTop :
+                      AlignLeft | AlignTop | WordBreak,
+                      text()); 
+    
       if (textRect.height() > mySize.height()) {
-	mySize.setHeight(textRect.height());
+    mySize.setHeight(textRect.height());
       }
 
       if (textRect.width() >= w) {
-	mySize.rwidth() += w;
+    mySize.rwidth() += w;
       } else {
-	mySize.rwidth() += textRect.width();
+    mySize.rwidth() += textRect.width();
       }
     }
 
@@ -436,13 +439,13 @@ void ChoiceButton::drawButton( QPainter *paint )
 
     if (isExclusive) {
       style().drawExclusiveIndicator(paint, x, y, 
-				     indSize.width(), indSize.height(), 
-				     colorGroup(), 
-				     isOn(), isDown(), isEnabled() );
+                     indSize.width(), indSize.height(), 
+                     colorGroup(), 
+                     isOn(), isDown(), isEnabled() );
     } else {
       style().drawIndicator(paint, x, y, 
-			    indSize.width(), indSize.height(), colorGroup(),
-			    state(), isDown(), isEnabled());
+                indSize.width(), indSize.height(), colorGroup(),
+                state(), isDown(), isEnabled());
     }
 
     x = indSize.width() + 6;
@@ -459,8 +462,8 @@ void ChoiceButton::drawButton( QPainter *paint )
 
     if (img != NULL) {
       style().drawItem( paint, x, y, imgSize.width(), imgSize.height(),
-			AlignLeft|AlignTop, colorGroup(), isEnabled(),
-			img, NULL);
+            AlignLeft|AlignTop, colorGroup(), isEnabled(),
+            img, NULL);
       x += imgSize.width() + 2;
       w -= imgSize.width() + 2;
     } 
@@ -470,24 +473,24 @@ void ChoiceButton::drawButton( QPainter *paint )
       int elWidth = 0;
 
       if (fitPolicy == TEXT_WRAP_OFF &&
-	  paint->fontMetrics().width(text()) > w) {
-	elWidth = paint->fontMetrics().width("...");
+      paint->fontMetrics().width(text()) > w) {
+    elWidth = paint->fontMetrics().width("...");
       }
       style().drawItem( paint, x, y, w - elWidth, h,
-			fitPolicy == TEXT_WRAP_OFF ? 
-			AlignLeft | AlignTop : 
-			AlignLeft | AlignTop | WordBreak, 
-			colorGroup(), isEnabled(), NULL, text());
+            fitPolicy == TEXT_WRAP_OFF ? 
+            AlignLeft | AlignTop : 
+            AlignLeft | AlignTop | WordBreak, 
+            colorGroup(), isEnabled(), NULL, text());
       if (elWidth > 0) {
-	paint->drawText(x + w - elWidth, y, elWidth, h, 
-			AlignLeft | AlignTop, "...");
+    paint->drawText(x + w - elWidth, y, elWidth, h, 
+            AlignLeft | AlignTop, "...");
       }      
     }
 
     if ( hasFocus() ) {
       if (text().isEmpty() && img == NULL) {
-	// draw focus around indicator 1 pixel wider
-	focusRect.setLeft(1);
+    // draw focus around indicator 1 pixel wider
+    focusRect.setLeft(1);
         focusRect.setWidth(indSize.width() + 2);
       }
 
@@ -579,24 +582,24 @@ void ChoiceButtonBoxBody::moveFocus(int key) {
     if (key == Qt::Key_Up && id > 0) {
       button = QVButtonGroup::find(--id);
       if (button != NULL) {
-	button->setFocus();
+    button->setFocus();
         int visY = parentWidget()->y();
-	if (id > 0) {
-	  visY += y() + button->y();
-	}
-	mscreen->ensureVisible(parentWidget()->x(), visY, 0, 0);
+    if (id > 0) {
+      visY += y() + button->y();
+    }
+    mscreen->ensureVisible(parentWidget()->x(), visY, 0, 0);
       }
     } else if (key == Qt::Key_Down && id < QVButtonGroup::count()-1) {
       button = QVButtonGroup::find(++id);
       if (button != NULL) {
-	button->setFocus();
-	int visY = parentWidget()->y();
-	if (id < QVButtonGroup::count()-1) {
-	  visY += y() + button->y() + button->height();
-	} else {
-	  visY += parentWidget()->height();
-	}
-	mscreen->ensureVisible(parentWidget()->x(), visY, 0, 0);
+    button->setFocus();
+    int visY = parentWidget()->y();
+    if (id < QVButtonGroup::count()-1) {
+      visY += y() + button->y() + button->height();
+    } else {
+      visY += parentWidget()->height();
+    }
+    mscreen->ensureVisible(parentWidget()->x(), visY, 0, 0);
       }
     } else {
       // focus does not move
@@ -679,7 +682,7 @@ ChoiceButton * ChoiceButtonBoxBody::selected()
  * @param fitPolicy flag for text wrapping
  */
 ChoiceButtonBox::ChoiceButtonBox(QWidget *parent, const QString &label, 
-				 int layout, bool exclusive, int fitPolicy) : 
+                 int layout, bool exclusive, int fitPolicy) : 
   Choice(parent, label, layout, fitPolicy) {
 
   qGroup = new ChoiceButtonBoxBody(this);
@@ -771,8 +774,8 @@ int ChoiceButtonBox::bodyHeightForWidth(int *takenWidth, int w) {
  * @return status of this call
  */
 MidpError ChoiceButtonBox::insert(int elementNum, 
-			      const QString &str, QPixmap* img, 
-			      jboolean selected) {
+                  const QString &str, QPixmap* img, 
+                  jboolean selected) {
   MidpError err = KNI_OK;
   ChoiceButton *newElement = NULL;
 
@@ -801,8 +804,8 @@ MidpError ChoiceButtonBox::insert(int elementNum,
     for(int i = num-1; i >= elementNum; i--) {
       button = qGroup->find(i);
       if (button != NULL) {
-	qGroup->remove(button);
-	qGroup->insert(button, i+1);
+    qGroup->remove(button);
+    qGroup->insert(button, i+1);
       }
     }
   
@@ -814,12 +817,12 @@ MidpError ChoiceButtonBox::insert(int elementNum,
     for(int i = elementNum+1; i < num+1; i++) {
       button = qGroup->find(i);
       if (button != NULL) {
-	p = button->pos();
-	qGroup->remove(button);
-	button->reparent(0, p);
-	p.setY(p.y() + button->height());
-	button->reparent(qGroup, p, true);
-	qGroup->insert(button, i);
+    p = button->pos();
+    qGroup->remove(button);
+    button->reparent(0, p);
+    p.setY(p.y() + button->height());
+    button->reparent(qGroup, p, true);
+    qGroup->insert(button, i);
       }
     }
   } 
@@ -865,9 +868,9 @@ MidpError ChoiceButtonBox::deleteElement(int elementNum, int selectedIndex) {
     for(int i=elementNum+1; i < qGroup->count()+1; i++) {
       button = qGroup->find(i);
       if (button != NULL) {
-	qGroup->remove(button);
-	// button->reparent(0, QPoint(0,0));
-	qGroup->insert(button, i-1);
+    qGroup->remove(button);
+    // button->reparent(0, QPoint(0,0));
+    qGroup->insert(button, i-1);
       }
     }
   }
@@ -907,7 +910,7 @@ MidpError ChoiceButtonBox::deleteAll() {
  * @return status of this call
  */
 MidpError ChoiceButtonBox::set(int elementNum, const QString &str, QPixmap* img,
-			   jboolean selected) {
+               jboolean selected) {
 
   /* Suppress unused-parameter warning */
   (void)img;
@@ -956,7 +959,7 @@ MidpError ChoiceButtonBox::setSelectedIndex(int elementNum, jboolean selected) {
  * Get the index of current selected element.
  *
  * @param elementNum pointer to the element index to be filled in
- *		-1 if no selection.
+ *      -1 if no selection.
  * @return status of this call
  */
 MidpError ChoiceButtonBox::getSelectedIndex(int *elementNum) {
@@ -980,7 +983,7 @@ MidpError ChoiceButtonBox::getSelectedIndex(int *elementNum) {
  * @return status of this call
  */
 MidpError ChoiceButtonBox::setSelectedFlags(jboolean* selectedArray,
-					int arrayLength) {
+                    int arrayLength) {
 
   /* Suppress unused-parameter warning */
   (void)arrayLength;
@@ -989,8 +992,8 @@ MidpError ChoiceButtonBox::setSelectedFlags(jboolean* selectedArray,
   if (qGroup->isRadioButtonExclusive()) {
     for (int i = 0; i < n; i++) {
       if (selectedArray[i]) {
-	setSelectedIndex(i, true);
-	return KNI_OK;
+    setSelectedIndex(i, true);
+    return KNI_OK;
       }
     }
     setSelectedIndex(0, true);
@@ -999,7 +1002,7 @@ MidpError ChoiceButtonBox::setSelectedFlags(jboolean* selectedArray,
     for (i = 0; i < n; i++) {
       checkbox = (ChoiceButton *)qGroup->find(i);
       if (checkbox != NULL) {
-	checkbox->setChecked(selectedArray[i]);
+    checkbox->setChecked(selectedArray[i]);
       }
     }
   }
@@ -1015,8 +1018,8 @@ MidpError ChoiceButtonBox::setSelectedFlags(jboolean* selectedArray,
  * @return status of this call
  */
 MidpError ChoiceButtonBox::getSelectedFlags(int *numSelected,
-					jboolean* selectedArray, 
-					int arrayLength) {
+                    jboolean* selectedArray, 
+                    int arrayLength) {
   QButton *button;
   int i;
   *numSelected = 0;
@@ -1027,18 +1030,18 @@ MidpError ChoiceButtonBox::getSelectedFlags(int *numSelected,
     if ((button = qGroup->selected()) != NULL) {
       i = qGroup->id(button);
       if (i >= 0) {
-	selectedArray[i] = true;
-	*numSelected = 1;
+    selectedArray[i] = true;
+    *numSelected = 1;
       }
     }
   } else {
     int n = qGroup->count();
     for (i = 0; i < n; i++) {
       if ((button = qGroup->find(i)) != NULL) {
-	selectedArray[i] = button->isOn();
-	if (selectedArray[i]) {
-	  numSelected++;
-	}
+    selectedArray[i] = button->isOn();
+    if (selectedArray[i]) {
+      numSelected++;
+    }
       }
     }
     
@@ -1146,13 +1149,12 @@ void ListElement::paint(QPainter *p) {
           - 2*lb->frameWidth()
           - (lb->verticalScrollBar()->sizeHint()).width();
 
-  int fitPolicy = ((List *)lb->parent())->getFitPolicy();
+  int fitPolicy = ((Choice *)lb->parent())->getFitPolicy();
   if (s.width() < w || fitPolicy == TEXT_WRAP_OFF) {
     w = s.width();
   }
   drawElement(p, 0, 0, w, s.height(), 6, 2,
-	      text(), pix, font == NULL ? lb->font() : *font, 
-	      ((List *)((ListBody *)lb)->parent())->getFitPolicy());
+          text(), pix, font == NULL ? lb->font() : *font, fitPolicy);
 }
 
 /**
@@ -1171,8 +1173,8 @@ int ListElement::width(const QListBox *lb) const {
           - (lb->verticalScrollBar()->sizeHint()).width();
 
   return sizeElement(text(), pix, font == NULL ? lb->font() : *font, 
-		     ((List *)lb->parent())->getFitPolicy(), 
-		     w, 6, 2).width();
+             ((Choice *)lb->parent())->getFitPolicy(), 
+             w, 6, 2).width();
 } 
 
 /**
@@ -1191,8 +1193,8 @@ int ListElement::height(const QListBox *lb) const {
           - (lb->verticalScrollBar()->sizeHint()).width();
 
   return sizeElement(text(), pix, font == NULL ? lb->font() : *font, 
-		     ((List *)lb->parent())->getFitPolicy(), 
-		     w, 6, 2).height();
+             ((Choice *)lb->parent())->getFitPolicy(), 
+             w, 6, 2).height();
 }
 
 /**
@@ -1235,6 +1237,7 @@ ListBody::ListBody(QWidget *parent) : QListBox(parent) {
 ListBody::~ListBody() {
 }
 
+
 /**
  * Override to notify Form focus change.
  *
@@ -1243,7 +1246,7 @@ ListBody::~ListBody() {
 void ListBody::focusInEvent(QFocusEvent *event) {
     // Notify Java if this is caused by user action
     if (event->reason() != QFocusEvent::Other) {
-	MidpFormFocusChanged(parent());
+    MidpFormFocusChanged(parent());
     }
 
     // Continue with focus activation
@@ -1256,29 +1259,42 @@ void ListBody::focusInEvent(QFocusEvent *event) {
  * @param keyEvent key event
  */
 void ListBody::keyPressEvent(QKeyEvent *keyEvent) {
-    switch(keyEvent->key()) {
-    case Key_Up:
-    case Key_Left:
-        if (item(0)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(keyEvent);
-        } else {
-            QListBox::keyPressEvent(keyEvent);
-        }
-        break;
-    case Key_Down:
-    case Key_Right:
-        if (item(count() - 1)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(keyEvent);
-        } else {
-            QListBox::keyPressEvent(keyEvent);
-        }
-        break;
-    default:
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (keyEvent->key() == Qt::Key_Select) {
         QListBox::keyPressEvent(keyEvent);
-        break;
-    }   
+    } else if (isModalEditing()) {
+#endif
+        switch(keyEvent->key()) {
+        case Qt::Key_Up:
+        case Qt::Key_Left:
+            if (item(0)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(keyEvent);
+            } else {
+                QListBox::keyPressEvent(keyEvent);
+            }
+            break;
+        case Qt::Key_Down:
+        case Qt::Key_Right:
+            if (item(count() - 1)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(keyEvent);
+            } else {
+                QListBox::keyPressEvent(keyEvent);
+            }
+            break;
+        default:
+            QListBox::keyPressEvent(keyEvent);
+            break;
+        }
+#ifdef QT_KEYPAD_MODE
+    } else {
+        // not handle events while it's in not modal state
+        keyEvent->ignore();
+    }
+#endif
 }
 
 /**
@@ -1286,30 +1302,43 @@ void ListBody::keyPressEvent(QKeyEvent *keyEvent) {
  *
  * @param keyEvent key event
  */
-void ListBody::keyReleaseEvent(QKeyEvent *keyEvent) {
-    switch(keyEvent->key()) {
-    case Key_Up:
-    case Key_Left:
-        if (item(0)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyReleaseEvent(keyEvent);
-        } else {
-            QListBox::keyReleaseEvent(keyEvent);
-        }
-        break;
-    case Key_Down:
-    case Key_Right:
-        if (item(count() - 1)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyReleaseEvent(keyEvent);
-        } else {
-            QListBox::keyReleaseEvent(keyEvent);
-        }
-        break;
-    default:
+void ListBody::keyReleaseEvent(QKeyEvent *keyEvent) { 
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (keyEvent->key() == Qt::Key_Select) {
         QListBox::keyReleaseEvent(keyEvent);
-        break;
-    }   
+    } else if (isModalEditing()) {
+#endif
+        switch(keyEvent->key()) {
+        case Qt::Key_Up:
+        case Qt::Key_Left:
+            if (item(0)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyReleaseEvent(keyEvent);
+            } else {
+                QListBox::keyReleaseEvent(keyEvent);
+            }
+            break;
+        case Qt::Key_Down:
+        case Qt::Key_Right:
+            if (item(count() - 1)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyReleaseEvent(keyEvent);
+            } else {
+                QListBox::keyReleaseEvent(keyEvent);
+            }
+            break;
+        default:
+            QListBox::keyReleaseEvent(keyEvent);
+            break;
+        }
+#ifdef QT_KEYPAD_MODE
+    } else {
+        // not handle events while it's in not modal state
+        keyEvent->ignore();
+    }
+#endif
 }
 
 
@@ -1402,11 +1431,11 @@ int List::bodyWidthForHeight(int *takenHeight, int h) {
  * @return status of this call
  */
 MidpError List::insert(int elementNum, 
-		       const QString &str, QPixmap* img, 
-		       jboolean selected) {
+               const QString &str, QPixmap* img, 
+               jboolean selected) {
 
   qList->insertItem(new ListElement(str, img, NULL), 
-		    elementNum);
+            elementNum);
 
   qList->setSelected(elementNum, selected);
 
@@ -1448,10 +1477,10 @@ MidpError List::deleteAll() {
  * @return status of this call
  */
 MidpError List::set(int elementNum, const QString &str, QPixmap* img, 
-		    jboolean selected) {
+            jboolean selected) {
 
   qList->changeItem(new ListElement(str, img, NULL), 
-		    elementNum);
+            elementNum);
   if (selected) {
     qList->setSelected(elementNum, selected);
   }
@@ -1510,13 +1539,13 @@ MidpError List::setSelectedFlags(jboolean* selectedArray, int arrayLength) {
  * Get selection state of all elements.
  *
  * @param numSelected pointer to the number of selected elements,
- *			to be set on return
+ *          to be set on return
  * @param selectedArray array to store the selection state
  * @param arrayLength size of the array
  * @return status of this call
  */
 MidpError List::getSelectedFlags(int *numSelected,
-				 jboolean* selectedArray, int arrayLength) {
+                 jboolean* selectedArray, int arrayLength) {
   int i;
   for (i = 0; i < arrayLength; i++) {
     selectedArray[i] = false;
@@ -1598,8 +1627,8 @@ void List::elementSelected(int elementNum) {
  * @param f font to used for this element
  */
 PopupElement::PopupElement(Popup *popup, 
-			   const QString& str, QPixmap* img, 
-			   QFont *f)
+               const QString& str, QPixmap* img, 
+               QFont *f)
   : string(str) {
 
   pix = img;
@@ -1635,8 +1664,8 @@ bool PopupElement::fullSpan () const {
  * @param h maximum height granted
  */
 void PopupElement::paint(QPainter *p, const QColorGroup &cg, 
-			 bool act, bool enabled,
-			 int x, int y, int w, int h) {
+             bool act, bool enabled,
+             int x, int y, int w, int h) {
 
   /* Suppress unused-parameter warning */
   (void)cg;
@@ -1644,8 +1673,8 @@ void PopupElement::paint(QPainter *p, const QColorGroup &cg,
   (void)enabled;
 
   drawElement(p, x, y, w, h, 6, 2, 
-	      string, pix, f == NULL ? popup->font() : *f, 
-	      popup->getFitPolicy());
+          string, pix, f == NULL ? popup->font() : *f, 
+          popup->getFitPolicy());
 }
 
 /**
@@ -1654,7 +1683,7 @@ void PopupElement::paint(QPainter *p, const QColorGroup &cg,
 QSize PopupElement::sizeHint() {
 
   return sizeElement(string, pix, f == NULL ? popup->font() : *f, 
-		     popup->getFitPolicy(), popup->width(), 6, 2);
+             popup->getFitPolicy(), popup->width(), 6, 2);
 }
 
 /**
@@ -1725,8 +1754,8 @@ PopupBody::~PopupBody() {
 void PopupBody::focusInEvent(QFocusEvent *event) {
     // Notify Java if this is caused by user action
     if (event->reason() != QFocusEvent::Other &&
-	event->reason() != QFocusEvent::Popup) {
-	MidpFormFocusChanged(parent());
+    event->reason() != QFocusEvent::Popup) {
+    MidpFormFocusChanged(parent());
     }
 
     // Continue with focus activation
@@ -1741,23 +1770,28 @@ void PopupBody::focusInEvent(QFocusEvent *event) {
  */
 void PopupBody::keyPressEvent(QKeyEvent *keyEvent) {
     switch(keyEvent->key()) {
-    case Key_Return:
-        if (!poppedUp) {
-            popupList();
-        }
-        break;
-    case Key_Up:
-    case Key_Left:
-    case Key_Right:
-    case Key_Down:
-        if (!poppedUp) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(keyEvent);
+        case Qt::Key_Space:
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+#ifdef QT_KEYPAD_MODE
+        case Qt::Key_Select:
+#endif
+            if (!poppedUp) {
+                popupList();
+            }
             break;
-        }
-    default:
-        QPushButton::keyPressEvent(keyEvent);
-        break;
+        case Qt::Key_Up:
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+        case Qt::Key_Down:
+            if (!poppedUp) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(keyEvent);
+                break;
+            }
+        default:
+            QPushButton::keyPressEvent(keyEvent);
+            break;
     }   
 }
 
@@ -1782,10 +1816,10 @@ void PopupBody::mousePressEvent(QMouseEvent *e) {
  */
 void PopupBody::keyReleaseEvent(QKeyEvent *keyEvent) {
     switch(keyEvent->key()) {
-    case Key_Up:
-    case Key_Left:
-    case Key_Right:
-    case Key_Down:
+    case Qt::Key_Up:
+    case Qt::Key_Left:
+    case Qt::Key_Right:
+    case Qt::Key_Down:
         if (!poppedUp) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyReleaseEvent(keyEvent);
@@ -1826,10 +1860,10 @@ bool PopupBody::eventFilter(QObject *object, QEvent *event) {
     
             case QEvent::KeyPress:
                 switch(((QKeyEvent *)event)->key()) {
-                    case Key_Escape:
+                    case Qt::Key_Escape:
             #ifdef QT_KEYPAD_MODE
-                    case Key_Back:
-                    case Key_No:
+                    case Qt::Key_Back:
+                    case Qt::Key_No:
             #endif
                         popDownList();
                         return TRUE;
@@ -1894,30 +1928,38 @@ void PopupBody::popupList() {
     // Send all listbox events to PopupBody eventFilter
     qPopup->installEventFilter(this);
     qPopup->viewport()->installEventFilter(this);
+    PlatformMScreen* mscreen = PlatformMScreen::getMScreen();
 
     // define size and position for popup
-    // following calculations in parent' coordinate system
-    int winH = qteapp_get_mscreen()->getDisplayFullHeight();
-    int bodyY = y();
-    int pX = x();
+    QPoint pos = mapToGlobal(QPoint(0, 0));
+    int winH = mscreen->height();
+    int bodyY = pos.y();
+    int pX = pos.x();
     int pY = bodyY + height();
+    QSize sizeP = qPopup->sizeHint();
     int pW = width();
-    int pH = qPopup->sizeHint().height();
-    if ((pY + pH) > winH) {
+    int pH = sizeP.height();
+    pos = mscreen->mapToGlobal(QPoint(0, 0));
+    int headerH = pos.y();
+
+    int lowerPartH = winH + headerH - pY;
+    int upperPartH = bodyY - headerH;
+    if (pH > lowerPartH) {
         //select the highest part of the widget
-        if ((winH - pY) > bodyY) {
-            pH = winH - pY;
+        if (lowerPartH > upperPartH) {
+            pH = lowerPartH;
+        } else if (pH < upperPartH) {
+            pY = bodyY - pH;
         } else {
-            pY = 0;
-            pH = bodyY;
+            pY = headerH;
+            pH = upperPartH;
         }
     }
 
-    QPoint pos = mapToGlobal(mapFromParent(QPoint(pX, pY)));
     qPopup->resize(pW, pH);
-    qPopup->move(pos.x(), pos.y());
+    qPopup->move(pX, pY);
     qPopup->raise();
-    qPopup->setAutoScrollBar(TRUE);
+    qPopup->setVScrollBarMode(QScrollView::Auto);
     qPopup->show();
 
     poppedUp = TRUE;
@@ -1955,7 +1997,7 @@ void PopupBody::drawButton( QPainter * p ) {
  * @param fitPolicy text wrapping policy
  */
 Popup::Popup(QWidget *parent, const QString &label, 
-	     int layout, int fitPolicy) : 
+         int layout, int fitPolicy) : 
   Choice(parent, label, layout, fitPolicy, false) {
 
   // Try to reuse cached popup body
@@ -1965,11 +2007,12 @@ Popup::Popup(QWidget *parent, const QString &label,
     cachedPopupBody->reparent(this, newpos, FALSE);
     qButton = cachedPopupBody;
     qPopup  = cachedPopupBody->getList();
+    qPopup->reparent(this, newpos, FALSE);
     cachedPopupBody = NULL;
 
   } else {
     qButton = new PopupBody(this);
-    qPopup = new QListBox(qButton, "", WType_Popup);
+    qPopup = new QListBox(this, "", WType_Popup);
     qButton->setList(qPopup);
   }
 
@@ -1988,14 +2031,14 @@ Popup::~Popup() {
     // Instead, we cache it for later use
     if (qteapp_get_application()->activePopupWidget() == qPopup) {
         PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-	    QPoint newpos;
+        QPoint newpos;
     
-	    qPopup->hide(); // Hide popup menu
-	    qButton->hide(); // Hide the push button
+        qPopup->hide(); // Hide popup menu
+        qButton->hide(); // Hide the push button
         disconnect(qPopup, SIGNAL(selected(int)), this, SLOT(elementSelected(int)));
-	    qPopup->clear(); // Empty contents of the popup
-	    qButton->reparent(mscreen, newpos, FALSE); // Reparent to mscreen
-	    cachedPopupBody = qButton;
+        qPopup->clear(); // Empty contents of the popup
+        qButton->reparent(mscreen, newpos, FALSE); // Reparent to mscreen
+        cachedPopupBody = qButton;
     }
 }
 
@@ -2013,9 +2056,9 @@ void Popup::bodyResize(int w, int h) {
  * Move body widget within a popup widget window.
  *
  * @param x X coordinate of top left corner of the body widget.
- *		Relative to popup widget window.
+ *      Relative to popup widget window.
  * @param y Y coordinate of top left corner of the body widget.
- *		Relative to popup widget window.
+ *      Relative to popup widget window.
  */ 
 void Popup::bodyRelocate(int x, int y) {
   qButton->move(x, y);
@@ -2066,8 +2109,8 @@ int Popup::bodyWidthForHeight(int *takenHeight, int h) {
  * @return status of this call
  */
 MidpError Popup::insert(int elementNum, 
-			const QString &str, QPixmap* img, 
-			jboolean selected) {
+            const QString &str, QPixmap* img, 
+            jboolean selected) {
   qPopup->insertItem(new ListElement(str, img, NULL), 
             elementNum);
 
@@ -2081,7 +2124,7 @@ MidpError Popup::insert(int elementNum,
  *
  * @param elementNum index of the element to be deleted
  * @param selIndex index of the element that should be selected
- *			after deletion
+ *          after deletion
  * @return status of this call
  */
 MidpError Popup::deleteElement(int elementNum, int selIndex) {
@@ -2119,7 +2162,7 @@ MidpError Popup::deleteAll() {
  * @return status of this call
  */
 MidpError Popup::set(int elementNum, const QString &str, QPixmap* img, 
-		     jboolean selected) {
+             jboolean selected) {
 
     qPopup->removeItem(elementNum);
     qPopup->insertItem(new ListElement(str, img, NULL), elementNum);
@@ -2173,7 +2216,7 @@ MidpError Popup::getSelectedIndex(int *elementNum) {
  * @return status of the call
  */
 MidpError Popup::setSelectedFlags(jboolean* selectedArray,
-				  int arrayLength) {
+                  int arrayLength) {
 
   /* Suppress unused-parameter warning */
   (void)arrayLength;
@@ -2199,7 +2242,7 @@ MidpError Popup::setSelectedFlags(jboolean* selectedArray,
  * @return status of this call
  */
 MidpError Popup::getSelectedFlags(int *numSelected,
-				  jboolean* selectedArray, int arrayLength) {
+                  jboolean* selectedArray, int arrayLength) {
   int i;
 
   for (i = 0; i < arrayLength; i++) {
@@ -2295,11 +2338,11 @@ int Popup::calculateMaxElementWidth(int width) {
   for (int w = 0, i = 0, n = qPopup->count(); i < n; i++) {
     popupElement = (ListElement *)qPopup->item(i);
     w = sizeElement(popupElement->text(), 
-		    popupElement->pixmap(),
-		    popupElement->getFont() == NULL ? 
-		     qPopup->font() : *(popupElement->getFont()),
-		    TEXT_WRAP_OFF, width,
-		    6, 2).width();
+            popupElement->pixmap(),
+            popupElement->getFont() == NULL ? 
+             qPopup->font() : *(popupElement->getFont()),
+            TEXT_WRAP_OFF, width,
+            6, 2).width();
 
     if (w >= width) {
       return width;
@@ -2330,15 +2373,15 @@ int Popup::calculateMaxElementWidth(int width) {
  */
 extern "C" MidpError
 lfpport_choicegroup_create(MidpItem* cgPtr, MidpDisplayable* formPtr,
-			   const pcsl_string* label, int layout,
-			   MidpComponentType choiceType,
-			   MidpChoiceGroupElement* choices, int numOfChoices,
-			   int selectedIndex, int fitPolicy) {
+               const pcsl_string* label, int layout,
+               MidpComponentType choiceType,
+               MidpChoiceGroupElement* choices, int numOfChoices,
+               int selectedIndex, int fitPolicy) {
   QString qlabel, qstring;
   Choice *cg = NULL;
   int i;
   QWidget *parentWidgetPtr = (formPtr == INVALID_NATIVE_ID ? 
-			      0 : (QWidget *)formPtr->frame.widgetPtr);
+                  0 : (QWidget *)formPtr->frame.widgetPtr);
 
   pcsl_string2QString(*label, qlabel);
   switch(choiceType) {
@@ -2368,8 +2411,8 @@ lfpport_choicegroup_create(MidpItem* cgPtr, MidpDisplayable* formPtr,
     pcsl_string2QString(choices[i].string, qstring);
 
     if (cg->insert(i, qstring, 
-		   gxpportqt_get_immutableimage_pixmap(choices[i].image), 
-		   choices[i].selected) < 0) {
+           gxpportqt_get_immutableimage_pixmap(choices[i].image), 
+           choices[i].selected) < 0) {
         return KNI_ERR;
     }
    
@@ -2396,16 +2439,16 @@ lfpport_choicegroup_create(MidpItem* cgPtr, MidpDisplayable* formPtr,
  */
 extern "C" MidpError
 lfpport_choicegroup_insert(MidpItem* cgPtr,
-			   int elementNum, MidpChoiceGroupElement element) {
+               int elementNum, MidpChoiceGroupElement element) {
   QString qStr;
 
   pcsl_string2QString(element.string, qStr);
 
   return ((Choice *)cgPtr->widgetPtr)->insert(
-		       elementNum,
-		       qStr, 
-		       gxpportqt_get_immutableimage_pixmap(element.image),
-		       element.selected);
+               elementNum,
+               qStr, 
+               gxpportqt_get_immutableimage_pixmap(element.image),
+               element.selected);
 }
 
 /**
@@ -2419,7 +2462,7 @@ lfpport_choicegroup_insert(MidpItem* cgPtr,
  */
 extern "C" MidpError
 lfpport_choicegroup_delete(MidpItem* cgPtr, int elementNum, 
-			   int selectedIndex) {
+               int selectedIndex) {
 
   return ((Choice *)cgPtr->widgetPtr)->deleteElement(elementNum, selectedIndex);
 }
@@ -2450,16 +2493,16 @@ lfpport_choicegroup_delete_all(MidpItem* cgPtr) {
  */
 extern "C" MidpError
 lfpport_choicegroup_set(MidpItem* cgPtr,
-		     int elementNum, MidpChoiceGroupElement element) {
+             int elementNum, MidpChoiceGroupElement element) {
   QString qStr;
 
   pcsl_string2QString(element.string, qStr);
 
   return ((Choice *)cgPtr->widgetPtr)->set(
-		      elementNum, 
-		      qStr,
-		      gxpportqt_get_immutableimage_pixmap(element.image),
-		      element.selected); 
+              elementNum, 
+              qStr,
+              gxpportqt_get_immutableimage_pixmap(element.image),
+              element.selected); 
 }
 
 /**
@@ -2475,9 +2518,9 @@ lfpport_choicegroup_set(MidpItem* cgPtr,
  */
 extern "C" MidpError
 lfpport_choicegroup_set_selected_index(MidpItem* cgPtr,
-		int elementNum, jboolean selected) {
+        int elementNum, jboolean selected) {
   return ((Choice *)cgPtr->widgetPtr)->setSelectedIndex(elementNum, 
-							selected); 
+                            selected); 
 }
 
 /**
@@ -2504,10 +2547,10 @@ lfpport_choicegroup_get_selected_index(int* elementNum, MidpItem* cgPtr) {
  */
 extern "C" MidpError
 lfpport_choicegroup_set_selected_flags(MidpItem* cgPtr, 
-				       jboolean* selectedArray,
-				       int arrayLength) {
+                       jboolean* selectedArray,
+                       int arrayLength) {
   return ((Choice *)cgPtr->widgetPtr)->setSelectedFlags(selectedArray,
-							arrayLength); 
+                            arrayLength); 
 }
 
 /**
@@ -2522,13 +2565,13 @@ lfpport_choicegroup_set_selected_flags(MidpItem* cgPtr,
  */
 extern "C" MidpError
 lfpport_choicegroup_get_selected_flags(int *numSelected,
-				       MidpItem* cgPtr,
-				       jboolean* selectedArray_return,
-				       int arrayLength) {
+                       MidpItem* cgPtr,
+                       jboolean* selectedArray_return,
+                       int arrayLength) {
   return ((Choice *)cgPtr->widgetPtr)->getSelectedFlags(numSelected,
-							selectedArray_return,
-							arrayLength);
-							     
+                            selectedArray_return,
+                            arrayLength);
+                                 
 }
 
 /**
@@ -2541,7 +2584,7 @@ lfpport_choicegroup_get_selected_flags(int *numSelected,
  */
 extern "C" MidpError
 lfpport_choicegroup_is_selected(jboolean *selected, MidpItem* cgPtr, 
-				int elementNum) {
+                int elementNum) {
   return ((Choice *)cgPtr->widgetPtr)->isSelected(selected, elementNum);
 }
 
@@ -2569,9 +2612,9 @@ lfpport_choicegroup_set_fit_policy(MidpItem* cgPtr, int fitPolicy) {
  */
 extern "C" MidpError
 lfpport_choicegroup_set_font(MidpItem* cgPtr, 
-			     int elementNum, PlatformFontPtr fontPtr) {
+                 int elementNum, PlatformFontPtr fontPtr) {
   return ((Choice *)cgPtr->widgetPtr)->setFont(elementNum,
-					       (QFont *)fontPtr);
+                           (QFont *)fontPtr);
 }
 
 /**

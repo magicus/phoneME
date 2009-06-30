@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -42,7 +42,6 @@ import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
 
 import com.sun.midp.log.Logging;
 
@@ -292,7 +291,7 @@ final class ConnectionRegistry
      *
      * @param midlet The proxy of the MIDlet being added
      */
-    public void midletAdded(MIDletProxy midlet) {};
+    public void midletAdded(MIDletProxy midlet) {}
 
     /**
      * Called when the state of a MIDlet in the list is updated.
@@ -300,7 +299,7 @@ final class ConnectionRegistry
      * @param midlet The proxy of the MIDlet that was updated
      * @param fieldId code for which field of the proxy was updated
      */
-    public void midletUpdated(MIDletProxy midlet, int fieldId) {};
+    public void midletUpdated(MIDletProxy midlet, int fieldId) {}
 
     /**
      * Called when a MIDlet is removed from the list, the connections
@@ -309,9 +308,7 @@ final class ConnectionRegistry
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        byte[] asciiClassName = Util.toCString(midlet.getClassName());
-
-        checkInByMidlet0(midlet.getSuiteId(), asciiClassName);
+        checkInByMidlet0(midlet.getSuiteId(), midlet.getClassName());
     }
 
     /**
@@ -322,13 +319,13 @@ final class ConnectionRegistry
      * @param externalAppId ID assigned by the external application manager
      * @param suiteId Suite ID of the MIDlet
      * @param className Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error code
      */
     public void midletStartError(int externalAppId, int suiteId,
-                                 String className, int error) {
-        byte[] asciiClassName = Util.toCString(className);
-
-        checkInByMidlet0(suiteId, asciiClassName);
+                                 String className, int errorCode,
+                                 String errorDetails) {
+        checkInByMidlet0(suiteId, className);
     }
 
     /**
@@ -365,11 +362,12 @@ final class ConnectionRegistry
      * @see #unregisterConnection
      */
     public static void registerConnection(MIDletSuite midletSuite,
-            Connection connection, String midlet, String filter)
+            String connection, String midlet, String filter)
         throws ClassNotFoundException, IOException {
 
+        checkRegistration(connection, midlet, filter);
         registerConnectionInternal(midletSuite,
-                            connection.getConnection(), midlet, filter, true);
+                            connection, midlet, filter, true);
     }
 
     /**
@@ -384,11 +382,11 @@ final class ConnectionRegistry
      * @exception ConnectionNotFoundException if PushRegistry doesn't support
      *               this kind of connections
      */
-    static void checkRegistration(Connection connection, String midlet,
+    static void checkRegistration(String connection, String midlet,
                                   String filter)
                                   throws ConnectionNotFoundException {
-        final String c = connection.getConnection();
-        ProtocolPush.getInstance(c).checkRegistration(c, midlet, filter);
+        ProtocolPush.getInstance(connection)
+            .checkRegistration(connection, midlet, filter);
     }
 
     /**
@@ -443,15 +441,20 @@ final class ConnectionRegistry
                 .registerConnection(midletSuite, connection, midlet, filter);
         }
 
-        byte[] asciiRegistration = Util.toCString(connection
+        String asciiRegistration = connection
                   + "," + midlet
                   + "," + filter
-                  + "," + suiteIdToString(midletSuite));
+                  + "," + suiteIdToString(midletSuite);
 
-        if (add0(asciiRegistration) == -1) {
+        int ret = add0(asciiRegistration);
+        if (ret == -1) {
             // in case of Bluetooth URL, unregistration within Bluetooth
             // PushRegistry was already performed by add0()
-            throw new IOException("Connection already registered");
+            throw new IOException("Connection already registered: " + connection);
+        } else if (ret == -2) {
+            throw new OutOfMemoryError("Connection registering");
+        } else if (ret == -3) {
+            throw new IllegalArgumentException("Connection not found");
         }
     }
 
@@ -472,9 +475,7 @@ final class ConnectionRegistry
     public static boolean unregisterConnection(MIDletSuite midletSuite,
             String connection) {
 
-        byte[] asciiRegistration = Util.toCString(connection);
-        byte[] asciiStorage = Util.toCString(suiteIdToString(midletSuite));
-        int ret =  del0(asciiRegistration, asciiStorage);
+        int ret =  del0(connection, suiteIdToString(midletSuite));
         if (ret == -2) {
             throw new SecurityException("wrong suite");
         }
@@ -506,7 +507,6 @@ final class ConnectionRegistry
      * @see #unregisterConnection
      */
     static boolean checkInConnectionInternal(final String connection) {
-        int ret;
 
         /* Verify that the connection requested is valid. */
         if (connection == null || connection.length() == 0) {
@@ -605,6 +605,7 @@ final class ConnectionRegistry
     /**
      * Retrieve the registered <code>MIDlet</code> for a requested connection.
      *
+     * @param midletSuite suite to fetch class name for
      * @param connection generic connection <em>protocol</em>, <em>host</em>
      *              and <em>port number</em>
      *              (optional parameters may be included
@@ -615,7 +616,7 @@ final class ConnectionRegistry
      *              registered
      * @see #registerConnection
      */
-    public static String getMIDlet(String connection) {
+    public static String getMIDlet(MIDletSuite midletSuite, String connection) {
 
         String midlet = null;
         byte[] asciiConn = Util.toCString(connection);
@@ -640,6 +641,7 @@ final class ConnectionRegistry
     /**
      * Retrieve the registered filter for a requested connection.
      *
+     * @param midletSuite suite to fetch filter for
      * @param connection generic connection <em>protocol</em>, <em>host</em>
      *              and <em>port number</em>
      *              (optional parameters may be included
@@ -650,7 +652,7 @@ final class ConnectionRegistry
      *              registered
      * @see #registerConnection
      */
-    public static String getFilter(String connection) {
+    public static String getFilter(MIDletSuite midletSuite, String connection) {
 
         String filter = null;
         byte[] asciiConn = Util.toCString(connection);
@@ -707,16 +709,28 @@ final class ConnectionRegistry
     }
 
     /**
+     * Loads application class given its name.
+     *
+     * @param className name of class to load
+     * @return instance of class
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    static Class loadApplicationClass(final String className)
+            throws ClassNotFoundException {
+        return Class.forName(className);
+    }
+
+    /**
       * Converts <code>MIDlet</code> suite ID into a string.
       *
-      * @param midletSuite <code>MIDlet</code> suite to convert ID of
+      * @param suiteId <code>MIDlet</code> suite to convert ID of
       * @return string representation
       */
     private static String suiteIdToString(final int suiteId) {
         // assert storage != null; // Listener should be started before
         return storage.suiteIdToString(suiteId);
     }
-      
+
     /**
       * Converts <code>MIDlet</code> suite ID into a string.
       *
@@ -727,13 +741,13 @@ final class ConnectionRegistry
         // assert midletSuite != null;
         return suiteIdToString(midletSuite.getID());
     }
-      
+
     /**
      * Native connection registry add connection function.
      * @param connection string to register
      * @return 0 if successful, -1 if failed
      */
-    private static native int add0(byte[] connection);
+    private static native int add0(String connection);
 
     /**
      * Native function to test registered inbound connections
@@ -781,7 +795,7 @@ final class ConnectionRegistry
      * @param storage current suite storage name
      * @return 0 if successful, -1 if failed
      */
-    private static native int del0(byte[] connection, byte[] storage);
+    private static native int del0(String connection, String storage);
 
     /**
      * Native connection registry check in connection function.
@@ -806,7 +820,7 @@ final class ConnectionRegistry
      *        byte array
      */
     private static native void checkInByMidlet0(int suiteId,
-                                                byte[] className);
+                                                String className);
 
     /**
      * Native connection registry list connection function.

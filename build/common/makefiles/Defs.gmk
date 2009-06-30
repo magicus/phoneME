@@ -1,27 +1,27 @@
 #
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 #####################################################################
 #
@@ -55,6 +55,7 @@
 # LD            - Linker command
 # CC            - Compiler command
 # KDP_CMD       - Command for the CLDC Debug Proxy
+# MEMPROF_CMD   - Command for the CLDC memory profiler client
 #
 # Other variables that may be defined elsewhere:
 #
@@ -70,6 +71,9 @@
 #                    convert them to a platform native representation, 
 #                    and cache the converted image for faster loading
 #                    at runtime of the MIDlet.
+# USE_ICON_CACHE   - Store icons of all installed midlet suites in one
+#                    file that will be read during the system startup
+#                    to speed up displaying the icons in the AMS.
 # USE_JAVA_DEBUGGER - Include the CLDC debugger hooks to communicate
 #                  with an external proxy agent. (default value is false)
 # USE_JAVA_PROFILER  - Compile MIDP with the VMs Java profiler
@@ -100,7 +104,30 @@ LIBDIR       = $(MIDP_OUTPUT_DIR)/lib
 OBJ_DIR      = $(MIDP_OUTPUT_DIR)/obj$(g)/$(TARGET_CPU)
 BINDIR       = $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)
 STORAGEDIR   = $(MIDP_OUTPUT_DIR)/appdb
+ifneq ($(TARGET_VM), cdc_vm)
+EXTSTORAGEDIR= $(MIDP_OUTPUT_DIR)/memory_card
+endif
 GENERATED_DIR= $(MIDP_OUTPUT_DIR)/generated
+
+MIDP_CLASSES_ZIP ?= $(MIDP_OUTPUT_DIR)/classes.zip
+
+ifeq ($(TARGET_VM), cdc_vm)
+   ifneq ($(CVM_STATICLINK_LIBS), true)
+      MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+      MIDP_SHARED_LIB_FILES += $(OBJ_FILES)
+      CREATE_MIDP_SHARED_LIB = true
+   endif
+else
+   MIDP_LIB_NAME ?= $(LIB_PREFIX)midp
+   ifeq ($(CREATE_MIDP_SHARED_LIB),true)
+      MIDP_SHARED_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(SHARED_LIB_SUFFIX)
+      MIDP_SHARED_LIB_FILES += $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
+   endif
+   ifeq ($(CREATE_MIDP_LIB),true)
+      MIDP_LIB = $(BINDIR)/$(MIDP_LIB_NAME)$(LIB_SUFFIX)
+      MIDP_LIB_FILES += $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
+   endif
+endif
 
 # Use "_" since it will be used by other modules
 BUILD_COMMON_CONFIG_DIR = $(MIDP_DIR)/build/common/config
@@ -151,7 +178,7 @@ LOG_ONLY   = >> $(LOG_FILE)
 #
 JAR_CMD      = $(JDK_DIR)/bin/jar$(EXE)
 JAVA_CMD     = $(JDK_DIR)/bin/java$(EXE)
-JAVAC_CMD    = $(JDK_DIR)/bin/javac$(EXE)
+JAVAC_CMD    = $(JDK_DIR)/bin/javac$(EXE) -source 1.3 -target 1.3
 JAVADOC_CMD  = $(JDK_DIR)/bin/javadoc$(EXE)
 
 # MIDP tools
@@ -159,11 +186,14 @@ JAVADOC_CMD  = $(JDK_DIR)/bin/javadoc$(EXE)
 ifeq ($(TARGET_VM), cldc_vm)
    PREVERIFY_CMD        = $(BINDIR)/preverify$(EXE)
    KDP_CMD              = $(BINDIR)/kdp.jar
+   ifeq ($(ENABLE_MEMORY_PROFILER), true)
+     MEMPROF_CMD        = $(BINDIR)/memprof_client.jar
+   endif
    J2ME_CONFIGURATION   = cldc
    EXTRA_CFLAGS        += -DENABLE_CDC=0
 else
    J2ME_CONFIGURATION   = cdc
-   EXTRA_CFLAGS        += -DENABLE_CDC=1
+   EXTRA_CFLAGS        += $(VM_FLAGS) -DENABLE_CDC=1
    JPP_DEFS            += -DENABLE_CDC
 endif
 
@@ -179,6 +209,16 @@ ifeq ($(USE_IMAGE_CACHE), true)
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=1
 else
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=0
+endif
+
+ifeq ($(TARGET_VM), cdc_vm)
+   USE_ICON_CACHE = false
+endif
+
+ifeq ($(USE_ICON_CACHE), true)
+   EXTRA_CFLAGS += -DENABLE_ICON_CACHE=1
+else
+   EXTRA_CFLAGS += -DENABLE_ICON_CACHE=0
 endif
 
 ifeq ($(USE_I3_TEST), true)
@@ -209,17 +249,61 @@ else
    EXTRA_CFLAGS += -DENABLE_MULTIPLE_ISOLATES=0
 endif
 
+ifeq ($(USE_MULTIPLE_DISPLAYS), true)
+   EXTRA_CFLAGS += -DENABLE_MULTIPLE_DISPLAYS=1
+else
+   EXTRA_CFLAGS += -DENABLE_MULTIPLE_DISPLAYS=0
+endif
+
 ifeq ($(USE_JAVA_DEBUGGER), true)
    EXTRA_CFLAGS += -DENABLE_JAVA_DEBUGGER=1
-else
+else               
    EXTRA_CFLAGS += -DENABLE_JAVA_DEBUGGER=0
 endif
 
-ifeq ($(USE_NATIVE_AMS), true)
-   EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=1
-   JPP_DEFS	+= -DENABLE_NATIVE_AMS
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_APP_MANAGER=1
+   JPP_DEFS	+= -DENABLE_NATIVE_APP_MANAGER
+
+ifeq ($(USE_NAMS_TEST_SERVICE), true)
+   EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=1
+   JPP_DEFS	+= -DENABLE_NAMS_TEST_SERVICE
 else
-   EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=0
+   EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=0
+endif
+
+# Remove the WTK dependency when building with Native App. Manager
+ifeq ($(MIDP_BIN_TARGET), wtk)
+    MIDP_BIN_TARGET=
+else
+ifeq ($(MIDP_BIN_TARGET), sdk)
+    MIDP_BIN_TARGET=
+endif
+endif
+
+else
+   EXTRA_CFLAGS += -DENABLE_NATIVE_APP_MANAGER=0 -DENABLE_NAMS_TEST_SERVICE=0
+endif
+
+ifeq ($(USE_NATIVE_INSTALLER), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_INSTALLER=1
+   JPP_DEFS	+= -DENABLE_NATIVE_INSTALLER
+else   
+   EXTRA_CFLAGS += -DENABLE_NATIVE_INSTALLER=0
+endif
+
+ifeq ($(USE_NATIVE_SUITE_STORAGE), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_SUITE_STORAGE=1
+   JPP_DEFS	+= -DENABLE_NATIVE_SUITE_STORAGE
+else   
+   EXTRA_CFLAGS += -DENABLE_NATIVE_SUITE_STORAGE=0
+endif
+
+ifeq ($(USE_NATIVE_RMS), true)
+   EXTRA_CFLAGS += -DENABLE_NATIVE_RMS=1
+   JPP_DEFS	+= -DENABLE_NATIVE_RMS
+else   
+   EXTRA_CFLAGS += -DENABLE_NATIVE_RMS=0
 endif
 
 ifeq ($(USE_NATIVE_PTI), true)
@@ -239,6 +323,7 @@ ifeq ($(USE_CLDC_11), true)
     JPP_DEFS	 += -DENABLE_CLDC_11
 else
     EXTRA_CFLAGS += -DENABLE_CLDC_11=0
+    JPP_DEFS	 += -DENABLE_CLDC_10
 endif
 
 ifeq ($(USE_VM_PROFILES), true)
@@ -266,6 +351,49 @@ else
    EXTRA_CFLAGS += -DENABLE_JPEG=0
 endif
 
+ifeq ($(USE_DIRECTDRAW), true)
+   EXTRA_CFLAGS += -DENABLE_DIRECT_DRAW=1
+else
+   EXTRA_CFLAGS += -DENABLE_DIRECT_DRAW=0
+endif
+
+ifeq ($(USE_FILE_SYSTEM), true)
+   EXTRA_CFLAGS += -DENABLE_FILE_SYSTEM=1
+else
+   EXTRA_CFLAGS += -DENABLE_FILE_SYSTEM=0
+endif
+
+ifeq ($(USE_ON_DEVICE_DEBUG), true)
+   EXTRA_CFLAGS += -DENABLE_ON_DEVICE_DEBUG=1
+   JPP_DEFS += -DENABLE_ON_DEVICE_DEBUG
+else
+   EXTRA_CFLAGS += -DENABLE_ON_DEVICE_DEBUG=0
+endif
+
+ifeq ($(USE_WTK_DEBUG), true)
+   EXTRA_CFLAGS += -DENABLE_WTK_DEBUG=1
+else
+   EXTRA_CFLAGS += -DENABLE_WTK_DEBUG=0
+endif
+
+ifeq ($(USE_AMS_FOLDERS), true)
+   EXTRA_CFLAGS += -DENABLE_AMS_FOLDERS=1
+else
+   EXTRA_CFLAGS += -DENABLE_AMS_FOLDERS=0
+endif
+
+ifeq ($(USE_OCSP), true)
+   EXTRA_CFLAGS += -DENABLE_OCSP=1
+else
+   EXTRA_CFLAGS += -DENABLE_OCSP=0
+endif
+
+ifeq ($(USE_DYNAMIC_COMPONENTS), true)
+   EXTRA_CFLAGS += -DENABLE_DYNAMIC_COMPONENTS=1
+else
+   EXTRA_CFLAGS += -DENABLE_DYNAMIC_COMPONENTS=0
+endif
+
 EXTRA_CFLAGS += -DPROJECT_NAME='"$(PROJECT_NAME)"'
 
 ifeq ($(USE_NATIVE_PROFILER), true)
@@ -273,12 +401,6 @@ ifeq ($(USE_NATIVE_PROFILER), true)
 else
    p =
 endif
-
-ifeq ($(USE_CLDC_RELEASE), true)
-   r = _r
-else 
-   r = 
-endif 
 
 ifeq ($(USE_DEBUG), true)
     EXTRA_CFLAGS += -DAZZERT=1 -DENABLE_DEBUG=1
@@ -295,12 +417,37 @@ else
     g = 
 endif
 
+ifeq ($(USE_CLDC_RELEASE), true)
+   cldc_g =
+   cldc_r = _r
+else 
+   cldc_g = $(g)
+   cldc_r = 
+endif 
+
 ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
     EXTRA_CFLAGS += -DENABLE_CONTROL_ARGS_FROM_JAD=1
     JPP_DEFS	 += -DENABLE_CONTROL_ARGS_FROM_JAD
 else
     EXTRA_CFLAGS += -DENABLE_CONTROL_ARGS_FROM_JAD=0
 endif
+
+ifeq ($(USE_RGBA8888_PIXEL_FORMAT), true)
+    EXTRA_CFLAGS += -DENABLE_RGBA8888_PIXEL_FORMAT=1
+    EXTRA_CFLAGS += -DENABLE_ABGR8888_PIXEL_FORMAT=0
+    EXTRA_CFLAGS += -DENABLE_32BITS_PIXEL_FORMAT=1
+else
+ifeq ($(USE_ABGR8888_PIXEL_FORMAT), true)
+    EXTRA_CFLAGS += -DENABLE_ABGR8888_PIXEL_FORMAT=1
+    EXTRA_CFLAGS += -DENABLE_RGBA8888_PIXEL_FORMAT=0
+    EXTRA_CFLAGS += -DENABLE_32BITS_PIXEL_FORMAT=1
+else
+    EXTRA_CFLAGS += -DENABLE_RGBA8888_PIXEL_FORMAT=0
+    EXTRA_CFLAGS += -DENABLE_ABGR8888_PIXEL_FORMAT=0
+    EXTRA_CFLAGS += -DENABLE_32BITS_PIXEL_FORMAT=0
+endif
+endif
+
 
 # Default compile flags
 #
@@ -332,6 +479,10 @@ OBJ_FILES += $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(JTWI_NATIVE_FILES)
 # subsystem)
 #
 override REBUILD_JAVA_LIST=$(MIDP_OUTPUT_DIR)/javalist.txt
+override SUBSET_API_JAVA_LIST=$(MIDP_OUTPUT_DIR)/subsetjavalist.txt
+override SUPERSET_API_JAVA_LIST=$(MIDP_OUTPUT_DIR)/supersetjavalist.txt
+override ALL_JAVA_LIST=$(MIDP_OUTPUT_DIR)/alljavalist.txt
+
 override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 
 # Add changed java files to REBUILD_JAVA_LIST
@@ -342,36 +493,58 @@ override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 # line length limit on cygwin, we split it into 100 words length chunks. 
 # This is not guaranteed to help in all cases, but at least reduce the 
 # possibility of it happening.
-define appendjavafiles
-    @if [ $(words $?) -gt 200 ]; then \
-        echo "ERROR: Java files list exceeds 200 words limit."; \
-        echo "To increase the limit, edit appendjavafiles variable definition in Defs.gmk"; \
+define appendfiles
+    @if [ $(words $?) -gt 250 ]; then \
+        echo "ERROR: Java files list exceeds 250 words limit."; \
+        echo "To increase the limit, edit appendfiles variable definition in Defs.gmk"; \
         exit 1; \
     fi
-    @_javalist="$(wordlist 1,100,$?)"; ( \
+    @_javalist="$(wordlist 1,125,$?)"; \
     if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
-    fi )
-    @_javalist="$(wordlist 101,200,$?)"; ( \
+        echo "$$_javalist" >> $(1); \
+    fi
+    @_javalist="$(wordlist 126,250,$?)"; \
     if [ -n "$$_javalist" ]; then \
-        echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
-    fi )
+        echo "$$_javalist" >> $(1); \
+    fi
+endef
+
+define appendjavafiles
+    @$(call appendfiles,$(REBUILD_JAVA_LIST)) 
+    @$(call appendfiles,$(ALL_JAVA_LIST)) 
+endef
+
+define appendsubsetjavafiles
+    @$(call appendfiles,$(SUBSET_API_JAVA_LIST)) 
+    @$(call appendfiles,$(ALL_JAVA_LIST)) 
+endef
+
+define appendsupersetjavafiles
+    @$(call appendfiles,$(SUPERSET_API_JAVA_LIST)) 
+    @$(call appendfiles,$(ALL_JAVA_LIST)) 
 endef
 
 # Distinguish between normal java files from generated one 
 #
 define countjavafiles
-if [ -f $(REBUILD_JAVA_LIST) ]; then \
-   num1=`cat $(REBUILD_JAVA_LIST) | wc -w`; \
- else \
-   num1=0; \
+ if [ -f $(REBUILD_JAVA_LIST) ]; then \
+   filenames=$(REBUILD_JAVA_LIST); \
+ fi; \
+ if [ -f $(SUBSET_API_JAVA_LIST) ]; then \
+   filenames="$$filenames $(SUBSET_API_JAVA_LIST)"; \
+ fi; \
+ if [ -f $(SUPERSET_API_JAVA_LIST) ]; then \
+   filenames="$$filenames $(SUPERSET_API_JAVA_LIST)"; \
+ fi; \
+ if [ -n "$$filenames" ]; then \
+   num=`cat $$filenames | wc -w`; \
  fi; \
  if [ -f $(GENERATED_JAVA_LIST) ]; then \
-   num2=`cat $(GENERATED_JAVA_LIST) | wc -w`; \
+   num4=`cat $(GENERATED_JAVA_LIST) | wc -w`; \
  else \
-   num2=0; \
+   num4=0; \
  fi; \
- echo " ... compiling $$num1 .java files and $$num2 generated .java files";
+ echo " ... compiling $$num .java files and $$num4 generated .java files";
 endef
 
 # Macro to compile Java sources with preverifier and then to build
@@ -391,7 +564,9 @@ define compilefiles
 		rm -rf $(VERIFYDIR); \
 		mkdir $(VERIFYDIR); \
 	fi $(LOG)
-	$(A)(if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST) ]; then\
+	$(A)(if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST) \
+					  -o -f $(SUBSET_API_JAVA_LIST)  \
+					  -o -f $(SUPERSET_API_JAVA_LIST) ]; then\
 		if test "$(TARGET_VM)" = "cldc_vm"; then \
 			chmod +x $(PREVERIFY_CMD); \
 		fi; \
@@ -406,9 +581,28 @@ define compilefiles
 		else \
 			f2= ; \
 		fi ; \
-		$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
-			-bootclasspath $(BOOTCLASSPATH) \
-			-classpath $(CLASSBINDIR) $$f1 $$f2 || exit 1; \
+		if [ -f $(SUBSET_API_JAVA_LIST) ] ; then \
+			f3=@$(SUBSET_API_JAVA_LIST) ; \
+		else \
+			f3= ; \
+		fi ; \
+		if [ -n "$$f1$$f2$$f3" ]; then \
+			echo " ... compiling subset API java files..."; \
+			$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
+				-bootclasspath "$(BOOTCLASSPATH)" \
+				-classpath $(CLASSBINDIR) $$f1 $$f2 $$f3 || exit 1; \
+		fi ; \
+		if [ -f $(SUPERSET_API_JAVA_LIST) ] ; then \
+			f4=@$(SUPERSET_API_JAVA_LIST) ; \
+		else \
+			f4= ; \
+		fi ; \
+		if [ -n "$$f4" ]; then \
+			echo " ... compiling superset API java files..."; \
+			$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
+				-bootclasspath "$(BOOTCLASSPATH)$(PATHSEP)$(JAVAC_OUT_DIR)" \
+				-classpath $(CLASSBINDIR) $$f1 $$f2 $$f4 || exit 1; \
+		fi ; \
 		if test "$(TARGET_VM)" = "cldc_vm"; then \
 		    num=`find $(VERIFYDIR) -type f -print | wc -l`; \
 		    num=`echo $$num | cut -f1 -d' '` ; \
@@ -420,17 +614,54 @@ define compilefiles
 	else \
 		echo " ... no need to recompile .java files"; \
 	fi) $(LOG)
-	@if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST) -o ! -f $@ ]; then \
+	@if [ -f $(REBUILD_JAVA_LIST) -o -f $(GENERATED_JAVA_LIST)    \
+	                              -o -f $(SUBSET_API_JAVA_LIST)   \
+	                              -o -f $(SUPERSET_API_JAVA_LIST) -o ! -f $@ ]; then \
 		echo " ... $@"; \
 		rm -f $@; \
 		$(JAR_CMD) -cf $@ -C $(CLASSBINDIR) .; \
 	fi $(LOG)
 endef
 
+# Rules to split $(MIDP_CLASSES_ZIP) into $(MIDP_PUB_CLASSES_ZIP) and 
+# $(MIDP_PRIV_CLASSES_ZIP) for proper romization so that midp classes 
+# packed in $(MIDP_PRIV_CLASSES_ZIP) be available at bootclasspath.
+#
+ifeq ($(TARGET_VM), cldc_vm)
+split_midpclasses_zip :=
+else
+bootclasspath_zip_entries = \
+        $(addsuffix /, $(subst .,/,$(MIDP_BOOTCLASSPATH_PACKAGES_LIST))) \
+        $(addsuffix /\*, $(subst .,/,$(MIDP_BOOTCLASSPATH_PACKAGES_LIST))) \
+        $(addsuffix .class, $(subst .,/,$(MIDP_BOOTCLASSPATH_CLASSES_LIST))) \
+        $(addsuffix \$$*.class, $(subst .,/,$(MIDP_BOOTCLASSPATH_CLASSES_LIST)))
+
+build_midp_pub_classes_zip = \
+	$(if $(1), zip -qd $(MIDP_PUB_CLASSES_ZIP) $(1), true)
+
+build_midp_priv_classes_zip = \
+	$(if $(1), zip -qr $(MIDP_PRIV_CLASSES_ZIP) $(subst \*,*,$(1)), \
+               zip -q $(MIDP_PRIV_CLASSES_ZIP) com)
+
+define split_midpclasses_zip_impl
+	$(AT)if [ ! -f $(MIDP_PUB_CLASSES_ZIP) -o \
+                  ! -f $(MIDP_PRIV_CLASSES_ZIP) -o \
+                  $(MIDP_PUB_CLASSES_ZIP) -ot $@ -o \
+                  $(MIDP_PRIV_CLASSES_ZIP) -ot $@ ]; then \
+		echo splitting $@...; \
+		cp $@ $(MIDP_PUB_CLASSES_ZIP); \
+		(cd $(MIDP_OUTPUT_DIR)/classes && \
+                $(build_midp_pub_classes_zip) && \
+                $(build_midp_priv_classes_zip)); \
+	fi
+endef
+split_midpclasses_zip = $(call split_midpclasses_zip_impl, $(bootclasspath_zip_entries))
+endif
+
 # Macro to clean up file list
 #
 define remove_filelist
-	-@(rm -f $(REBUILD_JAVA_LIST)) $(LOG)
+	-@(rm -f $(REBUILD_JAVA_LIST) $(SUBSET_API_JAVA_LIST) $(SUPERSET_API_JAVA_LIST))  $(LOG)
 endef
 
 # Macro to clean up generated file list

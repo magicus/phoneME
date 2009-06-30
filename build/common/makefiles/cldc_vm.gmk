@@ -1,27 +1,27 @@
 #
 # 	
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 ######################################################################
 
@@ -109,8 +109,8 @@ define verify_cldc
         exit -1; \
     fi; \
     \
-    makfile=$(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r).make; \
-    if grep "VM_arch.*=.*$(TARGET_CPU)" $$makfile > /dev/null; then \
+    makfile=$(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r).make; \
+    if grep "VM_arch.*=.*\($(TARGET_CPU)\|c\)" $$makfile > /dev/null; then \
        true; \
     else \
         echo "ERROR: TARGET_CPU ($(TARGET_CPU)) mismatch with VM_arch in $$makfile"; \
@@ -132,25 +132,34 @@ ROMGEN_CMD   = $(CLDC_DIST_DIR)/bin/romgen$(EXE)
 ROMGEN_CFG_LST = $(GENERATED_DIR)/rom_configs.lst
 
 ROMGEN_CFG_FILES = rom.config $(EXTRA_ROMGEN_CFG_FILES)
-ROMGEN_INCLUDE_PATHS =  $(CLDC_DIST_DIR)/lib
+ROMGEN_INCLUDE_PATHS +=  $(CLDC_DIST_DIR)/lib
 ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config
 
 ROMGEN_ARGS += -romconfig $(ROMGEN_CFG_LST)
 ROMGEN_ARGS += +GenerateROMStructs
 ROMGEN_ARGS += +EnableROMCompilation
 
-ifeq ($(USE_DEBUG), true)
-    ifeq ($(USE_JAVA_DEBUGGER), true)
-	ROMGEN_ARGS += +MakeROMDebuggable
-    endif
+ifeq ($(USE_SYSTEM_CLASSES_DEBUG), true)
+    ROMGEN_ARGS += +MakeROMDebuggable
 else
-    ifneq ($(USE_I3_TEST), true)
-	ROMGEN_ARGS += +EnableAllROMOptimizations
-	ifeq ($(USE_JAVA_PROFILER), true)
-	ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
-	endif
-	ifeq ($(TARGET_OS), armsd)
-	ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+    ifeq ($(USE_DEBUG), true)
+        ifeq ($(USE_JAVA_DEBUGGER), true)
+            ROMGEN_ARGS += +MakeROMDebuggable
+        endif
+    endif
+endif
+
+ifneq ($(USE_DEBUG), true)
+    ifneq ($(USE_SYSTEM_CLASSES_DEBUG), true)
+        ifneq ($(USE_I3_TEST), true)
+            # ROM optimizations do not work with DEBUG, WTK_DEBUG or I3_TEST
+            ROMGEN_ARGS += +EnableAllROMOptimizations
+            ifeq ($(USE_JAVA_PROFILER), true)
+                ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+            endif
+            ifeq ($(TARGET_OS), armsd)
+                ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+            endif
 	endif
     endif
 endif
@@ -167,6 +176,12 @@ CLDCTEST_CLASSES_ZIP = $(CLDC_DIST_DIR)/lib/cldctest_classes.zip
 # The K Debug Proxy executable
 #
 CLDC_KDP_CMD = $(CLDC_DIST_DIR)/bin/kdp.jar
+
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+# The memory profiler client
+#
+CLDC_MEMPROF_CMD = $(CLDC_DIST_DIR)/bin/memprof_client.jar
+endif
 
 # CLDC preverifier executable
 #
@@ -191,18 +206,26 @@ $(KDP_CMD): $(CLDC_KDP_CMD)
 	@cp -f $< $@ $(LOG)
 	@chmod a+x $@ $(LOG)
 
-$(MIDP_OUTPUT_DIR)/nativeFunctionTable.cpp: $(MIDP_OUTPUT_DIR)/classes.zip \
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+# Copy the CLDC memory profile client into MIDP bin directory
+#
+$(MEMPROF_CMD): $(CLDC_MEMPROF_CMD)
+	@cp -f $< $@ $(LOG)
+	@chmod a+x $@ $(LOG)
+endif
+
+$(MIDP_OUTPUT_DIR)/nativeFunctionTable.cpp: $(MIDP_CLASSES_ZIP) \
 					    $(JCC_CMD)
 	@echo " ... generating $@" $(LOG)
 	@echo +++ $(JAVA_CMD) -jar $(JCC_CMD) \
 		-writer CLDC_HI_Natives -o $@ \
-		$(MIDP_OUTPUT_DIR)/classes.zip $(LOG_ONLY)
+		$(MIDP_CLASSES_ZIP) $(LOG_ONLY)
 	@cd $(MIDP_OUTPUT_DIR); \
 	$(JAVA_CMD) -jar $(JCC_CMD) \
 		-writer CLDC_HI_Natives -o $@ \
-		$(MIDP_OUTPUT_DIR)/classes.zip $(LOG)
+		$(MIDP_CLASSES_ZIP) $(LOG)
 
-$(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_OUTPUT_DIR)/classes.zip \
+$(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_CLASSES_ZIP) \
 				 $(ROMGEN_CMD) \
                                  $(MIDP_DIR)/build/common/config/rom.config
 	@echo " ... generating $@" $(LOG)
@@ -213,14 +236,14 @@ $(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_OUTPUT_DIR)/classes.zip \
 	 done
 		
 	@echo	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
-		-cp $(MIDP_OUTPUT_DIR)/classes.zip \
+		-cp $(MIDP_CLASSES_ZIP) \
 		-romize =HeapCapacity96M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
 		-romincludepath $(path)) $(LOG)		
 		
 	@cd $(MIDP_OUTPUT_DIR); \
 	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
-		-cp $(MIDP_OUTPUT_DIR)/classes.zip \
+		-cp $(MIDP_CLASSES_ZIP) \
 		-romize =HeapCapacity96M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
 		-romincludepath $(path)) $(LOG)
@@ -238,7 +261,7 @@ UNCOMPRESSED_VM_CLASSES += $(CLDC_TEST_REFLECT_CLASS)
 endif
 
 # Uncompress cldc_classes.zip to $(MIDP_OUTPUT_DIR)/classes/ directory
-# to include CLDC classes in $(MIDP_OUTPUT_DIR)/classes.zip
+# to include CLDC classes in $(MIDP_CLASSES_ZIP)
 $(CLDC_JAVA_LANG_OBJECT_CLASS): $(CLDC_CLASSES_ZIP)
 	@if [ '!' -d $(CLASSBINDIR) ]; then \
 		mkdir -p $(CLASSBINDIR); \
@@ -256,7 +279,7 @@ $(CLDC_TEST_REFLECT_CLASS): $(CLDCTEST_CLASSES_ZIP)
 # Include C and LD flags exported by the VM build process. This is
 # important in configuring the word ordering of double precision floating point
 # variables in the ROM image, among other things.
--include $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r).make
+-include $(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r).make
 LD_FLAGS       += ${JVM_LINK_FLAGS}
 EXTRA_CFLAGS   += ${JVM_CC_FLAGS}
 EXTRA_CPPFLAGS += ${JVM_CPP_FLAGS}

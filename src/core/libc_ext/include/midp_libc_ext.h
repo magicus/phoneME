@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef MIDP_LIBC_EXT_H
@@ -57,16 +57,12 @@ extern int midp_snprintf(char* buffer, int bufferSize,
 
 /**
  * Same as for snprintf. Not all compilers provide vsnprintf function, 
- * so we have to use workaround. In debug mode it does buffer 
- * overflow checking, and in release mode it works as vsprintf.
+ * so we have to use workaround. Platform's vsnprintf function can be used
+ * instead of midp_vsnprintf when it is supported.
+ * 
  */
-#if ENABLE_DEBUG
 extern int midp_vsnprintf(char *buffer, int bufferSize, 
         const char* format, va_list argptr);
-#else
-#define midp_vsnprintf(buffer, bufferSize, format, argptr) \
-    vsprintf(buffer, format, argptr)
-#endif
 
 /**
  * Not all compilers provide the POSIX function strcasesmp, so we need to

@@ -1,29 +1,32 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.security;
+
+import java.util.Hashtable;
+import java.util.Enumeration;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -40,10 +43,7 @@ public class SecurityInitializerImpl {
     SecurityToken internalSecurityToken;
 
     /** List of trusted class names */
-    private String[] trustedClasses;
-
-    /** Index of the first trusted name in the list */
-    private int trustedStart = 0;
+    private Hashtable trustedClasses;
 
     /**
      * Check whether object is the instance of a trusted class, that means
@@ -51,33 +51,21 @@ public class SecurityInitializerImpl {
      * The optimized implementation for this method can be provided in
      * VM specific way.
      *
-     * Note, the implementation allows only single request for
-     * <code>SecurityToken</code> for each trusted class, the class
-     * is removed from the trusted list after token hand out.
-     *
      * @param object instance of the trusted class known to the initializer
      * @return true if the object belongs to trusted class, false otherwise
      */
     boolean isTrusted(Object object) {
-        if (trustedClasses != null) {
-            String className = object.getClass().getName();
-
-            // IMPL_NOTE: Optimize search for trusted class name
-            for (int i=trustedStart; i<trustedClasses.length; i++) {
-                if (className.equals(trustedClasses[i])) {
-                    // Free name of the used trusted class and
-                    // move forward the first name index
-                    if (trustedStart != i) {
-                        trustedClasses[i] =
-                            trustedClasses[trustedStart];
-                    }
-                    trustedClasses[trustedStart] = null;
-                    trustedStart++;
-                    return true;
-                }
-            }
+        if (trustedClasses == null) {
+            return false;
         }
-        return false;
+//        System.out.println("SecurityInitializerImpl.isTrusted: " + object.getClass().getName());
+//        Enumeration e = trustedClasses.keys();
+//        for (int i = 0; e.hasMoreElements(); i++)
+//        {
+//            System.out.println("e["+i+"]=" + (String)e.nextElement());
+//        }
+
+        return (trustedClasses.get(object.getClass().getName()) != null);
     }
 
     /**
@@ -107,7 +95,10 @@ public class SecurityInitializerImpl {
      */
     public SecurityInitializerImpl(SecurityToken token, String[] trusted) {
         internalSecurityToken = token;
-        trustedClasses = trusted;
-    }
+        trustedClasses = new Hashtable(trusted.length);
 
+        for (int i = 0; i < trusted.length; i++) {
+            trustedClasses.put(trusted[i], trusted[i]);
+        }
+    }
 }

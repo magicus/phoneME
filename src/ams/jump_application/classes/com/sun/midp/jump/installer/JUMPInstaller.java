@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -32,7 +32,6 @@ import com.sun.midp.installer.ManifestProperties;
 import com.sun.midp.installer.OtaNotifier;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.VerifierImpl;
-import com.sun.midp.installer.JarReader;
 
 import java.util.Vector;
 
@@ -43,6 +42,8 @@ import java.io.ByteArrayInputStream;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.SecurityHandler;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
@@ -50,7 +51,6 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.main.MIDletSuiteVerifier;
 import com.sun.midp.main.MIDletAppImageGenerator;
 
-import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
@@ -62,6 +62,8 @@ import com.sun.midp.midletsuite.SuiteSettings;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 
+import com.sun.midp.jarutil.JarReader;
+
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
 
@@ -71,8 +73,8 @@ import com.sun.midp.io.j2me.storage.File;
 
 import com.sun.midp.rms.RecordStoreFactory;
 
-//FIXME: sync with cldc installer for CHManager dependency
-//import com.sun.midp.content.CHManager;
+// IMPL_NOTE: sync with cldc installer for CHManager dependency
+// import com.sun.midp.content.CHManager;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -189,7 +191,7 @@ public abstract class JUMPInstaller {
 
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
-        Permissions.UNIDENTIFIED_DOMAIN_BINDING;
+        Permissions.getUnsignedDomain();
 
     /* SecurityToken provided by the user of the JUMPInstaller */
     protected SecurityToken token = null;
@@ -281,8 +283,8 @@ public abstract class JUMPInstaller {
         state.removeRMS = removeRMS;
         state.nextStep = 1;
         state.listener = installListener;
-        //FIXME: sync with cldc installer for CHManager dependency
-        //state.chmanager = CHManager.getManager(null);
+        // IMPL_NOTE: sync with cldc installer for CHManager dependency
+        // state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
 
         return performInstall();
@@ -298,7 +300,8 @@ public abstract class JUMPInstaller {
         state.localJadUrl = jadLocal;
         state.jadEncoding = encoding;
 
-        return installJad(location, storageId, force, removeRMS, installListener);
+        return installJad(location, storageId, force, removeRMS,
+			  installListener);
     }
 
 
@@ -366,23 +369,27 @@ public abstract class JUMPInstaller {
         state.file = new File();
         state.nextStep = 5;
         state.listener = installListener;
-        //state.chmanager = CHManager.getManager(null);
+        // state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
 
         return performInstall();
     }
 
     /**
-     * @param local    the location in local filesystem where the JAR can be updated
-    **/
-    public int installJar(String location, String local, String name, int storageId, 
-                boolean force, boolean removeRMS, InstallListener installListener)
-                throws IOException, InvalidJadException,
-                    MIDletSuiteLockedException {
+     * @param local    the location in local filesystem where the JAR
+     * can be updated
+     */
+    public int installJar(String location, String local, String name,
+			  int storageId, 
+			  boolean force, boolean removeRMS,
+			  InstallListener installListener)
+	throws IOException, InvalidJadException,
+	       MIDletSuiteLockedException {
         state.localJarUrl = local;
-        return installJar(location, name, storageId, force, removeRMS, installListener);
+        return installJar(location, name, storageId, force,
+			  removeRMS, installListener);
     }
-
+    
     /**
      * Performs an install.
      *
@@ -399,20 +406,20 @@ public abstract class JUMPInstaller {
      * descriptor file is not specified
      */
     protected int performInstall()
-            throws IOException, InvalidJadException,
+	throws IOException, InvalidJadException,
                    MIDletSuiteLockedException {
-
+	
         state.midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
-
+	
         /* Disable push interruptions during install. */
         PushRegistryInternal.enablePushLaunch(false);
-
+	
         try {
             state.startTime = System.currentTimeMillis();
-
+	    
             while (state.nextStep < 9) {
-    
-		     
+		
+		
                 /*
                  * clear the previous warning, so we can tell if another has
                  * happened
@@ -421,10 +428,10 @@ public abstract class JUMPInstaller {
 
                 if (state.stopInstallation) {
                     postInstallMsgBackToProvider(
-                        OtaNotifier.USER_CANCELLED_MSG);
+		        OtaNotifier.USER_CANCELLED_MSG);
                     throw new IOException("stopped");
                 }
-
+		
                 switch (state.nextStep) {
                 case 1:
                     installStep1();
@@ -497,7 +504,7 @@ public abstract class JUMPInstaller {
 
             PushRegistryInternal.enablePushLaunch(true);
         }
-
+        
         return info.id;
     }
 
@@ -567,7 +574,7 @@ public abstract class JUMPInstaller {
             state.jad = null;
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw ije;
-        } catch(java.io.UnsupportedEncodingException uee) {
+        } catch (java.io.UnsupportedEncodingException uee) {
             state.jad = null;
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw new InvalidJadException(
@@ -678,7 +685,8 @@ public abstract class JUMPInstaller {
         state.jad = null;
 
         state.file = new File();
-
+        
+        /*
         if (suiteSize > state.file.getBytesAvailableForFiles(state.storageId)) {
             postInstallMsgBackToProvider(
                 OtaNotifier.INSUFFICIENT_MEM_MSG);
@@ -688,6 +696,7 @@ public abstract class JUMPInstaller {
                 InvalidJadException(InvalidJadException.INSUFFICIENT_STORAGE,
                     Integer.toString((suiteSize + 1023)/ 1024));
         }
+        */
 
         info.jarUrl = state.jadProps.getProperty(MIDletSuite.JAR_URL_PROP);
         if (info.jarUrl == null || info.jarUrl.length() == 0) {
@@ -781,8 +790,8 @@ public abstract class JUMPInstaller {
             // Create JAR Properties (From .jar file's MANIFEST)
 
             try {
-                state.manifest = JarReader.readJarEntry(token,
-                    info.jarFilename, MIDletSuite.JAR_MANIFEST);
+                state.manifest = JarReader.readJarEntry(info.jarFilename,
+                    MIDletSuite.JAR_MANIFEST);
                 if (state.manifest == null) {
                     postInstallMsgBackToProvider(
                         OtaNotifier.INVALID_JAR_MSG);
@@ -815,10 +824,12 @@ public abstract class JUMPInstaller {
             state.jarProps = new ManifestProperties();
 
             try {
-//                JarFile jarFile = new JarFile(new java.io.File(info.jarFilename));
-//                Manifest manifest = jarFile.getManifest();
+		//  JarFile jarFile = 
+		//    new JarFile(new java.io.File(info.jarFilename));
+		//  Manifest manifest = jarFile.getManifest();
 
-//                state.jarProps.readFromAttributes(manifest.getMainAttributes());
+		//  state.jarProps.readFromAttributes(
+		//    manifest.getMainAttributes());
 
                 state.jarProps.load(new ByteArrayInputStream(state.manifest));
                 state.manifest = null;
@@ -902,7 +913,9 @@ public abstract class JUMPInstaller {
                         OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
                     throw new InvalidJadException(
                          InvalidJadException.VERSION_MISMATCH, 
-                             new String(info.suiteVersion + "," + state.jarProps.getProperty(MIDletSuite.VERSION_PROP)));
+                             new String(info.suiteVersion + ","
+					+ state.jarProps.getProperty(
+					    MIDletSuite.VERSION_PROP)));
                 }
 
                 if (!info.suiteVendor.equals(
@@ -1007,7 +1020,7 @@ public abstract class JUMPInstaller {
             }
 
             info.trusted = Permissions.isTrusted(info.domain);
-
+                       
             // Do not overwrite trusted suites with untrusted ones
             if (!info.trusted && state.isPreviousVersion &&
                     state.previousSuite.isTrusted()) {
@@ -1024,7 +1037,7 @@ public abstract class JUMPInstaller {
              * The unidentified suites do not get checked for requested
              * permissions.
              */
-            if (Permissions.UNIDENTIFIED_DOMAIN_BINDING.equals(info.domain)) {
+            if (Permissions.getUnsignedDomain().equals(info.domain)) {
 
                 settings.setPermissions((Permissions.forDomain(
                     info.domain)) [Permissions.CUR_LEVELS]);
@@ -1073,35 +1086,35 @@ public abstract class JUMPInstaller {
             checkConfiguration();
             matchProfile();
 
-        //FIXME: sync with cldc installer for CHManager dependency
-         /**
-        *    try {
-        *         state.chmanager.preInstall(this,
-        *                (InstallState)state,
-        *                (MIDletSuite)state,
-        *                (info.authPath == null ?
-        *                    null : info.authPath[0]));
-        *     } catch (InvalidJadException jex) {
-        *         // Post the correct install notify msg back to the server
-        *         String msg = OtaNotifier.INVALID_CONTENT_HANDLER;
-        *         if (jex.getReason() ==
-        *             InvalidJadException.CONTENT_HANDLER_CONFLICT) {
-        *             msg = OtaNotifier.CONTENT_HANDLER_CONFLICT;
-        *         }
-
-        *         postInstallMsgBackToProvider(msg);
-        *         throw jex;
-        *     } catch (SecurityException se) {
-        *         postInstallMsgBackToProvider(
-        *             OtaNotifier.AUTHORIZATION_FAILURE_MSG);
-
-        *         // since our state object put the permission in message
-        *         throw new InvalidJadException(
-        *             InvalidJadException.AUTHORIZATION_FAILURE,
-        *             se.getMessage());
-        *     }
-        **/
-
+	    // IMPL_NOTE: sync with cldc installer for CHManager dependency
+	    /*
+	     *    try {
+	     *         state.chmanager.preInstall(this,
+	     *                (InstallState)state,
+	     *                (MIDletSuite)state,
+	     *                (info.authPath == null ?
+	     *                    null : info.authPath[0]));
+	     *     } catch (InvalidJadException jex) {
+	     *         // Post the correct install notify msg back to the server
+	     *         String msg = OtaNotifier.INVALID_CONTENT_HANDLER;
+	     *         if (jex.getReason() ==
+	     *             InvalidJadException.CONTENT_HANDLER_CONFLICT) {
+	     *             msg = OtaNotifier.CONTENT_HANDLER_CONFLICT;
+	     *         }
+	     *
+	     *         postInstallMsgBackToProvider(msg);
+	     *         throw jex;
+	     *     } catch (SecurityException se) {
+	     *         postInstallMsgBackToProvider(
+	     *             OtaNotifier.AUTHORIZATION_FAILURE_MSG);
+	     *
+	     *         // since our state object put the permission in message
+	     *         throw new InvalidJadException(
+	     *             InvalidJadException.AUTHORIZATION_FAILURE,
+	     *             se.getMessage());
+	     *     }
+	     */
+	    
             // make sure at least 1 second has passed
             try {
                 long waitTime = 1000 -
@@ -1132,8 +1145,8 @@ public abstract class JUMPInstaller {
             registerPushConnections();
 
             /** Do the Content Handler registration updates now */
-            //FIXME: sync with cldc installer for CHManager dependency
-            //state.chmanager.install();
+            // IMPL_NOTE: sync with cldc installer for CHManager dependency
+            // state.chmanager.install();
 
             /*
              * Store suite will remove the suite including push connections,
@@ -1268,7 +1281,7 @@ public abstract class JUMPInstaller {
 
         try {
             /* Attempt to read the MIDlet from the JAR file. */
-            if (JarReader.readJarEntry(token, info.jarFilename, file) != null) {
+            if (JarReader.readJarEntry(info.jarFilename, file) != null) {
                 return;                // File found, normal return
             }
             // Fall into throwing the exception
@@ -1302,7 +1315,7 @@ public abstract class JUMPInstaller {
      *   of the JAR
      */
     protected abstract int downloadJAR(String filename) throws IOException;
-
+   
     /**
      * If the JAD belongs to an installed suite, check the URL against the
      * installed one. Set the state.exception if the user needs to be warned.
@@ -1356,15 +1369,16 @@ public abstract class JUMPInstaller {
             // there is no previous version
             return;
         }
-
+        
         try {
             midletSuite =
               state.midletSuiteStorage.getMIDletSuite(id, true);
 
             if (midletSuite == null) {
                 // there is no previous version
+                state.isPreviousVersion = false;
                 return;
-            }
+            }             
             checkVersionFormat(info.suiteVersion);
 
             state.isPreviousVersion = true;
@@ -1821,13 +1835,7 @@ public abstract class JUMPInstaller {
      * @param domain name of a security domain
      */
     public void setUnsignedSecurityDomain(String domain) {
-        MIDletSuite midletSuite = MIDletStateHandler.
-            getMidletStateHandler().getMIDletSuite();
-
-        // if a MIDlet suite is not started, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
-        }
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         unsignedSecurityDomain = domain;
     }
@@ -2344,13 +2352,14 @@ public abstract class JUMPInstaller {
             }
         }
 
-        if (curLevels[Permissions.PUSH] == Permissions.NEVER) {
+		int PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
+        if (curLevels[PUSH_ID] == Permissions.NEVER) {
             settings.setPushInterruptSetting(Permissions.NEVER);
-        } else if (curLevels[Permissions.PUSH] == Permissions.ALLOW) {
+        } else if (curLevels[PUSH_ID] == Permissions.ALLOW) {
             // Start the default at session for usability when denying.
             settings.setPushInterruptSetting(Permissions.SESSION);
         } else {
-            settings.setPushInterruptSetting(curLevels[Permissions.PUSH]);
+            settings.setPushInterruptSetting(curLevels[PUSH_ID]);
         }
     }
 

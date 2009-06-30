@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.installer;
@@ -32,6 +32,8 @@ import java.io.OutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.io.Base64;
@@ -39,8 +41,6 @@ import com.sun.midp.io.Base64;
 import com.sun.midp.io.j2me.http.Protocol;
 
 import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
@@ -118,6 +118,8 @@ public final class OtaNotifier {
     /**
      * Posts a status message back to the provider's URL in JAD.
      * This method will also retry ALL pending delete notifications.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param message status message to post
      * @param suite MIDlet suite object
@@ -127,15 +129,8 @@ public final class OtaNotifier {
     public static void postInstallMsgBackToProvider(String message,
             MIDletSuite suite, String proxyUsername, String proxyPassword) {
         String url;
-        MIDletSuite callingMidletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
 
-        if (callingMidletSuite == null) {
-            throw new IllegalStateException("This method can't be called " +
-                "before a suite is started.");
-        }
-
-        callingMidletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         // Now, send out install notifications
         url = suite.getProperty(NOTIFY_PROP);

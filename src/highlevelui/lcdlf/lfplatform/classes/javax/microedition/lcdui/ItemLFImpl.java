@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 package javax.microedition.lcdui;
 
@@ -432,7 +432,7 @@ abstract class ItemLFImpl implements ItemLF {
         int l = item.layout;
         if (l == Item.LAYOUT_DEFAULT) {
 	    // the spec requires the default vertical layout to be bottom
-            return Item.LAYOUT_BOTTOM | Item.LAYOUT_LEFT;
+            return Item.LAYOUT_BOTTOM;
         } else {
             return l;
         }
@@ -659,7 +659,11 @@ abstract class ItemLFImpl implements ItemLF {
      * @param w the new width of the item's content area
      * @param h the new height of the item's content area
      */
-    void uCallSizeChanged(int w, int h) { }
+    void uCallSizeChanged(int w, int h) {
+        synchronized (Display.LCDUILock) {
+            item.lUpdateLockedSize();
+        }
+ }
     
     /**
      * Called to commit any pending user interaction for the item.
@@ -710,6 +714,26 @@ abstract class ItemLFImpl implements ItemLF {
 	if (nativeId != DisplayableLFImpl.INVALID_NATIVE_ID) {
 	    setSize0(nativeId, w, h);
 	}
+    }
+
+    /**
+     * Sets the content size in the passed in array.
+     * Content is calculated based on the availableWidth.
+     * size[WIDTH] and size[HEIGHT] should be set by this method.
+     * Subclasses need to override this method for correct layout.
+     * @param size The array that holds Item content size and location
+     *             in Item internal bounds coordinate system.
+     * @param availableWidth The width available for this Item
+     */
+    void lGetContentSize(int size[], int availableWidth) {
+    }
+
+    /**
+     * Return the content size
+     * @return  array of content size
+     */
+    int[] lGetContentBounds() {
+        return null;
     }
 
     /**
@@ -851,8 +875,8 @@ abstract class ItemLFImpl implements ItemLF {
 	    // To make sure that happens we do the following check.
 	    // That check must be removed if FormLFImpl supports
 	    // dynamic change of the width available for layout.
-	    if (ownerLFImpl.width == Display.WIDTH &&
-		minimumHeight > Display.HEIGHT) {
+	    if (ownerLFImpl.width == ownerLFImpl.currentDisplay.width &&
+		minimumHeight > ownerLFImpl.currentDisplay.height) {
 	    
 		ownerLFImpl.width -= Constants.VERT_SCROLLBAR_WIDTH;
 	    }

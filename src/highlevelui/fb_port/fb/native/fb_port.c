@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -249,11 +249,15 @@ void initFrameBuffer() {
 }
 
 /**
-  * Change screen orientation to landscape or portrait,
-  * depending on the current screen mode 
-  */
+ * Change screen orientation to landscape or portrait,
+ * depending on the current screen mode
+ */
 void reverseScreenOrientation() {
-    gxj_rotate_screen_buffer();
+
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    gxj_rotate_screen_buffer(KNI_FALSE);
 }
 
 /** Initialize frame buffer video device */
@@ -294,6 +298,30 @@ static void checkScreenBufferSize(int width, int height) {
             width, height);
         exit(1);
     }
+}
+
+
+/** Get x-coordinate of screen origin */
+int getScreenX(int screenRotated) {
+    // System screen buffer geometry
+    int bufWidth = gxj_system_screen_buffer.width;
+    int x = 0;
+    int LCDwidth = screenRotated ? fb.height : fb.width;
+    if (LCDwidth > bufWidth) {
+        x = (LCDwidth - bufWidth) / 2;
+    }
+    return x;
+}
+
+/** Get y-coordinate of screen origin */
+int getScreenY(int screenRotated) {
+    int bufHeight = gxj_system_screen_buffer.height;
+    int y = 0;
+    int LCDheight = screenRotated ? fb.width : fb.height;
+    if (LCDheight > bufHeight) {
+        y = (LCDheight - bufHeight) / 2;
+    }
+    return y;
 }
 
 /** Refresh screen from offscreen buffer */
@@ -453,10 +481,7 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
         // Max screen size is 176x220 but can only display 176x208
-        // Since the rotated refresh is started from the left lower
-        // corner of the screen, we need to skip two bottom lines
         dstHeight = bufWidth;
-        dst -= dstWidth * 2;
     }
 
     // Make sure the copied lines are 4-byte aligned for faster memcpy
@@ -476,7 +501,7 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
         }
 
     src += x1 + y1 * bufWidth;
-    dst += y1 + (bufWidth - x1) * dstWidth;
+    dst += y1 + (bufWidth - x1 - 1) * dstWidth;
 
     srcInc = bufWidth - srcWidth;      // increment for src pointer at the end of row
     dstInc = srcWidth * dstWidth + 1;  // increment for dst pointer at the end of column

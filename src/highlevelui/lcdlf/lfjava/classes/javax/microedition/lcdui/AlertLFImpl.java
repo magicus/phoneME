@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -37,8 +37,8 @@ import java.util.TimerTask;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.chameleon.skins.AlertSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.AlertResources;
-import com.sun.midp.chameleon.layers.AlertLayer;
 
 /**
  * This is the look &amp; feel implementation for Alert.
@@ -131,6 +131,9 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
                 timerTask = null;
             } else {
                 timerTask = new TimeoutTask();
+                if (timeoutTimer == null) {
+                    timeoutTimer = new Timer();
+                }
                 timeoutTimer.schedule(timerTask, timeout);
             }                       
         } catch (Throwable t) {
@@ -188,7 +191,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      * (3) repaint contents
      */
     public void uCallInvalidate() {
-        boolean wasModal = isLayoutValid && (maxScroll > 0);
+        boolean wasModal = maxScroll > 0 || alert.numCommands > 1;
 
         super.uCallInvalidate();
         
@@ -226,7 +229,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     public void lAddCommand(Command cmd, int i) {
         super.lAddCommand(cmd, i);
         // make alert Modal
-        if (alert.numCommands == 1) {
+        if (alert.numCommands == 2) {
             lSetTimeout(alert.getTimeout());
         }
     }
@@ -244,7 +247,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     public void lRemoveCommand(Command cmd, int i) {
         super.lRemoveCommand(cmd, i);
         // remove modality if it was forced by command presence
-        if (alert.numCommands == 0) {
+        if (alert.numCommands == 1) {
             lSetTimeout(alert.getTimeout());
         }
     }
@@ -335,10 +338,10 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
         // We vertically center the title text
         titley = 
             (AlertSkin.TITLE_HEIGHT - AlertSkin.FONT_TITLE.getHeight()) / 2;
-        
+
         switch (AlertSkin.TITLE_ALIGN) {
             case Graphics.RIGHT:
-                titlex = AlertSkin.WIDTH - AlertSkin.TITLE_MARGIN - titlew;
+                titlex = AlertSkin.WIDTH - AlertSkin.TITLE_MARGIN;
                 break;
             case Graphics.HCENTER:
                 titlex = (AlertSkin.WIDTH - titlew) / 2;
@@ -355,7 +358,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
         
         if (icon != null) {
             g.drawImage(icon, titlex, icony,
-                        Graphics.LEFT | Graphics.TOP);
+                        ScreenSkin.TEXT_ORIENT | Graphics.TOP);
             titlex += (AlertSkin.PAD_HORIZ + iconw);
             titlew -= (AlertSkin.PAD_HORIZ + iconw);
         }
@@ -497,14 +500,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
             layout();
         }
 
-        int timeout = alert.getTimeout();
-        if (timeout != Alert.FOREVER) {
-            if (timeoutTimer == null) {
-                timeoutTimer = new Timer();
-            }
-            timerTask = new TimeoutTask();
-            timeoutTimer.schedule(timerTask, timeout);
-        }
+        lSetTimeout(alert.getTimeout());
         
         // We reset any scrolling done in a previous showing
         viewable[Y] = 0;
@@ -580,7 +576,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      */
     void layout() {
         super.layout();
-        
+
         // layout() is called from DisplayableLFImpl constructor
         // and at that time alert is not initialized
         if (alert == null) {
@@ -590,8 +586,9 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
 
         // The width of the viewable area is equal to the width of
         // the alert minus a left and right margin
-        viewable[WIDTH] = AlertSkin.WIDTH - (2 * AlertSkin.MARGIN_H);
-        
+
+        viewable[WIDTH] = getDisplayableWidth() - (2 * AlertSkin.MARGIN_H);
+
         // height of activity indicator, if any
         int indHeight = 0;                
         if (alert.indicator != null) {
@@ -693,26 +690,6 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     }
     
     /**
-     * Calculate the height a displayable would occupy if it was to
-     * be displayed.
-     *
-     * @return the height a displayable would occupy 
-     */
-    public int getDisplayableHeight() {
-        return AlertSkin.HEIGHT;
-    }
-
-    /**
-     * Calculate the width a displayable would occupy if it was to
-     * be displayed
-     *
-     * @return the width a displayable would occupy 
-     */
-    public int getDisplayableWidth() {
-        return AlertSkin.WIDTH;
-    }
-
-    /**
      * The maximum amount of scroll needed to see all the contents
      * @return get the maximum scroll amount
      */
@@ -728,6 +705,30 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      */
     protected int getScrollAmount() {
         return AlertSkin.SCROLL_AMOUNT;
+    }
+
+    /**
+     * Calculate the height a displayable would occupy if it was to
+     * be displayed.
+     *
+     * @return the height a displayable would occupy 
+     */
+    public int getDisplayableHeight() {
+        return (currentDisplay != null ?
+		currentDisplay.getDisplayableHeight() :
+		Display.getDefaultAlertHeight());
+    }
+
+    /**
+     * Calculate the width a displayable would occupy if it was to
+     * be displayed
+     *
+     * @return the width a displayable would occupy 
+     */
+    public int getDisplayableWidth() {
+	return (currentDisplay != null ?
+		currentDisplay.getDisplayableWidth() :
+		Display.getDefaultAlertWidth(getVerticalScrollProportion() != 100)); 
     }
 
     

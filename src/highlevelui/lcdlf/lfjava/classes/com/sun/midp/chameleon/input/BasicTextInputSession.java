@@ -1,29 +1,32 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 package com.sun.midp.chameleon.input;
+
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 import java.util.Vector;
 import javax.microedition.lcdui.Display;
@@ -85,6 +88,11 @@ public class BasicTextInputSession implements
         if (this.textComponent == null) {
             this.textComponent = component;
         } else if (this.textComponent != component) {
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
+                    "[Basic.beginSession()] " +
+                        "InputModeHandler in use by another TextInputComponent");
+            }
             throw new IllegalStateException(
                 "InputModeHandler in use by another TextInputComponent");
         }
@@ -273,7 +281,10 @@ public class BasicTextInputSession implements
      * characters to the buffer.
      */
     public void endSession() {
-        log("[BTIS.endSession]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[BTIS.endSession]");
+        }
 
         if (currentMode != null) {
             endInputMode(currentMode);
@@ -304,7 +315,10 @@ public class BasicTextInputSession implements
      */
     public void clear(int num) {
         if (num == 0) {
-            log("WARNING: BasicTextInput.clear calld with 0");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "WARNING: BasicTextInput.clear calld with 0");
+            }
             return;
         }
         textComponent.clear(num);
@@ -329,19 +343,28 @@ public class BasicTextInputSession implements
      * InputMode or possibly some other InputMode.
      */
     public void inputModeCompleted() {
-        log("[Basic.inputModeCompleted()] >>> ");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[Basic.inputModeCompleted()] >>> ");
+        }
         try {
             if (currentMode != null) {
-                log("[Basic.inputModeCompleted()] !=null");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[Basic.inputModeCompleted()] !=null");
+                }
                 endInputMode(currentMode);
                 setInputMode(null);
-            }        
+            }
             // Select a suitable InputMode
             selectInputMode();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        log("[Basic.inputModeCompleted()] <<<< ");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[Basic.inputModeCompleted()] <<<< ");
+        }
     }
 
     // ******* End InputModeMediator Interface *******
@@ -363,22 +386,28 @@ public class BasicTextInputSession implements
 	InputMode newMode = null;
        
         if (stickyMode != null && stickyMode.supportsConstraints(constraints)) {
-            log("[BTIS.selectInputMode] setting mode to sticky:" +
-                stickyMode.getName());
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[BTIS.selectInputMode] setting mode to sticky:" +
+                        stickyMode.getName());
+            }
             newMode = stickyMode;
         } else {
-            log("[BTIS.selectInputMode] not setting mode to sticky");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[BTIS.selectInputMode] not setting mode to sticky");
+            }
             for (int i = 0; i < inputModeSet.length; i++) {
                 if (inputModeSet[i].supportsConstraints(constraints)) {
                     boolean[][] map = inputModeSet[i].getIsConstraintsMap();
                     int index = 0;
                     String is = textComponent.getInitialInputMode();
                     for (; index < INPUT_SUBSETS.length; index++) {
-                        if (INPUT_SUBSETS[index].equals(is))
+                        if (INPUT_SUBSETS[index].equals(is)) {
                             break;
+                        }
                     }
-                    int constraint = constraints &
-                        TextField.CONSTRAINT_MASK;
+                    int constraint = constraints & TextField.CONSTRAINT_MASK;
                     if (constraint < TextInputSession.MAX_CONSTRAINTS &&
                         map[index][constraint]) {
                         newMode = inputModeSet[i];
@@ -451,19 +480,10 @@ public class BasicTextInputSession implements
         return SymbolInputMode.isSymbol(c);
     }
 
-
-    /**
-     * Print the debug message 
-     * @param s debug message
-     */
-    private void log(String s) {
-        //        System.out.println(s);
-    }
-
     /**
      * Returns true if the keyCode is used as 'clear'
      * @param keyCode key code
-     * @return true if keu code is Clear one, false otherwise
+     * @return true if key code is Clear one, false otherwise
      */
     public boolean isClearKey(int keyCode) {
         return textComponent != null &&
@@ -477,6 +497,18 @@ public class BasicTextInputSession implements
      */
     public int getAvailableSize() {
         return textComponent != null ? textComponent.getAvailableSize() : 0;
+    }
+
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     *
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    public boolean isNewlineKey(int keyCode) {
+        return textComponent != null &&
+            textComponent.isNewlineKey(keyCode);
     }
 }
 

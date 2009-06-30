@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -35,26 +35,21 @@ import java.io.ByteArrayInputStream;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
-import com.sun.midp.security.SecurityHandler;
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
+import com.sun.j2me.security.*;
+
+import com.sun.midp.security.*;
 
 import com.sun.midp.main.MIDletSuiteVerifier;
 import com.sun.midp.main.MIDletAppImageGenerator;
 
-import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.midletsuite.MIDletSuiteImpl;
-import com.sun.midp.midletsuite.MIDletInfo;
-import com.sun.midp.midletsuite.MIDletSuiteInfo;
-import com.sun.midp.midletsuite.InstallInfo;
-import com.sun.midp.midletsuite.SuiteSettings;
-import com.sun.midp.midletsuite.MIDletSuiteLockedException;
-import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+import com.sun.midp.midletsuite.*;
+
+import com.sun.midp.jarutil.JarReader;
 
 import com.sun.midp.io.HttpUrl;
+
 import com.sun.midp.io.Util;
 
 import com.sun.midp.io.j2me.push.PushRegistryInternal;
@@ -69,6 +64,7 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.jsr075.FileConnectionCleanup;
 
 /**
  * An Installer manages MIDlet suites and libraries
@@ -161,9 +157,12 @@ public abstract class Installer {
     /** Holds the install state. */
     protected InstallStateImpl state;
 
+    /** Holds the access control context. */
+    protected AccessControlContext accessControlContext;
+
     /** An alias for more state.installInfo to get more compact record. */
     protected InstallInfo info;
-
+    
     /** An alias for more state.suiteSettings to get more compact record. */
     protected SuiteSettings settings;
 
@@ -178,7 +177,7 @@ public abstract class Installer {
 
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
-        Permissions.UNIDENTIFIED_DOMAIN_BINDING;
+        Permissions.getUnsignedDomain();
 
     /**
      * Include this permissions into the list of permissions
@@ -193,8 +192,10 @@ public abstract class Installer {
     Installer() {
         state = getInstallState();
         verifier = new VerifierImpl(state);
+        // This setting has no effect until OCSP is enabled at the build-time.
+        verifier.enableOCSPCheck(true);
 
-        /* Aliases for more compact record. */
+        // Aliases for more compact record.
         info = state.installInfo;
         settings = state.suiteSettings;
     }
@@ -216,6 +217,19 @@ public abstract class Installer {
         return state;
     }
 
+    /**
+     * Creates an AccessControlContext for the suite being installed.
+     *
+     * @return an instance of class containing the installation state
+     */
+    protected AccessControlContext getAccessControlContext() {
+        if (accessControlContext == null) {
+            accessControlContext = new AccessControl(getInstallState());
+        }
+
+        return accessControlContext;
+    }
+    
     /**
      * Installs a software package from the given URL. The URL is assumed
      * refer to an application descriptor.
@@ -270,7 +284,7 @@ public abstract class Installer {
         boolean removeRMS, InstallListener installListener)
             throws IOException, InvalidJadException,
                    MIDletSuiteLockedException, SecurityException {
-
+            
         info.jadUrl = location;
         state.force = force;
         state.removeRMS = removeRMS;
@@ -278,7 +292,7 @@ public abstract class Installer {
         state.listener = installListener;
         state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
-
+        
         return performInstall();
     }
 
@@ -338,7 +352,7 @@ public abstract class Installer {
             throw
                 new IllegalArgumentException("Must specify URL of .jar file");
         }
-
+      
         info.jadUrl = null;
         info.jarUrl = location;
         info.suiteName = name;
@@ -351,6 +365,26 @@ public abstract class Installer {
         state.storageId = storageId;
 
         return performInstall();
+    }
+
+    /**
+     * Enables or disables certificate revocation checking using OCSP.
+     *
+     * @param enable true to enable OCSP checking, false - to disable it
+     */
+    public void enableOCSPCheck(boolean enable) {
+        // This setting has no effect until OCSP is enabled at the build-time.
+        verifier.enableOCSPCheck(enable);
+    }
+
+    /**
+     * Returns true if OCSP certificate revocation checking is enabled,
+     * false if it is disabled.
+     *
+     * @return true if OCSP checking is enabled, false otherwise
+     */
+    public boolean isOCSPCheckEnabled() {
+        return verifier.isOCSPCheckEnabled();
     }
 
     /**
@@ -484,20 +518,20 @@ public abstract class Installer {
      * descriptor file is not specified
      */
     private void installStep1()
-        throws IOException, InvalidJadException, MIDletSuiteLockedException {
-
+        throws IOException, InvalidJadException, MIDletSuiteLockedException {        
+        
         if (info.jadUrl == null || info.jadUrl.length() == 0) {
             throw
                 new IllegalArgumentException("Must specify URL of .jad file");
         }
-
-        try {
-            state.jad = downloadJAD();
+         
+        try {          
+            state.jad = downloadJAD();             
         } catch (OutOfMemoryError e) {
             try {
                 postInstallMsgBackToProvider(
                     OtaNotifier.INSUFFICIENT_MEM_MSG);
-            } catch (Throwable t) {
+            } catch (Throwable t) {                
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_AMS,
                     "Throwable during posting install message");
@@ -531,7 +565,7 @@ public abstract class Installer {
             throw new
                 InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
         } catch (InvalidJadException ije) {
-            state.jad = null;
+            state.jad = null;           
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw ije;
         } catch(java.io.UnsupportedEncodingException uee) {
@@ -541,40 +575,9 @@ public abstract class Installer {
                 InvalidJadException.UNSUPPORTED_CHAR_ENCODING,
                     state.jadEncoding);
         }
-
-        info.suiteName = state.jadProps.getProperty(
-            MIDletSuite.SUITE_NAME_PROP);
-        if (info.suiteName == null || info.suiteName.length() == 0) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new
-                InvalidJadException(InvalidJadException.MISSING_SUITE_NAME);
-        }
-
-        info.suiteVendor = state.jadProps.getProperty(MIDletSuite.VENDOR_PROP);
-        if (info.suiteVendor == null || info.suiteVendor.length() == 0) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new
-                InvalidJadException(InvalidJadException.MISSING_VENDOR);
-        }
-
-        info.suiteVersion = state.jadProps.getProperty(
-            MIDletSuite.VERSION_PROP);
-        if (info.suiteVersion == null || info.suiteVersion.length() == 0) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new
-                InvalidJadException(InvalidJadException.MISSING_VERSION);
-        }
-
-        try {
-            checkVersionFormat(info.suiteVersion);
-        } catch (NumberFormatException nfe) {
-            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
-            throw new InvalidJadException(
-                  InvalidJadException.INVALID_VERSION);
-        }
-
-        info.id = state.midletSuiteStorage.createSuiteID();
-
+        
+        checkJadAttributes();
+        assignNewId();
         checkPreviousVersion();
         state.nextStep++;
     }
@@ -583,9 +586,9 @@ public abstract class Installer {
      * If the JAD belongs to an installed suite, check the URL against the
      * installed one.
      */
-    private void installStep2() {
-        state.nextStep++;
-
+    private void installStep2() {          
+        
+        state.nextStep++;      
         if (state.isPreviousVersion) {
             checkForDifferentDomains(info.jadUrl);
         }
@@ -600,7 +603,7 @@ public abstract class Installer {
      * properly formatted or does not contain the required
      */
     private void installStep3()
-            throws IOException, InvalidJadException {
+            throws IOException, InvalidJadException {       
         String sizeString;
         int dataSize;
         int suiteSize;
@@ -657,6 +660,7 @@ public abstract class Installer {
         }
 
         info.jarUrl = state.jadProps.getProperty(MIDletSuite.JAR_URL_PROP);
+        
         if (info.jarUrl == null || info.jarUrl.length() == 0) {
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw new
@@ -673,7 +677,7 @@ public abstract class Installer {
      */
     private void installStep4()
             throws IOException {
-
+        
         synchronized (state) {
             /* One more check to see if user has already canceled */
             if (state.stopInstallation) {
@@ -712,13 +716,15 @@ public abstract class Installer {
      * descriptor or jar file download
      * @exception InvalidJadException is thrown, if the descriptor file is not
      * properly formatted or does not contain the required
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * already installed and is locked
      */
     private void installStep5()
-            throws IOException, InvalidJadException {
+            throws IOException, InvalidJadException, MIDletSuiteLockedException {
         int bytesDownloaded;
         MIDletInfo midletInfo;
         String midlet;
-
+        
         // Send out delete notifications that have been queued, first
         OtaNotifier.postQueuedDeleteMsgsBackToProvider(state.proxyUsername,
             state.proxyPassword);
@@ -747,8 +753,8 @@ public abstract class Installer {
 
             // Create JAR Properties (From .jar file's MANIFEST)
             try {
-                state.manifest = JarReader.readJarEntry(
-                    info.jarFilename, MIDletSuite.JAR_MANIFEST);
+                state.manifest = JarReader.readJarEntry(info.jarFilename,
+                    MIDletSuite.JAR_MANIFEST);
                 if (state.manifest == null) {
                     postInstallMsgBackToProvider(
                         OtaNotifier.INVALID_JAR_MSG);
@@ -810,7 +816,8 @@ public abstract class Installer {
             }
 
             for (int i = 1; ; i++) {
-                midlet = state.getAppProperty("MIDlet-" + i);
+                String key = "MIDlet-" + i;
+                midlet = state.getAppProperty(key);
                 if (midlet == null) {
                     break;
                 }
@@ -826,8 +833,15 @@ public abstract class Installer {
                     verifyMIDlet(midletInfo.classname);
                 } catch (InvalidJadException ije) {
                     if (ije.getReason() == InvalidJadException.INVALID_VALUE) {
-                        postInstallMsgBackToProvider(
-                            OtaNotifier.INVALID_JAD_MSG);
+                        // The MIDlet-n attribute may present in Manifest only
+                        if (state.jadProps != null &&
+                                state.jadProps.getProperty(key) != null) {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAD_MSG);
+                        } else {
+                            postInstallMsgBackToProvider(
+                                OtaNotifier.INVALID_JAR_MSG);
+                        }
                     } else {
                         postInstallMsgBackToProvider(
                             OtaNotifier.INVALID_JAR_MSG);
@@ -836,7 +850,7 @@ public abstract class Installer {
                 }
             }
 
-            // move on to the next step after a warning
+            // Move on to the next step after a warning
             state.nextStep++;
 
             // Check Manifest entries against .jad file
@@ -873,48 +887,11 @@ public abstract class Installer {
                 }
             } else {
                 info.expectedJarSize = bytesDownloaded;
-                info.suiteName = state.jarProps.getProperty(
-                    MIDletSuite.SUITE_NAME_PROP);
-                if (info.suiteName == null || info.suiteName.length() == 0) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.MISSING_SUITE_NAME);
-                }
 
-                info.suiteVendor = state.jarProps.getProperty(
-                    MIDletSuite.VENDOR_PROP);
-                if (info.suiteVendor == null ||
-                        info.suiteVendor.length() == 0) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.MISSING_VENDOR);
-                }
-
-                info.suiteVersion = state.jarProps.getProperty(
-                    MIDletSuite.VERSION_PROP);
-                if (info.suiteVersion == null ||
-                        info.suiteVersion.length() == 0) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.MISSING_VERSION);
-                }
-
-                try {
-                    checkVersionFormat(info.suiteVersion);
-                } catch (NumberFormatException nfe) {
-                    postInstallMsgBackToProvider(
-                        OtaNotifier.INVALID_JAR_MSG);
-                    throw new InvalidJadException(
-                         InvalidJadException.INVALID_VERSION);
-                }
+                checkJarAttributes();
+                assignNewId();
 
                 // if already installed, check the domain of the JAR URL
-
-                info.id = state.midletSuiteStorage.createSuiteID();
-
                 checkPreviousVersion();
             }
         } catch (Exception e) {
@@ -924,7 +901,17 @@ public abstract class Installer {
                 throw (IOException)e;
             }
 
-            throw (RuntimeException)e;
+            if (e instanceof MIDletSuiteLockedException) {
+                throw (MIDletSuiteLockedException)e;
+            }
+
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException)e;
+            }
+
+            /* handle not RuntimeException-derived exceptions */
+            throw new RuntimeException("Exception in installStep5(): " +
+                                        e.getMessage());
         }
     }
 
@@ -934,9 +921,9 @@ public abstract class Installer {
      */
     private void installStep6() {
         state.nextStep++;
-
+      
         if (info.jadUrl == null && state.isPreviousVersion) {
-            checkForDifferentDomains(info.jarUrl);
+            checkForDifferentDomains(info.jarUrl);                     
         }
     }
 
@@ -971,7 +958,11 @@ public abstract class Installer {
                     newPermissions += Permissions.getName(i);
                 }
             } else {
-                newPermissions += additionalPermissions;
+                if (newPermissions == null) {
+                    newPermissions = additionalPermissions; 
+                } else {
+                    newPermissions += additionalPermissions;
+                }
             }
 
             state.jadProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
@@ -999,8 +990,11 @@ public abstract class Installer {
      * storing the suite
      * @exception InvalidJadException is thrown, if the there is
      * permission problem
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * locked
      */
-    private void installStep7() throws IOException, InvalidJadException {
+    private void installStep7() throws IOException,
+            InvalidJadException, MIDletSuiteLockedException {
 
         try {
             if (info.authPath != null) {
@@ -1042,7 +1036,7 @@ public abstract class Installer {
              * The unidentified suites do not get checked for requested
              * permissions.
              */
-            if (Permissions.UNIDENTIFIED_DOMAIN_BINDING.equals(info.domain)) {
+            if (!Permissions.isTrusted(info.domain)) {
 
                 settings.setPermissions((Permissions.forDomain(
                     info.domain)) [Permissions.CUR_LEVELS]);
@@ -1063,6 +1057,58 @@ public abstract class Installer {
                  */
                 if (info.jadUrl != null) {
                     checkForJadManifestMismatches();
+
+                    /*
+                     * Check that if MIDlet-Permissions[-Opt] presents in jad
+                     * then it also presents in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
+                     */
+                    String[] keys = {
+                        MIDletSuite.PERMISSIONS_PROP,
+                        MIDletSuite.PERMISSIONS_OPT_PROP
+                    };
+
+                    for (int i = 0; i < keys.length; i++) {
+                        if (state.jadProps.getProperty(keys[i]) != null) {
+                            if (state.jarProps.getProperty(keys[i]) == null) {
+                                postInstallMsgBackToProvider(
+                                    OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                                throw new InvalidJadException(
+                                    InvalidJadException.ATTRIBUTE_MISMATCH,
+                                        keys[i]);
+                            }
+                        }
+                    }
+
+                    /*
+                     * Check that if extended properties are present in jad
+                     * then they aare lso present in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
+                     */
+                    String[] extKeys = {
+                        MIDletSuite.HEAP_SIZE_PROP,
+                        MIDletSuite.BACKGROUND_PAUSE_PROP,
+                        MIDletSuite.NO_EXIT_PROP,
+                        MIDletSuite.LAUNCH_BG_PROP,
+                        MIDletSuite.LAUNCH_POWER_ON_PROP
+                    };
+
+                    int midletNum = state.getNumberOfMIDlets();
+                    for (int i = 0; i < extKeys.length; i++) {
+                        for (int j = 1; j <= midletNum; j++) {
+                            String extKey = extKeys[i] + "-" + j;
+                            if (state.jadProps.getProperty(extKey) != null) {
+                                if (state.jarProps.getProperty(extKey) == null) {
+                                    postInstallMsgBackToProvider(
+                                        OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                                    throw new InvalidJadException(
+                                        InvalidJadException.ATTRIBUTE_MISMATCH,
+                                            extKey);
+                                }
+                            }
+                        }
+                    }
+
                 }
 
                 /*
@@ -1128,7 +1174,7 @@ public abstract class Installer {
                 long waitTime = 1000 -
                     (System.currentTimeMillis() - state.startTime);
 
-                if (waitTime > 0) {
+                if (waitTime > 0 && waitTime <= 1000) {
                     Thread.sleep(waitTime);
                 }
             } catch (InterruptedException ie) {
@@ -1159,41 +1205,16 @@ public abstract class Installer {
              * Store suite will remove the suite including push connections,
              * if there an error, but may not remove the temp jar file.
              */
-            MIDletInfo midletInfo = state.getMidletInfo();
-            String midletClassNameToRun = null, iconName;
-            MIDletSuiteInfo msi;
-
-            iconName = state.getAppProperty("MIDlet-Icon");
-            if (iconName != null) {
-                iconName.trim();
-            }
-
-            if (midletInfo != null) {
-                midletClassNameToRun = midletInfo.classname;
-                if (iconName == null) {
-                    // If an icon for the suite is not specified,
-                    // use the first midlet's icon.
-                    iconName = midletInfo.icon;
-                }
-            }
-
-            msi = new MIDletSuiteInfo(info.id);
-            msi.displayName = state.getDisplayName();
-            msi.midletToRun = midletClassNameToRun;
-            msi.numberOfMidlets = state.getNumberOfMIDlets();
-            /* default is to enable a newly installed suite */
-            msi.enabled = true;
-            msi.trusted = info.trusted;
-            msi.preinstalled = false;
-            msi.iconName = iconName;
-            msi.storageId = state.storageId;
-
-            state.midletSuiteStorage.storeSuite(info, settings, msi,
-                                                state.jadProps, state.jarProps);
+            storeUnit();
         } catch (Throwable e) {
             state.file.delete(info.jarFilename);
+            
             if (e instanceof IOException) {
                 throw (IOException)e;
+            }
+
+            if (e instanceof MIDletSuiteLockedException) {
+                throw (MIDletSuiteLockedException)e;
             }
 
             if (e instanceof OutOfMemoryError) {
@@ -1211,7 +1232,13 @@ public abstract class Installer {
                     InvalidJadException(InvalidJadException.TOO_MANY_PROPS);
             }
 
-            throw (RuntimeException)e;
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException)e;
+            }
+
+            /* handle not RuntimeException-derived exceptions */
+            throw new RuntimeException("Exception in installStep7(): " +
+                                        e.getMessage());
         }
 
         state.nextStep++;
@@ -1232,6 +1259,9 @@ public abstract class Installer {
      * MONET optimization, VERIFY ONCE optimization, etc.
      * This step is done after obligatory installation part,
      * so the suite is downloaded, checked and stored by this moment.
+     * 
+     * @exception IOException is thrown, if an I/O error occurs during
+     * MONET image creation or classes verification
      */
     private void installStep8() throws IOException {
 
@@ -1333,6 +1363,151 @@ public abstract class Installer {
     protected abstract int downloadJAR(String filename) throws IOException;
 
     /**
+     * Checks that all necessary attributes are present in JAD and are valid.
+     *
+     * May be overloaded by subclasses that require presence of
+     * different attributes in JAD during the installation.
+     *
+     * @throws InvalidJadException if any mandatory attribute is missing in
+     *                             the JAD file or its value is invalid
+     */
+    protected void checkJadAttributes() throws InvalidJadException {
+        info.suiteName = state.jadProps.getProperty(
+            MIDletSuite.SUITE_NAME_PROP);
+        if (info.suiteName == null || info.suiteName.length() == 0) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_SUITE_NAME);
+        }
+
+        info.suiteVendor = state.jadProps.getProperty(MIDletSuite.VENDOR_PROP);
+        if (info.suiteVendor == null || info.suiteVendor.length() == 0) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_VENDOR);
+        }
+
+        info.suiteVersion = state.jadProps.getProperty(
+            MIDletSuite.VERSION_PROP);
+        if (info.suiteVersion == null || info.suiteVersion.length() == 0) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new
+                InvalidJadException(InvalidJadException.MISSING_VERSION);
+        }
+
+        try {
+            checkVersionFormat(info.suiteVersion);
+        } catch (NumberFormatException nfe) {
+            postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
+            throw new InvalidJadException(
+                  InvalidJadException.INVALID_VERSION);
+        }
+    }
+
+    /**
+     * Checks that all necessary attributes are present in the manifest
+     * in the JAR file and are valid.
+     *
+     * May be overloaded by subclasses that require presence of
+     * different attributes in manifest during the installation.
+     *
+     * @throws InvalidJadException if any mandatory attribute is missing in
+     *                             the manifest or its value is invalid
+     */
+    protected void checkJarAttributes() throws InvalidJadException {
+        /*
+         * Check MIDlet-* attributes only if this is
+         * not a dynamic component.
+         */
+        info.suiteName = state.jarProps.getProperty(
+            MIDletSuite.SUITE_NAME_PROP);
+        if (info.suiteName == null ||
+                info.suiteName.length() == 0) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.MISSING_SUITE_NAME);
+        }
+
+        info.suiteVendor = state.jarProps.getProperty(
+            MIDletSuite.VENDOR_PROP);
+        if (info.suiteVendor == null ||
+                info.suiteVendor.length() == 0) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.MISSING_VENDOR);
+        }
+
+        info.suiteVersion = state.jarProps.getProperty(
+            MIDletSuite.VERSION_PROP);
+        if (info.suiteVersion == null ||
+                info.suiteVersion.length() == 0) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.MISSING_VERSION);
+        }
+
+        try {
+            checkVersionFormat(info.suiteVersion);
+        } catch (NumberFormatException nfe) {
+            postInstallMsgBackToProvider(
+                OtaNotifier.INVALID_JAR_MSG);
+            throw new InvalidJadException(
+                 InvalidJadException.INVALID_VERSION);
+        }
+    }
+
+    /**
+     * Assigns a new ID to the midlet suite being installed.
+     * May be overloaded by subclasses that use different storages.
+     */
+    protected void assignNewId() {
+        info.id = state.midletSuiteStorage.createSuiteID();
+    }
+
+    /**
+     * Stores the midlet suite being installed in the midlet suite storage.
+     *
+     * @throws IOException if an I/O error occured when storing the suite
+     * @throws MIDletSuiteLockedException if the suite is locked
+     */
+    protected void storeUnit() throws IOException, MIDletSuiteLockedException {
+        MIDletInfo midletInfo = state.getMidletInfo();
+        String midletClassNameToRun = null, iconName;
+
+        iconName = state.getAppProperty("MIDlet-Icon");
+        if (iconName != null) {
+            iconName = iconName.trim();
+        }
+
+        if (midletInfo != null) {
+            midletClassNameToRun = midletInfo.classname;
+            if (iconName == null) {
+                // If an icon for the suite is not specified,
+                // use the first midlet's icon.
+                iconName = midletInfo.icon;
+            }
+        }
+
+        MIDletSuiteInfo msi = new MIDletSuiteInfo(info.id);
+
+        msi.displayName = state.getDisplayName();
+        msi.midletToRun = midletClassNameToRun;
+        msi.numberOfMidlets = state.getNumberOfMIDlets();
+        /* default is to enable a newly installed suite */
+        msi.enabled = true;
+        msi.trusted = info.trusted;
+        msi.preinstalled = false;
+        msi.iconName = iconName;
+        msi.storageId = state.storageId;
+
+        state.midletSuiteStorage.storeSuite(
+                info, settings, msi, state.jadProps, state.jarProps);
+    }
+
+    /**
      * If the JAD belongs to an installed suite, check the URL against the
      * installed one. Set the state.exception if the user needs to be warned.
      *
@@ -1379,8 +1554,13 @@ public abstract class Installer {
         String installedVersion;
         int cmpResult;
 
+        state.isPreviousVersion = false;
+        state.previousSuite = null;
+        state.previousInstallInfo = null;
+        
         // Check if app already exists
-        id = MIDletSuiteStorage.getSuiteID(info.suiteVendor, info.suiteName);
+        id = MIDletSuiteStorage.getSuiteID(info.suiteVendor,
+                                           info.suiteName);
         if (id == MIDletSuite.UNUSED_SUITE_ID) {
             // there is no previous version
             return;
@@ -1434,7 +1614,6 @@ public abstract class Installer {
             state.exception = new InvalidJadException(
                                   InvalidJadException.NEW_VERSION,
                                   installedVersion);
-            return;
         } catch (MIDletSuiteCorruptedException mce) {
             if (state.listener != null) {
                 state.listener.updateStatus(CORRUPTED_SUITE, state);
@@ -1444,6 +1623,10 @@ public abstract class Installer {
                 OtaNotifier.INVALID_JAD_MSG);
             throw new
                 InvalidJadException(InvalidJadException.INVALID_VERSION);
+        } catch (MIDletSuiteLockedException msle) {
+            // this was an attempt to update a locked suite, set the correct ID
+            info.id = id;
+            throw msle;
         }
     }
 
@@ -1452,7 +1635,7 @@ public abstract class Installer {
      *
      * @param message status message to post
      */
-    protected void postInstallMsgBackToProvider(String message) {
+    protected void postInstallMsgBackToProvider(String message) {       
         OtaNotifier.postInstallMsgBackToProvider(message, state,
             state.proxyUsername, state.proxyPassword);
     }
@@ -1592,13 +1775,41 @@ public abstract class Installer {
      * scheme, host and path.
      *
      * @param url1 the first URL for comparision
-     * @param url1 the second URL for comparision
+     * @param url2 the second URL for comparision
      *
      * @return true if the scheme, host and path of the first given url
      *              is identical to the scheme, host and path of the second
      *              given url; false otherwise
      */
     protected abstract boolean isSameUrl(String url1, String url2);
+
+    /**
+     * The method checks if it's necessary to clean up file connection
+     * data upon suite.
+     *
+     * It detects whether JSR-75 is included, if so, invokes dedicated JSR's
+     * class.
+     *
+     * @param suiteId ID of suite to check data presence for
+     * @return true if JSR data exists for the suite, false otherwise
+     */
+    private static boolean FileConnectionHasPrivateData(int suiteId) {
+        FileConnectionCleanup fcc;
+
+        try {
+            Class fccClass =
+                Class.forName("com.sun.midp.jsr075.FileConnectionCleanupImpl");
+            fcc = (FileConnectionCleanup)(fccClass.newInstance());
+        } catch (ClassNotFoundException cnfe){
+            return false;
+        } catch (IllegalAccessException iae) {
+            return false;
+        } catch (InstantiationException ie) {
+            return false;
+        }
+
+        return fcc.suiteHasPrivateData(suiteId);
+    }
 
     /**
      * If this is an update, make sure the RMS data is handle correctly
@@ -1637,7 +1848,8 @@ public abstract class Installer {
      * @exception IOException if the install is stopped
      */
     protected void processPreviousRMS() throws IOException {
-        if (!RecordStoreFactory.suiteHasRmsData(info.id)) {
+        if (!RecordStoreFactory.suiteHasRmsData(info.id) &&
+                !FileConnectionHasPrivateData(info.id)) {
             return;
         }
 
@@ -1752,7 +1964,6 @@ public abstract class Installer {
             byte[] domainPermissions, byte[] permissions, boolean required)
             throws InvalidJadException {
 
-        String jadPermissionLine;
         String reqPermissionLine;
         Vector reqPermissions;
         String permission;
@@ -1867,17 +2078,14 @@ public abstract class Installer {
     }
 
     /**
-     * Checks if the calling suite has Permissions.MIDP permission.
-     * If not, the SecurityException is thrown.
+     * Checks if the calling suite has com.sun.midp.midletsuite.midp
+     * permission.
+     *
+     * @exception SecurityException if suite does not have the required
+     *            permission
      */
-    private void checkMidpPermission() {
-        MIDletSuite midletSuite = MIDletStateHandler.
-            getMidletStateHandler().getMIDletSuite();
-
-        // if a MIDlet suite is not started, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
-        }
+    private void checkAmsPermission() throws SecurityException {
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
     }
 
     /**
@@ -1885,11 +2093,10 @@ public abstract class Installer {
      * Can only be called by JAM for testing.
      *
      * @param domain name of a security domain
-     * @param allowedPermissions list of permissions that must be allowed even
      * if they are absent from the jad file; "all" to allow all permissions
      */
     public void setUnsignedSecurityDomain(String domain) {
-        checkMidpPermission();
+        checkAmsPermission();
         unsignedSecurityDomain = domain;
     }
 
@@ -1902,7 +2109,7 @@ public abstract class Installer {
      * if they are absent from the jad file; "all" to allow all permissions
      */
     public void setExtraPermissions(String extraPermissions) {
-        checkMidpPermission();
+        checkAmsPermission();
         additionalPermissions = extraPermissions;
     }
 
@@ -1975,7 +2182,7 @@ public abstract class Installer {
      * @exception NumberFormatException if either <code>ver1</code> or
      * <code>ver2</code> contain characters that are not numbers or periods
      */
-    private static int vercmp(String ver1, String ver2)
+    protected static int vercmp(String ver1, String ver2)
             throws NumberFormatException {
         String strVal1;
         String strVal2;
@@ -2061,7 +2268,7 @@ public abstract class Installer {
      * @exception NumberFormatException if <code>ver</code>
      *     contains any characters that are not numbers or periods
      */
-    private static void checkVersionFormat(String ver)
+    protected static void checkVersionFormat(String ver)
             throws NumberFormatException {
         int length;
         int start = 0;
@@ -2355,8 +2562,9 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryInternal.registerConnectionInternal(state,
-                    conn, midlet, filter, false);
+                PushRegistryInternal.registerConnectionInternal(
+                    getAccessControlContext(),
+                    state, conn, midlet, filter, false);
             } catch (Exception e) {
                 /* If already registered, abort the installation. */
                 PushRegistryInternal.unregisterConnections(info.id);
@@ -2400,7 +2608,13 @@ public abstract class Installer {
                 }
 
                 // error in the implementation code
-                throw (RuntimeException)e;
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException)e;
+                }
+
+                /* handle not RuntimeException-derived exceptions */
+                throw new RuntimeException("Exception in " +
+                        "registerPushConnections(): " + e.getMessage());
             }
         }
 
@@ -2417,14 +2631,14 @@ public abstract class Installer {
                 return;
             }
         }
-
-        if (curLevels[Permissions.PUSH] == Permissions.NEVER) {
+		int PUSH_ID = Permissions.getId("javax.microedition.io.PushRegistry");
+        if (curLevels[PUSH_ID] == Permissions.NEVER) {
             settings.setPushInterruptSetting(Permissions.NEVER);
-        } else if (curLevels[Permissions.PUSH] == Permissions.ALLOW) {
+        } else if (curLevels[PUSH_ID] == Permissions.ALLOW) {
             // Start the default at session for usability when denying.
             settings.setPushInterruptSetting(Permissions.SESSION);
         } else {
-            settings.setPushInterruptSetting(curLevels[Permissions.PUSH]);
+            settings.setPushInterruptSetting(curLevels[PUSH_ID]);
         }
     }
 
@@ -2455,6 +2669,7 @@ public abstract class Installer {
             /* Register the new push connection string. */
             try {
                 PushRegistryInternal.registerConnectionInternal(
+                    getAccessControlContext(),
                     state, conn, midlet, filter, true);
             } catch (IOException e) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
@@ -2473,6 +2688,66 @@ public abstract class Installer {
 }
 
 /**
+ * Implements the permission checking interface using the permission of
+ * the suite being installed.
+ */
+class AccessControl extends AccessControlContextAdapter {
+
+    /** Rreference to the MIDlet suite. */
+    private MIDletSuite suite;
+
+    /**
+     * Initializes the AccessControl object.
+     *
+     * @param theSuite reference to the MIDlet suite
+     */
+    AccessControl(MIDletSuite theSuite) {
+        suite = theSuite;
+    }
+    
+    /**
+     * Checks for permission and throw an exception if not allowed.
+     * May block to ask the user a question.
+     *
+     * @param name name of the permission to check for
+     * @param resource string to insert into the question, can be null if
+     *        no %2 in the question
+     * @param extraValue string to insert into the question,
+     *        can be null if no %3 in the question
+     *
+     * @exception SecurityException if the specified permission
+     * is not permitted, based on the current security policy
+     * @exception InterruptedException if another thread interrupts the
+     *   calling thread while this method is waiting to preempt the
+     *   display.
+     */
+    public void checkPermissionImpl(String name, String resource,
+            String extraValue) throws SecurityException, InterruptedException {
+
+        int permissionId;
+
+        if (AccessController.TRUSTED_APP_PERMISSION_NAME.equals(name)) {
+            // This is really just a trusted suite check.
+            if (suite.isTrusted()) {
+                return;
+            }
+
+            throw new SecurityException("suite not trusted");
+        }
+
+        permissionId = Permissions.getId(name);
+
+        if (permissionId == Permissions.AMS ||
+                permissionId == Permissions.MIDP) {
+            // These permission checks cannot block
+            suite.checkIfPermissionAllowed(name);
+        } else {
+            suite.checkForPermission(name, resource, extraValue);
+        }
+    }
+}
+
+/*
  * Holds the state of an installation, so it can restarted after it has
  * been stopped.
  */
@@ -2721,12 +2996,12 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      *        no %2 in the question
      *
      * @exception SecurityException if the permission is not
-     *            allowed by this token
+     *            allowed
      * @exception InterruptedException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource)
+    public void checkForPermission(String permission, String resource)
             throws InterruptedException {
         checkForPermission(permission, resource, null);
     }
@@ -2735,8 +3010,8 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * Checks for permission and throw an exception if not allowed.
      * May block to ask the user a question.
      *
-     * @param permission ID of the permission to check for,
-     *      the ID must be from
+     * @param permissionStr name of the permission to check for,
+     *      the name must be from
      *      {@link com.sun.midp.security.Permissions}
      * @param resource string to insert into the question, can be null if
      *        no %2 in the question
@@ -2744,20 +3019,21 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      *        can be null if no %3 in the question
      *
      * @exception SecurityException if the permission is not
-     *            allowed by this token
+     *            allowed
      * @exception InterruptedException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource,
+    public void checkForPermission(String permissionStr, String resource,
             String extraValue) throws InterruptedException {
 
-        securityHandler.checkForPermission(permission,
+		int permission = Permissions.getId(permissionStr);
+        securityHandler.checkForPermission(permissionStr,
             Permissions.getTitle(permission),
             Permissions.getQuestion(permission),
             Permissions.getOneshotQuestion(permission),
             installInfo.suiteName, resource, extraValue,
-            Permissions.getName(permission));
+            permissionStr);
     }
 
     /**
@@ -2806,10 +3082,14 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * @return suite's name that will be displayed to the user
      */
     public String getDisplayName() {
-        String displayName = getAppProperty(MIDletSuite.SUITE_NAME_PROP);
+        String displayName = installInfo.displayName;
 
-        if (displayName == null) {
-            displayName = String.valueOf(installInfo.id);
+        if (displayName == null || "".equals(displayName)) {
+            displayName = getAppProperty(MIDletSuite.SUITE_NAME_PROP);
+
+            if (displayName == null) {
+                displayName = String.valueOf(installInfo.id);
+            }
         }
 
         return displayName;
@@ -2925,6 +3205,17 @@ class InstallStateImpl implements InstallState, MIDletSuite {
     }
 
     /**
+     * Gets the MIDlet number as specified in the MIDlet-n entry in the JAD
+     * file based on the MIDlet's class name.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className) {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    /**
      * Checks to see the suite has the ALLOW level for specific permission.
      * This is used for by internal APIs that only provide access to
      * trusted system applications.
@@ -2938,7 +3229,7 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * @exception SecurityException if the suite is not
      *            allowed to perform the specified action
      */
-    public void checkIfPermissionAllowed(int permission) {
+    public void checkIfPermissionAllowed(String permission) {
         throw new RuntimeException("Not Implemented");
     }
 
@@ -2990,6 +3281,17 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * @return true if suite is enabled, false otherwise
      */
     public boolean isEnabled() {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    /**
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     *
+     * @return secure filename base for this suite
+     */
+    public String getSecureFilenameBase() {
         throw new RuntimeException("Not Implemented");
     }
 

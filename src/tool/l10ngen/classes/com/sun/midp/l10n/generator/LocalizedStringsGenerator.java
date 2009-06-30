@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -489,11 +489,11 @@ class CSourceWriter {
             pl("    if (index >= 0 && index <= max_index) {");
             pl("        int offset = (int)offset_data[index * 2 + 0];");
             pl("        int length = (int)offset_data[index * 2 + 1];");
-            pl("        if (offset > 0) {");
+            pl("        if (offset >= 0) {");
             if (type == UNICODE) {
                 plx("KNI_NewString(string_data+offset, length, string);");
             } else {
-                plx("const char *p = string_data+offset;");
+                plx("const unsigned char *p = string_data+offset;");
                 plx("if (length < 128) {");
                 plx("    utf8 = stackbuffer;");
                 plx("} else {");
@@ -690,7 +690,7 @@ class CSourceWriter {
         int STEP = 10;
         int MAX = end;
 
-        p("static const char string_data[] = {");
+        p("static const unsigned char string_data[] = {");
         for (int i=0; i<MAX; i ++) {
             if ((i % STEP) == 0) {
                 pl("");

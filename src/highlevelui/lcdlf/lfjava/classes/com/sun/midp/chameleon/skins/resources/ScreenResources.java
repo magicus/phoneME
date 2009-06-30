@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.skins.resources;
@@ -51,65 +51,64 @@ public class ScreenResources {
             return;
         }
 
-        if ((ScreenSkin.WIDTH <= 0) || (ScreenSkin.HEIGHT <= 0)) {
-            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
-                        "Screen dimentions not set.");
-            }
-        }
-
-        int textOrient = SkinResources.getInt(
+        int textOrient = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_TEXT_ORIENT);
-        ScreenSkin.TEXT_ORIENT = SkinResources.resourceConstantsToGraphics(
+        ScreenSkin.TEXT_ORIENT = SkinLoader.resourceConstantsToGraphics(
                 textOrient);
 
-        ScreenSkin.PAD_FORM_ITEMS = SkinResources.getInt(
+        ScreenSkin.PAD_FORM_ITEMS = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_PAD_FORM_ITEMS);
-        ScreenSkin.PAD_LABEL_VERT = SkinResources.getInt(
+        ScreenSkin.PAD_LABEL_VERT = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_PAD_LABEL_VERT);
-        ScreenSkin.PAD_LABEL_HORIZ = SkinResources.getInt(
+        ScreenSkin.PAD_LABEL_HORIZ = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_PAD_LABEL_HORIZ);
-        ScreenSkin.COLOR_BG = SkinResources.getInt(
+        ScreenSkin.COLOR_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_BG);
-        ScreenSkin.COLOR_HS_BG = SkinResources.getInt(
+        ScreenSkin.COLOR_HS_BG = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_HS_BG);
-        ScreenSkin.COLOR_FG = SkinResources.getInt(
+        ScreenSkin.COLOR_FG = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_FG);
-        ScreenSkin.COLOR_BG_HL = SkinResources.getInt(
+        ScreenSkin.COLOR_BG_HL = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_BG_HL);
-        ScreenSkin.COLOR_FG_HL = SkinResources.getInt(
+        ScreenSkin.COLOR_FG_HL = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_FG_HL);
-        ScreenSkin.COLOR_BORDER = SkinResources.getInt(
+        ScreenSkin.COLOR_BORDER = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_BORDER);
-        ScreenSkin.COLOR_BORDER_HL = SkinResources.getInt(
+        ScreenSkin.COLOR_BORDER_HL = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_BORDER_HL);
-        ScreenSkin.COLOR_TRAVERSE_IND = SkinResources.getInt(
+        ScreenSkin.COLOR_TRAVERSE_IND = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_TRAVERSE_IND);
 
-        int borderStyle = SkinResources.getInt(
+        int borderStyle = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_BORDER_STYLE);
-        ScreenSkin.BORDER_STYLE = SkinResources.resourceConstantsToGraphics(
+        ScreenSkin.BORDER_STYLE = SkinLoader.resourceConstantsToGraphics(
                 borderStyle);
 
-        ScreenSkin.SCROLL_AMOUNT = SkinResources.getInt(
+        ScreenSkin.SCROLL_AMOUNT = SkinLoader.getInt(
                 SkinPropertiesIDs.SCREEN_SCROLL_AMOUNT);
-        ScreenSkin.FONT_LABEL = SkinResources.getFont(
+        ScreenSkin.FONT_LABEL = SkinLoader.getFont(
                 SkinPropertiesIDs.SCREEN_FONT_LABEL);
-        ScreenSkin.FONT_INPUT_TEXT = SkinResources.getFont(
+        ScreenSkin.FONT_INPUT_TEXT = SkinLoader.getFont(
                 SkinPropertiesIDs.SCREEN_FONT_INPUT_TEXT);
-        ScreenSkin.FONT_STATIC_TEXT = SkinResources.getFont(
+        ScreenSkin.FONT_STATIC_TEXT = SkinLoader.getFont(
                 SkinPropertiesIDs.SCREEN_FONT_STATIC_TEXT);
 
-        ScreenSkin.IMAGE_WASH = SkinResources.getImage(
+        ScreenSkin.IMAGE_WASH = SkinLoader.getImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_WASH);
-        ScreenSkin.IMAGE_BG = SkinResources.getImage(
+        ScreenSkin.IMAGE_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_BG);
+
+        ScreenSkin.IMAGE_BG_HL = SkinLoader.getCompositeImage(
+                SkinPropertiesIDs.SCREEN_IMAGE_BG_HL, 3);
+
+        ScreenSkin.TOUCH_RADIUS = SkinLoader.getInt(
+                 SkinPropertiesIDs.TOUCH_RADIUS);
 
         /*
         Uncomment if 9 pc screen background images are used
-        ScreenSkin.IMAGE_BG_W_TITLE = SkinResources.getCompositeImage(
+        ScreenSkin.IMAGE_BG_W_TITLE = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_BG_W_TITLE, 9);
-        ScreenSkin.IMAGE_BG_WO_TITLE = SkinResources.getCompositeImage(
+        ScreenSkin.IMAGE_BG_WO_TITLE = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_BG_WO_TITLE, 9);
         */
 
@@ -120,11 +119,11 @@ public class ScreenResources {
 
         /*
         Uncomment if background images for "home" screen are used
-        ScreenSkin.IMAGE_HS_BG_TILE = SkinResources.getImage(
+        ScreenSkin.IMAGE_HS_BG_TILE = SkinLoader.getImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_HS_BG_TILE);
-        ScreenSkin.IMAGE_HS_BG_W_TITLE = SkinResources.getCompositeImage(
+        ScreenSkin.IMAGE_HS_BG_W_TITLE = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_HS_BG_W_TITLE, 9);
-        ScreenSkin.IMAGE_HS_BG_WO_TITLE = SkinResources.getCompositeImage(
+        ScreenSkin.IMAGE_HS_BG_WO_TITLE = SkinLoader.getCompositeImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_HS_BG_WO_TITLE, 9);
         */
 

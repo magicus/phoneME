@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef _NATIVEPUSH_PORT_EXPORT_H_
@@ -48,6 +48,7 @@
 
 #include <midpError.h>
 #include <suitestore_common.h>
+#include <pcsl_string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,7 +113,6 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  * @param suiteId The application suite ID string
  * @param connection Generic connection protocol, host and port number
  *                   (optional parameters may be included separated with semi-colons (;))
- * @param connectionLen The number of chars in connection string
  *
  * @return one of the error codes:
  * <pre>
@@ -126,8 +126,7 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  * </pre>
  */
 MIDP_ERROR midpport_push_unregister_connection(SuiteIdType suiteId,
-                                               jchar* connection,
-                                               jint connectionLen);
+                                               pcsl_string* connection);
 
 /**
  * Return a list of registered connections for the current MIDlet suite.
@@ -171,7 +170,7 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
  * </pre>
  */
 MIDP_ERROR midpport_push_register_alarm(SuiteIdType suiteId,
-                                        jchar* midlet, jint midletLen,
+                                        pcsl_string* midlet,
                                         jlong time, jlong* previousTime);
 #ifdef __cplusplus
 }

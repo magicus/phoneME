@@ -1,44 +1,49 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.content;
 
 import javax.microedition.midlet.MIDlet;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.main.MIDletProxyList;
 
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
-
 import com.sun.midp.installer.InvalidJadException;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InstallState;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
+
+import com.sun.midp.events.EventListener;
+import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.Event;
+import com.sun.midp.events.EventTypes;
 
 /**
  * Stub interface to handle ContentHandlers functions.
@@ -52,7 +57,7 @@ import com.sun.midp.security.SecurityToken;
  * {@link #install remove old content handlers and register new ones}.
  * When a suite is to be removed the content handlers are
  * {@link #uninstall uninstalled}.
- * At startup {@link #initCleanupMonitor} to initialize any
+ * At startup {@link #init} to initialize any
  * necessary cleanup handling when the application exits.
  * When a MIDlet is about to created the
  * {@link #midletAdded} method is called.
@@ -75,7 +80,26 @@ import com.sun.midp.security.SecurityToken;
  */
 public class CHManager {
     /** The CHManager instance for this application context. */
-    private static CHManager manager;
+    private static CHManager manager = null;
+    
+    static final String implClass = "com.sun.j2me.content.CHManagerImpl";
+    static {
+        try {
+            Class.forName(implClass);
+        } catch(Throwable t) {
+            // Class might not be found -- it's OK.
+        }
+    }
+
+    public static void setCHManager(SecurityToken classSecurityToken, CHManager imp) {
+
+        if (manager != null) {
+            throw new SecurityException(
+                    "CHManager implementation might be set only once.");
+        }
+
+        manager = imp;
+    }
 
     /**
      * Creates a new instance of CHInstaller.
@@ -94,26 +118,17 @@ public class CHManager {
      * @exception SecurityException if the token or suite is not allowed
      */
     public static CHManager getManager(SecurityToken token) {
+
         if (token != null) {
-            token.checkIfPermissionAllowed(Permissions.MIDP);
+            token.checkIfPermissionAllowed(Permissions.AMS);
         } else {
-            MIDletSuite msuite =
-                MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-            if (msuite != null) {
-                msuite.checkIfPermissionAllowed(Permissions.AMS);
-            }
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
-	if (manager == null) {
-	    try {
-		Class cl = Class.forName("com.sun.midp.content.CHManagerImpl");
-		manager = (CHManager)cl.newInstance();
-	    } catch (Exception t) {
-		// No real ContentHandler manager is available, return a noop
-		manager = new CHManager();
-	    }
-	}
-	return manager;
+		if (manager == null) {
+			manager = new CHManager();
+		}
+		return manager;
     }
 
     /**
@@ -171,7 +186,7 @@ public class CHManager {
      * @see com.sun.midp.content.CHInstallerImpl
      */
     public String getInstallURL(MIDlet midlet) {
-	return null;
+    	return null;
     }
 
     /**
@@ -190,8 +205,9 @@ public class CHManager {
      * for incompletely handled Invocation requests.
      *
      * @param midletProxyList reference to the MIDlet proxy list
+     * @param eventQueue reference to AMS isolate event queue
      */
-    public void initCleanupMonitor(MIDletProxyList midletProxyList) {
+    public void init(MIDletProxyList midletProxyList, EventQueue eventQueue) {
     }
 
     /**
@@ -204,5 +220,4 @@ public class CHManager {
      */
     public void midletInit(int suiteId, String classname) {
     }
-
 }

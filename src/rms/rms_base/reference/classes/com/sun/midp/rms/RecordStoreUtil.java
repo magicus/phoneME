@@ -1,27 +1,28 @@
 /*
  *
  *
- * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
+ * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  *
  * Copyright 2000 Motorola, Inc. All Rights Reserved.
  * This notice does not imply publication.
@@ -142,41 +143,41 @@ public class RecordStoreUtil {
      * Looks to see if the storage file for record store
      * identified by <code>uidPath</code> exists
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase base of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @return true if the file exists, false if it does not.
      */
-    native static boolean exists(int suiteId, String name, int extension);
+    native static boolean exists(String filenameBase, String name, int extension);
 
     /**
      * Removes the storage file for record store <code>filename</code>
      * if it exists.
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase base of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @throws RecordStoreException if deletion encountered an error
      *         internally.
      */
-    native static void deleteFile(int suiteId, String name, int extension)
+    native static void deleteFile(String filenameBase, String name, int extension)
             throws RecordStoreException;
 
     /**
      * Removes record store file without throwing an exception on failure.
      *
-     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param filenameBase base of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @return <code>true</code> if file was found and deleted successfully,
      *         <code>false</code> otherwise.
      */
-    static boolean quietDeleteFile(int suiteId, String name, int extension) {
+    static boolean quietDeleteFile(String filenameBase, String name, int extension) {
         try {
-            deleteFile(suiteId, name, extension);
+            deleteFile(filenameBase, name, extension);
         } catch (Throwable t) {
             return false;
         }

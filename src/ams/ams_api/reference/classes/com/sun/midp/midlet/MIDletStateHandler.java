@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.midlet;
@@ -29,7 +29,7 @@ package com.sun.midp.midlet;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
-import com.sun.midp.main.MIDletSuiteExceptionListener;
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
@@ -100,7 +100,7 @@ public class MIDletStateHandler {
     private MIDletPeer[] midlets;
     /** current number of MIDlets [0..n-1]. */
     private int nmidlets;
-    /**  next index to be scanned by selectForeground. */
+    /** next index to be scanned by selectByPriority. */
     private int scanIndex;
 
     /** The event handler of all MIDlets in an Isolate. */
@@ -114,6 +114,8 @@ public class MIDletStateHandler {
     /** New MIDlet peer waiting for the next MIDlet created to claim it. */
     private static MIDletPeer newMidletPeer;
 
+    /** MIDlet peer for MIDlet being constructed but not registered yet. */
+    private MIDletPeer underConstructionPeer;
 
     /**
      * Construct a new MIDletStateHandler object.
@@ -202,6 +204,8 @@ public class MIDletStateHandler {
 
     /**
      * Starts a MIDlet from outside of the package.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param externalAppId ID of given by an external application manager
      * @param classname name of MIDlet class
@@ -221,7 +225,7 @@ public class MIDletStateHandler {
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
 
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         createAndRegisterMIDlet(externalAppId, classname);
     }
 
@@ -320,6 +324,9 @@ public class MIDletStateHandler {
             // Add it to the end of the list
             midlets[nmidlets++] = state;
 
+            // MIDlet peer is registered now
+            underConstructionPeer = null;
+
             this.notify();
         }
     }
@@ -360,11 +367,6 @@ public class MIDletStateHandler {
      * Runs MIDlets until there are none.
      * Handle any pending state transitions of any MIDlet.
      * If there are none, wait for transitions.
-     * If there is no foreground MIDlet select one that is ACTIVE and
-     * has setCurrent != null.
-     * <p>
-     * If the foreground MIDlet changes from the ACTIVE_FOREGROUND state
-     * it automatically looses the foreground and and new one is selected.
      *
      * @param exceptionHandler the handler for midlet execution exceptions.
      * @param aMidletSuite the current midlet suite
@@ -543,7 +545,8 @@ public class MIDletStateHandler {
 
                 case MIDletPeer.DESTROYED:
                     listener.midletDestroyed(getMIDletSuite(),
-                        curr.getMIDlet().getClass().getName());
+                        curr.getMIDlet().getClass().getName(),
+                        curr.getMIDlet());
                     break;
                 }
             } catch (Throwable ex) {
@@ -582,17 +585,23 @@ public class MIDletStateHandler {
     public boolean isRunning(String name) {
         boolean found = false;
         synchronized (this) {
-            for (int i = 0; i < nmidlets; i++) {
-                if (midlets[i].getMIDlet().getClass().getName().equals(name)) {
-                    // found only if has not been destroyed
-                    found = (midlets[i].getState() != MIDletPeer.DESTROYED);
-                    break;
+            if (underConstructionPeer != null &&
+                    underConstructionPeer.getMIDlet().
+                        getClass().getName().equals(name)) {
+                found = true;
+            } else {
+                for (int i = 0; i < nmidlets; i++) {
+                    if (midlets[i].getMIDlet().
+                            getClass().getName().equals(name)) {
+                        // found only if has not been destroyed
+                        found = (midlets[i].getState() != MIDletPeer.DESTROYED);
+                        break;
+                    }
                 }
             }
         }
         return found;
     }
-
 
     /**
      * Gets MIDlet event consumer of the named <code>MIDlet</code>.
@@ -708,7 +717,6 @@ public class MIDletStateHandler {
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
         MIDlet midlet = null;
-        MIDletPeer localMidletPeerRef;
 
         synchronized (createMIDletLock) {
             /*
@@ -716,17 +724,11 @@ public class MIDletStateHandler {
              * Make sure there is not a new MIDlet state already created.
              */
             if (newMidletPeer != null) {
-                throw new SecurityException("Recusive MIDlet creation");
+                throw new SecurityException("Recursive MIDlet creation");
             }
 
             newMidletPeer = new MIDletPeer();
-
-            /*
-             * newMidlet peer will be set to null by the MIDlet class
-             * constructor to close the creation window. Save a reference
-             * in case the peer has to be destroyed.
-             */
-            localMidletPeerRef = newMidletPeer;
+            underConstructionPeer = newMidletPeer;
             try {
                 /*
                  * We can send a MIDlet create event because the peer that
@@ -745,7 +747,8 @@ public class MIDletStateHandler {
                          * The MIDlet was not constructed, send destroy
                          * notification to remove the peer from any lists.
                          */
-                        listener.midletDestroyed(getMIDletSuite(), classname);
+                        listener.midletDestroyed(getMIDletSuite(), classname,
+                                                 null);
                     }
                 }
             } finally {

@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <gxpport_mutableimage.h>
@@ -40,7 +40,7 @@
 void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
                                             int width, 
                                             int height,
-                                            gxutl_native_image_error_codes* 
+                                            img_native_error_codes* 
                                             creationErrorPtr) {
     REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_create_mutable()\n");
 
@@ -50,7 +50,7 @@ void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
     (void)height;
     
     /* Not yet implemented */
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -137,7 +137,7 @@ gxpport_render_mutableregion(gxpport_mutableimage_native_handle srcImagePtr,
 void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
 			      jint* rgbBuffer, int offset, int scanLength,
 			      int x, int y, int width, int height,
-			      gxutl_native_image_error_codes* errorPtr) {
+			      img_native_error_codes* errorPtr) {
 
     REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_get_mutable_argb()\n");
     
@@ -152,7 +152,7 @@ void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
     (void)height;
 
     /* Not yet implemented */
-    *errorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *errorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**

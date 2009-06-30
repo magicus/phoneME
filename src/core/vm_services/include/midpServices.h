@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef _MIDP_SERVICES_H_
@@ -43,7 +43,6 @@
  */
 
 #include <kni.h>
-#include <jvmspi.h>
 
 #include <midpString.h>
 
@@ -56,6 +55,9 @@ extern "C" {
 typedef enum midp_SignalType {
     NO_SIGNAL,
     UI_SIGNAL,
+    DISPLAY_DEVICE_SIGNAL,
+    UI_ALL_SIGNAL,
+    INSTALLER_UI_SIGNAL,
     NETWORK_READ_SIGNAL,
     NETWORK_WRITE_SIGNAL,
     NETWORK_EXCEPTION_SIGNAL,
@@ -67,6 +69,8 @@ typedef enum midp_SignalType {
     PUSH_SIGNAL,
     AUDIO_SIGNAL,
     JSR211_SIGNAL,
+    JSR211_PLATFORM_FINISH_SIGNAL,
+    JSR211_JAVA_INVOKE_SIGNAL,
     AMS_SIGNAL,
     VM_DEBUG_SIGNAL,
     HOST_NAME_LOOKUP_SIGNAL,
@@ -84,7 +88,22 @@ typedef enum midp_SignalType {
     LINK_READY_SIGNAL,
     LINK_PORTAL_SIGNAL,
     JSR179_LOCATION_SIGNAL,
-    MEDIA_SNAPSHOT_SIGNAL,
+    MEDIA_EVENT_SIGNAL,
+    JSR256_SIGNAL,
+    VOLUME_SIGNAL,
+    JSR290_INVALIDATE_SIGNAL,
+    JSR290_FLUID_EVENT_SIGNAL,
+    JSR290_INVOCATION_COMPLETION_SIGNAL,
+    JSR179_PROXIMITY_SIGNAL,
+    JSR179_ORIENTATION_SIGNAL,
+    JSR234_SNAPSHOT_STARTED_SIGNAL,
+    JSR234_TUNER_SOUGHT_SIGNAL,
+    JSR257_CONTACTLESS_SIGNAL,
+    JSR257_EVENT_SIGNAL,
+    JSR257_PUSH_SIGNAL,
+    NETWORK_STATUS_SIGNAL,
+    INTERISOLATE_MUTEX_SIGNAL,
+    EVENT_QUEUE_SIGNAL
 } midpSignalType;
 
 
@@ -157,13 +176,20 @@ jboolean midp_isDebuggerActive(void);
 #endif /* ENABLE_JAVA_DEBUGGER */
 
 /**
- * Get the current isolate ID from VM in case of MVM mode. 
+ * Gets the current isolate ID from VM in case of MVM mode.
  * For SVM, simply return 0 as an isolate ID.
  *
  * @return isolated : Isolate ID
  * 
  */
-extern int getCurrentIsolateId();
+int getCurrentIsolateId();
+
+/**
+ * Gets maximal allowed number of isolates in the case of MVM mode.
+ * For SVM, simply return 1.
+ */
+int getMaxIsolates();
+
 
 #ifdef __cplusplus
 }

@@ -1,27 +1,26 @@
 /*
  *   
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
  
 #include <string.h>
@@ -50,7 +49,7 @@ printMidpStringWithMessageImpl(char* message, MidpString mstr) {
     char* tag;
 
     if ((mstr.len <= 0) && (!message)) {
-        reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
+              REPORT_INFO(LC_MIDPSTRING, 
 		    "printMidpString() No input");
         return;
     }
@@ -64,12 +63,11 @@ printMidpStringWithMessageImpl(char* message, MidpString mstr) {
     if (mstr.len > 0) {
         msg = midpJcharsToChars(mstr);
         if (msg) {
-	    reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: %s", tag, msg);
+          REPORT_INFO2(LC_MIDPSTRING, "%s: %s", tag, msg);
 	    midpFree(msg);
         } else {
-            reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
-	        "%s: printMidpString can't convert MidpString to char*",
-		tag);
+            REPORT_INFO1(LC_MIDPSTRING, 
+	        "%s: printMidpString can't convert MidpString to char*",tag);
         }
     }
 }
@@ -79,7 +77,7 @@ printPcslStringWithMessageImpl(char* message, const pcsl_string* pstr) {
     char* tag;
 
     if ((pcsl_string_length(pstr) <= 0) && (!message)) {
-        reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
+        REPORT_INFO(LC_MIDPSTRING,
 		    "printPcslStringWithMessage() No input");
         return;
     }
@@ -93,14 +91,14 @@ printPcslStringWithMessageImpl(char* message, const pcsl_string* pstr) {
     if (pcsl_string_length(pstr) > 0) {
         const char* msg = pcsl_string_get_utf8_data(pstr);
         if (msg) {
-            reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: %s", tag, msg);
+            REPORT_INFO2(LC_MIDPSTRING, "%s: %s", tag, msg);
             pcsl_string_release_utf8_data(msg, pstr);
         } else {
-            reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
+           REPORT_INFO1(LC_MIDPSTRING,
 	        "%s: printPcslStringWithMessage can't convert pcsl_string to char*", tag);
         }
     } else {
-        reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: pcsl_string is %s", tag,
+        REPORT_INFO2(LC_MIDPSTRING, "%s: pcsl_string is %s", tag,
             0 == pcsl_string_length(pstr) ? "empty" : "null" );
     }
 }
@@ -116,36 +114,38 @@ void
 printMidpStringImpl(MidpString mstr) {
     char* msg = NULL;  
     if (mstr.len <= 0) {
-        reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
+        REPORT_INFO(LC_MIDPSTRING, 
 		    "printMidpString: Bad Length.");
         return;
     }
     if (mstr.len > 0) {
         msg = midpJcharsToChars(mstr);
         if (msg) {
-	    reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s", msg);
+	        REPORT_INFO1(LC_MIDPSTRING, "%s", msg);
             midpFree(msg);
         } else {
-            reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
+             REPORT_INFO(LC_MIDPSTRING, 
 	        "printMidpString: can't convert from MidpString to char");
+
         }
     }
 }
 void
 printPcslStringImpl(const pcsl_string* pstr) {
     if (pcsl_string_length(pstr) <= 0) {
-        reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
+       REPORT_INFO(LC_MIDPSTRING,
 		    "printPcslString: Bad Length.");
         return;
     }
     if (pcsl_string_length(pstr) > 0) {
         const char* msg = pcsl_string_get_utf8_data(pstr);
         if (msg) {
-	        reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s", msg);
+	        REPORT_INFO1(LC_MIDPSTRING, "%s", msg);
             pcsl_string_release_utf8_data(msg, pstr);
         } else {
-            reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
+             REPORT_INFO(LC_MIDPSTRING,
 	        "printPcslString: can't convert from pcsl_string to char");
+
         }
     }
 }

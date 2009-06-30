@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -84,11 +84,15 @@ void initScreenBuffer(int width, int height) {
 }                        
 
 /**
-  * Change screen orientation to landscape or portrait,
-  * depending on the current screen mode
-  */
+ * Change screen orientation to landscape or portrait,
+ * depending on the current screen mode
+ */
 void reverseScreenOrientation() {
-    gxj_rotate_screen_buffer();
+
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    gxj_rotate_screen_buffer(KNI_FALSE);
 }
 
 /** On i386, connect to the QVFB virtual frame buffer */
@@ -183,12 +187,35 @@ static void checkScreenBufferSize(int width, int height) {
     }
 }
 
+/** Get x-coordinate of screen origin */
+int getScreenX(int screenRotated) {
+    // System screen buffer geometry
+    int bufWidth = gxj_system_screen_buffer.width;
+    int x = 0;
+    int LCDwidth = screenRotated ? hdr->height : hdr->width;
+    if (LCDwidth > bufWidth) {
+        x = (LCDwidth - bufWidth) / 2;
+    }
+    return x;
+}
+
+/** Get y-coordinate of screen origin */
+int getScreenY(int screenRotated) {
+    int bufHeight = gxj_system_screen_buffer.height;
+    int y = 0;
+    int LCDheight = screenRotated ? hdr->width : hdr->height;
+    if (LCDheight > bufHeight) {
+        y = (LCDheight - bufHeight) / 2;
+    }
+    return y;
+}
+
 /** Refresh screen with offscreen bufer content */
 void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     // QVFB feature: a number of bytes per line can be different from
     // screenWidth * pixelSize, so lineStep should be used instead.
     int lineStep = hdr->lineStep / sizeof(gxj_pixel_type);
-    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);//, dstHeight = hdr->height;
+    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);
     gxj_pixel_type *dst  = (gxj_pixel_type *)qvfbPixels;
     gxj_pixel_type *src  = gxj_system_screen_buffer.pixelData;
 
@@ -234,8 +261,7 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type *)qvfbPixels;
     int srcWidth, srcHeight;
-    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);
-    int dstHeight = hdr->height;
+    int lineStep =  hdr->lineStep / sizeof(gxj_pixel_type);
 
     // System screen buffer geometry
     int bufWidth = gxj_system_screen_buffer.width;
@@ -252,23 +278,23 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     srcHeight = y2 - y1;
 
     // Center the LCD output area
-    if (bufWidth < dstHeight || bufHeight < dstWidth) {
-            // We are drawing into a frame buffer that's larger than what MIDP
-            // needs. Center it.
-            dst += (dstHeight - bufWidth) / 2 * dstWidth;
-            dst += ((dstWidth - bufHeight) / 2);
-        }
+    if (bufWidth < hdr->height) {
+        dst += (hdr->height - bufWidth) / 2 * lineStep;
+    }
+    if (bufHeight < hdr->width) {
+        dst += ((hdr->width - bufHeight) / 2);
+    }
 
     src += x1 + y1 * bufWidth;
-    dst += y1 + (bufWidth - x1) * dstWidth;
+    dst += y1 + (bufWidth - x1 - 1) * lineStep;
 
     srcInc = bufWidth - srcWidth;      // increment for src pointer at the end of row
-    dstInc = srcWidth * dstWidth + 1;  // increment for dst pointer at the end of column
+    dstInc = srcWidth * lineStep + 1;  // increment for dst pointer at the end of column
 
     while(y1++ < y2) {
         for (x = x1; x < x2; x++) {
             *dst = *src++;
-            dst -= dstWidth;
+            dst -= lineStep;
          }
          dst += dstInc;
          src += srcInc;

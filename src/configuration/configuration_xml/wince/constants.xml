@@ -3,8 +3,27 @@
 <!--
         	
 
-        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
 -->
 <configuration>
 <constants>
@@ -17,16 +36,6 @@
             Name="PORTING_NO_FILESYSTEM"
             Value="false"
             Comment="Whether your platform supports File System. Set to true when File System is not supported; set to false when File System is supported."/>
-<!-- Package javax.microedition.lcdui.game -->
-  <constant Type="int"
-            Name="GAMECANVAS_FULLWIDTH"
-            Value="240"
-            Comment="(Fixed) full display width"/>
-  <constant Type="int"
-            Name="GAMECANVAS_FULLHEIGHT"
-            Value="268" 
-            Comment="(Fixed) full display height"/>
-
 <!-- Package javax.microedition.lcdui -->
   <constant Type="boolean"
             Name="CHAM_USE_IMAGES"
@@ -42,11 +51,11 @@
             Comment="(Chameleon Only) display width (QVA PocketPC)"/>
   <constant Type="int"
             Name="CHAM_HEIGHT"
-            Value="268"
+            Value="294"
             Comment="(Chameleon Only) display height (QVA PocketPC)"/>
   <constant Type="int"
             Name="CHAM_FULLHEIGHT"
-            Value="268"
+            Value="294"
             Comment="(Chameleon Only) full display height (QVA PocketPC)"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
@@ -62,7 +71,7 @@
             Comment="(Fixed) full display width"/>
   <constant Type="int"
             Name="FULLHEIGHT"
-            Value="268" 
+            Value="294" 
             Comment="(Fixed) full display height"/>
   <constant Type="int"
             Name="NORMALWIDTH"
@@ -70,7 +79,7 @@
             Comment="(Fixed) normal width"/>
   <constant Type="int"
             Name="NORMALHEIGHT"
-            Value="268" 
+            Value="294" 
             Comment="(Fixed) normal height"/>
   <constant Type="int"
             Name="VERT_SCROLLBAR_WIDTH"
@@ -183,14 +192,6 @@
             Name="JWC_WINCE_TITLE_HEIGHT"
             Value="26"
             Comment="Height of the WinCE title at the top of LCD"/>
-  <constant Type="int"
-            Name="JWC_WINCE_MENU_HEIGHT"
-            Value="26"
-            Comment="Height of the WinCE menu at the bottom of LCD"/>
-  <constant Type="int"
-            Name="JWC_WINCE_USE_DIRECT_DRAW"
-            Value="0"
-            Comment="Use DirectDraw to refresh the screen."/>
  </constant_class>
 </constants>
 </configuration>

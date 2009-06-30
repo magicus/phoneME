@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -75,10 +75,6 @@ static void midpPermissionListener(jint requestHandle, jboolean granted) {
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
-    pcsl_string v_suite = PCSL_STRING_NULL_INITIALIZER;
-    pcsl_string v_permission = PCSL_STRING_NULL_INITIALIZER;
-    pcsl_string *const suite = &v_suite;
-    pcsl_string *const permission = &v_permission;
     jboolean granted = KNI_FALSE;
     MidpReentryData* info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
@@ -89,32 +85,10 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
 
     if (info == NULL) {
         /* initial invocation: send request */
-        int gotStrings = 0;
-        KNI_StartHandles(2);
-        /* IMPL NOTE: mg: is this a pattern? Do we need a macro?*/
-        KNI_DeclareHandle(jSuite);
-        KNI_DeclareHandle(jPermission);
-        KNI_GetParameterAsObject(1, jSuite);
-        KNI_GetParameterAsObject(2, jPermission);
-        if(PCSL_STRING_OK == midp_jstring_to_pcsl_string(jSuite, suite)) {
-            if(PCSL_STRING_OK == midp_jstring_to_pcsl_string(jPermission, permission)) {
-                gotStrings = 1;
-            }
-        }
-        KNI_EndHandles();
-
-        if (!gotStrings) {
-            KNI_ThrowNew(midpOutOfMemoryError, NULL);
-        } else {
-          GET_PCSL_STRING_DATA_AND_LENGTH(suite)
-          GET_PCSL_STRING_DATA_AND_LENGTH(permission)
-          if (  (NULL != suite_data || pcsl_string_is_null(suite))
-            &&  (NULL != permission_data || pcsl_string_is_null(permission))
-             ) {
                 jint requestHandle;
-                jint result = midpport_security_check_permission(
-                  (jchar*)suite_data, suite_len,
-                  (jchar*)permission_data, permission_len,
+        jint suiteId = KNI_GetParameterAsInt(1);
+        jint permId = KNI_GetParameterAsInt(2);
+        jint result = midpport_security_check_permission(suiteId, permId,
                   &requestHandle);
 
                 if (result == 1) {
@@ -123,20 +97,10 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
                   /* Block the caller until the security listener is called */
                   midp_thread_wait(SECURITY_CHECK_SIGNAL, requestHandle, NULL);
                 }
-          /* else permission is denied */
-          } else {
-              KNI_ThrowNew(midpOutOfMemoryError, NULL);
-          }
-          RELEASE_PCSL_STRING_DATA_AND_LENGTH
-          RELEASE_PCSL_STRING_DATA_AND_LENGTH
-        }
     } else {
         /* reinvocation: check result */
         granted = (jboolean)(info->status);
     }
-
-    pcsl_string_free(permission);
-    pcsl_string_free(suite);
 
     KNI_ReturnBoolean(granted);
 }
@@ -157,46 +121,11 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 Java_com_sun_midp_security_SecurityHandler_checkPermissionStatus0()
 {
-    pcsl_string v_suite = PCSL_STRING_NULL_INITIALIZER;
-    pcsl_string v_permission = PCSL_STRING_NULL_INITIALIZER;
-    pcsl_string *const suite = &v_suite;
-    pcsl_string *const permission = &v_permission;
     jint status = 0;
-    int gotStrings = 0;
+    jint suiteId = KNI_GetParameterAsInt(1);
+    jint permId = KNI_GetParameterAsInt(2);
 
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(jSuite);
-    KNI_DeclareHandle(jPermission);
-    
-    KNI_GetParameterAsObject(1, jSuite);
-    KNI_GetParameterAsObject(2, jPermission);
-    if(PCSL_STRING_OK == midp_jstring_to_pcsl_string(jSuite, suite)) {
-        if(PCSL_STRING_OK == midp_jstring_to_pcsl_string(jPermission, permission)) {
-            gotStrings = 1;
-        }
-    }
-    KNI_EndHandles();
-    
-    if (!gotStrings) {
-    	KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    } else {
-          GET_PCSL_STRING_DATA_AND_LENGTH(suite)
-          GET_PCSL_STRING_DATA_AND_LENGTH(permission)
-          if (  (NULL != suite_data || pcsl_string_is_null(suite))
-            &&  (NULL != permission_data || pcsl_string_is_null(permission))
-             ) {
-                status = midpport_security_check_permission_status(
-                    (jchar*)suite_data, suite_len,
-                    (jchar*)permission_data, permission_len);
-          } else {
-              KNI_ThrowNew(midpOutOfMemoryError, NULL);
-          }
-          RELEASE_PCSL_STRING_DATA_AND_LENGTH
-          RELEASE_PCSL_STRING_DATA_AND_LENGTH
-    }
-    
-    pcsl_string_free(permission);
-    pcsl_string_free(suite);
+    status = midpport_security_check_permission_status(suiteId, permId);
 
     KNI_ReturnInt(status);
 }

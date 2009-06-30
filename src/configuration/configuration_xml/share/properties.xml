@@ -1,10 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "./configuration.dtd">
 <!--
-		  
-
-		Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+		Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 		DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+		
+		This program is free software; you can redistribute it and/or
+		modify it under the terms of the GNU General Public License version
+		2 only, as published by the Free Software Foundation.
+		
+		This program is distributed in the hope that it will be useful, but
+		WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+		General Public License version 2 for more details (a copy is
+		included at /legal/license.txt).
+		
+		You should have received a copy of the GNU General Public License
+		version 2 along with this work; if not, write to the Free Software
+		Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+		02110-1301 USA
+		
+		Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+		Clara, CA 95054 or visit www.sun.com if you need additional
+		information or have any questions.
 -->
 <!-- Properties file common for all platforms -->
 <configuration>
@@ -14,20 +31,23 @@
   <!-- System tunable parameters -->
 
   <property Key="destroyMIDletTimeout"
-	  Value="5"
+	  Value="5000"
 	  Scope="internal"
-	  Comment="Destroy MIDlet timeout"/>
+	  Comment="Timeout in milliseconds to destroy a running MIDlet"/>
 
-  <property Key="pauseAppTimeout"
+  <property Key="suspendAppTimeout"
 	  Value="2000"
 	  Scope="internal"
 	  Comment="Timeout in milliseconds for MIDlets to complete 
                    pauseApp() execution within java stack pause"/>
 
-  <property Key="system.jam_space"
-	  Value="1000000"
-	  Scope="internal"
-	  Comment="Amount of space to reserve for JAM storage."/>
+  <property Key="suspendAlertTime"
+      Value="900"
+      Scope="internal"
+      Comment="Time in milliseconds for minimal duration of java suspension.
+        It is required to let a user see alert of java suspending. If the
+        time is too short, the alert will not be not shown possibly. If set
+        to 0 the alert will not be shown definitely."/>
 
   <property Key="system.i18n.lang"
 	  Value="en"
@@ -124,18 +144,31 @@
   <property Key="mms"
 	    Value="com.sun.midp.io.j2me.mms.ProtocolPushImpl"
 	    Scope="internal"/>				
+  <property Key="ndef"
+        Value="com.sun.contactless.ProtocolPushImpl"
+        Scope="internal"/>
+        
+  <property Key="AMS_MEMORY_RESERVED_MVM"
+            Value="1024"
+            Scope="internal"
+            Comment="Default AMS memory reserved in MVM mode"/>
+  <property Key="AMS_MEMORY_LIMIT_MVM"
+            Value="-1"
+            Scope="internal"
+            Comment="Default AMS memory limit in MVM mode"/>
+
+  <!-- OCSP (Online Certificate Status Protocol) properties: example values -->
+  <property Key="ocsp.responderURL"
+	    Value="http://127.0.0.1:80"
+	    Scope="internal"/>
+
 <!-- SYSTEM PROPERTIES -->
 <!-- Visible from System.getProperty() -->
-
   <property Key="microedition.hostname" 
 		Value="" 
 		Scope="system"
 		Callout="getLocalHostName"
 		Comment="The local hostname."/>
-  <property Key="microedition.configuration" 
-		Value="CLDC-1.1" 
-		Scope="system"
-		Comment="Configuration information."/>
   <property Key="microedition.profiles" 
 		Value="MIDP-2.1" 
 		Scope="system"
@@ -158,6 +191,10 @@
 		Value="1.0" 
 		Scope="system"
 		Comment="JWTI version number."/>
+  <property Key="microedition.msa.version"
+                Value="1.1"
+                Scope="system"
+                Comment="Specification version number."/>
 
   <!-- CLDC implementation parameters -->
   <!-- use MIDP protocol implementations -->

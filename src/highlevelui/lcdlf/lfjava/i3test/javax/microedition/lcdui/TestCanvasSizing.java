@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -30,6 +30,7 @@ import com.sun.midp.chameleon.skins.*;
 import com.sun.midp.i3test.TestCase;
 import com.sun.midp.util.LcduiTestCanvas;
 import com.sun.midp.util.LcduiTestMIDlet;
+import  com.sun.midp.configurator.Constants;
 
 /**
  * This test case does extensive testing on the proper sizing
@@ -56,6 +57,8 @@ public class TestCanvasSizing extends TestCase {
     // case for all implementations. Including both here allows the test
     // to be valid in both circumstances.
     
+    /** Screen width in fullsize mode */ 
+    protected static int FS_WIDTH;
     /** Screen height in fullsize mode */ 
     protected static int FS_HEIGHT;
     
@@ -83,10 +86,9 @@ public class TestCanvasSizing extends TestCase {
         // Initialize the constants
         
         STD_WIDTH = ScreenSkin.WIDTH;
-        STD_HEIGHT = ScreenSkin.HEIGHT;
-        //FS_HEIGHT = ScreenSkin.FULLHEIGHT;
-        // IMPL NOTE: should get FULLHEIGHT from native
-        FS_HEIGHT = ScreenSkin.HEIGHT;
+        STD_HEIGHT = Constants.CHAM_HEIGHT;
+        FS_WIDTH = Constants.CHAM_FULLWIDTH;
+        FS_HEIGHT = Constants.CHAM_FULLHEIGHT;
         TITLE_HEIGHT = TitleSkin.HEIGHT;
         TICKER_HEIGHT = TickerSkin.HEIGHT;
         SOFTBTN_HEIGHT = SoftButtonSkin.HEIGHT;
@@ -96,19 +98,14 @@ public class TestCanvasSizing extends TestCase {
     
     /**
      * This is a utility method which retrieves the canvas's size and
-     * validates it against the passed in values. It does this again
-     * after making sure the canvas is visible on the screen.
+     * validates it against the passed in values after making sure 
+     * the canvas is visible on the screen.
      *
      * @param canvas the canvas to test
      * @param WIDTH the <b>correct</b> width the canvas should be
      * @param HEIGHT the <b>correct</b> height the canvas should be
      */
     protected void checkCanvasSize(TestCanvas canvas, int WIDTH, int HEIGHT) {
-        int w = canvas.getWidth();
-        int h = canvas.getHeight();
-        
-        assertEquals("Checking canvas width (not shown):", WIDTH, w);
-        assertEquals("Checking canvas height (not shown):", HEIGHT, h);
             
         display.setCurrent(canvas);
 
@@ -117,9 +114,8 @@ public class TestCanvasSizing extends TestCase {
             return;
         }
             
-        // Now the canvas should be showing on the screen, we re-test
-        w = canvas.getWidth();
-        h = canvas.getHeight();
+        int w = canvas.getWidth();
+        int h = canvas.getHeight();
         assertEquals("Checking canvas width (shown):", WIDTH, w);
         assertEquals("Checking canvas height (shown):", HEIGHT, h);
     }
@@ -190,10 +186,10 @@ public class TestCanvasSizing extends TestCase {
         canvas.setTitle("CanvasSizing Test 5");
         canvas.setTicker(ticker);
         canvas.toggleFullscreen(true);
-        
+
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
     
     /**
@@ -209,7 +205,7 @@ public class TestCanvasSizing extends TestCase {
         
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
     
     /**
@@ -225,7 +221,7 @@ public class TestCanvasSizing extends TestCase {
         
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
     
     /**
@@ -240,7 +236,7 @@ public class TestCanvasSizing extends TestCase {
         
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
 
     /**

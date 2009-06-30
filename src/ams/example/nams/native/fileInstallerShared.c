@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -71,7 +71,7 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(class_suffix)
     {'.','c','l','a','s','s', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(class_suffix);
 
-extern char* midpFixMidpHome(char *cmd);
+extern char* getApplicationDir(char *cmd);
 
 PCSL_DEFINE_ASCII_STRING_LITERAL_START(ENTRY_NAME)
     {'M', 'E', 'T', 'A', '-', 'I', 'N', 'F', '/',
@@ -160,7 +160,7 @@ void convertChar2JChar(char* char_buf, jchar* jchar_buf, int char_buf_size) {
  *                  size of the char buf
  */
 void convertJChar2Char(jchar* jchar_buf, char* char_buf, int jchar_buf_size) {
-    int i = 0;
+    int i;
     for (i = 0; i < jchar_buf_size; i++) {
         *(char_buf+i) = (char)(*(jchar_buf+i));
     }
@@ -795,15 +795,21 @@ pcsl_string_status createRelativeURL(const pcsl_string * in,
     }
 
     return rc;
-}/* end of createRelativeURL */
+} /* end of createRelativeURL */
 
 /**************************************************************************/
 /**
- * fileInstaller could be launched as executable or as a function call
+ * Installs a midlet suite from a file. This is an example of how to use
+ * the public MIDP API.
+ *
+ * fileInstaller could be launched as executable or as a function call.
+ *
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
+ *
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
-int
-fileInstaller(int argc, char* argv[]) {
-
+int fileInstaller(int argc, char* argv[]) {
     /* temporary variable to contain return results */
     int     res                    = 0;
     /* pointer to the manifest extracted from the jar */
@@ -843,7 +849,7 @@ fileInstaller(int argc, char* argv[]) {
     /* jar relative url file:///jadname.jar */
     pcsl_string jarRelativeURL     = PCSL_STRING_NULL;
 
-    jchar trusted = KNI_TRUE;
+    jboolean trusted = KNI_TRUE;
 
     /*
      * From Permissions.java, 50 permissions, level 1 is allowed. Don't
@@ -864,7 +870,7 @@ fileInstaller(int argc, char* argv[]) {
     int verifyHashLen = 0;
 #endif
 
-    char* midpHome = NULL;
+    char* appDir = NULL;
     PCSL_DEFINE_ASCII_STRING_LITERAL_START(domain)
         {'o', 'p', 'e', 'r', 'a', 't', 'o', 'r', '\0'}
     PCSL_DEFINE_ASCII_STRING_LITERAL_END(domain);
@@ -879,12 +885,12 @@ fileInstaller(int argc, char* argv[]) {
     REPORT_INFO2(LC_AMS, "argv[0] = %s, argv[1] = %s", argv[0], argv[1]);
 
     /* get midp home directory, set it */
-    midpHome = midpFixMidpHome(argv[0]);
-    if (midpHome == NULL) {
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
         return -1;
     }
-    /* set up midpHome before calling initialize */
-    midpSetHomeDir(midpHome);
+    /* set up appDir before calling initialize */
+    midpSetAppDir(appDir);
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");
@@ -1388,6 +1394,7 @@ fileInstaller(int argc, char* argv[]) {
         suiteData.varSuiteData.pJarHash = NULL;
         suiteData.varSuiteData.midletClassName = PCSL_STRING_NULL;
         suiteData.varSuiteData.displayName = PCSL_STRING_NULL;
+        suiteData.varSuiteData.suiteVersion = PCSL_STRING_NULL;
         suiteData.varSuiteData.iconName = PCSL_STRING_NULL;
         suiteData.varSuiteData.pathToJar = TEMP_JAR_NAME;
         suiteData.varSuiteData.pathToSettings = PCSL_STRING_NULL;
@@ -1403,7 +1410,7 @@ fileInstaller(int argc, char* argv[]) {
         suiteData.isEnabled = 1;
         suiteData.isTrusted = trusted;
         suiteData.jarHashLen = 0;
-        suiteData.isPreinstalled = 0;
+        suiteData.type = COMPONENT_PREINSTALLED_SUITE;
 
         res = midp_store_suite(&installInfo, &suiteSettings, &suiteData);
 
@@ -1419,7 +1426,8 @@ fileInstaller(int argc, char* argv[]) {
             res = midp_suite_write_secure_resource(
                 suiteId, &VERIFY_HASH_RESOURCENAME,
                 verifyHash, verifyHashLen);
-            if (res != 0) {
+            midpFree(verifyHash);
+            if (res != ALL_OK) {
                 REPORT_ERROR(LC_AMS,
                   "Cannot store hash value for verified suite");
                 break;

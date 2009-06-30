@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.rms;
@@ -84,6 +84,12 @@ class RecordStoreIndex {
     /** specifies record ID to offset mapping */
     private OffsetCache recordIdOffsets;
 
+    /** 
+     * Specifies the version of record store for which this index is valid.
+     * Index becomes invalid if another MIDlet changes the record store.
+     */
+    private int indexVersion; 
+
     /**
      *  This value will be returned by recordIdOffsets.elementAt() when
      *  record id is not found
@@ -110,6 +116,13 @@ class RecordStoreIndex {
                      String recordStoreName) throws IOException {
         recordStore = rs;
         dbFile = rs.getDbFile();
+
+        indexVersion = 0;
+        try {
+            indexVersion = rs.getVersion();
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
     /**
@@ -204,6 +217,8 @@ class RecordStoreIndex {
         if (recordId <= 0) {
             throw new InvalidRecordIDException("error finding record data");
         }
+
+        ensureIndexValidity();
 
         if (null != recordIdOffsets)
         {
@@ -325,7 +340,7 @@ class RecordStoreIndex {
                 calculateBlockSize(RecordStoreUtil.getInt(header, 4));
 
             if (null != recordIdOffsets) {
-                recordIdOffsets.setElementAt(currentOffset, recordId);
+                recordIdOffsets.setElementAt(currentOffset, currentId);
                 recordIdOffsets.LastSeenOffset = currentOffset;
                 // if we had to repeat search from the beginning, there has been
                 // something wrong, and it's ok to forget where we have been.
@@ -423,6 +438,9 @@ class RecordStoreIndex {
                            " numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " blockOffset = " + blockOffset);
         }
+
+        ensureIndexValidity();
+
         int recordId = RecordStoreUtil.getInt(header, 0);
         if (null != recordIdOffsets) {
             recordIdOffsets.setElementAt(blockOffset, recordId);
@@ -448,6 +466,9 @@ class RecordStoreIndex {
                            " numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " blockOffset = " + blockOffset);
         }
+
+        ensureIndexValidity();
+
         // blocks get moved, LastSeenOffset may point into the middle
         // of a record.
         // In principle, all moved blocks will notify us via UpdateBlock(),
@@ -472,8 +493,46 @@ class RecordStoreIndex {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                            "deleteRecordIndex(" + recordId + ")");
         }
+
+        ensureIndexValidity();
+
         if (null != recordIdOffsets) {
             recordIdOffsets.removeElementAt(recordId);
         }
+    }
+
+    /**
+     * Called when record store version has been updated.
+     *
+     * @param newVersion new record store version
+     */
+    void recordStoreVersionUpdated(int newVersion) {
+        indexVersion = newVersion;
+    }
+
+    /**
+     * Ensures index validity. Index becomes invalid when another 
+     * MIDlet changes the record store.
+     */
+    void ensureIndexValidity() {
+        int storeVersion = indexVersion;
+
+        try {
+            storeVersion = recordStore.getVersion();
+        } catch (Exception e) {
+        }
+
+        if (indexVersion < storeVersion) {
+            // out of date, can't use current index anymore           
+            invalidateIndex();
+            indexVersion = storeVersion;
+        }
+    }
+
+    /**
+     * Invalidates (clears) the index
+     */
+    private void invalidateIndex() {
+        recordIdOffsets = null;
     }
 }

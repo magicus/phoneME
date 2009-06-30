@@ -1,27 +1,27 @@
 /*
  *   
  *
- *  Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ *  Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *  
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License version
- *  2 only, as published by the Free Software Foundation. 
+ *  2 only, as published by the Free Software Foundation.
  *  
  *  This program is distributed in the hope that it will be useful, but
  *  WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  *  General Public License version 2 for more details (a copy is
- *  included at /legal/license.txt). 
+ *  included at /legal/license.txt).
  *  
  *  You should have received a copy of the GNU General Public License
  *  version 2 along with this work; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- *  02110-1301 USA 
+ *  02110-1301 USA
  *  
  *  Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  *  Clara, CA 95054 or visit www.sun.com if you need additional
- *  information or have any questions. 
+ *  information or have any questions.
  */
 package javax.microedition.media;
 
@@ -447,34 +447,6 @@ public final class Manager {
      * Value "device://tone" is assigned to <code>TONE_DEVICE_LOCATOR</code>.
      */
     public final static String TONE_DEVICE_LOCATOR = "device://tone";
-
-    /**
-     * The locator to create a MIDI <code>Player</code>
-     * which gives access to the MIDI device by making
-     * {@link javax.microedition.media.control.MIDIControl MIDIControl}
-     * available.  For example,
-     * <pre>
-     * try {
-     *     Player p = Manager.createPlayer(Manager.MIDI_DEVICE_LOCATOR);
-     *     p.prefetch(); // opens the MIDI device
-     *     MIDIControl m = (MIDIControl)p.getControl("MIDIControl");
-     * } catch (IOException ioe) {
-     * } catch (MediaException me) {}
-     * </pre>
-     *
-     * The MIDI <code>Player</code> returned does not carry any
-     * media data.  <code>getDuration</code> returns 0 for this
-     * <code>Player</code>.
-     * <p>
-     * The content type of the <code>Player</code> created from this
-     * locator is <code>audio/midi</code>.
-     * <p>
-     * A <code>Player</code> for this locator may not be supported
-     * for all implementations.
-     * <p>
-     * Value "device://midi" is assigned to <code>MIDI_DEVICE_LOCATOR</code>.
-     */
-    public final static String MIDI_DEVICE_LOCATOR = "device://midi";
 
     // private final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
 

@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -35,14 +35,14 @@ import com.sun.midp.configurator.Constants;
  * See DisplayableLF.java for naming convention.
  */
 class LayoutManager {
-    
+
     // Required test: multiple/simultaneous forms with different layout
 
     /**
      * Singleton design pattern. Obtain access using instance() method.
      */
     LayoutManager() {
-	sizingBox = new int[3]; // x,y,width
+    	sizingBox = new int[3]; // x,y,width
     }
 
     /**
@@ -387,7 +387,15 @@ class LayoutManager {
         // tallest item on a line
         int lineHeight = 0;
         int pW, pH;
-        int curAlignment = Item.LAYOUT_LEFT;
+
+        String locale = System.getProperty("microedition.locale");
+
+        if (locale != null && locale.equals("he-IL")) {
+            rl_direction = true;
+        } else {
+            rl_direction = false;
+        }
+        int curAlignment = (rl_direction) ? Item.LAYOUT_RIGHT : Item.LAYOUT_LEFT;
 
         // We loop through the Items starting in startIndex, until we reach
         // the end of the block, and return the index of the next block,
@@ -872,11 +880,10 @@ class LayoutManager {
                 hSpace = hSpace / 2;
                 /* fall through */
         case Item.LAYOUT_RIGHT:
-                for (; rowStart <= rowEnd; rowStart++) {
-                    itemLFs[rowEnd].lMove(hSpace, 0); 
-                } 
+                    for (; rowStart <= rowEnd; rowStart++) {
+                        itemLFs[rowStart].lMove(hSpace, 0);
+                    }
                 break;
-
         case Item.LAYOUT_LEFT:
         default:
             break;
@@ -909,14 +916,15 @@ class LayoutManager {
         for (int hAlign, i = index; i >= 0; i--) {
             hAlign = itemLFs[i].getLayout() & LAYOUT_HMASK;
 
-            if (hAlign == 0) {
-                continue;
-            }
-            return hAlign;
+            if (hAlign != Item.LAYOUT_DEFAULT)
+                return hAlign;
         }
-
-        // default layout is LAYOUT_LEFT
-        return Item.LAYOUT_LEFT;
+        // default layout
+        if (rl_direction) {
+            return Item.LAYOUT_RIGHT;
+        } else {
+            return Item.LAYOUT_LEFT;
+        }
     }
 
     /**
@@ -1110,16 +1118,20 @@ class LayoutManager {
         }
         
         space = space / numExp;
-        
+
         // We then add the same amount to each Expandable
         for (int i = rowStart; i <= rowEnd; i++) {
             if (itemLFs[i].shouldHExpand()) {
                 itemLFs[i].lSetSize(itemLFs[i].bounds[WIDTH] + space,
-                                   getItemHeight(i, 
-                                                 itemLFs[i].bounds[WIDTH] + 
+                                   getItemHeight(i,
+                                                 itemLFs[i].bounds[WIDTH] +
                                                  space,
-                                                 itemLFs)); 
-                
+                                                 itemLFs));
+
+                itemLFs[i].lGetContentSize(itemLFs[i].lGetContentBounds(),itemLFs[i].bounds[WIDTH] + space);
+
+
+
                 // We right shift each subsequent item on the row
                 for (int j = i + 1; j <= rowEnd; j++) {
                     itemLFs[j].lMove(space, 0);
@@ -1337,6 +1349,10 @@ class LayoutManager {
      * Single instance of the LayoutManager class.
      */
     static LayoutManager singleInstance = new LayoutManager();
+
+    /** layout derection depend on the language conventions in use */
+    private boolean rl_direction;
+
 
     /** Used as an index into the viewport[], for the x origin. */
     final static int X      = DisplayableLFImpl.X;

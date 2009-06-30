@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -27,16 +27,18 @@
 #include <suspend_resume.h>
 #include <suspend_resume_vm.h>
 #include <suspend_resume_port.h>
+#include <suspend_resume_lcdui.h>
 #include <midpEvents.h>
 #include <midpEventUtil.h>
 #include <midpInit.h>
 #include <midpMalloc.h>
 #include <midpError.h>
-#include <midpNativeThread.h>
 #include <midpPauseResume.h>
 
 /** Suspendable resource that reprsents the VM. */
 VM vm = { KNI_FALSE };
+/** Suspendable resource that reprsents the LCDUI. */
+LCDUIState lcduiState;
 
 /** Java stack state from suspend/resume point of view. */
 static int sr_state = SR_INVALID;
@@ -75,7 +77,7 @@ static SuspendableResource *sr_resources = NULL;
  * Empty procedure to be used as default one in case when no action is
  * required to suspend or resume a resource.
  */
-SuspendResumeProc   SR_EMPTY_PROC = NULL;
+SuspendResumeProc SR_EMPTY_PROC = NULL;
 
 /** Returns current java stack state. */
 SRState midp_getSRState() {
@@ -129,6 +131,14 @@ void resume_resources() {
     }
 }
 
+/**
+ * Requests java stack to release resources and suspend.
+ * When the stack s suspended, there are two ways of requesting the stack
+ * to resume. One is to pass control to midp_checkAndResume() and provide
+ * midp_checkResumeRequest() to return KNI_TRUE. Another one is to simply
+ * call midp_resume(). The ways are logically equivalent but one of them may
+ * be more convenent on a port to a particular patform.
+ */
 void midp_suspend() {
     REPORT_INFO(LC_LIFECYCLE, "midp_suspend()");
 
@@ -168,6 +178,10 @@ void resume_java() {
     REPORT_INFO(LC_LIFECYCLE, "midp_resume(): midp resumed");
 }
 
+/**
+ * Requests java stack to resume normal processing restoring resources
+ * where possible.
+ */
 void midp_resume() {
     REPORT_INFO(LC_LIFECYCLE, "midp_resume()");
 
@@ -185,11 +199,18 @@ void midp_resume() {
     }
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_suspend_SuspendSystem_isResumePending) {
+    (void)midp_checkAndResume();
+    KNI_ReturnBoolean(midp_getSRState() == SR_RESUMING);
+}
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
     allMidletsKilled = KNI_GetParameterAsBoolean(1);
 
-    /* Checking that midp_resume() has not been called during suspending
+    /*
+     * Checking that midp_resume() has not been called during suspending
      * of java side.
      */
     if (sr_state == SR_SUSPENDING) {
@@ -240,7 +261,9 @@ void sr_unregisterResource(void *resource) {
 
 void sr_initSystem() {
     if (SR_INVALID == sr_state) {
+        lcduiState.locale = NULL;
         sr_registerResource((void*)&vm, &suspend_vm, &resume_vm);
+        sr_registerResource((void*)&lcduiState, &suspend_lcdui, &resume_lcdui);        
         sr_state = SR_ACTIVE;
     }
 }
@@ -276,12 +299,23 @@ void sr_finalizeSystem() {
     sr_state = SR_INVALID;
 }
 
+/**
+ * Checks if there is active request for java stack to resume and invokes
+ * stack resuming routines if requested. Makes nothing in case the java
+ * stack is not currently suspended. There is no need to call this function
+ * from the outside of java stack, it is called automatically if suspended
+ * stack receives control.
+ *
+ * @return KNI_TRUE if java stack resuming procedures were invoked.
+ */
 jboolean midp_checkAndResume() {
     jboolean res = KNI_FALSE;
+    SRState s = midp_getSRState();
 
     REPORT_INFO(LC_LIFECYCLE, "midp_checkAndResume()");
 
-    if (SR_SUSPENDED == sr_state && midp_checkResumeRequest()) {
+    if ((SR_SUSPENDED == s || SR_SUSPENDING == s) &&
+            midp_checkResumeRequest()) {
         midp_resume();
         res = KNI_TRUE;
     }
@@ -289,18 +323,33 @@ jboolean midp_checkAndResume() {
     return res;
 }
 
-void midp_waitWhileSuspended() {
+/**
+ * Waits while java stack stays suspended then calls midp_resume().
+ * If java stack is not currently suspened, returns false immediately.
+ * Otherwise calls midp_checkAndResume() in cycle until it detects
+ * resume request and performs resuming routines.
+ *
+ * Used in VM maser mode only.
+ *
+ * @retrun KNI_TRUE if java stack was suspended and resume request
+ *         was detected within this call, KNI_FALSE otherwise
+ */
+jboolean midp_waitWhileSuspended() {
+    jboolean ret = KNI_FALSE;
+
     while (SR_SUSPENDED == midp_getSRState()) {
+        ret = KNI_TRUE;
         midp_checkAndResume();
+
+        /*
+         * IMPL_NOTE: condition here is not midp_checkAndResume() to
+         * support special testing scenario when system is suspended
+         * but VM continues working.
+         */
         if (!vm.isSuspended) {
             break;
         }
-
-        /* IMPL_NOTE: Sleep delay 1 here means 1 second since
-         * midp_sleepNativeThread() takes seconds. Beter solution
-         * is rewriting midp_sleepNativeThread() for it to take
-         * milliseconds and use SR_RESUME_CHECK_TIMEOUT here.
-         */
-        midp_sleepNativeThread(1);
     }
+
+    return ret;
 }

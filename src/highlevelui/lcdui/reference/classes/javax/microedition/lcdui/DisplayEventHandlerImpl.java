@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -29,6 +29,7 @@ package javax.microedition.lcdui;
 import com.sun.midp.events.EventQueue;
 
 import com.sun.midp.lcdui.DisplayContainer;
+import com.sun.midp.lcdui.DisplayDeviceContainer;
 import com.sun.midp.lcdui.DisplayAccess;
 import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.DisplayEventProducer;
@@ -67,6 +68,9 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     /** The preempting display. */
     private DisplayAccess preemptingDisplay;
 
+    /** If request to end preemption was called */
+    private boolean preemptionDoneCalled = false;
+
     /** Package private constructor restrict creation to LCDUI package. */
     DisplayEventHandlerImpl() {
     }
@@ -75,18 +79,18 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
      * Initialize Display Event Handler.
      * DisplayEventHandler I/F method.
      *
-     * @param theEventQueue the event queue
      * @param theDisplayEventProducer producer for display events
      * @param theForegroundController controls which display has the foreground
      * @param theRepaintEventProducer producer for repaint events events
      * @param theDisplayContainer container for display objects
+     * @param theDisplayDeviceContainer container for display device objects
      */
     public void initDisplayEventHandler(
-        EventQueue theEventQueue,
         DisplayEventProducer theDisplayEventProducer,
         ForegroundController theForegroundController,
         RepaintEventProducer theRepaintEventProducer,
-        DisplayContainer theDisplayContainer) {
+        DisplayContainer theDisplayContainer,
+	DisplayDeviceContainer theDisplayDeviceContainer) {
 
         foregroundController = theForegroundController;
 
@@ -105,18 +109,19 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
             theForegroundController,
             theDisplayEventProducer,
             theRepaintEventProducer,
-            theDisplayContainer);
+            theDisplayContainer,
+	    theDisplayDeviceContainer);
     }
 
     /**
-     * Initialize per suite data of the display event handler.
+     * Sets the trusted state of the display event handler.
      * DisplayEventHandler I/F method.
      *
      * @param drawTrustedIcon true, to draw the trusted icon in the upper
      *                status bar for every display of this suite
      */
-    public void initSuiteData(boolean drawTrustedIcon) {
-        Display.initSuiteData(drawTrustedIcon);
+    public void setTrustedState(boolean drawTrustedIcon) {
+        Display.setTrustedState(drawTrustedIcon);
     }
 
     /**
@@ -206,29 +211,38 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
             if (preemptingDisplay != null &&
                 (preemptToken == preemptingDisplay || preemptToken == null)) {
 
+                preemptionDoneCalled = true;
+
                 foregroundController.stopPreempting(
                     preemptingDisplay.getDisplayId());
 
-                displayContainer.removeDisplay(
-                    preemptingDisplay.getNameOfOwner());
-
-                preemptingDisplay = null;
-
-                // A midlet may be waiting to preempt
-                this.notify();
             }
         }
     }
 
     /**
-     * Get the Image of the trusted icon for this Display.
-     * Only callers with the internal MIDP permission can use this method.
-     * DisplayEventHandler I/F method.
+     * Called by Display to notify DisplayEventHandler that
+     * Display has been sent to the background to finish
+     * preempt process if any.
      *
-     * @return an Image of the trusted icon.
+     * @param displayId id of Display
      */
-    public Image getTrustedMIDletIcon() {
-        return Display.getSystemImage("trustedmidlet_icon.png");
+    public void onDisplayBackgroundProcessed(int displayId) {
+
+        synchronized (this) {
+            if (preemptionDoneCalled && preemptingDisplay != null &&
+                preemptingDisplay.getDisplayId() == displayId) {
+
+                displayContainer.removeDisplaysByOwner(
+                    preemptingDisplay.getOwner());
+                preemptingDisplay = null;
+
+                preemptionDoneCalled = false;
+    
+                // A midlet may be waiting to preempt
+                this.notify();
+            }
+        }
     }
 
     /**

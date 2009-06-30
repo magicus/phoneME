@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon;
@@ -84,6 +84,18 @@ public interface ChamDisplayTunnel {
     public void callSizeChanged(int w, int h);
 
     /**
+     * This method is used by Chameleon to invoke
+     * hideNotify() method by Canvas.
+     */ 
+    public void callHideNotify();
+    
+     /**
+     * This method is used by Chameleon to invoke
+     * showNotify() method by Canvas.
+     */
+    public void callShowNotify(); 
+
+    /**
      * This method is used by Chameleon to invoke 
      * Displayable.uCallScrollContent() method.
      *
@@ -93,8 +105,54 @@ public interface ChamDisplayTunnel {
     public void callScrollContent(int scrollType, int thumbPosition);
 
     /**
+     * Checks whether it is allowed to start content dragging from
+     * this point
+     * @param x the x coordinate of the point to check
+     * @param y the y coordinate of the point to check
+     */
+    public boolean callIsDraggable(int x, int y);
+
+    /**
+     * This method is used by Chameleon to invoke
+     * Displayable.uCallDragContent() method.
+     *
+     * @param deltaY 
+     * @return desired drag amount to become stable
+     */
+    public int callDragContent(int deltaY);
+
+    /**
      * Updates the scroll indicator.
      */
     public void updateScrollIndicator();
+
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    public int getDisplayWidth();
+	
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    public int getDisplayHeight();
+
+    /**
+     * This method is used by Chameleon to invoke
+     * CanvasLFImpl.uCallKeyPressed() method.
+     *
+     * @param keyCode key code
+     */
+    public void callKeyPressed(int keyCode);
+
+    /**
+     * This method is used by Chameleon to invoke
+     * CanvasLFImpl.uCallKeyReleased() method.
+     *
+     * @param keyCode key code
+     */
+    public void callKeyReleased(int keyCode);
+
 }
 

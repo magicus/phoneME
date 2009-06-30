@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef _KEYMAP_INPUT_H_
@@ -118,7 +118,14 @@ typedef enum {
      * and is never passed to application.
      **/
     KEYMAP_KEY_DEBUG_TRACE1 = -21,
+    
     KEYMAP_KEY_SCREEN_ROT   = -22,
+
+    /* This key event is generated when platform requests to show
+     * virtual keyboard. Is intended to be converted from key event
+     * into appropriate MIDP event
+     */
+    KEYMAP_KEY_VIRT_KEYB    = -23,
 
     /* This is the last enum. Please shift
      * it if you are adding new values.
@@ -126,10 +133,15 @@ typedef enum {
      * can be used for associations with platform
      * dependent keys (for example KEYMAP_MD_KEY_HOME).
      **/
-    KEYMAP_KEY_MACHINE_DEP  = -23
+    KEYMAP_KEY_MACHINE_DEP  = -24
 
 } KeymapKeyCode;
 /** @} */
+
+/**
+ * Minimun valid key value.
+ */
+#define MIN_KEY_VALUE (KEYMAP_KEY_GAME_RIGHT)
 
 /**
  * Auxiliary data type to define association between key codes

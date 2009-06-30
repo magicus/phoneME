@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -86,6 +86,12 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         size[HEIGHT] = cg.cgElements[s].getFont().getHeight() + 
             (2 * ChoiceGroupSkin.PAD_V);
 
+        int imHeight =  ChoiceGroupSkin.HEIGHT_IMAGE;
+        if (imHeight > size[HEIGHT]) {
+            size[HEIGHT] = imHeight;
+        }
+        
+
         if (maxContentWidth < w) {
             size[WIDTH] = width - w + maxContentWidth;
         } else {
@@ -108,11 +114,12 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
     void lPaintContent(Graphics g, int width, int height) {
         // paint closed state of the popup
 
+        int textOffset = 0;
+
         // if there are no elements, we are done
         if (cg.numOfEls == 0) {
             return;
         }
-
         // draw background
         if (ChoiceGroupSkin.IMAGE_BG != null) {
             CGraphicsUtil.draw9pcsBackground(g, 0, 0, width, height,
@@ -125,30 +132,30 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 ChoiceGroupSkin.COLOR_BG);
         }
 
-        if (hasFocus && !popupLayer.isPopupOpen()) {
-            // hilight the background
-            g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-            g.fillRect(2, 2, width - 3, height - 3);
-        }
-
         // draw icon
         if (ChoiceGroupSkin.IMAGE_BUTTON_ICON != null) {
             int w = ChoiceGroupSkin.IMAGE_BUTTON_ICON.getWidth();
             int yOffset = height -
                 ChoiceGroupSkin.IMAGE_BUTTON_ICON.getHeight();
             if (yOffset > 0) {
-                yOffset = (int)(yOffset / 2);
+                yOffset = yOffset / 2;
             } else {
                 yOffset = 0;
             }
             width -= (w + 1);
+
+           if (ScreenSkin.RL_DIRECTION) {
+              textOffset = 0;
+            } else {
+              textOffset = width;
+            }
             if (ChoiceGroupSkin.IMAGE_BUTTON_BG != null) {
                 CGraphicsUtil.draw9pcsBackground(
-                    g, width, 1, w, height - 2,
+                    g, textOffset, 1, w, height - 2,
                     ChoiceGroupSkin.IMAGE_BUTTON_BG);
             }
             g.drawImage(ChoiceGroupSkin.IMAGE_BUTTON_ICON,
-                        width, yOffset + 1,
+                        textOffset, yOffset + 1,
                         Graphics.LEFT | Graphics.TOP);
             width -= ChoiceGroupSkin.PAD_H;
         }
@@ -159,7 +166,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         // paint value
 
-        int textOffset = 0;
+
 
         if (cg.cgElements[s].imageEl != null) {
             int iX = g.getClipX();
@@ -167,26 +174,48 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             int iW = g.getClipWidth();
             int iH = g.getClipHeight();
 
-            g.clipRect(0, 0,
+            if (ScreenSkin.RL_DIRECTION) {
+                textOffset = width;
+            } else {
+                textOffset = 0;
+            }
+
+            int yOffset = height - 2 - cg.cgElements[s].imageEl.getHeight();
+            yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
+
+            g.clipRect(textOffset, yOffset,
                        ChoiceGroupSkin.WIDTH_IMAGE,
                        ChoiceGroupSkin.HEIGHT_IMAGE);
             g.drawImage(cg.cgElements[s].imageEl,
-                        0, 0,
+                        textOffset, yOffset,
                         Graphics.LEFT | Graphics.TOP);
             g.setClip(iX, iY, iW, iH);
-            textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
-                ChoiceGroupSkin.PAD_H;
+
+            if (ScreenSkin.RL_DIRECTION) {
+                textOffset = 0;
+            } else {
+                textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
+                        ChoiceGroupSkin.PAD_H;
+            }
+        } else {
+            textOffset = 0;
         }
 
-        g.translate(textOffset, 0);
-        Text.drawTruncString(g,
-                        cg.cgElements[s].stringEl,
-                        cg.cgElements[s].getFont(),
-                        (hasFocus) ? ScreenSkin.COLOR_FG_HL :
-                            ChoiceGroupSkin.COLOR_FG,
-                        width);
-        g.translate(-textOffset, 0);
+
+        Font font = cg.cgElements[s].getFont();
         
+        int yOffset = height - 2 - font.getHeight();
+        yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
+
+        g.translate(textOffset, yOffset);
+
+        
+        Text.drawTruncString(g, cg.cgElements[s].stringEl, font,
+                             (hasFocus) ? ScreenSkin.COLOR_FG_HL :
+                             ChoiceGroupSkin.COLOR_FG,
+                             width);
+        g.translate(-textOffset, -yOffset);
+
         g.translate(-ChoiceGroupSkin.PAD_H, -ChoiceGroupSkin.PAD_V);
 
         if (popupLayer.isSizeChanged() && cachedWidth != INVALID_SIZE) {
@@ -201,7 +230,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      */
     void uCallTraverseOut() {
         super.uCallTraverseOut();
-        Form form = null;
         
         synchronized (Display.LCDUILock) {
             if (popupLayer.isPopupOpen()) {
@@ -232,7 +260,13 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             // and return true on the initial traverse, false on subsequent
             // traverses
             if (popupLayer.isPopupOpen()) {
+                traversedIn = true;
                 ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
+            } else {
+                 visRect[X] = 0;
+                 visRect[Y] = 0;
+                 visRect[HEIGHT] = bounds[HEIGHT];
+                 visRect[WIDTH] = bounds[WIDTH];
             }
         }
         
@@ -311,16 +345,19 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 // show popup
 
                 ScreenLFImpl sLF = (ScreenLFImpl)cg.owner.getLF();
-                int x = getInnerBounds(X) - sLF.viewable[X] + contentBounds[X];
-                int y = getInnerBounds(Y) - sLF.viewable[Y] + contentBounds[Y];
-                hilightedIndex = selectedIndex > 0 ? selectedIndex : 0;
+                int top = getInnerBounds(Y) - sLF.viewable[Y] + contentBounds[Y];
+                int bottom = sLF.viewport[HEIGHT] - contentBounds[HEIGHT] - top;
 
+                int x = getInnerBounds(X) - sLF.viewable[X] + contentBounds[X] +
+                    getCurrentDisplay().getWindow().getBodyAnchorX();
+                int y = top + getCurrentDisplay().getWindow().getBodyAnchorY();
+                hilightedIndex = selectedIndex > 0 ? selectedIndex : 0;
+                    
                 popupLayer.show(x, y,
                                 contentBounds[WIDTH], contentBounds[HEIGHT],
                                 viewable[WIDTH], viewable[HEIGHT],
-                                y, 
-                                sLF.viewport[HEIGHT] - 
-                                y - contentBounds[HEIGHT]);
+                                top,
+                                bottom);
             } else {
 
                 // popup is closed when SELECT, LEFT or RIGHT is pressed;
@@ -413,6 +450,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
     void uCallPointerPressed(int x, int y) {
         itemWasPressed = true;
         itemSelectedWhenPressed = false;
+        pointerDragged = false;
         if (popupLayer.isPopupOpen()) {
             // popupLayer.
             int i = getIndexByPointer(x, y);
@@ -439,8 +477,12 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @param y the x coordinate of the pointer up
      */
     void uCallPointerReleased(int x, int y) {
-        if (!itemWasPressed)
+        if (!itemWasPressed || pointerDragged) {
+            itemSelectedWhenPressed = false;
+            itemWasPressed = false;
+            pointerDragged = false;
             return;
+        }
         
         if (popupLayer.isPopupOpen()) {
             // do not dismiss the popup until a new selection is made.
@@ -458,8 +500,22 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         }
         itemSelectedWhenPressed = false;
         itemWasPressed = false;
+        pointerDragged = false;
 
     }
+
+    /**
+     * Called by the system to signal a pointer drag
+     *
+     * @param x the x coordinate of the pointer drag
+     * @param y the x coordinate of the pointer drag
+     *
+     * @see #getInteractionModes
+     */
+    void uCallPointerDragged(int x, int y) {
+        pointerDragged = true;
+    }
+
 
     /**
      * Called by the system to indicate the size available to this Item
@@ -574,11 +630,15 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 g.setColor(ChoiceGroupSkin.COLOR_BORDER_SHD);
                 g.drawLine(1, 1, 1, bounds[HEIGHT] - 2); 
             }
-            
-            if (sbVisible && ScrollIndSkin.MODE == 
+
+            if (sbVisible && ScrollIndSkin.MODE ==
                     ScrollIndResourcesConstants.MODE_ARROWS) {
-                int sbX = bounds[WIDTH] - 
-                    (ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;
+                int sbX;
+                if (ScreenSkin.RL_DIRECTION) {
+                    sbX = (ChoiceGroupSkin.WIDTH_SCROLL / 2) + 1;  
+                } else {
+                    sbX = bounds[WIDTH] -(ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;
+                }
                 int sbY = ChoiceGroupSkin.PAD_V;
                 int sbH = bounds[HEIGHT] - (2 * ChoiceGroupSkin.PAD_V);
                 int thumbY = sbY + 4 + 
@@ -680,13 +740,13 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
             } else { // there is more space at the top
                 setBounds(buttonX,
-                          buttonY - top + buttonH + 1, // show top border
+                          buttonY - top + 1, // show top border
                           buttonW,
-                          top - ChoiceGroupSkin.PAD_V + buttonH + 1);
+                          top - ChoiceGroupSkin.PAD_V + 1);
                 popupDrawnDown = false;
                 sbVisible = true;
             }
-
+ 
             // set viewport in popup's coordinate system
             viewport[X] = 2; // border width
             viewport[Y] = 1; // border width
@@ -701,10 +761,15 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
             if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
                 setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
-                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
-                              ChoiceGroupSkin.COLOR_BG);
+                
+//                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
+//                              ChoiceGroupSkin.COLOR_BG);
             }
-            updatePopupLayer(viewable[Y]);
+            int newY = viewable[Y];
+            if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                newY = viewable[HEIGHT] - viewport[HEIGHT];
+            }
+            updatePopupLayer(newY);
         }
 
         /**
@@ -756,6 +821,23 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                     break;
             }
         }
+
+        /**
+         * Drag the contents to the specified amount of pixels.
+         * @param deltaY
+         * @return desired drag amount to become stable
+         */
+        public int dragContent(int deltaY) {
+            int newY = viewable[Y] + deltaY;
+            updatePopupLayer(newY);
+            if (newY < 0) {
+                return -newY;
+            } else if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                return viewable[HEIGHT] - viewport[HEIGHT] - newY;
+            }
+            return 0;
+        }
+
 
         /**
          * Perform a line scrolling in the given direction. This method will
@@ -813,7 +895,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /**
          * Perform a scrolling at the given position.
-         * @param context position
+         * @param position
          */
         void uScrollAt(int position) {
             int newY = (viewable[HEIGHT] - viewport[HEIGHT]) * position / 100;
@@ -875,10 +957,18 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
          */
         public void updateScrollIndicator() {
             if (scrollInd != null) {
+                if (viewable[Y] < 0 ||
+                        viewable[Y] > viewable[HEIGHT] - viewport[HEIGHT]) {
+                    return;
+                }
                 if (sbVisible) {
-                    scrollInd.setVerticalScroll(
-                          (viewable[Y] * 100 / (viewable[HEIGHT] - viewport[HEIGHT])),
-                          (viewport[HEIGHT] * 100 / viewable[HEIGHT]));
+                    if (viewable[HEIGHT] <= viewport[HEIGHT]) {
+                        scrollInd.setVerticalScroll(0, 100);
+                    } else {
+                        scrollInd.setVerticalScroll((viewable[Y] * 100 /
+                                           (viewable[HEIGHT] - viewport[HEIGHT])),
+                                          (viewport[HEIGHT] * 100 / viewable[HEIGHT]));
+                    }
                 } else {
                     scrollInd.setVerticalScroll(0, 100);
                 }
@@ -913,7 +1003,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             case EventConstants.RELEASED:
                 lf.uCallPointerReleased(transX, transY);
                 break;
+            case EventConstants.DRAGGED:
+                lf.uCallPointerDragged(transX, transY);
+                break;
             }
+            super.pointerInput(type, x, y);
             return consume;
         }
 
@@ -924,15 +1018,17 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             // show popup
             if (popUpOpen) {
                 ScreenLFImpl sLF = (ScreenLFImpl) cg.owner.getLF();
-                int x = getInnerBounds(X) - sLF.viewable[X] + contentBounds[X];
-                int y = getInnerBounds(Y) - sLF.viewable[Y] + contentBounds[Y];
+                int top = getInnerBounds(Y) - sLF.viewable[Y] + contentBounds[Y];
+                int bottom = sLF.viewport[HEIGHT] - contentBounds[HEIGHT] - top;
+                int x = getInnerBounds(X) - sLF.viewable[X] + contentBounds[X] +
+                    getCurrentDisplay().getWindow().getBodyAnchorX();
+                int y = top + getCurrentDisplay().getWindow().getBodyAnchorY();
 
                 popupLayer.show(x, y,
-                        contentBounds[WIDTH], contentBounds[HEIGHT],
-                        viewable[WIDTH], viewable[HEIGHT],
-                        y,
-                        sLF.viewport[HEIGHT] -
-                                y - contentBounds[HEIGHT]);
+                                contentBounds[WIDTH], contentBounds[HEIGHT],
+                                viewable[WIDTH], viewable[HEIGHT],
+                                top,
+                                bottom);
             }
         }
 
@@ -946,7 +1042,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /**
          *  Set sizeChanged flag
-         * @param true if size change iccurs
+         * @param sizeChanged true if size change occurs
          */
         public void setSizeChanged(boolean sizeChanged) {
             this.sizeChanged = sizeChanged;
@@ -962,7 +1058,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /**
          *  Set popup Layer flag
-         * @param true if popup Layer is shown
          */
         public void setPopupOpen() {
             this.popUpOpen = true;

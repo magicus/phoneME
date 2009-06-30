@@ -1,27 +1,25 @@
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 ######################################################################
 #
@@ -61,7 +59,7 @@ JADTOOL_MAIN_CLASS    = com.sun.midp.jadtool.JadTool
 JADTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/JadTool.manifest
 JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
 
--include $(TOOLS_DIR)/tools.gmk
+include $(TOOLS_DIR)/tools.gmk
 
 # Localized strings generator settings
 #
@@ -81,17 +79,23 @@ IMAGE2RAW_MAIN_CLASS    = com.sun.midp.imageutil.ImageToRawTool
 IMAGE2RAW_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/ImageToRawTool.manifest
 IMAGE2RAW_JAR_FILE = $(BINDIR)/ImageToRawTool.jar
 
-# Macro to pre-process Jpp file into Java file
-# runjpp(<input_jpp_file>, <output_java_file>)
-define runjpp
-    $(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o `$(call fixcygpath,$(2))` `$(call fixcygpath,$(1))`
-endef
+# Romizer jar and manifest file names
+#
+ROMIZER_MAIN_CLASS    = com.sun.midp.romization.Romizer
+ROMIZER_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Romizer.manifest
+ROMIZER_JAR_FILE = $(BINDIR)/Romizer.jar
+
+ifeq ($(TARGET_VM), cdc_vm)
+  IDENTIFIED_DOMAIN_NAME = identified
+else
+  IDENTIFIED_DOMAIN_NAME = identified_third_party
+endif
 
 # Targets
 #
 all_tools:: keystore $(KEYTOOL_JAR_FILE) $(JADTOOL_JAR_FILE) \
             $(CONFIGURATOR_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
-	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE)
+	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(ROMIZER_JAR_FILE)
 
 $(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
 	@echo " ... building MEKeyTool " $(LOG)
@@ -131,11 +135,11 @@ $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
-		-domain identified $(LOG_ONLY)
+		-domain $(IDENTIFIED_DOMAIN_NAME) $(LOG_ONLY)
 	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
-		-domain identified) $(LOG)
+		-domain $(IDENTIFIED_DOMAIN_NAME)) $(LOG)
 	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
 		$(KEYTOOL_KEYSTORE_FILE) -alias dummyca \
 		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
@@ -248,14 +252,40 @@ $(IMAGE2RAW_MANIFEST_FILE):
 # Macro for converting PNG images into raw format
 # convert_images_to_raw <images_directory>
 define convert_images_to_raw
-        -@(echo $(wildcard $(1)/*.png) | xargs \
+        -@(echo $(foreach convert_images_folder_name,$(1),$(wildcard $(convert_images_folder_name)/*.png)) | xargs \
 	    $(JAVA_CMD) -Djava.awt.headless=true \
 		-classpath $(TOOLS_CLASSPATH) \
 		$(IMAGE2RAW_MAIN_CLASS) \
-    		-format $(GENERATED_DIR)/merged.xml \
-        	-out $(STORAGEDIR)) $(LOG)
+		-format $(GENERATED_DIR)/merged.xml \
+		-out $(STORAGEDIR)) $(LOG)
 endef									    
-    
+
+
+# Romizer tool (jar rules)
+#
+$(ROMIZER_JAR_FILE): $(MODULE_TOOL_ROMIZER_JAVA_FILES) $(ROMIZER_MANIFEST_FILE)
+	@echo " ... building Romizer " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@mkdir -p $(BINDIR) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_ROMIZER_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_ROMIZER_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
+		cfm $(ROMIZER_JAR_FILE) $(ROMIZER_MANIFEST_FILE) \
+		com/sun/midp/romization $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(ROMIZER_JAR_FILE) \
+		$(ROMIZER_MANIFEST_FILE) com/sun/midp/romization) $(LOG)
+
+$(ROMIZER_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: com.sun.midp.romization.Romizer" > $@) $(LOG)
+
+
 # Java Pre-processor
 #
 jpp: $(JPP_CLASS_FILES)

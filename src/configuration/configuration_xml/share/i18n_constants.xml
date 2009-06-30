@@ -3,8 +3,27 @@
 <!--
 
 
-        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
 -->
 <configuration>
 <constants>
@@ -28,6 +47,9 @@
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="OK"
+            Comment="Abstract Commands and other general strings"/>
+ <constant Type="int"
+            Name="SELECT"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="YES"
@@ -101,11 +123,17 @@
   <constant Type="int"
             Name="INSTALL_APPLICATION"
             Comment="Abstract Commands and other general strings"/>
-<constant Type="int"
+  <constant Type="int"
+            Name="ODT_AGENT_MIDLET"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
             Name="CLASS_VERIFIER_APPLICATION"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="CA_MANAGER_APP"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="COMP_MANAGER_APP"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="FOREGROUND"
@@ -116,6 +144,12 @@
   <constant Type="int"
             Name="OPTIONS"
             Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="OPEN"
+            Comment="Abstract Commands and other general strings"/>
+    <constant Type="int"
+              Name="VIEW_COMP"
+              Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="MANUFACTURER"
             Comment="General strings"/>
@@ -309,6 +343,21 @@
             Name="LCDUI_TF_CAPS_ON_LB_PTI"
             Comment="Input Methods: Lable name for 'PTI' caps on"/>
   <constant Type="int"
+            Name="PUSH_TITLE"
+            Comment="Push Dialog Title"/>
+  <constant Type="int"
+            Name="PUSH_CONTENT"
+            Comment="Push Dialog Content"/>
+  <constant Type="int"
+            Name="LCDUI_TF_NATIVE_VKBD"
+            Comment="Input Methods: Name for 'Native Virtual Keyboard'"/>
+  <constant Type="int"
+            Name="AMS_SELECT_FOLDER"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_CHANGE_FOLDER"
+            Comment="AMS: general"/>
+  <constant Type="int"
             Name="AMS_NO_CA_FOUND"
             Comment="AMS: general"/>
   <constant Type="int"
@@ -375,6 +424,15 @@
             Name="AMS_SUITES_TO_BE_DISABLED"
             Comment="AMS: general"/>
   <constant Type="int"
+            Name="AMS_INTERNAL_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_MOVE_TO_INTERNAL_STORAGE"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_EXTRENAL_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
             Name="AMS_MGR_TITLE"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
@@ -400,6 +458,9 @@
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
             Name="AMS_MGR_SUITE_RECORD_STORES"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
+            Name="AMS_MGR_SUITE_PRIVATE_DATA"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
             Name="AMS_MGR_REM_REINSTALL"
@@ -555,7 +616,28 @@
             Name="AMS_MGR_CALL_CONTROL_SETTINGS_QUE_DONT"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
+            Name="AMS_MGR_SENSOR_SETTINGS"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
+            Name="AMS_MGR_SENSOR_SETTINGS_QUE"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
+            Name="AMS_MGR_SENSOR_SETTINGS_QUE_DONT"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
+            Name="AMS_MGR_CONTACTLESS_SETTINGS"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
+            Name="AMS_MGR_CONTACTLESS_SETTINGS_QUE"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
+            Name="AMS_MGR_CONTACTLESS_SETTINGS_QUE_DONT"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
             Name="AMS_MGR_UPDATE_IS_RUNNING"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
+            Name="AMS_MGR_INSTALLER_IS_RUNNING"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
             Name="AMS_MGR_RUN_THE_NEW_SUITE_TITLE"
@@ -563,6 +645,24 @@
   <constant Type="int"
             Name="AMS_MGR_RUN_THE_NEW_SUITE"
             Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
+            Name="AMS_MGR_ENABLE_ON_DEVICE_DEBUG_TITLE"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
+            Name="AMS_MGR_ENABLE_ON_DEVICE_DEBUG"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
+            Name="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
+            Name="AMS_MGR_SUITE_DB_ALERT_TITLE"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerPeer"/>
+  <constant Type="int"
+            Name="AMS_MGR_SUITE_DB_FATAL_ERROR"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerPeer"/>
+  <constant Type="int"
+            Name="AMS_MGR_SUITE_DB_REPAIRED"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerPeer"/>
   <constant Type="int"
             Name="AMS_DISC_APP_WEBSITE_INSTALL"
             Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
@@ -587,6 +687,9 @@
   <constant Type="int"
             Name="AMS_DISC_APP_LOCKED"
             Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_SELECT_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_UPD_CAN"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
@@ -669,6 +772,12 @@
             Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_EXPIRED_CA_KEY"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
+            Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_REVOKED_PROVIDER_CERT"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNKNOWN_PROVIDER_CERT_STATUS"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
             Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_AUTHORIZATION_FAILURE"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
@@ -694,6 +803,9 @@
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_NEW_OLD_VERSION"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_CONFIRM_REDIRECT"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_NO_INFO"
@@ -758,8 +870,17 @@
   <constant Type="int"
             Name="AMS_GRA_INTLR_INVALIDJADEXCEPTION_UNSUPPORTED_CHAR_ENCODING"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_CMGR_INSTALL_COMPONENT"
+            Comment="AMS: com.sun.midp.appmanager.ComponentManager"/>
+  <constant Type="int"
+            Name="AMS_CMGR_ENTER_URL_TO_INSTALL_FROM"
+            Comment="AMS: com.sun.midp.appmanager.ComponentManager"/>
+  <constant Type="int"
+            Name="AMS_CMGR_ENTER_DESCRIPTIVE_NAME"
+            Comment="AMS: com.sun.midp.appmanager.ComponentManager"/>
 
-  <!-- Class verification literals common for both standalone verification  
+  <!-- Class verification literals common for both standalone verification
        and for verification intergrated into suite intsallation process -->
   <constant Type="int"
             Name="AMS_CLASS_VERIFIER_TITLE"
@@ -790,6 +911,9 @@
             Name="AMS_AUTO_TESTER_UNSIGN_SECURITY_DOMAIN"
             Comment="AMS: com.sun.midp.installer.AutoTester"/>
   <constant Type="int"
+            Name="AMS_AUTO_TESTER_BLANKET_PERMISSIONS"
+            Comment="AMS: AutoTester"/>
+  <constant Type="int"
             Name="AMS_AUTO_TESTER_ERROR_URL_MSG"
             Comment="AMS: com.sun.midp.installer.AutoTester"/>
   <constant Type="int"
@@ -798,6 +922,12 @@
   <constant Type="int"
             Name="PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE"
             Comment="Security: Mutually exclusive permission error message"/>
+  <constant Type="int"
+            Name="PERMISSION_MUTUALLY_EXCLUSIVE_SELECT_MESSAGE"
+            Comment="Security: Mutually exclusive permission select message"/>
+  <constant Type="int"
+            Name="PERMISSION_SECURITY_WARNING_ERROR_MESSAGE"
+            Comment="Security: Potentially dangerous permission error message"/>
   <constant Type="int"
             Name="PERMISSION_NET_ACCESS_DIALOG_TITLE"
             Comment="Security: Titles used for the user permission form"/>
@@ -880,6 +1010,12 @@
   <constant Type="int"
             Name="PERMISSION_CALL_CONTROL_QUE"
             Comment="Security: permission question for call control."/>
+  <constant Type="int"
+            Name="PERMISSION_SENSOR_TITLE"
+            Comment="Security: permission dialog title for sensor reading."/>
+  <constant Type="int"
+            Name="PERMISSION_SENSOR_QUE"
+            Comment="Security: permission question for sensor reading."/>
   <constant Type="int"
             Name="AMS_SELECTOR_SEL_TO_LAUNCH"
             Comment="AMS: com.sun.midp.midletsuite.Selector"/>
@@ -1040,10 +1176,50 @@
             The initial value \u2026 = &#8230; is ellipsis (...)."/>
   <constant Type="int"
             Name="SR_ALL_KILLED_ALERT_TITLE"
-            Comment="Suspend/resume: com.sun.midp.suspend.SuspendSystem"/>
+            Comment="Suspend/resume: com.sun.midp.suspend.SuspendResumeUI"/>
   <constant Type="int"
             Name="SR_ALL_KILLED_ALERT_MSG"
-            Comment="Suspend/resume: com.sun.midp.suspend.SuspendSystem"/>
+            Comment="Suspend/resume: com.sun.midp.suspend.SuspendResumeUI"/>
+  <constant Type="int"
+            Name="SR_SUSPEND_ALERT_TITLE"
+            Comment="Suspend/resume: com.sun.midp.suspend.SuspendResumeUI"/>
+  <constant Type="int"
+            Name="SR_SUSPEND_ALERT_MSG"
+            Comment="Suspend/resume: com.sun.midp.suspend.SuspendResumeUI"/>
+
+  <constant Type="int"
+            Name="AMS_DISC_APP_INSTALL_FROM_FILE"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_INSTALL_FROM_HTTP"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_START_FILE_INSTALL"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_STORAGE_INSTALL"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_PREPARE_INSTALL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_CONN_STORAGE_GAUGE_LABEL"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_DISC_APP_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_FILE_PATH"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_DOWNLOADING_JAD_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_FILE_NOT_FOUND"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/> 
 </constant_class>
 </constants>
 </configuration>

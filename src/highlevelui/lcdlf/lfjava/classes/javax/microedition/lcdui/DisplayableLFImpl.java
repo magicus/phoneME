@@ -1,40 +1,37 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.microedition.lcdui.game.GameCanvas;
 import com.sun.midp.lcdui.EventConstants;
-import com.sun.midp.lcdui.Text;
 import com.sun.midp.lcdui.GameMap;
+import com.sun.midp.lcdui.GameCanvasLFImpl;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.*;
 
 /**
@@ -219,6 +216,39 @@ class DisplayableLFImpl implements DisplayableLF {
             }
         }
     }
+    /**
+     * Notifies look and feel object of a screen mode change.
+     * @param mode MIDPWindow display mode
+     */
+    public void uSetMode(int mode) {
+        boolean requestRepaint = false;
+        
+        synchronized (Display.LCDUILock) {
+            if (lIsShown()) {
+                // IMPL_NOTE: Notify MainWindow of screen mode change
+                
+                // currentDisplay is not null when lIsShown is true
+                currentDisplay.lSetMode(mode);
+                
+                layout();
+                updateCommandSet();
+                requestRepaint = true;
+                
+            } else {
+                // Layout needs to happen even if the canvas is not visible
+                // so that correct width and height could be returned 
+                // in getWidth() and getHeight()
+                layout();
+            }  
+        } 
+
+        // app's sizeChanged has to be called before repaint
+        synchronized (Display.LCDUILock) {
+            if (requestRepaint) {
+                lRequestPaint();
+            }
+        }
+    }
 
     /**
      * \Need revisit Move this to CanvasLFImpl.
@@ -259,38 +289,40 @@ class DisplayableLFImpl implements DisplayableLF {
      * This function simply calls lCallShow() after obtaining LCDUILock.
      */
     public void uCallShow() {
-        int widthCopy, heightCopy;
+
+        boolean copyDefferedSizeChange;
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION, 
-                           LogChannels.LC_HIGHUI_FORM_LAYOUT,
-                           "# in DisplayableLFImpl: uCallShow");        
+            Logging.report(Logging.INFORMATION,
+                    LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                    "# in DisplayableLFImpl: uCallShow");
         }
 
         synchronized (Display.LCDUILock) {
 
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
-
-            if (sizeChangeOccurred) {
-                widthCopy = viewport[WIDTH];
-                heightCopy = viewport[HEIGHT];
-            } else {
-                widthCopy = heightCopy = -1; // Some invalid value
-            }
-
-            // Do the internal show preparation
-            lCallShow();
+	    if (!owner.isInFullScreenMode) {
+		currentDisplay.lSetMode(owner.lastSetMode);
+	    }
+            copyDefferedSizeChange = defferedSizeChange;
+            defferedSizeChange = false;
         }
 
-        // This may call into app code, so do it outside LCDUILock
-        if (widthCopy >= 0) {
-            uCallSizeChanged(widthCopy, heightCopy);
-        } else {
-            synchronized (Display.LCDUILock) {
-                if (pendingInvalidate) {
-                    lRequestInvalidate();
+        if (copyDefferedSizeChange) {
+            synchronized (Display.calloutLock) {
+                try {
+                    owner.sizeChanged(viewport[WIDTH], viewport[HEIGHT]);
+                } catch (Throwable t) {
+                    Display.handleThrowable(t);
                 }
+            }
+        }
+        synchronized (Display.LCDUILock) {
+            // Do the internal show preparation
+            lCallShow();
+            if (pendingInvalidate || copyDefferedSizeChange) {
+                lRequestInvalidate();
             }
         }
     }
@@ -323,17 +355,18 @@ class DisplayableLFImpl implements DisplayableLF {
         // set Game key event flag based on value passed in
         // GameCanvas constructor.
         if (owner instanceof GameCanvas) {
-            GameMap.register(owner, currentDisplay.accessor);
+            GameMap.registerDisplayAccess(owner, currentDisplay.accessor);
             stickyKeyMask = currentKeyMask = 0;
         } else {
             // set the keymask to -1 when
             // the displayable is not a GameCanvas.
             stickyKeyMask = currentKeyMask = -1;
         }
-                
-        // Setup scroll bar
-        currentDisplay.setVerticalScroll(getVerticalScrollPosition(),
-                                         getVerticalScrollProportion());
+
+       // IMPL_NOTES: should be remove after interface will be fixed
+         currentDisplay.setVerticalScroll(getVerticalScrollPosition(), 
+                                          getVerticalScrollProportion());
+
         state = SHOWN;
 
     } // lCallShow()
@@ -476,12 +509,24 @@ class DisplayableLFImpl implements DisplayableLF {
      * @param h the new height
      *
      */
-    public void uCallSizeChanged(int w, int h) {
+    public void uCallSizeChanged(int w, int h) {        
+        
+        boolean copyDefferedSizeChange;
+
         synchronized (Display.LCDUILock) {
+            if (owner instanceof GameCanvas) {
+                GameCanvasLFImpl gameCanvasLF =
+                    GameMap.getGameCanvasImpl((GameCanvas)owner);
+                if (gameCanvasLF != null) {
+                    gameCanvasLF.lCallSizeChanged(w, h);
+                }
+            }
+  
             // If there is no Display, or if this Displayable is not
             // currently visible, we simply record the fact that the
             // size has changed
-            sizeChangeOccurred = (state != SHOWN);
+            defferedSizeChange = (state != SHOWN);
+            copyDefferedSizeChange = defferedSizeChange;
 
             /*
             * sizeChangeOccurred is a boolean which (when true) indicates
@@ -492,18 +537,21 @@ class DisplayableLFImpl implements DisplayableLF {
 
             resetViewport();
 
-            if (!sizeChangeOccurred) {
+            if (!defferedSizeChange) {
                 lRequestInvalidate();
-                synchronized (Display.calloutLock) {
-                    try {
-                        owner.sizeChanged(w, h);
-                    } catch (Throwable t) {
-                        Display.handleThrowable(t);
-                    }
-                }
             }
 
         }
+        if (!copyDefferedSizeChange) {
+            synchronized (Display.calloutLock) {
+                try {
+                    owner.sizeChanged(w, h);
+                } catch (Throwable t) {
+                    Display.handleThrowable(t);
+                }
+            }
+        }
+
     }
 
     /**
@@ -515,8 +563,28 @@ class DisplayableLFImpl implements DisplayableLF {
     public void uCallScrollContent(int scrollType, int thumbPosition) {
         // by default nothing to do 
     }
-    
 
+    /**
+     * Checks whether it is allowed to start content dragging from
+     * this point
+     * @param x the x coordinate of the point to check
+     * @param y the y coordinate of the point to check
+     */
+    public boolean uIsDraggable(int x, int y) {
+        return true;
+    }
+
+    /**
+     * This method notify displayable to drag its content
+     *
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int uCallDragContent(int deltaY) {
+        // by default nothing to do
+        return 0;
+    }
+    
     /**
      * Display calls this method on it's current Displayable.
      * This function simply calls lCallPaint() after obtaining LCDUILock.
@@ -668,6 +736,8 @@ class DisplayableLFImpl implements DisplayableLF {
      */
     public void uCallPointerEvent(int type, int x, int y) {
         int eventType = -1;
+        prevPointerX = x;
+        prevPointerY = y;
 
         synchronized (Display.LCDUILock) {
             switch (type) {
@@ -681,10 +751,19 @@ class DisplayableLFImpl implements DisplayableLF {
                     }
                     break;
                 case EventConstants.DRAGGED:
+                    // FIX for Samsung only: skip the extra dragged events generated by the platform every time the pointer is pressed
+                    if (prevPointerX == x && prevPointerY == y) {
+                        break;
+                    } 
+                    
                     if (sawPointerPress) {
                         eventType = 2;
                     }
                     break;
+                case EventConstants.FLICKERED:
+                    if (sawPointerPress) {
+                        eventType = 3;
+                    }
                 default:
                     // will be handled below
                     break;
@@ -702,6 +781,9 @@ class DisplayableLFImpl implements DisplayableLF {
             break;
         case 2:
             uCallPointerDragged(x, y);
+            break;
+        case 3:
+            uCallPointerFlickered(x, y);
             break;
         default:
             if (sawPointerPress) {
@@ -734,6 +816,13 @@ class DisplayableLFImpl implements DisplayableLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) { }
+    /**
+     * Handle a pointer flicker event
+     *
+     * @param x The x coordinate of the flickered
+     * @param y The y coordinate of the flickered
+     */
+     void uCallPointerFlickered(int x, int y) { }
         
 
     /**
@@ -831,6 +920,54 @@ class DisplayableLFImpl implements DisplayableLF {
         lRequestPaint(0, 0, viewport[WIDTH], viewport[HEIGHT]);
     }
 
+
+    /**
+     * IMPL_NOTE: Invalidate requests are served with a limited rate to
+     *   not exceed 25 fps, i.e. 40 ms delay is enabled between sequential
+     *   requests. More frequent requests are ignored, the invalidate
+     *   request timer guarantees they will be processed in a predefined
+     *   time frame.
+     */
+
+    /** Last time the invalidate request was accepted */
+    private long lastTimeInvalidate = 0;
+
+    /** Timer to schedule delayed invalidate task */
+    private LFTimer invalidateTimer = new LFTimer(Display.LCDUILock) {
+        protected void perform() {
+            lastTimeInvalidate = System.currentTimeMillis();
+            lRequestInvalidateImpl();
+        }
+    };
+
+    /** The time in milliseconds between sequential invalidate requests */
+    private final int INVALIDATE_REQUESTS_PERIOD = 40; // 40 ms is 25 fps
+
+    /** Grace period to process last unserved invalidate request */
+    private final int INVALIDATE_REQUESTS_GRACE = 80; // ms
+
+    /**
+     * Called to schedule an "invalidate" for this Displayable.
+     * The method recalls internal implementation of invalidate
+     * request limiting the rate of requests to be not bigger than
+     * a predefined constant.
+     *
+     * SYNC NOTE: Caller should hold LCDUILock.
+     */
+    void lRequestInvalidate() {
+        long timePassed = System.currentTimeMillis() - lastTimeInvalidate;
+        if (timePassed >= INVALIDATE_REQUESTS_PERIOD) {
+            invalidateTimer.cancel();
+            lRequestInvalidateImpl();
+            lastTimeInvalidate += timePassed;
+
+        } else {
+            // Postpone too frequent invalidate requests.
+            invalidateTimer.schedule(
+                INVALIDATE_REQUESTS_GRACE - timePassed);
+        }
+    }
+
     /**
      * Called to schedule an "invalidate" for this Displayable. Invalidation
      * is caused by things like size changes, content changes, or spontaneous
@@ -838,7 +975,7 @@ class DisplayableLFImpl implements DisplayableLF {
      *
      * SYNC NOTE: Caller should hold LCDUILock.
      */
-    void lRequestInvalidate() {
+    void lRequestInvalidateImpl() {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -852,7 +989,7 @@ class DisplayableLFImpl implements DisplayableLF {
             invalidScroll = true;
         }
     }
-    
+
     // ************************************************************
     //  private methods
     // ************************************************************
@@ -880,21 +1017,12 @@ class DisplayableLFImpl implements DisplayableLF {
      * @return the height a displayable would occupy 
      */
     public int getDisplayableHeight() {
-        int h = 0;
-        
-        if (!owner.isInFullScreenMode) {
-            h = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;
-            
-            if (owner.getTitle() != null) {
-                h -= TitleSkin.HEIGHT;
-            }
-            if (owner.getTicker() != null) {
-                h -= TickerSkin.HEIGHT;
-            }
-        } else {
-            h = ScreenSkin.HEIGHT;
-        }
-        return h;
+        return (currentDisplay != null ?
+		currentDisplay.getDisplayableHeight() :
+		Display.getDefaultDisplayableHeight(owner.isInFullScreenMode, 
+						    owner.getTitle() != null, 
+						    owner.getTicker() != null, 
+						    owner.numCommands > 0));              
     }
 
     /**
@@ -904,10 +1032,10 @@ class DisplayableLFImpl implements DisplayableLF {
      * @return the width a displayable would occupy 
      */
     public int getDisplayableWidth() {
-        int w = currentDisplay != null ?
-            currentDisplay.getWindow().getBodyWidth() :
-            ScreenSkin.WIDTH;
-        return w;
+	return (currentDisplay != null ?
+		currentDisplay.getDisplayableWidth() :
+		Display.getDefaultDisplayableWidth(owner.isInFullScreenMode, 
+						   getVerticalScrollProportion() != 100)); 
     }
     
 
@@ -1047,7 +1175,7 @@ class DisplayableLFImpl implements DisplayableLF {
      * True, indicates that before being painted, this Displayable should
      * be notified that its size has changed via uCallSizeChanged()
      */
-    boolean sizeChangeOccurred;
+    boolean defferedSizeChange = true;
     
     /**
      * The owner of this view.
@@ -1069,6 +1197,9 @@ class DisplayableLFImpl implements DisplayableLF {
     /** true, if a key press is in progress. */
     boolean sawKeyPress;
 
+    /** previous pointer (x,y) */
+    int prevPointerX, prevPointerY;
+
     /** stores key code of the current key pressed at least once */
     // caters to the GameCanvas.getKeyStats()
     // latching behavior. This latched state is cleared
@@ -1084,7 +1215,7 @@ class DisplayableLFImpl implements DisplayableLF {
      * Used to indicate the invalidate is needed
      */
     boolean pendingInvalidate;
-   
+
     // ************************************************************
     //  Static initializer, constructor
     // ************************************************************

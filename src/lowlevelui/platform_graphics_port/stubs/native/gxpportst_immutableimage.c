@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -44,7 +44,7 @@
 void gxpport_createimmutable_from_mutable
     (gxpport_mutableimage_native_handle srcMutableImagePtr,
     gxpport_image_native_handle *newImmutableImagePtr,
-     gxutl_native_image_error_codes* creationErrorPtr) {
+     img_native_error_codes* creationErrorPtr) {
 
     REPORT_CALL_TRACE(LC_LOWUI,
 		      "LF:STUB:gxpport_createimmutable_from_mutable()\n");
@@ -54,7 +54,7 @@ void gxpport_createimmutable_from_mutable
     (void)newImmutableImagePtr;
 
     /* Not yet implemented */
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -79,7 +79,7 @@ gxpport_createimmutable_from_immutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     REPORT_CALL_TRACE(LC_LOWUI,
         "LF:STUB:gxpport_createimmutable_from_immutableregion()\n");
@@ -94,7 +94,7 @@ gxpport_createimmutable_from_immutableregion
     (void)newImmutableImagePtr;
 
     /* Not yet implemented */
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -120,7 +120,7 @@ gxpport_createimmutable_from_mutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
  
     REPORT_CALL_TRACE(LC_LOWUI,
        "LF:STUB:gxpport_createimmutable_from_mutableregion()\n");
@@ -135,7 +135,7 @@ gxpport_createimmutable_from_mutableregion
     (void)newImmutableImagePtr;
 
     /* Not yet implemented */
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -161,7 +161,7 @@ gxpport_decodeimmutable_from_selfidentifying
 (unsigned char *srcBuffer, int length, 
  int* imgWidth, int* imgHeight,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     REPORT_CALL_TRACE(LC_LOWUI,
         "LF:STUB:gxpport_decodeimmutable_from_selfidentifying()\n");
@@ -174,7 +174,7 @@ gxpport_decodeimmutable_from_selfidentifying
     (void)newImmutableImagePtr;
 
     /* Not yet implemented */
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -193,7 +193,7 @@ gxpport_decodeimmutable_from_selfidentifying
 void gxpport_decodeimmutable_from_argb(jint* srcBuffer,
          int width, int height, jboolean processAlpha,
          gxpport_image_native_handle *newImmutableImagePtr,
-         gxutl_native_image_error_codes* creationErrorPtr) {
+         img_native_error_codes* creationErrorPtr) {
     REPORT_CALL_TRACE(LC_LOWUI,
 		      "LF:STUB:gxpport_decodeimmutable_from_argb()\n");
 
@@ -205,7 +205,7 @@ void gxpport_decodeimmutable_from_argb(jint* srcBuffer,
     (void)newImmutableImagePtr;
 
     /* Not yet implemented */
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -297,7 +297,7 @@ gxpport_render_immutableregion
 void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
         jint* rgbBuffer, int offset, int scanLength,
         int x, int y, int width, int height,
-        gxutl_native_image_error_codes* errorPtr) {
+        img_native_error_codes* errorPtr) {
     REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_get_immutable_argb()\n");
 
     /* Suppress unused parameter warnings */
@@ -311,7 +311,7 @@ void gxpport_get_immutable_argb(gxpport_image_native_handle immutableImagePtr,
     (void)height;
 
     /* Not implemented yet */
-    *errorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *errorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 /**
  * Cleans up any native resources to prepare the image to be garbage collected.
@@ -344,7 +344,7 @@ void
 gxpport_decodeimmutable_to_platformbuffer
 (unsigned char *srcBuffer, long length, 
  unsigned char **ret_dataBuffer, long* ret_length,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     REPORT_CALL_TRACE(LC_LOWUI,
 		      "LF:STUB:gxpport_decodeimmutable_to_platformbuffer()\n");
@@ -356,7 +356,7 @@ gxpport_decodeimmutable_to_platformbuffer
     /* Not yet implemented */
     *ret_dataBuffer = 0;
     *ret_length = 0;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -383,7 +383,7 @@ gxpport_loadimmutable_from_platformbuffer
  (unsigned char *srcBuffer, int length, jboolean isStatic,
  int* ret_imgWidth, int* ret_imgHeight,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     REPORT_CALL_TRACE(LC_LOWUI,
 		      "LF:STUB:gxpport_loadimmutable_from_platformbuffer()\n");
@@ -397,5 +397,5 @@ gxpport_loadimmutable_from_platformbuffer
     /* Not yet implemented */
     *ret_imgWidth = 0;
     *ret_imgHeight = 0;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }

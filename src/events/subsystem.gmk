@@ -1,27 +1,27 @@
 #
-#   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
-# 
+# 2 only, as published by the Free Software Foundation.
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
-# 
+# included at /legal/license.txt).
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
-# 
+# 02110-1301 USA
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 ######################################################################
 #
@@ -55,10 +55,12 @@ MIDP_JAVADOC_ALL += \
 	$(shell echo $(SUBSYSTEM_EVENTS_PACKAGES)|tr ' ' $(PATHSEP))
 
 
-ifeq ($(PLATFORM), linux_qte)
-   SUBSYSTEM_EVENTS_MODULES = slave_mode
-else
-   SUBSYSTEM_EVENTS_MODULES = master_mode
+ifndef SUBSYSTEM_EVENTS_MODULES
+    ifeq ($(PLATFORM), linux_qte)
+       SUBSYSTEM_EVENTS_MODULES = slave_mode
+    else
+        SUBSYSTEM_EVENTS_MODULES = master_mode
+    endif
 endif
 
 include $(SUBSYSTEM_EVENTS_DIR)/eventqueue/lib.gmk
@@ -66,10 +68,14 @@ include $(SUBSYSTEM_EVENTS_DIR)/eventqueue_port/lib.gmk
 include $(SUBSYSTEM_EVENTS_DIR)/eventsystem/lib.gmk
 
 ifeq ($(SUBSYSTEM_EVENTS_MODULES), master_mode)
-    include $(SUBSYSTEM_EVENTS_DIR)/mastermode_port/lib.gmk
+    ifneq ($(PLATFORM), linux_gci)
+        ifneq ($(PLATFORM), win32_gci)
+            include $(SUBSYSTEM_EVENTS_DIR)/mastermode_port/lib.gmk
+        endif
+    endif
     ifeq ($(PLATFORM), linux_fb)
 	include $(SUBSYSTEM_EVENTS_DIR)/input_port/lib.gmk
     endif
-else 
+else
     include $(SUBSYSTEM_EVENTS_DIR)/slavemode_port/lib.gmk
 endif

@@ -1,33 +1,39 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.*;
+import com.sun.midp.chameleon.skins.ScrollIndSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.lcdui.EventConstants;
+
 import javax.microedition.lcdui.*;
+import com.sun.midp.lcdui.TactileFeedback;
 
 /**
  * A "Popup" layer is a special kind of layer which can
@@ -46,13 +52,29 @@ import javax.microedition.lcdui.*;
  * PopupLayer and MIDPWindow can allow non visible popup layers.
  */
 public class ScrollablePopupLayer extends PopupLayer
-    implements ScrollListener {
+    implements ScrollListener, GestureAnimatorListener {
 
     /**
      * The scroll indicator layer to notify of scroll settings
      * in case not all content can fit on the menu.
      */
     protected ScrollIndLayer scrollInd;
+
+    /**
+     *  Y coordinate of pointer during pointer drag event.
+     */
+    private int pointerY = Integer.MAX_VALUE;
+
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    private int stableY = 0;
+    
+    /**
+     * Last delta of pointer y coordinate during drag operation.
+     */
+    private int pointerDeltaY = 0;
     
     
     /**
@@ -61,6 +83,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer() {
         super((Image)null, -1);
+        setSupportsInput(true);
     }
 
 
@@ -71,6 +94,7 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer(Image bgImage, int bgColor) {
         super(bgImage, bgColor);
+        setSupportsInput(true);
     }
     
     /**
@@ -80,16 +104,27 @@ public class ScrollablePopupLayer extends PopupLayer
      */
     public ScrollablePopupLayer(Image[] bgImage, int bgColor) {
         super(bgImage, bgColor);
+        setSupportsInput(true);
     }
 
     /**
      * Scrolling the contents according to the scrolling parameters.
      * @param scrollType  can be SCROLL_LINEUP, SCROLL_LINEDOWN, SCROLL_PAGEUP,
      *                SCROLL_PAGEDOWN or SCROLL_THUMBTRACK
-     * @thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
+     * @param thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
      * 
      */
     public void scrollContent(int scrollType, int thumbPosition) {
+    }
+
+    /**
+     * Drag the contents to the specified amount of pixels.
+     * @param deltaY
+     * @return desired drag amount to become stable
+     *
+     */
+    public int dragContent(int deltaY) {
+        return 0;
     }
 
     public void setScrollInd(ScrollIndLayer newScrollInd) {
@@ -110,7 +145,8 @@ public class ScrollablePopupLayer extends PopupLayer
                 scrollInd.setListener(this);
             }
         }
-        updateScrollIndicator();        
+        updateScrollIndicator();
+        updateBoundsByScrollInd();
     }
 
     /**
@@ -122,10 +158,8 @@ public class ScrollablePopupLayer extends PopupLayer
         super.update(layers);
         if (scrollInd != null) {
             scrollInd.update(layers);
-            if (scrollInd.isVisible()) {
-                bounds[W] -= scrollInd.bounds[W];
-            }
         }
+        updateBoundsByScrollInd();
     }
     
     /**
@@ -154,5 +188,68 @@ public class ScrollablePopupLayer extends PopupLayer
             }
         }
     }
+
+    /**
+     *  * Update bounds of layer depend on visability of scroll indicator layer
+     */
+    protected void updateBoundsByScrollInd() {
+        if (scrollInd != null && scrollInd.isVisible() ) {
+            if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR ) {
+                bounds[W] -= scrollInd.bounds[W];
+                if (ScreenSkin.RL_DIRECTION) {
+                    bounds[X] += scrollInd.bounds[W];
+                }
+            }
+            scrollInd.setBounds();
+        }
+    }
+
+    /**
+     * Handle input from a pen tap.
+     *
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     *
+     * Important: the x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        switch (type) {
+            case EventConstants.PRESSED:
+                TactileFeedback.playTactileFeedback();
+                pointerY = y;
+                break;
+            case EventConstants.DRAGGED:
+                if (pointerY != Integer.MAX_VALUE) {
+                    pointerDeltaY = pointerY - y;
+                    stableY = dragContent(pointerY - y);
+                    pointerY = y;
+                }
+                break;
+            case EventConstants.FLICKERED:
+                if (pointerDeltaY != 0) {
+                    TactileFeedback.playTactileFeedback(
+                        TactileFeedback.FLICKERED);
+                    GestureAnimator.flick(this, pointerDeltaY);
+                    stableY = 0;
+                }
+                break;
+            case EventConstants.RELEASED:
+            case EventConstants.GONE:
+                if (stableY != 0) {
+                    GestureAnimator.dragToStablePosition(this, stableY);
+                    stableY = 0;
+                }
+                pointerY = Integer.MAX_VALUE;
+                break;
+        }
+        return true;
+    }
+    
 }
 

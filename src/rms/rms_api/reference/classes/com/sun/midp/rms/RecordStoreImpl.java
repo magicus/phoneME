@@ -1,27 +1,28 @@
 /*
  *
  *
- * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights
+ * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  *
  * Copyright 2000 Motorola, Inc. All Rights Reserved.
  * This notice does not imply publication.
@@ -54,11 +55,14 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     /** unique id for suite that owns this record store */
     int suiteId;
 
-    /** lock used to synchronize this record store */
-    Object rsLock;
+    /** 
+     * lock used to synchronize this record store between concurrently 
+     * running MIDlets 
+     */
+    AbstractRecordStoreLock recordStoreLock; 
 
     /** data block header stored here */
-    byte[] dbHeader;
+    RecordStoreSharedDBHeader dbHeader;
 
     /** record store index */
     private RecordStoreIndex dbIndex;
@@ -94,12 +98,16 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
         // check if file exists and delete it
-        if (RecordStoreUtil.exists(suiteId, recordStoreName,
-                                   RecordStoreFile.DB_EXTENSION)) {
+        
+        if (RecordStoreUtil.exists(
+                    RmsEnvironment.getSecureFilenameBase(suiteId),
+                    recordStoreName, RecordStoreFile.DB_EXTENSION)) {
             boolean success = RecordStoreIndex.deleteIndex(
                 suiteId, recordStoreName);
-            RecordStoreUtil.deleteFile(suiteId,
-                recordStoreName, RecordStoreFile.DB_EXTENSION);
+
+            RecordStoreUtil.deleteFile(
+                    RmsEnvironment.getSecureFilenameBase(suiteId),
+                    recordStoreName, RecordStoreFile.DB_EXTENSION);
 
             if (!success) {
                 throw new RecordStoreException("deleteRecordStore " +
@@ -146,7 +154,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
-        return new RecordStoreImpl(suiteId, recordStoreName,
+        return new RecordStoreImpl(token, suiteId, recordStoreName,
                                    createIfNecessary);
     }
 
@@ -185,23 +193,32 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public void setMode(int authmode, boolean writable)
         throws RecordStoreException {
 
-        synchronized (rsLock) {
-            int newAuthMode = authmode;
-            if ((authmode == RecordStore.AUTHMODE_ANY) &&
-                    (writable == false)) {
-                newAuthMode = AUTHMODE_ANY_RO;
-            }
-
-            RecordStoreUtil.putInt(newAuthMode, dbHeader, RS1_AUTHMODE);
+        synchronized (recordStoreLock) {
+            lockRecordStore();
 
             try {
-                // write out the changes to the db header
-                dbFile.seek(RS1_AUTHMODE);
-                dbFile.write(dbHeader, RS1_AUTHMODE, 4);
-                // dbFile.commitWrite();
-            } catch (java.io.IOException ioe) {
-                throw new RecordStoreException("error writing record " +
-                                               "store attributes");
+                int newAuthMode = authmode;
+                if ((authmode == RecordStore.AUTHMODE_ANY) &&
+                        (writable == false)) {
+                    newAuthMode = AUTHMODE_ANY_RO;
+                }
+
+                byte[] dbHeaderData = dbHeader.getHeaderData(); 
+                RecordStoreUtil.putInt(newAuthMode, dbHeaderData, 
+                        RS1_AUTHMODE);
+
+                try {
+                    // write out the changes to the db header
+                    dbFile.seek(RS1_AUTHMODE);
+                    dbFile.write(dbHeaderData, RS1_AUTHMODE, 4);
+                    dbHeader.headerUpdated(dbHeaderData);
+                    // dbFile.commitWrite();
+                } catch (java.io.IOException ioe) {
+                    throw new RecordStoreException("error writing record " +
+                            "store attributes");
+                }
+            } finally {
+                unlockRecordStore();
             }
         }
     }
@@ -228,19 +245,20 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public void closeRecordStore()
         throws RecordStoreNotOpenException, RecordStoreException {
 
-        synchronized (rsLock) {
+        synchronized (recordStoreLock) {
+            lockRecordStore();
+
             try {
-                // close native fd
                 compactRecords();  // compact before close
-
                 dbFile.close();
-
                 dbIndex.close();
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error closing .db file. "
-						+ ioe);
+                        + ioe);
             } finally {
+                unlockRecordStore();
                 dbFile = null;
+                dbHeader.recordStoreClosed();
             }
         }
     }
@@ -273,7 +291,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @return authorization mode
      */
     public int getAuthMode() {
-        return RecordStoreUtil.getInt(dbHeader, RS1_AUTHMODE);
+        byte[] dbHeaderData = dbHeader.getHeaderData();
+        return RecordStoreUtil.getInt(dbHeaderData, RS1_AUTHMODE);
     }
 
     /**
@@ -293,7 +312,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @return the current record store version
      */
     public int getVersion() throws RecordStoreNotOpenException {
-        return RecordStoreUtil.getInt(dbHeader, RS4_VERSION);
+        byte[] dbHeaderData = dbHeader.getHeaderData();        
+        return RecordStoreUtil.getInt(dbHeaderData, RS4_VERSION);
     }
 
     /**
@@ -302,7 +322,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @return the number of records currently in the record store
      */
     public int getNumRecords() {
-        return RecordStoreUtil.getInt(dbHeader, RS3_NUM_LIVE);
+        byte[] dbHeaderData = dbHeader.getHeaderData();        
+        return RecordStoreUtil.getInt(dbHeaderData, RS3_NUM_LIVE);
     }
 
     /**
@@ -314,7 +335,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @return the size of the record store in bytes
      */
     public int getSize() {
-        return DB_HEADER_SIZE + RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE);
+        byte[] dbHeaderData = dbHeader.getHeaderData();
+        return DB_HEADER_SIZE + RecordStoreUtil.getInt(dbHeaderData, 
+                RS6_DATA_SIZE);
     }
 
     /**
@@ -329,10 +352,12 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          this record store to grow
      */
     public int getSizeAvailable() {
+        byte[] dbHeaderData = dbHeader.getHeaderData();
+
         int fileSpace = dbFile.spaceAvailable(suiteId) -
                         BLOCK_HEADER_SIZE - DB_HEADER_SIZE;
         int limitSpace = RMSConfig.STORAGE_SUITE_LIMIT -
-                         RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) -
+                         RecordStoreUtil.getInt(dbHeaderData, RS6_DATA_SIZE) -
                          BLOCK_HEADER_SIZE - DB_HEADER_SIZE;
 
         int rv = (fileSpace < limitSpace) ? fileSpace : limitSpace;
@@ -347,7 +372,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          format used by System.currentTimeMillis()
      */
     public long getLastModified() {
-        return RecordStoreUtil.getLong(dbHeader, RS5_LAST_MODIFIED);
+        byte[] dbHeaderData = dbHeader.getHeaderData();        
+        return RecordStoreUtil.getLong(dbHeaderData, RS5_LAST_MODIFIED);
     }
 
     /**
@@ -365,7 +391,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          record store
      */
     public int getNextRecordID() {
-        return RecordStoreUtil.getInt(dbHeader, RS2_NEXT_ID);
+        byte[] dbHeaderData = dbHeader.getHeaderData();
+        return RecordStoreUtil.getInt(dbHeaderData, RS2_NEXT_ID);
     }
 
     /**
@@ -397,31 +424,44 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         throws RecordStoreNotOpenException, RecordStoreException,
             RecordStoreFullException {
 
-        synchronized (rsLock) {
-            int recordId = getNextRecordID();
+        synchronized (recordStoreLock) {
+            lockRecordStore();
 
             try {
-                // add a block for this record
-                addBlock(recordId, data, offset, numBytes);
+                int recordId = getNextRecordID();
 
-                // update the db header
-                RecordStoreUtil.putInt(recordId+1, dbHeader, RS2_NEXT_ID);
-                RecordStoreUtil.putInt(getNumRecords()+1, dbHeader, RS3_NUM_LIVE);
-                RecordStoreUtil.putInt(getVersion()+1, dbHeader, RS4_VERSION);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
-                        RS5_LAST_MODIFIED);
+                try {
+                    // add a block for this record
+                    addBlock(recordId, data, offset, numBytes);
 
-                // write out the changes to the db header
-                dbFile.seek(RS2_NEXT_ID);
-                dbFile.write(dbHeader, RS2_NEXT_ID, 3*4+8);
-                // dbFile.commitWrite();
-            } catch (java.io.IOException ioe) {
-                throw new RecordStoreException("error writing new record "
-                                               + "data");
+                    // update the db header
+                    byte[] dbHeaderData = dbHeader.getHeaderData();
+                    RecordStoreUtil.putInt(recordId+1, dbHeaderData, 
+                            RS2_NEXT_ID);
+                    RecordStoreUtil.putInt(getNumRecords()+1, dbHeaderData,
+                            RS3_NUM_LIVE);
+                    int newVersion = getVersion()+1;
+                    RecordStoreUtil.putInt(newVersion, dbHeaderData, 
+                            RS4_VERSION);
+                    RecordStoreUtil.putLong(System.currentTimeMillis(), 
+                            dbHeaderData, RS5_LAST_MODIFIED);
+
+                    // write out the changes to the db header
+                    dbFile.seek(RS2_NEXT_ID);
+                    dbFile.write(dbHeaderData, RS2_NEXT_ID, 3*4+8);
+                    dbHeader.headerUpdated(dbHeaderData);
+                    dbIndex.recordStoreVersionUpdated(newVersion);
+                    // dbFile.commitWrite();
+                } catch (java.io.IOException ioe) {
+                    throw new RecordStoreException("error writing new record "
+                            + "data");
+                }
+
+                // Return the new record id
+                return recordId;
+            } finally {
+                unlockRecordStore();
             }
-
-            // Return the new record id
-            return recordId;
         }
     }
 
@@ -442,7 +482,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public void deleteRecord(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException {
-        synchronized (rsLock) {
+
+        synchronized (recordStoreLock) {
+            lockRecordStore();
+
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -454,19 +497,27 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 dbIndex.deleteRecordIndex(recordId);
 
                 // update the db header
-                RecordStoreUtil.putInt(getNumRecords()-1, dbHeader, RS3_NUM_LIVE);
-                RecordStoreUtil.putInt(getVersion()+1, dbHeader, RS4_VERSION);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
-                        RS5_LAST_MODIFIED);
+                byte[] dbHeaderData = dbHeader.getHeaderData();
+                RecordStoreUtil.putInt(getNumRecords()-1, dbHeaderData, 
+                        RS3_NUM_LIVE);
+                int newVersion = getVersion()+1;                
+                RecordStoreUtil.putInt(newVersion, dbHeaderData, 
+                        RS4_VERSION);
+                RecordStoreUtil.putLong(System.currentTimeMillis(), 
+                        dbHeaderData, RS5_LAST_MODIFIED);
 
                 // save the updated db header
                 dbFile.seek(RS3_NUM_LIVE);
-                dbFile.write(dbHeader, RS3_NUM_LIVE, 2*4+8);
+                dbFile.write(dbHeaderData, RS3_NUM_LIVE, 2*4+8);
+                dbHeader.headerUpdated(dbHeaderData);
+                dbIndex.recordStoreVersionUpdated(newVersion);
                 // dbFile.commitWrite();
 
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error updating file after" +
-                                               " record deletion");
+                        " record deletion");
+            } finally {
+                unlockRecordStore();
             }
         }
     }
@@ -489,16 +540,23 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public int getRecordSize(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException {
-        synchronized (rsLock) {
-            byte[] header = new byte[BLOCK_HEADER_SIZE];
+
+        synchronized (recordStoreLock) {
+            lockRecordStore();
 
             try {
-                dbIndex.getRecordHeader(recordId, header);
-            } catch (java.io.IOException ioe) {
-                throw new RecordStoreException("error reading record data");
-            }
+                byte[] header = new byte[BLOCK_HEADER_SIZE];
 
-            return RecordStoreUtil.getInt(header, 4);
+                try {
+                    dbIndex.getRecordHeader(recordId, header);
+                } catch (java.io.IOException ioe) {
+                    throw new RecordStoreException("error reading record data");
+                }
+
+                return RecordStoreUtil.getInt(header, 4);
+            } finally {
+                unlockRecordStore();
+            }
         }
     }
 
@@ -524,7 +582,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public int getRecord(int recordId, byte[] buffer, int offset)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException {
-        synchronized (rsLock) {
+
+        synchronized (recordStoreLock) {
+            lockRecordStore();
+
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -535,6 +596,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 return dbFile.read(buffer, offset, dataSize);
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error reading record data");
+            } finally {
+                unlockRecordStore();
             }
         }
     }
@@ -557,7 +620,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public byte[] getRecord(int recordId)
         throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException {
-        synchronized (rsLock) {
+
+        synchronized (recordStoreLock) {
+            lockRecordStore();
+
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -575,6 +641,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 return buffer;
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error reading record data");
+            } finally {
+                unlockRecordStore();
             }
         }
     }
@@ -608,7 +676,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException, RecordStoreFullException {
 
-        synchronized (rsLock) {
+        synchronized (recordStoreLock) {
+            lockRecordStore();
+
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
@@ -629,16 +699,23 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 }
 
                 // update the db header
-                RecordStoreUtil.putInt(getVersion()+1, dbHeader, RS4_VERSION);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
-                        RS5_LAST_MODIFIED);
+                byte[] dbHeaderData = dbHeader.getHeaderData();
+                int newVersion = getVersion()+1;                
+                RecordStoreUtil.putInt(newVersion, dbHeaderData, 
+                        RS4_VERSION);
+                RecordStoreUtil.putLong(System.currentTimeMillis(), 
+                        dbHeaderData, RS5_LAST_MODIFIED);
 
                 // write out the changes to the db header
                 dbFile.seek(RS4_VERSION);
-                dbFile.write(dbHeader, RS4_VERSION, 4+8);
+                dbFile.write(dbHeaderData, RS4_VERSION, 4+8);
+                dbHeader.headerUpdated(dbHeaderData);
+                dbIndex.recordStoreVersionUpdated(newVersion);
                 // dbFile.commitWrite();
             } catch (java.io.IOException ioe) {
                 throw new RecordStoreException("error setting record data");
+            } finally {
+                unlockRecordStore();
             }
         }
     }
@@ -650,8 +727,13 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *         or null if the record store is closed.
      */
     public int[] getRecordIDs() {
-        synchronized (rsLock) {
-            return dbIndex.getRecordIDs();
+        synchronized (recordStoreLock) {
+            lockRecordStore();
+            try {
+                return dbIndex.getRecordIDs();
+            } finally {
+                unlockRecordStore();
+            }
         }
     }
 
@@ -689,6 +771,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * Warning: This is a slow operation that scales linearly
      * with dbFile size.
      *
+     * Warning: it is assumed that this method is only called while being
+     * protected by record store lock.
+     *
      * @exception RecordStoreNotOpenException if this record store
      *            is closed
      * @exception RecordStoreException if an error occurs during record
@@ -698,7 +783,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         throws IOException {
 
         // check if the db can be compacted
-        if (RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE) == 0) {
+        byte[] dbHeaderData = dbHeader.getHeaderData();
+        if (RecordStoreUtil.getInt(dbHeaderData, RS7_FREE_SIZE) == 0) {
             // no free space to compact
             return;
         }
@@ -789,18 +875,19 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         // check if the db file can be truncated
         if (moveUpNumBytes > 0) {
             RecordStoreUtil.putInt(
-                RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) -
-                    moveUpNumBytes, dbHeader, RS6_DATA_SIZE);
-            RecordStoreUtil.putInt(0, dbHeader, RS7_FREE_SIZE);
+                RecordStoreUtil.getInt(dbHeaderData, RS6_DATA_SIZE) -
+                    moveUpNumBytes, dbHeaderData, RS6_DATA_SIZE);
+            RecordStoreUtil.putInt(0, dbHeaderData, RS7_FREE_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
-            dbFile.write(dbHeader, RS6_DATA_SIZE, 4+4);
+            dbFile.write(dbHeaderData, RS6_DATA_SIZE, 4+4);
+            dbHeader.headerUpdated(dbHeaderData);
             // dbFile.commitWrite();
 
             dbFile.truncate(getSize());
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                               "compactRecords, truncate to size " +
+                               "compactRecords, truncate to size " + 
                                getSize());
             }
         }
@@ -857,6 +944,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     /**
      * Adds a block for the record and data or sets an existing block to
      * the data.  Splits an exiting block if needed.
+     * 
+     * Warning: it is assumed that this method is only called while being
+     * protected by record store lock.
      *
      * @param recordId the ID of the record to use in this operation
      * @param data the new data to store in the record
@@ -884,18 +974,20 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         // calculate the size of the block needed
         int blockSize = RecordStoreUtil.calculateBlockSize(numBytes);
         int blockOffset = 0;
+        byte[] dbHeaderData = dbHeader.getHeaderData();
+        int freeBlocksSize = RecordStoreUtil.getInt(dbHeaderData, 
+                RS7_FREE_SIZE);
 
         // initialize the block header
         byte[] header = new byte[BLOCK_HEADER_SIZE];
 
         // check if there is the potential for a large enough free block
-        if (RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE) >= blockSize) {
+        if (freeBlocksSize >= blockSize) {
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                                "blockSize = " + blockSize +
-                               "free size = " +
-                               RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE));
+                               "free size = " + freeBlocksSize);
             }
 
             // initialize the number of bytes and search for an
@@ -922,9 +1014,14 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                                "spaceAvailable = "+spaceAvailable);
             }
+
             // Is there room to grow the file?
             if (spaceAvailable < blockSize) {
-                throw new RecordStoreFullException();
+                 // Is there enough room totally: in storage and free blocks?
+                 if (spaceAvailable + freeBlocksSize < blockSize) {
+                     throw new RecordStoreFullException();
+                 }
+                 compactRecords();
             }
 
             blockOffset = getSize();
@@ -934,10 +1031,12 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             writeBlock(blockOffset, header, data, offset, numBytes);
 
             // update the db data size
-            RecordStoreUtil.putInt(RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) + blockSize,
-                   dbHeader, RS6_DATA_SIZE);
+            RecordStoreUtil.putInt(RecordStoreUtil.getInt(
+                    dbHeaderData, RS6_DATA_SIZE) + blockSize, 
+                    dbHeaderData, RS6_DATA_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
-            dbFile.write(dbHeader, RS6_DATA_SIZE, 4);
+            dbFile.write(dbHeaderData, RS6_DATA_SIZE, 4);
+            dbHeader.headerUpdated(dbHeaderData);
             // dbFile.commitWrite();
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -977,10 +1076,13 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         writeBlock(blockOffset, header, null, 0, 0);
 
         // add to the db free size
-        RecordStoreUtil.putInt(RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE) + blockSize,
-               dbHeader, RS7_FREE_SIZE);
+        byte[] dbHeaderData = dbHeader.getHeaderData();
+        RecordStoreUtil.putInt(RecordStoreUtil.getInt(
+                dbHeaderData, RS7_FREE_SIZE) + blockSize,
+                dbHeaderData, RS7_FREE_SIZE);
         dbFile.seek(RS7_FREE_SIZE);
-        dbFile.write(dbHeader, RS7_FREE_SIZE, 4);
+        dbFile.write(dbHeaderData, RS7_FREE_SIZE, 4);
+        dbHeader.headerUpdated(dbHeaderData);
         // dbFile.commitWrite();
     }
 
@@ -1019,6 +1121,22 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     }
 
     /**
+     * Locks this record store.
+     */
+    private void lockRecordStore() {
+        recordStoreLock.obtain();
+        dbHeader.recordStoreLocked();
+    }
+
+    /**
+     * Unlocks this record store.
+     */
+    private void unlockRecordStore() {
+        dbHeader.recordStoreAboutToBeUnlocked();
+        recordStoreLock.release();        
+    }
+
+    /**
      * Creates a RecordStoreImpl instance; for internal use only.
      * Callers from outside must use <code>openRecordStore()</code>.
      *
@@ -1033,92 +1151,112 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @exception RecordStoreFullException if there is no room in storage
      *            to create a new record store
      */
-    private RecordStoreImpl(int suiteId, String recordStoreName,
-                            boolean create)
+    private RecordStoreImpl(SecurityToken token, 
+            int suiteId, String recordStoreName, boolean create)
         throws RecordStoreException, RecordStoreNotFoundException {
 
         this.suiteId = suiteId;
-        rsLock = new Object();
-
-        boolean exists = RecordStoreUtil.exists(suiteId, recordStoreName,
-                                                RecordStoreFile.DB_EXTENSION);
-
-        // Check for errors between app and record store existance.
-        if (!create && !exists) {
-            throw new RecordStoreNotFoundException("cannot find record "
-                                                   + "store file");
-        }
+        recordStoreLock = RecordStoreLockFactory.getLockInstance(
+                token, suiteId, recordStoreName);
 
         /*
-         * If a new RecordStoreImpl will be created in storage,
-         * check to see if the space required is available.
+         * Even if this MIDlet doesn't have this record store opened yet,
+         * it is possible that some other MIDlet already opened it and 
+         * is in process of writing something into it, so we have to obtain 
+         * a lock before proceeding further.
          */
-        if (create && !exists) {
-            int space = RecordStoreFile.spaceAvailableNewRecordStore(suiteId);
-            if (space - DB_HEADER_SIZE < 0) {
-                throw new RecordStoreFullException();
-            }
-        }
+        recordStoreLock.obtain();
 
-        // Create a RecordStoreFile for storing the record store.
         try {
-            dbFile = new RecordStoreFile(suiteId, recordStoreName,
-                                         RecordStoreFile.DB_EXTENSION);
-
-            // allocate a new header
-            dbHeader = new byte[DB_HEADER_SIZE];
-
-            if (exists) {
-                // load header
-                dbFile.read(dbHeader);
-
-                /*
-                 * Verify that the file is actually a record store
-                 * by verifying the record store "signature."
-                 */
-                for (int i = 0; i < DB_SIGNATURE.length; i++) {
-                    if (dbHeader[i] != DB_SIGNATURE[i]) {
-                        throw new RecordStoreException("invalid record "+
-                                                       "store contents");
-                    }
-                }
-            } else {
-                // initialize the header
-                for (int i = 0; i < DB_SIGNATURE.length; i++) {
-                    dbHeader[i] = DB_SIGNATURE[i];
-                }
-
-                RecordStoreUtil.putInt(1, dbHeader, RS2_NEXT_ID);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
-                        RS5_LAST_MODIFIED);
-
-                // write the header to the file
-                dbFile.write(dbHeader);
-                dbFile.commitWrite();
-            }
-
-            // create the index object
-            dbIndex = new RecordStoreIndex(this, suiteId, recordStoreName);
-
-        } catch (java.io.IOException ioe) {
-            try {
-                if (dbFile != null) {
-                    dbFile.close();
-                }
-            } catch (java.io.IOException ioe2) {
-                // ignore exception within exception block
-            }
-
-            if (!exists) {
-                // avoid preserving just created damaged files
-                RecordStoreUtil.quietDeleteFile(suiteId,
+            boolean exists = RecordStoreUtil.exists(
+                    RmsEnvironment.getSecureFilenameBase(suiteId),
                     recordStoreName, RecordStoreFile.DB_EXTENSION);
-                RecordStoreIndex.deleteIndex(suiteId, recordStoreName);
+
+            // Check for errors between app and record store existance.
+            if (!create && !exists) {
+                throw new RecordStoreNotFoundException("cannot find record "
+                        + "store file");
             }
 
-            dbFile = null;
-            throw new RecordStoreException("error opening record store " +
-                                           "file");
+            /*
+             * If a new RecordStoreImpl will be created in storage,
+             * check to see if the space required is available.
+             */
+            if (create && !exists) {
+                int space = RecordStoreFile.spaceAvailableNewRecordStore(
+                        suiteId);
+                if (space - DB_HEADER_SIZE < 0) {
+                    throw new RecordStoreFullException();
+                }
+            }
+
+            // Create a RecordStoreFile for storing the record store.
+            try {
+                dbFile = new RecordStoreFile(suiteId, recordStoreName,
+                        RecordStoreFile.DB_EXTENSION);
+
+                // allocate a new header
+                byte[] dbHeaderData = new byte[DB_HEADER_SIZE];
+
+                if (exists) {
+                    // load header
+                    dbFile.read(dbHeaderData);
+
+                    /*
+                     * Verify that the file is actually a record store
+                     * by verifying the record store "signature."
+                     */
+                    for (int i = 0; i < DB_SIGNATURE.length; i++) {
+                        if (dbHeaderData[i] != DB_SIGNATURE[i]) {
+                            throw new RecordStoreException("invalid record " +
+                                    "store contents");
+                        }
+                    }
+                    
+                } else {
+                    // initialize the header
+                    for (int i = 0; i < DB_SIGNATURE.length; i++) {
+                        dbHeaderData[i] = DB_SIGNATURE[i];
+                    }
+
+                    RecordStoreUtil.putInt(1, dbHeaderData, RS2_NEXT_ID);
+                    RecordStoreUtil.putLong(System.currentTimeMillis(), 
+                            dbHeaderData, RS5_LAST_MODIFIED);
+
+                    // write the header to the file
+                    dbFile.write(dbHeaderData);
+                    dbFile.commitWrite();
+                }
+
+                dbHeader = new RecordStoreSharedDBHeader(suiteId, 
+                        recordStoreName, dbHeaderData);                
+
+                // create the index object
+                dbIndex = new RecordStoreIndex(this, suiteId, recordStoreName);
+
+            } catch (java.io.IOException ioe) {
+                try {
+                    if (dbFile != null) {
+                        dbFile.close();
+                    }
+                } catch (java.io.IOException ioe2) {
+                    // ignore exception within exception block
+                }
+
+                if (!exists) {
+                    // avoid preserving just created damaged files
+                    RecordStoreUtil.quietDeleteFile(
+                            RmsEnvironment.getSecureFilenameBase(suiteId),
+                            recordStoreName, RecordStoreFile.DB_EXTENSION);
+                    RecordStoreIndex.deleteIndex(suiteId, recordStoreName);
+                }
+
+                dbFile = null;
+                throw new RecordStoreException("error opening record store " +
+                        "file");
+            }
+        } finally {
+            recordStoreLock.release();
         }
     }
 }

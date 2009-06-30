@@ -1,34 +1,33 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
 
-import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
-import com.sun.midp.chameleon.skins.*;
+import com.sun.midp.chameleon.skins.InputModeSkin;
 
 /**
  * The InputModeLayer is a very simple overlay that displays to
@@ -50,10 +49,10 @@ public class InputModeLayer extends PopupLayer {
     
     public InputModeLayer() {
         super();
-        setBackground(null, 0xA3E2F8);
+        setBackground(InputModeSkin.IMAGE_BG, InputModeSkin.COLOR_BG);
         this.supportsInput = false;
         anchor = new int[2];
-        stringHeight = Font.getDefaultFont().getHeight();        
+        stringHeight = InputModeSkin.FONT.getHeight();        
     }
     
     /**
@@ -63,10 +62,18 @@ public class InputModeLayer extends PopupLayer {
      * @param mode the display name of the currently selected input mode
      */
     public void setDisplayMode(String mode) {
-        if (this.mode != mode) {
+        if (this.mode == null || !this.mode.equals(mode)) {
             this.mode = mode;
-            stringWidth = Font.getDefaultFont().stringWidth(mode);
-            updateLocation();
+            if (mode != null) {
+                stringWidth = InputModeSkin.FONT.stringWidth(mode);
+                // if the location is not changed just repain the content of the layer
+                // because the mode has been changed and should be renewed anyway. If the 
+                // relocation happend repaint is not needed because it is done in content 
+                // of relocation procedure
+                if (!updateLocation()) {
+                    requestRepaint();
+                }
+            }
         }
     }
     
@@ -99,22 +106,25 @@ public class InputModeLayer extends PopupLayer {
     
     public void paintBody(Graphics g) {
         if (mode != null) {
-            g.setFont(Font.getDefaultFont());
-            g.setColor(0);
-            g.drawString(mode, 3, 0, Graphics.LEFT | Graphics.TOP);
+            g.setFont(InputModeSkin.FONT);
+            g.setColor(InputModeSkin.COLOR_FG);
+            g.drawString(mode, InputModeSkin.MARGIN, 0, Graphics.LEFT | Graphics.TOP);
         }
-        g.setColor(0x336699);
+        g.setColor(InputModeSkin.COLOR_BDR);
         g.drawRect(0, 0, bounds[W] - 1, bounds[H] - 1);
-        g.setColor(0);
+        g.setColor(InputModeSkin.COLOR_FG);
     }
     
-    protected void updateLocation() {
-        super.setBounds(
-            anchor[X] - stringWidth - 6,
-            anchor[Y], 
-            stringWidth + 6, 
-            stringHeight);
-        requestRepaint();
+    protected boolean updateLocation() {
+        boolean ret = false;
+        if (owner != null) {
+            ret = owner.relocateLayer(this,                 
+                            anchor[X] - stringWidth - InputModeSkin.MARGIN * 2,
+                            anchor[Y], 
+                            stringWidth + InputModeSkin.MARGIN * 2, 
+                            stringHeight);
+        }
+        return ret;
     }
 }
 

@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
@@ -45,7 +45,6 @@
 #include <qrect.h>
 #include <qmetaobject.h>
 #include <qpushbutton.h>
-#include <qtimer.h>
 #include <qscrollview.h>
 #include <midpEvents.h>
 
@@ -197,16 +196,6 @@ public:
     QWidget * asWidget() { return this; }
 
     /**
-     * Makes a request to make all midlets active.
-     */
-    void activateAll();
-
-    /**
-     * Makes a request to pause all midlets.
-     */
-    void pauseAll();
-
-    /**
      * Size of a normal screen.
      */
     int getDisplayWidth() const;
@@ -224,8 +213,15 @@ public:
     int getScreenWidth() const;
     int getScreenHeight() const;
 
+    /**
+     * Size available for Alert
+     */
+    int getAlertWidth() const;
+    int getAlertHeight() const;
+
     jboolean reverse_orientation() { r_orientation = ! r_orientation; return r_orientation;}
     jboolean get_reverse_orientation() const { return r_orientation;}
+    void handle_clamshell(){};
 
     /**
      * Returns a pointer to the single PlatformMScreen instance,
@@ -237,7 +233,9 @@ public:
 
 public slots:
     /**
-     * Called when VM time slice is granted.
+     * Invoked when a timeslice is granted.
+     * Passes control to VM for this time slice and schedules
+     * next invokation.
      */
     void slotTimeout();
 
@@ -297,17 +295,6 @@ private:
     bool     force_refresh;
 
     /**
-     * Timer to request time slice for VM.
-     */
-    QTimer   vm_slicer;
-
-    /**
-     * A flag to avoid performing any more timer processing after
-     * JVM_TimeSlice returns -2.
-     */
-    bool vm_stopped;
-
-    /**
      * Size of a normal screen.
      */
     int DISPLAY_WIDTH;
@@ -324,7 +311,6 @@ private:
      */
     int SCREEN_WIDTH;
     int SCREEN_HEIGHT;
-    bool allPaused;
 
     static jboolean r_orientation;
 };

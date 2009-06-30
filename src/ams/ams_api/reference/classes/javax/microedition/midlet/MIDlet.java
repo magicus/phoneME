@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.midlet;
@@ -32,6 +32,8 @@ import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
+
+import javax.microedition.lcdui.Display;
 
 /**
  * A <code>MIDlet</code> is a MID Profile application.
@@ -110,6 +112,9 @@ public abstract class MIDlet {
      */
     protected MIDlet() {
         peer = MIDletStateHandler.newMIDletPeer(classSecurityToken, this);
+
+        // Ensure that a display for this midlet is created
+        Display d = Display.getDisplay(this);
     }
 
     /**
@@ -214,7 +219,7 @@ public abstract class MIDlet {
      *
      */
     public final void notifyDestroyed() {
-	peer.notifyDestroyed();
+        peer.notifyDestroyed();
     }
 
     /**
@@ -236,7 +241,7 @@ public abstract class MIDlet {
      * <code>active</code> state.
      */
     public final void notifyPaused() {
-	peer.notifyPaused();
+        peer.notifyPaused();
     }
 
     /**
@@ -260,7 +265,7 @@ public abstract class MIDlet {
      * if key is <code>null</code>.
      */
     public final String getAppProperty(String key) {
-	return peer.getMIDletSuite().getProperty(key);
+        return peer.getMIDletSuite().getProperty(key);
     }
 
     /**
@@ -276,7 +281,7 @@ public abstract class MIDlet {
      * such as timers or callbacks.
      */
     public final void resumeRequest() {
-	peer.resumeRequest();
+        peer.resumeRequest();
     }
 
     /**
@@ -373,6 +378,6 @@ public abstract class MIDlet {
      *
      */
     public final int checkPermission(String permission) {
-	return peer.checkPermission(permission);
+        return peer.checkPermission(permission);
     }
 }

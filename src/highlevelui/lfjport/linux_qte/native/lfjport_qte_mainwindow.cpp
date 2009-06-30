@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
@@ -45,6 +45,10 @@ extern "C" {
 #include <sni.h>
 #include <midpEventUtil.h>
 }
+
+#if ENABLE_MULTIPLE_DISPLAYS
+#include <lcdlf_export.h>
+#endif /* ENABLE_MULTIPLE_DISPLAYS */
 
 #include <qteapp_key.h>
 #include "lfjport_qte_mainwindow.h"
@@ -108,7 +112,8 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 #ifdef QT_KEYPAD_MODE
          ((QKeyEvent *)e)->key() == Qt::Key_Hangup)) {  
 #else
-         ((QKeyEvent *)e)->key() == Qt::Key_End)) {
+        (((QKeyEvent *)e)->key() == Qt::Key_End ||
+         ((QKeyEvent *)e)->key() == Qt::Key_F8))) {
 #endif
     // Pressing the (x) button means to destroy the
         // foreground MIDlet.
@@ -118,7 +123,11 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 
 #if ENABLE_MULTIPLE_ISOLATES
         evt.type = MIDLET_DESTROY_REQUEST_EVENT;
-        evt.DISPLAY = gForegroundDisplayId;
+#if ENABLE_MULTIPLE_DISPLAYS  
+            evt.DISPLAY = gForegroundDisplayIds[lcdlf_get_current_hardwareId()];  
+#else  
+            evt.DISPLAY = gForegroundDisplayId;  
+#endif /* ENABLE_MULTIPLE_DISPLAYS */  
         evt.intParam1 = gForegroundIsolateId;
         midpStoreEventAndSignalAms(evt);
 #else
@@ -135,8 +144,9 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
     // Forward Home key presses to mscreen to resume apps
     if (e->type() == QEvent::KeyPress) {
         QKeyEvent *ke = (QKeyEvent *) e;
-
-        if (ke->key() == Qt::Key_Home) {
+        
+        if (ke->key() == Qt::Key_Home ||
+            ke->key() == Qt::Key_F7 ) {
             mscreen->keyPressEvent(ke);
             ke->ignore();
             return TRUE;

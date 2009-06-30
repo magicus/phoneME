@@ -1,25 +1,25 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.main;
@@ -46,7 +46,7 @@ public class CdcMIDletLoader implements MIDletLoader {
      * @param mss the MIDlet suite storage
      *
      */
-    CdcMIDletLoader(MIDletSuiteStorage mss) {
+    public CdcMIDletLoader(MIDletSuiteStorage mss) {
         midletSuiteStorage = mss;
     }
 
@@ -68,40 +68,28 @@ public class CdcMIDletLoader implements MIDletLoader {
     public MIDlet newInstance(MIDletSuite suite, String className) throws
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
+
+        boolean hideCdcClasses = true;
         String[] jars;
+        MIDletClassLoader  midletClassLoader;
         Class midletClass;
 
         if (suite.getID() == -1) {
-            /*
-             * This is the internal suite, that has no JAR
-             *
-             * This is a workaround for loading external midlets
-             * from command line. The ID can be -1.
-             */
+            /* The suite is not installed, rommized or WTK created JAR. */
             jars = MIDPLauncher.getMidletSuitePath();
+
+            if (jars == null || jars.length == 0) {
+                /* This is a rommized internal MIDlet, that has no JAR. */
+                hideCdcClasses = false;
+            }
         } else {
             jars = midletSuiteStorage.
                        getMidletSuiteClassPath(suite.getID());
         }
 
         /* Use MIDletClassLoader to load the main midlet class. */
-        // Until the GCF part of the build is refactored we will
-        // not use the MIDletClassLoader, so HTTP will work.
-        //MIDletClassLoader  midletClassLoader =
-        //    MIDPConfig.newMIDletClassLoader(jars);          
-
-        URL[] urls = new URL[jars.length];
-        for (int i = 0; i < jars.length; i++) {
-            try {
-            urls[i] = new URL("file://" + jars[i]);
-            } catch (MalformedURLException e) {
-                System.out.println("malformed url");
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-
-        URLClassLoader midletClassLoader =
-            new URLClassLoader(urls, this.getClass().getClassLoader());
+        midletClassLoader =
+            MIDPConfig.newMIDletClassLoader(jars, hideCdcClasses, null);
 
         midletClass = midletClassLoader.loadClass(className);
 

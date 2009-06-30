@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
@@ -39,6 +39,7 @@
 #include <qpopupmenu.h>
 #include <qwidget.h>
 #include <qlabel.h>
+#include "lfpport_qte_mscreen.h"        
 
 extern "C" {
 #include <lfpport_alert.h>
@@ -131,6 +132,16 @@ class Alert : public QWidget {
     QPushButton *buttons[ALERT_NUM_OF_BUTTONS];
 
     /**
+    * Number of alert buttons
+    */
+    int numButtons;
+
+    /**
+    * Owner of alert
+    */
+    PlatformMScreen * mscreen;
+
+    /**
      * Places on this alert, at the given y position with no more than the
      * given maximum height, the given image. This function centers the image
      * horizontally on the alert window.
@@ -202,6 +213,8 @@ public:
      * @param key ptr to key event
      */
    void keyReleaseEvent(QKeyEvent *key);
+
+   void keyPressEvent(QKeyEvent *key);    
 
     /**
      * Resets the contents of this alert using the given image, <i>gauge</i>

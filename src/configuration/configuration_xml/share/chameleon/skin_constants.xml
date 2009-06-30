@@ -3,8 +3,27 @@
 <!--
         	
 
-        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
 -->
 <configuration>
 <constants>
@@ -713,6 +732,39 @@
             Comment="Right scrolling indicator for PTI bar"/>
 
   <!--
+     Input Mode Indicator properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="INPUT_MODE_MARGIN"
+            Comment="The text margin in Input Mode Indicator (in pixels)."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_BG"
+            Comment="The background fill color for this pti bar if its 
+                     background image isn't specified or cannot be loaded."/>
+
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_FG"
+            Comment="The foreground color for rendering the text of this 
+                     Input Mode Indicator."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_BDR"
+            Comment="The color of the background of this Input Mode Indicator."/>
+
+  <constant Type="int"
+            Name="INPUT_MODE_FONT"
+            Comment="The font to render the text of this Input Mode Indicator."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_IMAGE_BG"
+            Comment="These images are used to render a background for the 
+                     Input Mode Indicator. 
+            
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <!--
      Title bar properties indentifiers    
   -->                    
   <constant Type="int"
@@ -1264,6 +1316,13 @@
                      centered in the image."/>
             
   <constant Type="int"
+            Name="DATEEDITOR_IMAGE_DAYS"
+            Comment="This is a single image which holds all the days of week as 
+                     graphics. The image is arranged horizontally, starting 
+                     with 1 and going to 7. Each letter is equal height and
+                     centered in the image."/>
+            
+  <constant Type="int"
             Name="DATEEDITOR_IMAGE_TIME_BG"
             Comment="The background image for the drop-down hour/minute 
                      selected."/>
@@ -1615,6 +1674,94 @@
                      
                      If isn't specified or cannot be loaded, solid fill color
                      and line border are used instead of background image."/>
+
+  <constant Type="int"
+            Name="KEYBOARD_HEIGHT"
+            Comment="Height of virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_COEFFICIENT"
+            Comment="The persent of the board which virtual keyboard fill"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_KEY"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_BACKSPACE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_CAPS"
+            Comment="Image for virtual keyboard key"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_ENTER"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_ALPHA_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_SYMBOL_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_NUMERIC_MODE"
+            Comment="Image for virtual keyboard key"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BG"
+            Comment="Background for virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_COLOR_BG"
+            Comment="Background color for virtual keyboard"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_UP_SEL"
+            Comment="Image for virtual keyboard key with selected up arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_UP_UN"
+            Comment="Image for virtual keyboard key with unselected up arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_LEFT_SEL"
+            Comment="Image for virtual keyboard key with selected left arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_LEFT_UN"
+            Comment="Image for virtual keyboard key with unselected left arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_MID_SEL"
+            Comment="Image for virtual keyboard key with selected middle icon"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_MID_UN"
+            Comment="Image for virtual keyboard key with unselected middle icon"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_RIGHT_SEL"
+            Comment="Image for virtual keyboard key with selected right arrow"/>
+
+  <constant Type="int"
+            Name="KEYBOARD_BTN_RIGHT_UN"
+            Comment="Image for virtual keyboard key with unselected right arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_DOWN_SEL"
+            Comment="Image for virtual keyboard key with selected down arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_BTN_DOWN_UN"
+            Comment="Image for virtual keyboard key with unselected down arrow"/>
+  <constant Type="int"
+            Name="KEYBOARD_FONT"
+            Comment="Virtual keyboard font"/>
+    <constant Type="int"
+              Name="TOUCH_RADIUS"
+           Comment="Radius of finger if finger support is on,
+                    if finger support is off than this constant should be 0" />
 
 
 
@@ -2244,6 +2391,25 @@
             Name="SOFTBTN_BUTTON_ANCHOR_Y"
             Comment="The y-coordinate for the anchor point of a button. Its
                      a sequence of SOFTBTN_NUM_BUTTONS integer numbers."/>
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_MON_HE_BG"
+                         Comment="The background image for the drop-down month selector
+                                         if microedition.locale is set to a country where RTL text orientation is used"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_DAY_HE_BG"
+                         Comment="The background image for the drop-down day selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_YR_HE_BG"
+                         Comment="The background image for the drop-down year selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>
+
+   <constant Type="int"
+                         Name="DATEEDITOR_IMAGE_TIME_HE_BG"
+                         Comment="The background image for the drop-down time selector
+                                         if microedition.locale is set to a country where uses RIGHT-TO-LEFT note (Hebrew)"/>     
 </constant_class>
 </constants>
 </configuration>

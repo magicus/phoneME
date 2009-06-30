@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.midlet;
@@ -37,8 +37,8 @@ import com.sun.midp.security.SecurityToken;
 
 /**
  * MIDletPeer maintains the current state of the MIDlet and forwards updates
- * to it.  It contains references to the MIDlet itself and to its
- * corresponding Display instance.  Control methods (startApp, destroyApp,
+ * to it.  It contains a reference to the MIDlet itself.
+ * Control methods (startApp, destroyApp,
  * pauseApp) defined here are invoked on the MIDlet object via the
  * MIDletTunnel.
  * <p>
@@ -69,12 +69,12 @@ public class MIDletPeer implements MIDletEventConsumer {
     public static final int ACTIVE = 1;
 
     /**
-     * State of the MIDlet when resumed by the display manager
+     * State of the MIDlet when resumed by the AMS
      */
     static final int ACTIVE_PENDING = 2;
 
     /**
-     * State of the MIDlet when paused by the display manager
+     * State of the MIDlet when paused by the AMS
      */
     static final int PAUSE_PENDING = 3;
 
@@ -286,7 +286,6 @@ public class MIDletPeer implements MIDletEventConsumer {
      * called.  Even in the paused state the application may handle
      * asynchronous events such as timers or callbacks.
      */
-
     public final void resumeRequest() {
         midletStateListener.resumeRequest(getMIDletSuite(),
             getMIDlet().getClass().getName());

@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -119,12 +119,14 @@ typedef jint StorageIdType;
 /**
  * Initializes the storage subsystem.
  *
- * @param midp_home pathname in the file-system where MIDP is installed
+ * @param midp_config pathname in the file-system where MIDP is installed
+ * @param midp_home file system path to where MIDP should store its
+ * data like suites and such
  *
  * @return 0 for success, or non-zero if the MIDP implementation is
  * out of memory
  */
-int storageInitialize(char *midp_home);
+int storageInitialize(char *midp_config, char * midp_home);
 
 /**
  * Takes any actions necessary to safely terminate the storage
@@ -321,6 +323,17 @@ long storageRelativePosition(char** ppszError, int handle, long offset);
  */
 long storageSizeOf(char** ppszError, int handle);
 
+/*
+ * Return the size of file with the given name in storage.
+ *
+ * If not successful *ppszError will set to point to an error string,
+ * on success it will be set to NULL.
+ *
+ * @return size of file in bytes if successful, -1 otherwise
+ */
+long storage_size_of_file_by_name(char** ppszError,
+                                  const pcsl_string* pFileName);
+
 /**
  * Truncates the size of the given open native-storage file to the
  * given number of bytes.
@@ -363,7 +376,7 @@ int storage_file_exists(const pcsl_string* filename);
  * @param newFilename the name to change the file to
  */
 void storage_rename_file(char** ppszError, const pcsl_string* oldFilename,
-                       const pcsl_string* newFilename);
+                         const pcsl_string* newFilename);
 
 /**
  * Deletes the given native-storage file. This function does not

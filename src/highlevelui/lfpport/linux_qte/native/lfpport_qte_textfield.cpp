@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
@@ -34,7 +34,7 @@
 #include "lfpport_qte_mscreen.h"
 
 #include <qregexp.h>
-
+#include <stdio.h>
 
 /** The number of visible lines of a long ANY TextField */
 #define LONG_ANY_TEXTFIELD_LINES	6
@@ -75,30 +75,43 @@ void TextFieldBody::setCursorPosition(int position) {
 void TextFieldBody::keyPressEvent(QKeyEvent *key)
 {
     int k = key->key();
-    if (isReadOnly()) {
-        if ((k == Key_Up && rowIsVisible(0))
-            || (k == Key_Down && rowIsVisible(numRows() - 1)))  {
-    
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(key);
-
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (k == Qt::Key_Select) {
+        QMultiLineEdit::keyPressEvent(key);
+    } else if (isModalEditing()) {
+#endif
+        if (isReadOnly()) {
+            if ((k == Qt::Key_Up && rowIsVisible(0))
+                || (k == Qt::Key_Down && rowIsVisible(numRows() - 1)))  {
+                
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(key);
+                
+            } else {
+                QMultiLineEdit::keyPressEvent(key);
+            }
         } else {
-            QMultiLineEdit::keyPressEvent(key);
+            int line;
+            int col;
+            QMultiLineEdit::getCursorPosition(&line, &col);
+            if ((k == Qt::Key_Up && line == 0)  
+                || (k == Qt::Key_Down && (line == numLines() - 1))){
+                
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(key);
+                
+            } else {
+                QMultiLineEdit::keyPressEvent(key);
+            }
         }
+#ifdef QT_KEYPAD_MODE
     } else {
-        int line;
-        int col;
-        QMultiLineEdit::getCursorPosition(&line, &col);
-        if ((k == Key_Up && line == 0)  
-            || (k == Key_Down && (line == numLines() - 1))){
-
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(key);
-
-        } else {
-            QMultiLineEdit::keyPressEvent(key);
-        }
+        // not handle events while it's in not modal state
+        key->ignore();
     }
+#endif
 }
 
 /**
@@ -109,18 +122,31 @@ void TextFieldBody::keyPressEvent(QKeyEvent *key)
 void TextFieldBody::keyReleaseEvent(QKeyEvent *key)
 {
     int k = key->key();
-    int line;
-    int col;
-    QMultiLineEdit::getCursorPosition(&line, &col);
-    if (k == Key_Up && line == 0)  {
-        PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-        mscreen->keyReleaseEvent(key);
-    } else if (k == Key_Down && line == numLines() - 1) {
-        PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-        mscreen->keyReleaseEvent(key);
-    } else {
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (k == Qt::Key_Select) {
         QMultiLineEdit::keyReleaseEvent(key);
+    } else if (isModalEditing()) {
+#endif
+        int line;
+        int col;
+        QMultiLineEdit::getCursorPosition(&line, &col);
+        if (k == Qt::Key_Up && line == 0)  {
+            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+            mscreen->keyReleaseEvent(key);
+        } else if (k == Qt::Key_Down && line == numLines() - 1) {
+            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+            mscreen->keyReleaseEvent(key);
+        } else {
+            QMultiLineEdit::keyReleaseEvent(key);
+        }
+#ifdef QT_KEYPAD_MODE
+    } else {
+        // not handle events while it's in not modal state
+        key->ignore();
     }
+#endif
 }
 
 
@@ -203,10 +229,17 @@ bool TextFieldBody::validate(const QString &s, int line, int col) {
 	  }
 	}
 	break;
-
+    case MIDP_CONSTRAINT_PHONENUMBER:
+    {
+        /* the phone number has to accept the '+' at the start of the text, any digits, '#' and '*' */
+        QRegExp numbers("^[\053]?[0-9\\s\052\043]*$");
+        if (numbers.match(s) >= 0) {
+            ok = true;
+        }
+    }
+    break;
     case MIDP_CONSTRAINT_ANY:
     case MIDP_CONSTRAINT_EMAILADDR:
-    case MIDP_CONSTRAINT_PHONENUMBER:
     case MIDP_CONSTRAINT_URL:
         ok = true;
         break;
@@ -216,14 +249,119 @@ bool TextFieldBody::validate(const QString &s, int line, int col) {
     return ok;
 }
 
+
+/**
+ * Method format phone string
+ * @param s string
+ */
+QString TextFieldBody::getStringForPhoneNumber(QString& s) {
+    int res = s.find(" ",0);
+    while (res != -1) {
+        s.remove(res,1);
+        res = s.find(" ",0); 
+    }
+    switch (s.length()) {
+        case 5:
+        case 6:
+        case 7:
+            s.insert(3," ");
+            break;
+        case 8:
+        case 9:
+        case 10:
+        case 12:
+        case 13:
+            s.insert(3," ");
+            s.insert(6," ");
+            break;
+        case 11:
+            s.insert(1," ");
+            s.insert(5," ");
+            s.insert(9," ");
+            break;
+      }
+    return s;
+
+}
+
 /** Override to validate constraint against new insertion */
 void TextFieldBody::insertAt(const QString &s, int line, int col,
 			     bool mark) {
+
+    QString str;
  
     if (validate(s, line, col)) {
-	QMultiLineEdit::insertAt(s, line, col, mark);
+         switch ((MidpConstraint)(constraints & MIDP_CONSTRAINT_MASK)) {
+            case MIDP_CONSTRAINT_PHONENUMBER:
+
+                str = QMultiLineEdit::textLine(line);
+                str.insert(col,s);
+
+                QMultiLineEdit::removeLine(line);
+                str = getStringForPhoneNumber(str);
+
+                QMultiLineEdit::insertAt(str,line,0,mark);
+                QMultiLineEdit::setCursorPosition(line,col + 2,mark);
+            break;
+            default:
+                QMultiLineEdit::insertAt(s, line, col, mark);
+        }
     }
 }
+
+/**
+ * Override QMultLineEdit::backspace to format phone string
+ */
+void TextFieldBody::backspace() {
+
+    QString str;
+
+    int line, col;
+
+    QMultiLineEdit::backspace();
+
+    QMultiLineEdit::getCursorPosition(&line, &col);
+
+    switch ((MidpConstraint)(constraints & MIDP_CONSTRAINT_MASK)) {
+        case MIDP_CONSTRAINT_PHONENUMBER:
+            str = QMultiLineEdit::textLine(line);
+            QMultiLineEdit::removeLine(line);
+
+            str = getStringForPhoneNumber(str);
+
+            QMultiLineEdit::insertAt(str,line,0,FALSE);
+            break;
+        default:
+            break;
+    }
+}
+
+/**
+ * Override QMultLineEdit::del to format phone string
+ */
+void TextFieldBody::del() {
+
+    QString str;
+
+    int line, col;
+
+    QMultiLineEdit::del();
+
+    QMultiLineEdit::getCursorPosition(&line, &col);
+
+    switch ((MidpConstraint)(constraints & MIDP_CONSTRAINT_MASK)) {
+        case MIDP_CONSTRAINT_PHONENUMBER:
+            str = QMultiLineEdit::textLine(line);
+            QMultiLineEdit::removeLine(line);
+
+            str = getStringForPhoneNumber(str);
+            QMultiLineEdit::insertAt(str,line,0,FALSE);
+            break;
+        default:
+            break;
+    }
+}
+
 
 /** Override to notify Form focus change */
 void TextFieldBody::focusInEvent(QFocusEvent *event) {

@@ -1,32 +1,33 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.main;
 
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /** Implements utilities that are different for SVM and MVM modes. */
@@ -78,6 +79,8 @@ public class AmsUtil {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return true to signal that the MIDlet suite MUST first exit before the
      * MIDlet is run
@@ -86,10 +89,19 @@ public class AmsUtil {
             int externalAppId, int id, String midlet,
             String displayName, String arg0, String arg1, String arg2,
             int memoryReserved, int memoryTotal, int priority,
-            String profileName) {
+            String profileName, boolean isDebugMode) {
 
         if (id != MIDletSuite.UNUSED_SUITE_ID) {
-            if (midletProxyList.isMidletInList(id, midlet)) {
+
+            // The MIDlet running already shoudln't be started again.
+            // Each started MIDlet has matching MIDletProxy instance
+            // created on MIDLET_CREATED_NOTIFICATION event. In SVM mode
+            // the event system is not used for MIDlet execution, so
+            // MIDletProxy can not exist yet for a MIDlet just started.
+            // Instead of MIDletProxyList browsing the MIDletStateHandler
+            // is checked for the running MIDlet.
+
+            if (MIDletStateHandler.getMidletStateHandler().isRunning(midlet)) {
                 // No need to exit, MIDlet already loaded
                 return false;
             }
@@ -104,7 +116,8 @@ public class AmsUtil {
         MIDletSuiteUtils.memoryTotal = memoryTotal;
         MIDletSuiteUtils.priority    = priority;
         MIDletSuiteUtils.profileName = profileName;
-
+        MIDletSuiteUtils.isDebugMode = isDebugMode;
+        
         return true;
     }
 

@@ -2,12 +2,12 @@
 
 <!--
 
-        Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+        Copyright  2007  Sun Microsystems, Inc. All rights reserved.
 -->
 
 <html>
   <head>
-    <title>Reference Documentation - phoneME Feature project - Version 1.0</title>
+    <title>Reference Documentation - phoneME Feature project - Version 2.0</title>
     <link rel="stylesheet" href="doxygen_style.css" type="text/css">
   </head>
 

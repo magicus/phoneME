@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <stdarg.h>
@@ -34,10 +34,10 @@
 #include <sni.h>
 
 #include <midpMalloc.h>
-#include <midpUtilUTF.h>
 #include <midpServices.h>
 #include <midp_logging.h>
 #include <midp_constants_data.h>
+#include <midp_properties_port.h>
 #include <midpMidletSuiteUtils.h>
 #include <midpUtilKni.h>
 
@@ -77,8 +77,12 @@ midp_getCurrentTime(void) {
 /*=========================================================================
  * JAR helper functions
  *=======================================================================*/
-
-/**
+#if 0
+/*
+ * IMPL_NOTE: this code will be removed as soon as we find out
+ * that the full build does not break
+ */
+/* *
  * Reads an entry from a JAR file.
  *
  * @param jarName The name of the JAR file to read
@@ -87,18 +91,25 @@ midp_getCurrentTime(void) {
  *
  * @return <tt>true</tt> if the entry was read, otherwise <tt>false</tt>
  */
+/*
+* IMPL_NOTE: this function is the same as midpGetJarEntry() in midpJar.c,
+* but it uses only CLDC stuff
+*/
 jboolean
 midp_readJarEntry(const pcsl_string* jarName, const pcsl_string* entryName, jobject* entry) {
     JvmPathChar* platformJarName;
     int i;
-    int maxLen;
-    unsigned char* platformEntryName;
-    int numberOfChars;
     jboolean noerror = KNI_TRUE;
 
     GET_PCSL_STRING_DATA_AND_LENGTH(jarName)
-    GET_PCSL_STRING_DATA_AND_LENGTH(entryName)
+    /* Entry names in JARs are UTF-8. */
+    const jbyte * const platformEntryName = pcsl_string_get_utf8_data(entryName);
+
     do {
+        if (platformEntryName == NULL) {
+            noerror = KNI_FALSE;
+            break;
+        }
         /*
          * JvmPathChars can be either 16 bits or 8 bits so we can't
          * assume either.
@@ -122,35 +133,10 @@ midp_readJarEntry(const pcsl_string* jarName, const pcsl_string* entryName, jobj
 
         platformJarName[i] = 0;
 
-        /* IMPL_NOTE: could we get UTF-8 data from the very beginning? */
-
-        /* Entry names in JARs are UTF-8. */
-
-        /* Add one for the zero terminator. */
-        maxLen = (entryName_len * UTF_8_PER_UCS_2_CHAR) + 1;
-        platformEntryName = (unsigned char*)midpMalloc(maxLen);
-        if (platformEntryName == NULL) {
-            midpFree(platformJarName);
-            noerror = KNI_FALSE;
-            break;
-        }
-
-        numberOfChars = midpUTF8Encode(entryName_data, entryName_len,
-                                   (unsigned char*)platformEntryName, maxLen);
-        if (numberOfChars < 0) {
-            midpFree(platformEntryName);
-            midpFree(platformJarName);
-            noerror = KNI_FALSE;
-            break;
-        }
-
-        platformEntryName[numberOfChars] = 0;
-
         Jvm_read_jar_entry(platformJarName, (char*)platformEntryName, (jobject)*entry);
         midpFree(platformJarName);
-        midpFree(platformEntryName);
     } while(0);
-    RELEASE_PCSL_STRING_DATA_AND_LENGTH
+    pcsl_string_release_utf8_data(platformEntryName, entryName);
     RELEASE_PCSL_STRING_DATA_AND_LENGTH
     if (noerror) {
         return (KNI_IsNullHandle((jobject)*entry) == KNI_TRUE)
@@ -159,7 +145,7 @@ midp_readJarEntry(const pcsl_string* jarName, const pcsl_string* entryName, jobj
         return KNI_FALSE;
     }
 }
-
+#endif
 /**
  * Get the current isolate id from VM in case of MVM mode. 
  * For SVM, simply return 0 as an isolate ID.
@@ -180,6 +166,47 @@ int getCurrentIsolateId() {
     return ((amsIsolateId == 0)? 0:JVM_CurrentIsolateId());
 #else
     return amsIsolateId;
+#endif /* ENABLE_MULTIPLE_ISOLATES */
+}
+
+#if ENABLE_MULTIPLE_ISOLATES
+/** Sets new value of MAX_ISOLATES property */
+static void setMaxIsolates(int value) {
+    char valueStr[5];
+    sprintf(valueStr, "%d", value);
+    setInternalProperty("MAX_ISOLATES", valueStr);
+}
+#endif /* ENABLE_MULTIPLE_ISOLATES */
+
+/**
+ * Get maximal allowed number of isolates in the case of MVM mode.
+ * For SVM, simply return 1.
+ */
+int getMaxIsolates() {
+
+#if ENABLE_MULTIPLE_ISOLATES
+
+    static int midpMaxIsolates = 0;
+    if (midpMaxIsolates == 0) {
+        int jvmMaxIsolates = JVM_MaxIsolates();
+        midpMaxIsolates  = getInternalPropertyInt("MAX_ISOLATES");
+        if (0 == midpMaxIsolates) {
+            REPORT_INFO(LC_AMS, "MAX_ISOLATES property not set");
+            midpMaxIsolates = MAX_ISOLATES;
+        }
+        if (midpMaxIsolates > jvmMaxIsolates){
+            REPORT_WARN1(LC_AMS,
+                "MAX_ISOLATES exceeds VM limit %d, decreased", jvmMaxIsolates);
+            midpMaxIsolates = jvmMaxIsolates;
+        }
+        setMaxIsolates(midpMaxIsolates);
+    }
+    return midpMaxIsolates;
+
+#else
+
+    return 1;
+
 #endif /* ENABLE_MULTIPLE_ISOLATES */
 }
 

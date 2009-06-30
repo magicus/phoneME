@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.events;
@@ -194,12 +194,13 @@ public final class EventTypes {
     /**
      * Major ID for a execute MIDlet event.
      * <ul>
-     * <li> stringParam1 = id;
-     * <li> stringParam2 = midlet;
-     * <li> stringParam3 = displayName;
-     * <li> stringParam4 = arg0;
-     * <li> stringParam5 = arg1;
-     * <li> stringParam6 = arg2;
+     * <li> intParam1    = external application ID;
+     * <li> intParam2    = suite ID;
+     * <li> stringParam1 = midlet class name;
+     * <li> stringParam2 = display name;
+     * <li> stringParam3 = arg0;
+     * <li> stringParam4 = arg1;
+     * <li> stringParam5 = arg2;
      * </ul>
      */
     public static final int EXECUTE_MIDLET_EVENT  =  28;
@@ -236,58 +237,48 @@ public final class EventTypes {
     public static final int FATAL_ERROR_NOTIFICATION = 32;
 
     /**
-     * Major ID for a MM EOM event.
-     */
-    public static final int MM_EOM_EVENT = 33;
-
-    /**
-     * Major ID for a MM SAT event.
-     */
-    public static final int MM_SAT_EVENT = 34;
-
-    /**
-     * Major ID for a MM TONEEOM event.
-     */
-    public static final int MM_TONEEOM_EVENT = 35;
-    
-    /**
      * Major ID for a JSR 75 FileConnection disks changed event.
      */
-    public static final int FC_DISKS_CHANGED_EVENT = 36;
+    public static final int FC_DISKS_CHANGED_EVENT = 33;
 
     /** Reserved for testing. */
-    public static final int TEST_EVENT = 37;
+    public static final int TEST_EVENT = 34;
 
     /**
      * Sent to the AMS isolate when a paused MIDlet is requesting to be
      * moved to active state.
      */
-    public static final int MIDLET_RESUME_REQUEST = 38;
+    public static final int MIDLET_RESUME_REQUEST = 35;
 
     /**
      * Sent by the native system to request a MIDlet be created and started.
      */
-    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 39;
+    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 36;
 
     /**
      * Sent by the native system to request a paused MIDlet be resumed.
      */
-    public static final int NATIVE_MIDLET_RESUME_REQUEST = 40;
+    public static final int NATIVE_MIDLET_RESUME_REQUEST = 37;
 
     /**
      * Sent by the native system to request a MIDlet be paused.
      */
-    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 41;
+    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 38;
 
     /**
      * Sent by the native system to request a MIDlet be destroyed.
      */
-    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 42;
+    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 39;
+
+    /**
+     * Sent by the native system to request a MIDlet be destroyed.
+     */
+    public static final int NATIVE_MIDLET_GETINFO_REQUEST = 40;
 
     /**
      * Sent by the native system to request a MIDlet be in the foreground.
      */
-    public static final int NATIVE_SET_FOREGROUND_REQUEST = 43;
+    public static final int NATIVE_SET_FOREGROUND_REQUEST = 41;
 
     
     /**
@@ -299,41 +290,204 @@ public final class EventTypes {
      * <li>stringParam2 = MIDlet's class name
      * </ul>
      */
-    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 44;
+    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 42;
 
     /*
      * Sent to request screen rotation
      */
-    public static final int ROTATION_EVENT = 45;
+    public static final int ROTATION_EVENT = 43;
 
     /**
      * MIDlet resources paused notification 
      */
-    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 46;
-    
-    /**
-     * Major ID for a MM DURATION UPDATED event. (Multimedia Event Extension)
-     */
-    public static final int MM_DURATION_EVENT = 47;
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 44;
 
-    /* External Volume Changed */
-    public static final int MM_VOLUME_CHANGED_EVENT = 48;
+    /** Major ID for MMAPI event */
+    public static final int MMAPI_EVENT = 45;
+
+    /** Major ID for AMMS  event */ 
+    public static final int AMMS_EVENT  = 46;
+
+    /** The event to repaint entire screen*/
+    public static final int SCREEN_REPAINT_EVENT = 47;
+
+    /**
+     * JSR-256 sensor notification event.
+     */
+    public static final int SENSOR_EVENT = 48;
+
+    /**
+     * If USE_ON_DEVICE_DEBUG=true build option was given, when a special
+     * key sequence is detected, the system sends this event to AMS to
+     * enable On Device Debugging.
+     */
+    public static final int MIDP_ENABLE_ODD_EVENT = 49;
+
+    /**
+     * Request to start a new midlet from the debug agent to AMS.
+     */
+    public static final int MIDP_ODD_START_MIDLET_EVENT = 50;
+
+    /**
+     * Notification sent by AMS to the debug agent.
+     */
+    public static final int MIDP_ODD_MIDLET_EXITED_EVENT = 51;
+
+    /**
+     * JSR-211 CHAPI platform notification event.
+     */
+    public static final int CHAPI_EVENT = 52;
+
+    /**
+     * This event is used by AutoTester.
+     */
+    public static final int AUTOTESTER_EVENT = 53;
+
+    /**
+     * This event is sent when the display hardware state is changed.
+     */
+    public static final int DISPLAY_DEVICE_STATE_CHANGED_EVENT = 54;
     
     /**
-     * Multimedia Extended Events
-     * 
-     * 2. Recorder reach to size limit
-     * 3. Recorder error
-     * 4. Streaming buffering started
-     * 5. Streaming buffering stopped
-     * 6. General media error
+     * Notification sent by ODT agent indicating that it has installed a new
+     * MIDlet suite.
      */
-    public static final int MM_RECORD_LIMIT_EVENT = 49;
-    public static final int MM_RECORD_ERROR_EVENT = 50;
-    public static final int MM_BUFFERING_START_EVENT = 51;
-    public static final int MM_BUFFERING_STOP_EVENT = 52;
-    public static final int MM_GENERAL_ERROR_EVENT = 53;
+    public static final int MIDP_ODD_SUITE_INSTALLED_EVENT = 55;
+
+    /**
+     * Notification sent by ODT agent indicating that it has removed 
+     * an installed MIDlet suite.
+     */
+    public static final int MIDP_ODD_SUITE_REMOVED_EVENT = 56;
+
+    /**
+     * Major ID for a request to restart a MIDlet event.
+     */
+    public static final int RESTART_MIDLET_EVENT = 57;
+
+    /**
+     * This event is used for show or hide java virtual keyboard
+     */
+    public static final int VIRTUAL_KEYBOARD_EVENT = 58;
+
+    /**
+     * This event is sent by a native code to the Java installer to
+     * enable or disable OCSP check. 
+     */
+    public static final int NATIVE_ENABLE_OCSP_REQUEST = 59;
+
+    /**
+     * This event is sent by a native code to the Java installer to
+     * check if OCSP is currently enabled.
+     */
+    public static final int NATIVE_CHECK_OCSP_ENABLED_REQUEST = 60;
+
+    /**
+     * This event is sent by a native code to InstallerPeerMIDlet
+     * to unblock the installer thread waiting for a user's answer.
+     */
+    public static final int NATIVE_UNBLOCK_INSTALLER = 61;
+
+
+    /**
+     * This event is used for change current locale
+     */
+    public static final int CHANGE_LOCALE_EVENT	= 62;
+
+    /**
+     * JSR290 Fluid listener notification event
+     */
+    public static final int FLUID_EVENT = 63;
+
+    /**
+     * JSR290 DOM object finalize notification event
+     */
+    public static final int DOM_FINALIZE_EVENT = 64;
+
+    /**
+     * This event is sent on RMS storage changing to
+     * asynchronously notify registered RMS listeners
+     */
+    public static final int RECORD_STORE_CHANGE_EVENT = 65;
+
+    /**
+     * This event is sent to AMS task when asynchronous notification
+     * of record store changes can not be delivered to listener task
+     * during predefined timeout period 
+     */
+    public static final int RECORD_STORE_FAILED_NOTIFICATION_EVENT = 66;
+
+    /**
+     * This event is sent when the clamshell state is changed.
+     */
+
+    public static final int DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT = 67;
+
+    /**
+     * Request to AMS to terminate all running midlets from the given suite.
+     */
+    public static final int MIDP_KILL_MIDLETS_EVENT = 68;
+
+     /**
+      * Notification sent by AMS to inform the listeners that
+      * the midlets from the given suite were killed.
+      */
+    public static final int MIDP_MIDLETS_KILLED_EVENT = 69;
+
+    /**
+     * Request to exit a running midlet from the debug agent to AMS.
+     */
+    public static final int MIDP_ODD_EXIT_MIDLET_EVENT = 70;
+
+    /**
+     * JSR 257 notification event
+     */
+    public static final int CONTACTLESS_EVENT = 71;
+
+    /**
+     *  Events added to manage focus interaction with native applications
+     */
+    public static final int NATIVE_WINDOW_LOST_FOCUS = 72;
+    public static final int NATIVE_WINDOW_GAINED_FOCUS = 73;
+
+    /** 
+     * API Extensions System Event
+     */
+    public static final int API_EXTENSIONS_SYSTEM_EVENT = 74;
+
+    /**
+     * Request to install a MIDlet suite.
+     */
+    public static final int MIDP_ODD_REQUEST_INSTALLATION_EVENT = 75;
+
+    /**
+     * MIDlet suite installation has finished.
+     */
+    public static final int MIDP_INSTALLATION_DONE_EVENT = 76;
     
-    
-    
+    /**
+     * Notification sent from a native code to the Application Manager (Java or
+     * Native) to ask the user how to handle an uncaught exception.
+     */
+    public static final int MIDP_HANDLE_UNCAUGHT_EXCEPTION = 77;
+
+    /**
+     * Notification sent from a native code to the Application Manager (Java or
+     * Native) to ask the user how to handle an out of memory error.  
+     */
+    public static final int MIDP_HANDLE_OUT_OF_MEMORY = 78;
+
+    /**
+     * Notification sent by the Application Manager (Java or Native) to inform
+     * MIDP that a response from the user on the request how to handle an
+     * uncaught exception was received.  
+     */
+    public static final int MIDP_UNCAUGHT_EXCEPTION_HANDLED = 79;
+
+    /**
+     * Notification sent by the Application Manager (Java or Native) to inform
+     * MIDP that a response from the user on the request how to handle an
+     * out of memory was received.  
+     */
+    public static final int MIDP_OUT_OF_MEMORY_HANDLED = 80;
 }

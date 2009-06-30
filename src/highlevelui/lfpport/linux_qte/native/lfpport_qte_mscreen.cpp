@@ -1,33 +1,32 @@
 /*
  * 	
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
 
 #include <kni.h>
-#include <jvm.h>
 #include <jvmspi.h>
 #include <sni.h>
 
@@ -54,7 +53,6 @@
 #include <midpEventUtil.h>
 #include <lfpport_font.h>
 #include <lfp_registry.h>
-#include <suspend_resume.h>
 
 #include <qteapp_key.h>
 #include "lfpport_qte_mscreen.h"
@@ -101,8 +99,8 @@ PlatformMScreen::PlatformMScreen(QWidget *parent, const char* name) :QScrollView
 void PlatformMScreen::init() {
     TRACE_MSC(  PlatformMScreen::init..);
 
-    setFocusPolicy(QWidget::StrongFocus);
-
+    setFocusPolicy(QWidget::ClickFocus);
+    
     // Always ...
     setHScrollBarMode(QScrollView::AlwaysOff);
 
@@ -160,15 +158,19 @@ void PlatformMScreen::init() {
  */
 void PlatformMScreen::setBufferSize(BufferSize newSize)
 {
-       if (newSize == fullScreenSize) {
-           if (gc->isActive()) {
-               gc->end();
-           }
-           qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
-       } else {
-           qpixmap.resize(getDisplayWidth(), getDisplayHeight());
-       }
+    if (newSize == fullScreenSize) {
+        if (gc->isActive()) {
+            gc->end();
+        }
+        qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
+    } else {
+        qpixmap.resize(getDisplayWidth(), getDisplayHeight());
+    }
 
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    qpixmap.fill(); // Qt::white is default
 }
 
 /**
@@ -274,9 +276,9 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
 {
     key_press_count += 1;
 #if ENABLE_MULTIPLE_ISOLATES
-    if (key->key() == Qt::Key_F12 ||
+    if (key->key() == Qt::Key_F7 ||
         key->key() == Qt::Key_Home) {
-        // F12 to display the foreground selector
+        // F7 to display the foreground selector
         if (!key->isAutoRepeat()) {
             MidpEvent evt;
             MIDP_EVENT_INITIALIZE(evt);
@@ -298,8 +300,9 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
         }
     }
 #else
-    // F12 pause or activate all Java apps
-    if ((key->key() == Qt::Key_F12 || key->key() == Qt::Key_Home) &&
+    // F7 pause or activate all Java apps
+    if ((key->key() == Qt::Key_F7 ||
+         key->key() == Qt::Key_Home) &&
         !key->isAutoRepeat()) {
         pauseAll();
     }
@@ -310,6 +313,8 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
         if ((evt.CHR = mapKey(key)) != KEYMAP_KEY_INVALID) {
             if (evt.CHR == KEYMAP_KEY_SCREEN_ROT) {
                 evt.type = ROTATION_EVENT;
+            } else if (evt.CHR == KEYMAP_KEY_VIRT_KEYB) {
+                evt.type = VIRTUAL_KEYBOARD_EVENT;
             } else {
                 evt.type = MIDP_KEY_EVENT;
             }
@@ -319,33 +324,6 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
         }
     }
 }
-
-void PlatformMScreen::pauseAll() {
-
-  //  if (!allPaused) {
-      MidpEvent evt;
-
-      MIDP_EVENT_INITIALIZE(evt);
-
-      evt.type = PAUSE_ALL_EVENT;
-      midpStoreEventAndSignalAms(evt);
-      allPaused = true;
-  //  }
-}
-
-void PlatformMScreen::activateAll() {
-
-  if (allPaused) {
-    MidpEvent evt;
-
-    MIDP_EVENT_INITIALIZE(evt);
-
-    evt.type = ACTIVATE_ALL_EVENT;
-    midpStoreEventAndSignalAms(evt);
-    allPaused = false;
-  }
-}
-
 
 /**
  * Handle key release event
@@ -520,31 +498,7 @@ void PlatformMScreen::setNextVMTimeSlice(int millis) {
 }
 
 void PlatformMScreen::slotTimeout() {
-    jlong ms;
-
-    if (vm_stopped) {
-        return;
-    }
-
-    // check and align stack suspend/resume state
-    midp_checkAndResume();
-
-    ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
-
-    /* Let the VM run for some time */
-    if (ms <= -2) {
-        vm_stopped = true;
-        qteapp_get_application()->exit_loop();
-    } else if (ms == -1) {
-        /* Wait forever -- we probably have a thread blocked on IO or GUI.
-         * No need to set up timer from here */
-    } else {
-        if (ms > 0x7fffffff) {
-            vm_slicer.start(0x7fffffff, TRUE);
-        } else {
-            vm_slicer.start((int)(ms & 0x7fffffff), TRUE);
-        }
-    }
+    slotTimeoutImpl();
 }
 
 /**
@@ -659,6 +613,30 @@ int PlatformMScreen::getScreenHeight() const {
         return SCREEN_WIDTH;
     } else {
         return SCREEN_HEIGHT; 
+    }
+}
+
+
+/**
+ * Width available for Alert.
+ */
+int PlatformMScreen::getAlertWidth() const {
+    if (r_orientation) {
+        return ALERT_HEIGHT;
+    } else {
+        return ALERT_WIDTH;
+    }
+
+}
+
+/**
+ * Height available for Alert.
+ */
+int PlatformMScreen::getAlertHeight() const {
+    if (r_orientation) {
+        return ALERT_WIDTH;
+    } else {
+        return ALERT_HEIGHT; 
     }
 }
 

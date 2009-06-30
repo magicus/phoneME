@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <kni.h>
@@ -54,19 +54,19 @@ KNIDECL(com_sun_midp_rms_RecordStoreUtil_exists) {
     int extension = KNI_GetParameterAsInt(3);
     jboolean exists = KNI_FALSE;
     int status;
-    SuiteIdType suiteId;
 
-    KNI_StartHandles(1);
-    suiteId = KNI_GetParameterAsInt(1);
+    KNI_StartHandles(2);
 
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase)
     GET_PARAMETER_AS_PCSL_STRING(2, name_str) {
-        status = rmsdb_record_store_exists(suiteId, &name_str, extension);
+        status = rmsdb_record_store_exists(&filenameBase, &name_str, extension);
         if (status == OUT_OF_MEM_LEN) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
         } else if (status > 0) {
             exists = KNI_TRUE;
         }
     } RELEASE_PCSL_STRING_PARAMETER;
+    RELEASE_PCSL_STRING_PARAMETER;
 
     KNI_EndHandles();
 
@@ -91,13 +91,13 @@ KNIDECL(com_sun_midp_rms_RecordStoreUtil_deleteFile) {
     jboolean existed = KNI_FALSE;
     int status;
     char* pszError;
-    SuiteIdType suiteId;
 
-    KNI_StartHandles(1);
-    suiteId = KNI_GetParameterAsInt(1);
+    KNI_StartHandles(2);
 
+    GET_PARAMETER_AS_PCSL_STRING(1, filenameBase)
     GET_PARAMETER_AS_PCSL_STRING(2, name_str) {
-        status = rmsdb_record_store_delete(&pszError, suiteId, &name_str, extension);
+        status = rmsdb_record_store_delete(&pszError, &filenameBase, 
+                                           &name_str, extension);
 
         switch (status) {
             case  0 : // Identifies IOException which is not allowed in
@@ -114,6 +114,7 @@ KNIDECL(com_sun_midp_rms_RecordStoreUtil_deleteFile) {
             default : existed = KNI_TRUE;
         }
     } RELEASE_PCSL_STRING_PARAMETER;
+    RELEASE_PCSL_STRING_PARAMETER;
 
     KNI_EndHandles();
 

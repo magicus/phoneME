@@ -1,36 +1,40 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.installer;
+
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
+
+import com.sun.midp.midletsuite.MIDletInfo;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -38,10 +42,13 @@ import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.util.Properties;
 
 /**
- * Implements a the required MIDletSuite functionality needed by the
+ * Implements the required MIDletSuite functionality needed by the
  * system. The class is only needed for internal romized midlets.
  */
 public class InternalMIDletSuiteImpl implements MIDletSuite {
+    /** MIDlet Suite Storage. */
+    private MIDletSuiteStorage midletSuiteStorage;
+
     /** Display name for permission dialogs. */
     private String displayName = null;
 
@@ -57,10 +64,8 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
     /** Suite properties for this suite. */
     private Properties properties;
 
-    /**
-     * number of midlets in this suite. For a rommized suite assume 1.
-     */
-    private int numberOfMidlets = 1;
+    /** MIDlet class name */
+    private String initialMIDletClassName;
 
     /**
      * Creates MIDletSuite for rommized MIDlet.
@@ -71,8 +76,10 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *
      * @return new MIDletSuite object
      */
-    public static MIDletSuite create(String theDisplayName, int theId) {
-        return new InternalMIDletSuiteImpl(theDisplayName, theId);
+    public static MIDletSuite create(MIDletSuiteStorage theMidletSuiteStorage,
+            String theDisplayName, int theId) {
+        return new InternalMIDletSuiteImpl(theMidletSuiteStorage,
+            theDisplayName, theId, new Properties());
     }
 
     /**
@@ -80,9 +87,30 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *
      * @param theDisplayName display name to use in permission dialogs,
      *        and in the MIDlet proxy list
-     * @param theId unique identifier for this suite
+     * @param theId ID to separate this suite's resources from others
+     * @param theProps Properties to use for this suite
+     *
+     * @return new MIDletSuite object
      */
-    private InternalMIDletSuiteImpl(String theDisplayName, int theId) {
+    public static MIDletSuite create(MIDletSuiteStorage theMidletSuiteStorage,
+            String theDisplayName, int theId, Properties theProps) {
+        return new InternalMIDletSuiteImpl(theMidletSuiteStorage,
+            theDisplayName, theId, theProps);
+    }
+
+    /**
+     * Creates MIDletSuite for rommized or class path MIDlet.
+     *
+     * @param theDisplayName display name to use in permission dialogs,
+     *        and in the MIDlet proxy list
+     * @param theId unique identifier for this suite
+     * @param theProps Properties to use for this suite
+     */
+    private InternalMIDletSuiteImpl(MIDletSuiteStorage theMidletSuiteStorage,
+        String theDisplayName, int theId, Properties theProps) {
+
+        midletSuiteStorage = theMidletSuiteStorage;
+
         if (theDisplayName != null) {
             displayName = theDisplayName;
         } else {
@@ -98,7 +126,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
             (Permissions.forDomain(Permissions.MANUFACTURER_DOMAIN_BINDING))
                 [Permissions.CUR_LEVELS];
 
-        properties = new Properties();
+        properties = theProps;
     }
 
     /**
@@ -107,7 +135,18 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      * @return number of MIDlet in the suite
      */
     public int getNumberOfMIDlets() {
-        return numberOfMidlets;
+        int i;
+
+        // Called once by the AMS no need to pre calc the number.
+
+        for (i = 1; getProperty("MIDlet-" + i) != null; i++);
+
+        if (i > 1 ) {
+            return i - 1;
+        } else {
+            // This is rommized MIDlet so return 1
+            return 1;
+        }
     }
 
     /**
@@ -135,6 +174,18 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
     }
 
     /**
+     * Gets the number of a MIDlet from suite's
+     * MIDlet-&lt;n&gt; record in the manifest or
+     * application descriptor.
+     *
+     * @param className class name of the MIDlet to be checked
+     * @return the MIDlet's number, or 0 if it cannot be determined.
+     */
+    public int getMIDletNumber(String className) {
+	return 1;
+    }
+
+    /**
      * Gets a property of the suite. A property is an attribute from
      * either the application descriptor or JAR Manifest.
      *
@@ -150,8 +201,8 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
     /**
      * Replace or add a property to the suite for this run only.
      *
-     * @param token token with the AMS permission set to allowed,
-     *        can be null to use the suite's permission
+     * @param token token with the com.sun.midp.ams permission set
+     *              to allowed, can be null to use the suite's permission
      * @param key the name of the property
      * @param value the value of the property
      *
@@ -163,10 +214,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
         if (token != null) {
             token.checkIfPermissionAllowed(Permissions.AMS);
         } else {
-            MIDletSuite current = MIDletStateHandler.
-                getMidletStateHandler().getMIDletSuite();
-
-            current.checkIfPermissionAllowed(Permissions.AMS);
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
         properties.setProperty(key, value);
@@ -181,7 +229,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *
      * @exception SecurityException if the suite is not allowed the permission
      */
-    public void checkIfPermissionAllowed(int permission) {
+    public void checkIfPermissionAllowed(String permission) {
         if (checkPermission(permission) != 1) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
@@ -203,7 +251,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource)
+    public void checkForPermission(String permission, String resource)
             throws InterruptedException {
         checkForPermission(permission, resource, null);
     }
@@ -226,7 +274,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public void checkForPermission(int permission, String resource,
+    public void checkForPermission(String permission, String resource,
             String extraValue) throws InterruptedException {
         checkIfPermissionAllowed(permission);
     }
@@ -244,12 +292,10 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      *  -1 if the status is unknown
      */
     public int checkPermission(String permission) {
-        for (int i = 0; i < Permissions.NUMBER_OF_PERMISSIONS; i++) {
-            if (Permissions.getName(i).equals(permission)) {
-                return checkPermission(i);
-
-            }
-        }
+        try {
+            int i = Permissions.getId(permission);
+            return checkPermission(i);
+        } catch (Exception e){} // permission not found, do nothing, return 0
 
         return 0;
     }
@@ -386,5 +432,37 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
      * Close the opened MIDletSuite
      */
     public void close() {
+    }
+
+    /**
+     * Get the classname of the initial MIDlet to run.
+     * Relevant when running from the commnad line with the JAD file as an argument
+     * @return classname of a MIDlet
+     */
+    public String getMIDletClassName() {
+        if (initialMIDletClassName != null) {
+            return initialMIDletClassName;
+        }
+
+        if (getNumberOfMIDlets() == 1) {
+            String name = getProperty("MIDlet-1");
+            initialMIDletClassName = new MIDletInfo(name).classname;
+        } else {
+            // Have the user select a MIDlet. The selector should not exit.
+            initialMIDletClassName = "com.sun.midp.appmanager.Selector";
+        }
+
+        return initialMIDletClassName;
+    }
+
+    /**
+     * Gets a secure filename base (including path separator if needed)
+     * for the suite. File build with the base will be automatically deleted
+     * when the suite is removed.
+     *
+     * @return secure filename base for this suite
+     */
+    public String getSecureFilenameBase() {
+        return midletSuiteStorage.getSecureFilenameBase(getID());
     }
 }

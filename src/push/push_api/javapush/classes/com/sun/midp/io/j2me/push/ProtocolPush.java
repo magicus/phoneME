@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.push;
@@ -35,6 +35,11 @@ import com.sun.midp.io.HttpUrl;
  * JSR's implementations will provide push behaviour.
  */
 public abstract class ProtocolPush {
+
+    /**
+     * Number of delimiter characters in IP v4 address
+     */
+    protected static final int IP4_DELIMITER_COUNT = 3;
 
     /**
      * Get instance of this class.
@@ -159,7 +164,7 @@ public abstract class ProtocolPush {
         }
 
         if (checkPort && url.port == -1) {
-            new IllegalArgumentException("Port missing");
+            throw new IllegalArgumentException("Port missing");
         }
     }
 
@@ -173,12 +178,38 @@ public abstract class ProtocolPush {
     protected void checkIIPFilter(String filter) 
         throws IllegalArgumentException {
         int len = filter.length();
+        int dotCount = 0;
+        boolean dotUnexpected = true;
+        boolean failed = false;
+
         /* IP address characters only for other connections. */
-        for (int i = 0; i < len; i++) {
-            char c = filter.charAt(i);
-            if (!(c == '?' || c == '*' || c == '.' ||
-                  ('0' <= c && c <= '9'))) {
-                throw new IllegalArgumentException("IP Filter invalid");
+        /* Check for special case - single * char. This is valid filter. */
+        if (!"*".equals(filter)) {
+            /* All other filters shall be in IPv4 format. */
+            for (int i = 0; i < len && !failed; i++) {
+                char c = filter.charAt(i);
+
+                if (c == '.') {
+                    if (dotUnexpected || i == len-1) {
+                        failed = true;
+                    } else {
+                        dotCount++;
+                        if (dotCount > IP4_DELIMITER_COUNT) {
+                            failed = true;
+                        }
+                        dotUnexpected = true;
+                    }
+                } else
+                    if (c != '?' && c != '*' && !('0' <= c && c <= '9')) {
+                        /* The only acceptable characters are [*?0-9] */
+                        failed = true;
+                    } else {
+                        dotUnexpected = false;
+                    }
+            }
+
+            if (failed || dotCount < IP4_DELIMITER_COUNT) {
+                throw new IllegalArgumentException("IP Filter \"" + filter + "\" is invalid");
             }
         }
     }

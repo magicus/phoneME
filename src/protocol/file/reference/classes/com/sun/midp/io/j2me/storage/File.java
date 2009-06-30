@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.storage;
@@ -30,11 +30,10 @@ import java.io.IOException;
 
 import java.util.Vector;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-
-import com.sun.midp.midlet.Scheduler;
-import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.io.Util;
 
@@ -51,8 +50,17 @@ public class File {
     /** Caches the storage root to save repeated native method calls. */
     private static String storageRoot = null;
 
+    /** Indicates which storage root is being cached. */
+    private static int storageRootId;
+
     /** Caches the configuration root to save repeated native method calls. */
     private static String configRoot = null;
+
+    /** Indicates which configuration root is being cached. */
+    private static int configRootId;
+
+    /** Prevents race conditions. */
+    private static Object mutex = new Object();
 
     /**
      * Returns the root to build storage filenames including an needed
@@ -65,11 +73,14 @@ public class File {
      *         storage.
      */
     public static String getStorageRoot(int storageId) {
-        if (storageRoot == null) {
-            storageRoot = initStorageRoot(storageId);
-        }
+        synchronized (mutex) {
+            if (storageRoot == null || storageId != storageRootId) {
+                storageRoot = initStorageRoot(storageId);
+                storageRootId = storageId;
+            }
 
-        return storageRoot;
+            return storageRoot;
+        }
     }
 
     /**
@@ -84,11 +95,14 @@ public class File {
      *     persistant storage.
      */
     public static String getConfigRoot(int storageId) {
-        if (configRoot == null) {
-            configRoot = initConfigRoot(storageId);
-        }
+        synchronized (mutex) {
+            if (configRoot == null || storageId != configRootId) {
+                configRoot = initConfigRoot(storageId);
+                configRootId = storageId;
+            }
 
-        return configRoot;
+            return configRoot;
+        }
     }
 
     /**
@@ -176,14 +190,11 @@ public class File {
 
     /**
      * Constructs a file object.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      */
     public File() {
-        MIDletSuite midletSuite = Scheduler.getScheduler().getMIDletSuite();
-
-        // if a MIDlet suite is not scheduled, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        }
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
     }
 
     /**

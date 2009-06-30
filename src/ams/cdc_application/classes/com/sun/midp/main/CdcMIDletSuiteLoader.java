@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.main;
@@ -29,12 +29,16 @@ package com.sun.midp.main;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
+import com.sun.j2me.security.AccessController;
+import com.sun.midp.events.*;
 import com.sun.midp.log.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.installer.InternalMIDletSuiteImpl;
 import com.sun.midp.lcdui.*;
 import com.sun.midp.midlet.*;
 import com.sun.midp.midletsuite.*;
+import com.sun.midp.security.*;
+import com.sun.midp.rms.RmsEnvironment;
 
 /**
  * The first class loaded in VM by midp_run_midlet_with_args to initialize
@@ -49,6 +53,9 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
 
     /** Holds the ID of the current display, for preempting purposes. */
     protected int currentDisplayId;
+
+    /* Sends foreground events to displays. */
+    protected CdcForegroundEventProducer foregroundEventProducer;
 
     /**
      * Called at the initial start of the VM.
@@ -116,6 +123,12 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     protected void createSuiteEnvironment() {
         foregroundController = this;
 
+        lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
+						      eventQueue, isolateId, 
+						      foregroundController);
+        foregroundEventProducer = 
+            new CdcForegroundEventProducer(eventQueue);
+
         // creates display container, needs foregroundController
         super.createSuiteEnvironment();
 
@@ -130,6 +143,10 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
             this,
             new CdcMIDletLoader(mss),
             this);
+        
+       MidletSuiteContainer msc = new MidletSuiteContainer(mss);
+       
+       RmsEnvironment.init( internalSecurityToken, msc); 
     }
 
     /**
@@ -142,13 +159,12 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     protected void initSuiteEnvironment() {
         super.initSuiteEnvironment();
 
-        // Needed by the installer
-        TrustedMIDletIcon.initClass(
-            displayEventHandler.getTrustedMIDletIcon());
-
-        // Init internal state from the restored command state
         externalAppId = 0;
         midletDisplayName = null;
+
+        /* Set up permission checking for this suite. */
+        AccessController.setAccessControlContext(
+            new CdcAccessControlContext(midletSuite));
     }
 
 
@@ -165,13 +181,14 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         MIDletSuiteStorage storage;
         MIDletSuite suite = null;
 
+        storage = MIDletSuiteStorage.
+                      getMIDletSuiteStorage(internalSecurityToken);
+
         if (suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
             // assume a class name of a MIDlet in the classpath
-            suite = InternalMIDletSuiteImpl.create(midletDisplayName, suiteId);
+            suite = InternalMIDletSuiteImpl.create(storage, midletDisplayName,
+                        suiteId);
         } else {
-            storage = MIDletSuiteStorage.
-                getMIDletSuiteStorage(internalSecurityToken);
-
             suite = storage.getMIDletSuite(suiteId, false);
             Logging.initLogSettings(suiteId);
         }
@@ -179,18 +196,9 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         return suite;
     }
 
-    /** Overrides suite close logic for the AMS task */
-    protected void closeSuite() {
-        super.closeSuite();
-
-        // shutdown any preempting
-        if (displayEventHandler != null) {
-            displayEventHandler.donePreempting(null);
-        }
-    }
-
     /** Gracefully terminates VM with proper return code */
     protected void exitLoader() {
+        System.exit(0);
     }
 
     /**
@@ -237,14 +245,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
 
         reportError(errorCode, t.getMessage());
     }
-
-    /**
-     * Set foreground display native state, so the native code will know
-     * which display can draw.
-     *
-     * @param displayId Display ID
-     */
-    private native void setForegroundInNativeState(int displayId);
 
     /**
      * Gets AMS error message by generic error code.
@@ -386,9 +386,14 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      *
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet, null if the MIDlet's constructor
+     *               was not successful
      */
-    public void midletDestroyed(MIDletSuite suite, String className) {
-        displayContainer.removeDisplay(className);
+    public void midletDestroyed(MIDletSuite suite, String className,
+                                MIDlet midlet) {
+        if (midlet != null) {
+            displayContainer.removeDisplaysByOwner(midlet);
+        }
     }
 
     // ForegroundController
@@ -406,6 +411,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      */
     public Displayable registerDisplay(int displayId, String ownerClassName) {
         currentDisplayId = displayId;
+
         return null;
     }
 
@@ -417,16 +423,9 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param isAlert true if the current displayable is an Alert
      */
     public void requestForeground(int displayId, boolean isAlert) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
+        NativeForegroundState.setState(internalSecurityToken, displayId);
 
-        if (fc == null) {
-            return;
-        }
-
-        setForegroundInNativeState(displayId);
-
-        fc.handleDisplayForegroundNotifyEvent();
+        foregroundEventProducer.sendDisplayForegroundNotifyEvent(displayId);
     }
 
     /**
@@ -436,14 +435,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param displayId ID of the Display
      */
     public void requestBackground(int displayId) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
-
-        if (fc == null) {
-            return;
-        }
-
-        fc.handleDisplayBackgroundNotifyEvent();
     }
 
     /**
@@ -453,7 +444,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param displayId ID of the Display
      */
     public void startPreempting(int displayId) {
-        requestBackground(currentDisplayId);
+        foregroundEventProducer.sendDisplayBackgroundNotifyEvent(displayId);
         requestForeground(displayId, true);
     }
 
@@ -463,7 +454,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param displayId ID of the Display
      */
     public void stopPreempting(int displayId) {
-        requestBackground(displayId);
+        foregroundEventProducer.sendDisplayBackgroundNotifyEvent(displayId);
         requestForeground(currentDisplayId, false);
     }
 

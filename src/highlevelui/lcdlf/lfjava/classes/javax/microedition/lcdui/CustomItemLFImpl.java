@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -46,7 +46,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
     CustomItemLFImpl(CustomItem ci) {
         super(ci);
         customItem = ci;
-        drawsTraversalIndicator = true;
     }
 
     // **********************************************************
@@ -389,22 +388,17 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
             clipH = g.getClipHeight();
             clipW = g.getClipWidth();
 
-            g.clipRect(0, 0, contentBounds[WIDTH], contentBounds[HEIGHT]);
-
-            // IMPL NOTES: We need to remember translation and clipping
-            // and restore it after this.paint (stroke as well)
-            // Color does not have to be reset since it is always set
-            // Font??
-            g.setColor(0);
-
-            g.setFont(Font.getDefaultFont());
-
             w = contentBounds[WIDTH];
             h = contentBounds[HEIGHT];
         }
 
         if (clipY + clipH >= 0 && clipY < contentBounds[HEIGHT] &&
             clipX + clipW >= 0 && clipX < contentBounds[WIDTH]) {
+
+            // We prevent the CustomItem from drawing outside the bounds.
+            g.preserveMIDPRuntimeGC(0, 0, contentBounds[WIDTH], contentBounds[HEIGHT]);
+            // Reset the graphics context
+            g.resetGC();
 
             synchronized (Display.calloutLock) {
                 try {
@@ -413,9 +407,10 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                     Display.handleThrowable(thr);
                 }
             }
+            g.restoreMIDPRuntimeGC();
         }
-
         g.translate(-contentBounds[X], -contentBounds[Y]);
+
     }
 
     /**
@@ -450,6 +445,9 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                 // by the label height to give the real location
                 visRect_inout[X] += contX;
                 visRect_inout[Y] += contY;
+                if (t) {
+                    visRect[Y] = visRect_inout[Y]; 
+                } 
                 return t;
             }
         } catch (Throwable thr) {
@@ -457,6 +455,17 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
         }
         return false;
     }
+
+    /**
+     *  If hilighted element of item is not completely visible should make it visible
+     * @param viewport the viewport coordinates
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return true if visRect was changed
+     */
+    boolean lScrollToItem(int[] viewport, int[] visRect) {
+        visRect[Y] = this.visRect[Y] ; 
+        return true;
+    } 
 
     /**
      * Called by the system to indicate traversal has left this Item
@@ -558,9 +567,15 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * @see #getInteractionModes
      */
     void uCallPointerPressed(int x, int y) {
+        synchronized (Display.LCDUILock) {
+            if (hasFocus) {
+                itemWasPressed = true;
+            }
+        } // synchronized
+        
         try {
             synchronized (Display.calloutLock) {
-                customItem.pointerPressed(x - contentBounds[X] - 
+                customItem.pointerPressed(x - contentBounds[X] -
                                           ScreenSkin.PAD_FORM_ITEMS, 
                                           y - contentBounds[Y] -
                                           ScreenSkin.PAD_FORM_ITEMS);
@@ -579,12 +594,25 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * @see #getInteractionModes
      */
     void uCallPointerReleased(int x, int y) {
+        boolean handled = false;
+        synchronized (Display.LCDUILock) {
+            ItemCommandListener cl = customItem.commandListener;
+            Command defaultCmd = customItem.defaultCommand;
+            if ((cl != null) && (defaultCmd != null) && itemWasPressed) {
+                cl.commandAction(defaultCmd, customItem);
+                handled = true; 
+            }
+            itemWasPressed = false;
+        } // synchronized
+        
         try {
             synchronized (Display.calloutLock) {
-                customItem.pointerReleased(x - contentBounds[X] -
-                                           ScreenSkin.PAD_FORM_ITEMS, 
-                                           y - contentBounds[Y] -
-                                           ScreenSkin.PAD_FORM_ITEMS);
+                if (!handled) {
+                    customItem.pointerReleased(x - contentBounds[X] - 
+                                               ScreenSkin.PAD_FORM_ITEMS, 
+                                               y - contentBounds[Y] -
+                                               ScreenSkin.PAD_FORM_ITEMS);
+                }
             }
         } catch (Throwable thr) {
             Display.handleThrowable(thr);
@@ -602,6 +630,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
     void uCallPointerDragged(int x, int y) {
         try {
             synchronized (Display.calloutLock) {
+                itemWasPressed = false;
                 customItem.pointerDragged(x - contentBounds[X] -
                                           ScreenSkin.PAD_FORM_ITEMS, 
                                           y - contentBounds[Y] - 
@@ -681,4 +710,9 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * Cached minimum width when validRequestedSizes is true.
      */
     private int minimumWidth; // default 0
+
+    /**
+     * Visible part of custom item
+     */   
+    private int[] visRect = new int [4];
 } // CustomItemLF

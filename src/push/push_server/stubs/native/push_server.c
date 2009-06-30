@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -36,6 +36,18 @@
 #include <push_server_resource_mgmt.h>
 #include <midp_logging.h>
 
+
+/**
+ * Returns the number of buffered bytes for the given socket.
+ *
+ * @param fd handle of the socket
+ * @return number of cached bytes of -1 if none
+ */
+int pushcacheddatasize(int fd) {
+    (void)fd;
+    REPORT_WARN(LC_PUSH, "pushcacheddatasize: Stubbed out.");
+    return -1;
+}
 /**
  * Opens the pushregistry files and populate the push memory structures.
  *
@@ -128,9 +140,9 @@ int pushdel(char *str, char *store) {
  * @return the length of the datagram data if successful, or <tt>-1</tt>
  *         unsuccessful.
  */
-int pusheddatagram (int fd, int *ip, int *sndport, char *buf, int len) {
+int pushgetcachedpacket(int fd, int *ip, int *sndport, char *buf, int len) {
     /* need revisit */
-    REPORT_WARN(LC_PUSH, "pusheddatagram : Stubbed out.");
+    REPORT_WARN(LC_PUSH, "pushgetcachedpacket : Stubbed out.");
     (void)fd;
     (void)ip;
     (void)sndport;

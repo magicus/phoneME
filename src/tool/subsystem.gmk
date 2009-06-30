@@ -1,27 +1,27 @@
 #
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 
 ######################################################################
@@ -39,7 +39,7 @@ SUBSYSTEMS += tool
 
 # This specifies the option you choose for this build 
 #
-SUBSYSTEM_TOOL_MODULES = keytool jadtool imageutil skinromization l10n_generator
+SUBSYSTEM_TOOL_MODULES = keytool jadtool imageutil skinromization l10n_generator romizer
 
 INT_KEYTOOL_DIR = $(SUBSYSTEM_DIR)/tool/mekeytool/classes/com/sun/midp/mekeytool
 INT_KEYSTORE_DIR = $(SUBSYSTEM_DIR)/security/publickeystore/reference/classes/com/sun/midp/publickeystore
@@ -50,6 +50,7 @@ INT_IMAGEUTIL_DIR = $(SUBSYSTEM_DIR)/tool/imageutil/classes/com/sun/midp/imageut
 INT_SKINROMIZATION_DIR = $(SUBSYSTEM_DIR)/tool/chameleon/classes/com/sun/midp/skinromization
 INT_LCDLF_J_DIR = $(SUBSYSTEM_DIR)/highlevelui/lcdlf/lfjava/classes
 INT_L10N_GENERATOR_DIR = $(SUBSYSTEM_DIR)/tool/l10ngen/classes/com/sun/midp/l10n/generator
+INT_ROMIZER_DIR = $(SUBSYSTEM_DIR)/tool/romizer/classes/com/sun/midp/romization
 
 # Java files for the ( mekeytool ) module
 #
@@ -87,6 +88,9 @@ MODULE_TOOL_IMAGE2RAW_JAVA_FILES = \
 #
 MODULE_TOOL_SKINROMIZATION_JAVA_FILES = \
 	$(INT_IMAGEUTIL_DIR)/ImageToRawConverter.java \
+	$(INT_ROMIZER_DIR)/BinaryOutputStream.java \
+	$(INT_ROMIZER_DIR)/RomizedByteArray.java \
+	$(INT_ROMIZER_DIR)/RomUtil.java \
 	$(INT_SKINROMIZATION_DIR)/SkinRomizationTool.java \
     $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/FontResourcesConstants.java \
     $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
@@ -96,3 +100,11 @@ MODULE_TOOL_SKINROMIZATION_JAVA_FILES = \
 #
 MODULE_TOOL_L10N_GENERATOR_JAVA_FILES = \
 	$(INT_L10N_GENERATOR_DIR)/LocalizedStringsGenerator.java
+
+# Java files for the ( romizer ) module
+#
+MODULE_TOOL_ROMIZER_JAVA_FILES = \
+	$(INT_ROMIZER_DIR)/BinaryOutputStream.java \
+	$(INT_ROMIZER_DIR)/RomizedByteArray.java \
+	$(INT_ROMIZER_DIR)/RomUtil.java \
+	$(INT_ROMIZER_DIR)/Romizer.java

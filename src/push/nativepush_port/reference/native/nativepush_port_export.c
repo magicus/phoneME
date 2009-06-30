@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -35,7 +35,6 @@
 #include <jvmspi.h>
 #include <jvm.h>
 #include <sni.h>
-
 #include <java_types.h>
 #include <nativepush_port_export.h>
 
@@ -77,12 +76,9 @@ MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
  *        MIDP_ERROR_PERMISSION_DENIED - if the connection was registered by another MIDlet suite
  */
 MIDP_ERROR midpport_push_unregister_connection(SuiteIdType suiteId,
-                                               jchar* connection,
-                                               jint connectionLen) {
+                                               pcsl_string* connection) {
     (void)suiteId;
-    (void)connection;
-    (void)connectionLen;
-
+    (void)connection.;
     return MIDP_ERROR_NONE;
 }
 
@@ -127,11 +123,10 @@ MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
  *        MIDP_ERROR_SUITE_NOT_FOUND
  */
 MIDP_ERROR midpport_push_register_alarm(SuiteIdType suiteId,
-                                        jchar* midlet, jint midletLen,
+                                        pcsl_string* midlet,
                                         jlong time, jlong* previousTime) {
     (void)suiteId;
     (void)midlet;
-    (void)midletLen;
     (void)time;
     (void)previousTime;
 

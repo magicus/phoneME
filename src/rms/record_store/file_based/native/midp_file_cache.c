@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <kni.h>
@@ -29,7 +29,9 @@
 #include <midpMalloc.h>
 #include <midpStorage.h> /* IMPL_NOTE: use PCSL File API */
 #include <midp_logging.h>
+#include <midp_properties_port.h>
 #include <string.h>
+#include <stdio.h>
 
 #define CHECK_ERROR(pszError) \
     if (pszError != (char*) NULL) { \
@@ -43,6 +45,9 @@
 
 /* Cache for a single file */
 static MidpFileCache *mFileCache;
+
+/* Cache limit for a single file */
+static unsigned int fileCacheLimit = 0;
 
 /**
  * Test if region 1 that starts from position x1 with size s1
@@ -110,6 +115,22 @@ void uncachedWrite(char** ppszError, int handle, char *buffer, int length) {
         if (*ppszError == NULL) {
             updateCachedSizes(length);
         }
+    }
+}
+
+/* Initialize file cache limit reading RMS_CACHE_LIMIT property,
+ * using RMS_CACHE_LIMIT constant as default value.
+ * File cache limit is initialized only once.
+ */
+static void initFileCacheLimit() {
+    if (0 == fileCacheLimit) {
+        int rmsCacheLimit = getInternalPropertyInt("RMS_CACHE_LIMIT");
+        if (0 == rmsCacheLimit) {
+            REPORT_INFO(LC_AMS, "RMS_CACHE_LIMIT property not set");
+            /* set XML constant value as property value */
+            rmsCacheLimit = RMS_CACHE_LIMIT;
+        }
+        fileCacheLimit = (unsigned)rmsCacheLimit;
     }
 }
 
@@ -252,6 +273,7 @@ int midp_file_cache_open(char** ppszError, StorageIdType storageId,
 
     if (*ppszError == NULL) { /* Open successfully */
         if (mFileCache == NULL) {
+            initFileCacheLimit();
             mFileCache = (MidpFileCache *)midpMalloc(sizeof(MidpFileCache));
             mFileCache->handle = h;
             mFileCache->size = 0;
@@ -300,6 +322,7 @@ void midp_file_cache_seek(char** ppszError, int handle, long position) {
 
 void midp_file_cache_write(char** ppszError, int handle,
                            char* buffer, long length) {
+
     MidpFileCacheBlock *p, *b;
     *ppszError = NULL;
 
@@ -348,13 +371,13 @@ void midp_file_cache_write(char** ppszError, int handle,
     /* This is a new write block that has not been cached */
 
     /* Never try to cache large write that is bigger than cache limit */
-    if (sizeof(MidpFileCacheBlock)+length > RMS_CACHE_LIMIT) {
+    if (sizeof(MidpFileCacheBlock)+length > fileCacheLimit) {
         uncachedWrite(ppszError, handle, buffer, length);
         return;
     }
 
     /* If cache is full, flush it before caching new write */
-    if (mFileCache->size+sizeof(MidpFileCacheBlock)+length > RMS_CACHE_LIMIT) {
+    if (mFileCache->size+sizeof(MidpFileCacheBlock)+length > fileCacheLimit) {
         midp_file_cache_flush(ppszError, handle);
         /* Reset previous block pointer after flush */
         p = NULL;

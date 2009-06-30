@@ -1,32 +1,34 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.lcdui;
 
 import java.util.Vector;
+
+import javax.microedition.lcdui.Display;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
@@ -37,11 +39,8 @@ import com.sun.midp.security.SecurityToken;
  */
 public class DisplayContainer {
     
-    /** ID of the Isolate this instance is created in */
-    private final int isolateId;
-
-    /** Last local Display count used to create Display ID */
-    private int lastLocalDisplayId;
+    /** Sets the display ID in a new display. */
+    private DisplayIdPolicy displayIdPolicy;
 
     /** Active displays. */
     private Vector displays = new Vector(5, 5);
@@ -50,11 +49,11 @@ public class DisplayContainer {
      * Default constructor.
      *
      * @param token security token for initilaization
-     * @param isolateId id of the Isolate this instance is created in
+     * @param idPolicy policy to set the display ID of a new display
      */ 
-    public DisplayContainer(SecurityToken token, int isolateId) {
+    public DisplayContainer(SecurityToken token, DisplayIdPolicy idPolicy) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
-	this.isolateId = isolateId;
+	displayIdPolicy = idPolicy;
     }
 
     /**
@@ -67,8 +66,7 @@ public class DisplayContainer {
      */
     public synchronized void addDisplay(DisplayAccess da) {
         if (displays.indexOf(da) == -1) {
-            int newId = createDisplayId();
-            da.setDisplayId(newId);
+            displayIdPolicy.createDisplayId(da, this);
             displays.addElement(da);
         }
     }
@@ -76,25 +74,63 @@ public class DisplayContainer {
     /**
      * Get a display to request the foreground on behalf of the MIDlet.
      *
-     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param owner the object that owns this display
      */
-    public void requestForegroundForDisplay(String nameOfOwner) {
-        DisplayAccess da = findDisplayByOwner(nameOfOwner);
+    public void requestForegroundForDisplay(Object owner) {
+        DisplayAccess[] da = findDisplaysByOwner(owner, 0);
 
-        da.requestForeground();
+	/** IMPL_NOTE: correct call ! */
+	if (da != null) {
+	    da[0].requestForeground();
+	}
     }
 
     /**
-     * Removes display object from the container.
+     * Removes display objects by the owner name from the container.
      *
-     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param owner the MIDlet that owns this display
      *
      * @return true if display has been succcessfully removed, 
      *         false, if display object has not been found in the container.
      */
-    public synchronized boolean removeDisplay(String nameOfOwner) {
-        DisplayAccess da = findDisplayByOwner(nameOfOwner);
+    public synchronized boolean removeDisplaysByOwner(Object owner) {
+	int size = displays.size();
 
+        for (int i = size; --i >= 0;) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+	    if (current.getOwner() == owner) {
+		displays.removeElementAt(i);
+            }
+        }
+	return (displays.size() < size);
+    }
+
+    /**
+     * Removes display object from the container by Id.
+     *
+     * @param displayId ID of the display
+     *
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found in the container.
+     */
+    public synchronized boolean removeDisplayById(int displayId) {
+        DisplayAccess da = findDisplayById(displayId);
+	if (da != null) {
+	    return displays.removeElement(da);
+	}
+        return false;
+    }
+    
+    /**
+     * Removes display object from the container.
+     *
+     * @param da display access of the display
+     *
+     * @return true if display has been succcessfully removed, 
+     *         false, if display object has not been found in the container.
+     */
+    public synchronized boolean removeDisplay(DisplayAccess da) {
         return displays.removeElement(da);
     }
     
@@ -105,9 +141,9 @@ public class DisplayContainer {
      *
      * @return a display access object or null if not found
      */
-    synchronized DisplayAccess findDisplayById(int displayId) {
+    public synchronized DisplayAccess findDisplayById(int displayId) {
         int size = displays.size();
-
+        
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 
@@ -120,19 +156,19 @@ public class DisplayContainer {
     }
 
     /**
-     * Find a display by owner.
+     * Find a display's access object.
      *
-     * @param nameOfOwner class name of the MIDlet that owns this display
+     * @param display an LCDUI display
      *
      * @return a display access object or null if not found
      */
-    public synchronized DisplayAccess findDisplayByOwner(String nameOfOwner) {
+    public synchronized DisplayAccess findDisplayAccess(Display display) {
         int size = displays.size();
-
+        
         for (int i = 0; i < size; i++) {
             DisplayAccess current = (DisplayAccess)displays.elementAt(i);
 
-            if (current.getNameOfOwner().equals(nameOfOwner)) {
+            if (current.getDisplay() == display) {
                 return current;
             }
         }
@@ -140,6 +176,117 @@ public class DisplayContainer {
         return null;
     }
 
+    /**
+     * Find the displays by owner.
+     *
+     * @param owner the object that owns the display
+     *
+     * @return array of display access objects or null if not found
+     */
+    public synchronized DisplayAccess[] findDisplaysByOwner(Object owner) {
+        int size = displays.size();
+	Vector v = new Vector(2, 2); 
+	
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if (current.getOwner() == owner) {
+		v.addElement(current);
+            }
+        }
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
+        return ret;
+    }
+
+    /**
+     * Find the displays by owner.
+     *
+     * @param owner the object that owns the display
+     * @param capabilities display device capbilities filter
+     *
+     * @return array of display access objects or null if not found
+     */
+    public synchronized DisplayAccess[] findDisplaysByOwner(Object owner, int capabilities) {
+        int size = displays.size();
+	Vector v = new Vector(2, 2); 
+	
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if ((current.getOwner() == owner) && 
+		(current.getDisplayDevice().getCapabilities() & 
+		 capabilities) == capabilities) {
+		v.addElement(current);
+            }
+        }
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
+        return ret;
+    }
+
+    /**     
+     * Find the displays by hardwareId.
+     *
+     * @return array of display access objects or null if not found
+     */
+    public synchronized DisplayAccess[] findDisplaysByHardwareId(int hardwareId) {
+        int size = displays.size();
+	Vector v = new Vector(2, 2); 
+	System.out.println("size = " + size);
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if (current.getDisplayDevice().getHardwareId() == hardwareId) {
+		v.addElement(current);
+            }
+        }
+	
+	DisplayAccess[] ret = null;
+	if (v.size() > 0) {
+	    ret = new DisplayAccess[v.size()];
+	    v.copyInto(ret);
+	}
+	
+        return ret;
+    }
+
+    /**
+     * Find a primary display by owner.
+     *
+     * @param owner class of the MIDlet that owns this display
+     *
+     * @return a display access object or null if not found
+     */
+    public synchronized DisplayAccess findPrimaryDisplayByOwner(Object owner) {
+        int size = displays.size();
+	DisplayAccess d = null;
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+	    
+            if ((current.getOwner() == owner) && 
+		current.getDisplayDevice().isPrimaryDisplay()) {
+		d = current;
+		break;
+            }
+        }
+	
+        return d;
+    }
     /**
      * Find a display event consumer by ID.
      *
@@ -153,8 +300,30 @@ public class DisplayContainer {
         if (da == null) {
             return null;
         }
-
+        
         return da.getDisplayEventConsumer();
+    }
+    
+        /**
+     * Find all display event consumers.
+     *
+     * @return a display event consumer array object
+     */
+    public DisplayEventConsumer[] getAllDisplayEventConsumers() {
+                
+        int size = displays.size();
+        DisplayEventConsumer[] consumers = new DisplayEventConsumer[size];
+        DisplayAccess da;
+        
+        for (int i = 0; i < size; i++) {
+            da = (DisplayAccess)displays.elementAt(i);
+            
+            if (da != null) {
+                consumers[i] = da.getDisplayEventConsumer();
+            }
+        }
+       
+        return consumers;
     }
 
 
@@ -173,26 +342,5 @@ public class DisplayContainer {
         }
 
         return da.getForegroundEventConsumer();
-    }
-
-    /**
-     * Creates an Display Id that is unique across all Isolates.
-     * Graphics subsystem depends on this uniqueness, which allows
-     * quick check on whether a Display is in the foreground
-     * without having to check Isolate id.
-     *
-     * @return a new unique display Id with high 8 bits as Isolate ID,
-     *		low 24 bits as local display counter.
-     */
-    private int createDisplayId() {
-        int id;
-        
-        do {
-            lastLocalDisplayId++;
-	    // [high 8 bits: isolate id][low 24 bits: display id]]
-            id = ((isolateId & 0xff)<<24) | (lastLocalDisplayId & 0x00ffffff);
-        } while (findDisplayById(id) != null);
-
-        return id;
     }
 }

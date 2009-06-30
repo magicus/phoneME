@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -37,12 +37,9 @@
 #include <qaction.h>
 #include <qmessagebox.h>
 
-#include <jvm.h>
-
 #include <keymap_input.h>
 #include <midpEventUtil.h>
 #include <midp_constants_data.h>
-#include <suspend_resume.h>
 
 #include <qteapp_export.h>
 #include <qteapp_key.h>
@@ -120,12 +117,19 @@ void ChameleonMScreen::init() {
  */
 void ChameleonMScreen::setBufferSize(BufferSize newSize)
 {    
-       if (newSize == fullScreenSize) {
-           qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
-       } else {
-           qpixmap.resize(getDisplayWidth(), getDisplayHeight());
-       }
-
+    if (newSize == fullScreenSize) {
+        if (gc->isActive()) {
+            gc->end();
+        }
+        qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
+    } else {
+        qpixmap.resize(getDisplayWidth(), getDisplayHeight());
+    }
+    
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    qpixmap.fill(Qt::black);
 }
 
 /**
@@ -208,7 +212,7 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
 
 
 #if ENABLE_MULTIPLE_ISOLATES
-    if (key->key() == Qt::Key_F12||
+    if (key->key() == Qt::Key_F7||
         key->key() == Qt::Key_Home) {
         /* F12 to display the foreground selector */
         if (!key->isAutoRepeat()) {
@@ -232,8 +236,9 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
         }
     }
 #else
-    /* F12 pause or activate all Java apps */
-    if ((key->key() == Qt::Key_F12 || key->key() == Qt::Key_Home) &&
+    /* F7 pause or activate all Java apps */
+    if ((key->key() == Qt::Key_F7 ||
+         key->key() == Qt::Key_Home) &&
         !key->isAutoRepeat()) {
         pauseAll();
     }
@@ -246,6 +251,8 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
         if ((evt.CHR = mapKey(key)) != KEYMAP_KEY_INVALID) {
             if (evt.CHR == KEYMAP_KEY_SCREEN_ROT) {
                 evt.type = ROTATION_EVENT;
+            } else if (evt.CHR == KEYMAP_KEY_VIRT_KEYB) {
+                evt.type = VIRTUAL_KEYBOARD_EVENT;
             } else {
                 evt.type = MIDP_KEY_EVENT;
             }
@@ -254,32 +261,6 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
             midpStoreEventAndSignalForeground(evt);
         }
     }
-}
-
-void ChameleonMScreen::pauseAll() {
-
-  /* if (!allPaused) { */
-      MidpEvent evt;
-
-      MIDP_EVENT_INITIALIZE(evt);
-
-      evt.type = PAUSE_ALL_EVENT;
-      midpStoreEventAndSignalAms(evt);
-      allPaused = true;
- /* } */
-}
-
-void ChameleonMScreen::activateAll() {
-
-  if (allPaused) {
-    MidpEvent evt;
-
-    MIDP_EVENT_INITIALIZE(evt);
-
-    evt.type = ACTIVATE_ALL_EVENT;
-    midpStoreEventAndSignalAms(evt);
-    allPaused = false;
-  }
 }
 
 void ChameleonMScreen::keyReleaseEvent(QKeyEvent *key)
@@ -432,37 +413,7 @@ void ChameleonMScreen::setNextVMTimeSlice(int millis) {
 }
 
 void ChameleonMScreen::slotTimeout() {
-    jlong ms;
-
-    if (vm_stopped) {
-        return;
-    }
-
-    /* check and align stack suspend/resume state */
-    midp_checkAndResume();
-
-    ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
-
-    /* Let the VM run for some time */
-    if (ms <= -2) {
-        /*
-         * JVM_Stop was called. Avoid call JVM_TimeSlice again until
-         * startVM is called.
-         */
-        vm_stopped = true;
-        qteapp_get_application()->exit_loop();
-    } else if (ms == -1) {
-        /* 
-         * Wait forever -- we probably have a thread blocked on IO or GUI.
-         * No need to set up timer from here
-         */
-    } else {
-        if (ms > 0x7fffffff) {
-            vm_slicer.start(0x7fffffff, TRUE);
-        } else {
-            vm_slicer.start((int)(ms & 0x7fffffff), TRUE);
-        }
-    }
+    slotTimeoutImpl();
 }
 
 /**

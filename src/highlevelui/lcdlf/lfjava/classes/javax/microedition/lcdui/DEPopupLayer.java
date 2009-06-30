@@ -1,40 +1,39 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
 
 import com.sun.midp.lcdui.EventConstants;
 
-import com.sun.midp.lcdui.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.DateEditorSkin;
-import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.layers.ScrollIndLayer;
 import com.sun.midp.chameleon.layers.ScrollablePopupLayer;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 
 
@@ -75,9 +74,8 @@ class DEPopupLayer extends ScrollablePopupLayer {
         if (newElements != null) {
             numElements = newElements.length;
             elements = new String[numElements];
-            for (int i = 0; i < numElements; i++) {
-                elements[i] = newElements[i];
-            }
+            System.arraycopy(newElements, 0, elements, 0, numElements);
+
             this.selectedIndex = selectedIndex;
             hilightedIndex = selectedIndex;
         }
@@ -117,6 +115,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
             elementsToFit = numElements;
             sbVisible = false;
         }
+        updateBoundsByScrollInd();
     }
 
    /**
@@ -143,9 +142,11 @@ class DEPopupLayer extends ScrollablePopupLayer {
      * @return true always, since popupLayers swallow all pointer events
      */
     public boolean pointerInput(int type, int x, int y) {
+        super.pointerInput(type, x, y);
         boolean consume = true;
         switch (type) {
         case EventConstants.PRESSED:
+            leftToDrag = 0;
             itemIndexWhenPressed =  itemIndexAtPointerPosition(x, y);
             if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
                 hide();
@@ -153,11 +154,17 @@ class DEPopupLayer extends ScrollablePopupLayer {
             } else if (itemIndexWhenPressed >= 0 &&
                 // press on valid item
                 hilightedIndex != itemIndexWhenPressed + startIndex) { 
-                hilightedIndex = itemIndexWhenPressed + startIndex;
+                int newHilightedIndex = itemIndexWhenPressed + startIndex;  
+                if (newHilightedIndex > endIndex) {
+                    itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+                } else {
+                    hilightedIndex = newHilightedIndex;                    
+                }
                 requestRepaint();
             } 
             break;
         case EventConstants.RELEASED:
+            leftToDrag = 0;
             int itemIndexWhenReleased = itemIndexAtPointerPosition(x,y);
             
             if (itemIndexWhenReleased == itemIndexWhenPressed) {
@@ -241,34 +248,36 @@ class DEPopupLayer extends ScrollablePopupLayer {
      */
     public void paintBody(Graphics g) {
         boolean hilighted = false;
-        int translatedY = 0;
+        int y = 0;
+        int textOffset = 2;
         
-        int transY = elementHeight;
-        g.translate(2, 0);
-        
+
         endIndex = startIndex + (elementsToFit - 1);
-        
+
         if (hilightedIndex > endIndex) {
             endIndex = hilightedIndex;
             startIndex = endIndex - (elementsToFit - 1);
         }
-        
+
+        if (ScreenSkin.RL_DIRECTION) {
+            textOffset = elementWidth - textOffset - ScrollIndSkin.WIDTH + 3;
+        }
+        if (startIndex < 0) {
+            y = -startIndex * elementHeight;
+        }
         g.setFont(DateEditorSkin.FONT_POPUPS);
-        for (int i = startIndex; i <= endIndex; i++) {
+        for (int i = startIndex < 0 ? 0 : startIndex; i < elements.length; i++) {
             hilighted = (i == hilightedIndex);
-        
+
             if (hilighted) {
                 g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
-                g.fillRect(0, 0, elementWidth - 7, elementHeight);
+                g.fillRect(0, y, elementWidth, elementHeight);
             }
-        
+
             g.setColor(0);
-            g.drawString(elements[i], 2, 0, 0);
-            g.translate(0, transY);
-            translatedY += transY;
+            g.drawString(elements[i], textOffset, y, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+            y += elementHeight;
         }
-        
-        g.translate(-2, -translatedY); 
     }
 
 
@@ -426,6 +435,31 @@ class DEPopupLayer extends ScrollablePopupLayer {
     }
 
     /**
+     * Drag the contents to the specified amount of pixels.
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int dragContent(int deltaY) {
+        leftToDrag += deltaY;
+        startIndex += leftToDrag / elementHeight;
+        updatePopupLayer();
+        leftToDrag %= elementHeight;
+        stableY = 0;
+        if (startIndex < 0) {
+            stableY = -startIndex * elementHeight;
+        } else if (startIndex > numElements - elementsToFit
+                && numElements > elementsToFit) {
+            stableY = (numElements - elementsToFit - startIndex) *
+                    elementHeight;
+        } else if (startIndex > 0
+                && numElements <= elementsToFit) {
+            stableY = -startIndex * elementHeight;
+        }
+        return stableY - leftToDrag;
+    }
+    
+
+    /**
      * Perform a page flip in the given direction. This method will
      * attempt to scroll the view to show as much of the next page
      * as possible. It uses the locations and bounds of the items on
@@ -498,7 +532,11 @@ class DEPopupLayer extends ScrollablePopupLayer {
     public void updateScrollIndicator() {
         if (scrollInd != null) {
             scrollInd.update(null);
-            if (sbVisible) {
+
+            if (stableY != 0) {
+                return;
+            }
+            if (sbVisible && numElements > 0 && numElements != elementsToFit) {
                 scrollInd.setVerticalScroll(
                                             startIndex * 100 / (numElements - elementsToFit),
                                             elementsToFit * 100 / numElements);                                            
@@ -520,6 +558,14 @@ class DEPopupLayer extends ScrollablePopupLayer {
             hilightedIndex = startIndex;
         } else if (hilightedIndex >= startIndex + elementsToFit) {
             hilightedIndex = startIndex + elementsToFit - 1;
+        }
+
+        if (hilightedIndex >= numElements) {
+            hilightedIndex = numElements - 1;
+        }
+        
+        if (hilightedIndex < 0) {
+            hilightedIndex = 0;
         }
         updateScrollIndicator();
         addDirtyRegion();
@@ -596,7 +642,18 @@ class DEPopupLayer extends ScrollablePopupLayer {
     private int hilightedIndex;    
 
     /** Selected index. Index accepted by pressing set or fire key */
-    private int selectedIndex;    
+    private int selectedIndex;
+
+    /**
+     * Amount of pixels left from previous content dragging
+     */
+    protected int leftToDrag = 0;
+
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    protected int stableY = 0;    
 
     /**
      * True if traversal past the last item in the popup should jump to the

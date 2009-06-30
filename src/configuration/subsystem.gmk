@@ -1,27 +1,27 @@
 #
 #  
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 ######################################################################
 #
@@ -34,6 +34,7 @@
 #
 ######################################################################
 
+include $(SUBSYSTEM_DIR)/configuration/configuration_common.gmk
 # Adds to global SUBSYSTEMS list
 #
 CONFIG_SUBSYSTEM = configuration
@@ -43,38 +44,30 @@ SUBSYSTEM_CONFIG_DIR = $(SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
 PROJECT_SUBSYSTEM_CONFIG_DIR = $(PROJECT_SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
 
 #####################################################################
+# Bellow is the Description of default components in the subsystem
+#
+# Folder name: configuration_xml
 # Configurator Subsystem
 # Description: Config the whole system
-#####################################################################
-
-include $(SUBSYSTEM_CONFIG_DIR)/configuration_xml/lib.gmk
-
-#####################################################################
+#
+# Folder name: properties
 # Properties Library
 # Description: Java API for system properties access
-#####################################################################
-
-include $(SUBSYSTEM_CONFIG_DIR)/properties/lib.gmk
-
-#####################################################################
+#
+# Folder name: properties_port
 # Properties Port Library
 # Description: Native API for system properties access
+#
 #####################################################################
 
-include $(SUBSYSTEM_CONFIG_DIR)/properties_port/lib.gmk
-
-#####################################################################
-
-
-SUBSYSTEM_CONFIGURATION_JAVA_FILES +=  \
-    $(SUBSYSTEM_PROPERTIES_JAVA_FILES) \
-    $(SUBSYSTEM_PROPERTIES_PORT_JAVA_FILES)
+SUBSYSTEM_CONFIG_COMPONENTS ?= $(SUBSYSTEM_CONFIG_DIR)/configuration_xml/lib.gmk  \
+    $(SUBSYSTEM_CONFIG_DIR)/properties/lib.gmk \
+    $(SUBSYSTEM_CONFIG_DIR)/properties_port/lib.gmk
 
 
-SUBSYSTEM_CONFIGURATION_NATIVE_FILES +=  \
-    $(SUBSYSTEM_PROPERTIES_NATIVE_FILES) \
-    $(SUBSYSTEM_PROPERTIES_PORT_NATIVE_FILES)
+#Add Aditional components if supplied to allow extention of default list
+SUBSYSTEM_CONFIG_COMPONENTS += $(CONFIGURATION_ADDITIONAL_COMPONENTS)
 
-SUBSYSTEM_CONFIGURATION_EXTRA_INCLUDES +=  \
-    $(SUBSYSTEM_PROPERTIES_EXTRA_INCLUDES) \
-    $(SUBSYSTEM_PROPERTIES_PORT_EXTRA_INCLUDES)
+# Include components
+include $(SUBSYSTEM_CONFIG_COMPONENTS)
+

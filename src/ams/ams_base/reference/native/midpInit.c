@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -29,15 +29,24 @@
 #include <midpMalloc.h>
 #include <midpAMS.h>
 #include <midpStorage.h>
+#include <midpResourceLimit.h>
 #include <midp_properties_port.h>
 #include <midpInit.h>
 #include <suitestore_common.h>
 #if !ENABLE_CDC
+#include <pcsl_network.h>
 #include <suspend_resume.h>
 #endif
 #if MEASURE_STARTUP
 #include <stdio.h>
 #include <pcsl_print.h>
+#endif
+#if ENABLE_MULTIPLE_ISOLATES
+#include <midp_links.h>
+#endif
+
+#if ENABLE_ICON_CACHE
+#include <suitestore_icon_cache.h>
 #endif
 
 /**
@@ -48,27 +57,45 @@
 
 static int initLevel = NO_INIT;
 
-static char* midpHome = NULL;
+static char* midpAppDir = NULL;
+
+static char* midpConfig = NULL;
 
 static void (*vmFinalizer)(void) = NULL;
 
 /**
- * Sets the home directory for MIDP if needed.
+ * Sets the application directory for MIDP if needed.
  * So the suites and other MIDP persistent
- * state can be found. Only had an effect when called before any
+ * state can be found. Only had an effect when called before 
+ * any other method except midpInitialize is called.
+ * If not called directory specified by midpSetConfigDir will 
+ * be used.
+ * 
+ * @param dir application directory of MIDP
+ */
+void midpSetAppDir(const char* dir) {
+
+    midpAppDir = (char *)dir;
+}
+
+/**
+ * Sets the config directory for MIDP if needed.
+ * In this directory static data as images and 
+ * configuration files are located. If not called
+ * directory specified by midpSetAppDir will be used.
+ * Only had an effect when called before any
  * other method except midpInitialize is called.
  *
- * @param dir home directory of MIDP
+ * @param dir config directory of MIDP
  */
-void midpSetHomeDir(const char* dir) {
-
-    midpHome = (char *)dir;
+void midpSetConfigDir(const char* dir) {
+    midpConfig = (char *)dir;
 }
 
 /**
  * The public MIDP initialization function. If not running for the MIDP
- * home directory, midpSetHomeDir should the first call after this with the
- * directory of the MIDP system.
+ * home directory, midpSetAppDir, midpSetConfigDir should the first calls 
+ * after this with the directory of the MIDP system.
  */
 int midpInitialize() {
 
@@ -138,22 +165,36 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
     const char* spaceProp;
     long totalSpace;
     int result = -1; /* error status by default */
+    int main_memory_chunk_size;
 
     if (initLevel >= level) {
         return 0;
     }
 
     do {
-        if (midpHome == NULL) {
+        if ((midpAppDir == NULL) && (midpConfig == NULL)) {
             /*
-             * The caller has to set midpHome before calling midpInitialize().
+             * The caller has to set midpAppDir of midpConfig before
+             * calling midpInitialize().
              */
             break;
         }
 
+        /* duplicate values if not set */
+        if (midpConfig == NULL) {
+        	midpConfig = midpAppDir;
+        } else if (midpAppDir == NULL) {
+        	midpAppDir = midpConfig;
+        } 
+
         if (level >= MEM_LEVEL && initLevel < MEM_LEVEL) {
+	    /* Get java heap memory size */
+	    main_memory_chunk_size = getInternalPropertyInt("MAIN_MEMORY_CHUNK_SIZE");
+	    if (main_memory_chunk_size == 0) {
+		main_memory_chunk_size = -1;
+	    }
             /* Do initialization for the next level: MEM_LEVEL */
-            if (midpInitializeMemory(-1) != 0) {
+            if (midpInitializeMemory(main_memory_chunk_size) != 0) {
                 break;
             }
             initLevel = MEM_LEVEL;
@@ -164,12 +205,14 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
             MIDPError status;
             int err;
 
-            // initializing suspend/resume system first, other systems may then
-            // register their resources there.
+            /* 
+             * initializing suspend/resume system first, other systems may then
+             * register their resources there. 
+             */
 #if !ENABLE_CDC
             sr_initSystem();
 #endif
-            err = storageInitialize(midpHome);
+            err = storageInitialize(midpConfig, midpAppDir);
             if (err == 0) {
                 status = midp_suite_storage_init();
             } else {
@@ -199,7 +242,7 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
              * use it as the maximum space use limit for MIDP MIDlet
              * suites and their record stores.
              */
-            spaceProp = getInternalProp("system.jam_space");
+            spaceProp = getInternalProperty("system.jam_space");
             if (spaceProp != NULL) {
                 totalSpace = atoi(spaceProp);
                 storageSetTotalSpace(totalSpace);
@@ -247,6 +290,9 @@ void midpFinalize() {
         }
     }
 
+#if ENABLE_ICON_CACHE
+    midp_free_suites_icons();
+#endif    
     midp_suite_storage_cleanup();
 
     /** Now it makes no sense to process suspend/resume requests. */
@@ -255,6 +301,7 @@ void midpFinalize() {
 #endif
     if (initLevel > MEM_LEVEL) {
         /* Cleanup native code resources on exit */
+        midpFinalizeResourceLimit();
         finalizeConfig();
 
         /*
@@ -266,7 +313,13 @@ void midpFinalize() {
         storageFinalize();
     }
 
-    midpHome = NULL;
+#if ENABLE_MULTIPLE_ISOLATES
+    midp_links_shutdown();
+#endif    
+
+    pcsl_network_finalize_start(NULL);
+
+    midpAppDir = NULL;
     midpFinalizeMemory();
 
     initLevel = NO_INIT;

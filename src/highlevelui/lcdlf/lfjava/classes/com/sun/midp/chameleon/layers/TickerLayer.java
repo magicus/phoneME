@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
@@ -32,9 +32,7 @@ import javax.microedition.lcdui.*;
 import java.util.*;
 
 import com.sun.midp.chameleon.skins.TickerSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.util.ResourceHandler;
 
 /**
  *
@@ -75,23 +73,30 @@ public class TickerLayer extends CLayer {
     }
 
     public void setAnchor() {
+	if (owner == null) {
+	    return;
+	}
         bounds[X] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = TickerSkin.HEIGHT;
+	bounds[W] = owner.bounds[W];
+	
+	bounds[H] = TickerSkin.HEIGHT;
+        if (textLoc > bounds[X] + bounds[W]) {
+            textLoc = bounds[X] + bounds[W];
+        }
         switch (TickerSkin.ALIGN) {
-            case(Graphics.TOP):
-                bounds[Y] = 0;
-                break;
+	case(Graphics.TOP):
+	    bounds[Y] = 0;
+	    break;
             case(Graphics.BOTTOM):
-            default:
-                bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                        bounds[H];
+	default:
+	    bounds[Y] = owner.bounds[H];
+	    bounds[Y] -= SoftButtonSkin.HEIGHT + bounds[H];
         }
     }
 
     /**
      * Set the ticker of this ticker layer.
-     * @param text
+     * @param text the text to be displayed on the ticker
      * @return * @return true if visability of layer was changed
      */
     public boolean setText(String text) {
@@ -99,9 +104,8 @@ public class TickerLayer extends CLayer {
         synchronized (this) {
             this.text = text;
             super.visible = (text != null && text.trim().length() > 0);
-            textLoc = bounds[X] + bounds[W];
             textLen = (text == null) ? 0 : TickerSkin.FONT.stringWidth(text);
-            this.dirty = true;
+            setDirty();
         }
         return (oldVisable != super.visible);
     }
@@ -141,6 +145,7 @@ public class TickerLayer extends CLayer {
                 g.setColor(TickerSkin.COLOR_FG_SHD);
                 g.drawString(text, x, y, Graphics.TOP | TickerSkin.DIRECTION);
             }
+
             g.setColor(TickerSkin.COLOR_FG);
             g.drawString(text, textLoc, TickerSkin.TEXT_ANCHOR_Y,
                     Graphics.TOP | TickerSkin.DIRECTION);

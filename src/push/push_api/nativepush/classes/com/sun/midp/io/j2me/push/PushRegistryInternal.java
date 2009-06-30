@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -25,12 +25,18 @@
 package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 import javax.microedition.io.ConnectionNotFoundException;
+
+import com.sun.j2me.security.AccessControlContext;
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
 
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
 
 /**
  * Stubbed implementation for NAMS variant of CLDC stack
@@ -49,10 +55,22 @@ public final class PushRegistryInternal {
     private PushRegistryInternal() { }
 
     /**
+      * Validates that the method is invoked allowed party.
+      * <p>
+      * Method requires com.sun.midp.ams permission.
+      */
+    private static void checkInvocationAllowed() {
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+    }
+
+
+    /**
      * Start listening for push notifications. Will throw a security
      * exception if called by any thing other than the MIDletSuiteLoader.
+     *
+     * @param token security token with the com.sun.midp.ams permission
      */
-    public static void startListening() {
+    public static void startListening(SecurityToken token) {
     }
 
     /**
@@ -65,6 +83,7 @@ public final class PushRegistryInternal {
      * This method bypasses the class loader specific checks
      * needed by the <code>Installer</code>.
      *
+     * @param context Access control context the suite
      * @param midletSuite MIDlet suite for the suite registering,
      *                   the suite only has to implement isRegistered,
      *                   checkForPermission, and getID.
@@ -96,13 +115,36 @@ public final class PushRegistryInternal {
      *
      * @see #unregisterConnection
      */
-    public static void registerConnectionInternal(MIDletSuite midletSuite,
+    public static void registerConnectionInternal(AccessControlContext context,
+                                                  MIDletSuite midletSuite,
                                                   String connection,
                                                   String midlet,
                                                   String filter,
                                                   boolean bypassChecks)
             throws ClassNotFoundException, IOException {
-        throw new ConnectionNotFoundException("not supported");
+
+        checkInvocationAllowed();
+
+        if (filter == null) {
+            throw new IllegalArgumentException("filter is null");
+        }
+
+        if (!bypassChecks) {
+            try {
+                context.checkPermission(PushRegistryImpl.PUSH_PERMISSION_NAME);
+            } catch (InterruptedSecurityException ise) {
+                throw new InterruptedIOException(
+                    "Interrupted while trying to ask the user permission");
+            }
+
+            PushRegistryImpl.checkMidletRegistered(midletSuite, midlet);
+        }
+
+        PushRegistryImpl.registerConnectionInternal(
+                midletSuite,
+                connection, midlet, filter,
+                !bypassChecks);
+
     }
 
     /**
@@ -127,9 +169,23 @@ public final class PushRegistryInternal {
      *       where each connection is represented by the generic connection
      *       <em>protocol</em>, <em>host</em> and <em>port number</em>
      *       identification
+     *  
+     * @exception SecurityException if the
+     *       <code>MIDlet</code> does not have permission to
+     *       register a connection
      */
     public static String listConnections(int id, boolean available) {
-        return "";
+        checkInvocationAllowed();
+        String[] conns = PushRegistryImpl.listConnections(id, available);
+        if (null != conns && 0 != conns.length) {
+            StringBuffer result = new StringBuffer(conns[0]);
+            for (int i = 1; i < conns.length; i++) {
+                result.append(",").append(conns[i]);
+            }
+            return result.toString();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -137,8 +193,14 @@ public final class PushRegistryInternal {
      *
      * @param id identifies the specific <code>MIDlet</code>
      *               suite
+     *  
+     * @exception SecurityException if the <code>MIDlet</code> does not
+     *              have permission to register a connection  
      */
     public static void unregisterConnections(int id) {
+        checkInvocationAllowed();
+        PushRegistryImpl.deleteConnections(id);
+
     }
 
     /**
@@ -179,6 +241,7 @@ public final class PushRegistryInternal {
      */
     public static boolean checkInConnectionInternal(SecurityToken token,
                                                     String connection) {
+        // NAMS takes care about push connections
         return false;
     }
 

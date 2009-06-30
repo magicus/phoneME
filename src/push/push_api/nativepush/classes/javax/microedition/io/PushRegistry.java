@@ -1,30 +1,40 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.io;
 
+import java.lang.ClassNotFoundException;
+import java.lang.IllegalStateException;
+import java.lang.IllegalArgumentException;
+import java.lang.String;
 import java.io.IOException;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import com.sun.midp.io.Util;
+import com.sun.midp.io.j2me.push.PushRegistryImpl;
 
 /**
  * The <code>PushRegistry</code> maintains a list of inbound
@@ -583,10 +593,6 @@ import java.io.IOException;
  */
 
 public class PushRegistry {
-    /*
-     * Currently stubbed just to make TCK signature test
-     * pass and NAMS build configuration fine
-     */
 
     /** Prevent instantiation of the push registry. */
     private PushRegistry() { };
@@ -641,7 +647,8 @@ public class PushRegistry {
 					   String filter)
 	throws ClassNotFoundException,
 	        IOException {
-        throw new ConnectionNotFoundException("not supported");
+
+	PushRegistryImpl.registerConnection(connection, midlet, filter);
     }
 
     /**
@@ -658,7 +665,8 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static boolean unregisterConnection(String connection) {
-        return false;
+
+        return PushRegistryImpl.unregisterConnection(connection);
     }
 
     /**
@@ -674,7 +682,7 @@ public class PushRegistry {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String[] listConnections(boolean available) {
-        return new String [0];
+        return PushRegistryImpl.listConnections(available);
     }
 
     /**
@@ -692,7 +700,8 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static String getMIDlet(String connection) {
-        return null;
+        // Delegate to implementation class for native lookup
+        return 	PushRegistryImpl.getMIDlet(connection);
     }
 
     /**
@@ -710,7 +719,8 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static String getFilter(String connection) {
-        return null;
+        // Delegate to implementation class for native lookup
+        return 	PushRegistryImpl.getFilter(connection);
     }
 
     /**
@@ -753,6 +763,7 @@ public class PushRegistry {
      */
     public static long registerAlarm(String midlet, long time)
 	 throws ClassNotFoundException, ConnectionNotFoundException {
-        throw new ConnectionNotFoundException("not supported");
+        // Delegate to implementation class for native registration
+        return 	PushRegistryImpl.registerAlarm(midlet, time);
     }
 }

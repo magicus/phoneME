@@ -1,39 +1,38 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
-import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.lcdui.EventConstants;
+import com.sun.midp.lcdui.TactileFeedback;
 
 /**
  * A ScrollArrowLayer is a region of the display used for showing scroll indicator
@@ -68,22 +67,34 @@ public class ScrollArrowLayer extends ScrollIndLayer {
     }
 
     /**
+     * Called by MIDPWindow to initialize this layer
+     */
+    protected void initialize() {
+        super.initialize();
+        setBounds();
+    }
+
+    /**
      * Calculate layer bounds depending on the scrollable
      */
     public void setBounds() {
+	if (owner == null) {
+	    return;
+	}
+	
         bounds[H] = SoftButtonSkin.HEIGHT;
         if (ScrollIndSkin.IMAGE_UP != null) {
             bounds[W] = ScrollIndSkin.IMAGE_UP.getWidth();
             bounds[H] = (2 * ScrollIndSkin.IMAGE_UP.getHeight());
             bounds[Y] = (SoftButtonSkin.HEIGHT - bounds[H]) / 3;
             bounds[H] += bounds[Y];
-            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT +
+	    bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT +
                 bounds[Y];
-        } else {
-            bounds[W] = ScrollIndSkin.WIDTH;
+	} else {
+	    bounds[W] = ScrollIndSkin.WIDTH;
             bounds[Y] = 3;
-        }
-        bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
+	}
+	bounds[X] = (owner.bounds[W] - bounds[W]) / 2;
     }
 
     /**
@@ -161,7 +172,7 @@ public class ScrollArrowLayer extends ScrollIndLayer {
             // case EventConstants.HOLD:
             // no action for tap-and-hold in scrollbar
             // cancel timer for any press.
-            
+            TactileFeedback.playTactileFeedback();            
             int scrollType = getScrollType(x, y);
             if (scrollType == SCROLL_LINEDOWN ||
                 scrollType ==  SCROLL_LINEUP) {
@@ -217,4 +228,15 @@ public class ScrollArrowLayer extends ScrollIndLayer {
         upViz = downViz = false;
         return ret;
     }
+
+    /**
+     * Update bounds of layer
+     *
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        setBounds();
+    }
+
 }

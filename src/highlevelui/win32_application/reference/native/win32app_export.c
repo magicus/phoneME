@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -359,7 +359,7 @@ static void win32app_refresh_rotate(int x1, int y1, int x2, int y2) {
 
     destPtr = destBits;
 
-    pixels += x2-1 + y1 * get_screen_width();
+    pixels += x2-1 + y1 * win32app_get_screen_width();
 
       for (x = x2; x > x1; x--) {
 
@@ -373,13 +373,14 @@ static void win32app_refresh_rotate(int x1, int y1, int x2, int y2) {
             *destPtr++ = g;
             *destPtr++ = r;            
             destPtr += sizeof(long) - 3*sizeof(*destPtr);
-            pixels += get_screen_width();
+            pixels += win32app_get_screen_width();
          }
-         pixels += -1 - height * get_screen_width();         
+         pixels += -1 - height * win32app_get_screen_width();         
 
     }    
 
-        SetDIBitsToDevice(hdc, y, get_screen_width() - width - x, height, width, 0, 0, 0,
+        SetDIBitsToDevice(hdc, y, win32app_get_screen_width() - width - x, 
+			  height, width, 0, 0, 0,
                           width, destBits, &bi, DIB_RGB_COLORS);
 }
 
@@ -434,6 +435,12 @@ jboolean win32app_get_reverse_orientation() {
 }
 
 /**
+ * Handle clamshell events
+ */
+void win32app_handle_clamshell_event() {
+}
+
+/**
  * Set full screen mode on/off
  */
 void win32app_set_fullscreen_mode(jboolean mode) {
@@ -465,29 +472,48 @@ HWND win32app_get_window_handle() {
     return hMainWindow;
 }
 
+
+/**
+ * Flushes the offscreen buffer directly to the device screen.
+ * The size of the buffer flushed is defined by offscreen buffer width
+ * and passed in height. 
+ * Offscreen_buffer must be aligned to the top-left of the screen and
+ * its width must be the same as the device screen width.
+ * @param graphics The Graphics instance associated with the screen.
+ * @param offscreen_buffer The offscreen buffer to be flushed
+ * @param h The height to be flushed
+ * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
+ */
+jboolean win32app_direct_flush(const java_graphics *g, 
+		    	       const java_imagedata *offscreen_buffer, 
+                               int h) {
+  return KNI_FALSE;
+}
+
 /*
  * Draw BackLight.
  * If 'active' is KNI_TRUE, the BackLight is drawn.
  * If 'active' is KNI_FALSE, the BackLight is erased.
  */
-jboolean drawBackLight(int mode) {
+jboolean drawBackLight(AncBacklightState mode) {
 
     HDC hdc = GetDC(hMainWindow);
     jboolean result = KNI_FALSE;
 
-    if (mode == BACKLIGHT_IS_SUPPORTED) {
+    if (mode == ANC_BACKLIGHT_SUPPORTED) {
         result = KNI_TRUE;
     }
     else {
         CreateBacklight(hdc);
-        if ((mode == BACKLIGHT_ON) || 
-            (mode == BACKLIGHT_TOGGLE && isBklite_on == KNI_FALSE)) {
+        if ((mode == ANC_BACKLIGHT_ON) || 
+            (mode == ANC_BACKLIGHT_TOGGLE && isBklite_on == KNI_FALSE)) {
             isBklite_on = KNI_TRUE;
             DrawBitmap(hdc, hPhoneLightBitmap, 0, 0, SRCCOPY);
-            invalidateLCDScreen(0, 0, get_screen_width(), get_screen_height());
+            invalidateLCDScreen(0, 0, win32app_get_screen_width(), 
+				win32app_get_screen_height());
             result = KNI_TRUE;
-        } else if ((mode == BACKLIGHT_OFF) ||
-                  (mode == BACKLIGHT_TOGGLE && isBklite_on == KNI_TRUE)){
+        } else if ((mode == ANC_BACKLIGHT_OFF) ||
+                  (mode == ANC_BACKLIGHT_TOGGLE && isBklite_on == KNI_TRUE)){
             if (isBklite_on) {
                 isBklite_on = KNI_FALSE;
                 InvalidateRect(hMainWindow, NULL, KNI_TRUE);
@@ -511,8 +537,11 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
     case VK_F2:
         return KEYMAP_KEY_SOFT2;
 
-     case VK_F3:
+    case VK_F3:
         return KEYMAP_KEY_SCREEN_ROT;
+
+    case VK_F6:
+        return KEYMAP_KEY_VIRT_KEYB;
 
     case VK_F9:
         return KEYMAP_KEY_GAMEA;
@@ -556,8 +585,13 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
         return KEYMAP_KEY_BACKSPACE;
 
     case VK_HOME:
+    case VK_F7:
         return KEYMAP_MD_KEY_HOME;
     
+    case VK_END:
+    case VK_F8:
+        return KEYMAP_KEY_END;
+
     default:
         break;
     }
@@ -575,7 +609,7 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
     return KEYMAP_KEY_INVALID;
 }
 
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_APP_MANAGER
 void nams_process_command(int command, int param);
 #endif
 
@@ -671,6 +705,15 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
             pMidpEventResult->type = ROTATION_EVENT;
             pSignalResult->waitingFor = UI_SIGNAL;
             return 0;
+
+        case KEYMAP_KEY_VIRT_KEYB:
+                if (iMsg == WM_KEYDOWN) {
+                    return 0;
+            }
+            pMidpEventResult->type = VIRTUAL_KEYBOARD_EVENT;
+            pSignalResult->waitingFor = UI_SIGNAL;
+            return 0;
+
         case KEYMAP_MD_KEY_HOME:
             if (iMsg == WM_KEYDOWN) {
                 return 0;
@@ -731,15 +774,17 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
              * coordinate "pegged" to the edge of the screen.
              */
             if (reverse_orientation) {
-                maxX = DISPLAY_Y + get_screen_width() - 1;
-                maxY = DISPLAY_X + get_screen_height() - 1;
-                pMidpEventResult->X_POS = min(get_screen_width() - y + DISPLAY_Y, maxX - DISPLAY_Y);
+                maxX = DISPLAY_Y + win32app_get_screen_width() - 1;
+                maxY = DISPLAY_X + win32app_get_screen_height() - 1;
+                pMidpEventResult->X_POS = 
+		  min(win32app_get_screen_width() - y + DISPLAY_Y, 
+		      maxX - DISPLAY_Y);
                 pMidpEventResult->Y_POS = min(x, maxY) - DISPLAY_X;
             } else {
-                maxX = DISPLAY_X + get_screen_width() - 1;
-                maxY = DISPLAY_Y + get_screen_height() - 1;
+                maxX = DISPLAY_X + win32app_get_screen_width() - 1;
+                maxY = DISPLAY_Y + win32app_get_screen_height() - 1;
                 pMidpEventResult->X_POS = min(x, maxX) - DISPLAY_X;
-                pMidpEventResult->Y_POS = min(y, maxY) - DISPLAY_Y;                        
+                pMidpEventResult->Y_POS = min(y, maxY) - DISPLAY_Y;       
             }
             if (pMidpEventResult->X_POS < 0) {
                 pMidpEventResult->X_POS = 0;
@@ -914,7 +959,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         pSignalResult->waitingFor = VM_DEBUG_SIGNAL;
         return 0;
 
-#if ENABLE_NATIVE_AMS
+#if ENABLE_NATIVE_APP_MANAGER
     case WM_TEST:
         nams_process_command(wParam, lParam);
 
@@ -932,7 +977,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 /**
  * Return screen width
  */
-int get_screen_width() {
+int win32app_get_screen_width() {
     if (reverse_orientation) {
         return inFullScreenMode ? CHAM_FULLHEIGHT : CHAM_HEIGHT;
     } else {
@@ -943,7 +988,7 @@ int get_screen_width() {
 /**
  * Return screen height
  */
-int get_screen_height() {
+int win32app_get_screen_height() {
     if (reverse_orientation) {
         return inFullScreenMode ? CHAM_FULLWIDTH : CHAM_WIDTH;
     } else {
@@ -956,8 +1001,8 @@ int get_screen_height() {
  */
 static void resizeScreenBuffer() {
 
-    int newWidth = get_screen_width();
-    int newHeight = get_screen_height();
+    int newWidth = win32app_get_screen_width();
+    int newHeight = win32app_get_screen_height();
     int newScreenSize = sizeof(gxj_pixel_type) * newWidth * newHeight;
     if (gxj_system_screen_buffer.pixelData != NULL) {
         if (newScreenSize != sizeof(gxj_pixel_type) 

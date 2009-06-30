@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <string.h>
@@ -34,6 +34,7 @@
 #include <midpStorage.h>
 #include <gcf_export.h>
 #include <midp_logging.h>
+#include <midp_constants_data.h>
 
 /**
  * @file
@@ -75,13 +76,13 @@
 /** The name of the internal property file */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(IMPL_PROPERTY_FILE)
     {'i', 'n', 't', 'e', 'r', 'n', 'a', 'l', '.',
-     'c', 'o', 'n', 'f', 'i', 'g', '\0'};
+     'c', 'o', 'n', 'f', 'i', 'g', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(IMPL_PROPERTY_FILE);
 
 /** The name of the application property file */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APPL_PROPERTY_FILE)
     {'s', 'y', 's', 't', 'e', 'm', '.',
-     'c', 'o', 'n', 'f', 'i', 'g', '\0'};
+     'c', 'o', 'n', 'f', 'i', 'g', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APPL_PROPERTY_FILE);
 
 /** Storage structure for a property set */
@@ -383,12 +384,12 @@ initializeConfig(void) {
     }
 
     if (initProps(&implementationProperties, &IMPL_PROPERTY_FILE,
-                  storage_get_config_root()) != 0) {
+                  storage_get_config_root(INTERNAL_STORAGE_ID)) != 0) {
         return -1;
     }
 
     if (initProps(&applicationProperties, &APPL_PROPERTY_FILE,
-                  storage_get_config_root()) != 0) {
+                  storage_get_config_root(INTERNAL_STORAGE_ID)) != 0) {
         finalizeConfig();
         return -1;
     }
@@ -433,7 +434,7 @@ finalizeConfig(void) {
  * @param value The value to set <tt>key</tt> to
  */
 void
-setInternalProp(const char* key , const char* value) {
+setInternalProperty(const char* key , const char* value) {
     setProp(&implementationProperties, key, value);
 }
 
@@ -448,7 +449,7 @@ setInternalProp(const char* key , const char* value) {
  *         <tt>NULL</tt>
  */
 const char*
-getInternalProp(const char* key) {
+getInternalProperty(const char* key) {
     const char *result;
     
     result = findProp(implementationProperties, key);
@@ -472,7 +473,7 @@ getInternalProp(const char* key) {
  *         <tt>def</tt>
  */
 const char*
-getInternalPropDefault(const char* key, const char* def) {
+getInternalPropertyDefault(const char* key, const char* def) {
     const char *result;
 
     result = findProp(implementationProperties, key);

@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -203,7 +203,10 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // Focus remains on the same item
         if (traverseIndex >= itemNum) {
             traverseIndex++;
+        } else if (traverseIndex == -1) {
+            traverseIndex = itemNum;
         }
+        
         lRequestInvalidate();
     }
 
@@ -256,12 +259,14 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             lastTraverseItem = itemLFs[traverseIndex];
         }
 
-        if (traverseIndex >= 0 && traverseIndex >= itemNum) {
-            traverseIndex--;
-        }
-
         numOfLFs--;
         itemsModified = true;
+
+        if (traverseIndex > 0 && traverseIndex >= itemNum) {
+             traverseIndex--;
+         } else if (0 == numOfLFs) {
+             traverseIndex = -1;
+         }
 
         if (itemNum < numOfLFs) {
             System.arraycopy(itemLFs, itemNum + 1, itemLFs, itemNum,
@@ -308,8 +313,8 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         super.uCallInvalidate();
 
-        int new_width = Display.getScreenWidth0();
-        int new_height = Display.getScreenHeight0();
+        int new_width = currentDisplay.width; 
+        int new_height = currentDisplay.height; 
 
         // It could be that setCurrentItem() was called and we
         // have done an 'artificial' traversal. In this case, we
@@ -356,7 +361,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // 2. We are on event dispatch thread, call paint synchronously.
         // 3. Since we could call into app's functions, like traverse(),
         //    showNotify() and paint(), do this outside LCDUILock block.
-        currentDisplay.callPaint(0, 0, width, height, null);
+        currentDisplay.callPaint(0, 0, width, height, null);        
     }
 
     /**
@@ -536,20 +541,21 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * <code>ItemLF</code>.
      *
      * @param modelVersion the version of the peer's data model
+     * @param subtype the type of event
      * @param peerId one of the following:
      *  <ul> <li> the id of this <code>FormLF</code> if viewport
      *            has changed in the corresponding native resource
-     *            of this <code>FormLF</code>
+     *            of this <code>FormLF</code> 
      *            (current scroll position is passed as hint)
+     *            or traverse has been requested by peer
      *       <li> the id of the <code>ItemLF</code> whose peer state
-     *            has changed
-     *	     <li> <code>INVALID_NATIVE_ID</code> if a focus
-     *            changed notification.
+     *            has changed or new focus item in case of focus 
+     *            change notification.
      * @param hint some value that is interpreted only between the peers
      */
     public void uCallPeerStateChanged(int modelVersion,
-				      int peerId,
-				      int hint) {
+				      int subType, int peerId, int hint) {
+
 	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
 	    Logging.report(Logging.INFORMATION,
 			   LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -557,40 +563,36 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 			   peerId + "/" + hint);
 	}
 
-	int notifyType;
-	ItemLFImpl oldFocus = null, itemLFToNotify = null;
+	ItemLFImpl itemLFToNotify = null;
 
 	synchronized (Display.LCDUILock) {
         if (modelVersion != super.modelVersion) {
             return; // model version out of sync, ignore the event
         }
 
-        // If not matching ItemLF, this is a focus changed notification
-        // 'hint' is the id of the new focused itemLF
-        if (peerId == INVALID_NATIVE_ID) {
-            notifyType = 1; // focus changed
-            oldFocus = getItemInFocus();
-            itemLFToNotify = id2Item(hint);
-        } else if (peerId == nativeId) {
-            // there is a scroll event from the native peer,
-            // we call show/hide Notify outside of the synchronized block
-            notifyType = 2; // viewport changed
-        } else {
-            // peerId identified the ItemLF, notify it
-            notifyType = 3; // item peer state changed
-            itemLFToNotify = id2Item(peerId);
+        switch (subType) {
+            case PEER_FOCUS_CHANGED:
+            case PEER_ITEM_CHANGED:
+                itemLFToNotify = id2Item(peerId);
+                break;
+            case PEER_VIEWPORT_CHANGED:
+            case PEER_TRAVERSE_REQUEST:
+                if (peerId != nativeId) {
+                    return; // invalid peer id
+                }
+                break;
         }
 	}
 
 	// SYNC NOTE: Following calls may end in app code.
 	// 	      So do it outside LCDUILock
-	switch (notifyType) {
+	switch (subType) {
 
-	case 1: // Focus notification
+	case PEER_FOCUS_CHANGED: // Focus notification
         uFocusChanged(itemLFToNotify);
 	    break;
             
-	case 2: // Scrolling notification
+	case PEER_VIEWPORT_CHANGED: // Scrolling notification
 	    // 'hint' is the new viewport position
 	    uViewportChanged(hint, hint + viewportHeight);
 
@@ -602,18 +604,22 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 	    uCallPaint(null, null);
 	    break;
 
-	case 3: // Item peer notification
-	    if (itemLFToNotify != null &&
-		itemLFToNotify.uCallPeerStateChanged(hint)) {
-		// Notify the itemStateListener
-		owner.uCallItemStateChanged(itemLFToNotify.item);
-	    }
+	case PEER_ITEM_CHANGED: // Item peer notification
+        if (itemLFToNotify != null &&
+        itemLFToNotify.uCallPeerStateChanged(hint)) {
+            // Notify the itemStateListener
+            owner.uCallItemStateChanged(itemLFToNotify.item);
+        }
 	    break;
+
+    case PEER_TRAVERSE_REQUEST: // traverse requested
+        uTraverse((hint == 1) ? Canvas.RIGHT : Canvas.LEFT);
+        break;
 
 	default:
 	    // for safety/completeness.
             Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI_FORM_LAYOUT,
-                "FormLFImpl: notifyType=" + notifyType);
+                "FormLFImpl: notifyType=" + subType);
 	    break;
 	}
     }
@@ -632,7 +638,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (focusIndex == traverseIndex) {
                 oldFocus = newFocus;
             } else {
-                oldFocus = traverseIndex > 0 ? itemLFs[traverseIndex] : null;
+                oldFocus = traverseIndex >= 0 ? itemLFs[traverseIndex] : null;
                 traverseIndex = focusIndex;
             }
         }
@@ -1120,6 +1126,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         uEnsureResourceAndRequestedSizes();
 
         ItemLFImpl[] itemsCopy = null;
+        int itemsCopyCount = 0;
         int traverseIndexCopy = -1;
 
         // Layout
@@ -1152,6 +1159,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             } 
 
             itemsCopy = new ItemLFImpl[numOfLFs];
+            itemsCopyCount = numOfLFs;
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
             traverseIndexCopy = traverseIndex;
             itemsModified = false;
@@ -1183,11 +1191,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             updateCommandSet();
         }
 
-        for (int index = 0; index < numOfLFs; index++) {
-            if (itemLFs[index].sizeChanged) {
-                itemLFs[index].uCallSizeChanged(itemLFs[index].bounds[WIDTH],
-                        itemLFs[index].bounds[HEIGHT]);
-                itemLFs[index].sizeChanged = false;
+        for (int index = 0; index < itemsCopyCount; index++) {
+            if (itemsCopy[index].sizeChanged) {
+                itemsCopy[index].uCallSizeChanged(itemsCopy[index].bounds[WIDTH],
+                        itemsCopy[index].bounds[HEIGHT]);
+                itemsCopy[index].sizeChanged = false;
             }
         }
     }
@@ -1225,6 +1233,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         ItemLFImpl[] itemsCopy;
         int traverseIndexCopy;
+
         synchronized (Display.LCDUILock) {
             itemsCopy = new ItemLFImpl[numOfLFs];
             traverseIndexCopy = traverseIndex;
@@ -1312,7 +1321,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                 
                 if (scrollForBounds(dir, visRect)) {
                     uRequestPaint(); // request to paint contents area
-                } else {
+                } else {                   
                     synchronized (Display.LCDUILock) {
                         itemsCopy[traverseIndexCopy].lRequestPaint();
                     }
@@ -1456,7 +1465,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (newY < 0) {
                 newY = 0;
             }
-            
+
             // We loop upwards until we find the first item which is
             // currently at least partially visible
             int firstVis = items.length;
@@ -1464,6 +1473,12 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                 if (items[i].visibleInViewport) {
                     firstVis = i;
                 }
+            }
+
+            if (firstVis == items.length) {
+                scrollPos = newY;
+                setScrollPosition0(scrollPos);
+                return;
             }
             
             // case 1. We're at the top of the item so just
@@ -1733,10 +1748,26 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         }
         int scrollPos = getScrollPosition0();        
         // If the Item's top is within the viewport, return true
-        return !(item.bounds[Y] > scrollPos + viewportHeight ||
-                 item.bounds[Y] + item.bounds[HEIGHT] < scrollPos);
+        return !(item.bounds[Y] >= scrollPos + viewportHeight ||
+                 item.bounds[Y] + item.bounds[HEIGHT] <= scrollPos);
     }
 
+    /**
+     * Determine how much the given item is visible in the current viewport.
+     *
+     * @param item the item to determine visibility
+     * @return the percentage of visible item area rated from 0 to 100
+     * 0 - item is not visible,
+     * 100 - item is completely visible
+     * 1 - 99 - item is partially visible 
+     */
+    int howMuchItemVisible(ItemLFImpl item) {
+        int[] visibleArea = new int[4];
+        setVisRect(item, visibleArea);
+        return item.bounds[HEIGHT] > 0 ?
+            (visibleArea[HEIGHT] * 100 / item.bounds[HEIGHT]) : 0;
+    }
+    
     /**
      * Determine if the given item is at completely visible
      * in the current viewport.
@@ -1826,6 +1857,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      *         in the given direction.
      */
     boolean uCallItemTraverse(ItemLFImpl item, int dir) {
+
+        boolean ret = false;
+
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -1845,13 +1879,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         if (item.uCallTraverse(dir,
                                width, viewportHeight, visRect)) 
         {
-            
-            // Since visRect is sent to the Item in its own coordinate
-            // space, we translate it back into the overall Form's
-            // coordinate space
-            visRect[X] += item.bounds[X];
-            visRect[Y] += item.bounds[Y];
-
             synchronized (Display.LCDUILock) {
                 // It's possible that this newFocus item has
                 // been just removed from this Form since we
@@ -1861,10 +1888,16 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                 }
             }
 
-            return true;
+            ret = true;
         }
-        
-        return false;
+
+        // Since visRect is sent to the Item in its own coordinate
+        // space, we translate it back into the overall Form's
+        // coordinate space
+        visRect[X] += item.bounds[X];
+        visRect[Y] += item.bounds[Y];
+
+        return ret;
     }
 
     /**
@@ -1891,22 +1924,23 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             }
         }
 
+        // item not found
+        if (index==-1) {
+            return;
+        }
+
         itemLF = itemLFs[index];
         
-        // Ensure the item is visible
-        if (!itemCompletelyVisible(itemLF)) {
-            // We'll initially position at the bottom of the form,
-            // then adjust upward to the top corner of the item
-            // if necessary
-            if (itemLF.bounds[Y] > getScrollPosition0()) {
-                int scrollPos = viewable[HEIGHT] - viewportHeight;
-                if (itemLF.bounds[Y] < scrollPos) {
-                    scrollPos = itemLF.bounds[Y];
+        if (index != traverseIndex) {
+            // Ensure the item is visible
+            if (!itemCompletelyVisible(itemLF)) {
+                int scrollPos = itemLF.bounds[Y];
+                if (scrollPos + viewportHeight > viewable[HEIGHT]) {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
                 }
                 setScrollPosition0(scrollPos);
             }
-        }
-        if (index != traverseIndex) {
+
             // We record the present traverseItem because if it
             // is valid, we will have to call traverseOut() on that
             // item when we process the invalidate call.
@@ -1920,6 +1954,15 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             // be traversed to when the invalidate occurs
             traverseIndex = itemLF.item.acceptFocus() ? index : -1;
             lRequestInvalidate();
+        } else {
+            // Ensure the item is visible
+            if (!itemPartiallyVisible(itemLF)) {
+                int scrollPos = itemLF.bounds[Y];
+                if (scrollPos + viewportHeight > viewable[HEIGHT]) {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
+                }
+                setScrollPosition0(scrollPos);
+            }
         }
     }
     
@@ -1952,10 +1995,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         if (traverseIndexCopy != -1 && dir == CustomItem.NONE) {
             itemTraverse = 
                     uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
-            
-            synchronized (Display.LCDUILock) {
-                lScrollToItem(itemsCopy[traverseIndexCopy].item);
-            }
+
             uRequestPaint(); // request to paint contents area
             return;
         }
@@ -1974,12 +2014,28 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // left to right - this ensures we move line by line searching
         // for an interactive item. When paging "up", we search from
         // right to left.
-        int nextIndex = (dir == Canvas.DOWN || dir == CustomItem.NONE)
-            ? getNextInteractiveItem(
-                itemsCopy, Canvas.RIGHT, traverseIndexCopy)
-            : getNextInteractiveItem(
 
-                itemsCopy, Canvas.LEFT, traverseIndexCopy);
+
+        int nextIndex = traverseIndexCopy, curIndex = traverseIndexCopy;
+        int maxRate = traverseIndexCopy > -1 ?
+            howMuchItemVisible(itemsCopy[traverseIndexCopy]) : 0;
+        
+        while (maxRate < 100) {
+            curIndex = getNextInteractiveItem(itemsCopy,
+                                              (dir == Canvas.DOWN || dir == CustomItem.NONE) ?
+                                              Canvas.RIGHT : Canvas.LEFT,
+                                              curIndex);
+            if (curIndex != -1) {
+                int rate  = howMuchItemVisible(itemsCopy[curIndex]);
+                if (rate > maxRate) {
+                    maxRate = rate;
+                    nextIndex = curIndex;
+                }
+            } else {
+                // no more interractive items on the screen 
+                break;
+            }
+        }
         
         if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
             if (nextIndex != -1 || 
@@ -2223,6 +2279,13 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
     }
 
 
+    /**
+     * Sub types of peer notification events
+     */
+    private static final int PEER_FOCUS_CHANGED = 0;
+    private static final int PEER_VIEWPORT_CHANGED = 1;
+    private static final int PEER_ITEM_CHANGED = 2;
+    private static final int PEER_TRAVERSE_REQUEST = 3;
 
     /** 
      * A bit mask to capture the horizontal layout directive of an item.
@@ -2290,7 +2353,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
     /**
      * When a Form calls an Item's traverse() method, it passes in
-     * an in-out int[] that represents the Item's internal traversal
+     * an in-out int[] that represents the Item's traversal
      * bounds. This gets cached in the visRect variable
      */
     int[] visRect;

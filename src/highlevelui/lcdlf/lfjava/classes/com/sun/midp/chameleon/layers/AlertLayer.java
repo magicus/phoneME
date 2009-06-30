@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
@@ -30,10 +30,9 @@ import javax.microedition.lcdui.*;
 
 import com.sun.midp.chameleon.ChamDisplayTunnel;
 import com.sun.midp.chameleon.CLayer;
-import com.sun.midp.chameleon.layers.BodyLayer;
 
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.lcdui.Text;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 
 /**
  * AlertLayer 
@@ -63,7 +62,7 @@ public class AlertLayer extends BodyLayer {
      */
     public void setAlert(boolean alertVisible, Alert alert, int height) {
         this.alert = alert;
-        dirty = true;
+        setDirty();
         setVisible(alertVisible);
     }
     
@@ -96,42 +95,60 @@ public class AlertLayer extends BodyLayer {
      * Align alert depend on skin
      */
     public void setAnchor() {
+	if (owner == null)
+	    return;
+	if (AlertSkin.WIDTH == -1) {
+            AlertSkin.WIDTH = (int)(.95 * owner.bounds[W]);
+        }
+
+        if (AlertSkin.HEIGHT == -1) {
+            AlertSkin.HEIGHT = (int)(.75 * owner.bounds[H]);
+        }
 
         bounds[W] = AlertSkin.WIDTH;
         bounds[H] = AlertSkin.HEIGHT;
-        
+
         switch (AlertSkin.ALIGN_X) {
-            case Graphics.LEFT:
-                bounds[X] = 0;
-                break;
-            case Graphics.RIGHT:
-                bounds[X] = ScreenSkin.WIDTH - bounds[W];
-                break;
-            case Graphics.HCENTER:
-            default:
-                bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
-                break;
+        case Graphics.LEFT:
+            bounds[X] = 0;
+            break;
+        case Graphics.RIGHT:
+            bounds[X] = owner.bounds[W] - bounds[W];
+            break;
+        case Graphics.HCENTER:
+        default:
+	    bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
+            break;
         }
         switch (AlertSkin.ALIGN_Y) {
-            case Graphics.TOP:
-                bounds[Y] = 0;
-                break;
-            case Graphics.VCENTER:
-                bounds[Y] = (ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H]) / 2;
-                if (alert != null && alert.getTicker() != null) {
-                    bounds[Y] -= TickerSkin.HEIGHT;
-                }
-                break;
-            case Graphics.BOTTOM:
-            default:
-                bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H];
-                if (alert != null && alert.getTicker() != null) {
-                    bounds[Y] -= TickerSkin.HEIGHT;
-                }
-                break;
+        case Graphics.TOP:
+            bounds[Y] = 0;
+            if (alert != null &&
+                alert.getTicker() != null &&
+                TickerSkin.ALIGN == Graphics.TOP) {
+                bounds[Y] += TickerSkin.HEIGHT;
+            } 
+            break;
+        case Graphics.VCENTER:
+	    bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT - bounds[H];
+            if (alert != null && alert.getTicker() != null) {
+                bounds[Y] -= TickerSkin.HEIGHT;
+            }
+            bounds[Y] >>= 1;
+            break;
+        case Graphics.BOTTOM:
+        default:
+	    bounds[Y] = owner.bounds[H] - SoftButtonSkin.HEIGHT -
+		    bounds[H];
+            if (alert != null &&
+                alert.getTicker() != null &&
+                TickerSkin.ALIGN != Graphics.TOP) {
+                bounds[Y] -= TickerSkin.HEIGHT;
+            }
+            break;
         }
+        updateBoundsByScrollInd();
+
     }
 
     /** The Alert instance which content is currently visible */
@@ -143,16 +160,30 @@ public class AlertLayer extends BodyLayer {
      * @param layers - current layer can be dependant on this parameter
      */
     public void update(CLayer[] layers) {
+        super.update(layers);
         setAnchor();
-        if (visible) {
-            addDirtyRegion();
-        }
-        if (scrollInd != null) {
-            scrollInd.update(layers);
-            if (scrollInd.isVisible()) {
-                bounds[W] -= scrollInd.bounds[W];
+    }
+
+    /**
+     *  * Update bounds of layer depend on visability of scroll indicator layer
+     */
+    public void updateBoundsByScrollInd() {
+        bounds[W] = AlertSkin.WIDTH;
+        if (owner != null) {
+            switch (AlertSkin.ALIGN_X) {
+                case Graphics.LEFT:
+                    bounds[X] = 0;
+                    break;
+                case Graphics.RIGHT:
+                    bounds[X] = owner.bounds[W] - bounds[W];
+                    break;
+                case Graphics.HCENTER:
+                default:
+                    bounds[X] = (owner.bounds[W] - bounds[W]) >> 1;
+                    break;
             }
         }
+        super.updateBoundsByScrollInd();
     }
 }
 

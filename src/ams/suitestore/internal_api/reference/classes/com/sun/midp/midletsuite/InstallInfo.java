@@ -1,41 +1,44 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 package com.sun.midp.midletsuite;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-
-import javax.microedition.io.Connector;
-
-import com.sun.midp.io.j2me.storage.RandomAccessStream;
 
 /**
  * Information about a MIDlet that is to be installed.
  */
 public class InstallInfo {
+    /** True if this is not a midlet suite but a suite's component. */
+    public boolean isSuiteComponent;
+
+    /**
+     * If isSuiteComponent is true, holds ID of the component. In this case
+     * field "id" holds ID of the suite that owns this component.
+     */
+    public int componentId;
 
     /** What ID the installed suite is stored by. */
     public int id;
@@ -45,7 +48,7 @@ public class InstallInfo {
 
     /** URL of the JAR. */
     public String jarUrl;
-
+        
     /** Name of the downloaded MIDlet suite jar file. */
     public String jarFilename;
 
@@ -54,6 +57,9 @@ public class InstallInfo {
 
     /** Name of the suite. */
     public String suiteName;
+
+    /** User-friendly name of the suite or component being installed. */
+    public String displayName;
 
     /** Vendor of the suite. */
     public String suiteVendor;
@@ -76,11 +82,19 @@ public class InstallInfo {
     /** Flag for trusted suites. If true the system trust icon is displayed. */
     public boolean trusted;
 
+    /** 
+     * Flag for temporary suites. All temporary suites can be uninstalled at 
+     * once.
+     */
+    public boolean temporary;
+    
     /** Hash value of the suite with preverified classes */
     public byte[] verifyHash;
 
     /**
      * Constructor for InstallInfo to be called when storing a new suite.
+     *
+     * @param theId ID of the installed suite
      */
     public InstallInfo(int theId) {
         id = theId;
@@ -156,7 +170,16 @@ public class InstallInfo {
         return trusted;
     }
 
-
+    /**
+     * Indicates whether this suite is temporary. All temporary suites can 
+     * be uninstalled at once.
+     *
+     * @return true if the suite is temporary, false if not
+     */
+    public boolean isTemporary() {
+        return temporary;
+    }
+    
     /**
      * Gets hash value for the suite with all classes successfully
      * verified during the suite installation, otherwise null value

@@ -1,52 +1,69 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
-import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.lcdui.EventConstants;
 
 /**
  * Basic layer containing the application area of the display. This layer
  * contains the current Displayable contents, such as a Form or Canvas.
  */
 public class BodyLayer extends CLayer
-    implements ScrollListener {
+    implements ScrollListener, GestureAnimatorListener {
 
     /**
      * The scroll indicator layer to notify of scroll settings
      * in case not all content can fit on the menu.
      */
     protected ScrollIndLayer scrollInd;
-    
-    
+
+    /** Tunnel instance to call Display methods */
     ChamDisplayTunnel tunnel;
+
+    /**
+     *  Y coordinate of pointer during pointer drag event.
+     */
+    private int pointerY = Integer.MAX_VALUE;
+    
+    /**
+     *  Desired drag amount needed to return content
+     *  to the stable position.
+     */
+    private int stableY = 0;
+
+    /**
+     * Last delta of pointer y coordinate during drag operation.
+     */
+    private int pointerDeltaY = 0;
 
     /**
      * Create a new BodyLayer.
@@ -76,7 +93,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
-
+        setSupportsInput(true);
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
     
@@ -97,6 +114,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
+        setSupportsInput(true);
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
 
@@ -121,6 +139,39 @@ public class BodyLayer extends CLayer
     }
 
     /**
+     * Prepare Graphics context for optimized painting of the Canvas
+     * holded by this BodyLayer instance. Bounds and dirty region of
+     * the layer are used to set Graphics clip area and translation.
+     * 
+     * @param g Graphics context to prepare
+     */
+    public void setGraphicsForCanvas(Graphics g) {
+        // NOTE: note the two different orders of clip and translate
+        // below. That is because the layer's bounds are stored in
+        // the coordinate space of the window. But its internal dirty
+        // region is stored in the coordinate space of the layer itself.
+        // Thus, for the first one, the clip can be set and then translated,
+        // but in the second case, the translate must be done first and then
+        // the clip set.
+        if (isDirty()) {
+            if (isEmptyDirtyRegions()) {
+                g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
+                g.translate(bounds[X], bounds[Y]);
+            } else {
+                g.translate(bounds[X], bounds[Y]);
+                g.setClip(dirtyBounds[X], dirtyBounds[Y],
+                    dirtyBounds[W], dirtyBounds[H]);
+            }
+            cleanDirty();
+        } else {
+            // NOTE: the layer can be not dirty, e.g. in the case an empty
+            // area was requested for repaint, set empty clip area then.
+            g.translate(bounds[X], bounds[Y]);
+            g.setClip(0, 0, 0, 0);
+        }
+    }
+
+    /**
      * Add this layer's entire area to be marked for repaint. Any pending
      * dirty regions will be cleared and the entire layer will be painted
      * on the next repaint.
@@ -132,8 +183,8 @@ public class BodyLayer extends CLayer
         if (scrollInd != null) {
             scrollInd.addDirtyRegion();
         }
-    }
-    
+    } 
+
     /**
      * Mark this layer as being dirty. By default, this would also mark the
      * containing window (if there is one) as being dirty as well. However,
@@ -142,39 +193,78 @@ public class BodyLayer extends CLayer
      * Chameleon repaint when only the application area needs updating.
      */    
     public void setDirty() {
-        this.dirty = true;
+        setDirtyButNotNotifyOwner();
     }
     
     /**
      * Scrolling the contents according to the scrolling parameters.
      * @param scrollType  can be SCROLL_LINEUP, SCROLL_LINEDOWN, SCROLL_PAGEUP,
      *                SCROLL_PAGEDOWN or SCROLL_THUMBTRACK
-     * @thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
+     * @param thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
      * 
      */
     public void scrollContent(int scrollType, int thumbPosition) {
         tunnel.callScrollContent(scrollType, thumbPosition);
     }
 
+    /**
+     * Called by CWindow to notify the layer that is has been 
+     * added to the active stack. 
+     */
+    public void addNotify() {
+        if (scrollInd != null && owner != null) {
+            if (owner.addLayer(scrollInd)) {
+                updateScrollIndicator();    
+            }    
+        }
+    }
+
+    /**
+     * Called by CWindow to notify the layer that is has been 
+     * removed from the active stack. 
+     * @param owner an instance of CWindow this layer has been removed from 
+     */
+    public void removeNotify(CWindow owner) {
+        if (scrollInd != null && owner != null) {
+            owner.removeLayer(scrollInd);
+        }
+     }
+
+
     public void setScrollInd(ScrollIndLayer newScrollInd) {
         if (scrollInd != newScrollInd ||
-            scrollInd != null && scrollInd.scrollable != this ||
-            scrollInd != null && scrollInd.listener != this) {
+                scrollInd != null && scrollInd.scrollable != this ||
+                scrollInd != null && scrollInd.listener != this) {
             if (scrollInd != null) {
+                boolean vis = scrollInd.isVisible();
                 scrollInd.setScrollable(null);
                 scrollInd.setListener(null);
+
+                if (owner != null) {
+                    if (owner.removeLayer(scrollInd) &&
+                            ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
+                            vis) {
+                        bounds[W] += scrollInd.bounds[W];
+                        if (ScreenSkin.RL_DIRECTION) {
+                            bounds[X] -= scrollInd.bounds[W];
+                        }
+
+                        addDirtyRegion();
+                    }
+                }
             }
-            if (owner != null) {
-                owner.removeLayer(scrollInd);
-            }
-            
+
             scrollInd = newScrollInd;
             if (scrollInd != null) {
                 scrollInd.setScrollable(this);
                 scrollInd.setListener(this);
+
+                if (owner != null) {
+                    owner.addLayer(scrollInd);
+                }
             }
         }
-        updateScrollIndicator();        
+        updateScrollIndicator();
     }
 
     /**
@@ -189,18 +279,22 @@ public class BodyLayer extends CLayer
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
-     * @return true if set vertical scroll occues
+     * @return true if set vertical scroll occures
      */
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
-        if (scrollInd != null && owner != null)  {
+        if (scrollInd != null) {
+            boolean wasVisible = scrollInd.isVisible();
             scrollInd.setVerticalScroll(scrollPosition, scrollProportion);
-            if (scrollInd.isVisible()) {
-                owner.addLayer(scrollInd);
-            } else {
-                owner.removeLayer(scrollInd);
+            boolean scrollVisible = scrollInd.isVisible();
+
+            if (wasVisible != scrollVisible) {
+                if (owner != null) {
+                    bounds[X] = 0;
+                    bounds[W] = owner.bounds[W];
+                    updateBoundsByScrollInd();
+                }
+                return true;
             }
-            owner.resize();
-            return true;
         }
         return false;
     }
@@ -227,32 +321,120 @@ public class BodyLayer extends CLayer
      */
     public void update(CLayer[] layers) {
         super.update(layers);
-
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = ScreenSkin.HEIGHT;
-
-        if (layers[MIDPWindow.PTI_LAYER] != null && layers[MIDPWindow.PTI_LAYER].isVisible()) {
-            bounds[H] -= layers[MIDPWindow.PTI_LAYER].bounds[H];
+        if (owner == null) {
+            return;
         }
-        if (layers[MIDPWindow.TITLE_LAYER].isVisible()) {
-            bounds[Y] = layers[MIDPWindow.TITLE_LAYER].bounds[H];
-            bounds[H] -= layers[MIDPWindow.TITLE_LAYER].bounds[H];
-        } else {
-            bounds[Y] = 0;
+        bounds[X] = 0;
+        bounds[W] = owner.bounds[W];
+        bounds[H] = owner.bounds[H];
+        CLayer l = layers[MIDPWindow.PTI_LAYER];
+        if (l != null && l.isVisible()) {
+            bounds[H] -= l.bounds[H];
         }
-        if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
-            bounds[H] -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
+        l = layers[MIDPWindow.KEYBOARD_LAYER];
+        if (l != null && l.isVisible()) {
+            bounds[H] -= l.bounds[H];
         }
-        if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
-            bounds[H] -= layers[MIDPWindow.BTN_LAYER].bounds[H];
+        l = layers[MIDPWindow.TITLE_LAYER];
+        if (l != null) {
+            bounds[Y] = l.bounds[Y];
+            if (l.isVisible()) {
+                bounds[Y] += l.bounds[H];
+                bounds[H] -= l.bounds[H];
+            }
+        }
+        l = layers[MIDPWindow.TICKER_LAYER];
+        if (l != null && l.isVisible()) {
+            bounds[H] -= l.bounds[H];
+        }
+        l = layers[MIDPWindow.BTN_LAYER];
+        if (l != null && l.isVisible()) {
+            bounds[H] -= l.bounds[H];
         }
 
         if (scrollInd != null) {
             scrollInd.update(layers);
-            if (scrollInd.isVisible()) {
+        }
+        updateBoundsByScrollInd();
+    }
+
+
+    /**
+     *  * Update bounds of layer depend on visability of scroll indicator layer
+     */
+    public void updateBoundsByScrollInd() {
+        if (scrollInd != null && scrollInd.isVisible() ) {
+            if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR ) {
                 bounds[W] -= scrollInd.bounds[W];
+                if (ScreenSkin.RL_DIRECTION) {
+                    bounds[X] += scrollInd.bounds[W];
+                }
             }
+            scrollInd.setBounds();             
         }
     }
+
+    /**
+     * Handle input from a pen tap.
+     *
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     *
+     * Important: the x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     * @return
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        if (tunnel != null) {
+            switch (type) {
+                case EventConstants.PRESSED:
+                    if (tunnel.callIsDraggable(x, y)) {
+                        pointerY = y;
+                    } else {
+                        pointerY = Integer.MAX_VALUE;                        
+                    }
+                    break;
+                case EventConstants.DRAGGED:
+                    if (pointerY != Integer.MAX_VALUE) {
+                        pointerDeltaY = pointerY - y;
+                        stableY = tunnel.callDragContent(pointerDeltaY);
+                        pointerY = y;
+                    }
+                    break;
+                case EventConstants.FLICKERED:
+                    if (pointerY != Integer.MAX_VALUE && pointerDeltaY != 0) {
+                        GestureAnimator.flick(this, pointerDeltaY);
+                        stableY = 0;
+                    }
+                    break;
+                case EventConstants.RELEASED:
+                case EventConstants.GONE:
+                    if (stableY != 0) {
+                        // IMPL_NOTE: should return 0
+                        GestureAnimator.dragToStablePosition(this, stableY);
+                        stableY = 0;
+                    }
+                    pointerY = Integer.MAX_VALUE;
+                    break;
+            }
+        }
+        // pass event to other consumers
+        return false;
+    }
+
+    /**
+     * Drag displayable content
+     * @param deltaY
+     * @return desired drag amount to become stable
+     */
+    public int dragContent(int deltaY) {
+        return tunnel.callDragContent(deltaY);
+    }
+
+
 }
 

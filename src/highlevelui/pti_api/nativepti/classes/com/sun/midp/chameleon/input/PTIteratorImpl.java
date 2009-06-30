@@ -1,31 +1,33 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.input;
 import com.sun.midp.io.Util;
+import com.sun.midp.log.LogChannels;
+import com.sun.midp.log.Logging;
 
 /** 
  * Implements PTIterator using machine-dependent KNI interface.
@@ -70,7 +72,10 @@ public class PTIteratorImpl implements PTIterator {
      * @return true is valid, false otherwise
      */
     public boolean isValid() {
-        log("isValid = " + (handle != 0));
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "isValid = " + (handle != 0));
+        }
         return handle > 0;
     }
     
@@ -128,29 +133,26 @@ public class PTIteratorImpl implements PTIterator {
      * @exception NoSuchElementException iteration has no more elements.
      */
     public String next() {
-        log("[iter.nextCompletionOption] >>");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[iter.nextCompletionOption] >>");
+        }
         String ret = null;
-        
+
         if (isValid()) {
             ret = ptNextCompletionOption0(handle, entry.length);
         }
-        
+
         if (ret == null)
             ret = "";
 
-        log("[iter.nextCompletionOption] : " + ret);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[iter.nextCompletionOption] : " + ret);
+        }
 
         return ret;
     }
-
-    /**
-     * Prints the debug message
-     * @param str debug message
-     */
-    static void log(String str) {
-        //        System.out.println(str);
-    }
-
 
     /** 
      * NATIVE CODE

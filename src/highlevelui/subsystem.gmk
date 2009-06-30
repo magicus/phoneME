@@ -1,27 +1,27 @@
 #
 #  
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 ######################################################################
 #
@@ -81,6 +81,7 @@ include $(SUBSYSTEM_HIGHUI_DIR)/lcdlf/lib.gmk
 ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
     include $(SUBSYSTEM_HIGHUI_DIR)/lfpport/lib.gmk
 else
+
     include $(SUBSYSTEM_HIGHUI_DIR)/lfjport/lib.gmk
 
     ####################################################
@@ -100,11 +101,20 @@ else
 
     ifeq ($(USE_NATIVE_PTI), true)
        include $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port/lib.gmk
-    endif
 
+    endif
     # nim -- Native Input Mode support
     include $(SUBSYSTEM_HIGHUI_DIR)/nim_port/lib.gmk
+
 endif
+
+#####################################################################
+# Virtual keyboard Subsystem
+# Description: Optional for certain platforms
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/virtual_keyboard/lib.gmk
+
 
 #####################################################################
 # Application specific Subsystem
@@ -112,11 +122,11 @@ endif
 #####################################################################
 
 ifeq ($(PLATFORM), linux_fb)
-    ifeq ($(USE_DIRECTFB), true)
+   ifeq ($(USE_DIRECTFB), true)
 	include $(SUBSYSTEM_HIGHUI_DIR)/directfb_application/lib.gmk
-    endif
-    include $(SUBSYSTEM_HIGHUI_DIR)/fb_application/lib.gmk
-    include $(SUBSYSTEM_HIGHUI_DIR)/fb_port/lib.gmk
+   endif
+   include $(SUBSYSTEM_HIGHUI_DIR)/fb_application/lib.gmk
+   include $(SUBSYSTEM_HIGHUI_DIR)/fb_port/lib.gmk
 else 
 
     ifeq ($(PLATFORM), armsd)
@@ -133,12 +143,21 @@ else
                       include $(SUBSYSTEM_HIGHUI_DIR)/wince_application/lib.gmk
                   else
                        ifeq ($(PLATFORM), javacall)
-                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/lib.gmk
+                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/subsystem.gmk
                        endif                  
                   endif             
              endif
         endif
     endif
+endif
+
+#####################################################################
+# LCDUI for CDC Subsystem
+# Description: CDC UI
+#####################################################################
+
+ifeq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_HIGHUI_DIR)/cdcui/lib.gmk
 endif
 
 ########################################################################
@@ -201,6 +220,10 @@ SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES)
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_LCDLF_NATIVE_FILES)
 SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_LCDLF_EXTRA_INCLUDES)
 
+# Virtual keyboard
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES)
+
 # LFPPORT or LFJPORT
 #
 ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
@@ -232,4 +255,10 @@ endif
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_APP_NATIVE_FILES)
 SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_APP_EXTRA_INCLUDES)
 
+# CDC UI
+#
+ifeq ($(TARGET_VM), cdc_vm)
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_CDCUI_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_CDCUI_NATIVE_FILES)
+endif
 

@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 #include <kni.h>
 #include <midpUtilKni.h>
@@ -32,17 +32,20 @@
 #include <commonKNIMacros.h>
 #include <nim.h>
 
-#define numElems(x) sizeof(x)/sizeof(x[0])
+#ifdef WINCE
+#include <sipapi.h>
+#endif
 
-#include <stdio.h>
+#define numElems(x) sizeof(x)/sizeof(x[0])
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-
-
+#ifdef WINCE
+extern jboolean bVirtualModeEnabled;
+extern int midpPaintAllowed;
+#endif
 
 /* Macro to retrieve C structure representation of an Object */
 
@@ -58,7 +61,6 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_chameleon_input_NativeInputMode_initialize) {
     int rc = 0;
     jint id = KNI_GetParameterAsInt(1);
-    printf("contructor id=%i\n",id);
 
     KNI_StartHandles(3);
     KNI_DeclareHandle(thisObject);
@@ -74,7 +76,8 @@ KNIDECL(com_sun_midp_chameleon_input_NativeInputMode_initialize) {
         constraint_map* flags = nim_get_constraint_map(NIM_IDENTITY(thisObject));
         int j,i;
         /* store the array object address into the handle */
-        *((jobject_array**)flags2D) = (getNativeInputModePtr(thisObject)->isMap);
+        *((jobject_array**)flags2D) =(jobject_array*) 
+	  (getNativeInputModePtr(thisObject)->isMap);
         for(j=0; j<NIM_CONSTRAINT_MAP_NROWS; j++) {
             KNI_GetObjectArrayElement(flags2D,j,flags1D);
             for (i = 0; i < NIM_CONSTRAINT_MAP_NCOLS; i++) {
@@ -317,6 +320,7 @@ KNIDECL(com_sun_midp_chameleon_input_NativeInputMode_endInput0) {
     KNI_GetThisPointer(thisObject);
     nim_end_input(NIM_IDENTITY(thisObject));
     KNI_EndHandles();
+    KNI_ReturnVoid();
 }
 
 /* an example how to return an array of strings
@@ -398,6 +402,24 @@ KNIDECL(com_sun_midp_chameleon_input_InputModeFactory_getInputModeIds) {
     }
     KNI_EndHandlesAndReturnObject(idListObj);
 }
+
+#ifdef WINCE
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_showNativeKeyboard) {
+    bVirtualModeEnabled = KNI_TRUE;
+    midpPaintAllowed = 0;
+    SipShowIM(SIPF_ON);
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_chameleon_input_VirtualKeyboardInputMode_hideNativeKeyboard) {
+    bVirtualModeEnabled = KNI_FALSE;
+    midpPaintAllowed = 0;
+    SipShowIM(SIPF_OFF);
+    KNI_ReturnVoid();
+}
+#endif
 
 #ifdef __cplusplus
 }

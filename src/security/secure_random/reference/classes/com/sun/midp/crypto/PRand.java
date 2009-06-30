@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.crypto;
@@ -109,6 +109,18 @@ final class PRand extends SecureRandom {
 	    }
 	}
     }
+
+    /**
+     * Perform a platform-defined procedure for obtaining random bytes and
+     * store the obtained bytes into b, starting from index 0.
+     * (see IETF RFC 1750, Randomness Recommendations for Security,
+     *  http://www.ietf.org/rfc/rfc1750.txt)
+     * @param b array that receives random bytes
+     * @param nbytes the number of random bytes to receive, must not be less than size of b
+     * @return true if successful
+     */
+    private native static boolean getRandomBytes(byte[] b, int nbytes);
+
     /**
      * Set the random number seed.
      * @param b initial data to use as the seed 
@@ -131,19 +143,18 @@ final class PRand extends SecureRandom {
      * random data by using a one way hash as a mixing function and
      * the current time in milliseconds as a source of entropy for the seed.
      * This method assumes the original seed data is unpredicatble.
-     */ 
+     */
     private void updateSeed() {
-	long t = System.currentTimeMillis();
-	byte[] tmp = new byte[8];
-	
-	// Convert the long value into a byte array
-	for (int i = 0; i < 8; i++) {
-	    tmp[i] = (byte) (t & 0xff);
-	    t = (t >>> 8);
-	}
-	
-	md.update(seed, 0, seed.length);
-	md.update(tmp, 0, tmp.length);
+        byte[] tmp = new byte[8];
+
+        boolean haveSeed = getRandomBytes(tmp, tmp.length);
+
+        if (!haveSeed) {
+            throw new RuntimeException("could not obtain a random seed");
+        }
+
+        md.update(seed, 0, seed.length);
+        md.update(tmp, 0, tmp.length);
         try {
             md.digest(seed, 0, seed.length);
         } catch (DigestException de) {

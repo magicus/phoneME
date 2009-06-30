@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 package com.sun.midp.lcdui;
 
 import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.game.GameCanvas;
+import java.util.Hashtable;
 
 /**
  * A class that maps between DisplayAccess objects and Displayable, GameCanvas.
@@ -44,38 +46,94 @@ public class GameMap {
     static private DisplayAccess displayAccess;
 
     /**
+     * The GraphicsAccess tunnel instance handed out from
+     * javax.microedition.lcdui package 
+     */
+    static private GraphicsAccess graphicsAccess;
+
+    /**
+     * The GameAccess tunnel instance handed out from
+     * javax.microedition.lcdui.game package
+     */
+    static private GameAccess gameAccess;
+
+    /**
      * Lock to ensure synchronized access to the displayable
      */
     static final private Object lock = new Object();
 
     /**
-     * Associate the given Displayable and DisplayAccess.  This is a
+     * Associates the given Displayable and DisplayAccess.  This is a
      * one-way association.
      *
      * @param c The GameCanvas to store
      * @param d The DisplayAccess associated with the GameCanvas
      */
-    public static void register(Displayable c, DisplayAccess d) {
+    public static void registerDisplayAccess(Displayable c, DisplayAccess d) {
         synchronized (lock) {
-	    displayable = c;
-	    displayAccess = d;
-	}
+	        displayable = c;
+	        displayAccess = d;
+	    }
     }
 
-
     /**
-     * Get the DisplayAccess object for this Displayable.
+     * Gets the DisplayAccess object for this Displayable.
      * @param c The Displayable to get the DisplayAccess for
      * @return DisplayAccess The DisplayAccess associated with the MIDlet
      */
-    public static DisplayAccess get(Displayable c) {
+    public static DisplayAccess getDisplayAccess(Displayable c) {
         synchronized (lock) {
-  	    if (c == displayable) {
+  	        if (c == displayable) {
                 return displayAccess;
-  	    } else {
+  	        } else {
                 return null;
-	    }
+	        }
         }
     }
 
+    /**
+     * Register given game package accessor instance
+     * @param gameAccess implementation of the GameAccess interface
+     */
+    public static void registerGameAccess(GameAccess gameAccess) {
+        synchronized (lock) {
+            GameMap.gameAccess = gameAccess;
+        }
+    }
+
+    /**
+     * Gets the GameCanvasLFImpl object for this GameCanvas.
+     * @param c The GameCanvas to get the GameCanvasLFImpl for
+     * @return GameCanvasLFImpl, or null if there is no accessor to game package
+     */
+    public static GameCanvasLFImpl getGameCanvasImpl(GameCanvas c) {
+        if (gameAccess != null) {
+            return gameAccess.getGameCanvasLFImpl(c);
+        }
+        return null;
+    }
+
+    /**
+     * Sets graphics accessor instance from javax.microedition.lcdui package
+     * to use extended package-private Image and Graphics APIs
+     *
+     * @param graphicsAccess graphics accessor tunnel
+     */
+    public static void registerGraphicsAccess(GraphicsAccess graphicsAccess) {
+        synchronized (lock) {
+            GameMap.graphicsAccess = graphicsAccess;
+        }
+    }
+
+    /**
+     * Gets GraphicsAccess instance needed to access extended
+     * Image and Graphics APIs
+     * 
+     * @return GraphicsAccess tunnel instance
+     */
+    public static GraphicsAccess getGraphicsAccess() {
+        synchronized (lock) {
+            return graphicsAccess;
+        }
+    }
 }
