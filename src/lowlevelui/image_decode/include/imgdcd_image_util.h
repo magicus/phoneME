@@ -41,8 +41,13 @@
 extern "C" {
 #endif
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+typedef unsigned short imgdcd_pixel16_type;
+typedef unsigned int imgdcd_pixel32_type;
+typedef imgdcd_pixel32_type imgdcd_pixel_type;
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+extern int img_enable_32bit_mode;
+#elif ENABLE_32BITS_PIXEL_FORMAT
 typedef unsigned int imgdcd_pixel_type;
 #else
 /**

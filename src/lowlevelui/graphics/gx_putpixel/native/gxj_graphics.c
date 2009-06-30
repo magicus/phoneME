@@ -33,6 +33,7 @@
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_image.h"
+#include "gxj_putpixel.h"
 
 #if ENABLE_BOUNDS_CHECKS
 #include <gxapi_graphics.h>
@@ -105,7 +106,15 @@ gx_fill_triangle(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+      pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+      pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_triangle()\n");
 
@@ -138,7 +147,7 @@ gx_copy_area(const jshort *clip,
  */
 #define div(x)  (((x) >> 8) + ((((x) >> 8) + ((x) & 0xff) + 1) >> 8))
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
 /* return value of src OVER dst, where:
  *     src is an 8888 ARGB pixel in an int (LCDUI format)
  *     dst is an 8888 RGBA or ABGR pixel in an int (OpenGL ES format or inverted OpenGL ES format)
@@ -160,7 +169,7 @@ gx_copy_area(const jshort *clip,
  * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html#The compositing algebra
  * http://graphics.stanford.edu/courses/cs248-01/comp/comp.html#Premultiplied alpha
  */
-static jint alphaComposition(jint src, jint dst) { 
+static jint alphaComposition32(jint src, jint dst) { 
 
     int Rs, Bs, Gs, As, Rd, Bd, Gd, Ad, ONE_MINUS_As;
 
@@ -176,7 +185,7 @@ static jint alphaComposition(jint src, jint dst) {
         /* src is opaque, so no blend and no premultiplication are necessary */
 #if ENABLE_RGBA8888_PIXEL_FORMAT
         return((Rs << 24) | (Gs << 16) | (Bs << 8) | 0xff);
-#elif ENABLE_ABGR8888_PIXEL_FORMAT
+#elif ENABLE_ABGR8888_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
         return(0xff000000 | (Bs << 16) | (Gs << 8) | Rs);
 #endif
     }
@@ -189,7 +198,7 @@ static jint alphaComposition(jint src, jint dst) {
     dst = dst >> 8;
     Gd = dst & 0xff;
     Rd = (dst >> 8) & 0xff;
-#elif ENABLE_ABGR8888_PIXEL_FORMAT
+#elif ENABLE_ABGR8888_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
     Rd = dst & 0xff;
     dst = dst >> 8;
     Gd = dst & 0xff;
@@ -210,12 +219,14 @@ static jint alphaComposition(jint src, jint dst) {
 
 #if ENABLE_RGBA8888_PIXEL_FORMAT
     return((Rd << 24) | (Gd << 16) | (Bd << 8) | Ad);
-#elif ENABLE_ABGR8888_PIXEL_FORMAT
+#elif ENABLE_ABGR8888_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
     return((Ad << 24) | (Bd << 16) | (Gd << 8) | Rd);
 #endif
 }
-#else
-static unsigned short alphaComposition(jint src, 
+#endif
+
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+static unsigned short alphaComposition16(jint src, 
                                        unsigned short dst, 
                                        unsigned char As) {
   unsigned char Rs = (unsigned char)(src >> 16);
@@ -242,41 +253,84 @@ static unsigned short alphaComposition(jint src,
   /* compose RGB from separate color components */
   return ((Rr & 0xF8) << 8) + ((Gr & 0xFC) << 3) + (Br >> 3);
 }
-#endif /* ENABLE_32BITS_PIXEL_FORMAT */
+#endif
 
 #if (UNDER_CE)
 extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
     int dstSpan, int width, int height);
 #endif
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA_32(pSrc, pDest) \
+        src = *pSrc++;  \
+        As = src >> 26; \
+        if (As == 0x3F) {   \
+            *pDest = GXJ_MIDPTOOPAQUEPIXEL_32(src);  \
+        } else if (As != 0) {   \
+            *pDest = alphaComposition32(src, *pDest);   \
+        }   \
+        pDest++
+
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA_16(pSrc, pDest) \
+        src = *pSrc++;  \
+        As = src >> 26; \
+        if (As == 0x3F) {   \
+            *pDest = GXJ_MIDPTOOPAQUEPIXEL_16(src);  \
+        } else if (As != 0) {   \
+            *pDest = alphaComposition16(src, *pDest, (unsigned char)As);   \
+        }   \
+        pDest++
+
+#define SRC_PIXEL_TO_DEST_32(pSrc, pDest) \
+        src = *pSrc++;  \
+        *pDest = GXJ_MIDPTOOPAQUEPIXEL_32(src); \
+        pDest++
+
+#define SRC_PIXEL_TO_DEST_16(pSrc, pDest) \
+        src = *pSrc++;  \
+        *pDest = GXJ_MIDPTOOPAQUEPIXEL_16(src); \
+        pDest++
+
+#elif ENABLE_32BITS_PIXEL_FORMAT
+
 #define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
         src = *pSrc++;  \
         As = src >> 26; \
         if (As == 0x3F) {   \
             *pDest = GXJ_MIDPTOOPAQUEPIXEL(src);  \
         } else if (As != 0) {   \
-            *pDest = alphaComposition(src, *pDest);   \
+            *pDest = alphaComposition32(src, *pDest);   \
         }   \
         pDest++
+
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA_32(pSrc, pDest) SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest)
+#define SRC_PIXEL_TO_DEST_32(pSrc, pDest) SRC_PIXEL_TO_DEST(pSrc, pDest)
+
 #else
+
 #define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
         src = *pSrc++;  \
         As = src >> 26; \
         if (As == 0x3F) {   \
             *pDest = GXJ_MIDPTOOPAQUEPIXEL(src);  \
         } else if (As != 0) {   \
-            *pDest = alphaComposition(src, *pDest, (unsigned char)As);   \
+            *pDest = alphaComposition16(src, *pDest, (unsigned char)As);   \
         }   \
         pDest++
+
+#define SRC_PIXEL_TO_DEST_WITH_ALPHA_16(pSrc, pDest) SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest)
+#define SRC_PIXEL_TO_DEST_16(pSrc, pDest) SRC_PIXEL_TO_DEST(pSrc, pDest)
+
 #endif
 
 
+#if !ENABLE_DYNAMIC_PIXEL_FORMAT
 #define SRC_PIXEL_TO_DEST(pSrc, pDest) \
         src = *pSrc++;  \
         *pDest = GXJ_MIDPTOOPAQUEPIXEL(src); \
         pDest++
-
+#endif
 
 /** Draw image in RGB format */
 void
@@ -332,6 +386,7 @@ gx_draw_rgb(const jshort *clip,
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
 #if USE_SLOW_LOOPS
+#warning: slow loops are not adopted for dynamic pixel format
     {
       gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
       jint * psrc = &rgbData[offset];
@@ -370,9 +425,9 @@ gx_draw_rgb(const jshort *clip,
 	    CHECK_PTR_CLIP(sbuf, pdst);
 
 #if ENABLE_32BITS_PIXEL_FORMAT
-	    *pdst = alphaComposition(src, *pdst);
+	    *pdst = alphaComposition32(src, *pdst);
 #else
-	    *pdst = alphaComposition(src, *pdst, As);
+	    *pdst = alphaComposition16(src, *pdst, As);
 #endif
 	  } while (++pdst < pdst_stop);
 
@@ -381,17 +436,15 @@ gx_draw_rgb(const jshort *clip,
 	} while (pdst < pdst_end);
       }
     }
-#else
+#else /* USE_SLOW_LOOPS */
     {
         const unsigned int width16 = width & 0xFFFFFFF0;
         const unsigned int widthRemain = width & 0xF;
         unsigned int col;
         
-        gxj_pixel_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
         jint * psrc = &rgbData[offset];
         int pdst_delta = sbufWidth - width;
         int psrc_delta = scanlen - width;
-        gxj_pixel_type * pdst_end = pdst + height * sbufWidth;
         unsigned int  src;
         unsigned char As;
 
@@ -400,64 +453,156 @@ gx_draw_rgb(const jshort *clip,
         }
 
         if (processAlpha) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+          if (pp_enable_32bit_mode) {
+#endif
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+            gxj_pixel32_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
+            gxj_pixel32_type * pdst_end = pdst + height * sbufWidth;
+
             do {
                 for (col = width16; col != 0; col -= 16) {
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
                 }
                 
                 for (col = widthRemain; col != 0; col--) {
-                    SRC_PIXEL_TO_DEST_WITH_ALPHA(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_32(psrc, pdst);
                 }
                 
                 psrc += psrc_delta;
                 pdst += pdst_delta;
             } while (pdst < pdst_end);
-        } else {
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+          } else {
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+            gxj_pixel16_type * pdst = &((gxj_pixel16_type*)sbuf->pixelData)[y * sbufWidth + x];
+            gxj_pixel16_type * pdst_end = pdst + height * sbufWidth;
+
             do {
                 for (col = width16; col != 0; col -= 16) {
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
-                    SRC_PIXEL_TO_DEST(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
                 }
                 
                 for (col = widthRemain; col != 0; col--) {
-                    SRC_PIXEL_TO_DEST(psrc,pdst);
+                    SRC_PIXEL_TO_DEST_WITH_ALPHA_16(psrc, pdst);
+                }
+                
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+          }
+#endif
+        } else { /* processAlpha */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+          if (pp_enable_32bit_mode) {
+#endif
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+            gxj_pixel32_type * pdst = &sbuf->pixelData[y * sbufWidth + x];
+            gxj_pixel32_type * pdst_end = pdst + height * sbufWidth;
+
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_32(psrc, pdst);
+                }
+                
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST_32(psrc,pdst);
                 }
 
                 psrc += psrc_delta;
                 pdst += pdst_delta;
             } while (pdst < pdst_end);
-        }
-    }
 #endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+          } else {
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+            gxj_pixel16_type * pdst = &((gxj_pixel16_type*)sbuf->pixelData)[y * sbufWidth + x];
+            gxj_pixel16_type * pdst_end = pdst + height * sbufWidth;
+
+            do {
+                for (col = width16; col != 0; col -= 16) {
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                    SRC_PIXEL_TO_DEST_16(psrc, pdst);
+                }
+                
+                for (col = widthRemain; col != 0; col--) {
+                    SRC_PIXEL_TO_DEST_16(psrc,pdst);
+                }
+
+                psrc += psrc_delta;
+                pdst += pdst_delta;
+            } while (pdst < pdst_end);
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+          }
+#endif
+        } /* processAlpha */
+    }
+#endif /* USE_SLOW_LOOPS */
 }
 
 /**
@@ -466,7 +611,14 @@ gx_draw_rgb(const jshort *clip,
  */
 jint
 gx_get_displaycolor(jint color) {
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    int newColor;
+    if (pp_enable_32bit_mode) {
+        newColor = color;
+    } else {
+        newColor = GXJ_PIXELTOOPAQUEMIDP_16(GXJ_MIDPTOOPAQUEPIXEL_16(color));
+    }
+#elif ENABLE_32BITS_PIXEL_FORMAT
     int newColor = color;
 #else
     int newColor = GXJ_PIXELTOOPAQUEMIDP(GXJ_MIDPTOOPAQUEPIXEL(color));
@@ -496,7 +648,15 @@ gx_draw_line(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
   
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_line()\n");
   
@@ -522,7 +682,15 @@ gx_draw_rect(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rect()\n");
 
@@ -547,9 +715,8 @@ void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels)
 
 void fastFill_rect(gxj_pixel_type color, gxj_screen_buffer *sbuf, int x, int y, int width, int height, int cliptop, int clipbottom) {
 	int screen_horiz=sbuf->width;
-	gxj_pixel_type* raster;
 
-    if (width<=0) {return;}
+        if (width<=0) {return;}
 	if (x > screen_horiz) { return; }
 	if (y > sbuf->height) { return; }
 	if (x < 0) { width+=x; x=0; }
@@ -558,11 +725,27 @@ void fastFill_rect(gxj_pixel_type color, gxj_screen_buffer *sbuf, int x, int y, 
 	if (y+height > clipbottom) { height= clipbottom - y; }
 
 
-	raster=sbuf->pixelData + y*screen_horiz+x;
-	for(;height>0;height--) {
-		fast_pixel_set((unsigned *)raster, color, width);
-		raster+=screen_horiz;
-	}
+        {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+#endif
+  	    gxj_pixel_type* raster=sbuf->pixelData + y*screen_horiz+x;
+
+	    for(;height>0;height--) {
+		    fast_pixel_set((unsigned *)raster, color, width);
+		    raster+=screen_horiz;
+	    }
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        } else {
+  	    gxj_pixel16_type* raster=((gxj_pixel16_type*)sbuf->pixelData) + y*screen_horiz+x;
+
+	    for(;height>0;height--) {
+		    fast_pixel_set((unsigned *)raster, color, width);
+		    raster+=screen_horiz;
+	    }
+        }
+#endif
+        }
 }
 
 /**
@@ -582,7 +765,15 @@ gx_fill_rect(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
 
   if ((clipX1==0)&&(clipX2==sbuf->width)&&(dotted!=DOTTED)) {
     fastFill_rect(pixelColor, sbuf, x, y, width, height, clipY1, clipY2 );
@@ -611,7 +802,15 @@ gx_draw_roundrect(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_roundrect()\n");
 
@@ -637,7 +836,15 @@ gx_fill_roundrect(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fillround_rect()\n");
 
@@ -667,7 +874,15 @@ gx_draw_arc(jint color, const jshort *clip,
   gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_arc()\n");
 
@@ -694,7 +909,15 @@ gx_fill_arc(jint color, const jshort *clip,
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
   sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(color);
+  } else {
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(color);
+  }
+#else
   pixelColor = GXJ_MIDPTOOPAQUEPIXEL(color);
+#endif
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_arc()\n");
 

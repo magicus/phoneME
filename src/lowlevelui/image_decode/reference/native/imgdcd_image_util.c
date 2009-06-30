@@ -40,7 +40,23 @@
 #define CT_COLOR    0x02
 #define CT_ALPHA    0x04
 
-#if ENABLE_RGBA8888_PIXEL_FORMAT
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+
+#define IMGDCD_RGBA2PIXEL_32(r, g, b, a) ( (((a) << 24) & 0xFF000000) | \
+                                       (((b) << 16) & 0xFF0000) | \
+                                       (((g) << 8) & 0xFF00) | \
+                                        ((r) & 0xFF) )
+#define IMGDCD_MIDPTOOPAQUEPIXEL_32(x) ( ((x) & 0xFF00FF00) | \
+                                     (((x) << 16) & 0xFF0000) | \
+                                     (((x) >> 16) & 0xFF) | \
+                                     0xFF000000)
+#define IMGDCD_MIDPTOPIXEL_32(x) ( ((x) & 0xFF00FF00) | (((x) << 16) & 0xFF0000) | (((x) >> 16) & 0xFF))
+#define IMGDCD_RGB2PIXEL_16(r, g, b) ((imgdcd_pixel16_type)( b + (g << 5) + (r << 11) ))
+
+int img_enable_32bit_mode = 0;
+
+#elif ENABLE_RGBA8888_PIXEL_FORMAT
 
 /** Convert separate r, g, b and alpha components to 32-bit pixel. */
 #define IMGDCD_RGBA2PIXEL(r, g, b, a) ( (((r) << 24) & 0xFF000000) | \
@@ -212,7 +228,33 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
     for (x = 0; x < p->width; ++x) {
       alpha = 0xff;
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+      if (img_enable_32bit_mode) {
+          r = pixels[0];
+          g = pixels[1];
+          b = pixels[2];
+
+          if (hasAlphaChannel) {
+            alpha = pixels[3];
+            pixels++;
+          }
+          pixels += 3;
+
+          p->pixelData[y*p->width + x] = IMGDCD_RGBA2PIXEL_32(r, g, b, alpha);
+      } else {
+          r = pixels[0] >> 3;
+          g = pixels[1] >> 2;
+          b = pixels[2] >> 3;
+
+          if (hasAlphaChannel) {
+            alpha = pixels[3];
+            pixels++;
+          }
+          pixels += 3;
+
+          ((imgdcd_pixel16_type*)p->pixelData)[y*p->width + x] = IMGDCD_RGB2PIXEL_16(r, g, b);
+      }
+#elif ENABLE_32BITS_PIXEL_FORMAT
       r = pixels[0];
       g = pixels[1];
       b = pixels[2];
@@ -259,7 +301,22 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
         }
       }
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+      if (img_enable_32bit_mode) {
+          p->pixelData[y*p->width + x] = IMGDCD_MIDPTOPIXEL_32((color & 0x00FFFFFF) | ((alpha << 24) & 0xFF000000));
+      } else {
+          r = ((color >> 16) & 0xff) >> 3;
+          g = ((color >>  8) & 0xff) >> 2;
+          b = ((color >>  0) & 0xff) >> 3;
+
+          if (r < 0) r = 0; else if (r > 0xff) r = 0xff;
+          if (g < 0) g = 0; else if (g > 0xff) g = 0xff;
+          if (b < 0) b = 0; else if (b > 0xff) b = 0xff;
+
+          ((imgdcd_pixel16_type*)p->pixelData)[y*p->width + x] = IMGDCD_RGB2PIXEL_16(r, g, b);
+      }
+#elif ENABLE_32BITS_PIXEL_FORMAT
       p->pixelData[y*p->width + x] = IMGDCD_MIDPTOPIXEL((color & 0x00FFFFFF) | ((alpha << 24) & 0xFF000000));
 #else
       r = ((color >> 16) & 0xff) >> 3;
@@ -461,7 +518,15 @@ imgdcd_decode_jpeg
         *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (decode_jpeg_image((char*)srcBuffer, length,
         (char*)(pixelData), width, height) != FALSE) {
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+            if (img_enable_32bit_mode) {
+		imgdcd_pixel_type* pPtr = pixelData;
+		imgdcd_pixel_type* pEndPtr = pPtr + width * height;
+		for (; pPtr < pEndPtr; pPtr++) {
+			*pPtr = IMGDCD_MIDPTOOPAQUEPIXEL_32(*pPtr);
+		}
+            }
+#elif ENABLE_32BITS_PIXEL_FORMAT
 		/*
 		 * Decoder returns data in ARGB format therefore convert the content of
 		 * the output buffer to putpixel format (RGBA or ABGR)

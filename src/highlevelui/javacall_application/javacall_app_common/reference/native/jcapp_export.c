@@ -52,25 +52,36 @@ static jboolean disableRefresh=KNI_FALSE;
  */
 
 int jcapp_get_screen_buffer(int hardwareId) {
-     javacall_lcd_color_encoding_type color_encoding;
-     gxj_system_screen_buffer.alphaData = NULL;
-     gxj_system_screen_buffer.pixelData = 
-         javacall_lcd_get_screen (hardwareId,
-                                  &gxj_system_screen_buffer.width,
-                                  &gxj_system_screen_buffer.height,
-                                  &color_encoding);
+    javacall_lcd_color_encoding_type color_encoding;
+    gxj_system_screen_buffer.alphaData = NULL;
+    gxj_system_screen_buffer.pixelData = 
+        javacall_lcd_get_screen (hardwareId,
+                                 &gxj_system_screen_buffer.width,
+                                 &gxj_system_screen_buffer.height,
+                                 &color_encoding);
 
-#if ENABLE_32BITS_PIXEL_FORMAT
-     if (JAVACALL_LCD_COLOR_RGBA != color_encoding) {
-	    return -2;
-     };
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (jc_enable_32bit_mode) {
+        if (JAVACALL_LCD_COLOR_RGBA != color_encoding) {
+            return -2;
+        };
+
+    } else {
+        if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
+            return -2;
+        };
+    }
+#elif ENABLE_32BITS_PIXEL_FORMAT
+    if (JAVACALL_LCD_COLOR_RGBA != color_encoding) {
+        return -2;
+    };
 #else
-     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
-	    return -2;
-     };
+    if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
+        return -2;
+    };
 #endif
 
-     return 0;
+    return 0;
 }
 
 

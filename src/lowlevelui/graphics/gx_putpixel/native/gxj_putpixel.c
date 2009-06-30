@@ -31,6 +31,10 @@
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_graphics.h"
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+int pp_enable_32bit_mode = 0;
+#endif
+
 typedef struct _registers_4 {
 	unsigned int r0;
 	unsigned int r1;
@@ -174,22 +178,45 @@ primDrawVertLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     y1 = y2;
     count = -count;
   }
-		
-  pPtr = &(sbuf->pixelData[y1 * width + x1]);
-  while (count & ~0x7) {
-    CHECK_PTR_CLIP(sbuf,pPtr);
-    *pPtr = color; pPtr += width; *pPtr = color; pPtr += width;
-    *pPtr = color; pPtr += width; *pPtr = color; pPtr += width;
-    *pPtr = color; pPtr += width; *pPtr = color; pPtr += width;
-    *pPtr = color; pPtr += width;
-    *pPtr = color; CHECK_PTR_CLIP(sbuf,pPtr); pPtr += width;
-    count -= 8;
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+#endif
+    pPtr = &(sbuf->pixelData[y1 * width + x1]);
+    while (count & ~0x7) {
+      CHECK_PTR_CLIP(sbuf,pPtr);
+      *pPtr = color; pPtr += width; *pPtr = color; pPtr += width;
+      *pPtr = color; pPtr += width; *pPtr = color; pPtr += width;
+      *pPtr = color; pPtr += width; *pPtr = color; pPtr += width;
+      *pPtr = color; pPtr += width;
+      *pPtr = color; CHECK_PTR_CLIP(sbuf,pPtr); pPtr += width;
+      count -= 8;
+    }
+    while (count >= 0) {
+      CHECK_PTR_CLIP(sbuf,pPtr);
+      *pPtr = color; pPtr += width;
+      count -= 1;
+    }
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  } else {
+    gxj_pixel16_type* pPtr16;
+    pPtr16 = &(((gxj_pixel16_type*)sbuf->pixelData)[y1 * width + x1]);
+    while (count & ~0x7) {
+      CHECK_PTR_CLIP(sbuf,pPtr16);
+      *pPtr16 = color; pPtr16 += width; *pPtr16 = color; pPtr16 += width;
+      *pPtr16 = color; pPtr16 += width; *pPtr16 = color; pPtr16 += width;
+      *pPtr16 = color; pPtr16 += width; *pPtr16 = color; pPtr16 += width;
+      *pPtr16 = color; pPtr16 += width;
+      *pPtr16 = color; CHECK_PTR_CLIP(sbuf,pPtr16); pPtr16 += width;
+      count -= 8;
+    }
+    while (count >= 0) {
+      CHECK_PTR_CLIP(sbuf,pPtr16);
+      *pPtr16 = color; pPtr16 += width;
+      count -= 1;
+    }
   }
-  while (count >= 0) {
-    CHECK_PTR_CLIP(sbuf,pPtr);
-    *pPtr = color; pPtr += width;
-    count -= 1;
-  }
+#endif
 }
 
 /**
@@ -200,53 +227,30 @@ static void
 primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int x1, int y1, int x2, int y2) {
 
-#if 0  
   int width = sbuf->width;
   int height = sbuf->height;
   int count;
   gxj_pixel_type* pPtr;
-
-#if PRIM_CLIPPING
-  if ((y1 < 0) || (y1 >= height))
-    return;
-  x1 = (x1 < 0) ? 0 : ((x1 >= width) ? width-1 : x1);
-  x2 = (x2 < 0) ? 0 : ((x2 >= width) ? width-1 : x2);
-#endif
-  if ((count=x2-x1) < 0) {
-    x1 = x2;
-    count = -count;
-  }
-		
-  pPtr = &(sbuf->pixelData[y1 * width + x1]);
-  while (count & ~0x7) {
-    CHECK_PTR_CLIP(sbuf,pPtr);
-    *pPtr = color; pPtr += 1; *pPtr = color; pPtr += 1;
-    *pPtr = color; pPtr += 1; *pPtr = color; pPtr += 1;
-    *pPtr = color; pPtr += 1; *pPtr = color; pPtr += 1;
-    *pPtr = color; pPtr += 1;
-    *pPtr = color; CHECK_PTR_CLIP(sbuf,pPtr); pPtr += 1;
-    count -= 8;
-  }
-  while (count >= 0) {
-    CHECK_PTR_CLIP(sbuf,pPtr);
-    *pPtr = color; pPtr += 1;
-    count -= 1;
-  }
-#else
-  int width = sbuf->width;
-  int height = sbuf->height;
-  int count;
-  gxj_pixel_type* pPtr;
-#if ENABLE_32BITS_PIXEL_FORMAT
-  unsigned int c = (unsigned int)color;
-#else
-  unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
-#endif
-  jlong lcol = ((jlong) c) << 32 | ((jlong) c);
+  unsigned int c;
+  jlong lcol;
   registers_4 regs;
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  gxj_pixel16_type* pPtr16;
+  if (pp_enable_32bit_mode) {
+    c = (unsigned int)color;
+  } else {
+    c = ((unsigned int)color) << 16 | ((unsigned int)color);
+  }
+#elif ENABLE_32BITS_PIXEL_FORMAT
+  c = (unsigned int)color;
+#else
+  c = ((unsigned int)color) << 16 | ((unsigned int)color);
+#endif
+  lcol = ((jlong) c) << 32 | ((jlong) c);
   regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
 
-    (void)y2;
+  (void)y2;
 
 #if PRIM_CLIPPING
   if ((y1 < 0) || (y1 >= height))
@@ -259,14 +263,84 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     x1 = x2;
     count = -count;
   }
-  pPtr = &(sbuf->pixelData[y1 + x1]);
-  if (((unsigned int)pPtr & 0x3) && (count > 0)) {
-    CHECK_PTR_CLIP(sbuf,pPtr);
-    *pPtr++ = color;
-    --count;
-  }
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+#endif
+    pPtr = &(sbuf->pixelData[y1 + x1]);
+    if (((unsigned int)pPtr & 0x3) && (count > 0)) {
+      CHECK_PTR_CLIP(sbuf,pPtr);
+      *pPtr++ = color;
+      --count;
+    }
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  } else {
+    pPtr16 = &(((gxj_pixel16_type*)sbuf->pixelData)[y1 + x1]);
+    if (((unsigned int)pPtr16 & 0x3) && (count > 0)) {
+      CHECK_PTR_CLIP(sbuf,pPtr16);
+      *pPtr16++ = (gxj_pixel16_type)color;
+      --count;
+    }
+  }
+#endif
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+    while (count >= 8) {
+      CHECK_LLPTR_CLIP(sbuf,pPtr);
+      *((registers_4 *)pPtr) = regs;
+      pPtr += 4;
+      CHECK_LLPTR_CLIP(sbuf,pPtr);
+      *((registers_4 *)pPtr) = regs;
+      pPtr += 4;
+      count -= 8;
+    }
+    if (count >= 4) {
+      CHECK_LLPTR_CLIP(sbuf,pPtr);
+      *((registers_4 *)pPtr) = regs;
+      pPtr += 4;
+      count -= 4;
+    }
+    if (count >= 2) {
+      CHECK_LLPTR_CLIP(sbuf,pPtr);
+      *((jlong *)pPtr) = lcol;
+      pPtr += 2;
+      count -= 2;
+    }
+    while (count >= 0) {
+      CHECK_PTR_CLIP(sbuf,pPtr);
+      *pPtr = color; pPtr += 1;
+      count -= 1;
+    }
+  } else {
+    while (count >= 8) {
+    CHECK_LLPTR_CLIP(sbuf,pPtr16);
+      *((registers_4 *)pPtr16) = regs;
+      pPtr16 += 4;
+      CHECK_LLPTR_CLIP(sbuf,pPtr16);
+      *((registers_4 *)pPtr16) = regs;
+      pPtr16 += 4;
+      count -= 8;
+    }
+    if (count >= 4) {
+      CHECK_LLPTR_CLIP(sbuf,pPtr16);
+      *((registers_4 *)pPtr16) = regs;
+      pPtr16 += 4;
+      count -= 4;
+    }
+    if (count >= 2) {
+      CHECK_LLPTR_CLIP(sbuf,pPtr16);
+      *((jlong *)pPtr16) = lcol;
+      pPtr16 += 2;
+      count -= 2;
+    }
+    while (count >= 0) {
+      CHECK_PTR_CLIP(sbuf,pPtr16);
+      *pPtr16 = color; pPtr16 += 1;
+      count -= 1;
+    }
+  }
+#elif ENABLE_32BITS_PIXEL_FORMAT
   while (count >= 8) {
     CHECK_LLPTR_CLIP(sbuf,pPtr);
     *((registers_4 *)pPtr) = regs;
@@ -287,6 +361,11 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     *((jlong *)pPtr) = lcol;
     pPtr += 2;
     count -= 2;
+  }
+  while (count >= 0) {
+    CHECK_PTR_CLIP(sbuf,pPtr);
+    *pPtr = color; pPtr += 1;
+    count -= 1;
   }
 #else
   while (count >= 16) {
@@ -310,14 +389,12 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     pPtr += 4;
     count -= 4;
   }
-#endif /* ENABLE_32BITS_PIXEL_FORMAT */
   while (count >= 0) {
     CHECK_PTR_CLIP(sbuf,pPtr);
     *pPtr = color; pPtr += 1;
     count -= 1;
   }
-
-#endif
+#endif /* ENABLE_32BITS_PIXEL_FORMAT */
 }
 
 
@@ -885,73 +962,134 @@ static void
 primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int x1, int y1, int x2, int y2) {
 
-#if 0  
-    int width = sbuf->width;
-    int height = sbuf->height;
-    int count;
-    gxj_pixel_type* pPtr;
-    gxj_pixel_type* lPtr;
-
-#if PRIM_CLIPPING
-    x1 = (x1 < 0) ? 0 : ((x1 > width) ? width : x1);
-    x2 = (x2 < 0) ? 0 : ((x2 > width) ? width : x2);
-    y1 = (y1 < 0) ? 0 : ((y1 > height) ? height : y1);
-    y2 = (y2 < 0) ? 0 : ((y2 > height) ? height : y2);
-#endif
-    if ((count=x2-x1) < 0) {
-      SWAP(x2, x1);
-      count = -count;
-    }
-		
-    pPtr = &(sbuf->pixelData[y1 * width + x1]);
-    for (lPtr = pPtr; y1 < y2; y1++) {
-      while (count & ~0x7) {
-        CHECK_PTR_CLIP(sbuf,pPtr);
-        *pPtr = color; pPtr += 1; *pPtr = color; pPtr += 1;
-        *pPtr = color; pPtr += 1; *pPtr = color; pPtr += 1;
-        *pPtr = color; pPtr += 1; *pPtr = color; pPtr += 1;
-        *pPtr = color; pPtr += 1;
-        *pPtr = color; CHECK_PTR_CLIP(sbuf,pPtr); pPtr += 1;
-        count -= 8;
-      }
-      while (count > 0) {
-        CHECK_PTR_CLIP(sbuf,pPtr);
-        *pPtr = color; pPtr += 1;
-        count -= 1;
-      }
-      lPtr += width;
-      count = x2 - x1;
-      pPtr = lPtr;
-    }
-#else
     int width = sbuf->width;
     int height = sbuf->height;
     int count;
     gxj_pixel_type* pPtr;
     gxj_pixel_type* lPtr;
     registers_4	regs;
+    unsigned int c;
+    jlong lcol;
 
-#if ENABLE_32BITS_PIXEL_FORMAT
-    unsigned int c = (unsigned int)color;
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    gxj_pixel16_type* pPtr16;
+    gxj_pixel16_type* lPtr16;
+    if (pp_enable_32bit_mode) {
+      c = (unsigned int)color;
+    } else {
+      c = ((unsigned int)color) << 16 | ((unsigned int)color);
+    }
+#elif ENABLE_32BITS_PIXEL_FORMAT
+    c = (unsigned int)color;
 #else
-    unsigned int c = ((unsigned int)color) << 16 | ((unsigned int)color);
+    c = ((unsigned int)color) << 16 | ((unsigned int)color);
 #endif
-    jlong lcol = ((jlong) c) << 32 | ((jlong) c);
+    lcol = ((jlong) c) << 32 | ((jlong) c);
     regs.r0 = regs.r1 = regs.r2 = regs.r3 = c;
 
 #if PRIM_CLIPPING
     y1 = (y1 < 0) ? 0 : ((y1 > height) ? height : y1);
     y2 = (y2 < 0) ? 0 : ((y2 > height) ? height : y2);
-#endif
-    pPtr = &(sbuf->pixelData[y1 * width]);
-#if PRIM_CLIPPING
+
     x1 = (x1 < 0) ? 0 : ((x1 > width) ? width : x1);
     x2 = (x2 < 0) ? 0 : ((x2 > width) ? width : x2);
 #endif
+
     if ((count=x2-x1) < 0) {
       SWAP(x2, x1);
       count = -count;
     }
+
+    pPtr = &(sbuf->pixelData[y1 * width]);
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      pPtr += x1;
+      if (x1 == 0 && x2 == (width)) {
+        count = width*(y2-y1);
+        y2 = y1+1;
+      }
+      for (lPtr = pPtr; y1 < y2; y1++) {
+        if (((unsigned int)pPtr & 0x3) && (count > 0)) {
+          CHECK_PTR_CLIP(sbuf,pPtr);
+          *pPtr++ = color;
+          --count;
+        }
+        while (count >= 8) {
+          CHECK_LLPTR_CLIP(sbuf,pPtr);
+          *((registers_4 *)pPtr) = regs;
+  	  pPtr += 4;
+  	  CHECK_LLPTR_CLIP(sbuf,pPtr);
+  	  *((registers_4 *)pPtr) = regs;
+  	  pPtr += 4;
+          count -= 8;
+        }
+        if (count >= 4) {
+          CHECK_LLPTR_CLIP(sbuf,pPtr);
+          *((registers_4 *)pPtr) = regs;
+          pPtr += 4;
+          count -= 4;
+        }
+        if (count >= 2) {
+          CHECK_LLPTR_CLIP(sbuf,pPtr);
+          *((jlong *)pPtr) = lcol;
+          pPtr += 2;
+          count -= 2;
+        }
+        while (count > 0) {
+          CHECK_PTR_CLIP(sbuf,pPtr);
+          *pPtr++ = color;
+          count -= 1;
+        }
+        lPtr += width;
+        count = x2 - x1;
+        pPtr = lPtr;
+      }
+    } else {
+      pPtr16 = &(((gxj_pixel16_type*)sbuf->pixelData)[y1 * width]);
+
+      pPtr16 += x1;
+      if (x1 == 0 && x2 == (width)) {
+        count = width*(y2-y1);
+        y2 = y1+1;
+      }
+      for (lPtr16 = pPtr16; y1 < y2; y1++) {
+        if (((unsigned int)pPtr16 & 0x3) && (count > 0)) {
+          CHECK_PTR_CLIP(sbuf,pPtr16);
+          *pPtr16++ = color;
+          --count;
+        }
+        while (count >= 16) {
+          CHECK_LLPTR_CLIP(sbuf,pPtr16);
+          *((registers_4 *)pPtr16) = regs;
+	  pPtr16 += 8;
+	  CHECK_LLPTR_CLIP(sbuf,pPtr16);
+	  *((registers_4 *)pPtr16) = regs;
+	  pPtr16 += 8;
+          count -= 16;
+        }
+        if (count >= 8) {
+          CHECK_LLPTR_CLIP(sbuf,pPtr16);
+          *((registers_4 *)pPtr16) = regs;
+          pPtr16 += 8;
+          count -= 8;
+        }
+        if (count >= 4) {
+          CHECK_LLPTR_CLIP(sbuf,pPtr16);
+          *((jlong *)pPtr16) = lcol;
+          pPtr16 += 4;
+          count -= 4;
+        }
+        while (count > 0) {
+          CHECK_PTR_CLIP(sbuf,pPtr16);
+          *pPtr16++ = color;
+          count -= 1;
+        }
+        lPtr16 += width;
+        count = x2 - x1;
+        pPtr16 = lPtr16;
+      }
+    }
+#else /* ENABLE_DYNAMIC_PIXEL_FORMAT */
     pPtr += x1;
     if (x1 == 0 && x2 == (width)) {
       count = width*(y2-y1);
@@ -1017,7 +1155,7 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       count = x2 - x1;
       pPtr = lPtr;
     }
-#endif
+#endif /* ENABLE_DYNAMIC_PIXEL_FORMAT */
 }
 
 static void

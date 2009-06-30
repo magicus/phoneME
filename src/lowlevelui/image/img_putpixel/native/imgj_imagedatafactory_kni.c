@@ -247,6 +247,25 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
     int a, b, pixel, alpha;
 
     if (srcAlphaData != NULL) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = srcPixelData[b*srcWidth + a];
+          alpha = srcAlphaData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] = GXJ_PIXELTOMIDP_32(pixel);
+        }
+      }
+    } else {
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = ((imgdcd_pixel16_type*)srcPixelData)[b*srcWidth + a];
+          alpha = srcAlphaData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] = GXJ_PIXELTOMIDP_16(pixel, alpha);
+        }
+      }
+    }
+#else
       for (b = y; b < y + height; b++) {
         for (a = x; a < x + width; a++) {
           pixel = srcPixelData[b*srcWidth + a];
@@ -259,7 +278,27 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
 #endif
         }
       }
+#endif
     } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = srcPixelData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+            GXJ_PIXELTOOPAQUEMIDP_32(pixel);
+        }
+      }
+    } else {
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = ((imgdcd_pixel16_type*)srcPixelData)[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+            GXJ_PIXELTOOPAQUEMIDP_16(pixel);
+        }
+      }
+    }
+#else
       for (b = y; b < y + height; b++) {
         for (a = x; a < x + width; a++) {
           pixel = srcPixelData[b*srcWidth + a];
@@ -267,6 +306,7 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
             GXJ_PIXELTOOPAQUEMIDP(pixel);
         }
       }
+#endif
     }
   }
 
@@ -351,7 +391,15 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+           pixelSize = sizeof(gxj_pixel32_type) * imageSize;
+        } else {
+           pixelSize = sizeof(gxj_pixel16_type) * imageSize;
+        }
+#else
         pixelSize = sizeof(PIXEL) * imageSize;
+#endif
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
             alphaSize = sizeof(ALPHA) * imageSize;
@@ -781,14 +829,40 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
          */
 
         if (alphaData != NULL) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+           if (pp_enable_32bit_mode) {
+             for (i = 0; i < len; i++) {
+                pixelData[i] = GXJ_MIDPTOPIXEL_32(rgbBuffer[i]);
+                alphaData[i] = (rgbBuffer[i] >> 24) & 0xff;
+             }
+           } else {
+             for (i = 0; i < len; i++) {
+                ((gxj_pixel16_type*)pixelData)[i] = GXJ_MIDPTOPIXEL_16(rgbBuffer[i]);
+                alphaData[i] = (rgbBuffer[i] >> 24) & 0xff;
+             }
+           }
+#else                       
             for (i = 0; i < len; i++) {
                 pixelData[i] = GXJ_MIDPTOPIXEL(rgbBuffer[i]);
                 alphaData[i] = (rgbBuffer[i] >> 24) & 0xff;
             }
+#endif
         } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+           if (pp_enable_32bit_mode) {
+             for (i = 0; i < len; i++) {
+                 pixelData[i] = GXJ_MIDPTOOPAQUEPIXEL_32(rgbBuffer[i]);
+             }   
+           } else {
+             for (i = 0; i < len; i++) {
+                 ((gxj_pixel16_type*)pixelData)[i] = GXJ_MIDPTOOPAQUEPIXEL_16(rgbBuffer[i]);
+             }   
+           }
+#else
             for (i = 0; i < len; i++) {
                 pixelData[i] = GXJ_MIDPTOOPAQUEPIXEL(rgbBuffer[i]);
             }
+#endif
         }
     }
 
@@ -893,6 +967,37 @@ static void blit(int srcWidth, int srcHeight,
         break;
     }
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (!pp_enable_32bit_mode) {
+        switch (transform) {
+        case TRANS_NONE:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc));
+            break;
+        case TRANS_MIRROR_ROT180:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        case TRANS_MIRROR:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc));
+            break;
+        case TRANS_ROT180:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        case TRANS_MIRROR_ROT270:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc));
+            break;
+        case TRANS_ROT90:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        case TRANS_ROT270:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc + width - 1));
+            break;
+        case TRANS_MIRROR_ROT90:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        }
+    }
+#endif
+
     if (transform & TRANSFORM_INVERTED_AXES) {
         if (srcAlphaData == NULL) {
             pixelCopy(srcPtr, srcWidth, srcXInc, srcYInc, srcXStart,
@@ -983,7 +1088,9 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(javax_microedition_lcdui_ImageDataFactory_bytesInPixel) {
     int bytes;
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    bytes = (pp_enable_32bit_mode) ? 4 : 2;
+#elif ENABLE_32BITS_PIXEL_FORMAT
     bytes = 4;
 #else
     bytes = 2;

@@ -47,7 +47,7 @@ extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 			   unsigned short *srcRaster, int srcSpan,
 			   int height, int width, gxj_screen_buffer *dst);
 
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
 /* 
  * For A in [0..0xffff] 
  *
@@ -92,7 +92,7 @@ static jint alphaComposition(jint src, jint dst) {
     src = src >> 8;
     Gs = src & 0xff;
     Rs = (src >> 8) & 0xff;
-#elif ENABLE_ABGR8888_PIXEL_FORMAT
+#elif ENABLE_ABGR8888_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
     Rs = src & 0xff;
     src = src >> 8;
     Gs = src & 0xff;
@@ -113,7 +113,7 @@ static jint alphaComposition(jint src, jint dst) {
     dst = dst >> 8;
     Gd = dst & 0xff;
     Rd = (dst >> 8) & 0xff;
-#elif ENABLE_ABGR8888_PIXEL_FORMAT
+#elif ENABLE_ABGR8888_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
     Rd = dst & 0xff;
     dst = dst >> 8;
     Gd = dst & 0xff;
@@ -134,7 +134,7 @@ static jint alphaComposition(jint src, jint dst) {
 
 #if ENABLE_RGBA8888_PIXEL_FORMAT
     return((Rd << 24) | (Gd << 16) | (Bd << 8) | Ad);
-#elif ENABLE_ABGR8888_PIXEL_FORMAT
+#elif ENABLE_ABGR8888_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
     return((Ad << 24) | (Bd << 16) | (Gd << 8) | Rd);
 #endif
 
@@ -170,7 +170,21 @@ draw_image(gxj_screen_buffer *imageSBuf,
     if (x_dest >= clipX1 && y_dest >= clipY1 &&
        (x_dest + imageSBuf->width) <= clipX2 &&
        (y_dest + imageSBuf->height) <= clipY2) {
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+      if (pp_enable_32bit_mode) {
+          unclipped_blit((unsigned short *)&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
+    		        destSBuf->width<<2,
+		        (unsigned short *)&imageSBuf->pixelData[0], imageSBuf->width<<2,
+		        imageSBuf->height, imageSBuf->width<<2, destSBuf);
+
+      } else {
+          unclipped_blit((unsigned short *)&((gxj_pixel16_type*)(destSBuf->pixelData))[y_dest*destSBuf->width+x_dest],
+		        destSBuf->width<<1,
+		        (unsigned short *)&imageSBuf->pixelData[0], imageSBuf->width<<1,
+		        imageSBuf->height, imageSBuf->width<<1, destSBuf);
+
+      }
+#elif ENABLE_32BITS_PIXEL_FORMAT
       unclipped_blit((unsigned short *)&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
 		    destSBuf->width<<2,
 		    (unsigned short *)&imageSBuf->pixelData[0], imageSBuf->width<<2,
@@ -286,15 +300,31 @@ clipped_blit(gxj_screen_buffer* dst, int dstX, int dstY, gxj_screen_buffer* src,
   if (height <= 0)
     return;
 
-  srcRaster = src->pixelData + (negY ? (negY   * src->width) : 0) + negX;
-  dstRaster = dst->pixelData +         (startY * dst->width)      + startX;
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+#endif
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+    srcRaster = src->pixelData + (negY ? (negY   * src->width) : 0) + negX;
+    dstRaster = dst->pixelData +         (startY * dst->width)      + startX;
 
-#if ENABLE_32BITS_PIXEL_FORMAT
-  unclipped_blit((unsigned short *)dstRaster, dst->width<<2,
-		 (unsigned short *)srcRaster, src->width<<2, height, width<<2, dst);
+    unclipped_blit((unsigned short *)dstRaster, dst->width<<2,
+                   (unsigned short *)srcRaster, src->width<<2, height, width<<2, dst);
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  } else {
+    srcRaster = (gxj_pixel_type*)(((gxj_pixel16_type*)src->pixelData) + (negY ? (negY   * src->width) : 0) + negX);
+    dstRaster = (gxj_pixel_type*)(((gxj_pixel16_type*)dst->pixelData) +         (startY * dst->width)      + startX);
 #else
-  unclipped_blit(dstRaster, dst->width<<1,
-		 srcRaster, src->width<<1, height, width<<1, dst);
+    srcRaster = src->pixelData + (negY ? (negY   * src->width) : 0) + negX;
+    dstRaster = dst->pixelData +         (startY * dst->width)      + startX;
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+
+    unclipped_blit((unsigned short *)dstRaster, dst->width<<1,
+                   (unsigned short *)srcRaster, src->width<<1, height, width<<1, dst);
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  }
 #endif
 }
 
@@ -325,6 +355,8 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
   int destY;
   int yCounter;
   int xCounter;
+  int srcIdx, dstIdx;
+  int srcYwidth, destYwidth;
 
   /* set dimensions of image being created,
      depending on transform */
@@ -352,35 +384,81 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
     xIncr = +1;
   }
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  if (pp_enable_32bit_mode) {
+#endif
   for (srcY = src_y, destY = yStart, yCounter = 0;
        yCounter < height;
        srcY++, destY+=yIncr, yCounter++) {
 
-    int srcYwidth = srcY * src->width;
-    int destYwidth = destY * dest->width;
+    srcYwidth = srcY * src->width;
+    destYwidth = destY * dest->width;
 
     for (srcX = src_x, destX = xStart, xCounter = 0;
          xCounter < width;
          srcX++, destX+=xIncr, xCounter++) {
 
       if ( transform & TRANSFORM_INVERTED_AXES ) {
-          dest->pixelData[destX * dest->width + destY] =
-            src->pixelData[srcYwidth /*srcY*src->width*/ + srcX];
-        if (src->alphaData != NULL) {
-            dest->alphaData[destX * dest->width + destY] =
-                src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
-        }
+        dstIdx = destX * dest->width + destY;
+        srcIdx = srcYwidth /*srcY*src->width*/ + srcX;
 
-      } else {
-        dest->pixelData[destYwidth /*destY * dest->width*/ + destX] =
-                   src->pixelData[srcYwidth /*srcY*src->width*/ + srcX];
+        dest->pixelData[dstIdx] = src->pixelData[srcIdx];
+
         if (src->alphaData != NULL) {
-            dest->alphaData[destYwidth /*destY * dest->width*/ + destX] =
-                src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
+            dest->alphaData[dstIdx] = src->alphaData[srcIdx];
+        }
+      } else {
+        dstIdx = destYwidth /*destY * dest->width*/ + destX;
+        srcIdx = srcYwidth /*srcY*src->width*/ + srcX;
+
+        dest->pixelData[dstIdx] = src->pixelData[srcIdx];
+        if (src->alphaData != NULL) {
+            dest->alphaData[dstIdx] = src->alphaData[srcIdx];
         }
       }
     } /*for x*/
   } /* for y */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  } else {
+#endif
+  for (srcY = src_y, destY = yStart, yCounter = 0;
+       yCounter < height;
+       srcY++, destY+=yIncr, yCounter++) {
+
+    srcYwidth = srcY * src->width;
+    destYwidth = destY * dest->width;
+
+    for (srcX = src_x, destX = xStart, xCounter = 0;
+         xCounter < width;
+         srcX++, destX+=xIncr, xCounter++) {
+
+      if ( transform & TRANSFORM_INVERTED_AXES ) {
+        dstIdx = destX * dest->width + destY;
+        srcIdx = srcYwidth /*srcY*src->width*/ + srcX;
+
+        ((gxj_pixel16_type*)dest->pixelData)[dstIdx] =
+            ((gxj_pixel16_type*)src->pixelData)[srcIdx];
+
+        if (src->alphaData != NULL) {
+            ((gxj_pixel16_type*)dest->alphaData)[dstIdx] =
+                ((gxj_pixel16_type*)src->alphaData)[srcIdx];
+        }
+      } else {
+        dstIdx = destYwidth /*destY * dest->width*/ + destX;
+        srcIdx = srcYwidth /*srcY*src->width*/ + srcX;
+
+        ((gxj_pixel16_type*)dest->pixelData)[dstIdx] =
+            ((gxj_pixel16_type*)src->pixelData)[srcIdx];
+        if (src->alphaData != NULL) {
+            ((gxj_pixel16_type*)dest->alphaData)[dstIdx] =
+                ((gxj_pixel16_type*)src->alphaData)[srcIdx];
+        }
+      }
+    } /*for x*/
+  } /* for y */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+  }
+#endif
 }
 
 /**
@@ -537,12 +615,17 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
 
     if (width > 0) {
         int rowsCopied;
-        gxj_pixel_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
-        gxj_pixel_type* pSrc = src->pixelData + (y_src * src->width) + x_src;
-        gxj_pixel_type* limit;
         int destWidthDiff = dest->width - width;
         int srcWidthDiff = src->width - width;
         int r1, g1, b1, a2, a3, r2, b2, g2;
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+#endif
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+        gxj_pixel32_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
+        gxj_pixel32_type* pSrc = src->pixelData + (y_src * src->width) + x_src;
+        gxj_pixel32_type* limit;
 
         if (src->alphaData != NULL) {
             unsigned char *pSrcAlpha = src->alphaData + (y_src * src->width) + x_src;
@@ -555,26 +638,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                         *pDest = *pSrc;
                     }
                     else if (*pSrcAlpha > 0x3) {
-#if ENABLE_32BITS_PIXEL_FORMAT
                         *pDest = alphaComposition(*pSrc, *pDest);
-#else
-                        r1 = (*pSrc >> 11);
-                        g1 = ((*pSrc >> 5) & 0x3F);
-                        b1 = (*pSrc & 0x1F);
-
-                        r2 = (*pDest >> 11);
-                        g2 = ((*pDest >> 5) & 0x3F);
-                        b2 = (*pDest & 0x1F);
-
-                        a2 = *pSrcAlpha >> 2;
-                        a3 = *pSrcAlpha >> 3;
-
-                        r1 = (r1 * a3 + r2 * (31 - a3)) >> 5;
-                        g1 = (g1 * a2 + g2 * (63 - a2)) >> 6;
-                        b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;
-
-                        *pDest = (gxj_pixel_type)((r1 << 11) | (g1 << 5) | (b1));
-#endif
                     }
                 }
 
@@ -594,6 +658,66 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
                 pSrc += srcWidthDiff;
             }
         }
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    } else {
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+        gxj_pixel16_type* pDest = (gxj_pixel16_type*)dest->pixelData + (y_dest * dest->width) + x_dest;
+        gxj_pixel16_type* pSrc = (gxj_pixel16_type*)src->pixelData + (y_src * src->width) + x_src;
+        gxj_pixel16_type* limit;
+
+        if (src->alphaData != NULL) {
+            unsigned char *pSrcAlpha = src->alphaData + (y_src * src->width) + x_src;
+
+            /* copy the source to the destination */
+            for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+                for (limit = pDest + width; pDest < limit; pDest++, pSrc++, pSrcAlpha++) {
+                    if ((*pSrcAlpha) == 0xFF) {
+                        CHECK_PTR_CLIP(dest, pDest);
+                        *pDest = *pSrc;
+                    }
+                    else if (*pSrcAlpha > 0x3) {
+                        r1 = (*pSrc >> 11);
+                        g1 = ((*pSrc >> 5) & 0x3F);
+                        b1 = (*pSrc & 0x1F);
+
+                        r2 = (*pDest >> 11);
+                        g2 = ((*pDest >> 5) & 0x3F);
+                        b2 = (*pDest & 0x1F);
+
+                        a2 = *pSrcAlpha >> 2;
+                        a3 = *pSrcAlpha >> 3;
+
+                        r1 = (r1 * a3 + r2 * (31 - a3)) >> 5;
+                        g1 = (g1 * a2 + g2 * (63 - a2)) >> 6;
+                        b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;
+
+                        *pDest = (gxj_pixel16_type)((r1 << 11) | (g1 << 5) | (b1));
+                    }
+                }
+
+                pDest += destWidthDiff;
+                pSrc += srcWidthDiff;
+                pSrcAlpha += srcWidthDiff;
+            }
+        } else {
+            /* copy the source to the destination */
+            for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+                for (limit = pDest + width; pDest < limit; pDest++, pSrc++) {
+                    CHECK_PTR_CLIP(dest, pDest);
+                    *pDest = *pSrc;
+                }
+
+                pDest += destWidthDiff;
+                pSrc += srcWidthDiff;
+            }
+        }
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    }
+#endif
+
     }
 
     if (newSrc.pixelData != NULL) {
