@@ -83,8 +83,8 @@ public class VirtualKeyboardResources {
         VirtualKeyboardSkin.BTN_NUMERIC_MODE = SkinLoader.getImage(
                 SkinPropertiesIDs.KEYBOARD_BTN_NUMERIC_MODE);
 
-        VirtualKeyboardSkin.BG = SkinLoader.getCompositeImage(
-                SkinPropertiesIDs.KEYBOARD_BG,9);
+        VirtualKeyboardSkin.BG = SkinLoader.getImage(
+                SkinPropertiesIDs.KEYBOARD_BG);
 
         VirtualKeyboardSkin.COLOR_BG = SkinLoader.getInt(
                         SkinPropertiesIDs.KEYBOARD_COLOR_BG);
@@ -121,7 +121,61 @@ public class VirtualKeyboardResources {
 
         VirtualKeyboardSkin.FONT = SkinLoader.getFont(
                 SkinPropertiesIDs.KEYBOARD_FONT);
-        
+
+        VirtualKeyboardSkin.BTN_GAME_MODE = SkinLoader.getImage(
+                                                                SkinPropertiesIDs.KEYBOARD_BTN_GAME_MODE);
+
+        VirtualKeyboardSkin.BTN_GAMEA_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMEA_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMEA_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMEA_UN);
+        VirtualKeyboardSkin.BTN_GAMEB_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMEB_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMEB_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMEB_UN);
+        VirtualKeyboardSkin.BTN_GAMEC_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMEC_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMEC_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMEC_UN);
+        VirtualKeyboardSkin.BTN_GAMED_SEL = SkinLoader.getImage(
+                                                               SkinPropertiesIDs.KEYBOARD_BTN_GAMED_SEL);
+
+        VirtualKeyboardSkin.BTN_GAMED_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAMED_UN);
+        VirtualKeyboardSkin.BTN_SB_SEL = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_SB_SEL);
+        VirtualKeyboardSkin.BTN_SB_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_SB_UN);
+       
+        VirtualKeyboardSkin.COLOR_SEL = SkinLoader.getInt(
+                                                         SkinPropertiesIDs.KEYBOARD_COLOR_SEL);
+       VirtualKeyboardSkin.COLOR_UN = SkinLoader.getInt(
+                                                         SkinPropertiesIDs.KEYBOARD_COLOR_UN);
+        VirtualKeyboardSkin.BTN_GAME_SB_SEL = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAME_SB_SEL);
+        VirtualKeyboardSkin.BTN_GAME_SB_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAME_SB_UN); 
+        VirtualKeyboardSkin.BTN_NUMERIC_MODE_SEL = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_NUMERIC_MODE_SEL);
+        VirtualKeyboardSkin.BTN_NUMERIC_MODE_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_NUMERIC_MODE_UN);
+        VirtualKeyboardSkin.BTN_GAME_MODE_SEL = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAME_MODE_SEL);
+        VirtualKeyboardSkin.BTN_GAME_MODE_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_GAME_MODE_UN);
+        VirtualKeyboardSkin.BTN_NUM1_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_NUM1_UN);
+        VirtualKeyboardSkin.BTN_NUM1_SEL = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_NUM1_SEL);
+        VirtualKeyboardSkin.BTN_NUM2_UN = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_NUM2_UN);
+        VirtualKeyboardSkin.BTN_NUM2_SEL = SkinLoader.getImage(
+                                                              SkinPropertiesIDs.KEYBOARD_BTN_NUM2_SEL);
+
+
         init = true;
     }
 }

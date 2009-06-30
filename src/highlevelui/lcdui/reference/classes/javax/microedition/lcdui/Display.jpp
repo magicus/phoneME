@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -35,12 +35,16 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
+
 // #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
 
 import com.sun.midp.i18n.ResourceConstants;
+
+
+
 // #else
 import java.lang.*;
 import java.lang.reflect.*;
@@ -66,6 +70,7 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
 import java.io.IOException;
+
 // #endif ENABLE_CHAMELEON
 
 // #ifdef ENABLE_I3_TEST
@@ -78,6 +83,8 @@ import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
 // #endif
+
+import com.sun.midp.orientation.OrientationListener;
 
 /**
  * <code>Display</code> represents the manager of the display and
@@ -730,6 +737,11 @@ System.out.println("Display.close: disabling OpenGL");
         owner = theOwner;
         displayDevice = dd;
 
+System.out.println("Display constructor: checking for openGL");
+System.out.println("handler is " +
+com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler());
+System.out.println("app property is " +
+com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler().getMIDletSuite().getProperty("RUNTIME_OPENGL_PROPERTY"));
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
@@ -789,7 +801,7 @@ System.out.println("Display.close: disabling OpenGL");
         com.sun.midp.midlet.MIDletStateHandler handler = 
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
         if (handler != null) {
-            String propval = handler.getMIDletSuite().getProperty(RUNTIME_OPENGL_PROPERTY);
+            String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
             if (String.valueOf("YES").equals(propval)) {
 System.out.println("Display.constructor: enabling OpenGL for " + this);
                 useOpenGL = true;
@@ -1799,6 +1811,29 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
         return pt_popup;
     }
 
+    private boolean isSIWL() {
+        return (window != null && window.getMode() == MIDPWindow. NO_SOFT_BUTTON_MODE);
+    }
+
+    private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
+        boolean ret = true;
+        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
+        // microedition.canvasvk=FALSE to disable it
+        if (owner instanceof MIDlet) {
+            if (isSIWL()) {
+                ret = false;
+            } else if (d != null && d.lGetDisplayable() instanceof Canvas) {
+                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+                if ("no".equals(showVirtualKeyboard)) {
+                    ret = false;
+                }
+            }
+        } else {
+            ret = false;
+        }
+        return ret;
+    }
+    
     /**
      * Create popup layer that represents java virtual keyboard popup
      *   associated with this Display
@@ -1806,15 +1841,17 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
      *   associated with this Display
      **/
     VirtualKeyboardLayer getVirtualKeyboardPopup() {
-        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
-            return null;
-        }
-        if (keyboardLayer == null) {
-          VirtualKeyboardResources.load();
-          keyboardLayer = new VirtualKeyboardLayer();
-          keyboardLayer.init();
-        }
-        return keyboardLayer;
+        VirtualKeyboardLayer ret = null;
+        if (isVirtualKeyboardAllowed(current)) {
+            if (keyboardLayer == null) {
+                VirtualKeyboardResources.load();
+                if (VirtualKeyboardLayer.init()) {
+                    keyboardLayer = new VirtualKeyboardLayer();
+                }
+            }
+            ret = keyboardLayer;
+        } 
+        return ret;
     }
 
     // #endif ENABLE_CHAMELEON
@@ -3014,6 +3051,16 @@ System.out.println("Display: " + this + " returning from callPaint");
                 ((CanvasLFImpl)currentCopy).uCallKeyReleased(keyCode);
             }
         }
+        /**
+         * Create popup layer that represents java virtual keyboard popup
+         *   associated with this Display
+         * @return VirtualKeyboard layer instance connected to the current input session
+         *   associated with this Display
+         **/
+        public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+            return Display.this.getVirtualKeyboardPopup();
+        }
+        
     }
     // #endif
  
@@ -3074,6 +3121,15 @@ System.out.println("Display: " + this + " returning from callPaint");
                 }
             }
 
+        }
+
+        /**
+         * Checks is the display is foregroud.
+         *
+         * @return true when display is foreground
+         */
+        public boolean isDisplayForeground() {
+            return hasForeground;
         }
 
         /**
@@ -3749,8 +3805,26 @@ System.out.println("Display: disabling openGL");
 
         /**
          * Called by event delivery when size of screen was changed.
+         *
+         * @param state The new state or -1 when state is not supported
+         * @see OrientationListener interface
          */
-        public void handleRotationEvent() {
+        public void handleRotationEvent(int state) {
+            // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
+            boolean isPortrait = !Display.this.displayDevice.getReverseOrientation();
+            if (
+                (isPortrait && 
+                    (state == 
+                        OrientationListener.FODDER_BANK ||
+                        state == OrientationListener.BOW_ROLL)
+                ) || (!isPortrait &&
+                    (state == 
+                        OrientationListener.LEFT_BANK ||
+                        state == OrientationListener.RIGHT_BANK)
+                )) {
+                return;
+            }
+                    
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
                 wantRotation = Display.this.displayDevice.reverseOrientation();
@@ -3906,7 +3980,7 @@ System.out.println("Display: disabling openGL");
             keyboardLayer = Display.this.getVirtualKeyboardPopup();
 
             if (keyboardLayer != null && listener != null) {
-                keyboardLayer.setVirtualKeyboardLayerListener(listener);
+                keyboardLayer.addVirtualKeyboardLayerListener(listener);
                 keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
                 if (keyboardLayer.isVirtualKeyboardVisible()) {
                     Display.this.hidePopup(keyboardLayer);
@@ -4050,7 +4124,7 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
 
             if (current_orientation != restore_orientation) {
                 java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
-                consumer.handleRotationEvent();
+                consumer.handleRotationEvent(-1);
             }
 
             // SYNC NOTE: The implementation of dsPaint() could call
@@ -4082,7 +4156,7 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
                 if (current_orientation != initial_orientation) {
                     restore_orientation = current_orientation;
                     java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
-                    consumer.handleRotationEvent();
+                    consumer.handleRotationEvent(-1);
                 }
 
             synchronized (LCDUILock) {
