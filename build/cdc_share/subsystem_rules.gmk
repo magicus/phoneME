@@ -24,8 +24,21 @@
 
 JSR_239_DEPS=$(PS)$(MIDP_OUTPUT_DIR)/classes
 
-$(JSR_239_JAR): $(SUBSYSTEM_JSR_239_JAVA_FILES) 
-	echo xxx $(SUBSYSTEM_JSR_239_JAVA_FILES) 
+# TCK signature tests for CDC-MIDP build uses classes.zip 
+# from cldc1.1 project, these classes does not contain 
+# java.lang.Comparable and java.lang.UnsupportedOperationException. 
+# JSR 239 does not provide these classes for CDC-MIDP build 
+# because they are already provided by CDC. So jsr239_ext.jar is
+# prepared to include missing classes and satisfy signature test.
+#
+JSR_239_EXT_JAR=$(JSROP_JAR_DIR)/$(JSR_239_LIB_NAME)_ext.jar
+JSR_239_EXT_JAVA_FILES=$(NIO_IMPL_OO_API_JAVA_FILES_CLDC_ONLY)
+
+$(JSR_239_EXT_JAR): $(JSR_239_EXT_JAVA_FILES) 
+	$(call compileJSROP,jsr239,$(JSR_239_BUILD_DIR)/classes_ext,$(JSR_239_EXT_JAVA_FILES),$(JSR_239_DEPS))
+	$(call makeJSROPJar,$(JSR_239_EXT_JAR),$(JSR_239_BUILD_DIR)/classes_ext)
+
+$(JSR_239_JAR): $(SUBSYSTEM_JSR_239_JAVA_FILES) $(JSR_239_EXT_JAR)
 	$(call compileJSROP,jsr239,$(JSR_239_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_239_JAVA_FILES),$(JSR_239_DEPS))
 	$(call makeJSROPJar,$(JSR_239_JAR),$(JSR_239_BUILD_DIR)/classes)
 
