@@ -260,7 +260,15 @@ typedef const char* javacall_const_ascii_string;
  * @typedef javacall_pixel
  * @brief Pixel type for LCD graphics
  */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+typedef unsigned short javacall_pixel16;
+typedef unsigned int javacall_pixel32;
+typedef javacall_pixel32 javacall_pixel;
+#elif ENABLE_32BITS_PIXEL_FORMAT
+typedef unsigned int javacall_pixel;
+#else
 typedef unsigned short javacall_pixel;
+#endif
 
 /**
  * A list of properties that can be searched by a key.
