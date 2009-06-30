@@ -272,7 +272,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         locator = source.getLocator();
         hNative = nInit(appId, pID, locator);
 
-        mplayers.put(new Integer(pID), this);
+        mplayers.put(new Integer(pID), new PlayerWrapper(this));
 
         mediaFormat     = nGetMediaFormat(hNative);
 
@@ -1493,7 +1493,16 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * @return      Description of the Return Value
      */
     public static HighLevelPlayer get(int pid) {
-        return (HighLevelPlayer) (mplayers.get(new Integer(pid)));
+        Integer n = new Integer(pid);
+        PlayerWrapper pw = (PlayerWrapper) mplayers.get(n);
+        if (pw != null) {
+            HighLevelPlayer p = pw.getPlayer();
+            if (p == null) {
+                mplayers.remove(n);
+            }
+            return p;
+        }
+        return null;
     }
 
     /**
@@ -1531,7 +1540,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                             /* New task is waiting. Exitting */
                             break;
                         }
-                        HighLevelPlayer p = (HighLevelPlayer) e.nextElement();
+                        HighLevelPlayer p = ((PlayerWrapper) e.nextElement()).getPlayer();
+                        if (p == null) {
+                            continue;
+                        }
                         /* Send event to player if this player is in realized state (or above) */
                         int state = p.getState();
                         if (state >= Player.REALIZED && p.lowLevelPlayer != null) {
@@ -1567,7 +1579,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            HighLevelPlayer p = (HighLevelPlayer) e.nextElement();
+            HighLevelPlayer p = ((PlayerWrapper) e.nextElement()).getPlayer();
+            if (p == null) {
+                continue;
+            }
 
             int state = p.getState();
             long time = p.getMediaTime();
@@ -1603,7 +1618,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
         
         for (Enumeration e = mplayers.elements(); e.hasMoreElements();) {
-            HighLevelPlayer p = (HighLevelPlayer) e.nextElement();
+            HighLevelPlayer p = ((PlayerWrapper) e.nextElement()).getPlayer();
+            if (p == null) {
+                continue;
+            }
 
             int state = ((Integer) pstates.get(p)).intValue();
             long time = ((Long) mtimes.get(p)).longValue();
@@ -1635,6 +1653,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         // clear player states and media times
         pstates.clear();
         mtimes.clear();
+    }
+    
+    static Hashtable getPlayerList() {
+        return mplayers;
     }
 
     /**
