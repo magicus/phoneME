@@ -33,6 +33,12 @@
 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
 int pp_enable_32bit_mode = 0;
+
+void set_pp_enable_32bit_mode(int enable) {
+    if (pp_enable_32bit_mode != enable) {
+        pp_enable_32bit_mode = enable;
+    }
+}
 #endif
 
 typedef struct _registers_4 {

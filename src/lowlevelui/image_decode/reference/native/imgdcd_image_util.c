@@ -54,8 +54,22 @@
 #define IMGDCD_MIDPTOPIXEL_32(x) ( ((x) & 0xFF00FF00) | (((x) << 16) & 0xFF0000) | (((x) >> 16) & 0xFF))
 #define IMGDCD_RGB2PIXEL_16(r, g, b) ((imgdcd_pixel16_type)( b + (g << 5) + (r << 11) ))
 
+
 int img_enable_32bit_mode = 0;
 
+extern lfj_select_rgb565_image_rom();
+extern lfj_select_rgb888_image_rom();
+
+void set_img_enable_32bit_mode(enable) {
+    if (img_enable_32bit_mode != enable) {
+        img_enable_32bit_mode = enable;
+        if (img_enable_32bit_mode) {
+            lfj_select_rgb888_image_rom();
+        } else {
+            lfj_select_rgb565_image_rom();
+        }
+    }
+}
 #elif ENABLE_RGBA8888_PIXEL_FORMAT
 
 /** Convert separate r, g, b and alpha components to 32-bit pixel. */

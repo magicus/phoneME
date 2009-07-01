@@ -47,6 +47,7 @@ typedef unsigned int imgdcd_pixel32_type;
 typedef imgdcd_pixel32_type imgdcd_pixel_type;
 
 extern int img_enable_32bit_mode;
+void set_img_enable_32bit_mode(int enable);
 #elif ENABLE_32BITS_PIXEL_FORMAT
 typedef unsigned int imgdcd_pixel_type;
 #else

@@ -57,6 +57,7 @@ typedef unsigned int gxj_pixel32_type;
 typedef gxj_pixel32_type gxj_pixel_type;
 
 extern int pp_enable_32bit_mode;
+void set_pp_enable_32bit_mode(int enable);
 #elif ENABLE_32BITS_PIXEL_FORMAT
 /**
  * 32-bit pixel.
