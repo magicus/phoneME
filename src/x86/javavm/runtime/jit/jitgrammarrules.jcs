@@ -6526,6 +6526,7 @@ root:	LOOKUPSWITCH reg32 : 40 : : : : {
     	CVMLookupSwitchStackItem stack[16]; /* enough for nPairs == 64k */
     	CVMUint8  tos = 0;
 	CVMBool useCmp; /* use cmp rather than adds and subs */
+        int branchToDefaultPC = -1;
 #ifdef CVMCPU_HAS_ALU_SETCC
 	CVMInt32  prevMatchValue = 0;
 #endif
@@ -6713,9 +6714,27 @@ root:	LOOKUPSWITCH reg32 : 40 : : : : {
 		    }
 		}
 		
-		/* Either we have a match or the lookup failed */
+		/* If EQ we have a match */
 		branchToBlock(con, CVMCPU_COND_EQ, ls->lookupList[index].dest);
-		branchToBlock(con, CVMCPU_COND_AL, ls->defaultTarget);
+
+                /* Else we have a lookup failure and need to branch to the
+                   default target. Note we are only allowed one backward branch
+                   to the default target in this lookupswitch, due to how
+                   gcCheckPcsSize is computed by the front end. Therefore
+                   if we've already generated a backward branch to the default,
+                   target we'll just branch to this branch instead.
+                */
+                if (branchToDefaultPC == -1) {
+                    if (CVMJITirblockIsBackwardBranchTarget(ls->defaultTarget))
+                    {
+                        branchToDefaultPC = CVMJITcbufGetLogicalPC(con);
+                    }
+                    branchToBlock(con, CVMCPU_COND_AL, ls->defaultTarget);
+                } else {
+                    CVMJITaddCodegenComment((con,
+                        "branch to default target branch"));
+		    CVMCPUemitBranch(con, branchToDefaultPC, CVMCPU_COND_AL);
+                }
 		
 		/* See if there are still some more nodes to generate. */
 		item = popLookupNode(stack, &tos);
