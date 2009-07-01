@@ -173,6 +173,9 @@ public final class Font {
      */
     public static final int FONT_INPUT_TEXT = 1;
     
+    /*
+     * Create and register a shared font accessor object.
+     */
     static {
         OEMFont.registerFontAccessor(new FontAccessImpl());
     }
@@ -260,6 +263,7 @@ public final class Font {
             throw new IllegalArgumentException("Unsupported face");
         }
 
+        // TODO: make the following line more clear
         if ((inp_style & ((STYLE_UNDERLINED << 1) - 1)) != inp_style) {
             throw new IllegalArgumentException("Illegal style");
         }
@@ -284,7 +288,21 @@ public final class Font {
         }
     }
     
+    /**
+     * Same as getFont, but accept size in pixels. The method must be called via
+     * OEMFont accessor. A Font instance returned by this method holds a font
+     * with the specified size. Although getSize() method of such instance
+     * returns one of the <code>SIZE_SMALL</code, <code>SIZE_MEDIUM</code> or
+     * <code>SIZE_LARGE</code> constants (the closest to the actual size
+     * according to implementation specific values of these sizes).
+     * @param inp_style <code>STYLE_PLAIN</code>, or a combination of
+     * <code>STYLE_BOLD</code>,
+     * <code>STYLE_ITALIC</code>, and <code>STYLE_UNDERLINED</code>
+     * @param inp_size size of the font in pixels
+     * @return instance of the nearest font found
+     */
     static Font getOEMFont(int inp_style, int inp_size) {
+        // TODO: make the following line more clear
         if ((inp_style & ((STYLE_UNDERLINED << 1) - 1)) != inp_style) {
             throw new IllegalArgumentException("Illegal style");
         }
@@ -328,7 +346,7 @@ public final class Font {
      */
     public int getSize() {
         // SYNC NOTE: return of atomic value, no locking necessary
-        return size0;
+        return sizeRounded;
     }
 
     /**
@@ -499,9 +517,9 @@ public final class Font {
     /** The style of this Font */
     private int style;
     /** The size of this Font, one of the constants */
-    private int size;
+    private int sizeRounded;
     /** The size of this Font in pixels*/
-    private int size0;
+    private int size;
     /** The baseline of this Font */
     private int baseline;
     /** The height of this Font */
@@ -530,8 +548,20 @@ public final class Font {
                              boolean free_size);
 }
 
+/**
+ * Implementation of a font accessor. 
+ */
 class FontAccessImpl implements FontAccess {
+
+    /**
+     * Get a Font class instance holding a font with speicied size in pixels.
+     *
+     * @param style style of the font. Use Font.STYLE_XXX constants
+     * @param size size of the font in pixels
+     * @return Font instance of the given style and size
+     */ 
     public Font getOEMFont(int style, int size) {
         return Font.getOEMFont(style, size);
     }
 }
+

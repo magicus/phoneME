@@ -145,7 +145,9 @@ include $(SUBSYSTEM_DIR)/protocol/cdc_application/lib.gmk
 else 
 include $(SUBSYSTEM_DIR)/protocol/$(SUBSYSTEM_MAKE_FILE)
 endif
-
+ifeq ($(USE_OEM_PROTOCOL), true)
+    include $(OEM_PROTOCOL_DIR)/$(SUBSYSTEM_MAKE_FILE)
+endif
 #####################################################################
 # Push Subsystem
 # Description: Push Registry, Push Listener, Push db and resource

@@ -145,6 +145,13 @@ public class MIDPWindow extends CWindow {
     boolean bodyOverlapped = false;
 
     /**
+     * Construct a dummy MIDPWindow without a tunnel.
+     */
+    MIDPWindow() {
+        super();
+    }
+
+    /**
      * Construct a new MIDPWindow given the tunnel to the desired
      * MIDP Display instance
      *

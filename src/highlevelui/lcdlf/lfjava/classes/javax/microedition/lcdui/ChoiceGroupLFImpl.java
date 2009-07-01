@@ -143,6 +143,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             System.arraycopy(elHeights, elementNum, newArray, elementNum + 1, 
                              cg.numOfEls - elementNum - 1);
             elHeights = newArray; // swap them
+
         } else if (elementNum != cg.numOfEls - 1) {
             // if we're not appending
             System.arraycopy(elHeights, elementNum, elHeights, elementNum + 1,
@@ -838,16 +839,13 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                                            i == selectedIndex);
             
             if (choiceImg != null) {
-
-                int yOffset = elHeights[i] - choiceImg.getHeight();
-                yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
                 if (ScreenSkin.RL_DIRECTION) {
                     g.drawImage(choiceImg, bounds[WIDTH]
                             - 2 * ChoiceGroupSkin.PAD_H - choiceImg.getWidth(),
-                            yOffset, Graphics.LEFT | Graphics.TOP);
+                            0, Graphics.LEFT | Graphics.TOP);
                     offSetX = ChoiceGroupSkin.PAD_H;
                 } else {
-                    g.drawImage(choiceImg, 0, yOffset,
+                    g.drawImage(choiceImg, 0, 0,
                             Graphics.LEFT | Graphics.TOP);
                     offSetX = ChoiceGroupSkin.PAD_H + choiceImg.getWidth();
                 }
@@ -880,7 +878,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                         break;
                 }
             }
-            g.translate(offSetX, 0);
+                g.translate(offSetX, 0);
 
             hilighted = (i == hilightedIndex && hasFocus);
 
@@ -921,15 +919,11 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                         textOffset = w - ChoiceGroupSkin.WIDTH_IMAGE - ChoiceGroupSkin.PAD_H;                        
                     }
                 }
-                int yOffset = elHeights[i] - cg.cgElements[i].imageEl.getHeight();
-                yOffset = yOffset <= 0 ? 0 : yOffset >> 1;
-
-                
-                g.clipRect(textOffset, yOffset,
-                           ChoiceGroupSkin.WIDTH_IMAGE, ChoiceGroupSkin.HEIGHT_IMAGE);
-
+                g.clipRect(textOffset, 0,
+                           ChoiceGroupSkin.WIDTH_IMAGE,
+                           ChoiceGroupSkin.HEIGHT_IMAGE);
                 g.drawImage(cg.cgElements[i].imageEl,
-                            textOffset , yOffset,
+                            textOffset , 0,
                             Graphics.LEFT | Graphics.TOP);
                 g.setClip(iX, iY, iW, iH);
                 textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
@@ -937,34 +931,13 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             }
 
             g.translate(0, -1);
-            
-
-            int textHeight = 0;
-            String str = cg.cgElements[i].stringEl;
-            Font font = cg.cgElements[i].getFont();
-            
-            textHeight = cg.fitPolicy == ChoiceGroup.TEXT_WRAP_OFF ?
-                font.getHeight() :
-                Text.getHeightForWidth(str, font, contentW, textOffset);
-
-            int yOffset = elHeights[i] - textHeight;
-            int  contentH = elHeights[i];
-
-            if (yOffset > 0) {
-                contentH = textHeight;
-                yOffset >>= 1;
-            } else if (yOffset < 0) {
-                yOffset = 0;
-            }
-
-            g.translate(0, yOffset);
-
-            Text.paint(g, str, font,
+            Text.paint(g, cg.cgElements[i].stringEl,
+                       cg.cgElements[i].getFont(),
                        ChoiceGroupSkin.COLOR_FG,
                        ScreenSkin.COLOR_FG_HL,
-                       contentW, contentH, textOffset,
+                       contentW, elHeights[i], textOffset,
                        (hilighted) ? mode | Text.INVERT : mode, null);
-            g.translate(-offSetX, elHeights[i] + 1 - yOffset);
+            g.translate(-offSetX, elHeights[i] + 1);
             translatedY += elHeights[i];
 
         } // end for
@@ -1097,24 +1070,20 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         // taller then the choice image and taller then the content image
 
         elHeights[i] = 20;
+
         int textOffset = (cgEl.imageEl == null) ? 0 : 
             ChoiceGroupSkin.WIDTH_IMAGE + 
             ChoiceGroupSkin.PAD_H;
         
         Font fnt = cgEl.getFont();
-        int imHeight =  ChoiceGroupSkin.HEIGHT_IMAGE;
         
         if (cg.fitPolicy == ChoiceGroup.TEXT_WRAP_OFF) {
             elHeights[i] += fnt.getHeight();
         } else {
- 
             elHeights[i] += Text.getHeightForWidth(cgEl.stringEl, fnt,
                                                     availableWidth, textOffset);
         }
-
-        if (elHeights[i] < imHeight) {
-            elHeights[i] = imHeight;
-        }
+ 
         return elHeights[i];
     }
 
@@ -1143,7 +1112,6 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      * based on the preferred layout width.
      */
     int[] elHeights;
-
 
     /**
      * A flag indicating if traversal has occurred into this

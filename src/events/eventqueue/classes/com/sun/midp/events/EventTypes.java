@@ -490,4 +490,9 @@ public final class EventTypes {
      * out of memory was received.  
      */
     public static final int MIDP_OUT_OF_MEMORY_HANDLED = 80;
+    
+    /**
+     * This event is used by NativeVirtualKeyboard class internally only
+     */
+    public static final int NATIVE_VIRTUAL_KEYBOARD_EVENT = 81;
 }
