@@ -446,13 +446,13 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
             	    CVMInt32  npairs = CVMgetAlignedInt32(&lpc[1]);
 
 		    /* default target block */
-                    CVMJITirblockNewLabelForPC(con, 
+                    newLabel(con, pc - codeBegin,
                         CVMgetAlignedInt32(lpc) + pc - codeBegin); 
 
 	    	    /* Identify match-offset target blocks */ 
 	    	    for (cnt = 0; cnt < npairs; cnt++) {
                 	lpc += 2;
-                        CVMJITirblockNewLabelForPC(con,
+                        newLabel(con, pc - codeBegin,
 			    CVMgetAlignedInt32(&lpc[1]) + pc - codeBegin); 
             	    }
 		    break; 
@@ -462,12 +462,12 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
             	    CVMInt32* lpc  = (CVMInt32*)CVMalignWordUp(pc+1);
             	    CVMInt32  low  = CVMgetAlignedInt32(&lpc[1]);
             	    CVMInt32  high = CVMgetAlignedInt32(&lpc[2]);
-                    CVMJITirblockNewLabelForPC(con, 
+                    newLabel(con, pc - codeBegin,
 			CVMgetAlignedInt32(&lpc[0]) + pc - codeBegin);
 
             	    /* Fill up jump offset table list */
             	    for (cnt = 0; cnt < high - low + 1; cnt++) {
-                        CVMJITirblockNewLabelForPC(con, 
+                        newLabel(con, pc - codeBegin,
 			    CVMgetAlignedInt32(&lpc[3+cnt]) + pc - codeBegin);
             	    }
             	    break;
