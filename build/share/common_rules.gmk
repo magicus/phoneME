@@ -81,7 +81,9 @@ $(TCK_NCI_SLAVE_JAR): $(JSR_120_NCISLAVE_CLASS_DIR)
 $(TCK_NCI_SLAVE_JAD): $(TCK_NCI_SLAVE_JAR) 
 	cp $(MODULE_JSR_120_TCK_NCI_SLAVE_JAD) $(TCK_NCI_SLAVE_JAD)
 	sed "s/MIDlet-Jar-Size: .*/MIDlet-Jar-Size: `cat $(TCK_NCI_SLAVE_JAR) | wc -c`/" \
-		-i $(TCK_NCI_SLAVE_JAD) 
+		$(TCK_NCI_SLAVE_JAD) >$(TCK_NCI_SLAVE_JAD).tmp
+	rm $(TCK_NCI_SLAVE_JAD)
+	mv $(TCK_NCI_SLAVE_JAD).tmp $(TCK_NCI_SLAVE_JAD) 
 
 #################################################################
 
