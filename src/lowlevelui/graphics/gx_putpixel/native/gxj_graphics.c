@@ -700,9 +700,17 @@ gx_draw_rect(jint color, const jshort *clip,
 
 
 #if (UNDER_ADS || UNDER_CE) || (defined(__GNUC__) && defined(ARM))
-extern void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels);
+
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+extern void fast_pixel_set_32(unsigned * mem, unsigned value, int number_of_pixels);
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+extern void fast_pixel_set_16(unsigned * mem, unsigned value, int number_of_pixels);
+#endif
+
 #else
-void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels)
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+void fast_pixel_set_32(unsigned * mem, unsigned value, int number_of_pixels)
 {
    int i;
    gxj_pixel_type* pBuf = (gxj_pixel_type*)mem;
@@ -711,6 +719,19 @@ void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels)
       *(pBuf + i) = (gxj_pixel_type)value;
    }
 }
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+void fast_pixel_set_16(unsigned * mem, unsigned value, int number_of_pixels)
+{
+   int i;
+   gxj_pixel16_type* pBuf = (gxj_pixel16_type*)mem;
+
+   for (i = 0; i < number_of_pixels; ++i) {
+      *(pBuf + i) = (gxj_pixel16_type)value;
+   }
+}
+#endif
+
 #endif
 
 void fastFill_rect(gxj_pixel_type color, gxj_screen_buffer *sbuf, int x, int y, int width, int height, int cliptop, int clipbottom) {
@@ -729,20 +750,26 @@ void fastFill_rect(gxj_pixel_type color, gxj_screen_buffer *sbuf, int x, int y, 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
         if (pp_enable_32bit_mode) {
 #endif
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
   	    gxj_pixel_type* raster=sbuf->pixelData + y*screen_horiz+x;
 
 	    for(;height>0;height--) {
-		    fast_pixel_set((unsigned *)raster, color, width);
+		    fast_pixel_set_32((unsigned *)raster, color, width);
 		    raster+=screen_horiz;
 	    }
+#endif
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
         } else {
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
   	    gxj_pixel16_type* raster=((gxj_pixel16_type*)sbuf->pixelData) + y*screen_horiz+x;
 
 	    for(;height>0;height--) {
-		    fast_pixel_set((unsigned *)raster, color, width);
+		    fast_pixel_set_16((unsigned *)raster, color, width);
 		    raster+=screen_horiz;
 	    }
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
         }
 #endif
         }

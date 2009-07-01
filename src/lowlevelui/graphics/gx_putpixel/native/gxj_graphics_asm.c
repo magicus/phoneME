@@ -51,7 +51,9 @@ extern "C" {
  */
 
 #if UNDER_ADS
-void fast_pixel_set(void* mem, int value, int number_of_pixels) {
+
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+void fast_pixel_set_32(void* mem, int value, int number_of_pixels) {
 __asm {
 
     mov     r0,mem
@@ -102,11 +104,67 @@ loop:
 
     } 
 }
+
+#elif !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+
+void fast_pixel_set_16(void* mem, int value, int number_of_pixels) {
+__asm {
+
+    mov     r0,mem
+    mov     r2,number_of_pixels
+    add     r2, r0, r2, lsl #1
+    add     r3, value, value, lsl #0x10
+
+    and     r1, r0, #0x3
+    cmp     r1,#0
+    strneh  r3, [r0],#2
+    subne   r2, r2, #1
+
+    sub     r1, r2, #0x1f
+
+    cmp     r0, r1
+    bge     loop2
+
+
+#if (__ARMCC_VERSION < 120848)
+    stmfd sp, {r4-r11}
+#endif
+
+    mov r4,  r3
+    mov r5,  r3
+    mov r6,  r3
+    mov r7,  r3
+    mov r8,  r3
+    mov r9,  r3
+    mov r10, r3
+    
+
+loop:
+    stmia r0!, {r3-r10}
+    cmp r0, r1
+    blt loop
+
+#if (__ARMCC_VERSION < 120848)
+    ldmfd sp, {r4-r11}
+#endif 
+
+ loop2:
+    cmp    r0,r2;
+    strlth r3, [r0],#2
+    blt    loop2
+
+    } 
+}
+
+#endif /* !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT */
+
 #elif defined(__GNUC__) && defined(ARM)
+
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
 // For more info on GNU/ARM inline-asm, see
 // http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
 // http://lists.arm.linux.org.uk/pipermail/linux-arm/2005-July/010365.html
-void fast_pixel_set(void* mem, int value, int number_of_pixels) {
+void fast_pixel_set_16(void* mem, int value, int number_of_pixels) {
 asm volatile(
    "mov     r0, %0\n\t"   // %0 = mem
    "mov     r2, %2\n\t"   // %2 = number_of_pixels
@@ -143,6 +201,8 @@ asm volatile(
   : "r0", "r1", "r2", "r3", "r4", "r5", "r6"
   );
 }
+#endif
+
 #endif
 
 /**
