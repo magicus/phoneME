@@ -712,10 +712,10 @@ public class Display {
 
         if (useOpenGL) {
 System.out.println("Display.close: disabling OpenGL");
-            com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().disableOpenGL();
             com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
                 com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-           ogl.endMidpRendering();
+            ogl.disableOpenGL();
+            ogl.endMidpRendering();
         }
 
         // #ifdef ENABLE_CHAMELEON
@@ -737,11 +737,6 @@ System.out.println("Display.close: disabling OpenGL");
         owner = theOwner;
         displayDevice = dd;
 
-System.out.println("Display constructor: checking for openGL");
-System.out.println("handler is " +
-com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler());
-System.out.println("app property is " +
-com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler().getMIDletSuite().getProperty("RUNTIME_OPENGL_PROPERTY"));
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
