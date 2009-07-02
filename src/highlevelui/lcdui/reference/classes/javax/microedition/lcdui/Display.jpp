@@ -468,7 +468,7 @@ public class Display {
     DisplayEventConsumerImpl consumer;
 
     /** Foreground event consumer helper class. */
-    ForegroundEventConsumerImpl foregroundConsumer;
+    ForegroundEventConsumer foregroundConsumer;
 
     // #ifdef ENABLE_CHAMELEON
     /** Chameleon Display tunnel helper class */

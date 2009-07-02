@@ -122,6 +122,25 @@ public class Protocol extends com.sun.cdc.io.j2me.ssl.Protocol {
         AccessController.checkPermission(SSL_PERMISSION_NAME,
                                          host + ":" +
                                          port +  file);
+
+        if (port < 0) {
+            throw new IllegalArgumentException("bad port: " + port);
+        }
+        try {
+            AccessController.checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+        } catch (SecurityException exc) {
+            /*
+             * JTWI security check, untrusted MIDlets cannot open 443.
+             * This is so they cannot perform HTTPS
+             * requests on server without using the system code. The
+             * system HTTP code will add a "UNTRUSTED/1.0" to the user agent
+             * field for untrusted MIDlets.
+             */
+            if (port == 443) {
+                throw new SecurityException(
+                    "Target port denied to untrusted applications");
+            }
+        }
         return;
     }
 

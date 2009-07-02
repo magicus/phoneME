@@ -291,13 +291,12 @@ public class DateField extends Item {
             
             if (mode == TIME) {
 
-                if (currentDate.getTime().getTime() >= 24*60*60*1000) {
-                    initialized = false;
+                 if (currentDate.get(Calendar.YEAR) != 1970 ||
+                     currentDate.get(Calendar.MONTH) != Calendar.JANUARY ||
+                     currentDate.get (Calendar.DATE) != 1) {
+                     initialized = false;
                 } else {
-                    currentDate.set(Calendar.YEAR, 1970);
-                    currentDate.set(Calendar.MONTH, Calendar.JANUARY);
-                    currentDate.set(Calendar.DATE, 1);
-                    initialized = true;
+                     initialized = true;
                 }
             } else {
                 // Currently spec does not prohibit from losing
