@@ -146,4 +146,10 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
         return;
     }
 
+    /*
+     * open a server socket
+     */
+    protected com.sun.cdc.io.j2me.serversocket.Protocol createServerSocket() {
+        return new com.sun.midp.io.j2me.serversocket.Protocol();
+    }
 }
