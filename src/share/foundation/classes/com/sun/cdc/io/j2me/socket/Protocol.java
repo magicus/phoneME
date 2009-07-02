@@ -100,6 +100,15 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
         return;
     }
 
+    /*
+     * Creates a server socket. MIDP
+     * versions of the protocol handler should override this
+     * method.
+     */
+    protected com.sun.cdc.io.j2me.serversocket.Protocol createServerSocket() {
+        return new com.sun.cdc.io.j2me.serversocket.Protocol();
+    }
+
     /**
      * Open the connection
      * @param name the target for the connection
@@ -144,7 +153,7 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
                  */
                  /* socket:// and socket://: are also valid serversocket urls */
                 com.sun.cdc.io.j2me.serversocket.Protocol con =
-                    new com.sun.cdc.io.j2me.serversocket.Protocol();
+                    createServerSocket();
                 con.open("//"+name, mode, timeouts);
                 return con;
             }

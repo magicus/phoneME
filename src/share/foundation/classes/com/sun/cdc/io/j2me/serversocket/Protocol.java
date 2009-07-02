@@ -98,7 +98,6 @@ public class Protocol extends ConnectionBase
 
         try {
             final int port;
-            InetAddress hostAddress = InetAddress.getLocalHost();
 
             /* Get the port number */
             port = Integer.parseInt(name);
@@ -176,7 +175,22 @@ public class Protocol extends ConnectionBase
         if (ssocket.isClosed()) 
            throw new IOException("ServerSocketConnection is closed");
 
-	InetAddress addr = InetAddress.getLocalHost();
+        /*
+         * getLocalAddress calls SecurityManager.checkConnect,
+         * so a privileged block is used to avoid excessive security prompting.
+         */
+	InetAddress addr =
+            (InetAddress)java.security.AccessController.doPrivileged(
+                 new java.security.PrivilegedAction() {
+                     public Object run() {
+                         try {
+                             return InetAddress.getLocalHost();
+                         } catch (java.net.UnknownHostException uhe) {
+                             return null;
+                         }
+                     }
+                 });
+
         if (addr == null) 
             return null;
         else 
