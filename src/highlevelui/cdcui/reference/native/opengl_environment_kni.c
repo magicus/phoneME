@@ -169,6 +169,9 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
                                                 &srcSBuf, NULL);
     surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;
+    if (surfaceId == 0)
+         surfaceId = midpGL_createPbufferSurface();
+    IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;
 BREWprintf("opengl_environment_kni.c: flushPbufferSurface0: calling flushPbufferSurface %d %d %d %d %d %d\n",
     x,y, width, height, srcSBuf.pixelData, surfaceId);
     KNI_EndHandles();
@@ -200,13 +203,17 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_hasBackingSurface) {
     } else {
         KNI_GetObjectField(graphicsHandle, image_fid, imgHandle);
         if (KNI_IsNullHandle(imgHandle)) {
+BREWprintf("hasBackingSurface - no image in the graphics - return false\n");
             retval = KNI_FALSE;
         }
         else { // has a backing surface
             srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
             psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
                                                        &srcSBuf, NULL);
-            surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;                                         
+            surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;     
+            if (surfaceId == 0)
+                surfaceId = midpGL_createPbufferSurface();
+            IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;                                    
 BREWprintf("opengl_environment_kni.c: hasBackingSurface: calling flushPbufferSurface %d %d %d %d %d %d\n",
     0, 0, srcSBuf.width, srcSBuf.height, srcSBuf.pixelData, surfaceId);
             retval = KNI_TRUE;
