@@ -1,0 +1,170 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Generic compiler specific defines
+# MIDP specific directories and libraries defines will be in gcc-jtwi.gmk.
+#
+######################################################################
+#
+# The following variables are required to be defined here:
+#
+# File suffixes
+#
+# LIB_SUFFIX       suffix of library file
+# LIB_PREFIX        prefix of library file
+# OBJ_SUFFIX       suffix of object file
+#
+# Compiler definitions
+#
+# CC		   compiler command for c files
+# CPP		   compiler command for c++ files
+# CC_OUTPUT	   compiler option used to specify name of output file
+#
+# Linker definitions
+#
+# LD		   linker command
+# LINKER_OUTPUT	   linker option used to specify output name
+#
+# Archiver or library command
+#
+# AR		   command that creates a library
+#
+# Some optional variables
+#
+# AR_FLAGS	   flags for the library command
+# LIBS		   libraries to be linked with
+# LD_FLAGS         linker flags
+# EXTRA_CFLAGS     flags for c compiler 
+# EXTRA_CPPFLAGS   flags for c++ compiler
+# 
+#
+######################################################################
+ifdef GNU_TOOLS_DIR
+    GNU_TOOLS_BINDIR?=$(GNU_TOOLS_DIR)/bin/
+else
+    ifeq ($(TARGET_CPU), arm)
+	# Export GNU_TOOLS_DIR to VM makefile
+	export GNU_TOOLS_DIR=/opt/Embedix/tools/arm-linux
+	GNU_TOOLS_BINDIR?=$(GNU_TOOLS_DIR)/bin/
+    else
+	# Otherwise, use gcc command from path
+	GNU_TOOLS_BINDIR=
+    endif
+endif
+
+# Suffix
+LIB_SUFFIX      = .a
+LIB_PREFIX      = lib
+SHARED_LIB_SUFFIX = .so
+OBJ_SUFFIX      = o
+
+# Same defines when used as either TARGET or HOST COMPILER
+ifndef USE_GCC 
+USE_GCC		= true
+endif
+ifndef GCC_VERSION
+GCC_VERSION	=
+endif
+
+CC		= $(GNU_TOOLS_BINDIR)gcc$(GCC_VERSION)
+CPP		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
+CC_OUTPUT	= -o
+
+LD		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
+LINKER_OUTPUT	?= -o
+GCC_LIBS ?= -lpthread -lm -lnsl
+LIBS     += $(GCC_LIBS)
+
+# Options to force single-pass linker to search undefined references repeatly.
+# Note. '-Wl,' option cannot be used instead of -Xlinker
+LD_START_GROUP ?= -Xlinker --start-group
+LD_END_GROUP ?= --end-group
+
+AR		= $(GNU_TOOLS_BINDIR)ar
+AR_FLAGS	= -rcs
+CREATE_LIB	= $(AR) -rcs
+LIB_OUTPUT      =
+RANLIB  = $(GNU_TOOLS_BINDIR)ranlib
+
+# commands for AR mri script
+MRI_ADD = 'ADDMOD '
+MRI_CREATE = 'CREATE '
+MRI_SAVE = 'SAVE'
+MRI_OPT ?= -M <
+
+ASM		= $(GNU_TOOLS_BINDIR)as
+ASM_FLAGS	= -W
+ASM_OUTPUT	= -o
+ASMGEN_OPTIONS	+= +GenerateGNUCode
+
+ifneq ($(TARGET_VM), cdc_vm)
+# CDC port is not yet clear of warnings.
+ifneq ($(TARGET_OS), javacall)
+# javacall is not clear of warnings
+EXTRA_CFLAGS	+= -Werror
+endif
+endif
+
+include $(MIDP_DIR)/build/common/makefiles/gcc-warnings.gmk
+
+EXTRA_CFLAGS	+= -DGCC
+
+ifeq ($(TARGET_VM), cdc_vm)
+ifneq ($(CVM_STATICLINK_LIBS), true)
+LD_FLAGS += -shared
+endif
+endif
+
+ifeq ($(USE_NATIVE_PROFILER), true)
+EXTRA_CFLAGS	+= -pg
+LD_FLAGS	+= -pg
+endif
+
+ifeq ($(USE_GCOV), true)
+EXTRA_CFLAGS	 += -O0 -fprofile-arcs -ftest-coverage
+EXTRA_CPPFLAGS	 += -O0 -fprofile-arcs -ftest-coverage
+LIBS	+= -lgcov
+endif
+
+ifeq ($(USE_DEBUG), true)
+EXTRA_CFLAGS	+= -g -D_DEBUG
+LD_FLAGS	+= -g
+else
+ifneq ($(USE_GCOV), true)
+EXTRA_CFLAGS	+= -O3 -fexpensive-optimizations
+EXTRA_CPPFLAGS	+= -fconserve-space
+endif
+ifeq ($(USE_NATIVE_PROFILER), false)
+GCC_OMIT_FRAME_POINTER ?= -fomit-frame-pointer
+EXTRA_CFLAGS	+= -s $(GCC_OMIT_FRAME_POINTER)
+endif
+endif
+
+# command to display information about GCC
+DISPLAY_CC_VERSION = `$(CC) --version | head -n 1`
+DISPLAY_CPP_VERSION = `$(CPP) --version | head -n 1`
+
