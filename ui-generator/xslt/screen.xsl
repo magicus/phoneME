@@ -113,46 +113,68 @@ information or have any questions.
         <xsl:text>    }&#10;&#10;</xsl:text>
 
         <xsl:if test="uig:Screen-class-with-ProgressUpdater(.)">
-            <xsl:text>    public void updateProgress(Object progressId, int value, int max) {&#10;</xsl:text>
-            <xsl:for-each select="progress">
-                <xsl:value-of select="
-                    concat('        if (progressId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
-                <xsl:apply-templates select="." mode="Screen-set-item-value"/>
-                <xsl:text>            return;&#10;</xsl:text>
-                <xsl:text>        }&#10;</xsl:text>
-            </xsl:for-each>
-            <xsl:text>        throw new RuntimeException(progressId + " not found");&#10;</xsl:text>
-            <xsl:text>    }&#10;&#10;</xsl:text>
+            <xsl:value-of select="uig:Screen-define-item-accessor(
+                    progress,
+                    'public void updateProgress(Object itemId, int value, int max)',
+                    true())"/>
         </xsl:if>
 
         <xsl:if test="uig:Screen-class-with-TextFieldAccessor(.)">
-            <xsl:text>    public String getTextFieldValue(Object itemId) {&#10;</xsl:text>
-            <xsl:for-each select="text-field">
-                <xsl:value-of select="
-                    concat('        if (itemId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
-                <xsl:text>            return </xsl:text>
-                <xsl:apply-templates select="." mode="Screen-get-item-value"/>
-                <xsl:text>;&#10;</xsl:text>
-                <xsl:text>        }&#10;</xsl:text>
-            </xsl:for-each>
-            <xsl:text>        throw new RuntimeException(itemId + " not found");&#10;</xsl:text>
-            <xsl:text>    }&#10;&#10;</xsl:text>
-            <xsl:text>    public void setTextFieldValue(Object itemId, String value) {&#10;</xsl:text>
-            <xsl:for-each select="text-field">
-                <xsl:value-of select="
-                    concat('        if (itemId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
-                <xsl:apply-templates select="." mode="Screen-set-item-value"/>
-                <xsl:text>            return;&#10;</xsl:text>
-                <xsl:text>        }&#10;</xsl:text>
-            </xsl:for-each>
-            <xsl:text>        throw new RuntimeException(itemId + " not found");&#10;</xsl:text>
-            <xsl:text>    }&#10;&#10;</xsl:text>
+            <xsl:value-of select="uig:Screen-define-item-accessor(
+                    text-field,
+                    'public void setTextFieldValue(Object itemId, String value)',
+                    true())"/>
+            <xsl:value-of select="uig:Screen-define-item-accessor(
+                    text-field,
+                    'public String getTextFieldValue(Object itemId)',
+                    false())"/>
         </xsl:if>
 
         <!-- initializer -->
         <xsl:apply-templates select="." mode="Screen-define-initializer"/>
         <xsl:text>}&#10;</xsl:text>
     </xsl:template>
+
+
+    <xsl:function name="uig:Screen-define-item-accessor" as="xs:string">
+        <xsl:param name="items" as="element()*"/>
+        <xsl:param name="signature" as="xs:string"/>
+        <xsl:param name="setter" as="xs:boolean"/>
+
+        <xsl:value-of>
+            <xsl:value-of select="uig:add-indentation($signature, '    ')"/>
+
+            <xsl:text> {&#10;        synchronized (layoutLock) {&#10;</xsl:text>
+            <xsl:call-template name="add-indentation">
+                <xsl:with-param name="text">
+                    <xsl:for-each select="$items">
+                        <xsl:value-of select="
+                                concat('if (itemId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
+                        <xsl:choose>
+                            <xsl:when test="$setter">
+                                <xsl:call-template name="add-indentation">
+                                    <xsl:with-param name="text">
+                                        <xsl:apply-templates select="." mode="Screen-set-item-value"/>
+                                    </xsl:with-param>
+                                    <xsl:with-param name="ident" select="'    '"/>
+                                </xsl:call-template>
+                                <xsl:text>    return;&#10;</xsl:text>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:text>    return </xsl:text>
+                                <xsl:apply-templates select="." mode="Screen-get-item-value"/>
+                                <xsl:text>;&#10;</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                        <xsl:text>}&#10;</xsl:text>
+                    </xsl:for-each>
+                    <xsl:text>throw new RuntimeException(itemId + " not found");&#10;</xsl:text>
+                </xsl:with-param>
+                <xsl:with-param name="ident" select="'            '"/>
+            </xsl:call-template>
+            <xsl:text>        }&#10;    }&#10;&#10;</xsl:text>
+        </xsl:value-of>
+    </xsl:function>
 
 
     <!--
@@ -358,21 +380,18 @@ information or have any questions.
     <xsl:template match="screen" mode="Screen-define-initializer">
         <xsl:text>    </xsl:text>
         <xsl:apply-templates select="." mode="Screen-define-initializer-signature"/>
-        <xsl:text> {&#10;</xsl:text>
+        <xsl:text> {
+        synchronized (layoutLock) {
+</xsl:text>
         <xsl:value-of>
             <xsl:variable name="body">
                 <xsl:apply-templates select="." mode="Screen-define-initializer-header"/>
                 <xsl:apply-templates select="." mode="Screen-define-initializer-body"/>
                 <xsl:apply-templates select="." mode="Screen-define-initializer-footer"/>
             </xsl:variable>
-            <xsl:value-of select="
-                replace(
-                    replace($body, '^', '        ', 'm'),
-                    '^[ ]{1,};&#10;',
-                    '',
-                    'm')"/>
+            <xsl:value-of select="uig:add-indentation($body, '            ')"/>
         </xsl:value-of>
-        <xsl:text>    }&#10;</xsl:text>
+        <xsl:text>        }&#10;    }&#10;</xsl:text>
     </xsl:template>
 
     <xsl:template match="screen" mode="Screen-define-initializer-header">
@@ -654,14 +673,14 @@ information or have any questions.
 
     <xsl:template match="screen/text-field" mode="Screen-set-item-value">
         <xsl:value-of select="
-            concat('            ', uig:Screen-item-variable-name(.), '.setString(value);&#10;')"/>
+            concat(uig:Screen-item-variable-name(.), '.setString(value);&#10;')"/>
     </xsl:template>
 
     <xsl:template match="screen/progress" mode="Screen-set-item-value">
         <xsl:value-of select="
-            concat('            ', uig:Screen-item-variable-name(.), '.setMaxValue(max);&#10;')"/>
+            concat(uig:Screen-item-variable-name(.), '.setMaxValue(max);&#10;')"/>
         <xsl:value-of select="
-            concat('            ', uig:Screen-item-variable-name(.), '.setValue(value);&#10;')"/>
+            concat(uig:Screen-item-variable-name(.), '.setValue(value);&#10;')"/>
     </xsl:template>
 
 </xsl:stylesheet>

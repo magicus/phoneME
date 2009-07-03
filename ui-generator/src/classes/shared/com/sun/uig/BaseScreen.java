@@ -25,6 +25,8 @@
 package com.sun.uig;
 
 public abstract class BaseScreen {
+    final protected Object layoutLock = new Object();
+
     BaseScreenStack             stack;
     private ScreenProperties    props;
     private Strings             strings;

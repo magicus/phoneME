@@ -148,6 +148,28 @@ information or have any questions.
 
 
     <!--
+        Increases indentation and strips trailing
+        whitespace in the given multi-line string.
+    -->
+    <xsl:function name="uig:add-indentation" as="xs:string">
+        <xsl:param name="text" as="xs:string"/>
+        <xsl:param name="ident" as="xs:string"/>
+        <xsl:value-of select="
+                replace(
+                    replace($text, '^', $ident, 'm'),
+                    '^[ ]{1,};&#10;',
+                    '',
+                    'm')"/>
+    </xsl:function>
+
+    <xsl:template name="add-indentation">
+        <xsl:param name="text" as="xs:string"/>
+        <xsl:param name="ident" as="xs:string"/>
+        <xsl:value-of select="uig:add-indentation($text, $ident)"/>
+    </xsl:template>
+
+
+    <!--
         Report error.
     -->
     <xsl:template name="error">
