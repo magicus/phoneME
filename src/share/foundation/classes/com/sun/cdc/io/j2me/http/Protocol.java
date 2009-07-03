@@ -105,6 +105,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     private static String platformWapProfile;
 
     protected NetworkMetricsInf nm;
+    private boolean sentMetric = false;
+    protected int totalbytes = 0;
 
     static {
         maxNumberOfPersistentConnections = Integer.parseInt(
@@ -591,6 +593,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             }
 
             int ch = streamInput.read();
+            totalbytes++;
             bytesleft--;
             // CR 6211256
             // If we read an EOF, or if we are not chunked but
@@ -650,6 +653,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (bytesRead < 0) {
                 eof = true;
             } else {
+                totalbytes += bytesRead;
                 bytesleft -= bytesRead;
                 eof = (!chunked) && (bytesleft <= 0);
             }
@@ -668,6 +672,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 if (chunk == null) {
                     throw new IOException("No Chunk Size");
                 }
+                totalbytes += chunk.length();
+
                 int i;
                 for (i = 0; i < chunk.length(); i++) {
                     char ch = chunk.charAt(i);
@@ -696,6 +702,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             ch = streamInput.read();
             if (ch != '\n')
                 throw new IOException("missing CRLF");
+            totalbytes += 2;
         }
         
         public void close() throws IOException {
@@ -706,6 +713,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (--opens == 0 && connected)
                 disconnect();
         }
+
     }
 
     /**
@@ -1044,7 +1052,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + httpVersion + "\r\n";
         }
-
+ System.out.println("sendRequest " + reqLine);
 
             java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
                     public Object run() {
@@ -1074,7 +1082,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                                 con =
                                     ((StreamConnectionElement)con).getBaseConnection();
                             }
-                            nm.sendMetricReq(con, methodType);
+                            nm.sendMetricReq(con, methodType,
+                                 privateOut == null ? 0 : privateOut.size());
+                            sentMetric = true;
                         }
                         return null;
                     }
@@ -1173,6 +1183,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         connected = true;
 
+
     }
 
     protected void readResponseMessage() throws IOException {
@@ -1211,26 +1222,8 @@ malformed: {
             } catch (NumberFormatException nfe) {
                 break malformed;
             }
-    
+            totalbytes += line.length();
             responseMsg = line.substring(codeEnd + 1);
-
-            if (NetworkMetrics.metricsAvailable()) {
-                java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
-                        public Object run() {
-                            try {
-                                StreamConnection con = streamConnection;
-
-                                nm.setResponse(responseMsg);
-                                if (con instanceof StreamConnectionElement) {
-                                    con =
-                                        ((StreamConnectionElement)con).getBaseConnection();
-                                }
-                                nm.sendMetricResponse(con, responseCode);
-                            } catch (NullPointerException e) {}
-                            return null;
-                        }
-                    });
-            }
 
             return;
         }
@@ -1248,6 +1241,7 @@ malformed: {
             
             if (line == null || line.equals(""))
                 break;
+            totalbytes += line.length();
 
             /*
              * There can be multiline values. The line starts with a space
@@ -1316,6 +1310,24 @@ malformed: {
     protected void disconnect() throws IOException {
         if (streamConnection == null)
             return;
+
+        if (sentMetric && NetworkMetrics.metricsAvailable()) {
+            java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+                    public Object run() {
+                        try {
+                            StreamConnection con = streamConnection;
+
+                            if (con instanceof StreamConnectionElement) {
+                                con =
+                                    ((StreamConnectionElement)con).getBaseConnection();
+                            }
+                            nm.sendMetricResponse(con, responseCode,
+                                                  totalbytes);
+                        } catch (NullPointerException e) {}
+                        return null;
+                    }
+                });
+        }
 
         if (streamConnection != null) {
             String connectionField = (String) headerFields.get("connection");

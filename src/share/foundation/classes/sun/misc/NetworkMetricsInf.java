@@ -28,6 +28,8 @@
 package sun.misc;
 
 import javax.microedition.io.StreamConnection;
+import java.net.URL;
+import java.net.Socket;
 
 public interface NetworkMetricsInf {
 
@@ -41,9 +43,18 @@ public interface NetworkMetricsInf {
     public void initReq(int proto, String host, int port, String file,
                         String ref, String query);
 
-    public void setResponse(String resp);
+    public void initReq(int proto, URL url);
 
-    public void sendMetricReq(StreamConnection sc, int methodType);
+    public void sendMetricReq(StreamConnection sc, int methodType,
+                              int contentLength);
 
-    public void sendMetricResponse(StreamConnection sc, int code);
+    public void sendMetricReq(Socket serverSocket, int methodType,
+                              int contentLength);
+
+    public void sendMetricResponse(StreamConnection sc,
+                                   int code, long size);
+
+    public void sendMetricResponse(Socket serverSocket,
+                                   int code, long size);
+
 }

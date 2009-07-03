@@ -136,6 +136,8 @@ public class HttpClient extends NetworkClient {
     /* if set, the client will be reused and must not be put in cache */
     public boolean reuse = false; 
 
+    protected int totalBytes = 0;
+
     /**
      * A NOP method kept for backwards binary compatibility
      * @deprecated -- system properties are no longer cached.
@@ -732,7 +734,7 @@ public class HttpClient extends NetworkClient {
 	try {
 	    serverInput = serverSocket.getInputStream();
 	    serverInput = new BufferedInputStream(serverInput);
-	    return (parseHTTPHeader(responses, pe));
+            return (parseHTTPHeader(responses, pe));
 	} catch (IOException e) {
 	    closeServer();
             if (!failedOnce && requests != null) {
@@ -978,5 +980,9 @@ public class HttpClient extends NetworkClient {
      */
     public int getProxyPortUsed() {
 	return instProxyPort;
+    }
+
+    public Socket getServerSocket() {
+        return serverSocket;
     }
 }
