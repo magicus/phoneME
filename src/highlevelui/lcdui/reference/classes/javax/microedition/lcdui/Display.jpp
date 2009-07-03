@@ -1791,7 +1791,7 @@ public class Display {
             if (isSIWL()) {
                 ret = false;
             } else if (d != null && d.lGetDisplayable() instanceof Canvas) {
-                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
                 if ("no".equals(showVirtualKeyboard)) {
                     ret = false;
                 }
