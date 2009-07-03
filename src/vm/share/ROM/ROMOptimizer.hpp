@@ -167,7 +167,9 @@ class ROMOptimizer {
 
 #if USE_SOURCE_IMAGE_GENERATOR
 #define SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
-  template(bool,                config_parsing_active, "") \
+  template(int,                 if_level, "") \
+  template(int,                 false_if_level, "") \
+  template(int,                 profile_if_level, "") \
   template(int,                 config_parsing_line_number, "") \
   template(const JvmPathChar *, config_parsing_file, "")  
 #else
@@ -377,12 +379,37 @@ private:
 #endif
   }
 
+  bool is_in_profile( void ) const {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+    return current_profile()->obj() != global_profile()->obj();
+#else
+    return false;
+#endif
+  }
+
+  void reset_false_if_level( void ) {
+    set_false_if_level(max_jint);
+  }
+  int if_level_save( void ) {
+    const int old_level = if_level();
+    set_if_level(0);
+    return old_level;
+  }
+  void if_level_restore( const int old_level ) {
+    if( if_level() != 0 ) {
+      config_error( "EndIf expected" );
+    }
+    set_if_level(old_level);
+  }
+
   void read_config_file(JVM_SINGLE_ARG_TRAPS);
   void read_config_file(const JvmPathChar* config_file JVM_TRAPS);
   void read_hardcoded_config(JVM_SINGLE_ARG_TRAPS);
-  void process_config_line(char * config_line JVM_TRAPS);
+  static void abort( void );
+  void config_error( const char msg[] ) const;
+  void process_config_line(char* config_line JVM_TRAPS);
   void include_config_file(const char* config_file JVM_TRAPS);
-  bool parse_config(char *line, const char**name, const char **value);
+  static char parse_config(char* line, const char*& name, const char*& value);
   void add_class_to_list(ObjArray *list, const char *flag, const char *classname
                          JVM_TRAPS);
   void add_package_to_list(ROMVector *vector, const char *pkgname JVM_TRAPS);

@@ -194,8 +194,11 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
   if (config_file == NULL) {
     return;
   }
-  
+
+  reset_false_if_level();
   read_hardcoded_config(JVM_SINGLE_ARG_CHECK);
+
+  reset_false_if_level();
   read_config_file(config_file JVM_CHECK);
 
 #if USE_ROM_LOGGING
@@ -219,21 +222,25 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
   OsFile_Handle f = OsFile_open(config_file, "r");
   if (f == NULL) {
     tty->print_cr("Error: ROM configuration file not found: %s", config_file);
-    JVM::exit(0);
+    abort();
   }
 #if USE_ROM_LOGGING
   _log_stream->print_cr("Reading ROM configuration file %s", config_file);
 #endif
 
-  char * s;
+  // Save file name, line number and conditional state
+  const JvmPathChar* const old_config_file = config_parsing_file();
+  const int old_config_line = config_parsing_line_number();
+  const int old_if_level = if_level_save();
 
   // Initialize the config parsing context.
   set_config_parsing_file(config_file);
   set_config_parsing_line_number(0);
-  set_config_parsing_active(true);
+  
+
   set_global_profile();
 
-  for (;;) {
+  for (char* s;;) {
     // Read a single line from the file, up to 1024 bytes. We don't have
     // fgets() in the OsFile API, so let's roll one on our own. Efficiency is
     // not an issue here because this code is only used by the romizer, 
@@ -259,22 +266,26 @@ void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
 
     process_config_line(s JVM_NO_CHECK);
     if(CURRENT_HAS_PENDING_EXCEPTION){
-      break;
+      goto LoopExit;
     }
   }
 
-  // Reset the config parsing context.
-  set_config_parsing_file(NULL);
-  set_config_parsing_line_number(0);
-  set_config_parsing_active(true);
-  set_global_profile();
+  if( is_in_profile() ) {
+    config_error( "EndProfile expected" );
+  }
+  if_level_restore(old_if_level);
+
+LoopExit:
+  // Restore file name and line number
+  set_config_parsing_file(old_config_file);
+  set_config_parsing_line_number(old_config_line);
 
   OsFile_close(f);
   JVM_DELAYED_CHECK;
 #endif
 }
 
-static const char * const hardcoded_rom_config[] = {
+static const char* const hardcoded_rom_config[] = {
   "DontCompile = com.sun.cldchi.jvm.JVM.*",
 };
 
@@ -290,7 +301,6 @@ void ROMOptimizer::read_hardcoded_config(JVM_SINGLE_ARG_TRAPS) {
   // Initialize the config parsing context.
   set_config_parsing_file(hardcoded_configuration);
   set_config_parsing_line_number(0);
-  set_config_parsing_active(true);
   set_global_profile();
 
   for (int index = 0; index < ARRAY_SIZE(hardcoded_rom_config); index++) {
@@ -302,8 +312,6 @@ void ROMOptimizer::read_hardcoded_config(JVM_SINGLE_ARG_TRAPS) {
   // Reset the config parsing context.
   set_config_parsing_file(NULL);
   set_config_parsing_line_number(0);
-  set_config_parsing_active(true);
-  set_global_profile();
 }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
@@ -320,128 +328,205 @@ int ROMOptimizer::find_profile(const char name[] ) {
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
+inline char ROMOptimizer::parse_config(char* p, const char*& name, const char*& value) {
+  char c;
+  for(; c = *p, isspace(c); p++) {
+  }
 
+  if( c == '#' ) {
+    *p = 0;
+  }
+
+  name = p;
+
+  while( isalnum(c) ) {
+    c = *++p;
+  }
+  *p = 0;
+
+  while( c == '=' || isspace(c) ) {
+    c = *++p;
+  }
+
+  value = p;
+  while( c && !isspace(c) ) {
+    c = *++p;
+  }
+  *p = 0;
+
+  return *name;
+}
+
+void ROMOptimizer::abort(void) {
+  JVM::exit(-1);
+}
+
+void ROMOptimizer::config_error( const char msg[] ) const {
+  tty->print_raw("\nError ");
+  tty->print_raw( config_parsing_file() );
+  tty->print_cr("(%d):\n      %s", config_parsing_line_number(), msg);
+  abort();
+}
 
 // Parse and process the config line.
-void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
+void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
   set_config_parsing_line_number(config_parsing_line_number() + 1);
+
   const char *name, *value;
-  if (parse_config(s, &name, &value)) {
+  if (!parse_config(s, name, value) ) {
+    return;
+  }
 
-    if (jvm_strcmp(name, "If") == 0) {
-      if (jvm_strcmp(value, "CLDC_11") == 0) {
-        if (!ENABLE_CLDC_11) {
-          set_config_parsing_active(false);
-        }
-      } else if (jvm_strcmp(value, "ISOLATES") == 0) {
-        if (!ENABLE_ISOLATES) {
-          set_config_parsing_active(false);
-        }
-      } else if (jvm_strcmp(value, "MULTIPLE_PROFILES_SUPPORT") == 0) {
-        if (!ENABLE_MULTIPLE_PROFILES_SUPPORT) {
-          set_config_parsing_active(false);
-        }
-      } else {
-        tty->print_cr("Error: line %d in %s", config_parsing_line_number(), 
-                      config_parsing_file());
-        tty->print_cr("       Only \"If CLDC_11\" and \"If ISOLATES\" "
-                      "       and \"MULTIPLE_PROFILES_SUPPORT\" "
-                      "are allowed");
-        JVM::exit(0);
-      }
-      return;
-    }
-    if (jvm_strcmp(name, "EndIf") == 0) {
-      set_config_parsing_active(true);
+  if (jvm_strcmp(name, "If") == 0) {
+    const int level = if_level() + 1;
+    set_if_level(level);
+
+    if (level > false_if_level()) {
       return;
     }
 
-    if (!config_parsing_active()) {
-      // We're in an "If XXX" block but CLDC 1.1 is disabled
-      return;
+    int condition;
+    if (jvm_strcmp(value, "CLDC_11") == 0) {
+      condition = ENABLE_CLDC_11;
+    } else if (jvm_strcmp(value, "ISOLATES") == 0) {
+      condition = ENABLE_ISOLATES;
+    } else if (jvm_strcmp(value, "MULTIPLE_PROFILES_SUPPORT") == 0) {
+      condition = ENABLE_MULTIPLE_PROFILES_SUPPORT;
+    } else {
+      config_error( "Only CLDC_11, ISOLATES and MULTIPLE_PROFILES_SUPPORT"
+                          "are allowed");
+      condition = 0;
     }
+
+    if (!condition) {
+      set_false_if_level(level);
+    }
+    return;
+  }
+  if (jvm_strcmp(name, "EndIf") == 0) {
+    const int level = if_level();
+    if (level <= 0) {
+      config_error( "EndIf without matching If");
+    }
+    set_if_level(level-1);
+
+    if (level == false_if_level()) {
+      reset_false_if_level();
+    }
+    return;
+  }
+
+  if (if_level() >= false_if_level()) {
+    // We're in an "If XXX" block but XXX is false
+    return;
+  }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT       
-    if (jvm_strcmp(name, "BeginProfile") == 0) {      
-      const int profile_ind = find_profile(value);
-      OopDesc* profile;
-      if (profile_ind == Universe::UNKNOWN_PROFILE_ID) {
-        profile = ROMProfile::create(value JVM_CHECK);
-      } else {
-        profile = profiles_vector()->element_at(profile_ind);
-      }
-      set_profile(profile);
+  if (jvm_strcmp(name, "BeginProfile") == 0) {      
+    if (is_in_profile()) {
+      config_error("Nested profiles are not allowed");
     }
-    else if (jvm_strcmp(name, "EndProfile") == 0) {
-      set_global_profile();
-    } else
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT      
-    if (jvm_strcmp(name, "HiddenClass") == 0) {
-      UsingFastOops fastOops;
-      Symbol::Fast class_pattern =
-        SymbolTable::slashified_symbol_for(value JVM_CHECK);
-      hidden_classes()->add_element(&class_pattern JVM_CHECK);
-      GUARANTEE(hidden_classes()->contains(&class_pattern), "Sanity");
-    } else 
-    if (jvm_strcmp(name, "Include") == 0) {
-      include_config_file(value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "InitAtBuild") == 0) {
-      add_class_to_list(init_at_build_classes(), name, value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "InitAtLoad") == 0) {
-      add_class_to_list(init_at_load_classes(), name, value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "DontRenameClass") == 0) {
-      add_class_to_list(dont_rename_classes(), name, value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "DontRenameNonPublicFields") == 0) {
-      add_class_to_list(dont_rename_fields_classes(), name, value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "DontRenameNonPublicMethods") == 0) {
-      add_class_to_list(dont_rename_methods_classes(), name,value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "HiddenPackage") == 0) {
-      // Hidden packages are also restricted.
-      add_package_to_list(hidden_packages(), value JVM_CHECK);
-      add_package_to_list(restricted_packages(), value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "ReservedWord") == 0) {
-      UsingFastOops fastOops;
-      Symbol::Fast word =
-        SymbolTable::slashified_symbol_for(value JVM_ZCHECK(word));
-      if (!reserved_words()->contains(&word)) {
-        reserved_words()->add_element(&word JVM_CHECK);
-      }
-    }
-    else if (jvm_strcmp(name, "RestrictedPackage") == 0) {
-      add_package_to_list(restricted_packages(), value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "DontCompile") == 0) {
-      disable_compilation(value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "KvmNative") == 0) {
-      enable_kvm_natives(value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "QuickNative") == 0) {
-      enable_quick_natives(value JVM_CHECK);
-    }
-    else if (jvm_strcmp(name, "Precompile") == 0) {
-#if USE_AOT_COMPILATION
-      enable_precompile(value JVM_CHECK);
-#endif
-    }
-    else if (jvm_strcmp(name, "JniNative") == 0) {
-      enable_jni_natives(value JVM_CHECK);
-    }
+    
+    set_profile_if_level( if_level_save() );
 
-    else {
-      tty->print_cr("Unknown command \"%s\" on line %d of %s", name, 
-                    config_parsing_line_number(), config_parsing_file());
-      tty->print_cr("Note: ROM configuration commands are case sensitive.");
-      JVM::exit(0);
+    const int profile_ind = find_profile(value);
+    OopDesc* profile;
+    if (profile_ind == Universe::UNKNOWN_PROFILE_ID) {
+      profile = ROMProfile::create(value JVM_CHECK);
+    } else {
+      profile = profiles_vector()->element_at(profile_ind);
     }
+    set_profile(profile);
+    return;
   }
+  if (jvm_strcmp(name, "EndProfile") == 0) {
+    if (!is_in_profile()) {
+      config_error("EndProfile without matching BeginProfile");
+    }
+    if_level_restore( profile_if_level() );
+    set_global_profile();
+    return;
+  }
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT      
+  if (jvm_strcmp(name, "HiddenClass") == 0) {
+    UsingFastOops fastOops;
+    Symbol::Fast class_pattern =
+      SymbolTable::slashified_symbol_for(value JVM_CHECK);
+    hidden_classes()->add_element(&class_pattern JVM_CHECK);
+    GUARANTEE(hidden_classes()->contains(&class_pattern), "Sanity");
+    return;
+  }
+  if (jvm_strcmp(name, "Include") == 0) {
+    if (is_in_profile()) {
+      config_error("Include inside profile is not allowed");
+    }
+    include_config_file(value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "InitAtBuild") == 0) {
+    add_class_to_list(init_at_build_classes(), name, value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "InitAtLoad") == 0) {
+    add_class_to_list(init_at_load_classes(), name, value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "DontRenameClass") == 0) {
+    add_class_to_list(dont_rename_classes(), name, value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "DontRenameNonPublicFields") == 0) {
+    add_class_to_list(dont_rename_fields_classes(), name, value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "DontRenameNonPublicMethods") == 0) {
+    add_class_to_list(dont_rename_methods_classes(), name,value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "HiddenPackage") == 0) {
+    // Hidden packages are also restricted.
+    add_package_to_list(hidden_packages(), value JVM_CHECK);
+    add_package_to_list(restricted_packages(), value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "ReservedWord") == 0) {
+    UsingFastOops fastOops;
+    Symbol::Fast word =
+      SymbolTable::slashified_symbol_for(value JVM_ZCHECK(word));
+    if (!reserved_words()->contains(&word)) {
+      reserved_words()->add_element(&word JVM_CHECK);
+    }
+    return;
+  }
+  if (jvm_strcmp(name, "RestrictedPackage") == 0) {
+    add_package_to_list(restricted_packages(), value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "DontCompile") == 0) {
+    disable_compilation(value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "KvmNative") == 0) {
+    enable_kvm_natives(value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "QuickNative") == 0) {
+    enable_quick_natives(value JVM_CHECK);
+    return;
+  }
+  if (jvm_strcmp(name, "Precompile") == 0) {
+#if USE_AOT_COMPILATION
+    enable_precompile(value JVM_CHECK);
+#endif
+    return;
+  }
+  if (jvm_strcmp(name, "JniNative") == 0) {
+    enable_jni_natives(value JVM_CHECK);
+    return;
+  }
+
+  config_error( "Unknown command\n"
+                "Note: ROM configuration commands are case sensitive");
 }
 
 void ROMOptimizer::include_config_file(const char *config_file JVM_TRAPS) {
@@ -487,44 +572,8 @@ void ROMOptimizer::include_config_file(const char *config_file JVM_TRAPS) {
   tty->print_cr("Error: Cannot find included ROM configuration file: %s",
                 config_file);
   tty->print_cr("Please check you -romincludepath arguments");
-  JVM::exit(0);
+  abort();
 #endif
-}
-
-bool ROMOptimizer::parse_config(char *line, const char**name, const char**value) {
-  if (*line == '#') {
-    return false;
-  }
-
-  char * p;
-
-  *name = "";
-  *value = "";
-
-  for (p = line; *p && isspace(*p);) {
-    p++;
-  }
-  if (*p == 0) {
-      return false; // empty line
-  } else {
-    *name = p;
-  }
-
-  for (; *p && *p != '=' && !isspace(*p);) {
-    p++;
-  }
-
-  for (; *p && ((*p == '=') || isspace(*p));) {
-    *p = 0;
-    p ++;
-  }
-  *value = p;
-  for (; *p && !isspace(*p);) {
-    p++;
-  }
-  *p = 0;
-
-  return true;
 }
 
 void ROMOptimizer::add_class_to_list(ObjArray *list, const char *flag, 
@@ -575,16 +624,14 @@ void ROMOptimizer::add_package_to_list(ROMVector *vector, const char *pkgname
 
 
 bool ROMOptimizer::class_list_contains(ObjArray *list, InstanceClass *klass) {
-  Oop::Raw oop;
   for (int i=0; i<list->length(); i++) {
-    oop = list->obj_at(i);
+    Oop::Raw oop = list->obj_at(i);
     if (oop.is_null()) {
       // reached end of list
-      return false;
-    } else if (oop.equals(klass)) {
+      break;
+    }
+    if (oop.equals(klass)) {
       return true;
-    } else {
-      continue;
     }
   }
   return false;
@@ -1209,14 +1256,16 @@ void ROMOptimizer::mark_unremoveable_static_fields(ObjArray *directory JVM_TRAPS
 
     for (int i = 0; i < fields().length(); i += Field::NUMBER_OF_SLOTS) {
       Field f(&klass, i);
-      bool removable = is_field_removable(&klass, i, false JVM_CHECK);
-      if (f.is_static() && !removable) {
-        int offset = f.offset();
-        BasicType type = f.type();
-        int idx = (offset - JavaClass::static_field_start()) / BytesPerWord;
-        reloc_info().int_at_put(idx, 1); // Mark the field at this offset
-        if (is_two_word(type)) {
-          reloc_info().int_at_put(idx+1, 1);
+      if (f.is_static()) {
+        const bool removable = is_field_removable(&klass, i, false JVM_CHECK);
+        if (!removable) {
+          const int offset = f.offset();
+          const BasicType type = f.type();
+          int idx = (offset - JavaClass::static_field_start()) / BytesPerWord;
+          reloc_info().int_at_put(idx, 1); // Mark the field at this offset
+          if (is_two_word(type)) {
+            reloc_info().int_at_put(idx+1, 1);
+          }
         }
       }
     }

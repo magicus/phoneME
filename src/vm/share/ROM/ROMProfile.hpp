@@ -59,9 +59,9 @@ public:
   // assingment operators.
   HANDLE_DEFINITION(ROMProfile, MixedOop);
 
-  DEFINE_ACCESSOR_OBJ(ROMProfile, Symbol,    profile_name)  
-  DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, hidden_classes)
-  DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, hidden_packages)
+  DEFINE_ACCESSOR_OBJ(ROMProfile, Symbol,    profile_name       )  
+  DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, hidden_classes     )
+  DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, hidden_packages    )
   DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, restricted_packages)  
 
 public:
