@@ -122,7 +122,7 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
     imgdcd_image_format format;
     MIDP_ERROR err;
 
-    int width, height;
+    int width, height, imageSize;
     PIXEL *pixelData;
     ALPHA *alphaData;
 
@@ -136,8 +136,18 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
         return err;
     }
 
-    pixelSize = sizeof(PIXEL) * width * height;
-    alphaSize = sizeof(ALPHA) * width * height;
+    imageSize = width * height;
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+       if (pp_enable_32bit_mode) {
+           pixelSize = sizeof(gxj_pixel32_type) * imageSize;
+       } else {
+           pixelSize = sizeof(gxj_pixel16_type) * imageSize;
+       }
+#else
+       pixelSize = sizeof(PIXEL) * imageSize;
+#endif
+    alphaSize = sizeof(ALPHA) * imageSize;
 
     switch (format) {
 
@@ -746,7 +756,15 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+       if (pp_enable_32bit_mode) {
+           pixelSize = sizeof(gxj_pixel32_type) * imageSize;
+       } else {
+           pixelSize = sizeof(gxj_pixel16_type) * imageSize;
+       }
+#else
         pixelSize = sizeof(PIXEL) * imageSize;
+#endif
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
             alphaSize = sizeof(ALPHA) * imageSize;
