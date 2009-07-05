@@ -63,8 +63,19 @@ public class OpenGLEnvironment{
         DisplayAccess da = container.findDisplayById(displayId);
         if (da != null) {
             Object[] dirtyRegions = da.getDirtyRegions();
-            if (dirtyRegions.length <= 0)
+            if (dirtyRegions.length <= 0) {
+                /* when drawing directly to a canvas, dirtyRegions won't be
+                 * appropriately updated till the end of the paint method.
+                 * So, we'll have to force a flush of the whole screen to be
+                 * safe
+                 */
+                regionArray = new int[4];
+                regionArray[0] = 0; regionArray[1] = 0;
+                regionArray[2] = bindTarget.getClipWidth();
+                regionArray[3] = bindTarget.getClipHeight();
+                flushOpenGL0(regionArray, 1, displayId);
                 return;
+            }
             regionArray = new int[dirtyRegions.length*4];
             int[] curRegion;
             for (int i=0; i<dirtyRegions.length; i++) {
