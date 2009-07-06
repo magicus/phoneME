@@ -39,6 +39,8 @@
 #include <javacall_logging.h>
 #include <suitestore_listeners.h>
 
+#include "imgdcd_image_util.h"
+
 gxj_screen_buffer gxj_system_screen_buffer;
 
 static jboolean isLcdDirty = KNI_FALSE;
@@ -89,9 +91,18 @@ int jcapp_get_screen_buffer(int hardwareId) {
  * Reset screen buffer content.
  */
 void static jcapp_reset_screen_buffer(int hardwareId) {
+    int pixelSize;
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    pixelSize = (jc_enable_32bit_mode) ? sizeof(gxj_pixel32_type) : sizeof(gxj_pixel16_type);
+#else
+    pixelSize = sizeof(gxj_pixel_type);
+#endif
+
     memset (gxj_system_screen_buffer.pixelData, 0,
         gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
-            sizeof (gxj_pixel_type));
+            pixelSize
+    );
 }
 
 /**
@@ -153,13 +164,8 @@ int jcapp_init() {
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
         return -1;        
  
-    /**
-     *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME 
-     *     implementation. Other values are reserved for future  use. Returning
-     *     the buffer in other encoding will result in application termination.
-     */
     if (jcapp_get_screen_buffer(hardwareId) == -2) {
-        REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
+        REPORT_ERROR(LC_LOWUI, "Screen pixel format is incorrect!");
         return -2;
     }    
 
@@ -233,8 +239,8 @@ jboolean jcapp_reverse_orientation(int hardwareId) {
      * can appear. That's why the buffer content is not preserved. 
      */ 
 
-	jcapp_reset_screen_buffer(hardwareId);
-	return res;
+    jcapp_reset_screen_buffer(hardwareId);
+    return res;
 }
 
 /**
@@ -360,4 +366,15 @@ jint* jcapp_get_display_device_ids(jint* n) {
 void jcapp_display_device_state_changed(int hardwareId, int state) {
     (void)hardwareId;
     (void)state;
+}
+
+void jcapp_switch_color_depth(int mode_32bit) {
+    int hardwareId = jcapp_get_current_hardwareId();
+
+    set_jc_enable_32bit_mode(mode_32bit);
+    set_pp_enable_32bit_mode(mode_32bit);
+    set_img_enable_32bit_mode(mode_32bit);
+
+    jcapp_get_screen_buffer(hardwareId);
+    jcapp_reset_screen_buffer(hardwareId);
 }

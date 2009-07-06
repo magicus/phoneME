@@ -152,6 +152,8 @@ extern jint* jcapp_get_display_device_ids(jint* n);
 
 extern void jcapp_display_device_state_changed(int hardwareId, int state);
 
+extern void jcapp_switch_color_depth(int mode_32bit);
+
 
 /**
  * A callback function to be called for notification of network
