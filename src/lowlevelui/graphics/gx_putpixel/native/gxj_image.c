@@ -553,19 +553,33 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
     newSrc.pixelData = NULL;
     newSrc.alphaData = NULL;
     if (dest == src || transform != 0) {
+        int pixelSize, imageSize;
+
+        pixelSize = width * height;
+
         /*
          * create a new image that is a copy of the region with transform
          * applied
          */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+            imageSize = pixelSize * sizeof (gxj_pixel32_type);
+        } else {
+            imageSize = pixelSize * sizeof (gxj_pixel16_type);
+        }
+#else
+        imageSize = pixelSize * sizeof (gxj_pixel32_type);
+#endif
+
         newSrc.pixelData =
-            (gxj_pixel_type *)midpMalloc(width * height * sizeof (gxj_pixel_type));
+            (gxj_pixel_type *)midpMalloc(imageSize);
         if (newSrc.pixelData == NULL) {
             REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion (pixelData)\n"); 
             return ; 
         }
         if (src->alphaData != NULL) {
             newSrc.alphaData =
-                (gxj_alpha_type *)midpMalloc(width * height * sizeof (gxj_alpha_type));
+                (gxj_alpha_type *)midpMalloc(pixelSize * sizeof (gxj_alpha_type));
             if (newSrc.alphaData == NULL) {
                 midpFree(newSrc.pixelData);
                 REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion (Alpha)\n");

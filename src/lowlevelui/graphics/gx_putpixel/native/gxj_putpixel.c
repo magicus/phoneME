@@ -146,7 +146,15 @@ drawDottedPixel(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   }
 
   if (dds->drawing) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+       PRIMDRAWPIXEL32(sbuf, color, x, y);
+    } else {
+       PRIMDRAWPIXEL16(sbuf, color, x, y);
+    }
+#else
     PRIMDRAWPIXEL(sbuf, color, x, y);
+#endif
     ++(dds->solidcount);
   } else {
     ++(dds->emptycount);
@@ -206,19 +214,20 @@ primDrawVertLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
   } else {
     gxj_pixel16_type* pPtr16;
+    gxj_pixel16_type color16;
     pPtr16 = &(((gxj_pixel16_type*)sbuf->pixelData)[y1 * width + x1]);
     while (count & ~0x7) {
       CHECK_PTR_CLIP(sbuf,pPtr16);
-      *pPtr16 = color; pPtr16 += width; *pPtr16 = color; pPtr16 += width;
-      *pPtr16 = color; pPtr16 += width; *pPtr16 = color; pPtr16 += width;
-      *pPtr16 = color; pPtr16 += width; *pPtr16 = color; pPtr16 += width;
-      *pPtr16 = color; pPtr16 += width;
-      *pPtr16 = color; CHECK_PTR_CLIP(sbuf,pPtr16); pPtr16 += width;
+      *pPtr16 = color16; pPtr16 += width; *pPtr16 = color16; pPtr16 += width;
+      *pPtr16 = color16; pPtr16 += width; *pPtr16 = color16; pPtr16 += width;
+      *pPtr16 = color16; pPtr16 += width; *pPtr16 = color16; pPtr16 += width;
+      *pPtr16 = color16; pPtr16 += width;
+      *pPtr16 = color16; CHECK_PTR_CLIP(sbuf,pPtr16); pPtr16 += width;
       count -= 8;
     }
     while (count >= 0) {
       CHECK_PTR_CLIP(sbuf,pPtr16);
-      *pPtr16 = color; pPtr16 += width;
+      *pPtr16 = color16; pPtr16 += width;
       count -= 1;
     }
   }
@@ -243,10 +252,12 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
   gxj_pixel16_type* pPtr16;
+  gxj_pixel16_type color16;
   if (pp_enable_32bit_mode) {
     c = (unsigned int)color;
   } else {
-    c = ((unsigned int)color) << 16 | ((unsigned int)color);
+    color16 = (gxj_pixel16_type)color; 
+    c = ((unsigned int)color16) << 16 | ((unsigned int)color16);
   }
 #elif ENABLE_32BITS_PIXEL_FORMAT
   c = (unsigned int)color;
@@ -284,7 +295,7 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     pPtr16 = &(((gxj_pixel16_type*)sbuf->pixelData)[y1 + x1]);
     if (((unsigned int)pPtr16 & 0x3) && (count > 0)) {
       CHECK_PTR_CLIP(sbuf,pPtr16);
-      *pPtr16++ = (gxj_pixel16_type)color;
+      *pPtr16++ = color16;
       --count;
     }
   }
@@ -342,7 +353,7 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     }
     while (count >= 0) {
       CHECK_PTR_CLIP(sbuf,pPtr16);
-      *pPtr16 = color; pPtr16 += 1;
+      *pPtr16 = color16; pPtr16 += 1;
       count -= 1;
     }
   }
@@ -698,7 +709,15 @@ draw_clipped_line(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   if (ret == OUTSIDE)
     return;
   if (ret & POINT) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+       PRIMDRAWPIXEL32(sbuf, color, x1, y1);
+    } else {
+       PRIMDRAWPIXEL16(sbuf, color, x1, y1);
+    }
+#else
     PRIMDRAWPIXEL(sbuf, color, x1, y1);
+#endif
     return;
   }
   if (ret & REFLECT) {
@@ -722,6 +741,29 @@ draw_clipped_line(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     /* The combination of adjIncX/adjIncY (+1 or -1)
      * and REFLECT allow us to use the single octant
      * version of the loop for all octants. */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      while (x1 != xyEnd) {
+      PRIMDRAWPIXEL32(sbuf, color, *ptrX, *ptrY);
+        if (decision >= 0) {
+          y1 += adjIncY; decision -= incrY;
+        } else {
+          decision += incrX;
+        }
+        x1 += adjIncX;
+      }
+    } else {
+      while (x1 != xyEnd) {
+      PRIMDRAWPIXEL16(sbuf, color, *ptrX, *ptrY);
+        if (decision >= 0) {
+          y1 += adjIncY; decision -= incrY;
+        } else {
+          decision += incrX;
+        }
+        x1 += adjIncX;
+      }
+    }
+#else
     while (x1 != xyEnd) {
       PRIMDRAWPIXEL(sbuf, color, *ptrX, *ptrY);
       if (decision >= 0) {
@@ -731,6 +773,7 @@ draw_clipped_line(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       }
       x1 += adjIncX;
     }
+#endif
     return;
   }
   dds = START_STROKE;
@@ -980,10 +1023,12 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
     gxj_pixel16_type* pPtr16;
     gxj_pixel16_type* lPtr16;
+    gxj_pixel16_type color16;
     if (pp_enable_32bit_mode) {
       c = (unsigned int)color;
     } else {
-      c = ((unsigned int)color) << 16 | ((unsigned int)color);
+      color16 = (gxj_pixel16_type)color;
+      c = ((unsigned int)color16) << 16 | ((unsigned int)color16);
     }
 #elif ENABLE_32BITS_PIXEL_FORMAT
     c = (unsigned int)color;
@@ -1061,7 +1106,7 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       for (lPtr16 = pPtr16; y1 < y2; y1++) {
         if (((unsigned int)pPtr16 & 0x3) && (count > 0)) {
           CHECK_PTR_CLIP(sbuf,pPtr16);
-          *pPtr16++ = color;
+          *pPtr16++ = color16;
           --count;
         }
         while (count >= 16) {
@@ -1087,7 +1132,7 @@ primDrawFilledRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         }
         while (count > 0) {
           CHECK_PTR_CLIP(sbuf,pPtr16);
-          *pPtr16++ = color;
+          *pPtr16++ = color16;
           count -= 1;
         }
         lPtr16 += width;
@@ -1344,7 +1389,15 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       if (lineStyle == DOTTED) {
         drawDottedPixel(sbuf, color, x1, y1, &dds[0]);
       } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+          PRIMDRAWPIXEL32(sbuf, color, x1, y1);
+        } else {
+          PRIMDRAWPIXEL16(sbuf, color, x1, y1);
+        }
+#else
         PRIMDRAWPIXEL(sbuf, color, x1, y1);
+#endif
       }
     }
     if (((quadrantStatus[1] & QUADRANT_STATUS_FULL_ARC) ||
@@ -1374,7 +1427,15 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       if (lineStyle == DOTTED) {
         drawDottedPixel(sbuf, color, x2, y1, &dds[1]);
       } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+          PRIMDRAWPIXEL32(sbuf, color, x2, y1);
+        } else {
+          PRIMDRAWPIXEL16(sbuf, color, x2, y1);
+        }
+#else
         PRIMDRAWPIXEL(sbuf, color, x2, y1);
+#endif
       }
     }
     if (((quadrantStatus[2] & QUADRANT_STATUS_FULL_ARC) ||
@@ -1404,7 +1465,15 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       if (lineStyle == DOTTED) {
         drawDottedPixel(sbuf, color, x2, y2, &dds[2]);
       } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+          PRIMDRAWPIXEL32(sbuf, color, x2, y2);
+        } else {
+          PRIMDRAWPIXEL16(sbuf, color, x2, y2);
+        }
+#else
         PRIMDRAWPIXEL(sbuf, color, x2, y2);
+#endif
       }
     }
     if (((quadrantStatus[3] & QUADRANT_STATUS_FULL_ARC) ||
@@ -1434,7 +1503,15 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       if (lineStyle == DOTTED) {
         drawDottedPixel(sbuf, color, x1, y2, &dds[3]);
       } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+          PRIMDRAWPIXEL32(sbuf, color, x1, y2);
+        } else {
+          PRIMDRAWPIXEL16(sbuf, color, x1, y2);
+        }
+#else
         PRIMDRAWPIXEL(sbuf, color, x1, y2);
+#endif
       }
     }
   }
@@ -2315,8 +2392,19 @@ drawClippedFourWaySymetricHorizontalLines(gxj_screen_buffer *sbuf,
         primDrawHorzLine(sbuf, color, x1, y1, x2, y1);
         primDrawHorzLine(sbuf, color, x1, y2, x2, y2);
       } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+          PRIMDRAWPIXEL32(sbuf, color, x1, y1);
+          PRIMDRAWPIXEL32(sbuf, color, x1, y2);
+
+        } else {
+          PRIMDRAWPIXEL16(sbuf, color, x1, y1);
+          PRIMDRAWPIXEL16(sbuf, color, x1, y2);
+        }
+#else
         PRIMDRAWPIXEL(sbuf, color, x1, y1);
         PRIMDRAWPIXEL(sbuf, color, x1, y2);
+#endif
       }
     } else {
       if (y1 != y2)
@@ -2367,6 +2455,28 @@ drawClippedFourWaySymetricPixels(gxj_screen_buffer *sbuf,
     (void)flag;
 
   if (clip == NULL) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      PRIMDRAWPIXEL32(sbuf, color, x2, y2);
+      PRIMDRAWPIXEL32(sbuf, color, x1, y1);
+      if ((x1 != x2) || (y1 != y2))
+        PRIMDRAWPIXEL32(sbuf, color, x2, y2);
+      if ((x1 != x2) && (y1 != y2)) {
+        PRIMDRAWPIXEL32(sbuf, color, x1, y2);
+        PRIMDRAWPIXEL32(sbuf, color, x2, y1);
+      }
+    } else {
+      PRIMDRAWPIXEL16(sbuf, color, x2, y2);
+      PRIMDRAWPIXEL16(sbuf, color, x1, y1);
+      if ((x1 != x2) || (y1 != y2))
+        PRIMDRAWPIXEL16(sbuf, color, x2, y2);
+      if ((x1 != x2) && (y1 != y2)) {
+        PRIMDRAWPIXEL16(sbuf, color, x1, y2);
+        PRIMDRAWPIXEL16(sbuf, color, x2, y1);
+      }
+    }
+#else
+    PRIMDRAWPIXEL(sbuf, color, x2, y2);
     PRIMDRAWPIXEL(sbuf, color, x1, y1);
     if ((x1 != x2) || (y1 != y2))
       PRIMDRAWPIXEL(sbuf, color, x2, y2);
@@ -2374,6 +2484,7 @@ drawClippedFourWaySymetricPixels(gxj_screen_buffer *sbuf,
       PRIMDRAWPIXEL(sbuf, color, x1, y2);
       PRIMDRAWPIXEL(sbuf, color, x2, y1);
     }
+#endif
   } else {
     const jshort clipX1 = clip[0];
     const jshort clipY1 = clip[1];
@@ -2384,6 +2495,34 @@ drawClippedFourWaySymetricPixels(gxj_screen_buffer *sbuf,
     int y2Inside = (clipY1 <= y2 && y2 < clipY2);
     int x1Inside = (clipX1 <= x1 && x1 < clipX2);
     int x2Inside = (clipX1 <= x2 && x2 < clipX2);
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      if (x1Inside && y1Inside)
+        PRIMDRAWPIXEL32(sbuf, color, x1, y1);
+      if ((x1 != x2) || (y1 != y2))
+        if (x2Inside && y2Inside)
+          PRIMDRAWPIXEL32(sbuf, color, x2, y2);
+      if ((x1 != x2) && (y1 != y2)) {
+        if (x1Inside && y2Inside)
+          PRIMDRAWPIXEL32(sbuf, color, x1, y2);
+        if (x2Inside && y1Inside)
+          PRIMDRAWPIXEL32(sbuf, color, x2, y1);
+      }
+    } else {
+      if (x1Inside && y1Inside)
+        PRIMDRAWPIXEL16(sbuf, color, x1, y1);
+      if ((x1 != x2) || (y1 != y2))
+        if (x2Inside && y2Inside)
+          PRIMDRAWPIXEL16(sbuf, color, x2, y2);
+      if ((x1 != x2) && (y1 != y2)) {
+        if (x1Inside && y2Inside)
+          PRIMDRAWPIXEL16(sbuf, color, x1, y2);
+        if (x2Inside && y1Inside)
+          PRIMDRAWPIXEL16(sbuf, color, x2, y1);
+      }
+    }
+#else
     if (x1Inside && y1Inside)
       PRIMDRAWPIXEL(sbuf, color, x1, y1);
     if ((x1 != x2) || (y1 != y2))
@@ -2395,6 +2534,7 @@ drawClippedFourWaySymetricPixels(gxj_screen_buffer *sbuf,
       if (x2Inside && y1Inside)
         PRIMDRAWPIXEL(sbuf, color, x2, y1);
     }
+#endif
   }
 }
 
@@ -2403,7 +2543,15 @@ drawClippedPixel(gxj_screen_buffer *sbuf, const jshort *clip,
     gxj_pixel_type color, int x, int y) {
 
   if (clip == NULL) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      PRIMDRAWPIXEL32(sbuf, color, x, y);
+    } else {
+      PRIMDRAWPIXEL16(sbuf, color, x, y);
+    }
+#else
     PRIMDRAWPIXEL(sbuf, color, x, y);
+#endif
   } else {
     const jshort clipX1 = clip[0];
     const jshort clipY1 = clip[1];
@@ -2411,8 +2559,17 @@ drawClippedPixel(gxj_screen_buffer *sbuf, const jshort *clip,
     const jshort clipY2 = clip[3];
 
     if (clipX1 <= x && x < clipX2 &&
-        clipY1 <= y && y < clipY2)
+        clipY1 <= y && y < clipY2) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+        PRIMDRAWPIXEL32(sbuf, color, x, y);
+    } else {
+        PRIMDRAWPIXEL16(sbuf, color, x, y);
+    }
+#else
       PRIMDRAWPIXEL(sbuf, color, x, y);
+#endif
+    }
   }
 }
 
@@ -2823,10 +2980,25 @@ drawClippedFourWayRoundRectPixels(gxj_screen_buffer * sbuf,
   int     y2 = yOrigin + height - arcHeight + y;
 
   if (clip == NULL) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      PRIMDRAWPIXEL32(sbuf, color, x1, y1);
+      PRIMDRAWPIXEL32(sbuf, color, x2, y1);
+      PRIMDRAWPIXEL32(sbuf, color, x1, y2);
+      PRIMDRAWPIXEL32(sbuf, color, x2, y2);
+    } else {
+      PRIMDRAWPIXEL16(sbuf, color, x1, y1);
+      PRIMDRAWPIXEL16(sbuf, color, x2, y1);
+      PRIMDRAWPIXEL16(sbuf, color, x1, y2);
+      PRIMDRAWPIXEL16(sbuf, color, x2, y2);
+    }
+#else
     PRIMDRAWPIXEL(sbuf, color, x1, y1);
     PRIMDRAWPIXEL(sbuf, color, x2, y1);
     PRIMDRAWPIXEL(sbuf, color, x1, y2);
     PRIMDRAWPIXEL(sbuf, color, x2, y2);
+#endif
+
     if (y == arcHeight && x == 0) {
       primDrawHorzLine(sbuf, color, x1, y1, x2, y1);
       primDrawHorzLine(sbuf, color, x1, y2, x2, y2);
@@ -2848,6 +3020,44 @@ drawClippedFourWayRoundRectPixels(gxj_screen_buffer * sbuf,
     int y2Inside = (clipY1 <= y2 && y2 < clipY2);
     int x1Inside = (clipX1 <= x1 && x1 < clipX2);
     int x2Inside = (clipX1 <= x2 && x2 < clipX2);
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      if (y1Inside) {
+        if (x1Inside) {
+          PRIMDRAWPIXEL32(sbuf, color, x1, y1);
+        }
+        if (x2Inside) {
+          PRIMDRAWPIXEL32(sbuf, color, x2, y1);
+        }
+      }
+      if (y2Inside) {
+        if (x1Inside) {
+          PRIMDRAWPIXEL32(sbuf, color, x1, y2);
+        }
+        if (x2Inside) {
+          PRIMDRAWPIXEL32(sbuf, color, x2, y2);
+        }
+      }
+    } else {
+      if (y1Inside) {
+        if (x1Inside) {
+          PRIMDRAWPIXEL16(sbuf, color, x1, y1);
+        }
+        if (x2Inside) {
+          PRIMDRAWPIXEL16(sbuf, color, x2, y1);
+        }
+      }
+      if (y2Inside) {
+        if (x1Inside) {
+          PRIMDRAWPIXEL16(sbuf, color, x1, y2);
+        }
+        if (x2Inside) {
+          PRIMDRAWPIXEL16(sbuf, color, x2, y2);
+        }
+      }
+    }
+#else
     if (y1Inside) {
       if (x1Inside) {
         PRIMDRAWPIXEL(sbuf, color, x1, y1);
@@ -2864,6 +3074,8 @@ drawClippedFourWayRoundRectPixels(gxj_screen_buffer * sbuf,
         PRIMDRAWPIXEL(sbuf, color, x2, y2);
       }
     }
+#endif
+
     if (y == arcHeight && x == 0) {
       if (y1Inside) {
         drawClippedHorzLine(clip, sbuf, color, x1, y1, x2, y1);

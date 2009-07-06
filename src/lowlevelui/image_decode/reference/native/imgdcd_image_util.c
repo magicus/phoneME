@@ -532,19 +532,19 @@ imgdcd_decode_jpeg
         *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (decode_jpeg_image((char*)srcBuffer, length,
         (char*)(pixelData), width, height) != FALSE) {
-#if ENABLE_DYNAMIC_PIXEL_FORMAT
-            if (img_enable_32bit_mode) {
-		imgdcd_pixel_type* pPtr = pixelData;
-		imgdcd_pixel_type* pEndPtr = pPtr + width * height;
-		for (; pPtr < pEndPtr; pPtr++) {
-			*pPtr = IMGDCD_MIDPTOOPAQUEPIXEL_32(*pPtr);
-		}
-            }
-#elif ENABLE_32BITS_PIXEL_FORMAT
 		/*
 		 * Decoder returns data in ARGB format therefore convert the content of
 		 * the output buffer to putpixel format (RGBA or ABGR)
 		 */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+                if (img_enable_32bit_mode) {
+    		    imgdcd_pixel_type* pPtr = pixelData;
+		    imgdcd_pixel_type* pEndPtr = pPtr + width * height;
+		    for (; pPtr < pEndPtr; pPtr++) {
+			    *pPtr = IMGDCD_MIDPTOOPAQUEPIXEL_32(*pPtr);
+		    }
+                }
+#elif ENABLE_32BITS_PIXEL_FORMAT
 		imgdcd_pixel_type* pPtr = pixelData;
 		imgdcd_pixel_type* pEndPtr = pPtr + width * height;
 		for (; pPtr < pEndPtr; pPtr++) {
