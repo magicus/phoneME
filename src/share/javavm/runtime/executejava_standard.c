@@ -3615,6 +3615,35 @@ new_transition:
 		     * the size of the method result.
 		     */
                     CVMassert((int)ret <= CNI_DOUBLE);
+
+#if defined(CVM_DEBUG_ASSERTS) || defined(CVM_CHECK_CNI_RESULT)
+		{
+		    int resultSize = -1;
+		    switch(CVMtypeidGetReturnType(CVMmbNameAndTypeID(mb))) {
+			case CVM_TYPEID_VOID:
+			    resultSize = 0;
+			    break;
+			case CVM_TYPEID_LONG:
+			case CVM_TYPEID_DOUBLE:
+			    resultSize = 2;
+			    break;
+			default:
+			    resultSize = 1;
+		    }
+
+#ifdef CVM_DEBUG_ASSERTS
+		    CVMassert(ret == resultSize);
+#endif
+#ifdef CVM_CHECK_CNI_RESULT
+		    if (ret != resultSize) {
+			CVMconsolePrintf("Bad CNI method return type for %C.%M\n",
+			    CVMmbClassBlock(mb), mb);
+			CVMabort();
+		    }
+#endif
+		}
+#endif
+
 		    topOfStack += (int)ret;
 		    pc += (*pc == opc_invokeinterface_quick ? 5 : 3);
 		    CONTINUE;
