@@ -445,16 +445,6 @@ public class Display {
      */
     boolean screenModeKnown = false;
 
-    /** If the current display mode is known.
-     * Set to false after display changing
-     */
-    boolean isRotatedKnown = false;
-                                                
-    /**
-     * Current display orientation
-     */
-    boolean wantRotation;
-
     /** The last mode value passed to lSetFullScreen method. */
     boolean lastFullScnMode;
 
@@ -621,6 +611,7 @@ public class Display {
       * default
      */
     private boolean useOpenGL = false;
+    private boolean useVirtualKeyboard = true;
 
     // #ifdef ENABLE_GCI	
     /** GCIDisplay that incapsulates information about the display device */
@@ -697,10 +688,6 @@ public class Display {
     Display(Object theOwner) {
         this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
     }
-
-    private boolean initial_orientation = false;
-    private boolean current_orientation = false;
-    private boolean restore_orientation = false;
     
     /**
      * Release any resources, such as threads, which migth refer
@@ -780,7 +767,6 @@ System.out.println("Display.close: disabling OpenGL");
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH, HEIGHT,
                              gciScreenWidget.getDrawingSurface());
-        initial_orientation = (WIDTH > HEIGHT);
 
         // #else
         width = displayDevice.getWidth();
@@ -788,10 +774,14 @@ System.out.println("Display.close: disabling OpenGL");
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     width,
                                                     height);
-        initial_orientation = (width > height);
         // #endif ENABLE_GCI
-        current_orientation = initial_orientation;
-        restore_orientation = initial_orientation;
+
+        String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+System.out.println("Samsung-canvas-keypad property is " + showVirtualKeyboard);
+        if ("no".equals(showVirtualKeyboard)) {
+System.out.println("NOT using virtual keyboard");
+            useVirtualKeyboard = false;
+        }
 
         com.sun.midp.midlet.MIDletStateHandler handler = 
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
@@ -1817,15 +1807,20 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
         if (owner instanceof MIDlet) {
             if (isSIWL()) {
                 ret = false;
-            } else if (d != null && d.lGetDisplayable() instanceof Canvas) {
-                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+            } else if (d != null && d.lGetDisplayable() instanceof Canvas &&
+                       useVirtualKeyboard == true) {
+/*
+                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
                 if ("no".equals(showVirtualKeyboard)) {
                     ret = false;
                 }
+*/
+                ret = true;
             }
-        } else {
+            else
+                ret = false;
+        } else
             ret = false;
-        }
         return ret;
     }
     
@@ -2108,16 +2103,7 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
         }
 
         if (newCurrent != null) {
-            if (!isRotatedKnown) {
-                wantRotation = displayDevice.getReverseOrientation();
-                isRotatedKnown = true;
-            }
 
-            // Postponed notification of screen rotation
-            if (newCurrent.uSetRotatedStatus(wantRotation)) {
-                newCurrent.uCallSizeChanged(width, height);
-            }
-            
             if (hasForegroundCopy) {
                 // #ifdef ENABLE_CHAMELEON
                 // We need to establish the new title and ticker so that
@@ -2423,7 +2409,9 @@ System.out.println("Display: " + this + " returning from callPaint");
                     // eventually resulting in a call back to the Chameleon Display
                     // Tunnel, and possible into application code if the current
                     // displayable is a canvas or gamecanvas.
+System.out.println("Display.jpp: callPaint: calling window.callPaint");
                     window.callPaint(screenGraphics, graphicsQ);
+System.out.println("Display.jpp: done in window.callPaint");
 
                     // IMPL NOTE: This code block should really be a method inside CGraphics
                     // with its own native call to the refresh function. Until that
@@ -3806,13 +3794,17 @@ System.out.println("Display: disabling openGL");
          */
         public void handleRotationEvent(int state) {
             // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
-            boolean isPortrait = !Display.this.displayDevice.getReverseOrientation();
+            boolean isDevicePortrait = !Display.this.displayDevice.getReverseOrientation();
+            boolean isDisplayPortrait = Display.this.width < Display.this.height; 
+            
+            if (isDevicePortrait == isDisplayPortrait)
+                return;
             if (
-                (isPortrait && 
+                (isDevicePortrait && 
                     (state == 
                         OrientationListener.FODDER_BANK ||
                         state == OrientationListener.BOW_ROLL)
-                ) || (!isPortrait &&
+                ) || (!isDevicePortrait &&
                     (state == 
                         OrientationListener.LEFT_BANK ||
                         state == OrientationListener.RIGHT_BANK)
@@ -3822,8 +3814,7 @@ System.out.println("Display: disabling openGL");
                     
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
-                wantRotation = Display.this.displayDevice.reverseOrientation();
-                isRotatedKnown = true;
+                Display.this.displayDevice.reverseOrientation();
                 Display.this.width = Display.this.displayDevice.getWidth(); 
                 Display.this.height = Display.this.displayDevice.getHeight();
                 if (Display.this.displayDevice.isPrimaryDisplay()) {
@@ -3834,8 +3825,8 @@ System.out.println("Display: disabling openGL");
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
-                current_orientation = Display.this.width > Display.this.height;
-                System.out.println("CURRENT ORIENTATION STATUS is " + current_orientation);
+                System.out.println("CURRENT ORIENTATION STATUS is: " +
+                    (isDevicePortrait ? "Portrait" : "Landscape"));
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
             // #ifdef ENABLE_CHAMELEON
@@ -3973,7 +3964,7 @@ System.out.println("Display: disabling openGL");
             VirtualKeyListener listener = (VirtualKeyListener)Display.this.current;
 
             keyboardLayer = Display.this.getVirtualKeyboardPopup();
-
+System.out.println("handleVirtualKeyboardEvent: keyboardLayer is "  + keyboardLayer);
             if (keyboardLayer != null && listener != null) {
                 keyboardLayer.addVirtualKeyboardLayerListener(listener);
                 keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
@@ -4049,7 +4040,6 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
                 // When foreground-background state changes we loose control
                 // under the current display mode on the device
                 screenModeKnown = false;
-                isRotatedKnown = false;
             }
 
             // SYNC NOTE: for Canvas and CustomItem, dsHide/Show() will
@@ -4117,10 +4107,7 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
 
             } // synchronized
 
-            if (current_orientation != restore_orientation) {
-                java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
-                consumer.handleRotationEvent(-1);
-            }
+            consumer.handleRotationEvent(-1);
 
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
@@ -4148,11 +4135,7 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
-                if (current_orientation != initial_orientation) {
-                    restore_orientation = current_orientation;
-                    java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
-                    consumer.handleRotationEvent(-1);
-                }
+            consumer.handleRotationEvent(-1);
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
