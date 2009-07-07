@@ -5249,7 +5249,6 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     jint threadCount;
     jthread *threads;
     CVMUint16 oldFlags, newFlags;
-    CVMClassBlockData *oldCBData;
 
     CHECK_JVMTI_ENV;
 
@@ -5270,12 +5269,6 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     }
     ALLOC(jvmtienv, CVMint2Long(classCount * sizeof(CVMClassBlock*)),
 	  (unsigned char**)&classes);
-
-    oldCBData = calloc(sizeof(CVMClassBlockData), 1);
-    if (oldCBData == NULL) {
-        err = JVMTI_ERROR_OUT_OF_MEMORY;
-        goto cleanup;
-    }
 
     node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
     CVMassert(node != NULL);
@@ -5379,6 +5372,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	JVMTI_UNLOCK(ee);
 	/* load superclasses in a non-recursive way */
 	node->redefineCb = newcb;
+	node->oldCb = oldcb;
 	(*env)->CallVoidMethod(env, newKlass,
 			   CVMglobals.java_lang_Class_loadSuperClasses);
 	if (CVMexceptionOccurred(ee)) {
@@ -5386,7 +5380,12 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	    goto cleanup;
 	}
         if ((err = jvmtiCheckSchemas(oldcb, newcb)) != JVMTI_ERROR_NONE) {
-            goto cleanup;
+            classes[i] = NULL; 
+            free(className); 
+            className = NULL; 
+            node->redefineCb = NULL; 
+            node->oldCb = NULL; 
+            continue;
         }
 	/* clear all breakpoints in this classes methods */
 	JVMTI_LOCK(ee);
@@ -5460,20 +5459,26 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
         free(className);
         className = NULL;
 	node->redefineCb = NULL;
+	node->oldCb = NULL;
     }
     for (i = 0; i < classCount && classes[i] != NULL; i++) {
-        CVMClassBlockData **oldCBDataPtr;
+        CVMClassBlockData *oldCBData;
         CVMMethodArray *oldMethods;
         CVMMethodBlock **oldMethodTablePtr;
         CVMConstantPool *oldCp;
         CVMInt32 oldCpCount;
+
+        oldCBData = calloc(sizeof(CVMClassBlockData), 1);
+        if (oldCBData == NULL) {
+            err = JVMTI_ERROR_OUT_OF_MEMORY;
+            goto cleanup;
+        }
 
 	klass = classDefinitions[i].klass;
 	oldcb = CVMjvmtiClassRef2ClassBlock(ee, klass);
 	newKlass = classes[i];
 	newcb = CVMjvmtiClassRef2ClassBlock(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
-	node->redefineCb = NULL;
 	/*
 	 * Fixup all constant pools in other classes that point back to us 
 	 * as well as method table entries
@@ -5572,6 +5577,8 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
         CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
 #endif
         CVM_NULL_CLASSLOADER_UNLOCK(ee);
+        CVMcpResolveCbEntriesWithoutClassLoading(ee, oldcb);
+
 #if 0
 	/* NOTE: We don't know if/when old constant pool references and old mb 
 	 * references will go away so we can't just free up the unused space.
