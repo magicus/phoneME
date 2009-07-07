@@ -158,7 +158,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     /* If we decide we want to reuse a client, we put it here */
     private HttpClient reuseClient = null;
 
-    protected int totalBytes = 0;
+    protected int totalBytesRead = 0;
     protected int netMetricCode = 0;
     protected NetworkMetricsInf nm;
     private boolean sentMetric = false;
@@ -308,7 +308,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 	    }
 	    setRequests=true;
 	}
-	http.writeRequests(requests, poster);
+	final int bytesWritten = http.writeRequests(requests, poster);
         java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
             public Object run() {
                 if (NetworkMetrics.metricsAvailable()) {
@@ -327,7 +327,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     }
                     nm.initReq(NetworkMetricsInf.HTTP, getURL());
                     nm.sendMetricReq(http.getServerSocket(), methodType,
-                                     (poster == null ? 0 : poster.size()));
+                                     bytesWritten);
                     sentMetric = true;
                 }
                 return null;
@@ -1600,13 +1600,13 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
         public int read() throws IOException {
             int ret = super.read();
-            totalBytes++;
+            totalBytesRead++;
             return ret;
         }
 
         public int read(byte b[], int off, int len) throws IOException {
             int ret = super.read(b, off, len);
-            totalBytes += ret;
+            totalBytesRead += ret;
             return ret;
         }
 
@@ -1614,17 +1614,17 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 	    try {
 		super.close ();
 	    } finally {
-                if (totalBytes != 0) {
+                if (totalBytesRead != 0) {
                     if (sentMetric && NetworkMetrics.metricsAvailable()) {
                         java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
                             public Object run() {
                                 nm.sendMetricResponse(http.getServerSocket(),
-                                   netMetricCode, totalBytes);
+                                   netMetricCode, totalBytesRead);
                                     return null;
                                 }
                         });
                     }
-                    totalBytes = 0;
+                    totalBytesRead = 0;
                     netMetricCode = 0;
                     sentMetric = false;
                 }

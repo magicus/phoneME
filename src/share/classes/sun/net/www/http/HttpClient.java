@@ -136,7 +136,6 @@ public class HttpClient extends NetworkClient {
     /* if set, the client will be reused and must not be put in cache */
     public boolean reuse = false; 
 
-    protected int totalBytes = 0;
 
     /**
      * A NOP method kept for backwards binary compatibility
@@ -707,14 +706,18 @@ public class HttpClient extends NetworkClient {
 	serverOutput.flush();
     }
 
-    public void writeRequests(MessageHeader head, 
+    public int writeRequests(MessageHeader head, 
 			      PosterOutputStream pos) throws IOException {
+        int bytesWritten;
 	requests = head;
-	requests.print(serverOutput);
+	bytesWritten = requests.print(serverOutput);
 	poster = pos;
-	if (poster != null)
+	if (poster != null) {
 	    poster.writeTo(serverOutput);
+            bytesWritten += poster.size();
+        }
 	serverOutput.flush();
+        return bytesWritten;
     }
 
     /** Parse the first line of the HTTP request.  It usually looks

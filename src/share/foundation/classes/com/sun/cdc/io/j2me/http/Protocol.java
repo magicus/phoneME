@@ -588,6 +588,23 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
                 bytesleft = readChunkSize();
                 if (bytesleft == 0) {
+                    // end of the chunks, read the 'trailer'
+                    try {
+                        while (streamInput.available() > 0) {
+                            int t = streamInput.read();
+                            if (t == '\r') {
+                                if (streamInput.available() <= 0) {
+                                    break;
+                                }
+                                t = streamInput.read();
+                                if (t != '\n') {
+                                    break;
+                                }
+                                totalBytesRead += 2;
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {}
                     eof = true;
                     return -1;
                 }
@@ -636,6 +653,23 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
                 bytesleft = readChunkSize();
                 if (bytesleft == 0) {
+                    // end of the chunks, read the 'trailer'
+                    try {
+                        while (streamInput.available() > 0) {
+                            int t = streamInput.read();
+                            if (t == '\r') {
+                                if (streamInput.available() <= 0) {
+                                    break;
+                                }
+                                t = streamInput.read();
+                                if (t != '\n') {
+                                    break;
+                                }
+                                totalBytesRead += 2;
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {}
                     eof = true;
                     return -1;
                 }

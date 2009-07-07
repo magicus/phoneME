@@ -238,14 +238,20 @@ class MessageHeader {
     /** Prints the key-value pairs represented by this
 	header.  Also prints the RFC required blank line
 	at the end. Omits pairs with a null key. */
-    public synchronized void print(PrintStream p) {
+    public synchronized int print(PrintStream p) {
+        int bytesWritten = 0;
 	for (int i = 0; i < nkeys; i++) 
 	    if (keys[i] != null) {
 		p.print(keys[i] + 
 		    (values[i] != null ? ": "+values[i]: "") + "\r\n");
+                bytesWritten += (keys[i].length() + 2);
+                bytesWritten += (values[i] != null ? (values[i].length() + 2) :
+                                 0);
 	    }
+        bytesWritten += 2;
 	p.print("\r\n");
 	p.flush();
+        return bytesWritten;
     }
 
     /** Adds a key value pair to the end of the
