@@ -442,9 +442,6 @@ imgdcd_decode_png
 }
 
 #if ENABLE_JPEG
-#define LCDUI_PIXEL_SIZE sizeof(imgdcd_pixel_type)
-
-
 /**
  * TBD:
  * a). use imageSrcPtr & imageDstPtr instead of direct array pointers
@@ -458,7 +455,7 @@ static int decode_jpeg_image(char* inData, int inDataLen,
 
     void *info = JPEG_To_RGB_init();
     if (info) {
-        int width, height;
+        int width, height, outPixelSize;
         if (JPEG_To_RGB_decodeHeader(info, inData, inDataLen,
             &width, &height) != 0) {
             if ((width < outDataWidth) || (height < outDataHeight)) {
@@ -473,8 +470,18 @@ static int decode_jpeg_image(char* inData, int inDataLen,
                  */
             }
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+            if (img_enable_32bit_mode) {
+                outPixelSize = sizeof(imgdcd_pixel32_type);
+            } else {
+                outPixelSize = sizeof(imgdcd_pixel16_type);
+            }
+#else
+            outPixelSize = sizeof(imgdcd_pixel_type);
+#endif
+
             if (JPEG_To_RGB_decodeData2(info, outData,
-                LCDUI_PIXEL_SIZE, 0, 0, outDataWidth, outDataHeight) != 0) {
+                outPixelSize, 0, 0, outDataWidth, outDataHeight) != 0) {
                 result = TRUE;
             }
         }
