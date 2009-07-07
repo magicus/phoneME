@@ -330,26 +330,26 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       count -= 1;
     }
   } else {
-    while (count >= 8) {
-    CHECK_LLPTR_CLIP(sbuf,pPtr16);
-      *((registers_4 *)pPtr16) = regs;
-      pPtr16 += 4;
+    while (count >= 16) {
       CHECK_LLPTR_CLIP(sbuf,pPtr16);
       *((registers_4 *)pPtr16) = regs;
-      pPtr16 += 4;
+      pPtr16 += 8;
+      CHECK_LLPTR_CLIP(sbuf,pPtr16);
+      *((registers_4 *)pPtr16) = regs;
+      pPtr16 += 8;
+      count -= 16;
+    }
+    if (count >= 8) {
+      CHECK_LLPTR_CLIP(sbuf,pPtr16);
+      *((registers_4 *)pPtr16) = regs;
+      pPtr16 += 8;
       count -= 8;
     }
     if (count >= 4) {
       CHECK_LLPTR_CLIP(sbuf,pPtr16);
-      *((registers_4 *)pPtr16) = regs;
+      *((jlong *)pPtr16) = lcol;
       pPtr16 += 4;
       count -= 4;
-    }
-    if (count >= 2) {
-      CHECK_LLPTR_CLIP(sbuf,pPtr16);
-      *((jlong *)pPtr16) = lcol;
-      pPtr16 += 2;
-      count -= 2;
     }
     while (count >= 0) {
       CHECK_PTR_CLIP(sbuf,pPtr16);
