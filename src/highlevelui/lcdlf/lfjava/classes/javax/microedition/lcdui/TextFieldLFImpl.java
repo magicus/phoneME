@@ -2005,7 +2005,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (d != null) {
             if (!vkb_popupOpen) {
                if (d.getInputSession().getCurrentInputMode() instanceof JavaVirtualKeyboardInputMode) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup(item.owner.getLF());
                     if (keyboardPopup != null ) {
                         keyboardPopup.addVirtualKeyboardLayerListener(this);
                         keyboardPopup.setKeyboardType(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
@@ -2016,7 +2016,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 }
             } else {
                 if (!(d.getInputSession().getCurrentInputMode() instanceof JavaVirtualKeyboardInputMode)) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup(item.owner.getLF());
                     if (keyboardPopup != null ) {
                         keyboardPopup.removeVirtualKeyboardLayerListener(null);
                         d.hidePopup(keyboardPopup);
@@ -2052,7 +2052,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         Display d = getCurrentDisplay();
         if (vkb_popupOpen && d != null) {
-            VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+            VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup(item.owner.getLF());
             if (keyboardPopup != null ) {
                 keyboardPopup.removeVirtualKeyboardLayerListener(null);
                 d.hidePopup(keyboardPopup);
