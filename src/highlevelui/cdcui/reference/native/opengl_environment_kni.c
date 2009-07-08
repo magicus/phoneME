@@ -223,7 +223,7 @@ BREWprintf("opengl_environment_kni.c: hasBackingSurface: calling flushPbufferSur
     if (retval == KNI_TRUE)
         midpGL_flushPbufferSurface(surfaceId, srcSBuf.pixelData, 0, 0,
                                    srcSBuf.width, srcSBuf.height);
-    return retval;
+    KNI_ReturnBoolean(retval);
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
