@@ -179,11 +179,7 @@ class MIDPConfig{
                     readPermittedClassFile(infile);
                     infile.close();
                 }
-            } catch (IOException ioe) {
-                throw new InternalError(
-                        "Failed to read MIDPPermittedClasses.txt in " +
-                        jarfiles[i] + " (" + ioe.getMessage() + ").");
-            }
+            } catch (IOException ioe) {}
         }
     }
 
