@@ -107,7 +107,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
         if (Constants.CANVAS_JAVAVK_SUPPORTED) {
             if (currentDisplay != null) {
                 if (!vkb_popupOpen) {
-                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
+                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup(this);
                     if (keyboardPopup != null ) {
                         keyboardPopup.addVirtualKeyboardLayerListener(this);
                         keyboardPopup.setKeyboardType(com.sun.midp.lcdui.VirtualKeyboard.GAME_KEYBOARD);
@@ -133,7 +133,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
             if (vkb_popupOpen) {
                 vkb_popupOpen = false;
                 if (currentDisplay != null) {
-                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup();
+                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup(this);
                     if (keyboardPopup != null) {
                         keyboardPopup.removeVirtualKeyboardLayerListener(this);
                         currentDisplay.hidePopup(keyboardPopup);

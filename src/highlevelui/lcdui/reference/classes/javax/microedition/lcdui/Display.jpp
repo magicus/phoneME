@@ -586,6 +586,9 @@ public class Display {
     /** Chameleon rendering window */
     private MIDPWindow window;
 
+    /** flag indicating java vk should be shown for the canvas or not */
+    private boolean showVirtualKeyboard = true;
+
     /** Chameleon graphics queue */
     private CGraphicsQ graphicsQ;
     // #endif ENABLE_CHAMELEON
@@ -774,6 +777,16 @@ public class Display {
         cham_tunnel = new ChameleonTunnel();
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
+
+	if (owner instanceof MIDlet) {
+	    String vk = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
+	    if ("no".equals(vk)) {
+		showVirtualKeyboard = false;
+	    }
+	} else {
+	    showVirtualKeyboard = false;
+	}
+	
         // #endif ENABLE_CHAMELEON
 
         drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
@@ -1766,33 +1779,26 @@ public class Display {
     }
 
     private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
-        boolean ret = true;
-        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
-        // microedition.canvasvk=FALSE to disable it
-        if (owner instanceof MIDlet) {
-            if (isSIWL()) {
-                ret = false;
-            } else if (d != null && d.lGetDisplayable() instanceof Canvas) {
-                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
-                if ("no".equals(showVirtualKeyboard)) {
-                    ret = false;
-                }
-            }
-        } else {
+    	boolean ret = true;
+	    // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
+        // Sprint-Canvas-Keypad=no to disable it
+        if (isSIWL()) {
             ret = false;
+        } else if (d instanceof CanvasLF) {
+            ret = showVirtualKeyboard;
         }
         return ret;
     }
-    
+      
     /**
      * Create popup layer that represents java virtual keyboard popup
      *   associated with this Display
      * @return VirtualKeyboard layer instance connected to the current input session
      *   associated with this Display
      **/
-    VirtualKeyboardLayer getVirtualKeyboardPopup() {
+    VirtualKeyboardLayer getVirtualKeyboardPopup(DisplayableLF d) {
         VirtualKeyboardLayer ret = null;
-        if (isVirtualKeyboardAllowed(current)) {
+        if (isVirtualKeyboardAllowed(d)) {
             if (keyboardLayer == null) {
                 VirtualKeyboardResources.load();
                 if (VirtualKeyboardLayer.init()) {
@@ -2985,7 +2991,7 @@ public class Display {
          *   associated with this Display
          **/
         public VirtualKeyboardLayer getVirtualKeyboardPopup() {
-            return Display.this.getVirtualKeyboardPopup();
+            return Display.this.getVirtualKeyboardPopup(Display.this.current);
         }
         
     }
@@ -3890,7 +3896,7 @@ public class Display {
 
             VirtualKeyListener listener = (VirtualKeyListener)Display.this.current;
 
-            keyboardLayer = Display.this.getVirtualKeyboardPopup();
+            keyboardLayer = Display.this.getVirtualKeyboardPopup(Display.this.current);
 
             if (keyboardLayer != null && listener != null) {
                 keyboardLayer.addVirtualKeyboardLayerListener(listener);
