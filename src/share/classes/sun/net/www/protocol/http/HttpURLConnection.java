@@ -1,4 +1,4 @@
-/*
+ /*
  * @(#)HttpURLConnection.java	1.86 06/10/10
  *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
@@ -158,7 +158,6 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     /* If we decide we want to reuse a client, we put it here */
     private HttpClient reuseClient = null;
 
-    protected int totalBytesRead = 0;
     protected int netMetricCode = 0;
     protected NetworkMetricsInf nm;
     private boolean sentMetric = false;
@@ -1600,35 +1599,30 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
         public int read() throws IOException {
             int ret = super.read();
-            totalBytesRead++;
             return ret;
         }
 
         public int read(byte b[], int off, int len) throws IOException {
             int ret = super.read(b, off, len);
-            totalBytesRead += ret;
             return ret;
         }
 
         public void close () throws IOException {
 	    try {
 		super.close ();
-	    } finally {
-                if (totalBytesRead != 0) {
-                    if (sentMetric && NetworkMetrics.metricsAvailable()) {
-                        java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
-                            public Object run() {
-                                nm.sendMetricResponse(http.getServerSocket(),
-                                   netMetricCode, totalBytesRead);
-                                    return null;
-                                }
-                        });
-                    }
-                    totalBytesRead = 0;
+                if (sentMetric && NetworkMetrics.metricsAvailable()) {
+                    java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+                        public Object run() {
+                            int totalBytesRead = http.getBytesRead();
+                            nm.sendMetricResponse(http.getServerSocket(),
+                                          netMetricCode, totalBytesRead);
+                            return null;
+                        }
+                    });
                     netMetricCode = 0;
                     sentMetric = false;
                 }
-
+	    } finally {
 		HttpURLConnection.this.http = null;
 	    	checkResponseCredentials (true);
 	    } 

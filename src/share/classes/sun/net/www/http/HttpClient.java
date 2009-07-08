@@ -136,6 +136,7 @@ public class HttpClient extends NetworkClient {
     /* if set, the client will be reused and must not be put in cache */
     public boolean reuse = false; 
 
+    int totalBytesRead;
 
     /**
      * A NOP method kept for backwards binary compatibility
@@ -736,7 +737,7 @@ public class HttpClient extends NetworkClient {
 
 	try {
 	    serverInput = serverSocket.getInputStream();
-	    serverInput = new BufferedInputStream(serverInput);
+	    serverInput = new HttpClientInputStream(serverInput);
             return (parseHTTPHeader(responses, pe));
 	} catch (IOException e) {
 	    closeServer();
@@ -987,5 +988,39 @@ public class HttpClient extends NetworkClient {
 
     public Socket getServerSocket() {
         return serverSocket;
+    }
+
+    public int getBytesRead() {
+        return totalBytesRead;
+    }
+
+    class HttpClientInputStream extends BufferedInputStream {
+
+        public HttpClientInputStream (InputStream is) {
+	    super (is);
+            totalBytesRead = 0;
+        }
+
+        public int read() throws IOException {
+            int ret = super.read();
+            totalBytesRead ++;
+            return ret;
+        }
+
+        public synchronized void mark(int readlimit) {
+            super.mark(readlimit);
+            markpos = totalBytesRead;
+        }
+
+        public synchronized void reset() throws IOException {
+            super.reset();
+            totalBytesRead = markpos;
+        }
+
+        public int read(byte b[], int off, int len) throws IOException {
+            int ret = super.read(b, off, len);
+            totalBytesRead += ret;
+            return ret;
+        }
     }
 }
