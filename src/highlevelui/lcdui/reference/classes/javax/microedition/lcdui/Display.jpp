@@ -776,12 +776,16 @@ System.out.println("Display.close: disabling OpenGL");
                                                     height);
         // #endif ENABLE_GCI
 
+        if (owner instanceof MIDlet) {
         String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
 System.out.println("Samsung-canvas-keypad property is " + showVirtualKeyboard);
         if ("no".equals(showVirtualKeyboard)) {
 System.out.println("NOT using virtual keyboard");
             useVirtualKeyboard = false;
         }
+	} else {
+	    useVirtualKeyboard = false;
+	}
 
         com.sun.midp.midlet.MIDletStateHandler handler = 
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
