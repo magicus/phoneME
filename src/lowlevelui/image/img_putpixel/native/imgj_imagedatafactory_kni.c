@@ -1107,7 +1107,11 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_bytesInPixel) {
     int bytes;
 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
+    /* workaround for a crash while swithing color depth for a MIDlet started
+       in 16-bit mode.
     bytes = (pp_enable_32bit_mode) ? 4 : 2;
+    */
+    bytes = 4;
 #elif ENABLE_32BITS_PIXEL_FORMAT
     bytes = 4;
 #else
