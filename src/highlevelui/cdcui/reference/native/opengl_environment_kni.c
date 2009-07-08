@@ -114,11 +114,8 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_createPbufferSurface0) {
     srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
     psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr,
                                                 &srcSBuf, NULL);
-//BREWprintf("opengl_environment_kni: creating pbuffer surface for %d\n",srcSBuf.pixelData);
     IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = 
         midpGL_createPbufferSurface();
-BREWprintf("opengl: createPbufferSurface0: surfaceID is %d\n", 
-            IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId);
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
@@ -172,8 +169,6 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     if (surfaceId == 0)
          surfaceId = midpGL_createPbufferSurface();
     IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;
-BREWprintf("opengl_environment_kni.c: flushPbufferSurface0: calling flushPbufferSurface %d %d %d %d %d %d\n",
-    x,y, width, height, srcSBuf.pixelData, surfaceId);
     KNI_EndHandles();
     midpGL_flushPbufferSurface(surfaceId, srcSBuf.pixelData, x, y, width, height);
     KNI_ReturnVoid();
@@ -203,7 +198,6 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_hasBackingSurface) {
     } else {
         KNI_GetObjectField(graphicsHandle, image_fid, imgHandle);
         if (KNI_IsNullHandle(imgHandle)) {
-BREWprintf("hasBackingSurface - no image in the graphics - return false\n");
             retval = KNI_FALSE;
         }
         else { // has a backing surface
@@ -213,9 +207,7 @@ BREWprintf("hasBackingSurface - no image in the graphics - return false\n");
             surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;     
             if (surfaceId == 0)
                 surfaceId = midpGL_createPbufferSurface();
-            IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;                                    
-BREWprintf("opengl_environment_kni.c: hasBackingSurface: calling flushPbufferSurface %d %d %d %d %d %d\n",
-    0, 0, srcSBuf.width, srcSBuf.height, srcSBuf.pixelData, surfaceId);
+            IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;    
             retval = KNI_TRUE;
         }
     }
@@ -260,7 +252,6 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_getDrawingSurface0) {
                 retval = midpGL_createPbufferSurface();
                 IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = retval;
             }
-BREWprintf("opengl: getDrawingSurface0: nativeSurfaceid is %d\n", retval);
         }
     }
     KNI_EndHandles();

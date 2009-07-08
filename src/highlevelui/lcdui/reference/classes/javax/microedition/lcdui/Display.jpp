@@ -2409,9 +2409,7 @@ System.out.println("Display: " + this + " returning from callPaint");
                     // eventually resulting in a call back to the Chameleon Display
                     // Tunnel, and possible into application code if the current
                     // displayable is a canvas or gamecanvas.
-System.out.println("Display.jpp: callPaint: calling window.callPaint");
                     window.callPaint(screenGraphics, graphicsQ);
-System.out.println("Display.jpp: done in window.callPaint");
 
                     // IMPL NOTE: This code block should really be a method inside CGraphics
                     // with its own native call to the refresh function. Until that
