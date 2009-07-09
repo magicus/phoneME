@@ -871,7 +871,7 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     vfp_reg_name(type, (Fm << 1 | M) + 1, fm2);
 
     if (cpnum == 10 && L == 0) {
-      stream()->print("fmsrr%s\t%s, {%s,%s}, %s", condition_name(cond),
+      stream()->print("fmsrr%s\t{%s,%s}, %s, %s", condition_name(cond),
                                              fm, fm2,
                                              register_name(rd),
                                              register_name(rn));
