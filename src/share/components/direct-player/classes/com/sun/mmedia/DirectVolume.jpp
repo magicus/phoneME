@@ -172,15 +172,16 @@ class DirectVolume {
         if (_level == level || _hNative == 0) {
             return _level;
         }
-
+        
+        int new_level = level;
         // Try to set the native player volume 
         if (_systemLevel != -1) {
-            level = level * _systemLevel / 100;
+            new_level = level * _systemLevel / 100;
         }
-        if (-1 == nSetVolume(_hNative, level)) {
+        if (-1 == nSetVolume(_hNative, new_level)) {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
             Logging.report(Logging.ERROR, LogChannels.LC_MMAPI, 
-                "set volume failed volume=" + _level);
+                "set volume failed volume=" + level);
             }
         }
 
