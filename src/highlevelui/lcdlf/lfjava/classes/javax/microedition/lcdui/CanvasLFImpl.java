@@ -28,11 +28,15 @@ package javax.microedition.lcdui;
 
 /* import  javax.microedition.lcdui.KeyConverter; */
 import com.sun.midp.chameleon.layers.VirtualKeyListener;
+import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+
 
 import com.sun.midp.i18n.ResourceConstants;
 
 import java.util.Vector;
 import java.util.Enumeration;
+import com.sun.midp.configurator.Constants;
+import com.sun.midp.lcdui.EventConstants;
 
 /**
 * This is the look amps; feel implementation for Canvas.
@@ -100,6 +104,55 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
     }
 
     /**
+     * Show virtual keyboard popap
+     */
+    protected void showKeyboardLayer() {
+        if (Constants.CANVAS_JAVAVK_SUPPORTED) {
+            if (currentDisplay != null) {
+                if (!vkb_popupOpen) {
+                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup(this);
+                    if (keyboardPopup != null ) {
+                        keyboardPopup.addVirtualKeyboardLayerListener(this);
+                        keyboardPopup.setKeyboardType(com.sun.midp.lcdui.VirtualKeyboard.GAME_KEYBOARD);
+                        currentDisplay.showPopup(keyboardPopup);
+                        vkb_popupOpen = true;
+                        synchronized (Display.calloutLock) {
+                            lRequestInvalidate();
+                        }
+                    }
+                } 
+            }
+        } else if (Constants.CANVAS_NATIVEVK_SUPPORTED) {
+            // native keyboard impl
+        }
+    }
+
+
+    /**
+     * Hide virtual keyboard popap
+     */
+    protected void hideKeyboardLayer() {
+        if (Constants.CANVAS_JAVAVK_SUPPORTED) {
+            if (vkb_popupOpen) {
+                vkb_popupOpen = false;
+                if (currentDisplay != null) {
+                    VirtualKeyboardLayer keyboardPopup = currentDisplay.getVirtualKeyboardPopup(this);
+                    if (keyboardPopup != null) {
+                        keyboardPopup.removeVirtualKeyboardLayerListener(this);
+                        currentDisplay.hidePopup(keyboardPopup);
+                        synchronized (Display.calloutLock) {
+                            lRequestInvalidate();
+                        }
+                    }
+                }
+            }
+        } else if (Constants.CANVAS_NATIVEVK_SUPPORTED) {
+            // native keyboard impl
+        }
+    }
+    
+    
+    /**
      * Notify this Canvas it is being shown on the given Display
      */
     public void uCallShow() {
@@ -122,6 +175,8 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
                 Display.handleThrowable(t);
             }
         }
+
+        showKeyboardLayer();
     }
 
     /**
@@ -162,6 +217,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
                 needRepaintBackground = true;
             }
         }
+        hideKeyboardLayer();
     }
 
     /**
@@ -192,6 +248,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
                 needRepaintBackground = true;
            }
         }
+        hideKeyboardLayer();
     }
 
     /**
@@ -456,11 +513,38 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      */
     private static MMHelperImpl mmHelper = MMHelperImpl.getInstance();
 
-    public void processKeyPressed(int keyCode) {
-        uCallKeyPressed(keyCode);
+    private boolean vkb_popupOpen; 
+
+    public boolean processKeyPressed(int keyCode) {
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            uCallKeyEvent(EventConstants.PRESSED, keyCode);
+        }
+        return ret;
     }
 
-    public void processKeyReleased(int keyCode) {
-        uCallKeyReleased(keyCode);
+    public boolean processKeyReleased(int keyCode) {
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            uCallKeyEvent(EventConstants.RELEASED, keyCode);
+        }
+        return ret;
+    }
+
+    public boolean processKeyRepeated(int keyCode) {
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            uCallKeyEvent(EventConstants.REPEATED, keyCode);
+        }
+        return ret;
     }
 }

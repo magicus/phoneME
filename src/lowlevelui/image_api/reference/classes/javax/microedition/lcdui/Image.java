@@ -266,6 +266,11 @@ public class Image {
     private ImageData imageData;
     
     /**
+     * Native drawing surface associated with this <code>Image</code>.
+     */
+    private int nativeSurfaceId;
+    
+    /**
      * Valid transforms possible are 0 - 7
      */
     static final int INVALID_TRANSFORM_BITS = 0xFFFFFFF8;

@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -159,10 +159,28 @@ public interface DisplayAccess {
     public void setMode(int m);
 
     /**
+     * Checks is the display is foregroud.
+     *
+     * @return true when display is foreground
+     */
+    public boolean isDisplayForeground();
+
+    /**
      * Called to get the list of current dirty screen regions which
      * need to be refreshed
      *
      * @return Object[]  List of screen regions that need to be refreshed
      */
     public Object[] getDirtyRegions();
+    
+    /**
+     * Enable OpenGL rendering path instead of the default
+     * 
+     */
+    public void enableOpenGL();
+    
+    /**
+      * Called to enable default rendering path
+     */
+    public void disableOpenGL();
 }

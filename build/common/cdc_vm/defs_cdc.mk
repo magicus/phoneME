@@ -31,7 +31,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.appmanager.MIDletSuiteInfo \
         com.sun.midp.chameleon.input.InputModeFactory \
         com.sun.midp.chameleon.input.NativeInputMode \
-        com.sun.midp.chameleon.input.VirtualKeyboardInputMode \
+        com.sun.midp.chameleon.input.NativeVirtualKeyboardInputMode \
         com.sun.midp.chameleon.layers.SoftButtonLayer \
         com.sun.midp.chameleon.skins.resources.LoadedSkinData \
         com.sun.midp.chameleon.skins.resources.LoadedSkinProperties \
@@ -107,10 +107,8 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.jump.isolate.MIDletContainer
 endif
 
-ifeq ($(USE_OPENGL), true)
 MIDP_CNI_CLASSES += \
         com.sun.midp.lcdui.OpenGLEnvironment
-endif
 
 # The MIDP rom.config file
 ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config

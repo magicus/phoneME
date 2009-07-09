@@ -45,7 +45,7 @@ import com.sun.midp.lcdui.TactileFeedback;
 /**
  * Soft button layer.
  */
-public class SoftButtonLayer extends CLayer implements CommandListener {
+public class SoftButtonLayer extends CLayer implements CommandListener, VirtualKeyListener {
 
     /**
      * Labels for each of the softbuttons.
@@ -322,7 +322,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                             break;
                     }
                 } // if
-
             } // for
 
             // If we have a command for the left button, we pop it out
@@ -334,6 +333,11 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 System.arraycopy(screenCmds, index + 1,
                         scrCmds, index, numS - index);
             }
+
+	    /* If only BACK is active, hide it. */
+	    if ((type == Command.BACK) && (numS == 0)) {
+		soft1 = null ;
+	    }
         }
 
         // Now fill in the 'right' soft button, possibly with a menu
@@ -473,7 +477,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 		int cmdCount = scrCmds.length;
 		for (int i = 0; i < cmdCount; i++) {
 		    if (scrCmds[i].getCommandType() == Command.BACK) {
-			// System.out.println ("scr " + i + " " + tunnel);
 			if (tunnel != null) {
 			    tunnel.callScreenListener(scrCmds[i], scrListener);
 			    return true;
@@ -483,7 +486,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 		cmdCount = itmCmds.length;
 		for (int i = 0; i < cmdCount; i++) {
 		    if (itmCmds[i].getCommandType() == Command.BACK) {
-			// System.out.println ("itm " + i + " " + tunnel);
 			if (tunnel != null) {
 			    tunnel.callItemListener(itmCmds[i], itemListener);
 			    return true;
@@ -504,7 +506,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @return true always
      */
     public boolean pointerInput(int type, int x, int y) {
-
         if (type != EventConstants.PRESSED) {
             return true;
         }
@@ -512,14 +513,16 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
             switch (SoftButtonSkin.BUTTON_ALIGN_X[i]) {
                 case Graphics.LEFT:
-                    if (x < cached_button_anchor_x[i] ||
+                    //if (x < cached_button_anchor_x[i] ||
+                    if (
                             (x > cached_button_anchor_x[i] +
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;
                     }
                     break;
                 case Graphics.RIGHT:
-                    if (x > cached_button_anchor_x[i] ||
+                    //if (x > cached_button_anchor_x[i] ||
+                    if (
                             (x < cached_button_anchor_x[i] -
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;
@@ -1027,5 +1030,21 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             menuLayer.update(layers);
         }
     }
+
+    /**
+     *  VirtualKeyListener interface methods implementation
+     */
+    public boolean processKeyPressed(int keyCode) {
+        return keyInput(EventConstants.PRESSED, keyCode);
+    }
+    
+    public boolean processKeyReleased(int keyCode) {
+        return keyInput(EventConstants.RELEASED, keyCode);
+    }
+    
+    public boolean processKeyRepeated(int keyCode) {
+        return keyInput(EventConstants.REPEATED, keyCode);
+    }
+    
 }
 

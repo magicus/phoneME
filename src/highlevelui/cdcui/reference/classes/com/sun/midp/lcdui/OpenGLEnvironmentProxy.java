@@ -29,6 +29,8 @@ package com.sun.midp.lcdui;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 
+import com.sun.midp.chameleon.skins.SoftButtonSkin;
+
 /**
  * This class provides methods needed for JSRs to access OpenGL 
  * rendering capabilities in lcdui in order to properly synchronize 
@@ -86,7 +88,10 @@ public class OpenGLEnvironmentProxy{
      *
      */
     public void flushOpengGL(Object bindTarget) {
+       // System.out.println("OpenGLEnvironmentProxy: calling flushOpenGL with " +
+       //                     bindTarget);
         env.flushOpengGL(container, (Graphics)bindTarget);
+       // System.out.println("OpenGLEnvironmentProxy: done in flushOpenGL");
     }
     
     public void createPbufferSurface(Image img) {
@@ -105,4 +110,29 @@ public class OpenGLEnvironmentProxy{
     public void endMidpRendering() {
         env.endMidpRendering();
     }
+    
+    public void enableOpenGL(int width, int height) {
+        setSoftButtonHeight(SoftButtonSkin.HEIGHT);
+        env.enableOpenGL(width, height);
+    }
+    
+    public void disableOpenGL() {
+        env.disableOpenGL();
+    }
+    
+    public void raiseOpenGL() {
+        env.raiseOpenGL();
+    }    
+    public void lowerOpenGL() {
+        env.lowerOpenGL();
+    }
+    
+    public void switchColorDepth(int param) {
+        env.switchColorDepth(param);
+    }
+
+    public void setSoftButtonHeight(int height) {
+        env.setSoftButtonHeight(height);
+    }
+
 }

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -35,12 +35,16 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
+
 // #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
 
 import com.sun.midp.i18n.ResourceConstants;
+
+
+
 // #else
 import java.lang.*;
 import java.lang.reflect.*;
@@ -66,6 +70,7 @@ import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
 import java.io.IOException;
+
 // #endif ENABLE_CHAMELEON
 
 // #ifdef ENABLE_I3_TEST
@@ -78,6 +83,8 @@ import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
 // #endif
+
+import com.sun.midp.orientation.OrientationListener;
 
 /**
  * <code>Display</code> represents the manager of the display and
@@ -461,7 +468,7 @@ public class Display {
     DisplayEventConsumerImpl consumer;
 
     /** Foreground event consumer helper class. */
-    ForegroundEventConsumerImpl foregroundConsumer;
+    ForegroundEventConsumer foregroundConsumer;
 
     // #ifdef ENABLE_CHAMELEON
     /** Chameleon Display tunnel helper class */
@@ -589,6 +596,9 @@ public class Display {
     /** Chameleon rendering window */
     private MIDPWindow window;
 
+    /** flag indicating java vk should be shown for the canvas or not */
+    private boolean showVirtualKeyboard = true;
+
     /** Chameleon graphics queue */
     private CGraphicsQ graphicsQ;
     // #endif ENABLE_CHAMELEON
@@ -610,7 +620,14 @@ public class Display {
     /** Current active queue for serially repainted operations. */
     private static java.util.Vector currentQueue = queue1;
 
-    // #ifdef ENABLE_GCI        
+    /** Indicates if special openGL rendering path should be used instead of 
+      * default
+     */
+    private boolean useOpenGL = false;
+    private boolean use32Bit = false;
+    private boolean useVirtualKeyboard = true;
+
+    // #ifdef ENABLE_GCI	
     /** GCIDisplay that incapsulates information about the display device */
     private GCIDisplay gciDisplay;
   
@@ -698,6 +715,19 @@ public class Display {
     private void close() {
         displayClosed = true;
 
+        if (useOpenGL) {
+System.out.println("Display.close: disabling OpenGL");
+            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+            ogl.disableOpenGL();
+            ogl.endMidpRendering();
+        }
+
+        if (use32Bit) {
+com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
+            use32Bit = false;
+        }
+
         // #ifdef ENABLE_CHAMELEON
         /*
          * "Free" the window to allow it to GC, but there too many places
@@ -714,6 +744,7 @@ public class Display {
      * @param dd display device object for this display
      */
     Display(Object theOwner, DisplayDevice dd) {
+System.out.println("Creating new display for " + theOwner);
         owner = theOwner;
         displayDevice = dd;
 
@@ -770,6 +801,31 @@ public class Display {
                                                     height);
         initial_orientation = (width > height);
         // #endif ENABLE_GCI
+
+        if (owner instanceof MIDlet) {
+        String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
+System.out.println("Samsung-canvas-keypad property is " + showVirtualKeyboard);
+        if ("no".equals(showVirtualKeyboard)) {
+System.out.println("NOT using virtual keyboard");
+            useVirtualKeyboard = false;
+        }
+	} else {
+	    useVirtualKeyboard = false;
+	}
+
+        com.sun.midp.midlet.MIDletStateHandler handler = 
+            com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
+        if (handler != null) {
+            String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
+            if (String.valueOf("YES").equals(propval)) {
+System.out.println("Display.constructor: enabling OpenGL for " + this);
+                useOpenGL = true; use32Bit = true;
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().enableOpenGL(width, height);
+            }
+        }
+        else
+            System.out.println("System dialog " + this);
+
         current_orientation = initial_orientation;
         restore_orientation = initial_orientation;
         /**
@@ -785,6 +841,16 @@ public class Display {
         cham_tunnel = new ChameleonTunnel();
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
+
+	if (owner instanceof MIDlet) {
+	    String vk = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
+	    if ("no".equals(vk)) {
+		showVirtualKeyboard = false;
+	    }
+	} else {
+	    showVirtualKeyboard = false;
+	}
+	
         // #endif ENABLE_CHAMELEON
 
         drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
@@ -1772,22 +1838,39 @@ public class Display {
         return pt_popup;
     }
 
+    private boolean isSIWL() {
+        return (window != null && window.getMode() == MIDPWindow. NO_SOFT_BUTTON_MODE);
+    }
+
+    private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
+        boolean ret = true;
+	    // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
+        // Sprint-Canvas-Keypad=no to disable it
+        if (isSIWL()) {
+        } else if (d instanceof CanvasLF) {
+            ret = showVirtualKeyboard;
+        }
+        return ret;
+    }
+      
     /**
      * Create popup layer that represents java virtual keyboard popup
      *   associated with this Display
      * @return VirtualKeyboard layer instance connected to the current input session
      *   associated with this Display
      **/
-    VirtualKeyboardLayer getVirtualKeyboardPopup() {
-        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
-            return null;
-        }
-        if (keyboardLayer == null) {
-          VirtualKeyboardResources.load();
-          keyboardLayer = new VirtualKeyboardLayer();
-          keyboardLayer.init();
-        }
-        return keyboardLayer;
+    VirtualKeyboardLayer getVirtualKeyboardPopup(DisplayableLF d) {
+        VirtualKeyboardLayer ret = null;
+        if (isVirtualKeyboardAllowed(d)) {
+            if (keyboardLayer == null) {
+                VirtualKeyboardResources.load();
+                if (VirtualKeyboardLayer.init()) {
+                    keyboardLayer = new VirtualKeyboardLayer();
+                }
+            }
+            ret = keyboardLayer;
+        } 
+        return ret;
     }
 
     // #endif ENABLE_CHAMELEON
@@ -2323,11 +2406,13 @@ public class Display {
 		// #ifdef ENABLE_GCI
 		gciScreenWidget.getDrawingSurface().renderingBegin();
 		// #endif
-                // #ifdef ENABLE_OPENGL
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                ogl.startMidpRendering();
-                // #endif
+
+                if (useOpenGL) {
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                      com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                    ogl.startMidpRendering();
+                }
+
 		// #ifdef ENABLE_CHAMELEON
 		if (window.setGraphicsForCanvas(screenGraphics)) {
 		    // If the window is not dirty and we are repainting it
@@ -2354,7 +2439,8 @@ public class Display {
                     // translate is present
                     screenGraphics.translate(-screenGraphics.getTranslateX(),
                                              -screenGraphics.getTranslateY());
-                    displayDevice.refresh(displayId, region[0], region[1], region[2], region[3]);
+                    displayDevice.refresh(displayId, region[0], region[1], 
+                                          region[2], region[3], useOpenGL);
                 } else {
                     // Chameleon redirects the paint call through its layer logic,
                     // eventually resulting in a call back to the Chameleon Display
@@ -2378,7 +2464,7 @@ public class Display {
                         // x1, y1, x2, y2
                         displayDevice.refresh(displayId, subregion[0], subregion[1],
                                  subregion[0] + subregion[2],
-                                 subregion[1] + subregion[3]);
+                                 subregion[1] + subregion[3], useOpenGL);
                     }
                 }
                 // #else
@@ -2388,19 +2474,21 @@ public class Display {
                 } else {
                     screenGraphics.reset(x1, y1, x2, y2);
                     currentCopy.uCallPaint(screenGraphics, target);
-                    displayDevice.refresh(displayId, x1, y1, x2, y2);
+                    displayDevice.refresh(displayId, x1, y1, x2, y2, useOpenGL);
                 }
                 // #endif ENABLE_CHAMELEON
         }
         finally {
-                // #ifdef ENABLE_OPENGL
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                ogl.endMidpRendering();
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
+                if (useOpenGL) {
+
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                    ogl.endMidpRendering();
+
+                    // This call to refresh a "zero" region is inserted to
+                    // trigger display update on some platforms
+                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
+                }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x1,y1,x2,y2};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -2981,6 +3069,16 @@ public class Display {
                 ((CanvasLFImpl)currentCopy).uCallKeyReleased(keyCode);
             }
         }
+        /**
+         * Create popup layer that represents java virtual keyboard popup
+         *   associated with this Display
+         * @return VirtualKeyboard layer instance connected to the current input session
+         *   associated with this Display
+         **/
+        public VirtualKeyboardLayer getVirtualKeyboardPopup() {
+            return Display.this.getVirtualKeyboardPopup(Display.this.current);
+        }
+        
     }
     // #endif
  
@@ -3044,6 +3142,15 @@ public class Display {
         }
 
         /**
+         * Checks is the display is foregroud.
+         *
+         * @return true when display is foreground
+         */
+        public boolean isDisplayForeground() {
+            return hasForeground;
+        }
+
+        /**
          * Called to get key mask of all the keys that were pressed.
          * DisplayAccess I/F method.
          *
@@ -3067,6 +3174,22 @@ public class Display {
          */
         public Object[] getDirtyRegions() {
             return Display.this.graphicsQ.getRefreshRegions();
+        }
+
+        /**
+         * Called to enable OpenGL rendering path instead of default
+         */
+        public void enableOpenGL() {
+System.out.println("Display: enabling openGL");
+            useOpenGL = true;
+        }
+
+        /**
+         * Called to enable default rendering path
+         */
+        public void disableOpenGL() {
+System.out.println("Display: disabling openGL");
+            useOpenGL = false;
         }
 
         private long lastFlushTime = 0;
@@ -3221,38 +3344,37 @@ public class Display {
                             screenGraphics.translate(-tranX, -tranY);
                             screenGraphics.setClip(x1, y1, width, height);
                             
-                            //#ifdef ENABLE_OPENGL
-                            // flush the offscreen buffer to the backing surface
-                            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                            ogl.flushPbufferSurface(offscreen_buffer, x1, y1,
-                                                    width, height);
-                            //#else
-                            screenGraphics.drawImage(offscreen_buffer,
-                                     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
-                            //#endif
+                            if (useOpenGL) {
+                                // flush the offscreen buffer to the backing surface
+                                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                                ogl.flushPbufferSurface(offscreen_buffer, x1, y1,
+                                                        width, height);
+                            }
+                            else {
+                                screenGraphics.drawImage(offscreen_buffer,
+                                      anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
+                            }
                             // restore initial clip area and translation
                             screenGraphics.translate(tranX, tranY);
                             screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
                         }
-                        // #ifdef ENABLE_OPENGL
-                        // #else
-                        displayDevice.refresh(displayId, x1, y1, x2, y2);
-                        // #endif
+                        if (!useOpenGL)
+                            displayDevice.refresh(displayId, x1, y1, x2, y2, 
+                                                  useOpenGL);
                     }
             }
             finally {
-                // #ifdef ENABLE_OPENGL
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
+                if (useOpenGL) {
+                    // This call to refresh a "zero" region is inserted to
+                    // trigger display update on some platforms
+                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
+                }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x,y,x+width,y+height};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
                 // #endif
             }
-        
         }
 
         /**
@@ -3700,8 +3822,26 @@ public class Display {
 
         /**
          * Called by event delivery when size of screen was changed.
+         *
+         * @param state The new state or -1 when state is not supported
+         * @see OrientationListener interface
          */
-        public void handleRotationEvent() {
+        public void handleRotationEvent(int state) {
+            // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
+            boolean isPortrait = !Display.this.displayDevice.getReverseOrientation();
+            if (
+                (isPortrait && 
+                    (state == 
+                        OrientationListener.FODDER_BANK ||
+                        state == OrientationListener.BOW_ROLL)
+                ) || (!isPortrait &&
+                    (state == 
+                        OrientationListener.LEFT_BANK ||
+                        state == OrientationListener.RIGHT_BANK)
+                )) {
+                return;
+            }
+                    
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
                 wantRotation = Display.this.displayDevice.reverseOrientation();
@@ -3854,10 +3994,10 @@ public class Display {
 
             VirtualKeyListener listener = (VirtualKeyListener)Display.this.current;
 
-            keyboardLayer = Display.this.getVirtualKeyboardPopup();
-
+            keyboardLayer = Display.this.getVirtualKeyboardPopup(Display.this.current);
+System.out.println("handleVirtualKeyboardEvent: keyboardLayer is "  + keyboardLayer);
             if (keyboardLayer != null && listener != null) {
-                keyboardLayer.setVirtualKeyboardLayerListener(listener);
+                keyboardLayer.addVirtualKeyboardLayerListener(listener);
                 keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
                 if (keyboardLayer.isVirtualKeyboardVisible()) {
                     Display.this.hidePopup(keyboardLayer);
@@ -3920,6 +4060,13 @@ public class Display {
             synchronized (LCDUILock) {
                 if (hasForeground) {
                     return;
+                }
+
+                if (useOpenGL) {
+System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL");
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().raiseOpenGL();
+                    if (use32Bit)
+                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(1);
                 }
 
                 currentCopy = current;
@@ -3996,7 +4143,7 @@ public class Display {
 
             if (current_orientation != restore_orientation) {
                 java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
-                consumer.handleRotationEvent();
+                consumer.handleRotationEvent(-1);
             }
 
             // SYNC NOTE: The implementation of dsPaint() could call
@@ -4028,13 +4175,21 @@ public class Display {
                 if (current_orientation != initial_orientation) {
                     restore_orientation = current_orientation;
                     java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
-                    consumer.handleRotationEvent();
+                    consumer.handleRotationEvent(-1);
                 }
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
                     return;
                 }
+                if (useOpenGL) {
+System.out.println(this + " : handleBackgroundNotifyEvent: calling lowerOpenGL");
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
+                    if (use32Bit)
+                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
+                }
+                else
+                    System.out.println(this + " : handleBackgroundNotifyEvent: NOT calling lowerOpenGL");
 
                 currentCopy = current;
 

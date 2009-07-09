@@ -47,14 +47,15 @@ public class OpenGLEnvironment{
      */
     public void flushOpengGL(DisplayContainer container, Graphics bindTarget) {
         int regionArray[];
-
+        //System.out.println("in flushOpenGL - bindTarget is " + bindTarget);
+        /*
         while (midpIsRendering) {
             try {
+                System.out.println("waiting for midp to finish rendering");
                 Thread.sleep(10);
-                //System.out.println("waiting for midp to finish rendering");
             } catch (Exception e) {}
         }
-        //System.out.println("in flushOpenGL - bindTarget is " + bindTarget);
+         */
         if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
                                bindTarget.getClipHeight())) {
         //System.out.println("now checking for normal flush");
@@ -62,8 +63,19 @@ public class OpenGLEnvironment{
         DisplayAccess da = container.findDisplayById(displayId);
         if (da != null) {
             Object[] dirtyRegions = da.getDirtyRegions();
-            if (dirtyRegions.length <= 0)
+            if (dirtyRegions.length <= 0) {
+                /* when drawing directly to a canvas, dirtyRegions won't be
+                 * appropriately updated till the end of the paint method.
+                 * So, we'll have to force a flush of the whole screen to be
+                 * safe
+                 */
+                regionArray = new int[4];
+                regionArray[0] = 0; regionArray[1] = 0;
+                regionArray[2] = bindTarget.getClipWidth();
+                regionArray[3] = bindTarget.getClipHeight();
+                flushOpenGL0(regionArray, 1, displayId);
                 return;
+            }
             regionArray = new int[dirtyRegions.length*4];
             int[] curRegion;
             for (int i=0; i<dirtyRegions.length; i++) {
@@ -112,6 +124,33 @@ public class OpenGLEnvironment{
         return retval;
     }
     
+    public void enableOpenGL(int width, int height) {
+        System.out.println("OpenGLEnvironmentProxy: enabling OpenGL");
+        initMidpGL(width, height);
+    }
+    
+    public void disableOpenGL() {
+        System.out.println("OpenGLEnvironmentProxy: disabling OpenGL");
+        disableOpenGL0();
+    }
+    
+    public void raiseOpenGL() {
+        raiseOpenGL0();
+    }    
+    public void lowerOpenGL() {
+        lowerOpenGL0();
+    }
+
+    public void setSoftButtonHeight(int height) {
+        setSoftButtonHeight0(height);
+    }
+
+    private native void setSoftButtonHeight0(int height);
+    
+    public void switchColorDepth(int param) {
+        switchColorDepth0(param);
+    }
+    
     private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);
     
@@ -122,4 +161,9 @@ public class OpenGLEnvironment{
     private native boolean hasBackingSurface(Graphics bindTarget,
                                              int width, int height);
     private native int getDrawingSurface0(Graphics bindTarget, int api);
+    private native void initMidpGL(int screenWidth, int screenHeight);
+    private native void disableOpenGL0();
+    private native void raiseOpenGL0();
+    private native void lowerOpenGL0();
+    private native void switchColorDepth0(int param);
 }

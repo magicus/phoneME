@@ -66,11 +66,9 @@ SUBSYSTEM_CDCUI_JAVA_FILES += \
     $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GCIEventListener.java
 endif
 
-ifeq ($(USE_OPENGL), true)
 SUBSYSTEM_CDCUI_JAVA_FILES += \
     $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OpenGLEnvironment.java \
     $(CDCUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OpenGLEnvironmentProxy.java
 SUBSYSTEM_CDCUI_NATIVE_FILES += \
     opengl_environment_kni.c
-endif
 

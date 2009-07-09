@@ -104,8 +104,9 @@ loop:
 
     } 
 }
+#endif
 
-#elif !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
 
 void fast_pixel_set_16(void* mem, int value, int number_of_pixels) {
 __asm {

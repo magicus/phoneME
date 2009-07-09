@@ -273,6 +273,17 @@ clean::
 	    rm -rf "$(MIDP_OUTPUT_DIR)"; \
 	 fi $(LOG)
 
+ifneq ($(MIDP_OBJ_FILE_LIST),)
+$(MIDP_OBJ_FILE_LIST): $(MIDP_OBJ_FILE_LIST_FILES)
+	@echo " ... creating $@ " $(LOG)
+	$(A)echo $(MIDP_OBJ_FILE_LIST_FILES) > $@.tmp && \
+    mv -f $@.tmp $@ $(LOG)
+
+ifeq ($(CREATE_MIDP_OBJ_FILE_LIST),true)
+MIDP_DEPS += $(MIDP_OBJ_FILE_LIST)
+endif
+endif
+
 ifneq ($(MIDP_LIB),)
 $(MIDP_LIB): $(MIDP_LIB_FILES)
 	@echo " ... libing $@ " $(LOG)

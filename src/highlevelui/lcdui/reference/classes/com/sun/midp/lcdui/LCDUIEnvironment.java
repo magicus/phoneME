@@ -24,8 +24,12 @@
 
 package com.sun.midp.lcdui;
 
+import com.sun.midp.orientation.OrientationHandler;
+import com.sun.midp.orientation.OrientationListener;
+import com.sun.midp.orientation.OrientationFactory;
 import com.sun.midp.security.*;
 import com.sun.midp.events.EventQueue;
+import com.sun.midp.main.Configuration;
 import javax.microedition.lcdui.Image;
 
 /**
@@ -35,6 +39,12 @@ public class LCDUIEnvironment {
 
     /** Stores array of active displays for a MIDlet suite isolate. */
     private DisplayContainer displayContainer;
+
+    /** Orientation handler instance. */
+    private OrientationHandler orientHandler;
+
+    /** Orientation listener instance. */
+    private OrientationListener orientationListener;
 
     /**
      * Provides interface for display preemption, creation and other
@@ -96,11 +106,11 @@ public class LCDUIEnvironment {
          * has been run and then hook up its objects.
          */
         displayEventHandler.initDisplayEventHandler(
-	    displayEventProducer,
+            displayEventProducer,
             foregroundController,
             repaintEventProducer,
             displayContainer,
-	    displayDeviceContainer);
+            displayDeviceContainer);
 
         // Set a listener in the event queue for display events
         new DisplayEventListener(
@@ -121,6 +131,16 @@ public class LCDUIEnvironment {
 
         // Set a listener in the event queue for foreground events
         new ForegroundEventListener(eventQueue, displayContainer);
+
+        // Initialize a handler to process rotation events
+        String orientClassName = Configuration.getProperty("com.sun.midp.orientClassName");
+        if (orientClassName != null && orientClassName.length() > 0) {
+            orientHandler = OrientationFactory.createOrientHandler(orientClassName);
+            if (orientHandler != null) {
+                orientationListener = new OrientationListenerImpl();
+                orientHandler.addListener(orientationListener);
+            }
+        }
     }
 
     /**
@@ -129,7 +149,7 @@ public class LCDUIEnvironment {
      * @return DisplayContainer
      */
     public DisplayContainer getDisplayContainer() {
-	return displayContainer;
+        return displayContainer;
     }
 
     /** 
@@ -137,8 +157,11 @@ public class LCDUIEnvironment {
      */
     public void shutDown() {
 
+        if (orientHandler != null && orientationListener != null) {
+            orientHandler.removeListener(orientationListener);
+        }
         // shutdown any preempting
-	displayEventHandler.donePreempting(null);
+        displayEventHandler.donePreempting(null);
     }
 
     /**
@@ -148,5 +171,21 @@ public class LCDUIEnvironment {
      */
     public void setTrustedState(boolean isTrusted) {
         displayEventHandler.setTrustedState(isTrusted);
+    }
+
+    /** This is nested inside LCDUIEnvironment so that it can see the private fields. */
+    private class OrientationListenerImpl implements OrientationListener {
+    
+        /**
+         * Calls when orientation is changed. 
+         *
+         * @param orientation the orientation state
+         */
+        public void orientationChanged(int orientation) {
+            DisplayAccess da = displayContainer.findForegroundDisplay();
+            if (da != null) {
+                da.getDisplayEventConsumer().handleRotationEvent(orientation);
+            }
+        }
     }
 }

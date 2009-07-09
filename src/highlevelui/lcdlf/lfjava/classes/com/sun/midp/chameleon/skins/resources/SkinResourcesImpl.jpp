@@ -652,7 +652,7 @@ final class LoadedSkinData {
     /**
      * Cleanups after reading data from skin file
      */
-    private native static int finishReadingSkinFile()
+    private native static void finishReadingSkinFile()
         throws IOException;
 
     /**

@@ -60,7 +60,7 @@ extern void jcapp_finalize();
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h);
+extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h, boolean useOpenGL);
 
 /**
  * set the screen mode either to fullscreen or normal.
@@ -152,7 +152,9 @@ extern jint* jcapp_get_display_device_ids(jint* n);
 
 extern void jcapp_display_device_state_changed(int hardwareId, int state);
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
 extern void jcapp_switch_color_depth(int mode_32bit);
+#endif
 
 
 /**

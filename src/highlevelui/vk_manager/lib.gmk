@@ -1,0 +1,44 @@
+#
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# VIRTUAL_KEYBOARD_MANAGER Virtual keyboard Library
+#
+######################################################################
+
+# Name of the library
+VK_MANAGER_NAME = vk_manager
+VK_MANAGER_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(VK_MANAGER_NAME)
+VK_MANAGER_CLASSES_DIR = $(VK_MANAGER_DIR)/reference
+
+# Add to library set for this build
+LIB_SET += $(VK_MANAGER_NAME)
+# Java files for the library
+#
+SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
+    $(VK_MANAGER_CLASSES_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardFactory.java \
+    $(VK_MANAGER_CLASSES_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
+    $(VK_MANAGER_CLASSES_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java

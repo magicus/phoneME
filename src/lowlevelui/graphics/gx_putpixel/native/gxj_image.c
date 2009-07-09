@@ -567,8 +567,10 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
         } else {
             imageSize = pixelSize * sizeof (gxj_pixel16_type);
         }
-#else
+#elif ENABLE_32BITS_PIXEL_FORMAT
         imageSize = pixelSize * sizeof (gxj_pixel32_type);
+#else 
+        imageSize = pixelSize * sizeof (gxj_pixel16_type);
 #endif
 
         newSrc.pixelData =
