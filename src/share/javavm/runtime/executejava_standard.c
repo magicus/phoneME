@@ -3616,7 +3616,7 @@ new_transition:
 		     */
                     CVMassert((int)ret <= CNI_DOUBLE);
 
-#if defined(CVM_DEBUG_ASSERTS) || defined(CVM_CHECK_CNI_RESULT)
+#if defined(CVM_DEBUG) || defined(CVM_DEBUG_ASSERTS) || defined(CVM_CHECK_CNI_RESULT)
 		{
 		    int resultSize = -1;
 		    switch(CVMtypeidGetReturnType(CVMmbNameAndTypeID(mb))) {
@@ -3631,16 +3631,12 @@ new_transition:
 			    resultSize = 1;
 		    }
 
-#ifdef CVM_DEBUG_ASSERTS
-		    CVMassert(ret == resultSize);
-#endif
-#ifdef CVM_CHECK_CNI_RESULT
 		    if (ret != resultSize) {
-			CVMconsolePrintf("Bad CNI method return type for %C.%M\n",
+			CVMconsolePrintf(
+                            "ERROR! Bad CNI/KNI method return type for %C.%M\n",
 			    CVMmbClassBlock(mb), mb);
-			CVMabort();
+                        CVMassert(CVM_FALSE);
 		    }
-#endif
 		}
 #endif
 
