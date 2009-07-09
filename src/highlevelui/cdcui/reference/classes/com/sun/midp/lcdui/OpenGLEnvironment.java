@@ -140,6 +140,12 @@ public class OpenGLEnvironment{
     public void lowerOpenGL() {
         lowerOpenGL0();;
     }
+
+    public void setSoftButtonHeight(int height) {
+        setSoftButtonHeight0(height);
+    }
+
+    private native void setSoftButtonHeight0(int height);
     
     private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);

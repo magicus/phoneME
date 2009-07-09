@@ -29,6 +29,8 @@ package com.sun.midp.lcdui;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 
+import com.sun.midp.chameleon.skins.SoftButtonSkin;
+
 /**
  * This class provides methods needed for JSRs to access OpenGL 
  * rendering capabilities in lcdui in order to properly synchronize 
@@ -110,6 +112,7 @@ public class OpenGLEnvironmentProxy{
     }
     
     public void enableOpenGL(int width, int height) {
+        setSoftButtonHeight(SoftButtonSkin.HEIGHT);
         env.enableOpenGL(width, height);
     }
     
@@ -123,4 +126,9 @@ public class OpenGLEnvironmentProxy{
     public void lowerOpenGL() {
         env.lowerOpenGL();
     }
+
+    public void setSoftButtonHeight(int height) {
+        env.setSoftButtonHeight(height);
+    }
+
 }
