@@ -162,7 +162,7 @@ public class RecordStoreUtil {
      * @throws RecordStoreException if deletion encountered an error
      *         internally.
      */
-    native static void deleteFile(String filenameBase, String name, int extension)
+    native static boolean deleteFile(String filenameBase, String name, int extension)
             throws RecordStoreException;
 
     /**
