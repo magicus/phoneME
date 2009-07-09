@@ -35,7 +35,7 @@ ifeq ($(MIDP_BIN_TARGET),wtk)
 WTK_BIN_DIR = $(MIDP_OUTPUT_DIR)/WTK
 WTK_STORAGE_DIR = $(MIDP_OUTPUT_DIR)/WTK_STORAGE
 all:: wtkbin
-wtkbin: midp
+wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
 	$(AT)$(shell mkdir -p $(WTK_BIN_DIR)/bin $(WTK_BIN_DIR)/wtklib \
          $(WTK_STORAGE_DIR)/DefaultColorPhone)
 	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.exe, \
@@ -82,7 +82,7 @@ endif
 ifeq ($(MIDP_BIN_TARGET),sdk)
 SDK_BIN_DIR = $(MIDP_OUTPUT_DIR)/SDK
 all:: sdkbin
-sdkbin: midp
+sdkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
 	$(AT)$(shell rm -fr $(SDK_BIN_DIR))
 	$(AT)$(shell mkdir -p $(SDK_BIN_DIR)/bin \
 	$(SDK_BIN_DIR)/runtimes/cldc-hi-javafx/bin/ \
