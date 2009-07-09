@@ -860,6 +860,29 @@ void Disassembler::emit_vfp_instruction(int instr, int instr_offset) {
     } else {
       unknown_vfp_instr(instr);
     }
+  } else if (((instr >> 21) & 0x7f) == 0x62 &&
+             ((instr >> 8) & 0x0b) == 0x0a &&
+             ((instr >> 4) & 0x05) == 0x1) {
+    int L        = bit(instr, 20);
+    Register rd  = rd_field(instr);
+    Register rn  = rn_field(instr);
+    char fm2[4];
+    GUARANTEE(type == 's', "Single-precision register expected");
+    vfp_reg_name(type, (Fm << 1 | M) + 1, fm2);
+
+    if (cpnum == 10 && L == 0) {
+      stream()->print("fmsrr%s\t{%s,%s}, %s, %s", condition_name(cond),
+                                             fm, fm2,
+                                             register_name(rd),
+                                             register_name(rn));
+    } else if (cpnum == 10 && L == 1) {
+      stream()->print("fmrrs%s\t%s, %s, {%s,%s}", condition_name(cond),
+                                             register_name(rd),
+                                             register_name(rn),
+                                             fm, fm2);
+    } else {
+      unknown_vfp_instr(instr);
+    }
   } else if (((instr >> 25) & 0x07) == 0x6) {
     // Load and store
     Register rn  = rn_field(instr);
