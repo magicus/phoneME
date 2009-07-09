@@ -54,11 +54,9 @@ information or have any questions.
     <xsl:function name="uig:format-string-get-self" as="xs:string">
         <xsl:param name="str" as="xs:string"/>
         <xsl:value-of>
-            <xsl:text>"</xsl:text>
             <xsl:for-each select="uig:format-string-base($str, 'get-self')">
                 <xsl:value-of select="."/>
             </xsl:for-each>
-            <xsl:text>"</xsl:text>
         </xsl:value-of>
     </xsl:function>
 

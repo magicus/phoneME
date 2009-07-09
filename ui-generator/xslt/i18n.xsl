@@ -34,6 +34,7 @@ information or have any questions.
     <xsl:template name="top-I18N">
         <xsl:call-template name="I18N-StringIds"/>
         <xsl:call-template name="I18N-StringTable"/>
+        <xsl:call-template name="I18N-strings_en.properties"/>
     </xsl:template>
 
 
@@ -83,15 +84,9 @@ information or have any questions.
         <xsl:text>final public class StringTable implements Strings {&#10;</xsl:text>
         <xsl:text>    private static final String strings[] = new String[] {&#10;</xsl:text>
         <xsl:for-each select="uig:get-all-format-string-elements(/)">
-            <xsl:text>        </xsl:text>
-            <xsl:value-of select="
-                replace(
-                    replace(uig:format-string-get-self(.),
-                    '&#13;&#10;',
-                    '&#10;'),
-                '&#10;',
-                '&#34; + &#10;&#34;')"/> <!-- &#34; is a double quote (") character -->
-            <xsl:text>,&#10;</xsl:text>
+            <xsl:text>        "</xsl:text>
+            <xsl:value-of select="uig:format-string-get-self(.)"/>
+            <xsl:text>",&#10;</xsl:text>
         </xsl:for-each>
         <xsl:text>    };&#10;&#10;</xsl:text>
         <xsl:text>    public String getString(int id) {&#10;</xsl:text>
@@ -116,6 +111,42 @@ information or have any questions.
             '_ID',
             count(preceding::*[ancestor::screen/@name=$screen-id and uig:is-format-string(.)]) + 1
             )"/>
+    </xsl:template>
+
+
+    <!--
+        Generate strings_en.properties file.
+    -->
+    <xsl:template name="I18N-strings_en.properties">
+        <xsl:variable name="href"
+            select="concat($output-java-dir,'/strings_en.properties')"/>
+        <xsl:value-of select="concat($href,'&#10;')"/>
+        <xsl:result-document href="{$href}" encoding="utf8">
+            <xsl:call-template name="I18N-strings_en.properties-impl"/>
+        </xsl:result-document>
+    </xsl:template>
+
+    <xsl:template name="I18N-strings_en.properties-impl">
+        <xsl:text>####
+# Do not change the order of the lines!
+# Do not remove empty lines!
+# Do not split one line in two or more lines!
+# If you put some comments be sure to put '#' in front of it!
+# File encoding is UTF8!
+####
+# COUNT=</xsl:text>
+<xsl:value-of select="count(uig:get-all-format-string-elements(/))"/>
+<xsl:text>
+####
+# Main section
+</xsl:text>
+        <xsl:for-each select="uig:get-all-format-string-elements(/)">
+            <xsl:value-of select="position() - 1"/>
+            <xsl:text> = </xsl:text>
+            <xsl:value-of select="uig:format-string-get-self(.)"/>
+            <xsl:text>&#10;</xsl:text>
+        </xsl:for-each>
+        <xsl:text>####&#10;</xsl:text>
     </xsl:template>
 
 </xsl:stylesheet>

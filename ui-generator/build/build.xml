@@ -147,9 +147,6 @@ information or have any questions.
                 <tokenfilter>
                     <replacestring from="file:///${output-java-dir}/" to=""/>
                 </tokenfilter>
-                <linecontains>
-                  <contains value=".java"/>
-                </linecontains>
                 <prefixlines prefix=" "/>
                 <striplinebreaks/>
                 <prefixlines prefix="${makefile.files_list.varname} :="/>
