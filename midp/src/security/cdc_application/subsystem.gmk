@@ -1,0 +1,119 @@
+#
+#  
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SECURITY_SUBSYSTEM = security
+SUBSYSTEMS += $(SECURITY_SUBSYSTEM)
+
+SUBSYSTEM_SECURITY_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_SUBSYSTEM)
+
+CDC_SECURITY_DIR = $(SUBSYSTEM_DIR)/$(SECURITY_SUBSYSTEM)/cdc_application
+
+SUBSYSTEM_SECURITY_PACKAGES = \
+    com.sun.midp.security
+
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_SECURITY_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "MIDP Permissions Subsystem" \
+    $(shell echo $(SUBSYSTEM_SECURITY_PACKAGES) | tr ' ' $(PATHSEP))
+
+MIDP_JAVADOC_SOURCEPATH += $(CDC_SECURITY_DIR)/classes
+
+include $(SUBSYSTEM_SECURITY_DIR)/crypto/lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/file_digest/lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/internal_api_protection/lib.gmk
+include $(CDC_SECURITY_DIR)/midp_permissions_lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/permission_dialog/lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/pki/lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/publickeystore/lib.gmk
+include $(CDC_SECURITY_DIR)/secure_random_lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/access_controller_cldc_port/lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/der/lib.gmk
+include $(SUBSYSTEM_SECURITY_DIR)/ocsp/lib.gmk
+
+ifeq ($(USE_NATIVE_PERMISSION_DIALOG), true)
+  include $(SUBSYSTEM_SECURITY_DIR)/native_dialog_port/lib.gmk
+endif
+
+#####################################################################
+# Restricted Security 
+#####################################################################
+
+#The default for all platforms
+USE_BINARY_CRYPTO= false
+
+ifndef CRYPTO_OUTPUT_DIR
+  CRYPTO_OUTPUT_DIR = $(CURDIR)/crypto_output
+endif
+
+CRYPTO_CLASSES_DIR = $(CRYPTO_OUTPUT_DIR)/classes
+
+$(CRYPTO_CLASSES_DIR):
+	@mkdir -p $(CRYPTO_CLASSES_DIR)
+
+CRYPTO_LIB_DIR = $(CRYPTO_OUTPUT_DIR)/lib/$(TARGET_CPU)
+
+$(CRYPTO_LIB_DIR):
+	@mkdir -p $(CRYPTO_LIB_DIR)
+
+CRYPTO_LIB = $(CRYPTO_LIB_DIR)/libcrypto$(LIB_SUFFIX)
+
+CRYPTO_ROMGEN_FILE = crypto_rom.config
+
+ifeq ($(USE_BINARY_CRYPTO), true)
+  ROMGEN_INCLUDE_PATHS += $(CRYPTO_OUTPUT_DIR)
+  ROMGEN_CFG_FILES     += $(CRYPTO_ROMGEN_FILE)
+
+  LIBS += $(CRYPTO_LIB)
+
+  $(MIDP_CLASSES_ZIP) :: $(CLASSBINDIR)/com/sun/midp/crypto
+
+  $(CLASSBINDIR)/com/sun/midp/crypto:
+	$(A)cp -fr $(CRYPTO_CLASSES_DIR) $(MIDP_OUTPUT_DIR) $(LOG)
+else
+  ifeq ($(USE_RESTRICTED_CRYPTO), true)
+    ifeq ($(USE_SSL), true)
+      include $(RESTRICTED_CRYPTO_DIR)/src/ssl/subsystem.gmk
+    endif
+
+    include $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/subsystem.gmk
+  endif
+endif
+
+#####################################################################
+
