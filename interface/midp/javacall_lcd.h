@@ -293,7 +293,7 @@ javacall_bool javacall_lcd_get_full_screen_mode(int hardwareId);
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL fail
  */
-javacall_result javacall_lcd_flush(int hardwareId);
+javacall_result javacall_lcd_flush(int hardwareId, boolean useOpenGL);
 
 /**
  * Flush the screen raster to the display.
@@ -309,7 +309,7 @@ javacall_result javacall_lcd_flush(int hardwareId);
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, int yend);
+javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, int yend, boolean useOpenGL);
 
 /**
  * Reverse flag of rotation

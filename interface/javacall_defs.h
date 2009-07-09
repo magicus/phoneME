@@ -268,6 +268,7 @@ typedef javacall_pixel32 javacall_pixel;
 typedef unsigned int javacall_pixel;
 #else
 typedef unsigned short javacall_pixel;
+typedef unsigned short javacall_pixel16;
 #endif
 
 /**
