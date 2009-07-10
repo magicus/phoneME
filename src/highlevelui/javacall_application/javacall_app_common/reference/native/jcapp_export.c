@@ -98,14 +98,11 @@ void static jcapp_reset_screen_buffer(int hardwareId) {
 #else
     pixelSize = sizeof(gxj_pixel_type);
 #endif
-/*
-BREWprintf("calling memset  on screen buffer %d %d %d\n", gxj_system_screen_buffer.width,
-    gxj_system_screen_buffer.height, pixelSize);
+
     memset (gxj_system_screen_buffer.pixelData, 0,
         gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
             pixelSize
     );
-*/
 }
 
 /**
@@ -373,20 +370,13 @@ void jcapp_display_device_state_changed(int hardwareId, int state) {
 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT 
 void jcapp_switch_color_depth(int mode_32bit) {
-BREWprintf("jcapp_switch_color_depth: getting hardwareID\n");
     int hardwareId = jcapp_get_current_hardwareId();
-BREWprintf("hardwareID is %d\n", hardwareId);
 
-BREWprintf("calling set_jc_enable_32bit_mode with %d\n", mode_32bit);
     set_jc_enable_32bit_mode(mode_32bit);
-BREWprintf("calling set_pp_enable_32bit_mode\n");
     set_pp_enable_32bit_mode(mode_32bit);
-BREWprintf("calling set_img_enable_32bit_mode\n");
     set_img_enable_32bit_mode(mode_32bit);
 
-BREWprintf("calling jcapp_screen_buffer\n");
     jcapp_get_screen_buffer(hardwareId);
-BREWprintf("calling reset_screen_buffer\n");
     jcapp_reset_screen_buffer(hardwareId);
 }
 #endif

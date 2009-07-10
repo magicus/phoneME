@@ -266,7 +266,6 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_initMidpGL) {
     jint displayHeight = KNI_GetParameterAsInt(2);
 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
-BREWprintf("opengl_env: switching color depth\n");
     jcapp_switch_color_depth(1);
 #endif
 

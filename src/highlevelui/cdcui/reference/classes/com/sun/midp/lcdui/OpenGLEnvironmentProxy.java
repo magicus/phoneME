@@ -88,10 +88,7 @@ public class OpenGLEnvironmentProxy{
      *
      */
     public void flushOpengGL(Object bindTarget) {
-       // System.out.println("OpenGLEnvironmentProxy: calling flushOpenGL with " +
-       //                     bindTarget);
         env.flushOpengGL(container, (Graphics)bindTarget);
-       // System.out.println("OpenGLEnvironmentProxy: done in flushOpenGL");
     }
     
     public void createPbufferSurface(Image img) {

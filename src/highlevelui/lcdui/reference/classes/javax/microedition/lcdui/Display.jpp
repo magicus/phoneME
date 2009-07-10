@@ -802,17 +802,6 @@ System.out.println("Creating new display for " + theOwner);
         initial_orientation = (width > height);
         // #endif ENABLE_GCI
 
-        if (owner instanceof MIDlet) {
-        String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Samsung-canvas-keypad");
-System.out.println("Samsung-canvas-keypad property is " + showVirtualKeyboard);
-        if ("no".equals(showVirtualKeyboard)) {
-System.out.println("NOT using virtual keyboard");
-            useVirtualKeyboard = false;
-        }
-	} else {
-	    useVirtualKeyboard = false;
-	}
-
         com.sun.midp.midlet.MIDletStateHandler handler = 
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
         if (handler != null) {
@@ -845,14 +834,15 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
 	if (owner instanceof MIDlet) {
 	    String vk = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
 	    if ("no".equals(vk)) {
+System.out.println("showVirtualKeyboard = false");
 		showVirtualKeyboard = false;
 	    }
 	} else {
 	    showVirtualKeyboard = false;
 	}
 	
+System.out.println("showVirtualKeyboard = " + showVirtualKeyboard);
         // #endif ENABLE_CHAMELEON
-
         drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
 
         current = initialDisplayable;
@@ -1847,6 +1837,7 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
 	    // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
         // Sprint-Canvas-Keypad=no to disable it
         if (isSIWL()) {
+            ret = false;
         } else if (d instanceof CanvasLF) {
             ret = showVirtualKeyboard;
         }

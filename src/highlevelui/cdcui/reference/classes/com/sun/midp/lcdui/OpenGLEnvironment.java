@@ -47,7 +47,6 @@ public class OpenGLEnvironment{
      */
     public void flushOpengGL(DisplayContainer container, Graphics bindTarget) {
         int regionArray[];
-        //System.out.println("in flushOpenGL - bindTarget is " + bindTarget);
         /*
         while (midpIsRendering) {
             try {
@@ -58,7 +57,6 @@ public class OpenGLEnvironment{
          */
         if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
                                bindTarget.getClipHeight())) {
-        //System.out.println("now checking for normal flush");
         int displayId = NativeForegroundState.getState();
         DisplayAccess da = container.findDisplayById(displayId);
         if (da != null) {
@@ -96,9 +94,7 @@ public class OpenGLEnvironment{
     
     public void flushPbufferSurface(Image offscreen_buffer,
                                     int x, int y, int width, int height){
-        //System.out.println("offscreen buffer is " + offscreen_buffer);
         flushPbufferSurface0(offscreen_buffer, x, y, width, height);
-        //System.out.println("back from flushPbufferSurface0");
     }
     
     public void createPixmapSurface(Graphics g, Image img) {
