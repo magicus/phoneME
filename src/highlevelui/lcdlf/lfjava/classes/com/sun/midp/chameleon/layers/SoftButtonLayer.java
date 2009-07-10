@@ -477,7 +477,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
      * @return true always
      */
     public boolean pointerInput(int type, int x, int y) {
-
         if (type != EventConstants.PRESSED) {
             return true;
         }
@@ -485,14 +484,16 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
             switch (SoftButtonSkin.BUTTON_ALIGN_X[i]) {
                 case Graphics.LEFT:
-                    if (x < cached_button_anchor_x[i] ||
+                    //if (x < cached_button_anchor_x[i] ||
+                    if (
                             (x > cached_button_anchor_x[i] +
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;
                     }
                     break;
                 case Graphics.RIGHT:
-                    if (x > cached_button_anchor_x[i] ||
+                    //if (x > cached_button_anchor_x[i] ||
+                    if (
                             (x < cached_button_anchor_x[i] -
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;

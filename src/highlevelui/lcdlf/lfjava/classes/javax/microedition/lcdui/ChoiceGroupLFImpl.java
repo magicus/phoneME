@@ -890,16 +890,21 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     this.bgImage = new Image[bgImages.length];
                     System.arraycopy(bgImages, 0, this.bgImage, 0, bgImages.length);
                     if (bgImage.length == 3) {
-                        /* System.out.println("ChoiceGroupLFImpl callin draw3pcsBackground"); */
-                        CGraphicsUtil.draw3pcsBackground(g, 0, 0, bounds[WIDTH], bgImage);
+			int h_offset = 0;
+			int h_image = bgImage[1].getHeight();
+			do {
+			    /* System.out.println("ChoiceGroupLFImpl callin draw3pcsBackground");*/
+ 			    CGraphicsUtil.draw3pcsBackground(g, 0, h_offset, bounds[WIDTH], bgImage);
+			    h_offset += h_image;
+			} while (elHeights[i] - 20 > h_offset + h_image);
                     }
                 }else{//no image available draw a rect with color as background
-                     /* System.out.println("ChoiceGroupLFImpl drawing filled rect as background"); */
-                     g.setColor(ScreenSkin.COLOR_BG_HL);
-                     g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
-                           ChoiceGroupSkin.PAD_H + contentW +
-                           ChoiceGroupSkin.PAD_H,
-                           elHeights[i]);
+		    /* System.out.println("ChoiceGroupLFImpl drawing filled rect as background " + elHeights[i]); */
+		    g.setColor(ScreenSkin.COLOR_BG_HL);
+		    g.fillRect(-ChoiceGroupSkin.PAD_H, 0,
+			       ChoiceGroupSkin.PAD_H + contentW +
+			       ChoiceGroupSkin.PAD_H,
+			       elHeights[i]);
                 }
             }
 

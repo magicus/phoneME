@@ -445,6 +445,16 @@ public class Display {
      */
     boolean screenModeKnown = false;
 
+    /** If the current display mode is known.
+     * Set to false after display changing
+     */
+    boolean isRotatedKnown = false;
+                                                
+    /**
+     * Current display orientation
+     */
+    boolean wantRotation;
+
     /** The last mode value passed to lSetFullScreen method. */
     boolean lastFullScnMode;
 
@@ -586,6 +596,9 @@ public class Display {
     /** Chameleon rendering window */
     private MIDPWindow window;
 
+    /** flag indicating java vk should be shown for the canvas or not */
+    private boolean showVirtualKeyboard = true;
+
     /** Chameleon graphics queue */
     private CGraphicsQ graphicsQ;
     // #endif ENABLE_CHAMELEON
@@ -688,6 +701,10 @@ public class Display {
     Display(Object theOwner) {
         this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
     }
+
+    private boolean initial_orientation = false;
+    private boolean current_orientation = false;
+    private boolean restore_orientation = false;
     
     /**
      * Release any resources, such as threads, which migth refer
@@ -767,6 +784,7 @@ System.out.println("Display.close: disabling OpenGL");
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH, HEIGHT,
                              gciScreenWidget.getDrawingSurface());
+        initial_orientation = (WIDTH > HEIGHT);
 
         // #else
         width = displayDevice.getWidth();
@@ -774,6 +792,7 @@ System.out.println("Display.close: disabling OpenGL");
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     width,
                                                     height);
+        initial_orientation = (width > height);
         // #endif ENABLE_GCI
 
         if (owner instanceof MIDlet) {
@@ -800,6 +819,8 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
         else
             System.out.println("System dialog " + this);
 
+        current_orientation = initial_orientation;
+        restore_orientation = initial_orientation;
         /**
          * Sets this Display as creator of screen Graphics instance to
          * provide internal Graphics users with extended information
@@ -813,6 +834,16 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
         cham_tunnel = new ChameleonTunnel();
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
+
+	if (owner instanceof MIDlet) {
+	    String vk = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
+	    if ("no".equals(vk)) {
+		showVirtualKeyboard = false;
+	    }
+	} else {
+	    showVirtualKeyboard = false;
+	}
+	
         // #endif ENABLE_CHAMELEON
 
         drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
@@ -1805,38 +1836,26 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
     }
 
     private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
-        boolean ret = true;
-        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
-        // microedition.canvasvk=FALSE to disable it
-        if (owner instanceof MIDlet) {
-            if (isSIWL()) {
-                ret = false;
-            } else if (d != null && d.lGetDisplayable() instanceof Canvas &&
-                       useVirtualKeyboard == true) {
-/*
-                String showVirtualKeyboard = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
-                if ("no".equals(showVirtualKeyboard)) {
-                    ret = false;
-                }
-*/
-                ret = true;
-            }
-            else
-                ret = false;
-        } else
+    	boolean ret = true;
+	    // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
+        // Sprint-Canvas-Keypad=no to disable it
+        if (isSIWL()) {
             ret = false;
+        } else if (d instanceof CanvasLF) {
+            ret = showVirtualKeyboard;
+        }
         return ret;
     }
-    
+      
     /**
      * Create popup layer that represents java virtual keyboard popup
      *   associated with this Display
      * @return VirtualKeyboard layer instance connected to the current input session
      *   associated with this Display
      **/
-    VirtualKeyboardLayer getVirtualKeyboardPopup() {
+    VirtualKeyboardLayer getVirtualKeyboardPopup(DisplayableLF d) {
         VirtualKeyboardLayer ret = null;
-        if (isVirtualKeyboardAllowed(current)) {
+        if (isVirtualKeyboardAllowed(d)) {
             if (keyboardLayer == null) {
                 VirtualKeyboardResources.load();
                 if (VirtualKeyboardLayer.init()) {
@@ -2107,7 +2126,16 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
         }
 
         if (newCurrent != null) {
+            if (!isRotatedKnown) {
+                wantRotation = displayDevice.getReverseOrientation();
+                isRotatedKnown = true;
+            }
 
+            // Postponed notification of screen rotation
+            if (newCurrent.uSetRotatedStatus(wantRotation)) {
+                newCurrent.uCallSizeChanged(width, height);
+            }
+            
             if (hasForegroundCopy) {
                 // #ifdef ENABLE_CHAMELEON
                 // We need to establish the new title and ticker so that
@@ -3043,7 +3071,7 @@ System.out.println("Display: " + this + " returning from callPaint");
          *   associated with this Display
          **/
         public VirtualKeyboardLayer getVirtualKeyboardPopup() {
-            return Display.this.getVirtualKeyboardPopup();
+            return Display.this.getVirtualKeyboardPopup(Display.this.current);
         }
         
     }
@@ -3796,17 +3824,13 @@ System.out.println("Display: disabling openGL");
          */
         public void handleRotationEvent(int state) {
             // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
-            boolean isDevicePortrait = !Display.this.displayDevice.getReverseOrientation();
-            boolean isDisplayPortrait = Display.this.width < Display.this.height; 
-            
-            if (isDevicePortrait == isDisplayPortrait)
-                return;
+            boolean isPortrait = !Display.this.displayDevice.getReverseOrientation();
             if (
-                (isDevicePortrait && 
+                (isPortrait && 
                     (state == 
                         OrientationListener.FODDER_BANK ||
                         state == OrientationListener.BOW_ROLL)
-                ) || (!isDevicePortrait &&
+                ) || (!isPortrait &&
                     (state == 
                         OrientationListener.LEFT_BANK ||
                         state == OrientationListener.RIGHT_BANK)
@@ -3816,7 +3840,8 @@ System.out.println("Display: disabling openGL");
                     
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
-                Display.this.displayDevice.reverseOrientation();
+                wantRotation = Display.this.displayDevice.reverseOrientation();
+                isRotatedKnown = true;
                 Display.this.width = Display.this.displayDevice.getWidth(); 
                 Display.this.height = Display.this.displayDevice.getHeight();
                 if (Display.this.displayDevice.isPrimaryDisplay()) {
@@ -3827,8 +3852,8 @@ System.out.println("Display: disabling openGL");
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
-                System.out.println("CURRENT ORIENTATION STATUS is: " +
-                    (isDevicePortrait ? "Portrait" : "Landscape"));
+                current_orientation = Display.this.width > Display.this.height;
+                System.out.println("CURRENT ORIENTATION STATUS is " + current_orientation);
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
             // #ifdef ENABLE_CHAMELEON
@@ -3965,7 +3990,7 @@ System.out.println("Display: disabling openGL");
 
             VirtualKeyListener listener = (VirtualKeyListener)Display.this.current;
 
-            keyboardLayer = Display.this.getVirtualKeyboardPopup();
+            keyboardLayer = Display.this.getVirtualKeyboardPopup(Display.this.current);
 System.out.println("handleVirtualKeyboardEvent: keyboardLayer is "  + keyboardLayer);
             if (keyboardLayer != null && listener != null) {
                 keyboardLayer.addVirtualKeyboardLayerListener(listener);
@@ -4042,6 +4067,7 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
                 // When foreground-background state changes we loose control
                 // under the current display mode on the device
                 screenModeKnown = false;
+                isRotatedKnown = false;
             }
 
             // SYNC NOTE: for Canvas and CustomItem, dsHide/Show() will
@@ -4109,7 +4135,10 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
 
             } // synchronized
 
-            consumer.handleRotationEvent(-1);
+            if (current_orientation != restore_orientation) {
+                java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");
+                consumer.handleRotationEvent(-1);
+            }
 
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
@@ -4137,7 +4166,11 @@ System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL")
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
-            consumer.handleRotationEvent(-1);
+                if (current_orientation != initial_orientation) {
+                    restore_orientation = current_orientation;
+                    java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");
+                    consumer.handleRotationEvent(-1);
+                }
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
