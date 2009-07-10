@@ -1468,12 +1468,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         String fullName = getFullControlName( type );
 
-        Control c = null;
+        Control c = ( Control )htControls.get( fullName );
+        if (c != null) {
+            return c;
+        }
         synchronized( this )
         {
-            c = ( Control )htControls.get( fullName );
-            if( null == c &&
-                null == controls &&
+            if( null == controls &&
                 getPossibleControlNames().contains( fullName ) )
             {
                 c = lowLevelPlayer.doGetNewControl( fullName );
@@ -1663,7 +1664,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * the default size of the event queue
      * can be overridden by descendants
      */
-    int eventQueueSize = 20;
+    int eventQueueSize = 200;
 
     /**
      *  Description of the Method
