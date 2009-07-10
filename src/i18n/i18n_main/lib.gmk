@@ -60,9 +60,15 @@ SUBSYSTEM_I18N_JAVA_FILES = \
     $(I18N_MAIN_DIR)/reference/classes/com/sun/$(J2ME_CONFIGURATION)/i18n/j2me/UTF_16BE_Writer.java \
     $(I18N_MAIN_DIR)/reference/classes/com/sun/$(J2ME_CONFIGURATION)/i18n/j2me/UTF_16LE_Reader.java \
     $(I18N_MAIN_DIR)/reference/classes/com/sun/$(J2ME_CONFIGURATION)/i18n/j2me/UTF_16LE_Writer.java \
+    $(I18N_MAIN_DIR)/classes/com/sun/midp/i18n/ResourceBundle.java 
+
+ifneq ($(OEM_RUNTIME_L10N_DIR),)
+SUBSYSTEM_I18N_JAVA_FILES = \
     $(I18N_MAIN_DIR)/reference/classes/com/sun/midp/i18n/Resource.java \
-    $(I18N_MAIN_DIR)/classes/com/sun/midp/i18n/ResourceBundle.java \
     $(I18N_MAIN_DIR)/reference/classes/com/sun/midp/l10n/LocalizedStrings.java
+else
+    include $(OEM_RUNTIME_L10N_DIR)/lib.gmk
+endif
 
 # Native files for module ( common )
 #
