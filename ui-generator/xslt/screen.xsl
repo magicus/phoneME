@@ -93,6 +93,7 @@ information or have any questions.
             <xsl:text> </xsl:text>
             <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
             <xsl:text>;&#10;</xsl:text>
+            <xsl:apply-templates select="." mode="Screen-item-declare-cache-variables"/>
         </xsl:for-each>
         <xsl:if test="uig:Screen-class-with-CommandListener(.)">
             <xsl:text>    private CommandListener listener;&#10;&#10;</xsl:text>
@@ -152,18 +153,18 @@ information or have any questions.
                                 concat('if (itemId.equals(', uig:Screen-item-id(.), ')) {&#10;')"/>
                         <xsl:choose>
                             <xsl:when test="$setter">
-                                <xsl:call-template name="add-indentation">
-                                    <xsl:with-param name="text">
-                                        <xsl:apply-templates select="." mode="Screen-set-item-value"/>
-                                    </xsl:with-param>
-                                    <xsl:with-param name="ident" select="'    '"/>
-                                </xsl:call-template>
+                                <xsl:value-of select="
+                                    uig:add-indentation(uig:Screen-item-init-cache(.), '    ')"/>
+                                <xsl:value-of select="
+                                    uig:add-indentation(uig:Screen-item-init-from-cache(.), '    ')"/>
                                 <xsl:text>    return;&#10;</xsl:text>
                             </xsl:when>
                             <xsl:otherwise>
+                                <xsl:value-of select="
+                                    uig:add-indentation(uig:Screen-item-update-cache(.), '    ')"/>
                                 <xsl:text>    return </xsl:text>
-                                <xsl:apply-templates select="." mode="Screen-get-item-value"/>
-                                <xsl:text>;&#10;</xsl:text>
+                                <xsl:value-of select="uig:Screen-item-variable-name(.)"/>
+                                <xsl:text>_cached_value;&#10;</xsl:text>
                             </xsl:otherwise>
                         </xsl:choose>
                         <xsl:text>}&#10;</xsl:text>
@@ -408,6 +409,13 @@ information or have any questions.
         <xsl:apply-templates select="*[not(self::title)]" mode="Screen-add-item"/>
     </xsl:template>
 
+    <xsl:template match="screen" mode="Screen-init-items-from-cache">
+        <!-- init from cache -->
+        <xsl:for-each select="descendant::*[uig:Screen-has-member-field-for-item(.)]">
+            <xsl:value-of select="uig:Screen-item-init-from-cache(.)"/>
+        </xsl:for-each>
+    </xsl:template>
+
 
     <!--
         Adds an item to the screen.
@@ -637,6 +645,144 @@ information or have any questions.
 
 
     <!--
+        Item cache variables declaration.
+    -->
+    <xsl:template match="screen/text-field" mode="Screen-item-declare-cache-variables">
+        <xsl:text>    private String </xsl:text>
+        <xsl:value-of select="concat(uig:Screen-item-variable-name(.), '_cached_value')"/>
+        <xsl:text> = "";&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="Screen-item-declare-cache-variables">
+        <xsl:text>    private int </xsl:text>
+        <xsl:value-of select="concat(uig:Screen-item-variable-name(.), '_cached_max')"/>
+        <xsl:text> = 100;&#10;</xsl:text>
+        <xsl:text>    private int </xsl:text>
+        <xsl:value-of select="concat(uig:Screen-item-variable-name(.), '_cached_value')"/>
+        <xsl:text> = 0;&#10;</xsl:text>
+    </xsl:template>
+
+    <xsl:template match="*" mode="Screen-item-declare-cache-variables">
+        <xsl:call-template name="error-unexpected"/>
+    </xsl:template>
+
+
+    <!--
+        Update cached item value.
+    -->
+    <xsl:function name="uig:Screen-item-update-cache" as="xs:string">
+        <xsl:param name="e" as="element()"/>
+        <xsl:value-of>
+            <xsl:value-of select="
+                concat('if (', uig:Screen-item-variable-name($e), ' != null) {&#10;')"/>
+            <xsl:call-template name="add-indentation">
+                <xsl:with-param name="text">
+                    <xsl:apply-templates select="$e" mode="Screen-item-update-cache"/>
+                </xsl:with-param>
+                <xsl:with-param name="ident" select="'    '"/>
+            </xsl:call-template>
+            <xsl:text>}&#10;</xsl:text>
+        </xsl:value-of>
+    </xsl:function>
+
+    <xsl:template match="screen/text-field" mode="Screen-item-update-cache">
+        <xsl:value-of select="concat(
+            uig:Screen-item-variable-name(.),
+            '_cached_value = Screen.getTextFieldValue(',
+            uig:Screen-item-variable-name(.),
+            ');&#10;')"/>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="Screen-item-update-cache">
+        <xsl:value-of select="concat(
+            uig:Screen-item-variable-name(.),
+            '_cached_value = Screen.getProgressValue(',
+            uig:Screen-item-variable-name(.),
+            ');&#10;')"/>
+        <xsl:value-of select="concat(
+            uig:Screen-item-variable-name(.),
+            '_cached_max = Screen.getProgressMaxValue(',
+            uig:Screen-item-variable-name(.),
+            ');&#10;')"/>
+    </xsl:template>
+
+    <xsl:template match="*" mode="Screen-item-update-cache">
+        <xsl:call-template name="error-unexpected"/>
+    </xsl:template>
+
+
+    <!--
+        Init item value from cache.
+    -->
+    <xsl:function name="uig:Screen-item-init-from-cache" as="xs:string">
+        <xsl:param name="e" as="element()"/>
+        <xsl:value-of>
+            <xsl:value-of select="
+                concat('if (', uig:Screen-item-variable-name($e), ' != null) {&#10;')"/>
+            <xsl:call-template name="add-indentation">
+                <xsl:with-param name="text">
+                    <xsl:apply-templates select="$e" mode="Screen-item-init-from-cache"/>
+                </xsl:with-param>
+                <xsl:with-param name="ident" select="'    '"/>
+            </xsl:call-template>
+            <xsl:text>}&#10;</xsl:text>
+        </xsl:value-of>
+    </xsl:function>
+
+    <xsl:template match="screen/text-field" mode="Screen-item-init-from-cache">
+        <xsl:value-of select="concat(
+            'Screen.setTextFieldValue(',
+            uig:Screen-item-variable-name(.),
+            ', ', uig:Screen-item-variable-name(.),
+            '_cached_value);&#10;')"/>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="Screen-item-init-from-cache">
+        <xsl:value-of select="concat(
+            'Screen.setProgressValues(',
+            uig:Screen-item-variable-name(.),
+            ', ',
+            uig:Screen-item-variable-name(.),
+            '_cached_value, ',
+            uig:Screen-item-variable-name(.),
+            '_cached_max);&#10;')"/>
+    </xsl:template>
+
+    <xsl:template match="*" mode="Screen-item-init-from-cache">
+        <xsl:call-template name="error-unexpected"/>
+    </xsl:template>
+
+
+    <!--
+        Init item cache value.
+    -->
+    <xsl:function name="uig:Screen-item-init-cache" as="xs:string">
+        <xsl:param name="e" as="element()"/>
+        <xsl:value-of>
+            <xsl:apply-templates select="$e" mode="Screen-item-init-cache"/>
+        </xsl:value-of>
+    </xsl:function>
+
+    <xsl:template match="screen/text-field" mode="Screen-item-init-cache">
+        <xsl:value-of select="concat(
+            uig:Screen-item-variable-name(.), '_cached_value = value;&#10;')"/>
+    </xsl:template>
+
+    <xsl:template match="screen/progress" mode="Screen-item-init-cache">
+        <xsl:value-of select="concat(
+            uig:Screen-item-variable-name(.), '_cached_value = value;&#10;')"/>
+        <xsl:value-of select="concat(
+            uig:Screen-item-variable-name(.), '_cached_max = max;&#10;')"/>
+    </xsl:template>
+
+    <xsl:template match="*" mode="Screen-item-init-cache">
+        <xsl:call-template name="error-unexpected"/>
+    </xsl:template>
+
+
+
+
+    <!--
         ==========================================================
                         Toolkit specifics.
         ==========================================================
@@ -665,22 +811,6 @@ information or have any questions.
 
     <xsl:template match="*" mode="Screen-create-item">
         <xsl:call-template name="error-not-implemented"/>
-    </xsl:template>
-
-    <xsl:template match="screen/text-field" mode="Screen-get-item-value">
-        <xsl:value-of select="concat(uig:Screen-item-variable-name(.), '.getString()')"/>
-    </xsl:template>
-
-    <xsl:template match="screen/text-field" mode="Screen-set-item-value">
-        <xsl:value-of select="
-            concat(uig:Screen-item-variable-name(.), '.setString(value);&#10;')"/>
-    </xsl:template>
-
-    <xsl:template match="screen/progress" mode="Screen-set-item-value">
-        <xsl:value-of select="
-            concat(uig:Screen-item-variable-name(.), '.setMaxValue(max);&#10;')"/>
-        <xsl:value-of select="
-            concat(uig:Screen-item-variable-name(.), '.setValue(value);&#10;')"/>
     </xsl:template>
 
 </xsl:stylesheet>

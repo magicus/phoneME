@@ -32,7 +32,7 @@ information or have any questions.
         Context independent utility stuff
     -->
 
-    <xsl:param name="terminate-on-error">no</xsl:param>
+    <xsl:param name="terminate-on-error">yes</xsl:param>
 
     <!--
         Converts class name in file path.
