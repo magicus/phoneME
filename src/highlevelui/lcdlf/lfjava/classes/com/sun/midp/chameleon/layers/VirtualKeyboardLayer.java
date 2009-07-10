@@ -321,5 +321,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void removeNotify(CWindow owner) {
         // remove all listeners from the list
         listeners = new VirtualKeyListener[LIST_INC];
+        numberOfListeners = 0;
     }
 }
