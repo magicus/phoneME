@@ -29,6 +29,7 @@ package com.sun.midp.chameleon.layers;
 import com.sun.midp.lcdui.*;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
 import com.sun.midp.chameleon.CLayer;
+import com.sun.midp.chameleon.CWindow;
 import com.sun.midp.chameleon.MIDPWindow;
 import javax.microedition.lcdui.*;
 
@@ -126,7 +127,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
                     } else {
                         a = listeners;
                     }
-                    System.arraycopy(listeners, i + 1, a, 0, numberOfListeners - i);
+                    System.arraycopy(listeners, i + 1, a, i, numberOfListeners - i);
                     listeners = a;
                     break;
                 }
@@ -317,7 +318,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void setVirtualKeyboardVisible(boolean visible) {
         virtualKeyboardVisible = visible;
     }
-    public void removeNotify(MIDPWindow owner) {
+    public void removeNotify(CWindow owner) {
         // remove all listeners from the list
         listeners = new VirtualKeyListener[LIST_INC];
     }
