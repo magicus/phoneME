@@ -196,7 +196,7 @@ class PlainSocketImpl extends SocketImpl
 	}
     }
 
-    private void connectToAddress(InetAddress address, int port, int timeout) throws IOException {
+    void connectToAddress(InetAddress address, int port, int timeout) throws IOException {
 	if (address.isAnyLocalAddress()) {
 	    doConnect(InetAddress.getLocalHost(), port, timeout);
 	} else {
