@@ -565,10 +565,6 @@ bool Universe::bootstrap(const JvmPathChar* classpath) {
     }
   }
 
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  set_profile_id( DEFAULT_PROFILE_ID );
-#endif
-
   SETUP_ERROR_CHECKER_ARG;
 
 #if USE_BINARY_IMAGE_LOADER
@@ -1154,9 +1150,6 @@ void Universe::load_all_in_classpath(JVM_SINGLE_ARG_TRAPS) {
     load_all_in_classpath_segment(&path JVM_CHECK);
   }
   
-  GUARANTEE(Task::current()->sys_classpath() == NULL ||
-            ENABLE_ISOLATES, "sys_classpath should be null in SVM");
-
 #if ENABLE_ISOLATES
   classpath = Task::current()->sys_classpath();
   GUARANTEE(classpath().not_null(), "Sanity");
@@ -1274,6 +1267,10 @@ void Universe::apocalypse() {
 
 #if ENABLE_ISOLATES
   TaskContext::set_current_task_id(0);
+#endif
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  set_profile_id( DEFAULT_PROFILE_ID );
 #endif
 
 #if ENABLE_METHOD_TRAPS

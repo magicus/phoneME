@@ -125,6 +125,8 @@
 ErrorMessage.hpp                 Allocation.hpp
 ErrorMessage.cpp                 ErrorMessage.hpp
 
+Bits.hpp                         Allocation.hpp
+
 CharacterStream.hpp              Symbol.hpp
 CharacterStream.hpp              TypeArray.hpp
 CharacterStream.cpp              CharacterStream.hpp
@@ -3175,7 +3177,14 @@ kvmcompat.cpp                   JavaClassObj.hpp
 kvmcompat.cpp                   ObjectHeap_<iarch>.hpp
 kvmcompat.cpp                   TypeArrayClass.hpp
 
+ROMBitSet.hpp                   Bits.hpp
+ROMBitSet.hpp                   Universe.hpp
+ROMBitSet.cpp                   ROMBitSet.hpp
+ROMBitSet.cpp                   InstanceClass.hpp
+ROMBitSet.cpp                   Stream.hpp
+
 ROMProfile.hpp                  ROMTools.hpp
+ROMProfile.hpp                  ROMBitSet.hpp
 ROMProfile.cpp                  ROMProfile.hpp
 ROMProfile.cpp                  ROMWriter.hpp
 
