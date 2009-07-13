@@ -36,7 +36,7 @@ import com.sun.j2me.security.Token;
  * com.sun.midp.security.SecurityInitializer each time another 
  * JSR 211 implementation class requires initializing security token.
  */
-public final class SecurityInitializer {
+public final class SecurityUaaaaaaaaaaInitializer {
 
     /** List of the trusted subsystem classes that can request for token */
     final static private String[] trustedClasses = new String[] {
