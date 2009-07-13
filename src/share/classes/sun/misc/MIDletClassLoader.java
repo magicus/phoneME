@@ -76,6 +76,10 @@ public class MIDletClassLoader extends URLClassLoader {
 
     private MIDPBridgeInterface bridgeInterface;
 
+	public void finalize() {
+		System.out.println("---- MidletClassLoader FINALIZED: " + this);
+	}
+
     public MIDletClassLoader(
         URL base[],
         String systemPkgs[],
@@ -87,6 +91,7 @@ public class MIDletClassLoader extends URLClassLoader {
         MIDPBridgeInterface bridgeInterface)
     {
         super(base, parent);
+		System.out.println("++++ MidletClassLoader CREATED: " + this);
         myBase = base;
         this.systemPkgs = systemPkgs;
         memberChecker = mf;
