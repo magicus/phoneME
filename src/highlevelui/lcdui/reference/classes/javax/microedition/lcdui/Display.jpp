@@ -620,6 +620,13 @@ public class Display {
     /** Current active queue for serially repainted operations. */
     private static java.util.Vector currentQueue = queue1;
 
+    /** Indicates if special openGL rendering path should be used instead of 
+      * default
+     */
+    private boolean useOpenGL = false;
+    private boolean use32Bit = false;
+    private boolean useVirtualKeyboard = true;
+
     // #ifdef ENABLE_GCI
     /** GCIDisplay that incapsulates information about the display device */
     private GCIDisplay gciDisplay;
@@ -708,6 +715,19 @@ public class Display {
     private void close() {
         displayClosed = true;
 
+        if (useOpenGL) {
+System.out.println("Display.close: disabling OpenGL");
+            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+            ogl.disableOpenGL();
+            ogl.endMidpRendering();
+        }
+
+        if (use32Bit) {
+com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
+            use32Bit = false;
+        }
+
         // #ifdef ENABLE_CHAMELEON
         /*
          * "Free" the window to allow it to GC, but there too many places
@@ -780,6 +800,20 @@ public class Display {
                                                     height);
         initial_orientation = (width > height);
         // #endif ENABLE_GCI
+
+        com.sun.midp.midlet.MIDletStateHandler handler = 
+            com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
+        if (handler != null) {
+            String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
+            if (String.valueOf("YES").equals(propval)) {
+System.out.println("Display.constructor: enabling OpenGL for " + this);
+                useOpenGL = true; use32Bit = true;
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().enableOpenGL(width, height);
+            }
+        }
+        else
+            System.out.println("System dialog " + this);
+
         current_orientation = initial_orientation;
         restore_orientation = initial_orientation;
         /**
@@ -2361,6 +2395,13 @@ public class Display {
                 // #ifdef ENABLE_GCI
                 gciScreenWidget.getDrawingSurface().renderingBegin();
                 // #endif
+
+                if (useOpenGL) {
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                      com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                    ogl.startMidpRendering();
+                }
+
                 // #ifdef ENABLE_CHAMELEON
                 if (window.setGraphicsForCanvas(screenGraphics)) {
                     // If the window is not dirty and we are repainting it
@@ -2387,7 +2428,8 @@ public class Display {
                     // translate is present
                     screenGraphics.translate(-screenGraphics.getTranslateX(),
                                              -screenGraphics.getTranslateY());
-                    displayDevice.refresh(displayId, region[0], region[1], region[2], region[3]);
+                    displayDevice.refresh(displayId, region[0], region[1], 
+                                          region[2], region[3], useOpenGL);
                 } else {
                     // Chameleon redirects the paint call through its layer logic,
                     // eventually resulting in a call back to the Chameleon Display
@@ -2411,7 +2453,7 @@ public class Display {
                         // x1, y1, x2, y2
                         displayDevice.refresh(displayId, subregion[0], subregion[1],
                                  subregion[0] + subregion[2],
-                                 subregion[1] + subregion[3]);
+                                 subregion[1] + subregion[3], useOpenGL);
                     }
                 }
                 // #else
@@ -2421,16 +2463,21 @@ public class Display {
                 } else {
                     screenGraphics.reset(x1, y1, x2, y2);
                     currentCopy.uCallPaint(screenGraphics, target);
-                    displayDevice.refresh(displayId, x1, y1, x2, y2);
+                    displayDevice.refresh(displayId, x1, y1, x2, y2, useOpenGL);
                 }
                 // #endif ENABLE_CHAMELEON
         }
         finally {
-                // #ifdef ENABLE_OPENGL
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
+                if (useOpenGL) {
+
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                    ogl.endMidpRendering();
+
+                    // This call to refresh a "zero" region is inserted to
+                    // trigger display update on some platforms
+                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
+                }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x1,y1,x2,y2};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -3118,6 +3165,22 @@ public class Display {
             return Display.this.graphicsQ.getRefreshRegions();
         }
 
+        /**
+         * Called to enable OpenGL rendering path instead of default
+         */
+        public void enableOpenGL() {
+System.out.println("Display: enabling openGL");
+            useOpenGL = true;
+        }
+
+        /**
+         * Called to enable default rendering path
+         */
+        public void disableOpenGL() {
+System.out.println("Display: disabling openGL");
+            useOpenGL = false;
+        }
+
         private long lastFlushTime = 0;
 
         /**
@@ -3270,31 +3333,34 @@ public class Display {
                             screenGraphics.translate(-tranX, -tranY);
                             screenGraphics.setClip(x1, y1, width, height);
                             
-                            //#ifdef ENABLE_OPENGL
-                            // flush the offscreen buffer to the backing surface
-                            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
-                                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                            ogl.flushPbufferSurface(offscreen_buffer, y1, y2);
-                            //#else
-                            screenGraphics.drawImage(offscreen_buffer,
-                                     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
-                            //#endif
+		            if (useOpenGL) {
+                                // flush the offscreen buffer to the backing
+                                // surface
+                                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                                ogl.flushPbufferSurface(offscreen_buffer, x1, 
+                                                        y1, width, height);
+                            }
+                            else {
+                                screenGraphics.drawImage(offscreen_buffer,
+                                    anchorX, anchorY, 
+                                    Graphics.TOP | Graphics.LEFT);
+                            }
                             // restore initial clip area and translation
                             screenGraphics.translate(tranX, tranY);
                             screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
                         }
-                        // #ifdef ENABLE_OPENGL
-                        // #else
-                        displayDevice.refresh(displayId, x1, y1, x2, y2);
-                        // #endif
+                        if (!useOpenGL)
+                            displayDevice.refresh(displayId, x1, y1, x2, y2, 
+                                                  useOpenGL);
                     }
             }
             finally {
-                // #ifdef ENABLE_OPENGL
-                // This call to refresh a "zero" region is inserted to
-                // trigger display update on some platforms
-                displayDevice.refresh(displayId, 0, 0, 0, 0);
-                // #endif
+                if (useOpenGL) {
+                    // This call to refresh a "zero" region is inserted to
+                    // trigger display update on some platforms
+                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
+                }
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x,y,x+width,y+height};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -3988,6 +4054,12 @@ public class Display {
                     return;
                 }
 
+                if (useOpenGL) {
+System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL");
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().raiseOpenGL();
+                    if (use32Bit)
+                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(1);
+                }
                 currentCopy = current;
                 // When foreground-background state changes we loose control
                 // under the current display mode on the device
@@ -4101,6 +4173,15 @@ public class Display {
                 if (!hasForeground) {
                     return;
                 }
+
+                if (useOpenGL) {
+System.out.println(this + " : handleBackgroundNotifyEvent: calling lowerOpenGL");
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
+                    if (use32Bit)
+                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
+                }
+                else
+                    System.out.println(this + " : handleBackgroundNotifyEvent: NOT calling lowerOpenGL");
 
                 currentCopy = current;
 

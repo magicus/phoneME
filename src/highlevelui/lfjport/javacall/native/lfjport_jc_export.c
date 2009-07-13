@@ -64,9 +64,10 @@ void lfjport_ui_finalize() {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void lfjport_refresh(int hardwareId, int x1, int y1, int x2, int y2)
+void lfjport_refresh(int hardwareId, int x1, int y1, int x2, int y2,
+                     boolean useOpenGL)
 {
-    jcapp_refresh (hardwareId, x1, y1, x2, y2);
+    jcapp_refresh (hardwareId, x1, y1, x2, y2, useOpenGL);
 }
 
 /**

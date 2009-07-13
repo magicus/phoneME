@@ -120,11 +120,47 @@
 #ifndef TRUE
 #define TRUE   1
 #endif
- 
+
 /**
  * draw pixel at pixelData[y*width+x]
  * partial clipping to sbuf[width,height] and (y*width+x < 0)
  */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+
+#if PRIM_CLIPPING
+#define PRIMDRAWPIXEL32(_sbuf,_color,_x,_y) \
+  do { \
+    int _i= (_y) * (_sbuf)->width + (_x); \
+    if (((_x) < (_sbuf)->width) && ((_y) < (_sbuf)->height) && (_i>=0)) { \
+      CHECK_XY_CLIP((_sbuf),(_x),(_y)); \
+      (_sbuf)->pixelData[_i] = (_color); \
+    } \
+  } while (0)
+#define PRIMDRAWPIXEL16(_sbuf,_color,_x,_y) \
+  do { \
+    int _i= (_y) * (_sbuf)->width + (_x); \
+    if (((_x) < (_sbuf)->width) && ((_y) < (_sbuf)->height) && (_i>=0)) { \
+      CHECK_XY_CLIP((_sbuf),(_x),(_y)); \
+      ((gxj_pixel16_type*)((_sbuf)->pixelData))[_i] = (gxj_pixel16_type)(_color); \
+    } \
+  } while (0)
+#else
+#define PRIMDRAWPIXEL32(_sbuf,_color,_x,_y) \
+  do { \
+    int _i= (_y) * (_sbuf)->width + (_x); \
+    CHECK_XY_CLIP((_sbuf),(_x),(_y)); \
+    (_sbuf)->pixelData[_i] = (_color); \
+  } while (0)
+#define PRIMDRAWPIXEL16(_sbuf,_color,_x,_y) \
+  do { \
+    int _i= (_y) * (_sbuf)->width + (_x); \
+    CHECK_XY_CLIP((_sbuf),(_x),(_y)); \
+    ((gxj_pixel16_type*)((_sbuf)->pixelData))[_i] = (gxj_pixel16_type)(_color); \
+  } while (0)
+#endif
+
+#else 
+
 #if PRIM_CLIPPING
 #define PRIMDRAWPIXEL(_sbuf,_color,_x,_y) \
   do { \
@@ -142,6 +178,8 @@
     (_sbuf)->pixelData[_i] = (_color); \
   } while (0)
 #endif
+
+#endif /* ENABLE_DYNAMIC_PIXEL_FORMAT */
 
 void draw_clipped_line(gxj_screen_buffer *sbuf, 
                        gxj_pixel_type color, int lineStyle,

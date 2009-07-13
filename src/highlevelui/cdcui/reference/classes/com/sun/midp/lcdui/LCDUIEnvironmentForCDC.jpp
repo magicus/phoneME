@@ -94,9 +94,7 @@ public class LCDUIEnvironmentForCDC extends LCDUIEnvironment {
             gciEvMgr.setPointerListener(gciEvLst);
         // #endif ENABLE_GCI
 
-        // #ifdef ENABLE_OPENGL
-            OpenGLEnvironmentProxy ogl = OpenGLEnvironmentProxy.getInstance();
-            ogl.init(super.getDisplayContainer());
-        // #endif ENABLE_OPENGL 
+        OpenGLEnvironmentProxy ogl = OpenGLEnvironmentProxy.getInstance();
+        ogl.init(super.getDisplayContainer());
     }
 }

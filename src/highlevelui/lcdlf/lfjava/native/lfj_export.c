@@ -42,8 +42,9 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-void lcdlf_refresh(int hardwareId, int x, int y, int w, int h) {
-  lfjport_refresh(hardwareId, x, y, w, h);
+void lcdlf_refresh(int hardwareId, int x, int y, int w, int h,
+                   boolean useOpenGL) {
+  lfjport_refresh(hardwareId, x, y, w, h, useOpenGL);
 }
 
 /**
