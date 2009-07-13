@@ -314,8 +314,19 @@ extern "C" {
 */
 #define PLATFORM_EVENT 81
 
+/**
+ * Notification sent by application to inform Display about the desired
+ * orientation mode for this application. 
+ */  
+#define MIDP_DISPLAY_FIX_ORIENTATION 83
+
 /** @} */
 
+/**
+ * 
+ */ 
+#define MIDP_DISPLAY_ORIENTATION_PORTRAIT 1
+#define MIDP_DISPLAY_ORIENTATION_LANDSCAPE 2
 
 /**
  * @name Minor event type IDs of PLATFORM_NOTIFICATION_EVENT.

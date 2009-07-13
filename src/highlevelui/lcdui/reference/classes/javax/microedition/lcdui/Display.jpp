@@ -85,6 +85,7 @@ import com.sun.me.gci.windowsystem.GCIScreenWidget;
 // #endif
 
 import com.sun.midp.orientation.OrientationListener;
+import com.sun.midp.events.*;
 
 /**
  * <code>Display</code> represents the manager of the display and
@@ -495,7 +496,6 @@ public class Display {
      */
     boolean disabledForeground; //  = false;
 
-
 /*
  * ************* private member variables
  */
@@ -618,6 +618,16 @@ public class Display {
     private static GCIScreenWidget gciScreenWidget;
 
     // #endif ENABLE_GCI
+
+    /**
+     * 
+     */
+    private final static int ORIENTATION_AUTO = 0;
+    private final static int ORIENTATION_PORTRAIT = 1;
+    private final static int ORIENTATION_LANDSCAPE = 2;
+    
+    private int orientationMode = ORIENTATION_AUTO;
+    
 /*
  * ************* Static initializer, constructor
  */
@@ -674,6 +684,12 @@ public class Display {
 
         DisplayFactory.setStaticDisplayAccess(classSecurityToken, 
                                               displayStaticAccess);
+
+        EventQueue eventQueue =
+            EventQueue.getEventQueue(
+                SecurityInitializer.requestToken(new SecurityTrusted()));
+        eventQueue.registerEventListener(
+            EventTypes.MIDP_DISPLAY_FIX_ORIENTATION, new FixOrientationEventListener());
     }
 
 
@@ -2024,13 +2040,21 @@ public class Display {
         // A copy of current LF object
         DisplayableLF oldCurrent;
         boolean hasForegroundCopy;
+        System.out.println("++callScreenChange");
 
         synchronized (LCDUILock) {
 
             if (current == newCurrent) {
                 return;
             }
-
+System.out.println("++ callScreenChange: orientation="+displayDevice.getReverseOrientation());
+            // Postponed notification of screen rotation
+            if (newCurrent.uSetRotatedStatus(
+                    displayDevice.getReverseOrientation())) {
+System.out.println("++ callScreenChange...");
+                newCurrent.uCallSizeChanged(width, height);
+            }
+            
             hasForegroundCopy = hasForeground;
 
             // Before calling hideNotify() and showNotify(),
@@ -2708,6 +2732,25 @@ public class Display {
         return height;
         // #endif
     }
+    
+    /**
+     *
+     */
+    private void setOrientationMode(int mode) {
+        switch (mode) {
+        case ORIENTATION_AUTO:
+        case ORIENTATION_PORTRAIT:
+        case ORIENTATION_LANDSCAPE:
+            orientationMode = mode;
+            break;
+            
+        default:
+            throw new IllegalArgumentException();
+        }
+        System.out.println("++setOrientationMode: "+orientationMode);
+        consumer.handleRotationEvent(-1);
+    }         
+    
 
     /**
      * Called to get current display width.
@@ -3351,6 +3394,7 @@ public class Display {
                 Display.this.lSetMode(m);
             }
         }
+        
     } // END DisplayAccessImpl Class
 
 
@@ -3727,24 +3771,42 @@ public class Display {
          */
         public void handleRotationEvent(int state) {
             // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
-            boolean isDevicePortrait = !Display.this.displayDevice.getReverseOrientation();
-            boolean isDisplayPortrait = Display.this.width < Display.this.height; 
+            boolean isDevicePortrait;
             
-            if (isDevicePortrait == isDisplayPortrait)
-                return;
-            if (
-                (isDevicePortrait && 
-                    (state == 
-                        OrientationListener.FODDER_BANK ||
-                        state == OrientationListener.BOW_ROLL)
-                ) || (!isDevicePortrait &&
-                    (state == 
-                        OrientationListener.LEFT_BANK ||
-                        state == OrientationListener.RIGHT_BANK)
-                )) {
+            switch (orientationMode) {
+            case ORIENTATION_AUTO:
+                isDevicePortrait = !Display.this.displayDevice.getReverseOrientation();
+                break;
+            case ORIENTATION_PORTRAIT:
+                isDevicePortrait = true;
+                break; 
+            case ORIENTATION_LANDSCAPE:
+                isDevicePortrait = false;
+                break;
+            default:
+                throw new IllegalArgumentException();
+            }
+            
+            boolean isDisplayPortrait = Display.this.displayDevice.getWidth() <
+                Display.this.displayDevice.getHeight(); 
+            System.out.println("++handleRotationEvent"
+                +" isDevicePortrait=" + isDevicePortrait
+                +"; isDisplayPortrait="+isDisplayPortrait
+                +"; orientationMode="+orientationMode
+                +"; width="+width
+                +"; height="+height
+                +"; displayDevice.getWidth()="+displayDevice.getWidth()
+                +"; displayDevice.getHeight()="+displayDevice.getHeight()
+                );
+            Thread.dumpStack();
+            if (isDisplayPortrait == isDevicePortrait) {
                 return;
             }
-                    
+            /* We don't support state in the current project */
+            if (state != -1) {
+                throw new IllegalArgumentException();
+            }
+            System.out.println("++handleRotationEvent reverse...");
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
                 Display.this.displayDevice.reverseOrientation();
@@ -3957,6 +4019,8 @@ public class Display {
          * holding the LCDUILock.
          */
         public void handleDisplayForegroundNotifyEvent() {
+            System.out.println("++ handleDisplayForegroundNotifyEvent");
+
             // A copy of current LF object
             DisplayableLF currentCopy;
             synchronized (LCDUILock) {
@@ -3969,7 +4033,7 @@ public class Display {
                 // under the current display mode on the device
                 screenModeKnown = false;
             }
-
+System.out.println("++ handleDisplayForegroundNotifyEvent 1");
             // SYNC NOTE: for Canvas and CustomItem, dsHide/Show() will
             // call into app functions like hide/showNotify().
             // So we call it outside LCDUILock.
@@ -3984,6 +4048,7 @@ public class Display {
                     currentCopy.lGetDisplayable(),
                     currentCopy.lGetDisplayable().getHeight());
                 // #endif ENABLE_CHAMELEON
+System.out.println("++ handleDisplayForegroundNotifyEvent 2");
             }
 
             synchronized (LCDUILock) {
@@ -3998,6 +4063,7 @@ public class Display {
                 // #ifdef ENABLE_GCI
                 gciScreenWidget.setPeerEventTarget(accessor);
                 gciScreenWidget.show();
+System.out.println("++ handleDisplayForegroundNotifyEvent 3");
 
                 // #endif ENABLE_GCI
 
@@ -4015,6 +4081,7 @@ public class Display {
                 screenGraphics.fillRect(0, 0,
                                         Display.this.width, Display.this.height);
                 // #endif ENABLE_CHAMELEON
+System.out.println("++ handleDisplayForegroundNotifyEvent 4");
 
                 // update the command set after uCallShow()
                 // in which new screen commands could be created and
@@ -4034,9 +4101,8 @@ public class Display {
                 // correct screen mode (full or normal)
 
             } // synchronized
-
+System.out.println("++ handleDisplayForegroundNotifyEvent 5");
             consumer.handleRotationEvent(-1);
-
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
             // outside LCDUILock. dsPaint will use LCDUILock to lock
@@ -4063,12 +4129,13 @@ public class Display {
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
-            consumer.handleRotationEvent(-1);
+        System.out.println("++handleDisplayBackgroundNotifyEvent");
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
                     return;
                 }
+        System.out.println("++handleDisplayBackgroundNotifyEvent 1");
 
                 currentCopy = current;
 
@@ -4090,6 +4157,7 @@ public class Display {
                 window.hideDisplayable(currentCopy.lGetDisplayable());
                 // #endif ENABLE_CHAMELEON
                 currentCopy.uCallFreeze();
+        System.out.println("++handleDisplayBackgroundNotifyEvent 2");
             }
             displayEventHandlerImpl.onDisplayBackgroundProcessed(displayId);
         }
@@ -4109,4 +4177,29 @@ public class Display {
     LiveTracer liveTracer = new LiveTracer();
 
     // #endif ENABLE_I3_TEST
+    
+    /* An event listener for MIDP_DISPLAY_FIX_ORIENTATION event which notify
+     * a Display with the desired orientation mode.
+     */
+    private static class FixOrientationEventListener implements EventListener {
+        public boolean preprocess(Event event, Event waitingEvent) {
+            return true;
+        }
+
+        public void process(Event event) {
+            NativeEvent ne = (NativeEvent)event;
+            int displayId = ne.intParam4;
+            System.out.println("++ FixOrientationEventListener got an event. #"
+                +ne.intParam1+" display:"+displayId);
+            DisplayAccess da = displayContainer.findDisplayById(displayId);
+            if (da != null) {
+                Display d = da.getDisplay();
+                System.out.println("++ display:"+d);
+                if (d != null) {
+                    d.setOrientationMode(ne.intParam1);
+                }
+            }
+        }
+    }
+
 }

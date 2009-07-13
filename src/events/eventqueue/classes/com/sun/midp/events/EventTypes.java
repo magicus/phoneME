@@ -494,5 +494,11 @@ public final class EventTypes {
     /**
      * This event is used by NativeVirtualKeyboard class internally only
      */
-    public static final int NATIVE_VIRTUAL_KEYBOARD_EVENT = 81;
+    public static final int NATIVE_VIRTUAL_KEYBOARD_EVENT = 82;
+
+    /**
+     * This event is used by Display
+     */
+    public static final int MIDP_DISPLAY_FIX_ORIENTATION = 83;
+
 }
