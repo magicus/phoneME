@@ -32,7 +32,7 @@
 static CVMMutex        nAudioMutex;
 static javacall_bool   nAudioMutexCreated = JAVACALL_FALSE;
 
-void LockAudioMutex() {
+void DoLockAudioMutex() {
     if(!nAudioMutexCreated) {
         CVMmutexInit(&nAudioMutex);
         nAudioMutexCreated = JAVACALL_TRUE;
