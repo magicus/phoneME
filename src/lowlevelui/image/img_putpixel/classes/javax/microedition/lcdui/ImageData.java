@@ -62,6 +62,18 @@ final class ImageData implements AbstractImageData {
      * Must remain 0 unless pixelData is null.
      */
     private int nativePixelData;
+
+    /**
+     * 16-bit image native romized pixel data.
+     * Used only if ENABLE_DYNAMIC_PIXEL_FORMAT=true
+     */
+    private int nativePixelData16;
+
+    /**
+     * 32-bit image native romized pixel data.
+     * Used only if ENABLE_DYNAMIC_PIXEL_FORMAT=true
+     */
+    private int nativePixelData32;
     
     /**
      * Image native romized alpha data.

@@ -39,6 +39,8 @@
 #include <img_imagedata_load.h>
 #include <imgdcd_image_util.h>
 
+#include <lfj_image_rom.h>
+
 
 #define PIXEL imgdcd_pixel_type
 #define ALPHA imgdcd_alpha_type
@@ -87,7 +89,15 @@ static int get_imagedata(const java_imagedata *img,
                             ? (ALPHA *)&(img->alphaData->elements[0])
                             : NULL;
     } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+            *pixelData = (PIXEL *)img->nativePixelData32;
+        } else {
+            *pixelData = (PIXEL *)img->nativePixelData16;
+        }
+#else
         *pixelData = (PIXEL *)img->nativePixelData;
+#endif
         *alphaData = (ALPHA *)img->nativeAlphaData;
     }
 
@@ -714,13 +724,172 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
  * </pre>
  *
  * @param imageData The ImageData to load to
- * @param imageDataPtr native pointer to image data as Java int
- * @param imageDataLength length of image data array
+ * @param romIndex romized image id
  */
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
-    int imageDataPtr = KNI_GetParameterAsInt(2);
-    int imageDataLength = KNI_GetParameterAsInt(3);
+    int imageId = KNI_GetParameterAsInt(2);
+
+    unsigned char* imageDataPtr16;
+    unsigned char* imageDataPtr32;
+    int imageDataLength16;
+    int imageDataLength32;
+
+    int alphaSize16;
+    int alphaSize32;
+    int imageSize16;
+    int imageSize32;
+    int pixelSize16;
+    int pixelSize32;
+    int expectedLength16;
+    int expectedLength32;
+
+
+    imgdcd_image_buffer_raw *rawBuffer16;
+    imgdcd_image_buffer_raw *rawBuffer32;
+
+    java_imagedata *midpImageData;
+
+    jboolean status = KNI_FALSE;
+
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(imageData);
+    KNI_GetParameterAsObject(1, imageData);
+
+
+    // Note: current image rom MUST be restored later in the function
+    lfj_select_rgb565_image_rom();
+    imageDataLength16 = lfj_load_image_from_rom(imageId, &imageDataPtr16);
+
+    lfj_select_rgb888_image_rom();
+    imageDataLength32 = lfj_load_image_from_rom(imageId, &imageDataPtr32);
+
+    // Restore current image rom
+    if (pp_enable_32bit_mode) {
+        lfj_select_rgb888_image_rom();
+    } else {
+        lfj_select_rgb565_image_rom();
+    }
+
+    rawBuffer16 = (imgdcd_image_buffer_raw*)imageDataPtr16;
+    rawBuffer32 = (imgdcd_image_buffer_raw*)imageDataPtr32;
+
+    do {
+
+        /** 16 bit */
+  
+        if (rawBuffer16 == NULL) {
+            REPORT_ERROR(LC_LOWUI, "Romized image data is null");
+
+            status = KNI_FALSE;
+            break;
+        }
+
+        /** Check header */
+        if (memcmp(rawBuffer16->header, imgdcd_raw_header, 4) != 0) {
+            REPORT_ERROR(LC_LOWUI, "Unexpected romized image type");
+
+            status = KNI_FALSE;
+            break;
+        }
+
+        imageSize16 = rawBuffer16->width * rawBuffer16->height;
+        pixelSize16 = sizeof(gxj_pixel16_type) * imageSize16;
+
+        alphaSize16 = 0;
+        if (rawBuffer16->hasAlpha) {
+            alphaSize16 = sizeof(ALPHA) * imageSize16;
+        }
+
+        /** Check data array length */
+        expectedLength16 = offsetof(imgdcd_image_buffer_raw, data) +
+            pixelSize16 + alphaSize16;
+        if (imageDataLength16 != expectedLength16) {
+            REPORT_ERROR(LC_LOWUI,
+                    "Unexpected romized image data array length");
+
+            status = KNI_FALSE;
+            break;
+        }
+
+
+        /** 32 bit */
+
+        if (rawBuffer32 == NULL) {
+            REPORT_ERROR(LC_LOWUI, "Romized image data is null");
+
+            status = KNI_FALSE;
+            break;
+        }
+
+        /** Check header */
+        if (memcmp(rawBuffer32->header, imgdcd_raw_header, 4) != 0) {
+            REPORT_ERROR(LC_LOWUI, "Unexpected romized image type");
+
+            status = KNI_FALSE;
+            break;
+        }
+
+        imageSize32 = rawBuffer32->width * rawBuffer32->height;
+        pixelSize32 = sizeof(gxj_pixel32_type) * imageSize32;
+
+        alphaSize32 = 0;
+        if (rawBuffer32->hasAlpha) {
+            alphaSize32 = sizeof(ALPHA) * imageSize32;
+        }
+
+        /** Check data array length */
+        expectedLength32 = offsetof(imgdcd_image_buffer_raw, data) +
+            pixelSize32 + alphaSize32;
+        if (imageDataLength32 != expectedLength32) {
+            REPORT_ERROR(LC_LOWUI,
+                    "Unexpected romized image data array length");
+
+            status = KNI_FALSE;
+            break;
+        }
+
+        /** Check mutual matching of the 16 bit and the 32 bit version */
+        if (rawBuffer16->width != rawBuffer32->width ||
+                rawBuffer16->height != rawBuffer32->height) {
+            REPORT_ERROR(LC_LOWUI, "Romized image: 16-bit version doesn't match to 32-bit version");
+
+            status = KNI_FALSE;
+            break;
+        }
+
+
+        /** Store image info to midpImageData */
+
+        midpImageData = IMGAPI_GET_IMAGEDATA_PTR(imageData);
+
+        midpImageData->width = (jint)rawBuffer16->width;
+        midpImageData->height = (jint)rawBuffer16->height;
+
+        midpImageData->nativePixelData16 = (jint)rawBuffer16->data;
+        midpImageData->nativePixelData32 = (jint)rawBuffer32->data;
+
+        if (rawBuffer16->hasAlpha) {
+            midpImageData->nativeAlphaData =
+                (jint)(rawBuffer16->data + pixelSize16);
+        }
+
+        status = KNI_TRUE;
+
+    } while (0);
+
+    KNI_EndHandles();
+    KNI_ReturnBoolean(status);
+}
+#else
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
+    int romIndex = KNI_GetParameterAsInt(2);
+
+    int imageDataPtr;
+    int imageDataLength;
 
     int alphaSize;
     int pixelSize;
@@ -736,6 +905,9 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(imageData);
     KNI_GetParameterAsObject(1, imageData);
+
+
+    imageDataLength = lfj_load_image_from_rom(imageId, &imageDataPtr);
 
     rawBuffer = (imgdcd_image_buffer_raw*)imageDataPtr;
 
@@ -756,15 +928,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
-#if ENABLE_DYNAMIC_PIXEL_FORMAT
-       if (pp_enable_32bit_mode) {
-           pixelSize = sizeof(gxj_pixel32_type) * imageSize;
-       } else {
-           pixelSize = sizeof(gxj_pixel16_type) * imageSize;
-       }
-#else
         pixelSize = sizeof(PIXEL) * imageSize;
-#endif
+
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
             alphaSize = sizeof(ALPHA) * imageSize;
@@ -800,6 +965,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
     KNI_EndHandles();
     KNI_ReturnBoolean(status);
 }
+#endif
 
 /**
  * Loads the <tt>ImageData</tt> with the given ARGB integer

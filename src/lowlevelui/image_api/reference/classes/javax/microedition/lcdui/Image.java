@@ -853,18 +853,15 @@ public class Image {
     /**
      * Function to load an romized Image.
      *
-     * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
+     * @param romIndex romized image id
      * @return image created. Null if no romized image matches the id.
      */
-    static Image getRomizedImage(int imageDataArrayPtr, 
-            int imageDataArrayLength) {
+    static Image getRomizedImage(int romIndex) {
 
         try {
             AbstractImageDataFactory f = 
                 ImageDataFactory.getImageDataFactory();
-            ImageData data = f.createImmutableImageData(imageDataArrayPtr, 
-                    imageDataArrayLength);
+            ImageData data = f.createImmutableImageData(romIndex);
             return new Image(data);
         } catch (IllegalArgumentException iae) {
             return null;

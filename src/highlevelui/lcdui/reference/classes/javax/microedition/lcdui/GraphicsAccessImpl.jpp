@@ -42,16 +42,12 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
     /**
      * Return a romized image resource based on the identifier.
      *
-     * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
+     * @param romIndex romized image id
      * @return the romized Image, null if the identifier was invalid
      *         or the Image did not exist.
      */
-    public Image getRomizedImage(int imageDataArrayPtr,
-            int imageDataArrayLength) {
-        
-        return Image.getRomizedImage(
-            imageDataArrayPtr, imageDataArrayLength);
+    public Image getRomizedImage(int romIndex) {
+        return Image.getRomizedImage(romIndex);
     }
     // #endif
 
