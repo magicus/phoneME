@@ -227,6 +227,7 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
   _imageDstPtr p = (_imageDstPtr)self;
   int x;
   int r, g, b, alpha, color, hasAlphaChannel;
+  imgdcd_alpha_type* pAlphaData;
 
   REPORT_CALL_TRACE(LC_LOWUI,
                     "LF:STUB:sendPixelsColor()\n");
@@ -235,15 +236,21 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
     return;
   }
 
+  pAlphaData = &(p->alphaData[y*p->width]);
+
   if ((pixelType == CT_COLOR) ||              /* color triplet */
       (pixelType == (CT_COLOR | CT_ALPHA))) { /* color triplet with alpha */
 
     hasAlphaChannel = (( pixelType & CT_ALPHA) || p->hasTransMap) ? 1 : 0;
-    for (x = 0; x < p->width; ++x) {
-      alpha = 0xff;
 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
-      if (img_enable_32bit_mode) {
+    if (img_enable_32bit_mode) {
+#endif
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+    imgdcd_pixel32_type* pPixelData = &(p->pixelData[y*p->width]);
+    for (x = 0; x < p->width; ++x) {
+          alpha = 0xff;
+
           r = pixels[0];
           g = pixels[1];
           b = pixels[2];
@@ -254,8 +261,25 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
           }
           pixels += 3;
 
-          p->pixelData[y*p->width + x] = IMGDCD_RGBA2PIXEL_32(r, g, b, alpha);
-      } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+          *pPixelData++ = IMGDCD_RGBA2PIXEL_32(r, g, b, alpha);
+#else
+          *pPixelData++ = IMGDCD_RGBA2PIXEL(r, g, b, alpha);
+#endif
+
+          *pAlphaData++ = alpha;
+          if (alpha != 0xff) {
+              p->hasAlpha = KNI_TRUE;
+          }
+    }
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    } else {
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+    imgdcd_pixel16_type* pPixelData = &(((imgdcd_pixel16_type*)p->pixelData)[y*p->width]);
+    for (x = 0; x < p->width; ++x) {
+      alpha = 0xff;
           r = pixels[0] >> 3;
           g = pixels[1] >> 2;
           b = pixels[2] >> 3;
@@ -266,94 +290,97 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
           }
           pixels += 3;
 
-          ((imgdcd_pixel16_type*)p->pixelData)[y*p->width + x] = IMGDCD_RGB2PIXEL_16(r, g, b);
-      }
-#elif ENABLE_32BITS_PIXEL_FORMAT
-      r = pixels[0];
-      g = pixels[1];
-      b = pixels[2];
-
-      if (hasAlphaChannel) {
-        alpha = pixels[3];
-        pixels++;
-      }
-      pixels += 3;
-
-      p->pixelData[y*p->width + x] = IMGDCD_RGBA2PIXEL(r, g, b, alpha);
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+      *pPixelData++ = IMGDCD_RGB2PIXEL_16(r, g, b);
 #else
-      r = pixels[0] >> 3;
-      g = pixels[1] >> 2;
-      b = pixels[2] >> 3;
-
-      if (hasAlphaChannel) {
-        alpha = pixels[3];
-        pixels++;
-      }
-      pixels += 3;
-
-      p->pixelData[y*p->width + x] = IMGDCD_RGB2PIXEL(r, g, b);
+      *pPixelData++ = IMGDCD_RGB2PIXEL(r, g, b);
 #endif
-      p->alphaData[y*p->width + x] = alpha;
+      *pAlphaData++ = alpha;
       if (alpha != 0xff) {
           p->hasAlpha = KNI_TRUE;
       }
     }
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    }
+#endif
   } else { /* indexed color */
+      int indexedAlpha;
+
+      if ((pixelType & (CT_ALPHA | CT_COLOR)) == CT_ALPHA) {
+          indexedAlpha = 0;
+      } else if (p->hasTransMap) {
+        if ((pixelType & CT_COLOR) == 0) { /* grayscale */
+          indexedAlpha = 0;
+        } else { /* indexed color */
+          indexedAlpha = 1;
+        }
+      }
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (img_enable_32bit_mode) {
+#endif
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+    imgdcd_pixel32_type* pPixelData = &(p->pixelData[y*p->width]);
     for (x = 0; x < p->width; ++x) {
       int cmapIndex = *pixels++;
 
       color = p->cmap[cmapIndex];
       alpha = 0xff;
 
-      if ((pixelType & (CT_ALPHA | CT_COLOR)) == CT_ALPHA) {
-        alpha = *pixels++;
-      } else if (p->hasTransMap) {
-        if ((pixelType & CT_COLOR) == 0) { /* grayscale */
-          alpha = *pixels++;
-        } else { /* indexed color */
-          alpha = p->tmap[cmapIndex];
-        }
-      }
-
+      alpha = (indexedAlpha) ? p->tmap[cmapIndex] : *pixels++;
 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
-      if (img_enable_32bit_mode) {
-          p->pixelData[y*p->width + x] = IMGDCD_MIDPTOPIXEL_32((color & 0x00FFFFFF) | ((alpha << 24) & 0xFF000000));
-      } else {
-          r = ((color >> 16) & 0xff) >> 3;
-          g = ((color >>  8) & 0xff) >> 2;
-          b = ((color >>  0) & 0xff) >> 3;
-
-          if (r < 0) r = 0; else if (r > 0xff) r = 0xff;
-          if (g < 0) g = 0; else if (g > 0xff) g = 0xff;
-          if (b < 0) b = 0; else if (b > 0xff) b = 0xff;
-
-          ((imgdcd_pixel16_type*)p->pixelData)[y*p->width + x] = IMGDCD_RGB2PIXEL_16(r, g, b);
-      }
-#elif ENABLE_32BITS_PIXEL_FORMAT
-      p->pixelData[y*p->width + x] = IMGDCD_MIDPTOPIXEL((color & 0x00FFFFFF) | ((alpha << 24) & 0xFF000000));
+      *pPixelData++ = IMGDCD_MIDPTOPIXEL_32((color & 0x00FFFFFF) | ((alpha << 24) & 0xFF000000));
 #else
+      *pPixelData++ = IMGDCD_MIDPTOPIXEL((color & 0x00FFFFFF) | ((alpha << 24) & 0xFF000000));
+#endif
+
+      *pAlphaData++ = alpha;
+      if (alpha != 0xff) {
+          p->hasAlpha = KNI_TRUE;
+      }
+    }
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    } else {
+#endif
+#if !ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
+    imgdcd_pixel16_type* pPixelData = &(((imgdcd_pixel16_type*)p->pixelData)[y*p->width]);
+    for (x = 0; x < p->width; ++x) {
+      int cmapIndex = *pixels++;
+
+      color = p->cmap[cmapIndex];
+      alpha = 0xff;
+
+      alpha = (indexedAlpha) ? p->tmap[cmapIndex] : *pixels++;
+
       r = ((color >> 16) & 0xff) >> 3;
       g = ((color >>  8) & 0xff) >> 2;
       b = ((color >>  0) & 0xff) >> 3;
 
       /* 
        * IMPL_NOTE: Is this check really needed?
-       * Even if yes, remove it anyway and use 'unsigned char'
-       * instead of 'int'
        */
       if (r < 0) r = 0; else if (r > 0xff) r = 0xff;
       if (g < 0) g = 0; else if (g > 0xff) g = 0xff;
       if (b < 0) b = 0; else if (b > 0xff) b = 0xff;
 
-      p->pixelData[y*p->width + x] = IMGDCD_RGB2PIXEL(r, g, b);
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+      *pPixelData++ = IMGDCD_RGB2PIXEL_16(r, g, b);
+#else
+      *pPixelData++ = IMGDCD_RGB2PIXEL(r, g, b);
 #endif
-      p->alphaData[y*p->width + x] = alpha;
+      *pAlphaData = alpha;
       if (alpha != 0xff) {
           p->hasAlpha = KNI_TRUE;
       }
     }
-  }
+#endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    }
+#endif
+  } /* indexed color */
 }
 
 /**
