@@ -169,15 +169,15 @@ OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
               -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall \
               -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall
 
-$(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc
+$(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc javacall_common
 	@echo "...compiling resources ... "
 	$(AT)$(RC) $(RCFLAGS) -l 0x409 -d "NDEBUG" -fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
 
-$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp javacall_common
 	@echo -n "...compiling: "
 	$(AT)$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
-$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c javacall_common
 	@echo -n "...compiling: "
 	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
