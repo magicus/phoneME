@@ -65,6 +65,7 @@
 #define BinaryLabel  JVMBinaryLabel
 #define BinaryObjectWriter  JVMBinaryObjectWriter
 #define BinaryROMWriter  JVMBinaryROMWriter
+#define Bits  JVMBits
 #define Bitset  JVMBitset
 #define BlockTypeFinder  JVMBlockTypeFinder
 #define BlockedThread  JVMBlockedThread
@@ -322,6 +323,7 @@
 #define QuickCatchStub  JVMQuickCatchStub
 #define QuickNativesMatcher  JVMQuickNativesMatcher
 #define ROM  JVMROM
+#define ROMBitSet  JVMROMBitSet
 #define ROMBundle  JVMROMBundle
 #define ROMHashtableManager  JVMROMHashtableManager
 #define ROMImage  JVMROMImage

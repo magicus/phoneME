@@ -1254,10 +1254,10 @@ bool ROM::is_restricted_package_in_profile(const char* name, int name_len) {
 }
 
 bool ROM::is_hidden_class_in_profile(const jushort class_id) {  
-  const int index = class_id / BitsPerByte;
+  const int index = class_id / BitsPerByte - _rom_profile_bitmap_row_base;
   const int shift = class_id % BitsPerByte;
 
-  if (index >= _rom_profile_bitmap_row_size) {
+  if (unsigned(index) >= unsigned(_rom_profile_bitmap_row_size)) {
     return false;
   }
 

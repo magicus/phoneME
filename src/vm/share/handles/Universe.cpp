@@ -86,34 +86,21 @@ ReturnOop Universe::new_vector(JVM_SINGLE_ARG_TRAPS) {
 }
 #endif // USE_SOURCE_IMAGE_GENERATOR
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
 bool Universe::name_matches_pattern(const char* name, int name_len, 
                                     const char* pattern, int pattern_len) {
+  GUARANTEE( name_len > 0 && pattern_len > 0, "Sanity" );
 
-  GUARANTEE(name_len > 0 && pattern_len > 0, "Sanity");
-
-  int p_len = pattern_len - 2;
-
-  if (pattern_len > 1 && 
-      jvm_strncmp(&pattern[p_len], "/*", 2) == 0) {
-    if (jvm_strncmp(pattern, name, p_len) == 0) {
-      if(name_len == p_len) return true;
-      else if(name_len < p_len) return false;
-      else if (jvm_strncmp(name+(p_len), "/", 1) == 0) {
-        return true;
-      }
+  if( pattern_len > 1 &&
+      pattern[pattern_len-2] == '/' && pattern[pattern_len-1] == '*' ) {
+    pattern_len -= 2;
+    if( name_len > pattern_len && name[pattern_len] == '/' ) {
+      name_len = pattern_len;
     }
   }
 
-  if (name_len < pattern_len) {
-    return false;
-  }
-
-  if ((jvm_strncmp(pattern, name, pattern_len) == 0) && 
-       pattern_len == name_len) {
-    return true;
-  }
-
-  return false;
+  return name_len == pattern_len &&
+         jvm_memcmp(pattern, name, pattern_len) == 0;
 }
 
 
@@ -564,10 +551,6 @@ bool Universe::bootstrap(const JvmPathChar* classpath) {
       return false;
     }
   }
-
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  set_profile_id( DEFAULT_PROFILE_ID );
-#endif
 
   SETUP_ERROR_CHECKER_ARG;
 
@@ -1154,9 +1137,6 @@ void Universe::load_all_in_classpath(JVM_SINGLE_ARG_TRAPS) {
     load_all_in_classpath_segment(&path JVM_CHECK);
   }
   
-  GUARANTEE(Task::current()->sys_classpath() == NULL ||
-            ENABLE_ISOLATES, "sys_classpath should be null in SVM");
-
 #if ENABLE_ISOLATES
   classpath = Task::current()->sys_classpath();
   GUARANTEE(classpath().not_null(), "Sanity");
@@ -1274,6 +1254,10 @@ void Universe::apocalypse() {
 
 #if ENABLE_ISOLATES
   TaskContext::set_current_task_id(0);
+#endif
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  set_profile_id( DEFAULT_PROFILE_ID );
 #endif
 
 #if ENABLE_METHOD_TRAPS

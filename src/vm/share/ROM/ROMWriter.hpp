@@ -575,9 +575,8 @@ public:
   virtual void write_restricted_packages(JVM_SINGLE_ARG_TRAPS)
                {JVM_IGNORE_TRAPS;}
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-  virtual void write_hidden_classes(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
-  virtual void write_restricted_in_profiles() {}
-  virtual void write_hidden_in_profiles() {}
+  virtual void write_hidden_classes( void ) {}
+  virtual void write_restricted_in_profiles( void ) {}
 #endif
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
 #if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES        

@@ -163,6 +163,7 @@ extern const int                _rom_text_klass_table_size;
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
+extern const int                _rom_profile_bitmap_row_base;
 extern const int                _rom_profile_bitmap_row_size;
 extern const int                _rom_profiles_count;
 extern const char* const        _rom_profiles_names[];

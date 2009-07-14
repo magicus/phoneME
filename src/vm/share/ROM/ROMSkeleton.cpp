@@ -129,7 +129,7 @@ extern "C" {
 #endif // ENABLE_APPENDED_CALLINFO
 
 #if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
-  const int              _rom_system_symbols_src[]        = {0};
+  const int               _rom_system_symbols_src[]       = {0};
   const int               _rom_original_class_info_count  = 0;
   const OriginalClassInfo _rom_original_class_info[] = {
     {(const char*)0x0,
@@ -143,6 +143,7 @@ extern "C" {
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  const int                _rom_profile_bitmap_row_base       = 0;
   const int                _rom_profile_bitmap_row_size       = 0;
   const int                _rom_profiles_count                = 1;
   const unsigned char      _rom_hidden_classes_bitmaps[]      = {0};
