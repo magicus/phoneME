@@ -1197,6 +1197,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             reqProperties.put("network-type", platformNetworkType);
         }
 
+        getStreamConnection();
+
         // DEBUG: System.out.println("Calling sendRequest");
         sendRequest();
         try {
@@ -1219,8 +1221,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         readHeaders();
 
         connected = true;
-
-
     }
 
     protected void readResponseMessage() throws IOException {
