@@ -161,7 +161,7 @@ public:
   void write_constant_string_ref(Symbol* s);
   virtual void write_restricted_packages(JVM_SINGLE_ARG_TRAPS);
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  virtual void write_hidden_classes( void );
+  virtual void write_hidden_classes(JVM_SINGLE_ARG_TRAPS);
   virtual void write_restricted_in_profiles();
   void print_profile_name( const int profile_id );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT

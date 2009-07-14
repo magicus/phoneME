@@ -341,10 +341,9 @@ public:
   void set_classes_as_romized();
   bool is_overridden(InstanceClass *ic, Method *method);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool class_matches_classes_list(InstanceClass *klass,
-                                         ROMVector *patterns);
-  static bool class_matches_packages_list(InstanceClass *klass,
-                                          ROMVector *patterns JVM_TRAPS);
+  bool class_matches_classes_list(InstanceClass *klass, ROMVector *patterns);
+  bool class_matches_packages_list(InstanceClass *klass, ROMVector *patterns
+                                   JVM_TRAPS);
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
@@ -369,6 +368,7 @@ private:
     set_restricted_packages( current_profile()->restricted_packages() );
   }
 
+  void create_profiles_hidden_bitmap(JVM_SINGLE_ARG_TRAPS);
   int find_profile(const char name[]);
 #endif
 
@@ -461,7 +461,7 @@ private:
   void make_virtual_methods_final(InstanceClass *ic, ROMVector *log_vector
                                   JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool name_matches_patterns_list(Symbol* checking_name, 
+  bool name_matches_patterns_list(Symbol* checking_name, 
                                   ROMVector *patterns_list);
 #endif
 

@@ -55,28 +55,10 @@ ReturnOop ROMProfile::create(const char name[] JVM_TRAPS) {
   return profile().obj();
 }
 
-ReturnOop ROMProfile::allocate_hidden_set(JVM_SINGLE_ARG_TRAPS) {
-  OopDesc* p = ROMBitSet::create(JVM_SINGLE_ARG_NO_CHECK);
-  set_hidden_set(p);
-  return p;
+int ROMProfile::calc_bitmap_raw_size( void ) {
+  const int class_count = ROMWriter::number_of_romized_java_classes();
+  // Division with rounding up to the higher integer value.
+  return (class_count + (BitsPerByte - 1)) / BitsPerByte;
 }
 
-void ROMProfile::fill_hidden_set(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops fast_oops;
-  ROMVector::Fast hidden_packages = this->hidden_packages();
-  ROMVector::Fast hidden_classes  = this->hidden_classes();
-  ROMBitSet::Fast hidden_set      = this->hidden_set();;
-  InstanceClass::Fast klass;
-
-  for( SystemClassStream st; st.has_next(); ) {
-    klass = st.next();
-    const bool hidden =
-      ROMOptimizer::class_matches_classes_list(&klass, &hidden_classes) ||
-      ROMOptimizer::class_matches_packages_list(&klass, &hidden_packages
-                                                JVM_CHECK);
-    if( hidden ) {
-      hidden_set().set_bit( klass().class_id() );
-    }
-  }
-}
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR

@@ -311,95 +311,18 @@ void ROMOptimizer::log_time_counters() {
 #endif
 
 void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
-#if USE_SOURCE_IMAGE_GENERATOR
-
+#if !USE_SOURCE_IMAGE_GENERATOR
+  JVM_IGNORE_TRAPS;
+#else
+   ROMVector log_vector;
 #if USE_ROM_LOGGING
-  ROMVector log_vector;
-  log_vector.initialize(JVM_SINGLE_ARG_CHECK);
+   log_vector.initialize(JVM_SINGLE_ARG_CHECK);
+   
+   _log_stream->cr();
+   _log_stream->print_cr("[Classes marked as 'hidden']");
+   _log_stream->cr();
 #endif
 
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  const int number_of_romized_java_classes =
-    ROMWriter::number_of_romized_java_classes();
-
-  if( number_of_romized_java_classes == 0 ) {
-    return;
-  }
-
-  ROMBitSet::initialize( number_of_romized_java_classes );
-
-  const int profiles_count = profiles_vector()->size();
-  GUARANTEE( profiles_count > 0, "Sanity" );
-
-  {
-    for( int profile_id = 0; profile_id < profiles_count; profile_id++ ) {
-      UsingFastOops fast_oops;
-      ROMProfile::Fast profile = profiles_vector()->element_at(profile_id);
-      profile().allocate_hidden_set(JVM_SINGLE_ARG_CHECK);
-      profile().fill_hidden_set(JVM_SINGLE_ARG_CHECK);
-    }
-  }
-
-  UsingFastOops fast_oops;
-  ROMBitSet::Fast min_set =
-    global_profile()->allocate_hidden_set(JVM_SINGLE_ARG_ZCHECK(min_set));
-  ROMBitSet::Fast max_set =
-    ROMBitSet::create(JVM_SINGLE_ARG_ZCHECK(max_set));
-
-  {
-    int profile_id = 0;
-    ROMProfile::Raw profile = profiles_vector()->element_at(profile_id);
-    {
-      OopDesc* hidden_set = profile().hidden_set();
-      min_set().copy( hidden_set );
-      max_set().copy( hidden_set );
-    }
-
-    min_set().print_class_names(tty, "!!!! Hiding ");
-
-    while( ++profile_id < profiles_count ) {
-      profile = profiles_vector()->element_at(profile_id);
-      OopDesc* hidden_set = profile().hidden_set();
-      min_set().and( hidden_set );
-      max_set().or ( hidden_set );
-    }
-  }
-
-#if USE_ROM_LOGGING
-  if( min_set().not_empty() ) {
-    _log_stream->cr();
-    _log_stream->print_cr("[Common hidden classes moved from profiles to global scope]");
-    min_set().print_class_names(tty, "");
-  }
-#endif // USE_ROM_LOGGING
-
-  global_profile()->fill_hidden_set(JVM_SINGLE_ARG_CHECK);
-
-  {
-    for( int profile_id = 0; profile_id < profiles_count; profile_id++ ) {
-      ROMProfile::Raw profile = profiles_vector()->element_at(profile_id);
-      ROMBitSet::Raw hidden_set = profile().hidden_set();
-      hidden_set().sub( min_set.obj() );
-    }
-  }
-  max_set().sub( min_set.obj() );
-  max_set().compute_range();
-
-  {
-    for (SystemClassStream st; st.has_next();) {
-      UsingFastOops fast_oops;
-      InstanceClass::Fast klass = st.next();
-      if( min_set().get_bit( klass().class_id() ) ) {
-        AccessFlags flags = klass().access_flags();
-        flags.set_is_hidden();
-        klass().set_access_flags(flags);
-#if USE_ROM_LOGGING
-        log_vector.add_element(&klass JVM_CHECK);
-#endif // USE_ROM_LOGGING
-      }
-    }
-  }
-#else // !ENABLE_MULTIPLE_PROFILES_SUPPORT
   for (SystemClassStream st; st.has_next();) {
     UsingFastOops fast_oops;
     InstanceClass::Fast klass = st.next();
@@ -411,15 +334,11 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
       klass().set_access_flags(flags);
 #if USE_ROM_LOGGING
       log_vector.add_element(&klass JVM_CHECK);
-#endif // USE_ROM_LOGGING
+#endif
     }
   }
-#endif // !ENABLE_MULTIPLE_PROFILES_SUPPORT
   
 #if USE_ROM_LOGGING
-  _log_stream->cr();
-  _log_stream->print_cr("[Classes marked as 'hidden']");
-
   // Print the results
   log_vector.sort();
   for (int i=0; i<log_vector.size(); i++) {
@@ -427,12 +346,9 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
     klass().print_name_on(_log_stream);
     _log_stream->cr();
   }
-  _log_stream->cr();
 #endif
 
-#else // !USE_SOURCE_IMAGE_GENERATOR
-  JVM_IGNORE_TRAPS;
-#endif // !USE_SOURCE_IMAGE_GENERATOR
+#endif
 }
 
 void ROMOptimizer::oops_do(void do_oop(OopDesc**)) {
@@ -443,32 +359,6 @@ void ROMOptimizer::oops_do(void do_oop(OopDesc**)) {
 
 void ROMOptimizer::init_handles() {
   jvm_memset(_romoptimizer_oops, 0, sizeof(_romoptimizer_oops));
-}
-
-// IMPL_NOTE: do we need this for Monet?
-inline void ROMOptimizer::allocate_empty_arrays(JVM_SINGLE_ARG_TRAPS) {
-  // Many objects contains a constant array which can be safely placed
-  // in the TEXT block. E.g., InstanceClass::fields().
-  //
-  // In some cases, this array is empty and it's also stored in
-  // Universe::empty_<type>_array(). Since Universe::empty_<type>_array()
-  // may potentially be used for other purposes, it's better to leave
-  // it in the HEAP block. Thus, we create a copy of the empty array
-  // and place it in the TEXT block.
-
-  *empty_short_array()= Universe::allocate_array(Universe::short_array_class(),
-                                                0, sizeof(jshort) JVM_CHECK);
-  *empty_obj_array()  = Universe::new_obj_array(Universe::object_class(), 0 
-                                               JVM_CHECK);
-
-#if USE_SOURCE_IMAGE_GENERATOR
-  // This Universe handle is used in Monet images. YES, this should be done
-  // only when we're generating the system ROM image.
-  *Universe::rom_text_empty_obj_array() = empty_obj_array();
-#endif
-
-  GUARANTEE(!empty_obj_array()->equals(Universe::empty_obj_array()),
-            "Universe::empty_obj_array may not be placed in TEXT");
 }
 
 void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
@@ -519,10 +409,40 @@ void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
 
   read_config_file(JVM_SINGLE_ARG_CHECK);
 
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  create_profiles_hidden_bitmap(JVM_SINGLE_ARG_CHECK);
+#endif
+
 #endif // USE_SOURCE_IMAGE_GENERATOR
 
   allocate_empty_arrays(JVM_SINGLE_ARG_CHECK);
   initialize_subclasses_cache(JVM_SINGLE_ARG_CHECK);
+}
+
+// IMPL_NOTE: do we need this for Monet?
+void ROMOptimizer::allocate_empty_arrays(JVM_SINGLE_ARG_TRAPS) {
+  // Many objects contains a constant array which can be safely placed
+  // in the TEXT block. E.g., InstanceClass::fields().
+  //
+  // In some cases, this array is empty and it's also stored in
+  // Universe::empty_<type>_array(). Since Universe::empty_<type>_array()
+  // may potentially be used for other purposes, it's better to leave
+  // it in the HEAP block. Thus, we create a copy of the empty array
+  // and place it in the TEXT block.
+
+  *empty_short_array()= Universe::allocate_array(Universe::short_array_class(),
+                                                0, sizeof(jshort) JVM_CHECK);
+  *empty_obj_array()  = Universe::new_obj_array(Universe::object_class(), 0 
+                                               JVM_CHECK);
+
+#if USE_SOURCE_IMAGE_GENERATOR
+  // This Universe handle is used in Monet images. YES, this should be done
+  // only when we're generating the system ROM image.
+  *Universe::rom_text_empty_obj_array() = empty_obj_array();
+#endif
+
+  GUARANTEE(!empty_obj_array()->equals(Universe::empty_obj_array()),
+            "Universe::empty_obj_array may not be placed in TEXT");
 }
 
 // If a non-public class is in a restricted package, and it has no
@@ -3801,4 +3721,62 @@ void ROMOptimizer::initialize_subclasses_cache(JVM_SINGLE_ARG_TRAPS) {
 ReturnOop ROMOptimizer::get_subclass_list(jushort klass_id) {
   return subclasses_array()->obj_at(klass_id);
 }
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
+void ROMOptimizer::create_profiles_hidden_bitmap(JVM_SINGLE_ARG_TRAPS) {
+  const int profiles_count = profiles_vector()->size();
+  const int class_count = ROMWriter::number_of_romized_java_classes();
+  const int bitmap_row_size = ROMProfile::calc_bitmap_raw_size();
+
+  int p;
+  UsingFastOops fastOops;
+  ROMProfile::Fast rom_profile;
+  JavaClass::Fast klass;
+  InstanceClass::Fast ic;
+  ROMVector::Fast hidden_classes;
+  ROMVector::Fast hidden_packages;
+
+  *profile_hidden_bitmap() = Universe::new_byte_array(
+    bitmap_row_size * profiles_count JVM_CHECK);
+
+  for (p = 0; p < profiles_count; p++ ) {
+    rom_profile = profiles_vector()->element_at(p);
+    hidden_classes = rom_profile().hidden_classes();
+    hidden_packages = rom_profile().hidden_packages();
+
+    for (SystemClassStream st(false); st.has_next();) {
+      InstanceClass::Raw klass = st.next();
+      GUARANTEE(klass.not_null(), "Sanity");
+
+      if (klass().is_instance_class()) {
+        ic = klass;       
+        
+        // We rely on the fact that if the number of all system classes is N,
+        // each of a class should have class_id less then N.
+        GUARANTEE(ic().class_id() < class_count, "Sanity");        
+
+        // [1] If class is hidden itself.
+        bool class_is_hidden = 
+          class_matches_classes_list(&ic, &hidden_classes);
+        
+        // [2] If class belongs to the profile hidden package.
+        class_is_hidden |= class_matches_packages_list(&ic, &hidden_packages
+                                                       JVM_CHECK);
+
+        // Mark class in profile bitmap if [1] or [2].
+        if (class_is_hidden) {
+          const int class_id = ic().class_id();        
+          const int byte_ind = p * bitmap_row_size + class_id / BitsPerByte;
+
+          GUARANTEE(byte_ind < class_count, "Sanity");
+
+          unsigned char new_byte = profile_hidden_bitmap()->byte_at(byte_ind);
+          new_byte |= 1 << (class_id % BitsPerByte);
+          profile_hidden_bitmap()->byte_at_put(byte_ind, new_byte);
+        }
+      }
+    }
+  }
+}
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
 #endif // ENABLE_ROM_GENERATOR

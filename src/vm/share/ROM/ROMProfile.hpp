@@ -27,31 +27,25 @@
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
 
 class ROMProfileDesc : public MixedOopDesc {
-#define ROMPROFILE_FIELDS_DO(template)  \
-  template(Symbol,    profile_name       )  \
-  template(ROMVector, hidden_classes     )  \
-  template(ROMVector, hidden_packages    )  \
-  template(ROMVector, restricted_packages)  \
-  template(TypeArray, hidden_set         )
-
 private:
-#define ROMPROFILE_COUNT_FIELDS(type, name) name##_index,
-  enum {
-    ROMPROFILE_FIELDS_DO(ROMPROFILE_COUNT_FIELDS)
-    _pointer_count
-  };
-#undef ROMPROFILE_COUNT_FIELDS
+  // Specified profile name.
+  OopDesc* _profile_name;
 
-#define ROMPROFILE_DEFINE_FIELD(type, name) OopDesc* _##name;
-  ROMPROFILE_FIELDS_DO(ROMPROFILE_DEFINE_FIELD)
-#undef ROMPROFILE_DEFINE_FIELD
+  // The list of hidden classes for the specified profile.
+  OopDesc* _hidden_classes;
+
+  // The list of hidden packages.
+  OopDesc* _hidden_packages;
+
+  // The list of restricted packages.
+  OopDesc* _restricted_packages;
 
   static size_t allocation_size( void ) { 
     return align_allocation_size( sizeof(ROMProfileDesc) );
   }
 
   static int pointer_count( void ) {
-    return _pointer_count; // return the number of Handles aggregated by the object.
+    return 4; // return the number of Handles aggrigated by the object.
   }
 
 public:
@@ -65,18 +59,15 @@ public:
   // assingment operators.
   HANDLE_DEFINITION(ROMProfile, MixedOop);
 
-#define ROMPROFILE_DEFINE_ACCESSOR(type, name)\
-  DEFINE_ACCESSOR_OBJ(ROMProfile, type, name)
-  ROMPROFILE_FIELDS_DO(ROMPROFILE_DEFINE_ACCESSOR)
-#undef ROMPROFILE_DEFINE_ACCESSOR
+  DEFINE_ACCESSOR_OBJ(ROMProfile, Symbol,    profile_name       )  
+  DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, hidden_classes     )
+  DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, hidden_packages    )
+  DEFINE_ACCESSOR_OBJ(ROMProfile, ROMVector, restricted_packages)  
 
 public:
   static ReturnOop create(JVM_SINGLE_ARG_TRAPS);
   static ReturnOop create(const char name[] JVM_TRAPS);
-
-  OopDesc* allocate_hidden_set(JVM_SINGLE_ARG_TRAPS);
-  void fill_hidden_set(JVM_SINGLE_ARG_TRAPS);
-#undef ROMPROFILE_FIELDS_DO
+  static int calc_bitmap_raw_size();
 };
 
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
