@@ -330,6 +330,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 }
 
                 stream = streams[0];
+                if( 0 == stream.getContentLength() )
+                {
+                    throw new MediaException("Media size is zero");
+                }
             }
         }
 
