@@ -356,7 +356,13 @@ public final class MIDPVideoRenderer extends VideoRenderer
 
         if (rgbData == null)
             throw new IllegalStateException("No image available");
-        
+
+        // default value for imageType
+        if( null == imageType )
+        {
+            imageType = encodingString + SNAPSHOT_JPEG;
+        }
+
         /* Need to update  video.snapshot.encodings property accordingly
          */
         String encoding = getEncodingType(imageType);
