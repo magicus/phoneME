@@ -76,6 +76,10 @@ public abstract class BaseScreen {
 
     public abstract void update();
 
+    public abstract void showSpinner();
+
+    public abstract void hideSpinner();
+
     private static void test(String format, String expected) {
         String res =
             BaseScreen.printfImpl(format, new Object[] { "One", "Two" });
