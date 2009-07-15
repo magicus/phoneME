@@ -60,11 +60,6 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
      */
     protected int maxOStreams = 1;
 
-    public void openx(String url, int mode, boolean timeouts)
-        throws IOException {
-        open1(url, mode, timeouts);
-    }
-
     /*
      * Open the input stream if it has not already been opened.
      * @exception IOException is thrown if it has already been
