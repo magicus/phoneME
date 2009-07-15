@@ -2040,18 +2040,15 @@ public class Display {
         // A copy of current LF object
         DisplayableLF oldCurrent;
         boolean hasForegroundCopy;
-        System.out.println("++callScreenChange");
 
         synchronized (LCDUILock) {
 
             if (current == newCurrent) {
                 return;
             }
-System.out.println("++ callScreenChange: orientation="+displayDevice.getReverseOrientation());
             // Postponed notification of screen rotation
             if (newCurrent.uSetRotatedStatus(
                     displayDevice.getReverseOrientation())) {
-System.out.println("++ callScreenChange...");
                 newCurrent.uCallSizeChanged(width, height);
             }
             
@@ -2747,7 +2744,6 @@ System.out.println("++ callScreenChange...");
         default:
             throw new IllegalArgumentException();
         }
-        System.out.println("++setOrientationMode: "+orientationMode);
         consumer.handleRotationEvent(-1);
     }         
     
@@ -3789,16 +3785,6 @@ System.out.println("++ callScreenChange...");
             
             boolean isDisplayPortrait = Display.this.displayDevice.getWidth() <
                 Display.this.displayDevice.getHeight(); 
-            System.out.println("++handleRotationEvent"
-                +" isDevicePortrait=" + isDevicePortrait
-                +"; isDisplayPortrait="+isDisplayPortrait
-                +"; orientationMode="+orientationMode
-                +"; width="+width
-                +"; height="+height
-                +"; displayDevice.getWidth()="+displayDevice.getWidth()
-                +"; displayDevice.getHeight()="+displayDevice.getHeight()
-                );
-            Thread.dumpStack();
             if (isDisplayPortrait == isDevicePortrait) {
                 return;
             }
@@ -3806,7 +3792,6 @@ System.out.println("++ callScreenChange...");
             if (state != -1) {
                 throw new IllegalArgumentException();
             }
-            System.out.println("++handleRotationEvent reverse...");
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
                 Display.this.displayDevice.reverseOrientation();
@@ -3820,8 +3805,6 @@ System.out.println("++ callScreenChange...");
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
-                System.out.println("CURRENT ORIENTATION STATUS is: " +
-                    (isDevicePortrait ? "Portrait" : "Landscape"));
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
             // #ifdef ENABLE_CHAMELEON
@@ -4019,7 +4002,6 @@ System.out.println("++ callScreenChange...");
          * holding the LCDUILock.
          */
         public void handleDisplayForegroundNotifyEvent() {
-            System.out.println("++ handleDisplayForegroundNotifyEvent");
 
             // A copy of current LF object
             DisplayableLF currentCopy;
@@ -4033,7 +4015,6 @@ System.out.println("++ callScreenChange...");
                 // under the current display mode on the device
                 screenModeKnown = false;
             }
-System.out.println("++ handleDisplayForegroundNotifyEvent 1");
             // SYNC NOTE: for Canvas and CustomItem, dsHide/Show() will
             // call into app functions like hide/showNotify().
             // So we call it outside LCDUILock.
@@ -4048,7 +4029,6 @@ System.out.println("++ handleDisplayForegroundNotifyEvent 1");
                     currentCopy.lGetDisplayable(),
                     currentCopy.lGetDisplayable().getHeight());
                 // #endif ENABLE_CHAMELEON
-System.out.println("++ handleDisplayForegroundNotifyEvent 2");
             }
 
             synchronized (LCDUILock) {
@@ -4063,7 +4043,6 @@ System.out.println("++ handleDisplayForegroundNotifyEvent 2");
                 // #ifdef ENABLE_GCI
                 gciScreenWidget.setPeerEventTarget(accessor);
                 gciScreenWidget.show();
-System.out.println("++ handleDisplayForegroundNotifyEvent 3");
 
                 // #endif ENABLE_GCI
 
@@ -4081,7 +4060,6 @@ System.out.println("++ handleDisplayForegroundNotifyEvent 3");
                 screenGraphics.fillRect(0, 0,
                                         Display.this.width, Display.this.height);
                 // #endif ENABLE_CHAMELEON
-System.out.println("++ handleDisplayForegroundNotifyEvent 4");
 
                 // update the command set after uCallShow()
                 // in which new screen commands could be created and
@@ -4101,7 +4079,6 @@ System.out.println("++ handleDisplayForegroundNotifyEvent 4");
                 // correct screen mode (full or normal)
 
             } // synchronized
-System.out.println("++ handleDisplayForegroundNotifyEvent 5");
             consumer.handleRotationEvent(-1);
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
@@ -4129,13 +4106,12 @@ System.out.println("++ handleDisplayForegroundNotifyEvent 5");
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
-        System.out.println("++handleDisplayBackgroundNotifyEvent");
+
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
                     return;
                 }
-        System.out.println("++handleDisplayBackgroundNotifyEvent 1");
 
                 currentCopy = current;
 
@@ -4157,7 +4133,6 @@ System.out.println("++ handleDisplayForegroundNotifyEvent 5");
                 window.hideDisplayable(currentCopy.lGetDisplayable());
                 // #endif ENABLE_CHAMELEON
                 currentCopy.uCallFreeze();
-        System.out.println("++handleDisplayBackgroundNotifyEvent 2");
             }
             displayEventHandlerImpl.onDisplayBackgroundProcessed(displayId);
         }
@@ -4189,12 +4164,9 @@ System.out.println("++ handleDisplayForegroundNotifyEvent 5");
         public void process(Event event) {
             NativeEvent ne = (NativeEvent)event;
             int displayId = ne.intParam4;
-            System.out.println("++ FixOrientationEventListener got an event. #"
-                +ne.intParam1+" display:"+displayId);
             DisplayAccess da = displayContainer.findDisplayById(displayId);
             if (da != null) {
                 Display d = da.getDisplay();
-                System.out.println("++ display:"+d);
                 if (d != null) {
                     d.setOrientationMode(ne.intParam1);
                 }
