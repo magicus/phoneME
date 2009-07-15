@@ -752,6 +752,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         public void flush() throws IOException {
             // DEBUG: System.out.println("flush output stream");
             super.flush();
+
+            // Unlike close(), no data written, then no connection needed
             if (size() > 0) {
                 connect();
             }
@@ -764,6 +766,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (opens == 0)
                 return;
             flush();
+
+            /*
+             * Close must connect and flush may not connect.
+             * Connect will handle multiple calls.
+             */
+            connect();
 
             if (--opens == 0 && connected) disconnect();
             outputStreamOpened = false;
