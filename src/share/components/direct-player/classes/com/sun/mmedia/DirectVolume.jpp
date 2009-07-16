@@ -178,15 +178,15 @@ class DirectVolume {
         if (_systemLevel != -1) {
             new_level = level * _systemLevel / 100;
         }
+        _level = newlevel;
+        _player.sendEvent(PlayerListener.VOLUME_CHANGED, getVolumeControl());
+        
         if (-1 == nSetVolume(_hNative, new_level)) {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
             Logging.report(Logging.ERROR, LogChannels.LC_MMAPI, 
                 "set volume failed volume=" + level);
             }
         }
-
-        _level = level;
-        _player.sendEvent(PlayerListener.VOLUME_CHANGED, getVolumeControl());
         
         return _level;
     }
