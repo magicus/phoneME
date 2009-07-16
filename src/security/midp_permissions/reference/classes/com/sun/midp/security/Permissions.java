@@ -727,7 +727,7 @@ public final class Permissions {
      */
     private static void setPermission(byte[] current, int permission,
                                       byte level) {
-        if (current[permission] != NEVER || current[permission] != ALLOW) {
+        if (current[permission] != NEVER && current[permission] != ALLOW) {
             current[permission] = level;
         }
     }
