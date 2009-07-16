@@ -805,7 +805,7 @@ com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
         if (handler != null) {
             String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
-            if (String.valueOf("YES").equals(propval)) {
+            if (String.valueOf("yes").equals(propval)) {
 System.out.println("Display.constructor: enabling OpenGL for " + this);
                 useOpenGL = true; use32Bit = true;
                 com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().enableOpenGL(width, height);
