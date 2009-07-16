@@ -351,6 +351,70 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
+    private boolean deviceNotAvailable = false;
+    private Object deviceNotAvailableSync = new Object();
+    private String deviceName = null;
+    void notifyDeviceAvailable(final boolean available, final String deviceName) {
+        int state = getState();
+        
+        if (null == lowLevelPlayer || state == UNREALIZED || state == CLOSED) {
+            return;
+        }
+        this.deviceName = deviceName;
+        if (state == REALIZED) {
+            synchronized (deviceNotAvailableSync) {
+                if (available != !deviceNotAvailable) {
+                    if (available) {
+                        deviceNotAvailable = false;
+                        sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
+                    } else {
+                        deviceNotAvailable = true;
+                        sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
+                    }
+                }
+            }
+            return;
+        }
+        if (available && state > REALIZED) {
+            return;
+        }
+        
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    
+                    if (getState() > PREFETCHED) {
+                        // wait for all events achieve player
+                        try {Thread.sleep(300);} catch (InterruptedException ie) {}
+                    }
+                    if (getState() >= PREFETCHED) {
+                        deallocate();
+                    }
+                    if (getState() == REALIZED) {
+                        synchronized (deviceNotAvailableSync) {
+                            if (available != !deviceNotAvailable) {
+                                if (available) {
+                                    deviceNotAvailable = false;
+                                    sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
+                                } else {
+                                    deviceNotAvailable = true;
+                                    sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
+                                }
+                            }
+                        }
+                    }
+                } catch (IllegalStateException ise) {
+                    // ignore
+                } catch (RuntimeException re) {
+                    throw re;
+                } catch (Exception e) {
+                    sendEvent(PlayerListener.ERROR, "Error "+deviceName+" "+e);
+                }
+            }
+        }).start();
+        
+    }
+
     void notifySnapshotFinished()
     {
         if( null != lowLevelPlayer )
@@ -585,7 +649,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * <i>REALIZED</i> state.
      * <p>
      * If <code>realize</code> is called when the <code>Player</code> is in
-     * the <i>REALIZED</i>, <i>PREFETCHTED</i> or <i>STARTED</i> state,
+     * the <i>REALIZED</i>, <i>PREFETCHED</i> or <i>STARTED</i> state,
      * the request will be ignored.
      *
      * @exception IllegalStateException Thrown if the <code>Player</code>
@@ -749,6 +813,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
+        synchronized (deviceNotAvailableSync) {
+            if (deviceNotAvailable) {
+                deviceNotAvailable = false;
+                sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
+            }
+        }
         lowLevelPlayer.doPrefetch();
 
         VolumeControl vc = ( VolumeControl )getControl(
