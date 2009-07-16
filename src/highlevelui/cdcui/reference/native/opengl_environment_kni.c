@@ -301,6 +301,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_switchColorDepth0) {
     jint param = KNI_GetParameterAsInt(1);
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
+BREWprintf("calling switchColorDepth with %d\n", param);
     jcapp_switch_color_depth(param);
 #endif
     KNI_ReturnVoid();

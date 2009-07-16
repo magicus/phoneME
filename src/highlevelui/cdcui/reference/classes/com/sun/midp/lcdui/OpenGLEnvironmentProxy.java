@@ -42,6 +42,7 @@ public class OpenGLEnvironmentProxy{
     private DisplayContainer container;
     private static OpenGLEnvironmentProxy instance = null;
     private OpenGLEnvironment env;
+    private boolean openGLIsEnabled = false;
     
     public OpenGLEnvironmentProxy() {
         env = new OpenGLEnvironment();
@@ -92,7 +93,8 @@ public class OpenGLEnvironmentProxy{
     }
     
     public void createPbufferSurface(Image img) {
-        env.createPbufferSurface(img);
+        if (openGLIsEnabled)
+            env.createPbufferSurface(img);
     }
     
     public void flushPbufferSurface(Image offscreen_buffer,
@@ -111,10 +113,12 @@ public class OpenGLEnvironmentProxy{
     public void enableOpenGL(int width, int height) {
         setSoftButtonHeight(SoftButtonSkin.HEIGHT);
         env.enableOpenGL(width, height);
+        openGLIsEnabled = true;
     }
     
     public void disableOpenGL() {
         env.disableOpenGL();
+        openGLIsEnabled = false;
     }
     
     public void raiseOpenGL() {

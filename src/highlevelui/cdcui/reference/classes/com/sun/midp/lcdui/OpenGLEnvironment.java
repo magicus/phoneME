@@ -71,6 +71,7 @@ public class OpenGLEnvironment{
                 regionArray[0] = 0; regionArray[1] = 0;
                 regionArray[2] = bindTarget.getClipWidth();
                 regionArray[3] = bindTarget.getClipHeight();
+                //System.out.println("flushOpenGL: flushing whole screen");
                 flushOpenGL0(regionArray, 1, displayId);
                 return;
             }
@@ -83,6 +84,7 @@ public class OpenGLEnvironment{
                 regionArray[i+2]=curRegion[2];
                 regionArray[i+3]=curRegion[3];
             }
+            //System.out.println("flushOpenGL: flushing dirty regions");
             flushOpenGL0(regionArray, dirtyRegions.length, displayId);
         }
         }

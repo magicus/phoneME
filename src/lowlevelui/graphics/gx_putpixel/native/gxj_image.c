@@ -440,8 +440,8 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
             ((gxj_pixel16_type*)src->pixelData)[srcIdx];
 
         if (src->alphaData != NULL) {
-            ((gxj_pixel16_type*)dest->alphaData)[dstIdx] =
-                ((gxj_pixel16_type*)src->alphaData)[srcIdx];
+            dest->alphaData[dstIdx] =
+                src->alphaData[srcIdx];
         }
       } else {
         dstIdx = destYwidth /*destY * dest->width*/ + destX;
@@ -450,8 +450,8 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
         ((gxj_pixel16_type*)dest->pixelData)[dstIdx] =
             ((gxj_pixel16_type*)src->pixelData)[srcIdx];
         if (src->alphaData != NULL) {
-            ((gxj_pixel16_type*)dest->alphaData)[dstIdx] =
-                ((gxj_pixel16_type*)src->alphaData)[srcIdx];
+            dest->alphaData[dstIdx] =
+                src->alphaData[srcIdx];
         }
       }
     } /*for x*/
