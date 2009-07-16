@@ -178,7 +178,7 @@ class DirectVolume {
         if (_systemLevel != -1) {
             new_level = level * _systemLevel / 100;
         }
-        _level = newlevel;
+        _level = new_level;
         _player.sendEvent(PlayerListener.VOLUME_CHANGED, getVolumeControl());
         
         if (-1 == nSetVolume(_hNative, new_level)) {
