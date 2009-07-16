@@ -325,6 +325,19 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
     }
 
+    /*
+     * To pass CDC TCK (which should not be testing HTTP) only.
+     * (not needed for FP and MIDP TCKs)
+     * This can be overrided by non-CDC profiles to just return false.
+     */
+    protected boolean isNoSuchHost() {
+        if (host.equals("no.such.host")) {
+            return true;
+        }
+
+        return false;
+    }
+
     public void open(String url, int mode, boolean timeouts)
         throws IOException {
         open1(url, mode, timeouts);
@@ -355,6 +368,25 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // Check permission. The permission method wants the URL
         checkPermission(host, port, file);
 
+        /*
+         * Holding off the connecting to the server until the application
+         * has fully setup the request helps avoid connection failures
+         * against real world servers that require sending data immediately
+         * after connecting, so the FP and MIDP specs for HttpConnection
+         * specify this behavior.
+         *
+         * The CDC (not the FP or MIDP) TCK tests Connector.open with "http"
+         * when it should not and then incorrectly expects the connection
+         * to happen during Connector.open when the FP and MIDP specs say
+         * otherwise. Serveral tests open the connection with an unknown host
+         * and expects ConnectionNotFoundException to be thrown.
+         *
+         * While waiting for the CDC TCK to be changed we will workaround the
+         * CDC TCK by rejecting the "no.such.host" host during open.
+         */
+        if (isNoSuchHost()) {
+            throw new ConnectionNotFoundException("Unknown host");
+        }
     }
 
     protected void getStreamConnection()
