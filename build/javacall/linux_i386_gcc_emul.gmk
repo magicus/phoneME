@@ -49,6 +49,10 @@ EXTRA_CPPFLAGS +=
 LD_FLAGS +=
 EXTRA_LIBS += 
 
-LIBS += -L$(JAVACALL_LIB_DIR) -ljavacall$(g)$(r) $(shell pkg-config --libs pangocairo gstreamer-0.10 gstreamer-interfaces-0.10 gstreamer-app-0.10)
+ifdef LINUX_MMAPI_GSTREAMER_APP
+	LIBS += -L$(JAVACALL_LIB_DIR) -ljavacall$(g)$(r) $(shell pkg-config --libs pangocairo gstreamer-0.10 gstreamer-interfaces-0.10 gstreamer-app-0.10 gstreamer-video-0.10)
+else
+	LIBS += -L$(JAVACALL_LIB_DIR) -ljavacall$(g)$(r) $(shell pkg-config --libs pangocairo gstreamer-0.10 gstreamer-interfaces-0.10 gstreamer-video-0.10)
+endif
 
 MIDP_BIN_TARGET ?= sdk
