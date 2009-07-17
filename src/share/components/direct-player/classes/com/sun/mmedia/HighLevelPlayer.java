@@ -1635,6 +1635,24 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     }
 
     /**
+     * Send DEVICE_AVAILABLE event to all players in this VM
+     */
+    public static void sendDeviceAvailable() {
+        if (mplayers == null) {
+            return;
+        }
+
+        Enumeration mp = mplayers.elements();
+        while (mp.hasMoreElements()) {
+            PlayerWrapper pw = (PlayerWrapper)mp.nextElement();
+            HighLevelPlayer p = pw.getPlayer();
+            if (p != null) {
+                p.notifyDeviceAvailable(true, "Native player is now available");
+            }
+        }
+    }
+
+    /**
      *  Pauses and deallocates all media players.
      *
      *  After this call all players are either in realized
