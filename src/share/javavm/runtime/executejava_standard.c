@@ -3594,12 +3594,12 @@ new_transition:
 		CNINativeMethod *f = (CNINativeMethod *)CVMmbNativeCode(mb);
 
 		TRACE_FRAMELESS_METHOD_CALL(frame, mb0, CVM_FALSE);
-#ifdef CVM_JVMTI_ENABLED
-		ee->threadState = CVM_THREAD_IN_NATIVE;
+#if defined(CVM_JVMTI_ENABLED) || !defined(CVM_OPTIMIZED)
+                ee->threadState = CVM_THREAD_IN_NATIVE;
 #endif
 		ret = (*f)(ee, topOfStack, &mb);
-#ifdef CVM_JVMTI_ENABLED
-		ee->threadState &= ~CVM_THREAD_IN_NATIVE;
+#if defined(CVM_JVMTI_ENABLED) || !defined(CVM_OPTIMIZED)
+                ee->threadState &= ~CVM_THREAD_IN_NATIVE;
 #endif
 		TRACE_FRAMELESS_METHOD_RETURN(mb0, frame);
 

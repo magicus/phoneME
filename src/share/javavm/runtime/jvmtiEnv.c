@@ -1108,6 +1108,10 @@ jvmti_GetThreadState(jvmtiEnv* jvmtienv,
 	    *threadStatePtr = JVMTI_THREAD_STATE_ALIVE |
 		JVMTI_THREAD_STATE_RUNNABLE;
 	    break;
+        case  CVM_THREAD_IN_NATIVE:
+	    *threadStatePtr = state | JVMTI_THREAD_STATE_ALIVE |
+		JVMTI_THREAD_STATE_RUNNABLE;
+	    break;
 	default:
 	    *threadStatePtr = JVMTI_THREAD_STATE_ALIVE | state;
 	    break;

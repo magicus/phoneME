@@ -1649,10 +1649,12 @@ JVM_MonitorWait(JNIEnv *env, jobject obj, jlong millis)
         CVMjvmpiPostMonitorWaitEvent(ee, obj, millis);
     }
 #endif
-#ifdef CVM_JVMTI
+#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
     ee->threadState = CVM_THREAD_WAITING | CVM_THREAD_OBJECT_WAIT;
     ee->threadState |= (millis == 0 ? CVM_THREAD_WAITING_INDEFINITE :
 		       CVM_THREAD_WAITING_TIMEOUT);
+#endif
+#ifdef CVM_JVMTI
     if (CVMjvmtiShouldPostMonitorWait()) {
         CVMjvmtiPostMonitorWaitEvent(ee, obj, millis);
     }
@@ -1661,6 +1663,11 @@ JVM_MonitorWait(JNIEnv *env, jobject obj, jlong millis)
     /* NOTE: CVMgcSafeObjectWait() may throw certain exceptions: */
     CVMgcSafeObjectWait(ee, obj, millis);
 
+#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
+    ee->threadState &= ~(CVM_THREAD_WAITING | CVM_THREAD_OBJECT_WAIT |
+                         CVM_THREAD_WAITING_INDEFINITE |
+			 CVM_THREAD_WAITING_TIMEOUT);
+#endif
 #ifdef CVM_JVMPI
     if (CVMjvmpiEventMonitorWaitedIsEnabled()) {
         CVMjvmpiPostMonitorWaitedEvent(ee, obj);
@@ -1677,10 +1684,6 @@ JNIEXPORT void JNICALL
 JVM_MonitorNotify(JNIEnv *env, jobject obj)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
-#ifdef CVM_JVMTI
-    ee->threadState &= ~(CVM_THREAD_WAITING | CVM_THREAD_WAITING_INDEFINITE |
-			 CVM_THREAD_WAITING_TIMEOUT);
-#endif
     /* NOTE: CVMgcSafeObjectNotify() may throw certain exceptions: */
     CVMgcSafeObjectNotify(ee, obj);
 }
@@ -1689,18 +1692,6 @@ JNIEXPORT void JNICALL
 JVM_MonitorNotifyAll(JNIEnv *env, jobject obj)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
-#ifdef CVM_JVMTI
-    CVMsysMutexLock(ee, &CVMglobals.threadLock);
-    CVM_WALK_ALL_THREADS(ee, currentEE, {
-	    CVMassert(CVMcurrentThreadICell(currentEE) != NULL);
-	    if (!CVMID_icellIsNull(CVMcurrentThreadICell(currentEE))) {
-		currentEE->threadState &=  ~(CVM_THREAD_WAITING |
-					     CVM_THREAD_WAITING_INDEFINITE |
-					     CVM_THREAD_WAITING_TIMEOUT);
-	    }
-	});
-    CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
-#endif
     /* NOTE: CVMgcSafeObjectNotifyAll() may throw certain exceptions: */
     CVMgcSafeObjectNotifyAll(ee, obj);
 }
@@ -2406,12 +2397,12 @@ JVM_Sleep(JNIEnv *env, jclass threadClass, jlong millis)
 	    CVMSysMonitor mon;
 	    if (CVMsysMonitorInit(&mon, NULL, 0)) {
 		CVMsysMonitorEnter(ee, &mon);
-#ifdef CVM_JVMTI
+#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
 		ee->threadState = CVM_THREAD_SLEEPING | CVM_THREAD_WAITING |
 		    CVM_THREAD_WAITING_TIMEOUT;
 #endif
 		st = CVMsysMonitorWait(ee, &mon, millis);
-#ifdef CVM_JVMTI
+#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
 		ee->threadState &= ~(CVM_THREAD_SLEEPING | CVM_THREAD_WAITING |
 				     CVM_THREAD_WAITING_TIMEOUT);
 #endif
@@ -2493,7 +2484,7 @@ Java_java_lang_Thread_interrupt0(JNIEnv *env, jobject thread)
     /* %comment: rt035 */
     if (targetEE != NULL) {
 	if (!targetEE->interruptsMasked) {
-#ifdef CVM_JVMTI
+#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
 	    targetEE->threadState |= CVM_THREAD_INTERRUPTED;
 #endif
 	    CVMthreadInterruptWait(CVMexecEnv2threadID(targetEE));
@@ -2555,7 +2546,7 @@ JVM_IsInterrupted(JNIEnv *env, jobject thread, jboolean clearInterrupted)
 	 */
 	result = !ee->interruptsMasked &&
 	    CVMthreadIsInterrupted(CVMexecEnv2threadID(ee), clearInterrupted);
-#ifdef CVM_JVMTI
+#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
 	ee->threadState &= ~CVM_THREAD_INTERRUPTED;
 #endif
     } else {
