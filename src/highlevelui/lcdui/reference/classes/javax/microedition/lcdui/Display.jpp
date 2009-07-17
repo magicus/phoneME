@@ -751,7 +751,6 @@ com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
     Display(Object theOwner, DisplayDevice dd) {
         owner = theOwner;
         displayDevice = dd;
-
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
@@ -810,8 +809,9 @@ com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
         com.sun.midp.midlet.MIDletStateHandler handler = 
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
         if (handler != null) {
+System.out.println("handler is not null!");
             String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
-            if (String.valueOf("yes").equals(propval)) {
+            if (String.valueOf("YES").equalsIgnoreCase(propval)) {
 System.out.println("Display.constructor: enabling OpenGL for " + this);
                 useOpenGL = true; use32Bit = true;
                 com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().enableOpenGL(width, height);
@@ -4072,7 +4072,7 @@ System.out.println("Display: disabling openGL");
                 if (hasForeground) {
                     return;
                 }
-
+System.out.println("handleForeground for " + Display.this);
                 // #ifdef ENABLE_OPENGL
                 if (useOpenGL) {
 System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL");
