@@ -2311,10 +2311,19 @@ bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
     //consume the items of the operation stack
     //since we only target the byte code related to
     //memory acces and arithmetic
+//XXXXXXX
+    tty->print_cr("BytecodeCompileClosure::code_eliminate_prologue code: 0x%x(%s) dec:%d bci:%d", 
+		  code, Bytecodes::name(code), Bytecodes::can_decrease_stack(code),
+		  VirtualStackFrame::first_bci_of_current_snippet());
+//XXXXXXX
     if (!Bytecodes::can_decrease_stack(code)) {
       // If the bytecode does not consume stack items, we should start a new snippet
       // to guarantee that each calculates only one value
       VirtualStackFrame::abort_tracking_of_current_snippet();
+//XXXXXXX
+      tty->print_cr("BytecodeCompileClosure::code_eliminate_prologue code: ABORTED bci:%d",
+		    VirtualStackFrame::first_bci_of_current_snippet());
+//XXXXXXX
       if (is_following_codes_can_be_eliminated(bci_after_elimination)) {
   
 	GUARANTEE(bci_after_elimination != not_found, "cse match error")
@@ -2347,6 +2356,11 @@ void BytecodeCompileClosure::record_current_code_snippet(void) {
   jint begin;
   jint end = bci();
 
+//XXXXXXX
+  tty->print_cr("BytecodeCompileClosure::record_current_code_snippet aborted:%d bci:%d",
+		VirtualStackFrame::is_aborted_from_tracking(),
+		VirtualStackFrame::first_bci_of_current_snippet());
+//XXXXXXX
   // IMPL_NOTE: need to revisit for inlining
   GUARANTEE(!Compiler::is_inlining(), "Unsupported for inlining");
   Method * method = Compiler::root()->method();

@@ -75,7 +75,7 @@ public:
   static ReturnOop create(const char name[] JVM_TRAPS);
 
   OopDesc* allocate_hidden_set(JVM_SINGLE_ARG_TRAPS);
-  void fill_hidden_set( void );
+  void fill_hidden_set(JVM_SINGLE_ARG_TRAPS);
 #undef ROMPROFILE_FIELDS_DO
 };
 

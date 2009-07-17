@@ -622,24 +622,6 @@ void ROMOptimizer::add_package_to_list(ROMVector *vector, const char *pkgname
   }
 }
 
-bool
-ROMOptimizer::name_matches_patterns_list(const char name[], const int name_len,
-                                         ROMVector* patterns) {
-  GUARANTEE(patterns != NULL, "Sanity");
-  const int list_len = patterns->size();
-  for( int i = 0; i < list_len; i++ ) {
-    Symbol::Raw pattern = patterns->element_at(i);
-    if (pattern.is_null()) { // end of list
-      break;
-    }    
-
-    if( Universe::name_matches_pattern(name, name_len,
-          pattern().utf8_data(), pattern().length()) ) {
-      return true;
-    }
-  }
-  return false;
-}
 
 bool ROMOptimizer::class_list_contains(ObjArray *list, InstanceClass *klass) {
   for (int i=0; i<list->length(); i++) {
@@ -655,35 +637,71 @@ bool ROMOptimizer::class_list_contains(ObjArray *list, InstanceClass *klass) {
   return false;
 }
 
-bool ROMOptimizer::class_matches_classes_list(InstanceClass* klass, 
-                                              ROMVector* patterns) {
-  Symbol::Raw name = klass->original_name();
-  const int len = name().length();
-  return name_matches_patterns_list(name().utf8_data(), len,  patterns);
+bool 
+ROMOptimizer::class_matches_classes_list(InstanceClass *klass, 
+                                        ROMVector *patterns) {
+  Symbol::Raw class_name = klass->name();
+  return name_matches_patterns_list(&class_name, patterns);
 }
 
-bool ROMOptimizer::class_matches_packages_list(InstanceClass* klass,
-                                               ROMVector* patterns) {
-  Symbol::Raw name = klass->original_name();
-  int len = name().strrchr('/');
-  if( len <= 0 ) {
-    len = name().length();
+bool 
+ROMOptimizer::class_matches_packages_list(InstanceClass *klass, 
+                                        ROMVector *patterns JVM_TRAPS) {
+  Symbol::Raw package_name = klass->package_name(JVM_SINGLE_ARG_CHECK_0);
+  return name_matches_patterns_list(&package_name, patterns);
+}
+
+bool
+ROMOptimizer::name_matches_patterns_list(Symbol* checking_name, ROMVector *patterns_list) {
+  GUARANTEE(patterns_list != NULL, "Sanity");
+
+  if (patterns_list->is_null()) {
+    // Do nothing for null patterns lists.
+    return false;
   }
-  return name_matches_patterns_list(name().utf8_data(), len, patterns);
-}
 
-bool ROMOptimizer::is_init_at_build(InstanceClass* klass) {
-  const int len = init_at_build_classes()->length();
-  for( int i = 0; i < len; i++ ) {
-    InstanceClass::Raw init_at_build = init_at_build_classes()->obj_at(i);
-    if( init_at_build.is_null() ) {
-      break;
+  const int list_len = patterns_list->size();
+  Symbol pattern;
+  for (int i=0; i<list_len; i++) {
+    pattern = patterns_list->element_at(i);
+    if (pattern.is_null()) { // end of list
+      return false;
+    }    
+
+    const int pattern_len = pattern.length();
+    const int name_len = checking_name->length();
+
+    if (pattern_len == 0) {
+      continue;
     }
-    if( init_at_build.equals(klass) ) {
+    utf8 c_name = checking_name->utf8_data();    
+    utf8 p_name = pattern.utf8_data();
+
+    const bool name_matches_pattern = 
+      Universe::name_matches_pattern(c_name, name_len, p_name, pattern_len);
+    if (name_matches_pattern) {
       return true;
     }
   }
   return false;
+}
+
+
+bool ROMOptimizer::is_init_at_build(InstanceClass *klass) {
+  int len = init_at_build_classes()->length();
+  bool in_list = false;
+
+  for (int i=0; i<len; i++) {
+    InstanceClass::Raw init_at_build = init_at_build_classes()->obj_at(i);
+    if (init_at_build.is_null()) {
+        break;
+    } else if (init_at_build.equals(klass)) {
+      in_list = true;
+      break;
+    }
+  }
+  
+  return in_list;
 }
 
 // This optimization is too expensive for binary rom image.
@@ -847,19 +865,29 @@ void ROMOptimizer::record_original_fields(InstanceClass *klass JVM_TRAPS) {
   }
 }
 
-ReturnOop ROMOptimizer::original_fields(InstanceClass* klass, bool& is_orig) {
-  ObjArray::Raw orig_list = romizer_original_fields_list()->obj();
-  if( orig_list.not_null() ) {
-    ClassInfo::Raw info = klass->class_info();
-    ReturnOop orig = orig_list().obj_at(info().class_id());
-    if( orig ) {
-      is_orig = true;
-      return orig;
+ReturnOop ROMOptimizer::original_fields(InstanceClass *klass, bool &is_orig) {
+  is_orig = false;
+  if (romizer_original_fields_list()->is_null()) {
+    if (UseROM) {
+      return klass->original_fields();
+    } else {
+      return klass->fields();
     }
   }
 
-  is_orig = false;
-  return UseROM ? klass->original_fields() : klass->fields();
+  ClassInfo::Raw info = klass->class_info();
+  ObjArray::Raw orig_list = romizer_original_fields_list()->obj();
+  ReturnOop orig = orig_list().obj_at(info().class_id());
+  if (orig != NULL) {
+    is_orig = true;
+    return orig;
+  } else {
+    if (UseROM) {
+      return klass->original_fields();
+    } else {
+      return klass->fields();
+    }
+  }
 }
 
 jushort
@@ -920,7 +948,7 @@ void ROMOptimizer::enable_quick_natives(const char * pattern JVM_TRAPS) {
 }
 
 #if USE_ROM_LOGGING
-void ROMOptimizer::write_quick_natives_log( void ) {
+void ROMOptimizer::write_quick_natives_log() {
   int size = _quick_natives_log->size();
   _quick_natives_log->sort();
 
@@ -1103,7 +1131,7 @@ void ROMOptimizer::remove_unused_static_fields(JVM_SINGLE_ARG_TRAPS) {
   //     getstatic/putstatic bytecodes), or if the field is accessible
   //     by applications.
   mark_static_fieldrefs(&directory);
-  mark_unremoveable_static_fields(&directory);
+  mark_unremoveable_static_fields(&directory JVM_CHECK);
 
   {
     // Inside this block the heap may be in inconsistent state
@@ -1208,25 +1236,36 @@ void ROMOptimizer::fix_static_fieldrefs(ObjArray *directory) {
   }
 }
 
-void ROMOptimizer::mark_unremoveable_static_fields(ObjArray* directory) {
-  for( SystemClassStream st; st.has_next_optimizable(); ) {
-    InstanceClass::Raw klass = st.next();
-    TypeArray::Raw reloc_info = directory->obj_at(klass().class_id());
-    if( reloc_info.is_null() ) {
-      continue;
-    }
-    GUARANTEE(!dont_rename_fields_in_class(&klass), "sanity");
+void ROMOptimizer::mark_unremoveable_static_fields(ObjArray *directory JVM_TRAPS) {
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
+  TypeArray::Fast fields;
+  TypeArray::Fast reloc_info;
 
-    TypeArray::Raw fields = klass().fields();
+  for (SystemClassStream st; st.has_next_optimizable();) {
+    klass = st.next();
+    fields = klass().fields();
+    int id = klass().class_id();
+
+    reloc_info = directory->obj_at(klass().class_id());
+    if (reloc_info.is_null()) {
+      continue;
+    } else {
+      GUARANTEE(!dont_rename_fields_in_class(&klass), "sanity");
+    }
+
     for (int i = 0; i < fields().length(); i += Field::NUMBER_OF_SLOTS) {
       Field f(&klass, i);
-      if (f.is_static() && !is_field_removable(&klass, i, false)) {
-        const int offset = f.offset();
-        const BasicType type = f.type();
-        int idx = (offset - JavaClass::static_field_start()) / BytesPerWord;
-        reloc_info().int_at_put(idx, 1); // Mark the field at this offset
-        if (is_two_word(type)) {
-          reloc_info().int_at_put(idx+1, 1);
+      if (f.is_static()) {
+        const bool removable = is_field_removable(&klass, i, false JVM_CHECK);
+        if (!removable) {
+          const int offset = f.offset();
+          const BasicType type = f.type();
+          int idx = (offset - JavaClass::static_field_start()) / BytesPerWord;
+          reloc_info().int_at_put(idx, 1); // Mark the field at this offset
+          if (is_two_word(type)) {
+            reloc_info().int_at_put(idx+1, 1);
+          }
         }
       }
     }
