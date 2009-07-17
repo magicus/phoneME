@@ -45,9 +45,6 @@ class InstanceClass: public JavaClass {
   void set_is_synthetic() {
   }
 
-  // Returns the package Name of a Class.
-  ReturnOop package_name(JVM_SINGLE_ARG_TRAPS);
-
   // Next InstanceClass with the same hash value
   ReturnOop next() const {
     return obj_field(next_offset());

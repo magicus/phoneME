@@ -34,26 +34,6 @@
 
 HANDLE_CHECK(InstanceClass, is_instance_class())
 
-#if ENABLE_ROM_GENERATOR
-ReturnOop InstanceClass::package_name(JVM_SINGLE_ARG_TRAPS) {  
-  UsingFastOops fast_oops;
-  Symbol::Fast symbol_class_name = original_name();
-
-  int len = symbol_class_name().strrchr('/');
-  if (len <= 0) {
-    len = symbol_class_name().length();
-  }
-  TypeArray::Fast byte_array = Universe::new_byte_array(len JVM_CHECK_0);  
-
-  for (int i = 0; i < len; i++) {
-    byte_array().byte_at_put(i, symbol_class_name().byte_at(i));
-  }
-  GUARANTEE(SymbolTable::current()->not_null(), 
-    "JavaClass::package_name() requires SymbolTable");
-  return SymbolTable::symbol_for(&byte_array JVM_NO_CHECK_AT_BOTTOM_0);
-}
-#endif
-
 #if !ROMIZED_PRODUCT || ENABLE_ISOLATES
 void InstanceClass::bootstrap_initialize(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
