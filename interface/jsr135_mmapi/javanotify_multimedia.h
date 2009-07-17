@@ -89,6 +89,8 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_ERROR,
     /** Posted when the System Volume level has changed. */
     JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED,
+    /** Posted when an ACM error has occurred. */
+    JAVACALL_EVENT_MEDIA_ACM_ERROR,
     /** 
      * All events that should be sent to Java listeners must be defined
      * above this marker.
