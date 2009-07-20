@@ -159,7 +159,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
-                String http_proxy ;
+                String http_proxy =
+                       System.getProperty("platform.browser.http.proxy");
+                if (http_proxy == null)
+                {
 		String profileTemp =
 		    System.getProperty("microedition.profiles");
 		if (profileTemp != null && profileTemp.indexOf("MIDP") != -1) {
@@ -170,6 +173,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 		    // Default to CDC
 		    http_proxy =
 			System.getProperty("com.sun.cdc.io.http.proxy");
+		}
 		}
 
                 parseProxy(http_proxy);

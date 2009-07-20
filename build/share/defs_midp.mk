@@ -202,4 +202,7 @@ CVM_PROP_MIDP_IMPL += \
 	$(patsubst $(JSROP_LIB_DIR)/%,%,$(JSROP_AGENT_JARS))"
 endif
 
+# Create lib/resources.jar for lcdui chameleon image files
+CVM_RESOURCES_DEPS = force_midp_build
+
 endif
