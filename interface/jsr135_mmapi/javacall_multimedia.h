@@ -454,15 +454,15 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
                     int eventType, void *pResult, int numArgs, void *args[]);
 
 /**
- * Java MMAPI call this function to create native media handler.
+ * Java MMAPI call this function to create native player from locator.
  * This function is called at the first time to initialize native library.
  * You can do your own initialization job from this function.
  * 
- * @param appID         Unique application ID for this playing
- * @param playerId      Unique player object ID for this playing
- * @param uri           URI unicode string to media data.
- * @param uriLength     String length of URI
- * @param handle        Handle of native library.
+ * @param app_id        Unique application ID for this playing
+ * @param player_id     Unique player object ID for this playing
+ * @param locator_len   Locator string length.
+ * @param locator       Locator unicode string.
+ * @param handle        Native player handle.
  *
  * @retval JAVACALL_OK                      Success
  * @retval JAVACALL_CONNECTION_NOT_FOUND    Could not connect to the URL
@@ -483,13 +483,48 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
  *                                          some reason. For example, if you
  *                                          do not want media from some
  *                                          pre-defined "bad" Internet site.
- *                                          
  */
-javacall_result javacall_media_create(int appID,
-                                      int playerID,
-                                      javacall_const_utf16_string uri, 
-                                      long uriLength,
-                                      /*OUT*/ javacall_handle* handle);
+javacall_result javacall_media_create_player_by_locator(
+    javacall_int32 app_id,
+    javacall_int32 player_id,
+    javacall_int32 locator_len,
+    javacall_const_utf16_string locator,
+    /*OUT*/ javacall_handle *handle);
+
+/**
+ * Java MMAPI call this function to create native player which data flow
+ * will be controlled by Java.
+ * This function is called at the first time to initialize native library.
+ * You can do your own initialization job from this function.
+ * 
+ * @param app_id        Unique application ID for this playing
+ * @param player_id     Unique player object ID for this playing
+ * @param handle        Native player handle.
+ *
+ * @retval JAVACALL_OK                      Success
+ * @retval JAVACALL_CONNECTION_NOT_FOUND    Could not connect to the URL
+ * @retval JAVACALL_IO_ERROR                IO error occurred while connecting
+ *                                          the URL or getting data 
+ * @retval JAVACALL_INVALID_ARGUMENT        Invalid URL or other parameter
+ * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
+ *                                      playback is impossible. JVM will throw
+ *                                      a MediaException. Please return this
+ *                                      code only in case you want to
+ *                                      reject playback, i.e. when the content
+ *                                      is audio only. If some kind of playback
+ *                                      is still possible (e.g. mute video),
+ *                                      please return JAVACALL_OK instead
+ * @retval JAVACALL_FAIL                    General failure or the following
+ *                                          situation. Porting Layer may
+ *                                          decide to reject the creation for
+ *                                          some reason. For example, if you
+ *                                          do not want media from some
+ *                                          pre-defined "bad" Internet site.
+ */
+javacall_result javacall_media_create_managed_player(
+    javacall_int32 app_id,
+    javacall_int32 player_id,
+    /*OUT*/ javacall_handle *handle);
 
 /**
  * Get the format type of media content
@@ -500,7 +535,7 @@ javacall_result javacall_media_create(int appID,
  * @retval JAVACALL_OK          Success
  * @retval JAVACALL_FAIL        Fail
  */
-javacall_result javacall_media_get_format(javacall_handle handle, 
+javacall_result javacall_media_get_format(javacall_handle handle,
                               /*OUT*/ javacall_media_format_type* format);
 
 /**
@@ -564,113 +599,30 @@ javacall_result javacall_media_acquire_device(javacall_handle handle);
 javacall_result javacall_media_release_device(javacall_handle handle);
 
 /**
- * Ask to the native layer if it will handle media download from specific URL.
- * Is media download for specific URL (provided in javacall_media_create)
- * will be handled by native layer or Java layer?
- * If isHandled is JAVACALL_TRUE, Java do not call 
- * javacall_media_do_buffering function
- * In this case, native layer should handle all of data gathering by itself
- * 
- * @param handle    Handle to the library
- * @param isHandled JAVACALL_TRUE if native player will handle media download
- * 
- * @retval JAVACALL_OK      
- * @retval JAVACALL_FAIL    
- */
-javacall_result javacall_media_download_handled_by_device(javacall_handle handle,
-                                                  /*OUT*/ javacall_bool* isHandled);
-
-/**
- * This function returns desired size of Java Layer buffer for downloaded media content
- * It is possible if function returns different values for the same player in case of:
- *    - format of media data is unknown
- *    - format of media data is successfully discovered
- * Java Layer will call this function two times to create/update java Layer buffers:
- *    1) before downloading media content
- *    2) after 
+ * Notify the native player about stream length. This function is called if
+ * stream length is known.
  *
- * @param handle    Handle to the library
- * @param java_buffer_size  Desired size of java buffer
- * @param first_data_size  Size of the first chunk of media data, 
- *                          provided from Java to native
- * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL
- * @retval JAVACALL_NOT_IMPLEMENTED
- */
-javacall_result javacall_media_get_java_buffer_size(javacall_handle handle,
-                                 /*OUT*/ long* java_buffer_size, 
-                                 /*OUT*/ long* first_chunk_size);
-
-/**
- * This function is called by Java Layer to notify javacall implementation about 
- * whole size of media content. This function is called in prefetch stage if 
- * whole size of media content is known only.
- *
- * @param handle    Handle to the library
- * @param whole_content_size  size of whole media content
+ * @param handle        Handle to the native player.
+ * @param stream_length Stream length, in bytes.
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
  */
-javacall_result javacall_media_set_whole_content_size(javacall_handle handle,
-                                 long whole_content_size);
+javacall_result javacall_media_stream_length(
+    javacall_handle handle,
+    javacall_int64 stream_length);
 
 /**
- * Get native buffer address to store media content
+ * Tell the native player that data has been written to the memory block
+ * specified by event.
  * 
- * @param handle    Handle to the library
- * @param buffer    Native layer provides address of data buffer for media content. 
- *                  Java layer will store downloaded media data to the provided buffer.
- *                  The size of data stored in the buffer should be equal or divisible 
- *                  by minimum media data chunk size and less or equal to max_size
- * @param max_size  The maximum size of data can be stored in the buffer
+ * @param handle        Handle to the native player.
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
  */
-javacall_result javacall_media_get_buffer_address(javacall_handle handle, 
-                                 /*OUT*/ const void** buffer, 
-                                 /*OUT*/ long* max_size);
-
-/**
- * Java MMAPI call this function to send media data to this library.
- * This function can be called multiple times to send large media data.
- * Native library can implement buffering by using any method (file, heap, etc...)
- * Buffering always occurs sequentially, not randomly.
- * 
- * When there is no more data, the buffer is set to NULL and the length to -1.
- * OEM should care about this case.
- * 
- * @param handle    Handle to the library.
- * @param buffer    Media data buffer pointer. Can be NULL at end of buffering.
- * @param length    Length of media data. Can be -1 at end of buffering.
- *                  If success returns length of data processed.
- * @param need_more_data    returns JAVACALL_FALSE if no more data is required
- *                          at the moment, otherwise returns JAVACALL_TRUE
- * @param next_chunk_size   next expected buffering data size
- *                          must be divisible by this value
- * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
- * @retval JAVACALL_INVALID_ARGUMENT
- */
-javacall_result javacall_media_do_buffering(javacall_handle handle, 
-                                 const void* buffer,
-                                 /*INOUT*/ long* length,
-                                 /*OUT*/ javacall_bool* need_more_data,
-                                 /*OUT*/ long* next_chunk_size);
-
-/**
- * MMAPI call this function to clear(delete) buffered media data
- * You have to clear any resources created from previous buffering
- * 
- * @param handle    Handle to the library
- * 
- * @retval JAVACALL_OK      Can clear buffer
- * @retval JAVACALL_FAIL    Can't clear buffer. JVM can't erase resources.
- */
-javacall_result javacall_media_clear_buffer(javacall_handle handle);
+javacall_result javacall_media_data_written(
+    javacall_handle handle);
 
 /**
  * Realize native player.

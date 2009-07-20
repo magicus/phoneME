@@ -75,8 +75,24 @@ typedef enum {
     /** Posted when the system or another higher priority application has temporarily 
         taken control of an exclusive device which was previously available to the Player. */
     JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE,    
-    /** Posted when the native player needs more media content from Java side. */
-    JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
+
+    /**
+     * Posted when the native player requests stream data.
+     *
+     * Additional data:
+     *     javacall_int64 offset    Data offset within stream.
+     *     javacall_int32 length    Requested data block length.
+     *     void *pointer            Pointer to write data to.
+     */
+    JAVACALL_EVENT_MEDIA_DATA_REQUEST,
+
+    /**
+     * Posted when the native player requests stream length.
+     *
+     * Additional data: none.
+     */
+    JAVACALL_EVENT_MEDIA_LENGTH_REQUEST,
+
     /** Posted when the Player enters into a buffering mode. */
     JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,     
     /** Posted when the Player leaves the buffering mode. */
