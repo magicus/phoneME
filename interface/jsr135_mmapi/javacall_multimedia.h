@@ -616,13 +616,15 @@ javacall_result javacall_media_stream_length(
  * Tell the native player that data has been written to the memory block
  * specified by event.
  * 
- * @param handle        Handle to the native player.
+ * @param handle    Handle to the native player.
+ * @param length    Length of data actually written, in bytes.
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
  */
 javacall_result javacall_media_data_written(
-    javacall_handle handle);
+    javacall_handle handle,
+    javacall_int32 length);
 
 /**
  * Realize native player.
