@@ -90,13 +90,13 @@ pcm_handle_t pcm_out_open_channel( int          bits,
     {
         JC_MM_ASSERT( NULL == g_pDS );
 
-        #ifdef ENABLE_MMAPI_DSHOW
+        #ifdef ENABLE_JSR_135_DSHOW
         r = CoInitializeEx(NULL, COINIT_MULTITHREADED);
         if( DS_OK != r && S_FALSE != r )
         {
             return NULL;
         }
-        #endif //ENABLE_MMAPI_DSHOW
+        #endif //ENABLE_JSR_135_DSHOW
 
         r = DirectSoundCreate(NULL, &g_pDS, NULL);
         if( DS_OK != r )
