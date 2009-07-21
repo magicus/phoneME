@@ -771,23 +771,21 @@ ReturnOop ROM::get_original_class_name(ClassInfo *clsinfo) {
 
   GUARANTEE(GenerateROMImage || UseROM, "sanity");
   //  GUARANTEE(clsinfo->access_flags().is_romized(), "must be romized!");
-  int class_id = clsinfo->class_id();
+  const int class_id = clsinfo->class_id();
 
 #if ENABLE_ROM_GENERATOR
   if (ROMWriter::is_active()) {
     // try romizer first
     ReturnOop name = ROMOptimizer::original_name(class_id);
-    if (name != NULL) {
+    if( name != NULL ) {
       return name;
     }
   }
 #endif
-  if (_original_class_name_list == NULL) {
-    return Symbols::unknown()->obj();
-  }
 
-  ObjArray::Raw name_list = _original_class_name_list;  
-  return name_list().obj_at(class_id);
+  ObjArray::Raw name_list = _original_class_name_list;
+  return name_list.is_null() ? Symbols::unknown()->obj()
+                             : name_list().obj_at( class_id );
 }
 
 ReturnOop ROM::get_original_method_info(const Method *method) {
@@ -841,7 +839,7 @@ ReturnOop ROM::get_original_method_name(const Method *method) {
 // The result is NULL if this class doesn't have renamed fields.
 ReturnOop ROM::get_original_fields(InstanceClass *ic) {
   ClassInfo::Raw info = ic->class_info();
-  int class_id = info().class_id();
+  const int class_id = info().class_id();
 
 #if ENABLE_ROM_GENERATOR
   if (ROMWriter::is_active()) {
@@ -852,16 +850,12 @@ ReturnOop ROM::get_original_fields(InstanceClass *ic) {
   }
 #endif
 
-  if (_original_fields_list == NULL) {
-    return NULL;
-  }
-
-  if (!ic->access_flags().is_romized()) {
+  if( !ic->access_flags().is_romized() ) {
     return NULL;
   }
 
   ObjArray::Raw orig_list = _original_fields_list;
-  if (class_id >= orig_list().length()) {
+  if( orig_list.is_null() || class_id >= orig_list().length() ) {
     return NULL;
   }
   return orig_list().obj_at(class_id);

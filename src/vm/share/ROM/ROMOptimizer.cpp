@@ -34,6 +34,55 @@ ROMOPTIMIZER_INT_FIELDS_DO(ROMOPTIMIZER_DEFINE_INT)
 OopDesc* ROMOptimizer::_romoptimizer_oops[ROMOptimizer::_number_of_oop_fields];
 int ROMOptimizer::_time_counters[ROMOptimizer::STATE_COUNT];
 
+#if USE_ROM_LOGGING
+inline void ROMOptimizer::log_non_restricted_packages( void ) {
+  _log_stream->cr();
+  _log_stream->print_cr("[classes in non-restricted packages]");
+  _log_stream->cr();
+
+  for (SystemClassStream st; st.has_next();) {
+    InstanceClass::Raw klass = st.next();
+    if( !is_in_restricted_package(&klass) ) {
+      klass().print_name_on(_log_stream);
+      _log_stream->cr();
+    }
+  }
+}
+
+void ROMOptimizer::log_time_counters( void ) {
+#define PRINT_TIME_COUNTER(x) \
+        _log_stream->print_cr("    ROMOptimizer[%-36s] =%6d ms", \
+                              STR(x), _time_counters[x]); \
+        total += _time_counters[x]
+
+  int total = 0;
+  _log_stream->print_cr("[ROMOptimizer timings]");
+  PRINT_TIME_COUNTER(STATE_MAKE_RESTRICTED_PACKAGES_FINAL);
+  PRINT_TIME_COUNTER(STATE_INITIALIZE_CLASSES);
+  PRINT_TIME_COUNTER(STATE_QUICKEN_METHODS);
+  PRINT_TIME_COUNTER(STATE_RESOLVE_CONSTANT_POOL);
+  PRINT_TIME_COUNTER(STATE_REMOVE_REDUNDATE_STACKMAPS);
+  PRINT_TIME_COUNTER(STATE_MERGE_STRING_BODIES);
+  PRINT_TIME_COUNTER(STATE_RESIZE_CLASS_LIST);
+  PRINT_TIME_COUNTER(STATE_REPLACE_EMPTY_ARRAYS);
+  PRINT_TIME_COUNTER(STATE_INLINE_METHODS);
+  PRINT_TIME_COUNTER(STATE_OPTIMIZE_FAST_ACCESSORS);
+  PRINT_TIME_COUNTER(STATE_REMOVE_DEAD_METHODS);
+  PRINT_TIME_COUNTER(STATE_RENAME_NON_PUBLIC_SYMBOLS);
+  PRINT_TIME_COUNTER(STATE_REMOVE_UNUSED_STATIC_FIELDS);
+  PRINT_TIME_COUNTER(STATE_COMPACT_FIELD_TABLES);
+  PRINT_TIME_COUNTER(STATE_REMOVE_UNUSED_SYMBOLS);
+  PRINT_TIME_COUNTER(STATE_REWRITE_CONSTANT_POOLS);
+  PRINT_TIME_COUNTER(STATE_COMPACT_TABLES);
+  PRINT_TIME_COUNTER(STATE_PRECOMPILE_METHODS);
+  PRINT_TIME_COUNTER(STATE_REMOVE_DUPLICATED_OBJECTS);
+  PRINT_TIME_COUNTER(STATE_MARK_HIDDEN_CLASSES);
+
+  _log_stream->print_cr("    ROMOptimizer[%-36s] =%6d ms", "*total*", total);
+#undef PRINT_TIME_COUNTER
+}
+#endif // USE_ROM_LOGGING
+
 void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
   _log_stream = log_stream;
 
@@ -275,41 +324,6 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
 #endif
 }
 
-#if USE_ROM_LOGGING
-void ROMOptimizer::log_time_counters() {
-#define PRINT_TIME_COUNTER(x) \
-        _log_stream->print_cr("    ROMOptimizer[%-36s] =%6d ms", \
-                              STR(x), _time_counters[x]); \
-        total += _time_counters[x]
-
-  int total = 0;
-  _log_stream->print_cr("[ROMOptimizer timings]");
-  PRINT_TIME_COUNTER(STATE_MAKE_RESTRICTED_PACKAGES_FINAL);
-  PRINT_TIME_COUNTER(STATE_INITIALIZE_CLASSES);
-  PRINT_TIME_COUNTER(STATE_QUICKEN_METHODS);
-  PRINT_TIME_COUNTER(STATE_RESOLVE_CONSTANT_POOL);
-  PRINT_TIME_COUNTER(STATE_REMOVE_REDUNDATE_STACKMAPS);
-  PRINT_TIME_COUNTER(STATE_MERGE_STRING_BODIES);
-  PRINT_TIME_COUNTER(STATE_RESIZE_CLASS_LIST);
-  PRINT_TIME_COUNTER(STATE_REPLACE_EMPTY_ARRAYS);
-  PRINT_TIME_COUNTER(STATE_INLINE_METHODS);
-  PRINT_TIME_COUNTER(STATE_OPTIMIZE_FAST_ACCESSORS);
-  PRINT_TIME_COUNTER(STATE_REMOVE_DEAD_METHODS);
-  PRINT_TIME_COUNTER(STATE_RENAME_NON_PUBLIC_SYMBOLS);
-  PRINT_TIME_COUNTER(STATE_REMOVE_UNUSED_STATIC_FIELDS);
-  PRINT_TIME_COUNTER(STATE_COMPACT_FIELD_TABLES);
-  PRINT_TIME_COUNTER(STATE_REMOVE_UNUSED_SYMBOLS);
-  PRINT_TIME_COUNTER(STATE_REWRITE_CONSTANT_POOLS);
-  PRINT_TIME_COUNTER(STATE_COMPACT_TABLES);
-  PRINT_TIME_COUNTER(STATE_PRECOMPILE_METHODS);
-  PRINT_TIME_COUNTER(STATE_REMOVE_DUPLICATED_OBJECTS);
-  PRINT_TIME_COUNTER(STATE_MARK_HIDDEN_CLASSES);
-
-  _log_stream->print_cr("    ROMOptimizer[%-36s] =%6d ms", "*total*", total);
-#undef PRINT_TIME_COUNTER
-}
-#endif
-
 void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
 #if USE_SOURCE_IMAGE_GENERATOR
 
@@ -336,7 +350,7 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
       UsingFastOops fast_oops;
       ROMProfile::Fast profile = profiles_vector()->element_at(profile_id);
       profile().allocate_hidden_set(JVM_SINGLE_ARG_CHECK);
-      profile().fill_hidden_set(JVM_SINGLE_ARG_CHECK);
+      profile().fill_hidden_set();
     }
   }
 
@@ -373,7 +387,7 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
   }
 #endif // USE_ROM_LOGGING
 
-  global_profile()->fill_hidden_set(JVM_SINGLE_ARG_CHECK);
+  global_profile()->fill_hidden_set();
 
   {
     for( int profile_id = 0; profile_id < profiles_count; profile_id++ ) {
@@ -386,9 +400,10 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
   max_set().compute_range();
 
   {
+    UsingFastOops fast_oops;
+    InstanceClass::Fast klass;
     for (SystemClassStream st; st.has_next();) {
-      UsingFastOops fast_oops;
-      InstanceClass::Fast klass = st.next();
+      klass = st.next();
       if( min_set().get_bit( klass().class_id() ) ) {
         AccessFlags flags = klass().access_flags();
         flags.set_is_hidden();
@@ -400,12 +415,12 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
     }
   }
 #else // !ENABLE_MULTIPLE_PROFILES_SUPPORT
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
   for (SystemClassStream st; st.has_next();) {
-    UsingFastOops fast_oops;
-    InstanceClass::Fast klass = st.next();
-    const bool hidden = class_matches_classes_list(&klass, hidden_classes()) ||
-                        is_in_hidden_package(&klass JVM_CHECK);
-    if (hidden) {
+    klass = st.next();
+    if (class_matches_classes_list(&klass, hidden_classes())
+        || is_in_hidden_package(&klass)) {
       AccessFlags flags = klass().access_flags();
       flags.set_is_hidden();
       klass().set_access_flags(flags);
@@ -539,26 +554,19 @@ void ROMOptimizer::make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->cr();
 #endif
 
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
   for (SystemClassStream st; st.has_next();) {
-    UsingFastOops fast_oops;
-    InstanceClass::Fast klass = st.next();
+    klass = st.next();
     AccessFlags flags = klass().access_flags();
-    if (!flags.is_final() && !has_subclasses(&klass)) {
-      bool make_final = false;
-      bool hidden = is_in_hidden_package(&klass JVM_CHECK);
-      if (hidden) {        
-        make_final = true;
-      } else if (is_in_restricted_package(&klass) && !flags.is_public()) {
-        make_final = true;
-      }
-
-      if (make_final) {
-        flags.set_is_final();
-        klass().set_access_flags(flags);
+    if( !flags.is_final() && !has_subclasses(&klass)
+        && ( is_in_hidden_package(&klass)
+             || (!flags.is_public() && is_in_restricted_package(&klass)) ) ) {
+      flags.set_is_final();
+      klass().set_access_flags(flags);
 #if USE_ROM_LOGGING
-        log_vector.add_element(&klass JVM_CHECK);
+      log_vector.add_element(&klass JVM_CHECK);
 #endif
-      }
     }
   }
 
@@ -584,16 +592,13 @@ void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->cr();
 #endif
 
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
   for (SystemClassStream st; st.has_next();) {
-    UsingFastOops fast_oops;
-    InstanceClass::Fast klass = st.next();
-    AccessFlags flags = klass().access_flags();
-
-    if (!flags.is_final()) {
-      const bool hidden = is_in_hidden_package(&klass JVM_CHECK);
-      if (hidden || is_in_restricted_package(&klass)) {
-        make_virtual_methods_final(&klass, &log_vector JVM_CHECK);
-      }
+    klass = st.next();
+    if( !klass().is_final() &&
+        ( is_in_hidden_package(&klass) || is_in_restricted_package(&klass) ) ) {
+      make_virtual_methods_final(&klass, &log_vector JVM_CHECK);
     }
   }
 
@@ -611,8 +616,8 @@ void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) {
 
 
 // Is the given method overridden in any subclass of ic?
-bool ROMOptimizer::is_overridden(InstanceClass *ic, Method *method) {
-  int vtable_index = method->vtable_index();
+bool ROMOptimizer::is_overridden(InstanceClass* ic, Method* method) {
+  const int vtable_index = method->vtable_index();
   if (vtable_index < 0) {
     // This is a final method, so it's not overridden (and is not
     // stored in the vtable).
@@ -622,14 +627,13 @@ bool ROMOptimizer::is_overridden(InstanceClass *ic, Method *method) {
   }
 
   TypeArray::Raw subclass_id_array = get_subclass_list(ic->class_id());
-  InstanceClass::Raw klass;
-  ClassInfo::Raw info;
-  Method::Raw m;
-  for (int idx = 0; idx < subclass_id_array().length(); idx++) {
-    klass = Universe::class_from_id(subclass_id_array().short_at(idx));
-    info = klass().class_info();    
-    m = info().vtable_method_at(vtable_index);
-    if (!method->equals(&m)) {
+  const int subclass_id_array_len = subclass_id_array().length();
+  for( int i = 0; i < subclass_id_array_len; i++) {
+    InstanceClass::Raw klass =
+      Universe::class_from_id(subclass_id_array().short_at(i));
+    ClassInfo::Raw info = klass().class_info();    
+    Method::Raw m = info().vtable_method_at(vtable_index);
+    if( !method->equals(&m) ) {
       return true; // This method has been overridden in a subclass
     }    
   }
@@ -642,25 +646,17 @@ void ROMOptimizer::make_virtual_methods_final(InstanceClass *ic,
                                               JVM_TRAPS) {
   UsingFastOops fast_oops;
   ObjArray::Fast methods = ic->methods();
-  jint package_flags = get_package_flags(ic JVM_CHECK);
+  const int len = methods().length();
+  const jint package_flags = get_package_flags(ic);
   AccessFlags class_flags = ic->access_flags();
 
   Method::Fast method;
-  for (int i=0; i<methods().length(); i++) {
-    
+  for( int i = 0; i < len; i++ ) {
     method = methods().obj_at(i);
-    if (method.is_null()) {
-      continue;
-    }
-    if (method().is_object_initializer()) {
-      // Not really a virtual method
-      continue;
-    }
-    if (method().is_static()) {
-      continue;
-    }
-    if (method().is_final()) {
-      // Nothing to do
+    if( method.is_null() ||
+        method().is_object_initializer() ||
+        method().is_static() ||
+        method().is_final() ) {
       continue;
     }
 
@@ -672,9 +668,8 @@ void ROMOptimizer::make_virtual_methods_final(InstanceClass *ic,
     }
 
     if (!is_overridden(ic, &method)) {
-      AccessFlags flags = method().access_flags();
-      flags.set_is_final();
-      method().set_access_flags(flags);
+      method_flags.set_is_final();
+      method().set_access_flags(method_flags);
 
 #if USE_ROM_LOGGING
       log_vector->add_element(&method JVM_CHECK);
@@ -685,57 +680,17 @@ void ROMOptimizer::make_virtual_methods_final(InstanceClass *ic,
   }
 }
 
-bool ROMOptimizer::is_in_restricted_package(InstanceClass *klass) {
-#if USE_SOURCE_IMAGE_GENERATOR
-  SETUP_ERROR_CHECKER_ARG; // IMPL_NOTE: consider whether this should be fixed 
-  return class_matches_packages_list(klass, restricted_packages()
-                                     JVM_NO_CHECK_AT_BOTTOM);
-#else
-  // IMPL_NOTE: Monet: all classes can be considered as restricted
-  (void)klass;
-  return false;
-#endif
-}
-
-bool ROMOptimizer::is_in_hidden_package(InstanceClass *klass JVM_TRAPS) {
-#if USE_SOURCE_IMAGE_GENERATOR
-  return class_matches_packages_list(klass, hidden_packages()
-                                     JVM_NO_CHECK_AT_BOTTOM);
-#else
-  (void)klass;
-  return false;
-#endif
-}
-
 bool ROMOptimizer::has_subclasses(InstanceClass *klass) {
   for (SystemClassStream st; st.has_next();) {
     InstanceClass::Raw ic = st.next();
     InstanceClass::Raw super = ic().super();
-    if (super.not_null() && super.equals(klass)) {
+    if( super.equals(klass) ) {
       // klass has at least one subclass
       return true;
     }
   }
   return false;
 }
-
-#if USE_ROM_LOGGING
-void ROMOptimizer::log_non_restricted_packages() {
-  _log_stream->cr();
-  _log_stream->print_cr("[classes in non-restricted packages]");
-  _log_stream->cr();
-
-  UsingFastOops fast_oops;
-  InstanceClass::Fast klass;
-  for (SystemClassStream st; st.has_next();) {
-    klass = st.next();
-    if (!is_in_restricted_package(&klass)) {
-      klass().print_name_on(_log_stream);
-      _log_stream->cr();
-    }
-  }
-}
-#endif
 
 void ROMOptimizer::initialize_classes(JVM_SINGLE_ARG_TRAPS) {
   // Initialize all classes that may be initialized (e.g., if
@@ -747,15 +702,16 @@ void ROMOptimizer::initialize_classes(JVM_SINGLE_ARG_TRAPS) {
 
   bool made_progress = false;
 
-  InstanceClass klass;
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
   for (SystemClassStream st; st.has_next();) {
     klass = st.next();
     if (may_be_initialized(&klass)) {
       made_progress = true;
-      klass.initialize(JVM_SINGLE_ARG_CHECK);
+      klass().initialize(JVM_SINGLE_ARG_CHECK);
       if (TraceRomizer) {
         TTY_TRACE(("Initializing class: "));
-        klass.print_name_on(tty);
+        klass().print_name_on(tty);
         TTY_TRACE_CR((""));        
       }
 #if USE_SOURCE_IMAGE_GENERATOR
@@ -785,6 +741,7 @@ void ROMOptimizer::initialize_classes(JVM_SINGLE_ARG_TRAPS) {
 
 #if USE_ROM_LOGGING
 void ROMOptimizer::print_class_initialization_log(JVM_SINGLE_ARG_TRAPS) {
+
   ROMVector log_vector;
   log_vector.initialize(JVM_SINGLE_ARG_CHECK);
   int i;
@@ -793,19 +750,22 @@ void ROMOptimizer::print_class_initialization_log(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->print_cr("[Classes initialized at build time]");
   _log_stream->cr();
 
-  UsingFastOops level1;  
-  InstanceClass::Fast klass;
-  for (i=0; i<init_at_build_classes()->length(); i++) {
-    klass = init_at_build_classes()->obj_at(i);    
-    if (klass.is_null()) {
-      break;
-    } else if (klass().is_initialized()) {
-      log_vector.add_element(&klass JVM_CHECK);
+  {
+    UsingFastOops fast_oops;
+    InstanceClass::Fast klass;
+    for( i = 0; i < init_at_build_classes()->length(); i++ ) {
+      klass = init_at_build_classes()->obj_at(i);
+      if( klass.is_null() ) {
+        break;
+      }
+      if (klass().is_initialized()) {
+        log_vector.add_element(&klass JVM_CHECK);
+      }
     }
   }
 
   log_vector.sort();
-  for (i=0; i<log_vector.size(); i++) {
+  for( i = 0; i < log_vector.size(); i++ ) {
     InstanceClass::Raw klass = log_vector.element_at(i);
     _log_stream->print("init at build: ");
 #if USE_PRODUCT_BINARY_IMAGE_GENERATOR
@@ -832,37 +792,36 @@ void ROMOptimizer::print_class_initialization_log(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->print_cr("[Uninitialized Classes]");
   _log_stream->cr();
   
-  Method::Fast init;
-  InstanceClass::Fast ic;
-  TypeArray::Fast interfaces;
-  InstanceClass::Fast intf;
-  for (SystemClassStream st; st.has_next();) {
-    klass = st.next();
-    if (!klass().is_initialized()) {
+  for( SystemClassStream st; st.has_next(); ) {
+    InstanceClass::Raw klass = st.next();
+    if( !klass().is_initialized() ) {
       klass().print_name_on(_log_stream);
       _log_stream->cr();
 
-      init = klass().find_local_method(Symbols::class_initializer_name(),
-                                            Symbols::void_signature());
-      if (!init.is_null()) {
-        _log_stream->print_cr("\t-> <clinit> not executed (%d bytes)",
-                             init().code_size());
+      {
+        Method::Raw init =
+          klass().find_local_method(Symbols::class_initializer_name(),
+                                    Symbols::void_signature());
+        if( !init.is_null() ) {
+          _log_stream->print_cr("\t-> <clinit> not executed (%d bytes)",
+                               init().code_size());
+        }
       }
       
-      for (ic = klass.obj(); !ic.is_null(); ic = ic().super()) {
-        if (!ic.equals(&klass) && !ic().is_initialized()) {
+      InstanceClass::Raw ic = klass.obj();
+      for(; !ic.is_null(); ic = ic().super() ) {
+        if( !ic.equals(&klass) && !ic().is_initialized() ) {
           _log_stream->print("\t-> uninitialized super class ");
           ic().print_name_on(_log_stream);
           _log_stream->cr();
         }
 
-        interfaces = ic().local_interfaces();
-        int n_interfaces = interfaces().length();
-
-        for (int i = 0; i < n_interfaces; i++) {
-          int intf_id = interfaces().ushort_at(i);
-          intf = Universe::class_from_id(intf_id);
-          if (!intf().is_initialized()) {
+        TypeArray::Raw interfaces = ic().local_interfaces();
+        const int n_interfaces = interfaces().length();
+        for( int i = 0; i < n_interfaces; i++) {
+          const int intf_id = interfaces().ushort_at(i);
+          InstanceClass::Raw intf = Universe::class_from_id(intf_id);
+          if( !intf().is_initialized() ) {
             _log_stream->print("\t-> uninitialized super interface ");
             intf().print_name_on(_log_stream);
             _log_stream->cr();
@@ -890,35 +849,29 @@ bool ROMOptimizer::may_be_initialized(InstanceClass *klass) {
   }
   GUARANTEE(klass->is_verified(), "Sanity");
 
-  Method::Raw init = klass->find_local_method(Symbols::class_initializer_name(),
-                                         Symbols::void_signature());
-  if (!init.is_null()) {
 #if USE_SOURCE_IMAGE_GENERATOR
-    if (!is_init_at_build(klass)) {
+  if( !is_init_at_build(klass) )
+#endif
+  {
+    if( klass->find_local_method( Symbols::class_initializer_name(),
+                                  Symbols::void_signature()) ) {
       return false;
     }
-#else
-    return false;
-#endif
   }
 
   // All super classes and super interfaces must be initialized
-  UsingFastOops level1;
-  InstanceClass::Fast ic;
-  TypeArray::Fast interfaces;
-  InstanceClass::Fast intf;
-  for (ic = klass->obj(); !ic.is_null(); ic = ic().super()) {
+  InstanceClass::Raw ic = klass->obj();
+  for ( ; !ic.is_null(); ic = ic().super()) {
     if (!ic.equals(klass) && !ic().is_initialized()) {
       return false;
     }
 
-    interfaces = ic().local_interfaces();
-    int n_interfaces = interfaces().length();
-
-    for (int i = 0; i < n_interfaces; i++) {
-      int intf_id = interfaces().ushort_at(i);
-      intf = Universe::class_from_id(intf_id);
-      if (!intf().is_initialized()) {
+    TypeArray::Raw interfaces = ic().local_interfaces();
+    const int n_interfaces = interfaces().length();
+    for( int i = 0; i < n_interfaces; i++ ) {
+      const int intf_id = interfaces().ushort_at(i);
+      InstanceClass::Raw intf = Universe::class_from_id(intf_id);
+      if( !intf().is_initialized() ) {
         return false;
       }
     }
@@ -956,6 +909,49 @@ void ROMOptimizer::set_classes_as_romized() {
   }
 }
 
+#if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
+inline void ROMOptimizer::fill_interface_implementation_cache(void) {
+  //initialization
+  int i = 0;
+  for (; i < Universe::number_of_java_classes(); i++) {
+    interface_implementation_cache()->int_at_put(i, NOT_IMPLEMENTED); 
+    direct_interface_implementation_cache()->int_at_put(i, NOT_IMPLEMENTED); 
+  }
+
+  for (i = 0; i < Universe::number_of_java_classes(); i++) {
+    JavaClass::Raw java_cls = Universe::class_from_id(i);
+    if (java_cls().is_fake_class() || !java_cls().is_instance_class()) {
+      continue;
+    }
+
+    InstanceClass::Raw cls = java_cls.obj();
+
+#if USE_SOURCE_IMAGE_GENERATOR      
+    const bool not_reachable_by_applications = is_in_hidden_package(&cls) ||
+      ( !cls().is_public() && is_in_restricted_package(&cls) );
+    
+#elif (ENABLE_MONET && !ENABLE_LIB_IMAGES)
+    const bool not_reachable_by_applications = true;
+#endif
+
+    if (cls().is_interface()) {
+      if (!not_reachable_by_applications) {
+        forbid_invoke_interface_optimization(&cls, false);
+        forbid_invoke_interface_optimization(&cls, true);
+      }
+    } else {
+      const int class_id = cls().class_id();
+      set_implementing_class(class_id, class_id, true, true);
+      if (not_reachable_by_applications || cls().is_final()) {
+        set_implementing_class(class_id, class_id, true, false);        
+      } else {
+        forbid_invoke_interface_optimization(&cls, false);
+      }
+    }
+  }
+}
+#endif
+
 // Try to quicken bytecodes in all methods in all classes.
 void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
   int qcount = 0;
@@ -977,7 +973,7 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
         Universe::new_int_array(Universe::number_of_java_classes() JVM_CHECK);
   *direct_interface_implementation_cache() = 
         Universe::new_int_array(Universe::number_of_java_classes() JVM_CHECK);
-  fill_interface_implementation_cache(JVM_SINGLE_ARG_CHECK);
+  fill_interface_implementation_cache();
 #endif
   UsingFastOops level1;
   ObjArray::Fast methods;
@@ -1124,69 +1120,24 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
   // IMPL_NOTE: on a final pass, quicken all 'static' bytecodes in <clinit>
   // methods that operate on the current class.
 }
-#if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
-void ROMOptimizer::fill_interface_implementation_cache(JVM_SINGLE_ARG_TRAPS) {
-  //initialization
-  int i = 0;
-  for (; i < Universe::number_of_java_classes(); i++) {
-    interface_implementation_cache()->int_at_put(i, NOT_IMPLEMENTED); 
-    direct_interface_implementation_cache()->int_at_put(i, NOT_IMPLEMENTED); 
-  }
-
-  for (i = 0; i < Universe::number_of_java_classes(); i++) {
-    UsingFastOops fast;
-    JavaClass::Fast java_cls = Universe::class_from_id(i);
-
-    if (java_cls().is_fake_class() || !java_cls().is_instance_class()) {
-      continue;
-    }
-
-    InstanceClass::Fast cls = java_cls.obj();
-    int class_id = cls().class_id();
-
-#if USE_SOURCE_IMAGE_GENERATOR      
-    bool reachable_by_applications = true;
-    bool hidden = is_in_hidden_package(&cls JVM_CHECK);
-    if (hidden) {
-      reachable_by_applications = false;
-    } else if (is_in_restricted_package(&cls) && !cls().is_public()) {
-      reachable_by_applications = false;
-    }
-#elif (ENABLE_MONET && !ENABLE_LIB_IMAGES)
-    bool reachable_by_applications = false;
-#endif
-    if (cls().is_interface()) {
-      if (reachable_by_applications) {
-        forbid_invoke_interface_optimization(&cls, false);
-        forbid_invoke_interface_optimization(&cls, true);
-      }
-    } else {
-      set_implementing_class(class_id, class_id, true, true);
-      if (!reachable_by_applications || cls().is_final()) {
-        set_implementing_class(class_id, class_id, true, false);        
-      } else {
-        forbid_invoke_interface_optimization(&cls, false);
-      }
-    }
-  }
-}
-#endif
-
 #if USE_SOURCE_IMAGE_GENERATOR || !ENABLE_LIB_IMAGES
 void ROMOptimizer::forbid_invoke_interface_optimization(InstanceClass* cls, bool direct) {
-  TypeArray::Raw local_interfaces = cls->local_interfaces();
-  TypeArray::Raw cache = direct ? direct_interface_implementation_cache()->obj() : 
-                                  interface_implementation_cache()->obj() ;
-  InstanceClass::Raw interf;
-  int len = local_interfaces().length();
-  cache().int_at_put(cls->class_id(), FORBID_TO_IMPLEMENT);
-  for (int i = 0; i < len; i++) {
-    int interf_id = local_interfaces().ushort_at(i);
-    cache().int_at_put(interf_id, FORBID_TO_IMPLEMENT);
+  {
+    TypeArray::Raw local_interfaces = cls->local_interfaces();
+    TypeArray::Raw cache = direct ? direct_interface_implementation_cache()->obj() : 
+                                    interface_implementation_cache()->obj() ;
+    int len = local_interfaces().length();
+    cache().int_at_put(cls->class_id(), FORBID_TO_IMPLEMENT);
+    for (int i = 0; i < len; i++) {
+      int interf_id = local_interfaces().ushort_at(i);
+      cache().int_at_put(interf_id, FORBID_TO_IMPLEMENT);
+    }
   }
-  InstanceClass::Raw super_cls = cls->super();
-  if (super_cls.not_null() && !direct) {
-    forbid_invoke_interface_optimization(&super_cls, direct);
+  if( !direct ) {
+    InstanceClass::Raw super_cls = cls->super();
+    if( super_cls.not_null() ) {
+      forbid_invoke_interface_optimization(&super_cls, false);
+    }
   }
 }
 
@@ -1203,47 +1154,28 @@ void ROMOptimizer::set_implementing_class(int interf_id, int class_id, bool only
     }
   }
   InstanceClass::Raw cls = Universe::class_from_id(interf_id);
-  TypeArray::Raw interfaces = cls().local_interfaces();
-  for (int i = 0; i < interfaces().length(); i++) {
-    set_implementing_class(interfaces().ushort_at(i), class_id, false, direct_only);
+  {
+    TypeArray::Raw interfaces = cls().local_interfaces();
+    for (int i = 0; i < interfaces().length(); i++) {
+      set_implementing_class(interfaces().ushort_at(i), class_id, false, direct_only);
+    }
   }
   if (!direct_only) {
     InstanceClass::Raw super_cls = cls().super();
     if (super_cls().not_null()) {
-      set_implementing_class(super_cls().class_id(), class_id, true, direct_only);
+      set_implementing_class(super_cls().class_id(), class_id, true, false);
     }
   }
 }
 #endif
 
-
-void ROMOptimizer::initialize_hashtables(ObjArray* symbol_table_input,
-                                         ObjArray* string_table_input
-                                         JVM_TRAPS) {
-  ROMHashtableManager hashtab_mgr;
-  hashtab_mgr.initialize(symbol_table_input, string_table_input JVM_CHECK);
-
-  *string_table()          = hashtab_mgr.string_table();
-  *symbol_table()          = hashtab_mgr.symbol_table();
-  *embedded_table_holder() = hashtab_mgr.embedded_table_holder();
-  _embedded_symbols_offset = hashtab_mgr.embedded_symbols_offset();
-  _embedded_strings_offset = hashtab_mgr.embedded_strings_offset();
-}
-
-bool ROMOptimizer::is_in_public_vtable(InstanceClass *ic, Method *method JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  int vtable_index = method->vtable_index();
-  InstanceClass::Fast klass = ic;
-
-  for (klass = ic->obj(); klass.not_null(); klass = klass().super()) {
-    bool hidden = is_in_hidden_package(&klass JVM_CHECK_(1));
-    if (hidden) {
-      // Not a public base class
-      continue;
-    }
-    if (is_in_restricted_package(&klass) && !klass().is_public()) {
-      // Not a public base class
-      continue;
+bool ROMOptimizer::is_in_public_vtable(InstanceClass* ic, Method* method) {
+  const int vtable_index = method->vtable_index();
+  InstanceClass::Raw klass = ic->obj();
+  for( ; klass.not_null(); klass = klass().super() ) {
+    if( is_in_hidden_package(&klass) ||
+      (!klass().is_public() && is_in_restricted_package(&klass)) ) {    
+      continue; // Not a public base class
     }
 
     if (vtable_index < klass().vtable_length()) {
@@ -1254,22 +1186,15 @@ bool ROMOptimizer::is_in_public_vtable(InstanceClass *ic, Method *method JVM_TRA
   return false;
 }
 
-bool ROMOptimizer::is_in_public_itable(InstanceClass *ic, Method *method JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  ClassInfo::Fast ci = ic->class_info();
-  InstanceClass::Fast intf;
+bool ROMOptimizer::is_in_public_itable(InstanceClass* ic, Method* method) {
+  ClassInfo::Raw ci = ic->class_info();
   for (int index = 0; index < ci().itable_length(); index++) {
-    int offset = ci().itable_offset_at(index);
+    const int offset = ci().itable_offset_at(index);
     if (offset > 0) {
-      intf = ci().itable_interface_at(index);
-      bool hidden = is_in_hidden_package(&intf JVM_CHECK_(1));
-      if (hidden) {
-        // Not a public interface
-        continue;
-      }
-      if (is_in_restricted_package(&intf) && !intf().is_public()) {
-        // Not a public interface
-        continue;
+      InstanceClass::Raw intf = ci().itable_interface_at(index);
+      if( is_in_hidden_package(&intf) ||
+          (!intf().is_public() && is_in_restricted_package(&intf)) ) {
+        continue; // Not a public interface
       }
 
       ObjArray::Raw methods = intf().methods();
@@ -1337,19 +1262,11 @@ bool ROMOptimizer::is_member_reachable_by_apps(jint package_flags,
                                                AccessFlags member_flags) {
   switch (package_flags) {
   case UNRESTRICTED_PACKAGE:
-    if (class_flags.is_public()) {
+    if (class_flags.is_public() || !AggressiveROMSymbolRenaming ) {
       if (member_flags.is_public() ||
           member_flags.is_protected() ||
           member_flags.is_package_private()) {
         return true;
-      }
-    } else {
-      if (!AggressiveROMSymbolRenaming) {
-        if (member_flags.is_public() ||
-            member_flags.is_protected() ||
-            member_flags.is_package_private()) {
-          return true;
-        }
       }
     }
     break;
@@ -1370,46 +1287,24 @@ bool ROMOptimizer::is_member_reachable_by_apps(jint package_flags,
   return false;
 }
 
-bool ROMOptimizer::field_may_be_renamed(jint package_flags, 
-                                        AccessFlags class_flags,
-                                        AccessFlags member_flags,
-                                        Symbol *name) {
-  if (is_member_reachable_by_apps(package_flags, class_flags, member_flags)) {
-    return false;
-  }
-  if (Symbols::is_system_symbol(name)) {  
-    return false;
-  }
-  return true;
-}
 
 bool
-ROMOptimizer::is_method_reachable_by_apps(InstanceClass *ic, Method *method JVM_TRAPS) {
-  jint package_flags = get_package_flags(ic JVM_CHECK_(1));
+ROMOptimizer::is_method_reachable_by_apps(InstanceClass* ic, Method* method) {
+  const jint package_flags = get_package_flags(ic);
   AccessFlags class_flags = ic->access_flags();
   AccessFlags method_flags = method->access_flags();
   
-  if (is_member_reachable_by_apps(package_flags, class_flags, method_flags)) {
+  if( is_member_reachable_by_apps(package_flags, class_flags, method_flags) ) {
     return true;
   }
 
-  if (method->is_public() && !method->is_static()){
-    bool public_vtable = is_in_public_vtable(ic, method JVM_CHECK_(1));
-    if (public_vtable) {
-      return true;
-    }
-    bool public_itable = is_in_public_itable(ic, method JVM_CHECK_(1));
-    if (public_itable) {
-      return true;
-    }
-  }
-
-  return false;
+  return method->is_public() && !method->is_static() &&
+         (is_in_public_vtable(ic, method) || is_in_public_itable(ic, method));
 }
 
-bool ROMOptimizer::method_may_be_renamed(InstanceClass *ic, Method *method JVM_TRAPS) {
-  bool reachable = is_method_reachable_by_apps(ic, method JVM_CHECK_(1));
-  if (reachable) {
+inline bool
+ROMOptimizer::method_may_be_renamed(InstanceClass* ic, Method* method) {
+  if( is_method_reachable_by_apps(ic, method) ) {
     return false;
   }
 
@@ -1422,26 +1317,14 @@ bool ROMOptimizer::method_may_be_renamed(InstanceClass *ic, Method *method JVM_T
 
 // Should this method be added to the initial invocation closure (when we
 // start to search for methods that are not dead)
-bool
-ROMOptimizer::is_invocation_closure_root(InstanceClass *ic, Method *method JVM_TRAPS) {
-  if (is_special_method(method)) {
-    return true;
-  }
-  if (method->is_native()) {
-    return true; // private finalize, etc
-  }
-  bool reachable = is_method_reachable_by_apps(ic, method JVM_CHECK_(1));
-  if (reachable) {
-    return true;
-  }
+inline bool
+ROMOptimizer::is_invocation_closure_root(InstanceClass* ic, Method* method) {
+  return is_special_method(method)
+         || method->is_native()
+         || is_method_reachable_by_apps(ic, method)
+         || method->match( Symbols::object_initializer_name(),
+                           Symbols::void_signature() );
 
-  // default constructor should be here 
-  if (method->match(Symbols::object_initializer_name(),
-                    Symbols::void_signature())) {
-    return true;
-  }
-
-  return false;
 }
 
 void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
@@ -1481,8 +1364,8 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
         // A nulled-out method
         continue;
       }
-      bool in_closure = is_invocation_closure_root(&klass, &method JVM_CHECK)
-      if (in_closure) {
+
+      if( is_invocation_closure_root(&klass, &method) ) {
         mic.add_method(&method JVM_CHECK);
       }
     }
@@ -1672,11 +1555,9 @@ void ROMOptimizer::inline_short_methods(JVM_SINGLE_ARG_TRAPS) {
 void ROMOptimizer::clean_vtables(InstanceClass* klass,
                                  Method* method,
                                  int vindex) {
-  Oop null_oop;
-
   // clean our vtable
   ClassInfo::Raw info = klass->class_info();
-  info().vtable_at_put(vindex, null_oop);
+  info().vtable_at_put(vindex, (OopDesc*) NULL);
 
   // clean subs vtables
   for (SystemClassStream st; st.has_next();) {
@@ -1688,7 +1569,7 @@ void ROMOptimizer::clean_vtables(InstanceClass* klass,
       // for additional safety 
       Method::Raw m = info().vtable_method_at(vindex);
       if (m().equals(*method)) {
-        info().vtable_at_put(vindex, null_oop);
+        info().vtable_at_put(vindex, (OopDesc*) NULL);
       }      
     }
   }
@@ -1696,8 +1577,6 @@ void ROMOptimizer::clean_vtables(InstanceClass* klass,
 
 void ROMOptimizer::clean_itables(InstanceClass* intf_klass,
                                  int itable_index) {
-  Oop null_oop;
-  
   for (SystemClassStream st; st.has_next();) {
     InstanceClass::Raw klass = st.next();
     ClassInfo::Raw ci = klass().class_info();
@@ -1711,8 +1590,8 @@ void ROMOptimizer::clean_itables(InstanceClass* intf_klass,
       if (!intf_klass->equals(intf)) {
         continue;
       }
-      jint addr = offset + itable_index * sizeof(jobject);
-      ci().obj_field_put(addr, &null_oop);
+      const jint addr = offset + itable_index * sizeof(jobject);
+      ci().obj_field_put(addr, (OopDesc*) NULL);
     }
   }
 }
@@ -2081,6 +1960,72 @@ void ROMOptimizer::resize_class_list(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
+inline int ROMOptimizer::rename_non_public_class(InstanceClass* klass) {
+  // The following types of classes may be renamed:
+  // [1] all classes in hidden packages
+  // [2] package-private classes in restricted packages
+  if( is_in_hidden_package(klass) ||
+      (!klass->is_public() && is_in_restricted_package(klass)) ) {
+    Symbol::Raw name = klass->name();
+    record_original_class_info(klass, &name);
+    klass->set_name(Symbols::unknown());
+    return 1;
+  }
+  return 0;
+}
+
+inline int
+ROMOptimizer::rename_non_public_fields(InstanceClass *klass JVM_TRAPS) {
+  UsingFastOops level1;
+  ConstantPool::Fast cp = klass->constants();
+  int unknown_symbol_index = 0;
+  TypeArray::Fast fields = klass->fields();
+  int count = 0;
+
+  jint package_flags = get_package_flags(klass);
+  const AccessFlags class_flags = klass->access_flags();
+
+  for (int i=0; i<fields().length(); i+= 5) {
+    //5-tuples of shorts [access, name index, sig index, initval index, offset]
+    AccessFlags field_flags;
+    field_flags.set_flags(fields().ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
+    jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
+    Symbol::Raw name = cp().symbol_at(name_index);
+
+    if (field_may_be_renamed(package_flags, class_flags, field_flags, &name)) {
+      record_original_field_info(klass, name_index JVM_CHECK_0);
+      fields().ushort_at_put(i + Field::NAME_OFFSET, unknown_symbol_index);
+      count ++;
+    }
+  }
+  return count;
+}
+
+inline int
+ROMOptimizer::rename_non_public_methods(InstanceClass* klass JVM_TRAPS) {
+  enum { unknown_symbol_index = 0 };
+  int count = 0;
+
+  UsingFastOops level1;
+  ObjArray::Fast methods = klass->methods();
+  Method::Fast method;
+
+  for( int i=0; i < methods().length(); i++) {
+    method = methods().obj_at(i);
+    if (method.is_null()) {
+      // A nulled-out <clinit> method
+      continue;
+    }
+
+    if( method_may_be_renamed(klass, &method) ) {
+      record_original_method_info(&method JVM_CHECK_0);
+      method().set_name_index(unknown_symbol_index);
+      count ++;
+    }
+  }
+  return count;
+}
+
 void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
   int class_count = 0;
   int field_count = 0;
@@ -2108,7 +2053,7 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
       // Class.forName).
     } else {
       if (RenameNonPublicROMClasses) {
-        class_count += rename_non_public_class(&klass JVM_CHECK);
+        class_count += rename_non_public_class(&klass);
       }
     }
 
@@ -2137,78 +2082,6 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->print_cr("Renamed non-public methods: %d", method_count);
   _log_stream->cr();
 #endif
-}
-
-int ROMOptimizer::rename_non_public_class(InstanceClass *klass JVM_TRAPS) {
-  // The following types of classes may be renamed:
-  // [1] all classes in hidden packages
-  // [2] package-private classes in restricted packages
-  bool may_rename = false;
-  bool hidden = is_in_hidden_package(klass JVM_CHECK_0;)
-  if (hidden) {
-    may_rename = true;
-  } else if (is_in_restricted_package(klass) && !klass->is_public()) {
-    may_rename = true;
-  }
-
-  if (may_rename) {
-    Symbol::Raw name = klass->name();
-    record_original_class_info(klass, &name);
-    klass->set_name(Symbols::unknown());
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-int ROMOptimizer::rename_non_public_fields(InstanceClass *klass JVM_TRAPS) {
-  UsingFastOops level1;
-  ConstantPool::Fast cp = klass->constants();
-  int unknown_symbol_index = 0;
-  TypeArray::Fast fields = klass->fields();
-  int count = 0;
-
-  jint package_flags = get_package_flags(klass JVM_CHECK_0);
-  const AccessFlags class_flags = klass->access_flags();
-
-  for (int i=0; i<fields().length(); i+= 5) {
-    //5-tuples of shorts [access, name index, sig index, initval index, offset]
-    AccessFlags field_flags;
-    field_flags.set_flags(fields().ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
-    jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
-    Symbol::Raw name = cp().symbol_at(name_index);
-
-    if (field_may_be_renamed(package_flags, class_flags, field_flags, &name)) {
-      record_original_field_info(klass, name_index JVM_CHECK_0);
-      fields().ushort_at_put(i + Field::NAME_OFFSET, unknown_symbol_index);
-      count ++;
-    }
-  }
-  return count;
-}
-
-int ROMOptimizer::rename_non_public_methods(InstanceClass *klass JVM_TRAPS) {
-  UsingFastOops level1;
-  int unknown_symbol_index = 0;
-  int count = 0;
-
-  ObjArray::Fast methods = klass->methods();
-  Method::Fast method;
-  for (int i=0; i<methods().length(); i++) {
-    method = methods().obj_at(i);
-    if (method.is_null()) {
-      // A nulled-out <clinit> method
-      continue;
-    }
-
-    bool may_be_renamed = method_may_be_renamed(klass, &method JVM_CHECK_0);
-    if (may_be_renamed) {
-      record_original_method_info(&method JVM_CHECK_0);
-      method().set_name_index(unknown_symbol_index);
-      count ++;
-    }
-  }
-  return count;
 }
 
 void ROMOptimizer::replace_empty_arrays() {
@@ -2287,8 +2160,7 @@ void ROMOptimizer::compact_field_tables(JVM_SINGLE_ARG_TRAPS) {
     }
 
     for (i = 0; i < len; i += Field::NUMBER_OF_SLOTS) {
-      bool removable = is_field_removable(&klass, i, true JVM_CHECK);
-      if (removable) {
+      if( is_field_removable(&klass, i, true) ) {
         num_removed ++;
       }
     }
@@ -2311,8 +2183,7 @@ void ROMOptimizer::compact_field_tables(JVM_SINGLE_ARG_TRAPS) {
       new_fields = Universe::new_short_array(new_len JVM_CHECK);
 
       for (i = 0, j = 0; i < len; i += Field::NUMBER_OF_SLOTS) {
-        bool removable = is_field_removable(&klass, i, true JVM_CHECK);
-        if (!removable) {
+        if (!is_field_removable(&klass, i, true)) {
           for (int x=0; x<Field::NUMBER_OF_SLOTS; x++) {
             jushort val = fields().ushort_at(i+x);
             new_fields().ushort_at_put(j+x, val);
@@ -2343,11 +2214,11 @@ void ROMOptimizer::compact_field_tables(JVM_SINGLE_ARG_TRAPS) {
 
 // Can this field be removed (from the fields table, or from InstanceClass)
 bool ROMOptimizer::is_field_removable(InstanceClass *ic, int field_index,
-                                      bool from_table JVM_TRAPS) {
+                                      bool from_table) {
   TypeArray::Raw fields = ic->fields();
 
   AccessFlags flags;
-  flags.set_flags(fields().ushort_at(field_index+ Field::ACCESS_FLAGS_OFFSET));
+  flags.set_flags(fields().ushort_at(field_index + Field::ACCESS_FLAGS_OFFSET));
   jushort initval = fields().ushort_at(field_index + Field::INITVAL_OFFSET);
 
   // Fields may be not removed if any of the following is true
@@ -2355,32 +2226,68 @@ bool ROMOptimizer::is_field_removable(InstanceClass *ic, int field_index,
     // This field is needed by InstanceClass::initialize_static_fields()
     return false;
   }
+  if( from_table && flags.is_static() ) {
 #if ENABLE_ISOLATES
-  if (from_table) {
     // In the case of isolates, fields may be not removed even if the
     // class has been initialized because we re-init the class for each task
     // at runtime
-    if (flags.is_static() && initval != 0) {
+    if ( initval != 0) {
       // This field is needed by InstanceClass::initialize_static_fields()
       return false;
     }
-  }
 #endif
-  if (from_table) {
-    if (flags.is_static() && flags.is_final()) {
+    if( flags.is_final() ) {
       // This field is needed by Value::set_immediate_from_static_field()
       return false;
     }
   }
 
-  const jint package_flags = get_package_flags(ic JVM_CHECK_0);
-  const AccessFlags class_flags = ic->access_flags();
+  return !is_member_reachable_by_apps(get_package_flags(ic), ic->access_flags(),
+                                      flags);
+}
 
-  if (is_member_reachable_by_apps(package_flags, class_flags, flags)) {
-    return false;
+inline int ROMOptimizer::compact_method_table(InstanceClass *klass JVM_TRAPS) {
+  UsingFastOops fast_oops;
+  ObjArray::Fast old_methods = klass->methods();
+  int num_old_methods = old_methods().length();
+
+  int num_removed_methods = 0;
+  int i;
+
+  // (1) Determine how many method entries can be removed.
+  for( i = 0; i < num_old_methods; i++ ) {
+    Method::Raw m = old_methods().obj_at(i);
+    if( m.is_null() || is_method_removable_from_table(&m) ) {
+      num_removed_methods ++;
+    }
   }
 
-  return true;
+  if( num_removed_methods == 0 ) {
+    return num_removed_methods;
+  }
+
+  if (num_removed_methods == num_old_methods) {
+    klass->set_methods(empty_obj_array());
+    return num_removed_methods;
+  }
+
+  // (2) Allocate a new method table and replace klass->methods();
+  const int num_new_methods = num_old_methods - num_removed_methods;
+  ObjArray::Raw new_methods =
+      Universe::new_obj_array(num_new_methods JVM_CHECK_0);
+
+  int num_methods_added = 0;
+  for( i = 0; i < num_old_methods; i++ ) {
+    Method::Raw m = old_methods().obj_at(i);
+    if( m.not_null() && !is_method_removable_from_table(&m) ) {
+      new_methods().obj_at_put(num_methods_added, &m);
+      num_methods_added ++;
+    }
+  }
+  GUARANTEE(num_methods_added == num_new_methods, "sanity");
+
+  klass->set_methods(&new_methods);
+  return num_removed_methods;
 }
 
 /// Compact the InstanceClass::methods() array -- remove renamed or virtual
@@ -2416,50 +2323,6 @@ void ROMOptimizer::compact_method_tables(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->print_cr("\tTotal removed method table entries(s) = %d "
                         "(%d bytes)", total_removed, total_removed*4);
 #endif
-}
-
-int ROMOptimizer::compact_method_table(InstanceClass *klass JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  ObjArray::Fast old_methods = klass->methods();
-  Method::Fast m;
-  int num_old_methods = old_methods().length();
-  int num_removed_methods = 0;
-  int i;
-
-  // (1) Determine how many method entries can be removed.
-  for (i=0; i<num_old_methods; i++) {
-    m = old_methods().obj_at(i);
-    if (m.is_null() || is_method_removable_from_table(&m)) {
-      num_removed_methods ++;
-    }
-  }
-
-  if (num_removed_methods == 0) {
-    return 0;
-  }
-
-  if (num_removed_methods == num_old_methods) {
-    klass->set_methods(empty_obj_array());
-    return num_removed_methods;
-  }
-
-  // (2) Allocate a new method table and replace klass->methods();
-  int num_new_methods = num_old_methods - num_removed_methods;
-  int num_methods_added = 0;
-  ObjArray::Fast new_methods =
-      Universe::new_obj_array(num_new_methods JVM_CHECK_0);
-
-  for (i=0; i<num_old_methods; i++) {
-    m = old_methods().obj_at(i);
-    if (m.not_null() && !is_method_removable_from_table(&m)) {
-      new_methods().obj_at_put(num_methods_added, &m);
-      num_methods_added ++;
-    }
-  }
-  GUARANTEE(num_methods_added == num_new_methods, "sanity");
-
-  klass->set_methods(&new_methods);
-  return num_removed_methods;
 }
 
 bool ROMOptimizer::is_method_removable_from_table(Method *method) {
@@ -2688,16 +2551,14 @@ ReturnOop ROMOptimizer::get_live_symbols(JVM_SINGLE_ARG_TRAPS) {
     Oop::Raw oop = persistent_handles[index];
     if (oop.not_null() && oop.is_symbol() &&
         !ROMWriter::write_by_reference(&oop)) {
-      Symbol::Raw s = oop.obj();      
-      record_live_symbol(&live_symbols, &s);
+      record_live_symbol(&live_symbols, oop.obj());
     }
   }
 
   for (index = 0; index < Universe::resource_names()->length(); index++) {
     Oop::Raw oop = Universe::resource_names()->obj_at(index);
     if (oop.not_null()) {
-      Symbol::Raw s = oop.obj();      
-      record_live_symbol(&live_symbols, &s);
+      record_live_symbol(&live_symbols, oop.obj());
     }
   }
 
@@ -2705,8 +2566,7 @@ ReturnOop ROMOptimizer::get_live_symbols(JVM_SINGLE_ARG_TRAPS) {
     Oop::Raw oop = (OopDesc*)(system_symbols[index]);
     if (oop.not_null() && oop.is_symbol()
         && !ROMWriter::write_by_reference(&oop)) {
-      Symbol::Raw s = oop.obj();
-      record_live_symbol(&live_symbols, &s);
+      record_live_symbol(&live_symbols, oop.obj());
     }
   }
 #endif
@@ -2754,105 +2614,93 @@ ReturnOop ROMOptimizer::get_live_symbols(JVM_SINGLE_ARG_TRAPS) {
 void ROMOptimizer::scan_all_symbols_in_class(ObjArray *live_symbols,
                                               JavaClass *klass) {
   ClassInfo::Raw class_info = klass->class_info();
-  Symbol::Raw name = class_info().name();
-  record_live_symbol(live_symbols, &name);  
+  record_live_symbol(live_symbols, class_info().name());  
   if (klass->is_instance_class()) {    
     InstanceClass::Raw ic = klass->obj();
     ConstantPool::Raw cp = ic().constants();    
     for (int i = 0; i < cp().length(); i++) {
-      unsigned char tag_value = cp().tag_value_at(i);            
+      const unsigned char tag_value = cp().tag_value_at(i);            
       if (tag_value == JVM_CONSTANT_Utf8) {
-        Symbol::Raw sym = cp().symbol_at(i);       
-        record_live_symbol(live_symbols, &sym);
+        record_live_symbol(live_symbols, cp().symbol_at(i));
       }
     }
   }
 }
 #endif
 
-void ROMOptimizer::scan_live_symbols_in_class(ObjArray *live_symbols,
-                                              JavaClass *klass) {
-  ClassInfo::Raw class_info = klass->class_info();
-  Symbol::Raw name = class_info().name();
-  record_live_symbol(live_symbols, &name);  
+inline void ROMOptimizer::scan_live_symbols_in_fields(ObjArray *live_symbols,
+                                                      InstanceClass *klass) {
+  TypeArray::Raw fields = klass->fields();
+  if( fields.is_null() ) {
+    return;
+  }
 
-  if (klass->is_instance_class()) {
-    InstanceClass ic = klass->obj();
+  ConstantPool::Raw cp = klass->constants();
+  const int fields_len = fields().length();
+
+  for( int i=0; i < fields_len; i += 5 ) {
+    //5-tuples of shorts [access, name index, sig index, initval index, offset]
+    const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
+    const jushort sig_index  = fields().ushort_at(i + Field::SIGNATURE_OFFSET);
+    record_live_symbol(live_symbols, cp().symbol_at(name_index));
+    record_live_symbol(live_symbols, cp().symbol_at(sig_index));
+  }
+}
+
+void ROMOptimizer::scan_live_symbols_in_class(ObjArray *live_symbols,
+                                              JavaClass *klass) {  
+  {
+    ClassInfo::Raw class_info = klass->class_info();
+    record_live_symbol(live_symbols, class_info().name());
+  }
+
+  if( klass->is_instance_class() ) {
+    InstanceClass::Raw ic = klass->obj();
     scan_live_symbols_in_fields(live_symbols, &ic);
     scan_live_symbols_in_methods(live_symbols, &ic);
   }
 }
 
-void ROMOptimizer::scan_live_symbols_in_fields(ObjArray *live_symbols,
-                                              InstanceClass *klass) {
-  UsingFastOops level1;
-  ConstantPool::Fast cp = klass->constants();
-  TypeArray::Fast fields = klass->fields();
-
-  if (fields.is_null()) {
-    return;
-  }
-  Symbol::Fast name;
-  Symbol::Fast sig;
-  for (int i=0; i<fields().length(); i+= 5) {
-    //5-tuples of shorts [access, name index, sig index, initval index, offset]
-    jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
-    jushort sig_index  = fields().ushort_at(i + Field::SIGNATURE_OFFSET);
-
-    name = cp().symbol_at(name_index);
-    sig  = cp().symbol_at(sig_index);
-
-    record_live_symbol(live_symbols, &name);
-    record_live_symbol(live_symbols, &sig);
-  }
-}
-
 void ROMOptimizer::scan_live_symbols_in_methods(ObjArray *live_symbols,
                                                 InstanceClass *klass) {
-  UsingFastOops level1;
-  ObjArray::Fast methods = klass->methods();
-
-  if (methods.is_null()) {
+  ObjArray::Raw methods = klass->methods();
+  if( methods.is_null() ) {
     return;
   }
-  Method::Fast method;
-  Symbol::Fast name;
-  Symbol::Fast sig;
-  for (int i=0; i<methods().length(); i++) {
-    method = methods().obj_at(i);
-    if (method.is_null()) {
+
+  for( int i = 0; i < methods().length(); i++ ) {
+    Method::Raw method = methods().obj_at(i);
+    if( method.is_null() ) {
       // A nulled-out <clinit> method
       continue;
     }
-    name = method().name();
-    sig  = method().signature();
-   
-    record_live_symbol(live_symbols, &name);
-    record_live_symbol(live_symbols, &sig);
+    record_live_symbol(live_symbols, method().name());
+    record_live_symbol(live_symbols, method().signature());
   }
 }
 
-void ROMOptimizer::record_live_symbol(ObjArray *live_symbols, Symbol* s) {
-  juint hash_value = SymbolTable::hash(s->utf8_data(), s->length());
-  int length = live_symbols->length();
+void ROMOptimizer::record_live_symbol(ObjArray *live_symbols, OopDesc* symbol) {
+  Symbol::Raw s = symbol;
+  juint hash_value = SymbolTable::hash(s().utf8_data(), s().length());
+
+  const int length = live_symbols->length();
   juint index = hash_value % length;
 
   AZZERT_ONLY(juint start = index;)
 
   while (true) {
-    Symbol::Raw existing = live_symbols->obj_at(index);
-    if (existing.is_null()) {
-      live_symbols->obj_at_put(index, s);
+    OopDesc* existing = live_symbols->obj_at(index);
+    if( existing == NULL ) {
+      live_symbols->obj_at_put(index, symbol);
       return;
-    } else if (existing().equals(s)) {
+    }
+    if( existing == symbol ) {
       // s is already recorded.
       return;
-    } else {
-      // advance to next slot
-      index ++;
-      index %= length;
     }
-
+    // advance to next slot
+    index ++;
+    index %= length;
     GUARANTEE(index != start, "table overflow");
   }
 }
@@ -2863,22 +2711,21 @@ bool ROMOptimizer::is_symbol_alive(ObjArray *live_symbols, Symbol* s) {
   juint index = hash_value % length;
   juint start = index;
 
-  while (true) {
+  do {
     Symbol::Raw existing = live_symbols->obj_at(index);
-    if (existing.is_null()) {
-      return false;
-    } else if (existing().equals(s)) {
+    if( existing.is_null() ) {
+      break;
+    }
+    if( existing().equals(s) ) {
       return true;
-    } else {
-      // advance to next slot
-      index ++;
-      index %= length;
     }
 
-    if (index == start) {
-      return false;
-    }
-  }
+    // advance to next slot
+    index ++;
+    index %= length;
+  } while( index != start );
+
+  return false;
 }
 
 class DisableCompilationMatcher : public JavaClassPatternMatcher {
