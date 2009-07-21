@@ -27,7 +27,7 @@ package com.sun.uig;
 public abstract class BaseScreen {
     final protected Object layoutLock = new Object();
 
-    BaseScreenStack             stack;
+    private BaseScreenStack     stack;
     private ScreenProperties    props;
     private Strings             strings;
 
@@ -59,6 +59,14 @@ public abstract class BaseScreen {
         returnString.append(format.substring(startIndex));
 
         return returnString.toString();
+    }
+
+    void setParentStack(BaseScreenStack stack) {
+        this.stack = stack;
+    }
+
+    boolean isParentStack(BaseScreenStack stack) {
+        return (this.stack == stack);
     }
 
     protected String printf(int id, Object args[]) {
