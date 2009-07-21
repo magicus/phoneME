@@ -603,7 +603,12 @@ class Assembler: public AssemblerCommon {
     // with cross compilation -- remember the loop generator is compiled
     // with the host compiler!
 #ifdef UNDER_CE
-    emit(0x1200070 | (cond << 28));
+    // bkpt instruction does not support condition codes, so we emit
+    // a conditional branch around it
+    if (cond != al) {
+      emit(not_cond(cond) << 28 | 0x5 << 25);
+    }
+    emit(0xe1200070);
 #else
     swi(0x9f0001, cond);
 #endif
