@@ -81,7 +81,6 @@ public class Ticker {
 
         synchronized (Display.LCDUILock) {
 	    message = str;
-	    displayedMessage = str.trim().replace('\n', ' ');
 	    tickerLF = LFFactory.getFactory().getTickerLF(this);
         }
     }
@@ -107,14 +106,7 @@ public class Ticker {
 	    // Save the original unmodified message so that getString() 
 	    // returns that.
 	    message = str;
-
-	    // According to the spec, linebreak characters should 
-	    // not be displayed in the ticker and could be used as 
-	    // separators. We will use a single white space as the
-	    // separator.
-
-	    displayedMessage = str.trim().replace('\n', ' ');
-	    tickerLF.lSetString(displayedMessage);
+        tickerLF.lSetString(message);
         }
     }
 
@@ -131,13 +123,6 @@ public class Ticker {
     /** The message set in this Ticker */
     private String message;
     
-    /** 
-     * The message being displayed in this Ticker. #getString() will
-     * only return what is stored in "message" and not in "displayedMessage",
-     * which is only used for display purposes.
-     */
-    String displayedMessage;
-
     /** Look and Feel corresponding to this Ticker */
     TickerLF tickerLF;
 }

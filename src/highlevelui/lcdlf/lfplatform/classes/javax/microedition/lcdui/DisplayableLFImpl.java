@@ -883,7 +883,15 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     private void setTicker(Ticker t) {
 
         if (nativeId != INVALID_NATIVE_ID) {
-            setTicker0(nativeId, (t == null) ? null : t.displayedMessage);
+    	    // According to the spec, linebreak characters should 
+    	    // not be displayed in the ticker and could be used as 
+    	    // separators. We will use a single white space as the
+    	    // separator.
+            String displayedMessage = null;
+            if (null != t) {
+                displayedMessage = t.getString().trim().replace('\n', ' ');
+            }
+            setTicker0(nativeId, displayedMessage);
         }
     }
 
