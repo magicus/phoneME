@@ -63,7 +63,6 @@ $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll: $(JSMS_SOURCES)
             /OUT:`$(call fixcygpath, $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll)` \
             $(LINK_LIBS) /entry:DllMain
 
-JAVACALL_EXTRA_LIBS:: $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll
+local_vc:: $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll
 
 endif
-
