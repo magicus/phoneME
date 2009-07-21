@@ -361,6 +361,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             GameMap.registerDisplayAccess(owner, currentDisplay.accessor);
             stickyKeyMask = currentKeyMask = 0;
         } else {
+            GameMap.registerDisplayAccess(null, null);
             // set the keymask to -1 when
             // the displayable is not a GameCanvas.
             stickyKeyMask = currentKeyMask = -1;
@@ -427,6 +428,10 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     void lCallHide() {
         if (state == SHOWN) {
             updateNativeTicker(owner.ticker, null);
+        }
+
+        if (GameMap.getDisplayAccess(owner) != null) {
+            GameMap.registerDisplayAccess(null, null);
         }
 
         // Delete native resources
