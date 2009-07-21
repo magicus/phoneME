@@ -329,51 +329,26 @@ public:
     return romizer_alternate_constant_pool()->obj();
   }
 
-  void initialize_hashtables(ObjArray* symbol_table_input,
-                             ObjArray* string_table_input JVM_TRAPS) {
-    ROMHashtableManager hashtab_mgr;
-    hashtab_mgr.initialize(symbol_table_input, string_table_input JVM_CHECK);
-
-    *string_table()          = hashtab_mgr.string_table();
-    *symbol_table()          = hashtab_mgr.symbol_table();
-    *embedded_table_holder() = hashtab_mgr.embedded_table_holder();
-    _embedded_symbols_offset = hashtab_mgr.embedded_symbols_offset();
-    _embedded_strings_offset = hashtab_mgr.embedded_strings_offset();
-  }
-
+  void initialize_hashtables(ObjArray* symbol_table, ObjArray* string_table 
+                             JVM_TRAPS);
   static void trace_failed_quicken(Method *method, 
                                    JavaClass *dependency JVM_TRAPS);
   static void process_quickening_failure(Method *method);
   bool may_be_initialized(InstanceClass *klass);
-  bool is_in_restricted_package(InstanceClass* klass) {
-#if USE_SOURCE_IMAGE_GENERATOR
-    return class_matches_packages_list(klass, restricted_packages());
-#else
-    // IMPL_NOTE: Monet: all classes can be considered as restricted
-    (void)klass;
-    return false;
-#endif
-  }
-  bool is_in_hidden_package(InstanceClass* klass) {
-#if USE_SOURCE_IMAGE_GENERATOR
-    return class_matches_packages_list(klass, hidden_packages());
-#else
-    (void)klass;
-    return false;
-#endif
-  }
+  bool is_in_restricted_package(InstanceClass *klass);
+  bool is_in_hidden_package(InstanceClass *klass  JVM_TRAPS);
   ReturnOop original_fields(InstanceClass *klass, bool &is_orig);
   void set_classes_as_romized();
   bool is_overridden(InstanceClass *ic, Method *method);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool class_matches_classes_list(InstanceClass* klass,
-                                         ROMVector* patterns);
-  static bool class_matches_packages_list(InstanceClass* klass,
-                                          ROMVector* patterns);
+  static bool class_matches_classes_list(InstanceClass *klass,
+                                         ROMVector *patterns);
+  static bool class_matches_packages_list(InstanceClass *klass,
+                                          ROMVector *patterns JVM_TRAPS);
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
-  void fill_interface_implementation_cache(void);
+  void fill_interface_implementation_cache(JVM_SINGLE_ARG_TRAPS);
   void forbid_invoke_interface_optimization(InstanceClass* cls, bool indirect_only);
   void set_implementing_class(int interface_id, int class_id, bool only_childs, bool direct);  
   enum {
@@ -486,8 +461,8 @@ private:
   void make_virtual_methods_final(InstanceClass *ic, ROMVector *log_vector
                                   JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool name_matches_patterns_list(const char name[], const int name_len,
-                                         ROMVector* patterns);
+  static bool name_matches_patterns_list(Symbol* checking_name, 
+                                  ROMVector *patterns_list);
 #endif
 
   bool has_subclasses(InstanceClass *klass);
@@ -506,7 +481,7 @@ private:
 #endif
   void resize_class_list(JVM_SINGLE_ARG_TRAPS);
   void rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS);
-  int  rename_non_public_class(InstanceClass* klass);
+  int  rename_non_public_class(InstanceClass *klass JVM_TRAPS);
   int  rename_non_public_fields(InstanceClass *klass JVM_TRAPS);
   int  rename_non_public_methods(InstanceClass *klass JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
@@ -530,20 +505,18 @@ private:
 
   void replace_empty_arrays();
   void remove_unused_static_fields(JVM_SINGLE_ARG_TRAPS);
-
-  void mark_static_fieldrefs                      (ObjArray *directory);
-  void fix_static_fieldrefs                       (ObjArray *directory);
-  void mark_unremoveable_static_fields            (ObjArray* directory);
-  void compact_static_field_containers            (ObjArray *directory);
+  void mark_static_fieldrefs(ObjArray *directory);
+  void fix_static_fieldrefs(ObjArray *directory);
+  void mark_unremoveable_static_fields(ObjArray *directory JVM_TRAPS);
+  void compact_static_field_containers(ObjArray *directory);
   void fix_field_tables_after_static_field_removal(ObjArray *directory);
-
   void fix_one_field_table(InstanceClass *klass, TypeArray *fields, 
                            TypeArray *reloc_info);
   void compact_field_tables(JVM_SINGLE_ARG_TRAPS);
   void compact_method_tablses(JVM_SINGLE_ARG_TRAPS);
   int compact_one_interface(InstanceClass* ic);
   void compact_interface_classes(JVM_SINGLE_ARG_TRAPS);
-  bool is_field_removable(InstanceClass *ic, int field_index, bool from_table);
+  bool is_field_removable(InstanceClass *ic, int field_index, bool from_table JVM_TRAPS);
   void compact_method_tables(JVM_SINGLE_ARG_TRAPS);
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
   bool is_method_removable_from_table(Method *method);
@@ -551,24 +524,16 @@ private:
                                    AccessFlags class_flags,
                                    AccessFlags member_flags);
   bool field_may_be_renamed(jint package_flags, AccessFlags class_flags,
-                            AccessFlags member_flags, Symbol* name) {
-    if( is_member_reachable_by_apps(package_flags, class_flags, member_flags) ||
-        Symbols::is_system_symbol(name) ) {  
-      return false;
-    }
-    return true;
-  }
-
-  bool method_may_be_renamed      (InstanceClass* ic, Method* method);
-  bool is_method_reachable_by_apps(InstanceClass* ic, Method* method);
-  bool is_invocation_closure_root (InstanceClass *ic, Method *method);
-  bool is_in_public_itable        (InstanceClass* ic, Method* method);
-  bool is_in_public_vtable        (InstanceClass* ic, Method* method);
-
+                            AccessFlags member_flags, Symbol *name);
+  bool method_may_be_renamed(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_method_reachable_by_apps(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_invocation_closure_root(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_in_public_itable(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_in_public_vtable(InstanceClass *ic, Method *method JVM_TRAPS);
   void remove_unused_symbols(JVM_SINGLE_ARG_TRAPS);
   bool is_symbol_alive(ObjArray *live_symbols, Symbol* symbol);
   ReturnOop get_live_symbols(JVM_SINGLE_ARG_TRAPS);
-  void record_live_symbol(ObjArray* live_symbols, OopDesc* symbol);
+  void record_live_symbol(ObjArray *live_symbols, Symbol* s);
   void scan_live_symbols_in_class(ObjArray *live_symbols, JavaClass *klass);
 #if ENABLE_ISOLATES
   void scan_all_symbols_in_class(ObjArray *live_symbols, JavaClass *klass);
@@ -629,15 +594,17 @@ private:
     DEAD_FIELD = 0x10000
   };
 
-  jint get_package_flags(InstanceClass* klass) {
-    if( is_in_hidden_package(klass) ) {
+  jint get_package_flags(InstanceClass *ic JVM_TRAPS) {
+    const bool hidden = is_in_hidden_package(ic JVM_CHECK_0);
+    if (hidden) {
       return HIDDEN_PACKAGE;
-    }
-    if( is_in_restricted_package(klass) ) {
+    } else if (is_in_restricted_package(ic)) {
       return RESTRICTED_PACKAGE;
+    } else {
+      return UNRESTRICTED_PACKAGE;
     }
-    return UNRESTRICTED_PACKAGE;
   }
+
 
   class MethodIterator : public ObjectHeapVisitor
   {

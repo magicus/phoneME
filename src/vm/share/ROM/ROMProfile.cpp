@@ -61,15 +61,20 @@ ReturnOop ROMProfile::allocate_hidden_set(JVM_SINGLE_ARG_TRAPS) {
   return p;
 }
 
-void ROMProfile::fill_hidden_set( void ) {
-  ROMVector::Raw hidden_packages = this->hidden_packages();
-  ROMVector::Raw hidden_classes  = this->hidden_classes();
-  ROMBitSet::Raw hidden_set      = this->hidden_set();;
+void ROMProfile::fill_hidden_set(JVM_SINGLE_ARG_TRAPS) {
+  UsingFastOops fast_oops;
+  ROMVector::Fast hidden_packages = this->hidden_packages();
+  ROMVector::Fast hidden_classes  = this->hidden_classes();
+  ROMBitSet::Fast hidden_set      = this->hidden_set();;
+  InstanceClass::Fast klass;
 
   for( SystemClassStream st; st.has_next(); ) {
-    InstanceClass::Raw klass = st.next();
-    if( ROMOptimizer::class_matches_classes_list (&klass, &hidden_classes ) ||
-        ROMOptimizer::class_matches_packages_list(&klass, &hidden_packages) ) {
+    klass = st.next();
+    const bool hidden =
+      ROMOptimizer::class_matches_classes_list(&klass, &hidden_classes) ||
+      ROMOptimizer::class_matches_packages_list(&klass, &hidden_packages
+                                                JVM_CHECK);
+    if( hidden ) {
       hidden_set().set_bit( klass().class_id() );
     }
   }
