@@ -65,6 +65,14 @@ public class RmsEnvironment {
     }
 
     /*
+     * Called by java.microedition.rms.RecordStore. Returns null if 
+     * a suite is not calling or the suite is destroyed.
+     */
+    public static String getCallingMidletClassName() {
+        return suiteContainer.getCallingMidletClassName();
+    }
+
+    /*
      * Called by java.microedition.rms.RecordStore, returns 0 if suite not
      *  found.
      */

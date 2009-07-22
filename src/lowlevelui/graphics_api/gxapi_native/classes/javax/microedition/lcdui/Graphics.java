@@ -1337,6 +1337,7 @@ public class Graphics {
      * @see Image
      */
     public void drawImage(Image image, int x, int y, int anchor) {
+        System.out.println("Graphics.drawImage");
         if (image == null) {
             throw new NullPointerException();
         }

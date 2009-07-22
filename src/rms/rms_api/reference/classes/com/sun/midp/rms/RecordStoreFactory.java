@@ -26,6 +26,9 @@
 
 package com.sun.midp.rms;
 
+import javax.microedition.rms.RecordStore;
+import javax.microedition.rms.RecordStoreException;
+
 import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.security.Permissions;
@@ -78,6 +81,77 @@ public class RecordStoreFactory {
         }
 
         return suiteHasRmsData0(fileNameBase);
+    }
+
+    /**
+     * Open a Record Store of a suite. This method allows an AMS MIDlet
+     * such as the an installer to open any record store without a
+     * owner check for sharing. 
+     * <p>
+     * Method requires com.sun.midp.ams permission.
+     *
+     * @param token security token with MIDP AMS permission
+     * @param id ID of the suite
+     * @param name name of the record store
+     *
+     * @return <code>RecordStore</code> object for the record store
+     *
+     * @exception RecordStoreException if a record store-related
+     *          exception occurred
+     */
+    public static RecordStore openRecordStore(SecurityToken token,
+            int id, String name, boolean createIfNecessary)
+            throws RecordStoreException {
+	if (token == null) {
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+        } else {
+            token.checkIfPermissionAllowed(Permissions.AMS);
+        }
+
+        return Tunnel.getTunnel().openRecordStore(id, name, createIfNecessary);
+    }
+
+    /**
+     * Remove a Record Store of a suite.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
+     *
+     * @param token security token with MIDP AMS permission
+     * @param id ID of the suite
+     * @param name name of the record store
+     *
+     * @exception RecordStoreException if a record store-related
+     *          exception occurred
+     */
+    public static void deleteRecordStore(SecurityToken token,
+            int id, String name) throws RecordStoreException {
+	if (token == null) {
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+        } else {
+            token.checkIfPermissionAllowed(Permissions.AMS);
+        }
+
+        Tunnel.getTunnel().deleteRecordStore(id, name);
+    }
+
+    /**
+     * Closes the Record Stores left open by a MIDlet.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
+     *
+     * @param token security token with MIDP AMS permission
+     * @param id ID of the suite
+     * @param className class name of the MIDlet
+     */
+    public static void closeRecordStoresForMidlet(SecurityToken token,
+            int id, String className) {
+	if (token == null) {
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+        } else {
+            token.checkIfPermissionAllowed(Permissions.AMS);
+        }
+
+        Tunnel.getTunnel().closeRecordStoresForMidlet(id, className);
     }
 
     /**

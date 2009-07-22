@@ -896,7 +896,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
 			    /* System.out.println("ChoiceGroupLFImpl callin draw3pcsBackground");*/
  			    CGraphicsUtil.draw3pcsBackground(g, 0, h_offset, bounds[WIDTH], bgImage);
 			    h_offset += h_image;
-			} while (elHeights[i] - 20 > h_offset + h_image);
+			} while (elHeights[i] - (cg.fitPolicy != ChoiceGroup.TEXT_WRAP_OFF ? 20 : 0) 
+				 > h_offset + h_image);
                     }
                 }else{//no image available draw a rect with color as background
 		    /* System.out.println("ChoiceGroupLFImpl drawing filled rect as background " + elHeights[i]); */

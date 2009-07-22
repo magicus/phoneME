@@ -47,14 +47,6 @@ public class OpenGLEnvironment{
      */
     public void flushOpengGL(DisplayContainer container, Graphics bindTarget) {
         int regionArray[];
-        /*
-        while (midpIsRendering) {
-            try {
-                System.out.println("waiting for midp to finish rendering");
-                Thread.sleep(10);
-            } catch (Exception e) {}
-        }
-         */
         if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
                                bindTarget.getClipHeight())) {
         int displayId = NativeForegroundState.getState();
@@ -71,7 +63,7 @@ public class OpenGLEnvironment{
                 regionArray[0] = 0; regionArray[1] = 0;
                 regionArray[2] = bindTarget.getClipWidth();
                 regionArray[3] = bindTarget.getClipHeight();
-                //System.out.println("flushOpenGL: flushing whole screen");
+                System.out.println("flushOpenGL: flushing whole screen");
                 flushOpenGL0(regionArray, 1, displayId);
                 return;
             }
@@ -84,7 +76,7 @@ public class OpenGLEnvironment{
                 regionArray[i+2]=curRegion[2];
                 regionArray[i+3]=curRegion[3];
             }
-            //System.out.println("flushOpenGL: flushing dirty regions");
+            System.out.println("flushOpenGL: flushing dirty regions");
             flushOpenGL0(regionArray, dirtyRegions.length, displayId);
         }
         }
@@ -104,12 +96,10 @@ public class OpenGLEnvironment{
     }
 
     public void startMidpRendering() {
-        //System.out.println("*** startMidpRendering");
         midpIsRendering=true;
     }
 
     public void endMidpRendering() {
-        //System.out.println("*** endMidpRendering");
         midpIsRendering=false;
     }
     

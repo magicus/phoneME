@@ -26,6 +26,8 @@
 
 package javax.microedition.rms;
 
+import java.util.Vector;
+
 import com.sun.midp.rms.RecordStoreImpl;
 import com.sun.midp.rms.RecordStoreEventConsumer;
 import com.sun.midp.rms.RecordStoreRegistry;
@@ -121,7 +123,7 @@ public class RecordStore {
     final static int RECORD_DELETED = 3;    
 
     /** cache of open RecordStore instances */
-    private static java.util.Vector openRecordStores = new java.util.Vector(3);
+    private static Vector openRecordStores = new Vector(3);
 
     /** The peer that performs the real functionality. */
     private RecordStoreImpl peer;
@@ -135,8 +137,14 @@ public class RecordStore {
     /** number of open instances of this record store */
     private int opencount;
 
+    /** ID of the suite that opened this record store */
+    private int consumerId;
+
+    /** Class name of the MIDlet that opened this record store */
+    private String consumerName;
+
     /** recordListeners of this record store */
-    private java.util.Vector recordListeners;
+    private Vector recordListeners;
 
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -155,6 +163,11 @@ public class RecordStore {
     /** Consumer of record store change events */
     private static RecordStoreEventConsumer recordStoreEventConsumer;
 
+    // Connect the javax.microedition.rms.Tunnel to com.sun.midp.rms package
+    static {
+    	Tunnel.connectTunnel(classSecurityToken);
+    }
+
     /*
      * RecordStore Constructors
      */
@@ -165,15 +178,21 @@ public class RecordStore {
      * is not declared (as private scope), Javadoc (and Java)
      * will assume a public constructor.
      *
+     * @param consumerId ID of the suite that opened this record store
+     * @param consumerName Class name of the MIDlet that opened this
+     *                     record store
      * @param suiteId the ID of the suite that owns this record store
      * @param recordStoreName the MIDlet suite unique name for the
      *          record store, consisting of between one and 32 Unicode
      *          characters inclusive.
      */
-    private RecordStore(int suiteId, String recordStoreName) {
+    private RecordStore(int consumerId, String consumerName, int suiteId,
+            String recordStoreName) {
+        this.consumerId = consumerId;
+        this.consumerName = consumerName;
         this.suiteId = suiteId;
         this.recordStoreName = recordStoreName;
-        recordListeners = new java.util.Vector(3);
+        recordListeners = new Vector(3);
     }
 
     /**
@@ -199,7 +218,6 @@ public class RecordStore {
         int id = RmsEnvironment.getCallersSuiteId();
 
         if (id == RmsEnvironment.UNUSED_SUITE_ID) {
-System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
             throw new RecordStoreException("Calling MIDlet is DESTROYED");
         }
 
@@ -265,11 +283,10 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
         int id = RmsEnvironment.getCallersSuiteId();
 
         if (id == RmsEnvironment.UNUSED_SUITE_ID) {
-System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
             throw new RecordStoreException("Calling MIDlet is DESTROYED");
         }
 
-        return doOpen(id, recordStoreName, createIfNecessary);
+        return doOpen(id, id, recordStoreName, createIfNecessary);
     }
 
     /**
@@ -430,13 +447,9 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
                                               String suiteName)
         throws RecordStoreException, RecordStoreNotFoundException {
 
-        int currentID = RmsEnvironment.getCallersSuiteId();
+        int currentId = RmsEnvironment.getCallersSuiteId();
         int id;
         RecordStore recordStore;
-
-        if (currentID == RmsEnvironment.UNUSED_SUITE_ID) {
-            throw new RecordStoreException("Calling MIDlet is DESTROYED");
-        }
 
         if (vendorName == null || suiteName == null) {
             throw new IllegalArgumentException("vendorName and " +
@@ -454,8 +467,14 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
             throw new RecordStoreNotFoundException();
         }
 
-        recordStore = doOpen(id, recordStoreName, false);
-        if ((currentID != id) &&
+        currentId = RmsEnvironment.getCallersSuiteId();
+        if (currentId == RmsEnvironment.UNUSED_SUITE_ID) {
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
+        }
+
+        recordStore = doOpen(currentId, id, recordStoreName, false);
+
+        if ((currentId != id) &&
                 (recordStore.peer.getAuthMode() == AUTHMODE_PRIVATE)) {
             recordStore.closeRecordStore();
             throw new SecurityException();
@@ -546,15 +565,29 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
         checkOpen();
         synchronized (openRecordStores) {
             if (--opencount <= 0) {  // free stuff - final close
-
-                stopRecordStoreListening();
-                openRecordStores.removeElement(this);
-                peer.closeRecordStore();
-
-                // mark this RecordStore as closed
-                peer = null;
+                forceClose();
             }
         }
+    }
+
+    /**
+     * Internal force a complete close of the record store.
+     *
+     * @exception RecordStoreNotOpenException if the record store is
+     *          not open
+     * @exception RecordStoreException if a different record
+     *          store-related exception occurred
+     */
+    private void forceClose()
+            throws RecordStoreNotOpenException, RecordStoreException {
+
+        opencount = 0;
+        stopRecordStoreListening();
+        openRecordStores.removeElement(this);
+        peer.closeRecordStore();
+        
+        // mark this RecordStore as closed
+        peer = null;
     }
 
     /**
@@ -785,14 +818,22 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
      *
      * Record listeners registered in the execution context where record store
      * has been changed are notified synchronously, while listeners registered
-     * in other execution contexts are notified asynchronously over event system.
+     * in other execution contexts are notified asynchronously over event
+     * system.
      *
      * @param changeType type of record store change: ADDED, CHANGED or DELETED
      * @param recordId ID of the changed record
      */
     private void notifyAllRecordListeners(int changeType, int recordId) {
+        /*
+         * To support multiple suites in the same VM and record store
+         * sharing we must assume the record store is open many times
+         * an notify them all.
+         */
+        handleRecordStoreChange(suiteId, recordStoreName, changeType,
+            recordId);
 
-        notifyRecordListeners(changeType, recordId);
+        // Notify other VMs/Isolates
         RecordStoreRegistry.notifyRecordStoreChange(
             classSecurityToken, suiteId, recordStoreName,
             changeType, recordId);
@@ -1159,7 +1200,8 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
      * @param changeType type of the change
      * @param recordId changed record ID
      */
-    private void notifyRecordListeners(final int changeType, final int recordId) {
+    private void notifyRecordListeners(final int changeType,
+            final int recordId) {
         synchronized (recordListeners) {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
@@ -1169,7 +1211,8 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
             }
             int nListeners = recordListeners.size();
             for (int i = 0; i < nListeners; i++) {
-                RecordListener rl = (RecordListener) recordListeners.elementAt(i);
+                RecordListener rl =
+                    (RecordListener) recordListeners.elementAt(i);
                 switch (changeType) {
                     case RECORD_ADDED:
                         rl.recordAdded(RecordStore.this, recordId);
@@ -1186,6 +1229,30 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
     }
 
     /**
+     * Find the open record stores for a given consumer.
+     *
+     * @param suiteId suite ID of the consumer
+     * @param className class name of the consumer
+     *
+     * @return never null, all of the consumer's open stores if any
+     */
+    private static Vector findConsumersStores(int suiteId, String className) {
+        Vector result = new Vector();
+
+        int size = openRecordStores.size();
+        for (int i = 0; i < size; i++) {
+            RecordStore rc = (RecordStore)openRecordStores.elementAt(i);
+
+            if (rc.consumerId == suiteId &&
+                    rc.consumerName.equals(className)) {
+                result.addElement(rc);
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Handles asynchronous notification about changes of the record store
      * done in other execution context. The notification can be recieved
      * over event system.
@@ -1195,8 +1262,8 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
      * @param changeType type of record change: ADDED, DELETED or CHANGED
      * @param recordId ID of the changed record
      */
-    private static void handleRecordStoreChange(
-            int suiteId, String recordStoreName, int changeType, int recordId) {
+    private static void handleRecordStoreChange(int suiteId,
+            String recordStoreName, int changeType, int recordId) {
 
         synchronized (openRecordStores) {
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -1207,13 +1274,20 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
                         "changeType = " + changeType + ", " +
                         "recordId = " + recordId);
             }
+
             int size = openRecordStores.size();
             for (int n = 0; n < size; n++) {
-                RecordStore recordStore = (RecordStore)openRecordStores.elementAt(n);
+                RecordStore recordStore =
+                    (RecordStore)openRecordStores.elementAt(n);
                 if (suiteId == recordStore.suiteId &&
                         recordStoreName.equals(recordStore.recordStoreName)) {
                     recordStore.notifyRecordListeners(changeType, recordId);
-                    break;
+                    /*
+                     * To support multiple suites in the same VM and record
+                     * store sharing we must assume the record store can
+                     * be open many times in this VM, so keep searching.
+                     * an notify them all.
+                     */
                 }
             }
         }
@@ -1225,6 +1299,7 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
      * the record store is already open by a MIDlet in the MIDlet suite,
      * this method returns a reference to the same RecordStoreImpl object.
      *
+     * @param consumerId ID of the MIDlet suite opening the record store
      * @param suiteId ID of the MIDlet suite that owns the record store
      * @param recordStoreName the MIDlet suite unique name for the
      *          record store, consisting of between one and 32 Unicode
@@ -1243,14 +1318,60 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
      * @exception IllegalArgumentException if
      *          recordStoreName is invalid
      */
-    static RecordStore doOpen(int suiteId,
+    static RecordStore openRecordStoreInPackage(int suiteId,
+            String recordStoreName, boolean createIfNecessary)
+                throws RecordStoreException, RecordStoreFullException,
+                RecordStoreNotFoundException {
+
+        int consumerId = RmsEnvironment.getCallersSuiteId();
+
+        if (consumerId == RmsEnvironment.UNUSED_SUITE_ID) {
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
+        }
+
+        return doOpen(consumerId, suiteId, recordStoreName, createIfNecessary);
+    }
+
+    /**
+     * Internal method to open (and possibly create) a record store associated
+     * with the given MIDlet suite. If this method is called by a MIDlet when
+     * the record store is already open by a MIDlet in the MIDlet suite,
+     * this method returns a reference to the same RecordStoreImpl object.
+     *
+     * @param consumerId ID of the MIDlet suite opening the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
+     * @param recordStoreName the MIDlet suite unique name for the
+     *          record store, consisting of between one and 32 Unicode
+     *          characters inclusive.
+     * @param createIfNecessary if true, the record store will be
+     *          created if necessary
+     *
+     * @return <code>RecordStore</code> object for the record store
+     *
+     * @exception RecordStoreException if a record store-related
+     *          exception occurred
+     * @exception RecordStoreNotFoundException if the record store
+     *          could not be found
+     * @exception RecordStoreFullException if the operation cannot be
+     *          completed because the record store is full
+     * @exception IllegalArgumentException if
+     *          recordStoreName is invalid
+     */
+    private static RecordStore doOpen(int consumerId, int suiteId,
             String recordStoreName, boolean createIfNecessary)
                 throws RecordStoreException, RecordStoreFullException,
                 RecordStoreNotFoundException {
 
         RecordStore recordStore;
+        String consumerName;
+
         if (recordStoreName.length() > 32 || recordStoreName.length() == 0) {
             throw new IllegalArgumentException();
+        }
+
+        consumerName = RmsEnvironment.getCallingMidletClassName();
+        if (consumerName == null) {
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
         }
 
         synchronized (openRecordStores) {
@@ -1265,7 +1386,9 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
             int size = openRecordStores.size();
             for (int n = 0; n < size; n++) {
                 recordStore = (RecordStore) openRecordStores.elementAt(n);
-                if (recordStore.suiteId == suiteId &&
+                if (recordStore.consumerId == consumerId &&
+                    recordStore.consumerName.equals(consumerName) &&
+                    recordStore.suiteId == suiteId &&
                     recordStore.recordStoreName.equals(recordStoreName)) {
                     recordStore.opencount++;  // increment the open count
                     return recordStore;  // return ref to cached record store
@@ -1278,10 +1401,11 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
             * does not exists, a RecordStoreNotFoundException is
             * thrown.
             */
-            recordStore = new RecordStore(suiteId, recordStoreName);
+            recordStore = new RecordStore(consumerId, consumerName, suiteId,
+                                          recordStoreName);
             recordStore.peer = RecordStoreImpl.openRecordStore(
-                classSecurityToken, suiteId, recordStoreName,
-                createIfNecessary);
+                classSecurityToken, suiteId,
+                recordStoreName, createIfNecessary);
 
             /*
             * Now add the new record store to the cache
@@ -1320,8 +1444,18 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
 
         RecordStore recordStore;
         int suiteId = RmsEnvironment.getCallersSuiteId();
+        String consumerName = RmsEnvironment.getCallingMidletClassName();
 
-        recordStore = new RecordStore(suiteId, recordStoreName);
+        if (suiteId == RmsEnvironment.UNUSED_SUITE_ID) {
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
+        }
+
+        if (consumerName == null) {
+            throw new RecordStoreException("Calling MIDlet is DESTROYED");
+        }
+
+        recordStore = new RecordStore(suiteId, consumerName, suiteId,
+                                      recordStoreName);
         recordStore.peer = RecordStoreImpl.openRecordStore(
                            classSecurityToken, suiteId, recordStoreName,
                            false);
@@ -1330,7 +1464,24 @@ System.out.println("\n*** Destroyed MIDlet tried to delete record store. ***");
     }
 
     // used via Tunnel
-        void setWritable() throws RecordStoreException {
-                peer.setMode(AUTHMODE_ANY, true);
+    void setWritable() throws RecordStoreException {
+        peer.setMode(AUTHMODE_ANY, true);
+    }
+
+    static void closeRecordStoresForMidlet(int suiteId, String className) {
+        synchronized (openRecordStores) {
+            Vector stores = findConsumersStores(suiteId, className);
+
+            int size = openRecordStores.size();
+            for (int i = 0; i < size; i++) {
+                RecordStore rc = (RecordStore)stores.elementAt(i);
+
+                try {
+                    rc.forceClose();
+                } catch (Throwable t) {
+                    // move on to avoid a memory leak
+                }
+            }
         }
+    }
 }

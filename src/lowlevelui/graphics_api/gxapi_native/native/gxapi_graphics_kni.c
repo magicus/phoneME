@@ -199,7 +199,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
     int w = KNI_GetParameterAsInt(3);
     int y = KNI_GetParameterAsInt(2);
     int x = KNI_GetParameterAsInt(1);
-
+BREWprintf("in graphics.fillRect\n");
     /*
      * @note { Spec verify step: "If either width or height
      * is zero or less, nothing is drawn." }
@@ -704,6 +704,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChar) {
 
     KNI_GetThisPointer(thisObject);
 
+BREWprintf("graphics.drawChar\n");
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
         if (!check_anchor(anchor, VCENTER)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
@@ -763,7 +764,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
 
     KNI_GetParameterAsObject(1, ch);
     KNI_GetThisPointer(thisObject);
-
+BREWprintf("graphics.drawChars\n");
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
         chLen = KNI_GetArrayLength(ch);
         if (chLen < 0) {

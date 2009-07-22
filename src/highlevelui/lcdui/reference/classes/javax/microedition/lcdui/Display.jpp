@@ -2432,13 +2432,17 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
                     region[1] += ty;
                     region[2] += tx;
                     region[3] += ty;
+System.out.println("Display: calling uCallPaint");
                     currentCopy.uCallPaint(screenGraphics, null);
+System.out.println("Display: done in uCallPaint");
                     // SetFullScreenMode TCK test fails unless the following
                     // translate is present
                     screenGraphics.translate(-screenGraphics.getTranslateX(),
                                              -screenGraphics.getTranslateY());
+System.out.println("Display: screen refresh for canvas");
                     displayDevice.refresh(displayId, region[0], region[1], 
                                           region[2], region[3], useOpenGL);
+System.out.println("Display: done with screen refresh for canvas");
                 } else {
                     // Chameleon redirects the paint call through its layer logic,
                     // eventually resulting in a call back to the Chameleon Display
@@ -4072,7 +4076,7 @@ System.out.println("Display: disabling openGL");
                 if (hasForeground) {
                     return;
                 }
-System.out.println("handleForeground for " + Display.this);
+//System.out.println("handleForeground for " + Display.this);
                 // #ifdef ENABLE_OPENGL
                 if (useOpenGL) {
 System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL");
