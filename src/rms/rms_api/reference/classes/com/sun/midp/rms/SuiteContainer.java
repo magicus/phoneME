@@ -32,9 +32,14 @@ package com.sun.midp.rms;
  */
 public interface SuiteContainer {
     /**
-     * Get the suite ID of applicaiton on the current call stack.
+     * Get the suite ID of application on the current call stack.
      */
     int getCallersSuiteId();
+
+    /**
+     * Get the class name of MIDlet on the current call stack.
+     */
+    String getCallingMidletClassName();
 
     /**
      * Get the suite of identified by vendor and suite name.
@@ -49,8 +54,8 @@ public interface SuiteContainer {
     
     /**
      * Get the storage area ID for a suite.
-     * This is only CLDC RescordStore implementations, any other implementations can just
-     * return 0.
+     * This is only CLDC RescordStore implementations, any other
+     * implementations can just return 0.
      */
     int getStorageAreaId(int suiteId);
 }

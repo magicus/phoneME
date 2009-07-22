@@ -29,12 +29,35 @@ package com.sun.midp.rms;
 import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 
+import com.sun.j2me.security.AccessController;
+
+import com.sun.midp.security.Permissions;
+import com.sun.midp.security.SecurityToken;
+
 public abstract class Tunnel {
-	static public Tunnel inst;
+    private static Tunnel tunnel;
 
-	public abstract RecordStore openRecordStore(int suiteId, String storeName, 
-									boolean createIfNecessary) throws RecordStoreException;
+    public static void setTunnel(SecurityToken token, Tunnel t) {
+        token.checkIfPermissionAllowed(Permissions.AMS);
 
-	public abstract void deleteRecordStore(int suiteID, String storeName) 
-									throws RecordStoreException;
+        if (tunnel == null) {
+            tunnel = t;
+        }
+    }
+
+    // The tunnel is used publically through RecordStoreFactory
+    static Tunnel getTunnel() {
+        // Trigger the RecordStore class to set the tunnel
+        RecordStore.class.getName();
+        return tunnel;
+    }
+
+    public abstract RecordStore openRecordStore(int suiteId, String storeName, 
+        boolean createIfNecessary) throws RecordStoreException;
+
+    public abstract void deleteRecordStore(int suiteID, String storeName) 
+        throws RecordStoreException;
+
+    public abstract void closeRecordStoresForMidlet(int suiteId,
+        String className);
 }
