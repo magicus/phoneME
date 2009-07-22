@@ -1,6 +1,5 @@
-#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -55,6 +54,10 @@ $(FILE_DIR) $(NETWORK_DIR) $(STRING_DIR)
 	cd ${NETWORK_DIR}; $(MAKE) $@
 	cd ${STRING_DIR}; $(MAKE) $@
 	cd ${ESCFILENAMES_DIR}; $(MAKE) $@
+
+NUM_JOBS ?= 2
+parallel_all:
+	$(MAKE) -j $(NUM_JOBS) all
 
 include makefiles/verify.gmk
 
@@ -121,7 +124,6 @@ endif
 	@echo '#define PRINT_MODULE $(PRINT_MODULE)' >> $(PCSL_CONFIG_FILENAME)
 	@echo '/* String module */' >> $(PCSL_CONFIG_FILENAME)
 	@echo '#define STRING_MODULE $(STRING_MODULE)' >> $(PCSL_CONFIG_FILENAME)
-	
 	@echo  >> $(PCSL_CONFIG_FILENAME)
 	@echo '#endif /*_PCSL_CONFIG_H_*/' >> $(PCSL_CONFIG_FILENAME)
 
