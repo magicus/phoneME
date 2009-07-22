@@ -458,10 +458,10 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
  * This function is called at the first time to initialize native library.
  * You can do your own initialization job from this function.
  * 
- * @param app_id        Unique application ID for this playing
- * @param player_id     Unique player object ID for this playing
- * @param locator_len   Locator string length.
+ * @param app_id        Unique application ID.
+ * @param player_id     Unique player object ID.
  * @param locator       Locator unicode string.
+ * @param locator_len   Locator string length.
  * @param handle        Native player handle.
  *
  * @retval JAVACALL_OK                      Success
@@ -484,46 +484,11 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
  *                                          do not want media from some
  *                                          pre-defined "bad" Internet site.
  */
-javacall_result javacall_media_create_player_by_locator(
+javacall_result javacall_media_create(
     javacall_int32 app_id,
     javacall_int32 player_id,
-    javacall_int32 locator_len,
     javacall_const_utf16_string locator,
-    /*OUT*/ javacall_handle *handle);
-
-/**
- * Java MMAPI call this function to create native player which data flow
- * will be controlled by Java.
- * This function is called at the first time to initialize native library.
- * You can do your own initialization job from this function.
- * 
- * @param app_id        Unique application ID for this playing
- * @param player_id     Unique player object ID for this playing
- * @param handle        Native player handle.
- *
- * @retval JAVACALL_OK                      Success
- * @retval JAVACALL_CONNECTION_NOT_FOUND    Could not connect to the URL
- * @retval JAVACALL_IO_ERROR                IO error occurred while connecting
- *                                          the URL or getting data 
- * @retval JAVACALL_INVALID_ARGUMENT        Invalid URL or other parameter
- * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
- *                                      playback is impossible. JVM will throw
- *                                      a MediaException. Please return this
- *                                      code only in case you want to
- *                                      reject playback, i.e. when the content
- *                                      is audio only. If some kind of playback
- *                                      is still possible (e.g. mute video),
- *                                      please return JAVACALL_OK instead
- * @retval JAVACALL_FAIL                    General failure or the following
- *                                          situation. Porting Layer may
- *                                          decide to reject the creation for
- *                                          some reason. For example, if you
- *                                          do not want media from some
- *                                          pre-defined "bad" Internet site.
- */
-javacall_result javacall_media_create_managed_player(
-    javacall_int32 app_id,
-    javacall_int32 player_id,
+    javacall_int32 locator_len,
     /*OUT*/ javacall_handle *handle);
 
 /**
@@ -576,55 +541,21 @@ javacall_result javacall_media_close(javacall_handle handle);
 javacall_result javacall_media_destroy(javacall_handle handle);
 
 /**
- * Request to acquire device resources used to play media data.
- * You could implement this function to control device resource usage.
- * If there is no valid device resource to play media data, return JAVACALL_FAIL.
+ * Ask to the native layer if it will handle media download from specific URL.
+ * Is media download for specific URL (provided in javacall_media_create)
+ * will be handled by native layer or Java layer?
+ * If isHandled is JAVACALL_TRUE, Java do not call 
+ * javacall_media_do_buffering function
+ * In this case, native layer should handle all of data gathering by itself
  * 
  * @param handle    Handle to the library
+ * @param isHandled JAVACALL_TRUE if native player will handle media download
  * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Java VM will raise the media exception
+ * @retval JAVACALL_OK      
+ * @retval JAVACALL_FAIL    
  */
-javacall_result javacall_media_acquire_device(javacall_handle handle);
-
-/**
- * Release device resource. 
- * Java MMAPI call this function to release limited device resources.
- * 
- * @param handle    Handle to the library
- * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Nothing happened now. Same as JAVACALL_OK.
- */
-javacall_result javacall_media_release_device(javacall_handle handle);
-
-/**
- * Notify the native player about stream length. This function is called if
- * stream length is known.
- *
- * @param handle        Handle to the native player.
- * @param stream_length Stream length, in bytes.
- * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL
- */
-javacall_result javacall_media_stream_length(
-    javacall_handle handle,
-    javacall_int64 stream_length);
-
-/**
- * Tell the native player that data has been written to the memory block
- * specified by event.
- * 
- * @param handle    Handle to the native player.
- * @param length    Length of data actually written, in bytes.
- * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
- */
-javacall_result javacall_media_data_written(
-    javacall_handle handle,
-    javacall_int32 length);
+javacall_result javacall_media_download_handled_by_device(javacall_handle handle,
+                                                  /*OUT*/ javacall_bool* isHandled);
 
 /**
  * Realize native player.
@@ -704,6 +635,41 @@ javacall_result javacall_media_pause(javacall_handle handle);
  * @retval JAVACALL_FAIL    Fail
  */
 javacall_result javacall_media_resume(javacall_handle handle);
+
+/**
+ * Notify the native player about stream length. This function is called if
+ * stream length is known.
+ *
+ * @param handle        Handle to the native player.
+ * @param length        Stream length, in bytes.
+ * 
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL
+ */
+javacall_result javacall_media_stream_length(
+    javacall_handle handle,
+    javacall_int64 length);
+
+/**
+ * Tell the native player that requested data has been written.
+ * 
+ * @param handle      Handle to the native player.
+ * @param length      Length of data actually written, in bytes.
+ * @param new_request Additional data requested.
+ * @param new_offset  New stream offset to read from.
+ * @param new_length  New buffer length.
+ * @param new_data    New buffer address.
+ * 
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL   
+ */
+javacall_result javacall_media_data_written(
+    javacall_handle handle,
+    javacall_int32 length,
+    /*OUT*/ javacall_bool *new_request,
+    /*OUT*/ javacall_int64 *new_offset,
+    /*OUT*/ javacall_int32 *new_length,
+    /*OUT*/ void **new_data);
 
 /**
  * Get current media time (position) in ms unit

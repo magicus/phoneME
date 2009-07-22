@@ -77,12 +77,26 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE,    
 
     /**
+     * Posted when the native player finished realize procedure.
+     *
+     * Additional data: none.
+     */
+    JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
+
+    /**
+     * Posted when the native player finished prefetch procedure.
+     *
+     * Additional data: none.
+     */
+    JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
+
+    /**
      * Posted when the native player requests stream data.
      *
      * Additional data:
      *     javacall_int64 offset    Data offset within stream.
      *     javacall_int32 length    Requested data block length.
-     *     void *pointer            Pointer to write data to.
+     *     void *pointer            Buffer addres to write data to.
      */
     JAVACALL_EVENT_MEDIA_DATA_REQUEST,
 
