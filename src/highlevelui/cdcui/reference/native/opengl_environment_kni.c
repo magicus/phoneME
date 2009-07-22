@@ -36,12 +36,26 @@
 #include <commonKNIMacros.h>
 #include <midpEventUtil.h>
 #include "javacall_memory.h"
+#include "javacall_defs.h"
 #include "gxj_putpixel.h"
 #include "gxapi_graphics.h"
 #include "imgapi_image.h"
+#include "jcapp_export.h"
 
+typedef struct {
+    javacall_pixel *buffer; // associated image data for this surface
+    int surface;
+    int context;
+    int jsrContext;
+    int textureName;
+} surface_info;
+
+extern surface_info* midpGL_getSurface(int handle);
 extern void midpGL_flush(int dirtyRegions[], int numRegions);
-
+extern int midpGL_createPbufferSurface();
+extern void midpGL_flushPbufferSurface(int surfaceId, javacall_pixel *buffer,
+                                       int x, int y, int width, int height);
+extern void midpGL_setSoftButtonHeight(int nSoftButtonHeight);                                
 /**
  *
  * Calls openGL function to prepare for switching from lcdui rendering
@@ -90,15 +104,19 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushOpenGL0) {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_createPbufferSurface0) {
-    static jfieldID surface_fid = 0;
-    jint surfaceId;
+    gxj_screen_buffer srcSBuf;
+    gxj_screen_buffer *psrcSBuf;
+    const java_imagedata *srcImageDataPtr;
 
     // call into midpGL_createPbufferSurface();
     KNI_StartHandles(1);
     KNI_DeclareHandle(imgHandle);
-    KNI_GetParameterAsObject(1, imgHandle);    
-    midpGL_createPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle));
-    //IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;
+    KNI_GetParameterAsObject(1, imgHandle);
+    srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
+    psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr,
+                                                &srcSBuf, NULL);
+    IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = 
+        midpGL_createPbufferSurface();
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
@@ -132,15 +150,15 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     byte *imgByteArray;
     jsize arrayLength;
     static jfieldID image_data_fid = 0;
-    static jfieldID pixel_data_fid = 0;
-    static jfieldID native_surface_id_fid = 0;
-    const java_imagedata *srcImageDataPtr;
-    gxj_screen_buffer srcSBuf;  
+    gxj_screen_buffer srcSBuf;
     gxj_screen_buffer *psrcSBuf;
+    const java_imagedata *srcImageDataPtr;
     jint surfaceId;
-
-    jint ystart = KNI_GetParameterAsInt(2);
-    jint yend = KNI_GetParameterAsInt(3);
+    static jfieldID pixel_data_fid = 0;
+    jint x = KNI_GetParameterAsInt(2);
+    jint y = KNI_GetParameterAsInt(3);
+    jint width = KNI_GetParameterAsInt(4);
+    jint height = KNI_GetParameterAsInt(5);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(imgHandle);
@@ -148,8 +166,150 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushPbufferSurface0) {
     srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
     psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
                                                 &srcSBuf, NULL);
-    midpGL_flushPbufferSurface(IMGAPI_GET_IMAGE_PTR(imgHandle), 
-                               srcSBuf.pixelData, ystart, yend);
+    surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;
+    if (surfaceId == 0)
+         surfaceId = midpGL_createPbufferSurface();
+    IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;
     KNI_EndHandles();
+    midpGL_flushPbufferSurface(surfaceId, srcSBuf.pixelData, x, y, width, height);
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_hasBackingSurface) {
+    static jfieldID image_fid = 0;
+    jint surfaceId;
+    const java_imagedata *srcImageDataPtr;
+    gxj_screen_buffer srcSBuf;
+    gxj_screen_buffer *psrcSBuf;
+    jboolean retval;
+
+    jint width = KNI_GetParameterAsInt(2);
+    jint height = KNI_GetParameterAsInt(3);
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(graphicsHandle);
+    KNI_DeclareHandle(tmpHandle);
+    KNI_DeclareHandle(imgHandle);
+    KNI_GetParameterAsObject(1, graphicsHandle);
+    KNI_GetObjectClass(graphicsHandle, tmpHandle);
+    image_fid = KNI_GetFieldID(tmpHandle, "img", "Ljavax/microedition/lcdui/Image;");
+    if (image_fid == 0) {
+        retval = KNI_FALSE;
+    } else {
+        KNI_GetObjectField(graphicsHandle, image_fid, imgHandle);
+        if (KNI_IsNullHandle(imgHandle)) {
+            retval = KNI_FALSE;
+        }
+        else { // has a backing surface
+            srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(imgHandle)->imageData;
+            psrcSBuf = gxj_get_image_screen_buffer_impl(srcImageDataPtr, 
+                                                       &srcSBuf, NULL);
+            surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;     
+            if (surfaceId == 0)
+                surfaceId = midpGL_createPbufferSurface();
+            IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = surfaceId;    
+            retval = KNI_TRUE;
+        }
+    }
+    KNI_EndHandles();
+    if (retval == KNI_TRUE)
+        midpGL_flushPbufferSurface(surfaceId, srcSBuf.pixelData, 0, 0,
+                                   srcSBuf.width, srcSBuf.height);
+    KNI_ReturnBoolean(retval);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_getDrawingSurface0) {
+    static jfieldID image_fid = 0;
+    jint surfaceId = 0;
+    jint retval=0;
+
+    jint api = KNI_GetParameterAsInt(2);
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(graphicsHandle);
+    KNI_DeclareHandle(tmpHandle);
+    KNI_DeclareHandle(imgHandle);
+    KNI_GetParameterAsObject(1, graphicsHandle);
+    KNI_GetObjectClass(graphicsHandle, tmpHandle);
+    image_fid = KNI_GetFieldID(tmpHandle, "img", "Ljavax/microedition/lcdui/Image;");
+    if (image_fid == 0) {
+        /* no image fid???  Error */
+        retval = 0;
+    } else {
+        KNI_GetObjectField(graphicsHandle, image_fid, imgHandle);
+        if (KNI_IsNullHandle(imgHandle)) {
+            retval = midpGL_getWindowSurface(api);
+        }
+        else { 
+            /* the graphics object has an image associated with it, so
+             * get the suface associated with that image
+             */
+            surfaceId = IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId;
+            if (surfaceId != 0)
+                retval = surfaceId;
+            else {
+                retval = midpGL_createPbufferSurface();
+                IMGAPI_GET_IMAGE_PTR(imgHandle)->nativeSurfaceId = retval;
+            }
+        }
+    }
+    KNI_EndHandles();
+    KNI_ReturnInt(retval);
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_initMidpGL) {
+
+    jint displayWidth = KNI_GetParameterAsInt(1);
+    jint displayHeight = KNI_GetParameterAsInt(2);
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    jcapp_switch_color_depth(1);
+#endif
+
+    midpGL_init(displayWidth, displayHeight);
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_disableOpenGL0) {
+
+    midpGL_disableOpenGL();
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    jcapp_switch_color_depth(0);
+#endif
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_raiseOpenGL0) {
+
+    midpGL_raiseOpenGL();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_lowerOpenGL0) {
+
+    midpGL_lowerOpenGL();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_switchColorDepth0) {
+    jint param = KNI_GetParameterAsInt(1);
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+BREWprintf("calling switchColorDepth with %d\n", param);
+    jcapp_switch_color_depth(param);
+#endif
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_setSoftButtonHeight0) {
+    jint softButtonHeight = KNI_GetParameterAsInt(1);
+    midpGL_setSoftButtonHeight(softButtonHeight);
     KNI_ReturnVoid();
 }

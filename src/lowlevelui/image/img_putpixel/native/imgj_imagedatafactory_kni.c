@@ -48,15 +48,7 @@
         get_imagedata(IMGAPI_GET_IMAGEDATA_PTR(jimgData),   \
                       width, height, pixelData, alphaData)
 
-/** Convert 24-bit RGB color to 16bit (565) color */
-#define RGB24TORGB16(x) (((( x ) & 0x00F80000) >> 8) + \
-                             ((( x ) & 0x0000FC00) >> 5) + \
-                             ((( x ) & 0x000000F8) >> 3) )
-
-/** Convert 16-bit (565) color to 24-bit RGB color */
-#define RGB16TORGB24(x) ( ((x & 0x001F) << 3) | ((x & 0x001C) >> 2) |\
-                              ((x & 0x07E0) << 5) | ((x & 0x0600) >> 1) |\
-                              ((x & 0xF800) << 8) | ((x & 0xE000) << 3) )
+#include <gxj_putpixel.h>
 
 /**
  * Create native representation for a image.
@@ -130,7 +122,7 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
     imgdcd_image_format format;
     MIDP_ERROR err;
 
-    int width, height;
+    int width, height, imageSize;
     PIXEL *pixelData;
     ALPHA *alphaData;
 
@@ -144,8 +136,18 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
         return err;
     }
 
-    pixelSize = sizeof(PIXEL) * width * height;
-    alphaSize = sizeof(ALPHA) * width * height;
+    imageSize = width * height;
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+       if (pp_enable_32bit_mode) {
+           pixelSize = sizeof(gxj_pixel32_type) * imageSize;
+       } else {
+           pixelSize = sizeof(gxj_pixel16_type) * imageSize;
+       }
+#else
+       pixelSize = sizeof(PIXEL) * imageSize;
+#endif
+    alphaSize = sizeof(ALPHA) * imageSize;
 
     switch (format) {
 
@@ -255,22 +257,66 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
     int a, b, pixel, alpha;
 
     if (srcAlphaData != NULL) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
       for (b = y; b < y + height; b++) {
         for (a = x; a < x + width; a++) {
           pixel = srcPixelData[b*srcWidth + a];
           alpha = srcAlphaData[b*srcWidth + a];
-          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-            (alpha << 24) + RGB16TORGB24(pixel);
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] = GXJ_PIXELTOMIDP_32(pixel);
         }
       }
     } else {
       for (b = y; b < y + height; b++) {
         for (a = x; a < x + width; a++) {
-          pixel = srcPixelData[b*srcWidth + a];
-          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-            RGB16TORGB24(pixel) | 0xFF000000;
+          pixel = ((imgdcd_pixel16_type*)srcPixelData)[b*srcWidth + a];
+          alpha = srcAlphaData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] = GXJ_PIXELTOMIDP_16(pixel, alpha);
         }
       }
+    }
+#else
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = srcPixelData[b*srcWidth + a];
+          alpha = srcAlphaData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+#if ENABLE_32BITS_PIXEL_FORMAT
+            GXJ_PIXELTOMIDP(pixel);
+#else
+            GXJ_PIXELTOMIDP(pixel, alpha);
+#endif
+        }
+      }
+#endif
+    } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = srcPixelData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+            GXJ_PIXELTOOPAQUEMIDP_32(pixel);
+        }
+      }
+    } else {
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = ((imgdcd_pixel16_type*)srcPixelData)[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+            GXJ_PIXELTOOPAQUEMIDP_16(pixel);
+        }
+      }
+    }
+#else
+      for (b = y; b < y + height; b++) {
+        for (a = x; a < x + width; a++) {
+          pixel = srcPixelData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+            GXJ_PIXELTOOPAQUEMIDP(pixel);
+        }
+      }
+#endif
     }
   }
 
@@ -355,7 +401,15 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+           pixelSize = sizeof(gxj_pixel32_type) * imageSize;
+        } else {
+           pixelSize = sizeof(gxj_pixel16_type) * imageSize;
+        }
+#else
         pixelSize = sizeof(PIXEL) * imageSize;
+#endif
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
             alphaSize = sizeof(ALPHA) * imageSize;
@@ -702,7 +756,15 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+       if (pp_enable_32bit_mode) {
+           pixelSize = sizeof(gxj_pixel32_type) * imageSize;
+       } else {
+           pixelSize = sizeof(gxj_pixel16_type) * imageSize;
+       }
+#else
         pixelSize = sizeof(PIXEL) * imageSize;
+#endif
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
             alphaSize = sizeof(ALPHA) * imageSize;
@@ -785,14 +847,40 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
          */
 
         if (alphaData != NULL) {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+           if (pp_enable_32bit_mode) {
+             for (i = 0; i < len; i++) {
+                pixelData[i] = GXJ_MIDPTOPIXEL_32(rgbBuffer[i]);
+                alphaData[i] = (rgbBuffer[i] >> 24) & 0xff;
+             }
+           } else {
+             for (i = 0; i < len; i++) {
+                ((gxj_pixel16_type*)pixelData)[i] = GXJ_MIDPTOPIXEL_16(rgbBuffer[i]);
+                alphaData[i] = (rgbBuffer[i] >> 24) & 0xff;
+             }
+           }
+#else                       
             for (i = 0; i < len; i++) {
-                pixelData[i] = RGB24TORGB16(rgbBuffer[i]);
-                alphaData[i] = (rgbBuffer[i] >> 24) & 0x00ff;
+                pixelData[i] = GXJ_MIDPTOPIXEL(rgbBuffer[i]);
+                alphaData[i] = (rgbBuffer[i] >> 24) & 0xff;
             }
+#endif
         } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+           if (pp_enable_32bit_mode) {
+             for (i = 0; i < len; i++) {
+                 pixelData[i] = GXJ_MIDPTOOPAQUEPIXEL_32(rgbBuffer[i]);
+             }   
+           } else {
+             for (i = 0; i < len; i++) {
+                 ((gxj_pixel16_type*)pixelData)[i] = GXJ_MIDPTOOPAQUEPIXEL_16(rgbBuffer[i]);
+             }   
+           }
+#else
             for (i = 0; i < len; i++) {
-                pixelData[i] = RGB24TORGB16(rgbBuffer[i]);
+                pixelData[i] = GXJ_MIDPTOOPAQUEPIXEL(rgbBuffer[i]);
             }
+#endif
         }
     }
 
@@ -897,6 +985,37 @@ static void blit(int srcWidth, int srcHeight,
         break;
     }
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (!pp_enable_32bit_mode) {
+        switch (transform) {
+        case TRANS_NONE:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc));
+            break;
+        case TRANS_MIRROR_ROT180:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        case TRANS_MIRROR:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc));
+            break;
+        case TRANS_ROT180:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        case TRANS_MIRROR_ROT270:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc));
+            break;
+        case TRANS_ROT90:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        case TRANS_ROT270:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + (ySrc * srcWidth + xSrc + width - 1));
+            break;
+        case TRANS_MIRROR_ROT90:
+            srcPtr = (gxj_pixel_type*)(((gxj_pixel16_type*)srcPixelData) + ((ySrc + height - 1) * srcWidth + xSrc));
+            break;
+        }
+    }
+#endif
+
     if (transform & TRANSFORM_INVERTED_AXES) {
         if (srcAlphaData == NULL) {
             pixelCopy(srcPtr, srcWidth, srcXInc, srcYInc, srcXStart,
@@ -976,4 +1095,28 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
 
     KNI_EndHandles();
     KNI_ReturnVoid();
+}
+
+/**
+ * Returns how many bytes are in a pixel.
+ *
+ * @return number of bytes in native pixel
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_bytesInPixel) {
+    int bytes;
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    /* workaround for a crash while swithing color depth for a MIDlet started
+       in 16-bit mode.
+    bytes = (pp_enable_32bit_mode) ? 4 : 2;
+    */
+    bytes = 4;
+#elif ENABLE_32BITS_PIXEL_FORMAT
+    bytes = 4;
+#else
+    bytes = 2;
+#endif
+
+    KNI_ReturnInt(bytes);
 }

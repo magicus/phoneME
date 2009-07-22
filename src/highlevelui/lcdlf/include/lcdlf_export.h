@@ -49,7 +49,12 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
+#if ENABLE_OPENGL
+void lcdlf_refresh(int hardwareId, int x, int y, int w, int h,
+                   boolean useOpenGL);
+#else
 void lcdlf_refresh(int hardwareId, int x, int y, int w, int h);
+#endif
 
 /**
  * Change screen orientation flag

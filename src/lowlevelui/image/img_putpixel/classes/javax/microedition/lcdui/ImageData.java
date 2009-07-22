@@ -32,6 +32,8 @@ package javax.microedition.lcdui;
  */
 final class ImageData implements AbstractImageData {
 
+    private static final int PIXEL_SIZE = ImageDataFactory.bytesInPixel();
+
     /**
      * The width, height of this Image
      */
@@ -117,7 +119,7 @@ final class ImageData implements AbstractImageData {
         this.height = height;
         this.isMutable = isMutable;
 
-        int length = width * height * 2;
+        int length = width * height * PIXEL_SIZE;
         byte[] newPixelData = new byte[length];
         System.arraycopy(pixelData, 0, newPixelData, 0, length);
 
@@ -144,7 +146,7 @@ final class ImageData implements AbstractImageData {
         this.height = height;
         this.isMutable = isMutable;
 
-        pixelData = new byte[width * height * 2];
+        pixelData = new byte[width * height * PIXEL_SIZE];
 
         if (allocateAlpha) {
             alphaData = new byte[width * height];

@@ -109,6 +109,8 @@ public class ImageToRawTool {
             // raw file formats
             "Putpixel",
             "ARGB",
+            "RGBA",
+            "ABGR",
             // endianess
             "Little",
             "Big",
@@ -124,6 +126,8 @@ public class ImageToRawTool {
             // raw file formats
             ImageToRawConverter.RAW_FORMAT_PP,
             ImageToRawConverter.RAW_FORMAT_ARGB,
+            ImageToRawConverter.RAW_FORMAT_RGBA,
+            ImageToRawConverter.RAW_FORMAT_ABGR,
             // endianess
             ImageToRawConverter.INT_FORMAT_LITTLE_ENDIAN,
             ImageToRawConverter.INT_FORMAT_BIG_ENDIAN,
@@ -327,12 +331,10 @@ public class ImageToRawTool {
                 javax.imageio.ImageIO.read(new File(sourceName));
         int width = image.getWidth(null);
         int height = image.getHeight(null);
-        boolean hasAlpha = image.getColorModel().hasAlpha();
         int[] imageData = getBufferedImageData(image);
 
         // convert image
-        byte[] rawData = converter.convertToRaw(
-                imageData, width, height, hasAlpha);
+        byte[] rawData = converter.convertToRaw(imageData, width, height);
 
         // save image
         if (new File(destName).exists())

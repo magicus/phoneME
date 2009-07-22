@@ -50,7 +50,12 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-void lfjport_refresh(int hardwareId, int x, int y, int w, int h);
+#if ENABLE_OPENGL
+void lfjport_refresh(int hardwareId, int x, int y, int w, int h, 
+                     boolean useOpenGL);
+#else
+void lfjport_refresh(int hardwareId, int x, int y, int w, int h); 
+#endif
 
 
 /**

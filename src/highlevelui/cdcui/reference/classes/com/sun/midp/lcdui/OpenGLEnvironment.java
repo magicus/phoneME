@@ -38,48 +38,130 @@ import com.sun.midp.main.NativeForegroundState;
  * 
  */
 public class OpenGLEnvironment{
-    
+
+    private boolean midpIsRendering;
     /** 
      * Prepare openGL renderer to switch between lcdui and some exernal
      * API - can be either JSR226 or JSR239
      *
      */
-    public void flushOpengGL(DisplayContainer container) {
+    public void flushOpengGL(DisplayContainer container, Graphics bindTarget) {
+        int regionArray[];
+        /*
+        while (midpIsRendering) {
+            try {
+                System.out.println("waiting for midp to finish rendering");
+                Thread.sleep(10);
+            } catch (Exception e) {}
+        }
+         */
+        if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
+                               bindTarget.getClipHeight())) {
         int displayId = NativeForegroundState.getState();
         DisplayAccess da = container.findDisplayById(displayId);
-        Object[] dirtyRegions = da.getDirtyRegions();
-        int regionArray[] = new int[dirtyRegions.length*4];
-        int[] curRegion;
-        for (int i=0; i<dirtyRegions.length; i++) {
-            curRegion = (int[])dirtyRegions[i];
-            regionArray[i]=curRegion[0];
-            regionArray[i+1]=curRegion[1];
-            regionArray[i+2]=curRegion[2];
-            regionArray[i+3]=curRegion[3];
+        if (da != null) {
+            Object[] dirtyRegions = da.getDirtyRegions();
+            if (dirtyRegions.length <= 0) {
+                /* when drawing directly to a canvas, dirtyRegions won't be
+                 * appropriately updated till the end of the paint method.
+                 * So, we'll have to force a flush of the whole screen to be
+                 * safe
+                 */
+                regionArray = new int[4];
+                regionArray[0] = 0; regionArray[1] = 0;
+                regionArray[2] = bindTarget.getClipWidth();
+                regionArray[3] = bindTarget.getClipHeight();
+                //System.out.println("flushOpenGL: flushing whole screen");
+                flushOpenGL0(regionArray, 1, displayId);
+                return;
+            }
+            regionArray = new int[dirtyRegions.length*4];
+            int[] curRegion;
+            for (int i=0; i<dirtyRegions.length; i++) {
+             curRegion = (int[])dirtyRegions[i];
+                regionArray[i]=curRegion[0];
+                regionArray[i+1]=curRegion[1];
+                regionArray[i+2]=curRegion[2];
+                regionArray[i+3]=curRegion[3];
+            }
+            //System.out.println("flushOpenGL: flushing dirty regions");
+            flushOpenGL0(regionArray, dirtyRegions.length, displayId);
         }
-        flushOpenGL0(regionArray, dirtyRegions.length, displayId);
+        }
     }
     
     public void createPbufferSurface(Image img) {
-        System.out.println("OpenGLEnvironment: createPbufferSurface");
         createPbufferSurface0(img);
     }
     
     public void flushPbufferSurface(Image offscreen_buffer,
-                                    int ystart, int yend){
-        System.out.println("offscreen buffer is " + offscreen_buffer);
-        flushPbufferSurface0(offscreen_buffer, ystart, yend);
-        System.out.println("back from flushPbufferSurface0");
+                                    int x, int y, int width, int height){
+        flushPbufferSurface0(offscreen_buffer, x, y, width, height);
     }
     
     public void createPixmapSurface(Graphics g, Image img) {
         createPixmapSurface0(g, img);
+    }
+
+    public void startMidpRendering() {
+        //System.out.println("*** startMidpRendering");
+        midpIsRendering=true;
+    }
+
+    public void endMidpRendering() {
+        //System.out.println("*** endMidpRendering");
+        midpIsRendering=false;
+    }
+    
+    /** 
+     * Return shared drawing surface for given Graphics targets
+     */
+    public int getDrawingSurface(Graphics bindTarget, int api) {
+        int retval;
+        retval = getDrawingSurface0(bindTarget, api);
+        return retval;
+    }
+    
+    public void enableOpenGL(int width, int height) {
+        System.out.println("OpenGLEnvironmentProxy: enabling OpenGL");
+        initMidpGL(width, height);
+    }
+    
+    public void disableOpenGL() {
+        System.out.println("OpenGLEnvironmentProxy: disabling OpenGL");
+        disableOpenGL0();
+    }
+    
+    public void raiseOpenGL() {
+        raiseOpenGL0();
+    }    
+    public void lowerOpenGL() {
+        lowerOpenGL0();
+    }
+
+    public void setSoftButtonHeight(int height) {
+        setSoftButtonHeight0(height);
+    }
+
+    private native void setSoftButtonHeight0(int height);
+    
+    public void switchColorDepth(int param) {
+        switchColorDepth0(param);
     }
     
     private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);
     
     private native void createPbufferSurface0(Image img);
-    private native void flushPbufferSurface0(Image src, int ystart, int yend);
+    private native void flushPbufferSurface0(Image src, int x, int y,
+                                             int width, int height);
     private native void createPixmapSurface0(Graphics g, Image img);
+    private native boolean hasBackingSurface(Graphics bindTarget,
+                                             int width, int height);
+    private native int getDrawingSurface0(Graphics bindTarget, int api);
+    private native void initMidpGL(int screenWidth, int screenHeight);
+    private native void disableOpenGL0();
+    private native void raiseOpenGL0();
+    private native void lowerOpenGL0();
+    private native void switchColorDepth0(int param);
 }

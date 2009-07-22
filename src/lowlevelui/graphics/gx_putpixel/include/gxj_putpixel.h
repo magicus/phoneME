@@ -51,12 +51,28 @@ extern "C" {
 #define ENABLE_BOUNDS_CHECKS 0
 #endif
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+typedef unsigned short gxj_pixel16_type;
+typedef unsigned int gxj_pixel32_type;
+typedef gxj_pixel32_type gxj_pixel_type;
+
+extern int pp_enable_32bit_mode;
+void set_pp_enable_32bit_mode(int enable);
+#elif ENABLE_32BITS_PIXEL_FORMAT
+/**
+ * 32-bit pixel.
+ */
+typedef unsigned int gxj_pixel_type;
+typedef gxj_pixel_type gxj_pixel32_type;
+#else
 /**
  * 16-bit pixel.
  * The color encoding used in pixels is 565, that is,
  * 5+6+5=16 bits for red, green, blue.
  */
 typedef unsigned short gxj_pixel_type;
+typedef gxj_pixel_type gxj_pixel16_type;
+#endif
 
 /** 8-bit alpha */
 typedef unsigned char gxj_alpha_type;
@@ -78,6 +94,43 @@ typedef struct _gxj_screen_buffer {
  */
 extern gxj_screen_buffer gxj_system_screen_buffer;
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+
+#define GXJ_PIXELTOMIDP_32(x) GXJ_MIDPTOPIXEL_32(x)
+#define GXJ_MIDPTOPIXEL_32(x) ( ((x) & 0xFF00FF00) | (((x) << 16) & 0xFF0000) | (((x) >> 16) & 0xFF))
+
+#define GXJ_MIDPTOOPAQUEPIXEL_32(x) GXJ_MIDPTOPIXEL_32( (x) | 0xFF000000 ) 
+#define GXJ_PIXELTOOPAQUEMIDP_32(x) ( GXJ_PIXELTOMIDP_32(x) | 0xFF000000 )
+
+#define GXJ_MIDPTOOPAQUEPIXEL_16(x) ((((x) & 0x00F80000) >> 8) | \
+                                  (((x) & 0x0000FC00) >> 5) | \
+			          (((x) & 0x000000F8) >> 3) )
+
+#define GXJ_PIXELTOOPAQUEMIDP_16(x) ( (((x) & 0x001F) << 3) | (((x) & 0x001C) >> 2) | \
+                                   (((x) & 0x07E0) << 5) | (((x) & 0x0600) >> 1) | \
+                                   (((x) & 0xF800) << 8) | (((x) & 0xE000) << 3) | 0xFF000000)
+
+#define GXJ_PIXELTOMIDP_16(x, a) ( GXJ_PIXELTOOPAQUEMIDP_16(x) | ((((int)(a)) << 24) & 0xFF000000) )
+#define GXJ_MIDPTOPIXEL_16(x) GXJ_MIDPTOOPAQUEPIXEL_16(x) 
+
+#elif ENABLE_RGBA8888_PIXEL_FORMAT
+
+#define GXJ_MIDPTOPIXEL(x) ( (((x) << 8) & 0xFFFFFF00) | (((x) >> 24) & 0xFF) )
+#define GXJ_PIXELTOMIDP(x) ( (((x) >> 8) & 0x00FFFFFF) | (((x) << 24) & 0xFF000000) )
+
+#define GXJ_MIDPTOOPAQUEPIXEL(x) ( ((x) << 8) | 0xFF )
+#define GXJ_PIXELTOOPAQUEMIDP(x) ( ((x) >> 8) | 0xFF000000 )
+
+#elif ENABLE_ABGR8888_PIXEL_FORMAT
+
+#define GXJ_PIXELTOMIDP(x) GXJ_MIDPTOPIXEL(x)
+#define GXJ_MIDPTOPIXEL(x) ( ((x) & 0xFF00FF00) | (((x) << 16) & 0xFF0000) | (((x) >> 16) & 0xFF))
+
+#define GXJ_MIDPTOOPAQUEPIXEL(x) GXJ_MIDPTOPIXEL( (x) | 0xFF000000 ) 
+#define GXJ_PIXELTOOPAQUEMIDP(x) ( GXJ_PIXELTOMIDP(x) | 0xFF000000 )
+
+#else
+
 /**
  * @name Accessing pixel colors
  * These macros return separate colors packed as 5- and 6-bit fields
@@ -92,29 +145,20 @@ extern gxj_screen_buffer gxj_system_screen_buffer;
 #define GXJ_GET_BLUE_FROM_PIXEL(P)  (((P) << 3) & 0xF8)
 /** @} */
 
-/** Convert pre-masked triplet r, g, b to 16 bit pixel. */
-#define GXJ_RGB2PIXEL(r, g, b) ( b +(g << 5)+ (r << 11) )
-
 /** Convert 24-bit RGB color to 16bit (565) color */
-#define GXJ_RGB24TORGB16(x) (((( x ) & 0x00F80000) >> 8) + \
-                             ((( x ) & 0x0000FC00) >> 5) + \
-			     ((( x ) & 0x000000F8) >> 3) )
+#define GXJ_MIDPTOOPAQUEPIXEL(x) ((((x) & 0x00F80000) >> 8) | \
+                                  (((x) & 0x0000FC00) >> 5) | \
+			          (((x) & 0x000000F8) >> 3) )
 
 /** Convert 16-bit (565) color to 24-bit RGB color */
-#define GXJ_RGB16TORGB24(x) ( ((x & 0x001F) << 3) | ((x & 0x001C) >> 2) |\
-                              ((x & 0x07E0) << 5) | ((x & 0x0600) >> 1) |\
-                              ((x & 0xF800) << 8) | ((x & 0xE000) << 3) )
+#define GXJ_PIXELTOOPAQUEMIDP(x) ( (((x) & 0x001F) << 3) | (((x) & 0x001C) >> 2) | \
+                                   (((x) & 0x07E0) << 5) | (((x) & 0x0600) >> 1) | \
+                                   (((x) & 0xF800) << 8) | (((x) & 0xE000) << 3) | 0xFF000000)
 
-/**
- * Extend the 8-bit Alpha value of an ARGB8888 pixel
- * over 24 bits.
- * Used for alpha blending a RGB888 pixel.
- */
-#define GXJ_XAAA8888_FROM_ARGB8888(src) \
-(unsigned int)(((src >> 24) & 0x000000FF) | \
-               ((src >> 16) & 0x0000FF00) | \
-               ((src >> 8 ) & 0x00FF0000) )
+#define GXJ_PIXELTOMIDP(x, a) ( GXJ_PIXELTOOPAQUEMIDP(x) | ((((int)(a)) << 24) & 0xFF000000) )
+#define GXJ_MIDPTOPIXEL(x) GXJ_MIDPTOOPAQUEPIXEL(x) 
 
+#endif
 
 /**
  * Convert a Java platform image object to its native representation.
