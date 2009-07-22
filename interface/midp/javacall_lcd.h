@@ -55,26 +55,88 @@ extern "C" {
  * @{
  */
 
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+
+extern int jc_enable_32bit_mode;
+
+void set_jc_enable_32bit_mode(int enable);
+
+#define RGB2PIXELTYPE32(r, g, b) ( 0xFF000000 | \
+                                 (((b) << 16) & 0xFF0000) | \
+                                 (((g) << 8)  & 0xFF00) | \
+                                 (((r)     )  & 0xFF) )
+
+/** Separate colors are 8 bits. */
+#define GET_RED_FROM_PIXEL32(P)   (((P)      ) & 0xFF)
+#define GET_GREEN_FROM_PIXEL32(P) (((P) >>  8) & 0xFF)
+#define GET_BLUE_FROM_PIXEL32(P)  (((P) >> 16) & 0xFF)
+
+#define RGB2PIXELTYPE16(r,g,b) (( ((javacall_pixel)(b)) >> 3) & 0x1f)        \
+                          | ((( ((javacall_pixel)(g)) >> 2) & 0x3f) << 5)  \
+                          | ((( ((javacall_pixel)(r)) >> 3) & 0x1f) << 11)
+
+/** Separate colors are 8 bits as in Java RGB */
+#define GET_RED_FROM_PIXEL16(P)   (((P) >> 8) & 0xF8)
+#define GET_GREEN_FROM_PIXEL16(P) (((P) >> 3) & 0xFC)
+#define GET_BLUE_FROM_PIXEL16(P)  (((P) << 3) & 0xF8)
+
+
+#elif ENABLE_RGBA8888_PIXEL_FORMAT
+
+/**
+ * @def RGB2PIXELTYPE
+ *
+ * Convert 3 RGB octets to a pixel type.
+ */
+#define RGB2PIXELTYPE(r, g, b) ( (((r) << 24) & 0xFF000000) | \
+                                 (((g) << 16) & 0xFF0000) | \
+                                 (((b) <<  8) & 0xFF00) | \
+                                 0xFF )
+
+/** Separate colors are 8 bits. */
+#define GET_RED_FROM_PIXEL(P)   (((P) >> 24) & 0xFF)
+#define GET_GREEN_FROM_PIXEL(P) (((P) >> 16) & 0xFF)
+#define GET_BLUE_FROM_PIXEL(P)  (((P) >>  8) & 0xFF)
+
+#elif ENABLE_ABGR8888_PIXEL_FORMAT
+
+/**
+ * @def RGB2PIXELTYPE
+ *
+ * Convert 3 RGB octets to a pixel type.
+ */
+#define RGB2PIXELTYPE(r, g, b) ( 0xFF000000 | \
+                                 (((b) << 16) & 0xFF0000) | \
+                                 (((g) << 8)  & 0xFF00) | \
+                                 (((r)     )  & 0xFF) )
+
+/** Separate colors are 8 bits. */
+#define GET_RED_FROM_PIXEL(P)   (((P)      ) & 0xFF)
+#define GET_GREEN_FROM_PIXEL(P) (((P) >>  8) & 0xFF)
+#define GET_BLUE_FROM_PIXEL(P)  (((P) >> 16) & 0xFF)
+
+#else
+
 /**
  * @def RGB2PIXELTYPE
  *
  * Conversion between 3 RGB octets to a pixel type is defined for the following
- * #define: For example RGB conversion of RGB to 16bpp can be of the form 6-5-6
+ * #define: For example RGB conversion of RGB to 16bpp can be of the form 5-6-5
  */
-
 #ifndef RGB2PIXELTYPE
 #define RGB2PIXELTYPE(r,g,b) (( ((javacall_pixel)(b)) >> 3) & 0x1f)        \
                           | ((( ((javacall_pixel)(g)) >> 2) & 0x3f) << 5)  \
                           | ((( ((javacall_pixel)(r)) >> 3) & 0x1f) << 11)
-#endif
+#endif /* RGB2PIXELTYPE */
 
 /** Separate colors are 8 bits as in Java RGB */
 #ifndef GET_RED_FROM_PIXEL
 #define GET_RED_FROM_PIXEL(P)   (((P) >> 8) & 0xF8)
 #define GET_GREEN_FROM_PIXEL(P) (((P) >> 3) & 0xFC)
 #define GET_BLUE_FROM_PIXEL(P)  (((P) << 3) & 0xF8)
-#endif
+#endif /* GET_RED_FROM_PIXEL */
 
+#endif /* ENABLE_RGBA8888_PIXEL_FORMAT */
 
 /**
  * @enum javacall_lcd_color_encoding_type
@@ -231,7 +293,11 @@ javacall_bool javacall_lcd_get_full_screen_mode(int hardwareId);
  * @retval JAVACALL_OK   success
  * @retval JAVACALL_FAIL fail
  */
+#if ENABLE_OPENGL
+javacall_result javacall_lcd_flush(int hardwareId, boolean useOpenGL);
+#else
 javacall_result javacall_lcd_flush(int hardwareId);
+#endif
 
 /**
  * Flush the screen raster to the display.
@@ -247,7 +313,13 @@ javacall_result javacall_lcd_flush(int hardwareId);
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    fail
  */
-javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, int yend);
+#if ENABLE_OPENGL
+javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, 
+                                           int yend, boolean useOpenGL);
+#else
+javacall_result javacall_lcd_flush_partial(int hardwareId, int ystart, 
+                                           int yend);
+#endif
 
 /**
  * Reverse flag of rotation
