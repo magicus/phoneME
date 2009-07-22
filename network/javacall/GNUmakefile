@@ -1,6 +1,5 @@
 #
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -41,7 +40,8 @@ endif
 # 'all' is the default target
 
 NET_LIB = $(OUTPUT_LIB_DIR)/libpcsl_network$(LIB_EXT)
-NET_INTERFACE = $(OUTPUT_INC_DIR)/pcsl_network.h $(OUTPUT_INC_DIR)/pcsl_network_md.h
+NET_INTERFACE:=$(addprefix $(OUTPUT_INC_DIR)/, pcsl_network.h pcsl_socket.h \
+pcsl_datagram.h pcsl_network_md.h pcsl_network_notifier.h pcsl_serversocket.h)
 
 OBJS = \
 	$(OUTPUT_OBJ_DIR)/pcsl_socket.o \
@@ -60,14 +60,11 @@ $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
 $(NET_LIB): $(OBJS)
 	@$(AR) $(AR_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $^)`
 
-#	cp -f $< $@
-$(NET_INTERFACE): $(NETWORK_DIR)/pcsl_network.h
-	cp -f $(NETWORK_DIR)/pcsl_network.h $(OUTPUT_INC_DIR)
-	cp -f $(NETWORK_DIR)/pcsl_socket.h $(OUTPUT_INC_DIR)
-	cp -f $(NETWORK_DIR)/pcsl_datagram.h $(OUTPUT_INC_DIR)
-	cp -f $(NETWORK_SELECT_DIR)/pcsl_network_md.h $(OUTPUT_INC_DIR)
-	cp -f $(NETWORK_DIR)/pcsl_network_notifier.h $(OUTPUT_INC_DIR)
-	cp -f $(NETWORK_DIR)/pcsl_serversocket.h $(OUTPUT_INC_DIR)
+$(OUTPUT_INC_DIR)/pcsl_network_md.h : $(NETWORK_SELECT_DIR)/pcsl_network_md.h
+	cp -f $< $@
+
+$(OUTPUT_INC_DIR)/%.h : $(NETWORK_DIR)/%.h
+	cp -f $< $@
 
 $(OUTPUT_OBJ_DIR)/pcsl_socket.o: $(NETWORK_SELECT_DIR)/pcsl_socket.c \
  $(NETWORK_DIR)/pcsl_network.h $(MEMORY_DIR)/pcsl_memory.h \
