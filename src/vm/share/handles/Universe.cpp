@@ -89,8 +89,6 @@ ReturnOop Universe::new_vector(JVM_SINGLE_ARG_TRAPS) {
 
 bool Universe::name_matches_pattern(const char* name, int name_len, 
                                     const char* pattern, int pattern_len) {
-  GUARANTEE( name_len > 0 && pattern_len > 0, "Sanity" );
-
   if( pattern_len > 1 &&
       pattern[pattern_len-2] == '/' && pattern[pattern_len-1] == '*' ) {
     pattern_len -= 2;
