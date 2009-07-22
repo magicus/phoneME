@@ -624,7 +624,6 @@ public class Display {
       * default
      */
     private boolean useOpenGL = false;
-    private static boolean lastUsed32bit = false;
     private boolean use32Bit = false;
     private boolean useVirtualKeyboard = true;
 
@@ -714,15 +713,12 @@ public class Display {
      * a reference to the Display.
      */
     private void close() {
-System.out.println("In display.close for " + this + ": use32Bit is " + use32Bit);
         displayClosed = true;
         // #ifdef ENABLE_OPENGL
         if (useOpenGL) {
-System.out.println("Display.close: disabling OpenGL");
             com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
                 com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
             ogl.disableOpenGL();
-            //ogl.endMidpRendering();
         }
         // #endif ENABLE_OPENGL
 
@@ -809,16 +805,12 @@ com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
         com.sun.midp.midlet.MIDletStateHandler handler = 
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
         if (handler != null) {
-System.out.println("handler is not null!");
             String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
             if (String.valueOf("YES").equalsIgnoreCase(propval)) {
-System.out.println("Display.constructor: enabling OpenGL for " + this);
                 useOpenGL = true; use32Bit = true;
                 com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().enableOpenGL(width, height);
             }
         }
-        else
-            System.out.println("System dialog " + this);
         // #endif ENABLE_OPENGL
 
         current_orientation = initial_orientation;
@@ -2432,17 +2424,13 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
                     region[1] += ty;
                     region[2] += tx;
                     region[3] += ty;
-System.out.println("Display: calling uCallPaint");
                     currentCopy.uCallPaint(screenGraphics, null);
-System.out.println("Display: done in uCallPaint");
                     // SetFullScreenMode TCK test fails unless the following
                     // translate is present
                     screenGraphics.translate(-screenGraphics.getTranslateX(),
                                              -screenGraphics.getTranslateY());
-System.out.println("Display: screen refresh for canvas");
                     displayDevice.refresh(displayId, region[0], region[1], 
                                           region[2], region[3], useOpenGL);
-System.out.println("Display: done with screen refresh for canvas");
                 } else {
                     // Chameleon redirects the paint call through its layer logic,
                     // eventually resulting in a call back to the Chameleon Display
@@ -3184,7 +3172,6 @@ System.out.println("Display: done with screen refresh for canvas");
          * Called to enable OpenGL rendering path instead of default
          */
         public void enableOpenGL() {
-System.out.println("Display: enabling openGL");
             useOpenGL = true;
         }
 
@@ -3192,7 +3179,6 @@ System.out.println("Display: enabling openGL");
          * Called to enable default rendering path
          */
         public void disableOpenGL() {
-System.out.println("Display: disabling openGL");
             useOpenGL = false;
         }
 
@@ -4076,13 +4062,10 @@ System.out.println("Display: disabling openGL");
                 if (hasForeground) {
                     return;
                 }
-//System.out.println("handleForeground for " + Display.this);
                 // #ifdef ENABLE_OPENGL
                 if (useOpenGL) {
-System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL");
                     com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().raiseOpenGL();
                     if (use32Bit) {
-System.out.println("in handle background event for " + Display.this + ": use32bit is " + use32Bit);
                         com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(1);
                     }
                 }
@@ -4202,11 +4185,8 @@ System.out.println("in handle background event for " + Display.this + ": use32bi
                 }
                 // #ifdef ENABLE_OPENGL
                 if (useOpenGL) {
-System.out.println(this + " : handleBackgroundNotifyEvent: calling lowerOpenGL");
                     com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
                     if (use32Bit) {
-System.out.println("in handle background event for " + Display.this + ": use32bit is " + use32Bit);
-                        lastUsed32bit = true;
                         com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
                     }
                 }
