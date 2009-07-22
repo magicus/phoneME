@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -24,7 +24,15 @@
 
 .PHONY: all pre_target local_ads post_target
 
-all: pre_target javacall_common local_ads post_target
+all: 
+	$(MAKE) pre_target
+	$(MAKE) javacall_common
+	$(MAKE) local_ads
+	$(MAKE) post_target
+
+NUM_JOBS ?= 2
+parallel_all: # non debug only
+	$(MAKE) -j $(NUM_JOBS) all
 
 ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
