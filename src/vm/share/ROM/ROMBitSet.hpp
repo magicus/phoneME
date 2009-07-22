@@ -48,17 +48,17 @@ public:
   void and( OopDesc* src ) {
     ROMBitSet s( src );
     GUARANTEE( length() == s.length(), "Sanity" );
-    Bits::and( data(), s.data(), length() );
+    Bits::_and( data(), s.data(), length() );
   }
   void or( OopDesc* src ) {
     ROMBitSet s( src );
     GUARANTEE( length() == s.length(), "Sanity" );
-    Bits::or( data(), s.data(), length() );
+    Bits::_or( data(), s.data(), length() );
   }
   void sub( OopDesc* src ) {
     ROMBitSet s( src );
     GUARANTEE( length() == s.length(), "Sanity" );
-    Bits::sub( data(), s.data(), length() );
+    Bits::_sub( data(), s.data(), length() );
   }
 
   int not_empty( void ) {

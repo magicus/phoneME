@@ -30,7 +30,7 @@ public:
   typedef jint item_type;
   enum {
     LogBitSize = LogBitsPerInt,
-    BitSize = 1 << LogBitSize,
+    BitSize = 1 << LogBitSize
   };
 private:
   enum {
@@ -66,17 +66,17 @@ public:
       *dst++ = *src++;
     } while( --length > 0 );
   }
-  static void or( item_type* dst, const item_type* src, int length ) {
+  static void _or( item_type* dst, const item_type* src, int length ) {
     do {
       *dst++ |= *src++;
     } while( --length > 0 );
   }
-  static void and( item_type* dst, const item_type* src, int length ) {
+  static void _and( item_type* dst, const item_type* src, int length ) {
     do {
       *dst++ &= *src++;
     } while( --length > 0 );
   }
-  static void sub( item_type* dst, const item_type* src, int length ) {
+  static void _sub( item_type* dst, const item_type* src, int length ) {
     do {
       *dst++ &= ~*src++;
     } while( --length > 0 );
@@ -111,70 +111,3 @@ public:
     return index( bit_size + BitIndexMask );
   }
 };
-
-#if 0
-class BitSet: public AllStatic {
- public:
-  typedef jint item_type;
- private:
-  typedef TypeArray::Raw array_type;
-
-  enum {
-    log_bits_per_item = LogBitsPerInt,
-    bits_per_item = 1 << log_bits_per_item,    
-    bit_index_mask = bits_per_item - 1
-  };
-
-  static int item_index( const int i ) {
-    return i >> log_bits_per_item
-  }
-  static int bit_index( const int i ) {
-    return i & bit_index_mask;
-  }
-  static int size( const int bitsize ) {
-    return item_index( bitsize + bit_index_mask );
-  }
-  static item_type bit( const int i ) {
-    return 1 << bit_index( i );
-  }
-
-  static item_type* base( OopDesc* p ) {
-    array_type a( p );
-    return a().int_base_address();
-  }
-  static const item_type* base( const OopDesc* p ) {
-    return base( (OopDesc*) p );
-  }
-
-  static item_type* item( OopDesc* p, const int i ) {
-    return base(p) + item_index(i);
-  }
-  static const item_type* item( const OopDesc* p, const int i ) {
-    return base(p) + item_index(i);
-  }
-
- public:
-  static OopDesc* create( const int bitsize JVM_TRAPS ) {
-    OopDesc* p = Universe::new_int_array( size( bitsize ) JVM_NO_CHECK );
-    return p;
-  }
-
-  static item_type get( const OopDesc* p, const int i ) {
-    return item( p, i ) & bit( i );
-  }
-  static void set( OopDesc* p, const int i ) {
-    item( p, i ) |= bit( i );
-  }
-  static void clear( OopDesc* p, const int i ) {
-    item( p, i ) &= ~bit( i );
-  }
-
-  static void copy( OopDesc* dst, const OopDesc* src ) {
-    array_type s( (OopDesc*) src );
-    array_type d( dst );
-    const int length = s().length();
-    GUARANTEE( length == d().length(), "Sanity" );
-    jvm_memcpy( d().data(), s().data(), length*sizeof(item_type) );
-  }
-};
-#endif
