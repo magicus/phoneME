@@ -25,10 +25,67 @@
 
 package com.sun.mmedia;
 
-public class DirectInputThread extends Thread {
+import java.io.IOException;
+import javax.microedition.media.protocol.SourceStream;
+
+class DirectInputThread extends Thread {
+
+    private long curOffset = 0;
+    private long offset = 0;
+    private int requestedLen = 0;
+    private int nativePtr = 0;
+    private int hNative;
+    private SourceStream stream;
+    private boolean isClosed = false;
+    private byte[] tmpBuf = new byte [ 1024 ];
+
+    DirectInputThread(int hNative, SourceStream stream) {
+        this.hNative = hNative;
+        this.stream = stream;
+    }
+    
+
 
     public void run(){
 
+        for(;;)
+        {
+            synchronized( this )
+            {
+                if( 0 < requestedLen )
+                {
+                    int len = requestedLen > tmpBuf.length ?
+                                    tmpBuf.length : requestedLen;
+                    try {
+                        stream.read(tmpBuf, 0, len);
+                    } catch (IOException ex) {
+                    }
+                    // call native copying + javacall_media_written()
+                }
+                try {
+                    this.wait();
+                } catch (InterruptedException ex) {
+                }
+
+                if( isClosed )
+                {
+                    break;
+                }
+            }
+            
+        }
+
+    }
+
+    public void requestData( long offset, int length, int bufPtr )
+    {
+        synchronized( this )
+        {
+            this.offset = offset;
+            this.requestedLen = length;
+            this.nativePtr = bufPtr;
+            this.notify();
+        }
     }
 
 }
