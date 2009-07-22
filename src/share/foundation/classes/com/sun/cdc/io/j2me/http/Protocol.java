@@ -983,20 +983,21 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     public String getHeaderField(String name) throws IOException {
         // DEBUG: System.out.println("getHeaderField(" + name + ")");
         ensureOpen();
-        try { connect(); }
-        catch (IOException x) {
+        
+        connect();
+
+        if (name == null) {
             return null;
         }
+
         return (String)headerFields.get(toLowerCase(name));
     }
     
     public String getHeaderField(int index) throws IOException {
         // DEBUG: System.out.println("getHeaderField(" + index + ")");
         ensureOpen();
-        try { connect(); }
-        catch (IOException x) {
-            return null;
-        }
+
+        connect();
 
         if (headerFieldValues == null) {
             makeHeaderFieldValues();
@@ -1011,10 +1012,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     public String getHeaderFieldKey(int index) throws IOException {
         // DEBUG: System.out.println("getHeaderFieldKey(" + index + ")");
         ensureOpen();
-        try { connect(); }
-        catch (IOException x) {
-            return null;
-        }
+
+        connect();
 
         if (headerFieldNames == null) {
             makeHeaderFields();
@@ -1041,28 +1040,37 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public int getHeaderFieldInt(String name, int def) throws IOException {
-        ensureOpen();
-        try { connect(); }
-        catch (IOException x) {
+        String field = getHeaderField(name);
+
+        if (field == null) {
             return def;
         }
+
         try {
-            return Integer.parseInt(getHeaderField(name));
-        } catch (Throwable t) { }
+            return Integer.parseInt(field);
+        } catch (NumberFormatException nfe) {
+            // fall through
+        } catch (IllegalArgumentException iae) {
+            // fall through
+        }
+
         return def;
     }
 
     public long getHeaderFieldDate(String name, long def) throws IOException {
-        // DEBUG: System.out.println("getHeaderFieldDate(" + name + ", " + def + ")");
-        ensureOpen();
-        try { connect(); }
-        catch (IOException x) {
+        String field = getHeaderField(name);
+        
+        if (field == null) {
             return def;
         }
 
         try {
-            return DateParser.parse(getHeaderField(name));
-        } catch (Throwable t) { }
+            return DateParser.parse(field);
+        } catch (NumberFormatException nfe) {
+            // fall through
+        } catch (IllegalArgumentException iae) {
+            // fall through
+        }
 
         return def;
     }
