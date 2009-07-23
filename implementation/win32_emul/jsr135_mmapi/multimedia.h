@@ -231,11 +231,9 @@ typedef struct {
     javacall_result (*stop)(javacall_handle handle);
     javacall_result (*pause)(javacall_handle handle);
     javacall_result (*resume)(javacall_handle handle);
-    javacall_result (*get_java_buffer_size)(javacall_handle handle,long* java_buffer_size,long* first_data_size);
-    javacall_result (*set_whole_content_size)(javacall_handle handle, long whole_content_size);
-    javacall_result (*get_buffer_address)(javacall_handle handle,const void** buffer,long* max_size);
-    javacall_result (*do_buffering)(javacall_handle handle, const void* buffer, long *length, javacall_bool *need_more_data, long *min_data_size);
-    javacall_result (*clear_buffer)(javacall_handle handle);
+    javacall_result (*stream_length)(javacall_handle handle, javacall_int64 length);
+    javacall_result (*data_written)(javacall_handle handle, javacall_int32 length, javacall_bool *new_request,
+                                    javacall_int64 *new_offset, javacall_int32 *new_length, void **new_data);
     javacall_result (*get_time)(javacall_handle handle, long* ms);
     javacall_result (*set_time)(javacall_handle handle, long* ms);
     javacall_result (*get_duration)(javacall_handle handle, long* ms);

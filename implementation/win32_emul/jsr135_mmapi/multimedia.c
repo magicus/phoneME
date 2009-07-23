@@ -826,87 +826,6 @@ javacall_result javacall_media_create(int appId,
     }
 }
 
-javacall_result javacall_media_realize(javacall_handle handle,
-                                       javacall_const_utf16_string mime,
-                                       long mimeLength)
-{
-    javacall_result ret     = JAVACALL_FAIL;
-    javacall_result ret_from_create = JAVACALL_OK;
-    javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
-    char* cmime;
-
-    if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
-    {
-        if( NULL != mime )
-        {
-            JC_MM_ASSERT( mimeLength > 0 );
-
-            cmime = MALLOC( mimeLength + 1 );
-
-            if( NULL != cmime )
-            {
-                /* Implementation Note: 
-                 * unsafe, mime must contain only ASCII chars. 
-                 * NEED REVISIT
-                 */
-                int wres = WideCharToMultiByte( CP_ACP, 0, mime, mimeLength,
-                                                cmime, mimeLength + 1, NULL, NULL );
-                if( wres )
-                {
-                    cmime[ mimeLength ] = '\0';
-                    pPlayer->mediaType = fmt_mime2str( cmime );
-                }
-
-                FREE( cmime );
-            }
-        }
-
-        if( NULL == pPlayer->mediaItfPtr && 
-            0 != strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
-        {
-            pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
-
-            if( NULL != pPlayer->mediaItfPtr )
-            {
-                JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
-
-                ret_from_create =
-                    pPlayer->mediaItfPtr->vptrBasic->create( 
-                    pPlayer->appId, pPlayer->playerId, 
-                    fmt_str2enum(pPlayer->mediaType),
-                    pPlayer->uri, &pPlayer->mediaHandle );
-
-                if( NULL == pPlayer->mediaHandle )
-                {
-                    return ret_from_create;
-                }
-            }
-            else
-            {
-                return JAVACALL_FAIL;
-            }
-        }
-    }
-    if (NULL == pPlayer->mediaItfPtr) {
-        pPlayer->mediaType = JAVACALL_MEDIA_FORMAT_UNSUPPORTED;
-    }
-
-    if( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, realize) )
-    {
-        ret = pPlayer->mediaItfPtr->vptrBasic->realize(
-            pPlayer->mediaHandle, mime, mimeLength );
-    } else {
-        ret = JAVACALL_OK;
-    }
-
-    if( JAVACALL_OK == ret && JAVACALL_NO_AUDIO_DEVICE == ret_from_create )
-    {
-        ret = JAVACALL_NO_AUDIO_DEVICE;
-    }
-        
-    return ret;
-}
-
 javacall_result javacall_media_get_format(javacall_handle handle, 
                               javacall_media_format_type /*OUT*/*format)
 {
@@ -1041,90 +960,84 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
     return JAVACALL_OK;
 }
 
-javacall_result javacall_media_get_java_buffer_size(javacall_handle handle,
-                                 long /*OUT*/*java_buffer_size, 
-                                 long /*OUT*/*first_data_size)
+javacall_result javacall_media_realize(javacall_handle handle,
+                                       javacall_const_utf16_string mime,
+                                       long mimeLength)
 {
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
+    javacall_result ret     = JAVACALL_FAIL;
+    javacall_result ret_from_create = JAVACALL_OK;
+    javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
+    char* cmime;
 
-    if (QUERY_BASIC_ITF(pItf, get_java_buffer_size)) {
-        ret = pItf->vptrBasic->get_java_buffer_size(pPlayer->mediaHandle,
-                                                    java_buffer_size, 
-                                                    first_data_size);
+    if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
+    {
+        if( NULL != mime )
+        {
+            JC_MM_ASSERT( mimeLength > 0 );
+
+            cmime = MALLOC( mimeLength + 1 );
+
+            if( NULL != cmime )
+            {
+                /* Implementation Note: 
+                 * unsafe, mime must contain only ASCII chars. 
+                 * NEED REVISIT
+                 */
+                int wres = WideCharToMultiByte( CP_ACP, 0, mime, mimeLength,
+                                                cmime, mimeLength + 1, NULL, NULL );
+                if( wres )
+                {
+                    cmime[ mimeLength ] = '\0';
+                    pPlayer->mediaType = fmt_mime2str( cmime );
+                }
+
+                FREE( cmime );
+            }
+        }
+
+        if( NULL == pPlayer->mediaItfPtr && 
+            0 != strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
+        {
+            pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
+
+            if( NULL != pPlayer->mediaItfPtr )
+            {
+                JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
+
+                ret_from_create =
+                    pPlayer->mediaItfPtr->vptrBasic->create( 
+                    pPlayer->appId, pPlayer->playerId, 
+                    fmt_str2enum(pPlayer->mediaType),
+                    pPlayer->uri, &pPlayer->mediaHandle );
+
+                if( NULL == pPlayer->mediaHandle )
+                {
+                    return ret_from_create;
+                }
+            }
+            else
+            {
+                return JAVACALL_FAIL;
+            }
+        }
+    }
+    if (NULL == pPlayer->mediaItfPtr) {
+        pPlayer->mediaType = JAVACALL_MEDIA_FORMAT_UNSUPPORTED;
     }
 
-    return ret;
-}
-
-javacall_result javacall_media_set_whole_content_size(javacall_handle handle,
-                                 long whole_content_size)
-{
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, set_whole_content_size)) {
-        ret = pItf->vptrBasic->set_whole_content_size(pPlayer->mediaHandle, 
-                                                      whole_content_size);
+    if( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, realize) )
+    {
+        ret = pPlayer->mediaItfPtr->vptrBasic->realize(
+            pPlayer->mediaHandle, mime, mimeLength );
+    } else {
+        ret = JAVACALL_OK;
     }
 
-    return ret;
-}
-
-javacall_result javacall_media_get_buffer_address(javacall_handle handle, 
-                                 const void** /*OUT*/buffer, 
-                                 long /*OUT*/*max_size)
-{
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, get_buffer_address)) {
-        ret = pItf->vptrBasic->get_buffer_address(pPlayer->mediaHandle,
-                                                  buffer,
-                                                  max_size);
+    if( JAVACALL_OK == ret && JAVACALL_NO_AUDIO_DEVICE == ret_from_create )
+    {
+        ret = JAVACALL_NO_AUDIO_DEVICE;
     }
-
-    return ret;
-}
-
-/**
- * Store media data to temp file (except JTS type)
- */
-javacall_result javacall_media_do_buffering(javacall_handle handle, 
-                                            const void*     buffer,
-                                            long*           length,
-                                            javacall_bool*  need_more_data,
-                                            long*           min_data_size)
-{
-    long ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, do_buffering)) {
-        ret = pItf->vptrBasic->do_buffering(
-            pPlayer->mediaHandle, buffer, length,
-            need_more_data, min_data_size);
-    }
-
-    return ret;
-}
-
-/**
- * Delete temp file
- */
-javacall_result javacall_media_clear_buffer(javacall_handle handle)
-{
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, clear_buffer)) {
-        ret = pItf->vptrBasic->clear_buffer(pPlayer->mediaHandle);
-    }
-
+        
     return ret;
 }
 
@@ -1201,6 +1114,68 @@ javacall_result javacall_media_resume(javacall_handle handle)
 
     if (QUERY_BASIC_ITF(pItf, resume)) {
         ret = pItf->vptrBasic->resume(pPlayer->mediaHandle);
+    }
+
+    return ret;
+}
+
+/**
+ * Notify the native player about stream length. This function is called if
+ * stream length is known.
+ *
+ * @param handle        Handle to the native player.
+ * @param length        Stream length, in bytes.
+ * 
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL
+ */
+javacall_result javacall_media_stream_length(
+    javacall_handle handle,
+    javacall_int64 length)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_BASIC_ITF(pItf, stream_length)) {
+        ret = pItf->vptrBasic->stream_length(pPlayer->mediaHandle,length);
+    }
+
+    return ret;
+}
+
+/**
+ * Tell the native player that requested data has been written.
+ * 
+ * @param handle      Handle to the native player.
+ * @param length      Length of data actually written, in bytes.
+ * @param new_request Additional data requested.
+ * @param new_offset  New stream offset to read from.
+ * @param new_length  New buffer length.
+ * @param new_data    New buffer address.
+ * 
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL   
+ */
+javacall_result javacall_media_data_written(
+    javacall_handle handle,
+    javacall_int32 length,
+    /*OUT*/ javacall_bool *new_request,
+    /*OUT*/ javacall_int64 *new_offset,
+    /*OUT*/ javacall_int32 *new_length,
+    /*OUT*/ void **new_data)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_BASIC_ITF(pItf, data_written)) {
+        ret = pItf->vptrBasic->data_written(pPlayer->mediaHandle,
+                                            length,
+                                            new_request,
+                                            new_offset,
+                                            new_length,
+                                            new_data);
     }
 
     return ret;

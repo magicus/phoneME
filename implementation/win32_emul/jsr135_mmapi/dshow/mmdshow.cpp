@@ -628,6 +628,7 @@ static javacall_result dshow_prefetch(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+/*
 static javacall_result dshow_get_java_buffer_size(javacall_handle handle,
     long* java_buffer_size,
     long* first_chunk_size)
@@ -764,6 +765,7 @@ static javacall_result dshow_clear_buffer(javacall_handle handle)
     PRINTF( "*** clear buffer ***\n" );
     return JAVACALL_OK;
 }
+*/
 
 static javacall_result dshow_start(javacall_handle handle)
 {
@@ -811,6 +813,19 @@ static javacall_result dshow_pause(javacall_handle handle)
 static javacall_result dshow_resume(javacall_handle handle)
 {
     return dshow_start(handle);
+}
+
+javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 length)
+{
+}
+
+javacall_result dshow_data_written(javacall_handle handle,
+                                   javacall_int32  length,
+                                   javacall_bool*  new_request,
+                                   javacall_int64* new_offset,
+                                   javacall_int32* new_length,
+                                   void**          new_data)
+{
 }
 
 static javacall_result dshow_get_time(javacall_handle handle, long* ms)
@@ -1039,11 +1054,8 @@ static media_basic_interface _dshow_basic_itf =
     dshow_stop,
     dshow_pause,
     dshow_resume,
-    dshow_get_java_buffer_size,
-    dshow_set_whole_content_size,
-    dshow_get_buffer_address,
-    dshow_do_buffering,
-    dshow_clear_buffer,
+    dshow_stream_length,
+    dshow_data_written,
     dshow_get_time,
     dshow_set_time,
     dshow_get_duration,
