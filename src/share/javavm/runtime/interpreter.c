@@ -626,7 +626,14 @@ CVMinterpreterIterateRefArguments(CVMMethodBlock* mb, CVMStackVal32* list,
 		callback(refPtr, data);
 	    }
 	}
-	list++;
+	switch (arg) {
+	case CVM_TYPEID_LONG:
+	case CVM_TYPEID_DOUBLE:
+	    list += 2;
+	    break;
+	default:
+	    list += 1;
+	}
     }
 }
 
