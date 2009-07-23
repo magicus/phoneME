@@ -35,7 +35,7 @@ class DirectInputThread extends Thread {
     private volatile long posToRead = 0;
     private volatile int sizeToRead = 0;
     private volatile int nativePtr = 0;
-    private int read;
+    private int nRead;
     private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 1024 ];
     private final Object dismissLock = new Object();
@@ -58,52 +58,46 @@ class DirectInputThread extends Thread {
                 {
                     try {
                         seek();
+                        
+                        if( isDismissed() ) {
+                            return;
+                        }
+
                         int len = sizeToRead > tmpBuf.length ?
                                         tmpBuf.length : sizeToRead;
-                        read = owner.stream.read(tmpBuf, 0, len);
+                        nRead = owner.stream.read(tmpBuf, 0, len);
                     } catch ( MediaException ex) {
                         owner.abort( ex.getMessage() );
-                        break;
-                    } catch ( IOException e )
-                    {
+                        return;
+                    } catch ( IOException e ) {
                         owner.abort("Stream reading IOException: "
                                 + e.getMessage() );
-                        break;
+                        return;
                     }
 
-                    synchronized( dismissLock )
-                    {
-                        if( isDismissed )
-                        {
-                            break;
-                        }
+                    if( isDismissed() ) {
+                        return;
                     }
+
                     // call native copying + javacall_media_written()
                     nWriteData();
-                }
 
-                synchronized( dismissLock )
-                {
-                    if( isDismissed )
-                    {
-                        break;
+                    if( isDismissed() ) {
+                        return;
                     }
                 }
+
                 try {
                     this.wait();
                 } catch (InterruptedException ex) {
                     owner.abort("Stream reading thread was interrupted");
-                    break;
+                    return;
                 }
 
             }
             
-            synchronized( dismissLock )
-            {
-                if( isDismissed )
-                {
-                    break;
-                }
+            if( isDismissed() ) {
+                return;
             }
         }
 
@@ -143,6 +137,13 @@ class DirectInputThread extends Thread {
         synchronized( dismissLock )
         {
             isDismissed = true;
+        }
+    }
+
+    private boolean isDismissed()
+    {
+        synchronized( dismissLock ) {
+            return isDismissed;
         }
     }
 }

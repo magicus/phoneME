@@ -41,7 +41,7 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     
     /* Get field of this object */
     addrToWrite = KNI_GetIntField(instance, KNI_GetFieldID(clazz, "nativePtr", "I"));
-    state = KNI_GetIntField(instance, KNI_GetFieldID(clazz, "state", "I"));
+    
 
     KNI_EndHandles();
     KNI_ReturnVoid();
