@@ -44,7 +44,6 @@ class DirectInputThread extends Thread {
 
     final private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 1024 ];
-    private final Object dismissLock = new Object();
     private boolean isDismissed = false;
 
     DirectInputThread(HighLevelPlayer p) {
@@ -161,9 +160,10 @@ class DirectInputThread extends Thread {
 
     public void dismiss()
     {
-        synchronized( dismissLock )
+        synchronized( this )
         {
             isDismissed = true;
+            this.notify();
         }
     }
 
