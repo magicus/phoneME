@@ -26,13 +26,12 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 
 class DirectInputThread extends Thread {
 
+    private volatile long curPos = 0;
     private volatile long posToRead = 0;
     private volatile int sizeToRead = 0;
     private volatile int nativePtr = 0;
