@@ -36,7 +36,7 @@ class DirectInputThread extends Thread {
     private volatile int sizeToRead = 0;
     private volatile int nativePtr = 0;
     private int nRead;
-    private HighLevelPlayer owner;
+    final private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 1024 ];
     private final Object dismissLock = new Object();
     private boolean isDismissed = false;
@@ -46,7 +46,7 @@ class DirectInputThread extends Thread {
     }
     
 
-    private native void nWriteData();
+    private native void nWriteData( byte [] buf, int len );
 
     public void run(){
 
@@ -65,6 +65,7 @@ class DirectInputThread extends Thread {
 
                         int len = sizeToRead > tmpBuf.length ?
                                         tmpBuf.length : sizeToRead;
+                        nRead = 0;
                         nRead = owner.stream.read(tmpBuf, 0, len);
                     } catch ( MediaException ex) {
                         owner.abort( ex.getMessage() );
@@ -80,7 +81,7 @@ class DirectInputThread extends Thread {
                     }
 
                     // call native copying + javacall_media_written()
-                    nWriteData();
+                    nWriteData( tmpBuf, nRead );
 
                     if( isDismissed() ) {
                         return;

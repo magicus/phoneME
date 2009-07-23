@@ -31,18 +31,31 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     jlong curPos = 0;
     jint sizeToRead = 0;
     jint addrToWrite = 0;
+    jint nRead = 0;
+    jfieldID fieldNativePtr;
+    jfieldID fieldCurPos;
+    char *buf = NULL;
     
     KNI_StartHandles(2);
     KNI_DeclareHandle(instance);
     KNI_DeclareHandle(clazz);
+    
     /* Get this object instance and clazz */
     KNI_GetThisPointer(instance);
     KNI_GetObjectClass(instance, clazz);
     
-    /* Get field of this object */
-    addrToWrite = KNI_GetIntField(instance, KNI_GetFieldID(clazz, "nativePtr", "I"));
+    fieldNativePtr = KNI_GetFieldID( clazz, "nativePtr", "I" );
+    fieldCurPos = KNI_GetFieldID( clazz, "curPos", "J" ); // Long!
     
+    
+    addrToWrite = KNI_GetIntField( instance, fieldNativePtr );
+    
+    // Long!
+    nRead = KNI_GetLongField( instance,
+                              KNI_GetFieldID( clazz, "nRead", "J" ) );
 
+    buf = ( char* )addrToWrite;
+    
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
