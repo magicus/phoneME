@@ -87,7 +87,12 @@ public class Timer {
     /**
      * The timer thread.
      */
-    private TimerThread thread = new TimerThread(queue);
+    private TimerThread thread;
+
+    /**
+     * Should the thread be marked as daemon before starting it.
+     */
+    private boolean isDaemon = false;
 
     /**
      * This object causes the timer's task execution thread to exit
@@ -99,7 +104,7 @@ public class Timer {
     private Object threadReaper = new Object() {
         protected void finalize() throws Throwable {
             synchronized(queue) {
-                thread.newTasksMayBeScheduled = false;
+                queue.newTasksMayBeScheduled = false;
                 queue.notify(); // In case queue is empty.
             }
         }
@@ -113,7 +118,7 @@ public class Timer {
      * @see #cancel()
      */
     public Timer() {
-        thread.start();
+        isDaemon = false;
     }
 
     /**
@@ -129,8 +134,7 @@ public class Timer {
      * @see #cancel()
      */
     public Timer(boolean isDaemon) {
-        thread.setDaemon(isDaemon);
-        thread.start();
+        this.isDaemon = isDaemon;
     }
 
     /**
@@ -329,9 +333,20 @@ public class Timer {
             throw new IllegalArgumentException("Illegal execution time.");
         
         synchronized(queue) {
-            if (!thread.newTasksMayBeScheduled)
+            if (!queue.newTasksMayBeScheduled)
                 throw new IllegalStateException("Timer already cancelled.");
 
+            /*
+             * If the TimerThread has exited without an error
+             * it is restarted. See the commentary in TimerThread.run.
+             */
+            if (thread == null || !thread.isAlive()) {
+                thread = new TimerThread(queue);
+                if (isDaemon) {
+                    thread.setDaemon(isDaemon);
+                }
+                thread.start();
+            }
             synchronized(task.lock) {
                 if (task.state != TimerTask.VIRGIN)
                     throw new IllegalStateException(
@@ -363,7 +378,7 @@ public class Timer {
      */
     public void cancel() {
         synchronized(queue) {
-            thread.newTasksMayBeScheduled = false;
+            queue.newTasksMayBeScheduled = false;
             queue.clear();
             queue.notify();  // In case queue was already empty.
         }
@@ -377,14 +392,6 @@ public class Timer {
  * non-repeating tasks from the queue.
  */
 class TimerThread extends Thread {
-    /**
-     * This flag is set to false by the reaper to inform us that there
-     * are no more live references to our Timer object.  Once this flag
-     * is true and there are no more tasks in our queue, there is no
-     * work left for us to do, so we terminate gracefully.  Note that
-     * this field is protected by queue's monitor!
-     */
-    boolean newTasksMayBeScheduled = true;
 
     /**
      * Our Timer's queue.  We store this reference in preference to
@@ -392,7 +399,25 @@ class TimerThread extends Thread {
      * Otherwise, the Timer would never be garbage-collected and this
      * thread would never go away.
      */
-    private TaskQueue queue;
+        private TaskQueue queue;
+
+        /**
+         * The number of milliseconds to wait after the timer queue is empty
+         * before the thread exits. It will be restarted when the next TimerTask
+         * is inserted.
+         * A thread may be terminated before the timeout, if either the Timer is cancelled,
+         * or the thread reaper has been finalized because there where no live references
+         * to the Timer. However, this timeout is necessary to prevent memory leaks,
+         * in case the timer is reachable through a static reference in an application
+         * loaded by a custom class loader. In this situation the live thread will prevent
+         * garbage collection of the application class loader, and thereby also the Timer.
+         * Such an application can only be released after the thread times out.
+         * Thus, the timeout is the maximal duration an uncancelled Timer, with an empty
+         * queue, may cause such an application to stay loaded after it otherwise has terminated.
+         * Note: it's the application responsiblity to cancel a Timer with a non-empty
+         * queue (e.g. with a recurring timer task).
+         */
+        private static final long THREAD_TIMEOUT = 2 * 1000L;
 
     TimerThread(TaskQueue queue) {
         this.queue = queue;
@@ -401,10 +426,15 @@ class TimerThread extends Thread {
     public void run() {
         try {
             mainLoop();
-        } finally {
+            /*
+             * If mainLoop returns then thread timed out with no events
+             * in the queue.  The thread will quietly be restarted in sched()
+             * when the next TimerTask is queued.
+             */
+        } catch(Throwable t) {
             // Somone killed this Thread, behave as if Timer cancelled
             synchronized(queue) {
-                newTasksMayBeScheduled = false;
+                queue.newTasksMayBeScheduled = false;
                 queue.clear();  // Eliminate obsolete references
             }
         }
@@ -420,8 +450,23 @@ class TimerThread extends Thread {
                 boolean taskFired;
                 synchronized(queue) {
                     // Wait for queue to become non-empty
-                    while (queue.isEmpty() && newTasksMayBeScheduled)
-                        queue.wait();
+                    // But no more than timeout value.
+                    while (queue.isEmpty() && queue.newTasksMayBeScheduled) {
+                        queue.wait(THREAD_TIMEOUT);
+                        if (queue.isEmpty()) {
+                            // If we get here, either the timer has been cancelled,
+                            // or the thread has timed out, or the thread reaper has been
+                            // finalized because there where no live references to the Timer.
+                            // The timeout is necessary to prevent memory leaks,
+                            // in case the timer is reachable through a static reference
+                            // in an application loaded by a custom class loader. In
+                            // this situation the live thread will prevent GCing
+                            // the application class loader, and thereby also the Timer.
+                            // Such an application will only be released when the thread
+                            // times out.
+                            break;
+                        }
+                    }
                     if (queue.isEmpty())
                         break; // Queue is empty and will forever remain; die
 
@@ -441,8 +486,8 @@ class TimerThread extends Thread {
                                 task.state = TimerTask.EXECUTED;
                             } else { // Repeating task, reschedule
                                 queue.rescheduleMin(
-                                  task.period<0 ? currentTime   - task.period
-                                                : executionTime + task.period);
+                                        task.period<0 ? currentTime   - task.period
+                                                      : executionTime + task.period);
                             }
                         }
                     }
@@ -452,9 +497,9 @@ class TimerThread extends Thread {
                 if (taskFired)  // Task fired; run it, holding no locks
                     task.run();
             } catch(InterruptedException e) {
-		if (ThreadRegistry.exitRequested()) {
-		    break;
-		}
+                if (ThreadRegistry.exitRequested()) {
+                    break;
+                }
             }
         }
     }
@@ -482,7 +527,13 @@ class TaskQueue {
      * The number of tasks in the priority queue.  (The tasks are stored in
      * queue[1] up to queue[size]).
      */
-    private int size = 0;
+        private int size = 0;
+
+    /**
+     * This flag is set to false by the reaper to inform us that there
+     * are no more live references to our Timer object.
+     */
+        boolean newTasksMayBeScheduled = true;
 
     /**
      * Adds a new task to the priority queue.
