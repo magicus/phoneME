@@ -26,25 +26,27 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 
 class DirectInputThread extends Thread {
 
-    private long curOffset = 0;
-    private long offset = 0;
-    private int requestedLen = 0;
-    private int nativePtr = 0;
-    private int hNative;
-    private SourceStream stream;
-    private boolean isClosed = false;
+    private volatile long posToRead = 0;
+    private volatile int sizeToRead = 0;
+    private volatile int nativePtr = 0;
+    private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 1024 ];
+    private final Object dismissLock = new Object();
+    private boolean isDismissed = false;
 
-    DirectInputThread(int hNative, SourceStream stream) {
-        this.hNative = hNative;
-        this.stream = stream;
+    DirectInputThread(HighLevelPlayer p) {
+        this.owner = p;
     }
     
 
+    private native void nWriteData();
 
     public void run(){
 
@@ -52,40 +54,95 @@ class DirectInputThread extends Thread {
         {
             synchronized( this )
             {
-                if( 0 < requestedLen )
+                while( 0 < sizeToRead )
                 {
-                    int len = requestedLen > tmpBuf.length ?
-                                    tmpBuf.length : requestedLen;
                     try {
-                        stream.read(tmpBuf, 0, len);
-                    } catch (IOException ex) {
+                        seek();
+                        int len = sizeToRead > tmpBuf.length ?
+                                        tmpBuf.length : sizeToRead;
+                        owner.stream.read(tmpBuf, 0, len);
+                    } catch ( MediaException ex) {
+                        owner.abort( ex.getMessage() );
+                        break;
+                    } catch ( IOException e )
+                    {
+                        owner.abort("Stream reading IOException: "
+                                + e.getMessage() );
+                        break;
+                    }
+
+                    synchronized( dismissLock )
+                    {
+                        if( isDismissed )
+                        {
+                            break;
+                        }
                     }
                     // call native copying + javacall_media_written()
+                    nWriteData();
+                }
+
+                synchronized( dismissLock )
+                {
+                    if( isDismissed )
+                    {
+                        break;
+                    }
                 }
                 try {
                     this.wait();
                 } catch (InterruptedException ex) {
+                    owner.abort("Stream reading thread was interrupted");
+                    break;
                 }
 
-                if( isClosed )
+            }
+            
+            synchronized( dismissLock )
+            {
+                if( isDismissed )
                 {
                     break;
                 }
             }
-            
         }
 
     }
 
-    public void requestData( long offset, int length, int bufPtr )
+    private void seek() throws IOException, MediaException
+    {
+        if( owner.stream.tell() == posToRead )
+        {
+            return;
+        }
+        if( owner.stream.getSeekType() ==
+                SourceStream.NOT_SEEKABLE ||
+            ( posToRead != 0 &&
+              owner.stream.getSeekType() !=
+                SourceStream.RANDOM_ACCESSIBLE ) )
+        {
+            throw new MediaException("The stream is not seekable");
+        }
+
+        owner.stream.seek(posToRead);
+    }
+
+    public void requestData( long position, int length, int bufPtr )
     {
         synchronized( this )
         {
-            this.offset = offset;
-            this.requestedLen = length;
+            this.posToRead = position;
+            this.sizeToRead = length;
             this.nativePtr = bufPtr;
             this.notify();
         }
     }
 
+    public void dismiss()
+    {
+        synchronized( dismissLock )
+        {
+            isDismissed = true;
+        }
+    }
 }

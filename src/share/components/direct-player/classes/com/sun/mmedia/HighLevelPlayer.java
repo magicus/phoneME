@@ -247,6 +247,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
+    synchronized void abort( String msg )
+    {
+        if( CLOSED != getState() )
+        {
+            close();
+            sendEvent(PlayerListener.ERROR, msg );
+        }
+    }
+
     private void setHandledByJava()
     {
         handledByJava = true;
