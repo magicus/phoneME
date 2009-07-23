@@ -53,8 +53,8 @@ void jsr211_process_platform_finish_notification (int invoc_id, jsr211_platform_
 
 void jsr211_process_java_invoke_notification (int invoc_id, jsr211_platform_event *event);
 
-typedef jsr211_request_data;
-typedef jsr211_response_data;
+typedef struct _jsr211_request_data jsr211_request_data;
+typedef struct _jsr211_response_data jsr211_response_data;
 
 int jsr211_process_msg_request( const jsr211_request_data * data );
 void jsr211_process_msg_result( const jsr211_response_data * data );

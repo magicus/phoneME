@@ -108,19 +108,21 @@ void unblockWaitingThreads( jsr211_wait_status status, int blockID, jsr211_wait_
 
 /* strutures */
 
-typedef struct {
+struct _jsr211_request_data {
     int queueID;
     int msg;
     int dataExchangeID;
     unsigned char * bytes;
     unsigned int count;
-} jsr211_request_data;
+};
+typedef struct _jsr211_request_data jsr211_request_data;
 
-typedef struct {
+struct _jsr211_response_data {
     int dataExchangeID;
     unsigned char * bytes;
     unsigned int count;
-} jsr211_response_data;
+};
+typedef struct _jsr211_response_data jsr211_response_data;
 
 
 #ifdef __cplusplus
