@@ -36,108 +36,6 @@
 
 int VirtualStackFrame::_location_map_size;
 
-#if ENABLE_CSE
-
-void VirtualStackFrame::push_tag() {
-  // IMPL_NOTE: need to revisit for inlining
-  if (!Compiler::is_inlining()) {
-    jint bci_stack_pointer = virtual_stack_pointer() -
-      method()->max_locals();
-    if ( bci_stack_pointer >= 0 ) {
-      //add 1 since bci start from zero.
-      jshort bci = (jshort) code_generator()->bci();
-      jint tag = create_tag(bci);
-      jint* top_tag = tag_at(bci_stack_pointer);
-      *top_tag = tag;
-    }
-  }
-}
-
-//for example, iadd will pop twice, so the last pop will
-//get the begin index of current expression
-void  VirtualStackFrame::pop_tag() {
-  // IMPL_NOTE: need to revisit for inlining
-  if (!Compiler::is_inlining()) {
-    jint bci_stack_pointer = virtual_stack_pointer() -
-      method()->max_locals();
-    if ( bci_stack_pointer >= 0 ) {
-
-      BasicType type = expression_stack_type(0);
-
-      if (type == T_DOUBLE || type == T_LONG) {
-        bci_stack_pointer --;
-      }
-
-      jint* top_tag = tag_at(bci_stack_pointer);
-
-      jint  tag = (*top_tag);
-
-      //update VFS tag status
-      decode_tag(tag);
-    }
-  }
-}
-
-void  VirtualStackFrame::decode_tag(jint tag) {
-    _cse_tag = tag;
-    _pop_bci = (jshort) code_generator()->bci();
-}
-
-jint VirtualStackFrame::size_of_tag_stack(Method* method) {
-  return method->max_execution_stack_count()*sizeof(jint);
-}
-
-void VirtualStackFrame::wipe_notation_for_osr_entry() {
-  VERBOSE_CSE(("clear notation for osr entry bci =%d",
-       Compiler::current()->bci()));
-  VERBOSE_CSE(("osr is  %s",
-          VirtualStackFrame::is_entry_passable()?"passable":"un-passable" ));
-
-  VirtualStackFrame::abort_tracking_of_current_snippet();
-  if (VirtualStackFrame::is_entry_passable()) {
-    RegisterAllocator::wipe_all_notation_except(
-      VirtualStackFrame::remained_registers());
-  } else {
-    RegisterAllocator::wipe_all_notations();
-  }
-  VirtualStackFrame::mark_as_unpassable();
-}
-
-void VirtualStackFrame::wipe_notation_for_unmapped() {
-  const RawLocation* raw_location = raw_location_at(0);
-  const RawLocation* end  = raw_location_end(raw_location);
-
-  jint register_bitmap = 0 ;
-
-  while (raw_location < end) {
-    if (!raw_location->is_flushed() && raw_location->in_register()) {
-      register_bitmap |= 1 << raw_location->get_register();
-      if (raw_location->is_two_word()) {
-        raw_location ++;
-        register_bitmap |= 1 << raw_location->get_register();
-      }
-    } else if (raw_location->is_two_word()) {
-      raw_location ++;
-    }
-    raw_location ++;
-  }
-
-  for (Assembler::Register reg = Assembler::first_register;
-       reg <= Assembler::last_register;
-       reg = (Assembler::Register) ((int) reg + 1)) {
-    if ((register_bitmap & (1<<reg)) == 0) {
-      RegisterAllocator::wipe_notation_of(reg);
-    }
-  }
-}
-
-#define ABORT_CSE_TRACKING VirtualStackFrame::abort_tracking_of_current_snippet();\
-      RegisterAllocator::wipe_all_notations();
-#else
-#define ABORT_CSE_TRACKING
-#endif
-
-
 bool VirtualStackFrame::is_mapped_by(const RawLocation* item,
                                      const Assembler::Register reg) const {
   if (!item->is_flushed() && item->in_register()) {
@@ -323,7 +221,7 @@ VirtualStackFrame* VirtualStackFrame::create(Method* method JVM_TRAPS) {
 
   set_location_map_size( Location::size() *
     (inliner_stack_count + method->max_execution_stack_count() -
-     num_stack_lock_words()) + size_of_tag_stack(method) );
+     num_stack_lock_words()));
 
   VirtualStackFrame* frame =
     VirtualStackFrame::allocate(JVM_SINGLE_ARG_ZCHECK_0( frame ) );
@@ -465,9 +363,6 @@ void VirtualStackFrame::dirtify(Assembler::Register reg) {
       location.mark_as_changed();
     }
   }
-
-  //cse
-  RegisterAllocator::wipe_notation_of(reg);
 }
 #endif
 
@@ -517,7 +412,6 @@ void VirtualStackFrame::flush(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
   set_flush_count(flush_count() + 1);
-  ABORT_CSE_TRACKING;
 }
 
 void VirtualStackFrame::mark_as_flushed() {
@@ -531,8 +425,6 @@ void VirtualStackFrame::mark_as_flushed() {
 
   //remember array length: clear cached value
   clear_bound();
-
-  RegisterAllocator::wipe_all_notations();
 }
 
 void VirtualStackFrame::conform_to_stack_map(int bci) {
@@ -583,16 +475,6 @@ void VirtualStackFrame::conformance_entry(bool merging) {
   RawLocation *raw_location = raw_location_at(0);
   RawLocation *end  = raw_location_end(raw_location);
   int index = 0;
-#if ENABLE_CSE
-  //collecting preserve information for OSR entry
-  bool check_register = false;
-  jint register_bitmap = 0 ;
-  if (VirtualStackFrame::is_entry_passable() &&
-   !merging ) {
-    check_register = true;
-
-  }
-#endif
 
   while (raw_location < end) {
     if (!raw_location->is_flushed()) {
@@ -613,13 +495,6 @@ void VirtualStackFrame::conformance_entry(bool merging) {
       }
     }
 
-#if ENABLE_CSE
-    if (check_register &&
-        raw_location->where() == Value::T_REGISTER) {
-      jint reg = (jint) raw_location->get_register();
-      register_bitmap |= (1<< reg);
-    }
-#endif
     if (merging) {
       raw_location->clear_flags();
 #if ENABLE_COMPILER_TYPE_INFO
@@ -634,14 +509,6 @@ void VirtualStackFrame::conformance_entry(bool merging) {
       index ++;
     }
   }
-
-#if ENABLE_CSE
-  if (check_register) {
-    //if those register are still in register
-    //we won't clear theire notation later.
-    VirtualStackFrame::record_remained_registers( register_bitmap);
-  }
-#endif
 
   // Mark all the literals as being junk
   clear_literals();
@@ -734,8 +601,6 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
 
   //remember array length: clear cached value
   clear_bound();
-
-  RegisterAllocator::wipe_all_notations();
 
   // This optimization prevents a lot of sp thrashing
   if (stack_pointer() < other->stack_pointer()) {
@@ -1846,8 +1711,6 @@ void VirtualStackFrame::spill_register(Assembler::Register reg) {
       clear_bound();
     }
   }
-
-  RegisterAllocator::wipe_notation_of(reg);
 }
 
 // Modify a frame so that it doesn't use a particular register.
@@ -1865,8 +1728,6 @@ void VirtualStackFrame::unuse_register(Assembler::Register reg) {
     }
   }
 
-  RegisterAllocator::wipe_notation_of(reg);
-
   for (VSFStream s(this); !s.eos(); s.next()) {
     if (is_mapped_by(s.index(), reg)) {
       if (!used) {
@@ -1875,9 +1736,6 @@ void VirtualStackFrame::unuse_register(Assembler::Register reg) {
         if (RegisterAllocator::has_free(1)) {
           new_reg = RegisterAllocator::allocate();
           code_generator()->move(new_reg, reg);
-
-          RegisterAllocator::move_notation(reg, new_reg);
-
         }
       }
       // Either spill the location, or modify to indicate that it is in
@@ -1885,8 +1743,6 @@ void VirtualStackFrame::unuse_register(Assembler::Register reg) {
       Location location(this, s.index());
       if (new_reg == Assembler::no_reg) {
         location.flush();
-   //cse
-        RegisterAllocator::wipe_notation_of(reg);
       } else {
         location.change_register(new_reg, reg);
       }
@@ -2164,8 +2020,6 @@ void VirtualStackFrame::pop(Value& result) {
   bool double_word = result.is_two_word();
   int index = virtual_stack_pointer();
 
-  pop_tag();
-
   // Adjust the virtual stack pointer.
   decrement_virtual_stack_pointer();
   if (double_word) {
@@ -2187,8 +2041,6 @@ void VirtualStackFrame::push(const Value& value) {
   bool double_word = value.is_two_word();
   // Adjust the virtual stack pointer.
   increment_virtual_stack_pointer();
-
-  push_tag();
 
   if (double_word) increment_virtual_stack_pointer();
 
@@ -2418,15 +2270,6 @@ bool VirtualStackFrame::is_value_must_be_index_checked(
     return false;
   }
 
-  //cse
-  if(!value.is_two_word() &&
-    RegisterAllocator::is_checked_before(value.lo_register())) {
-    VERBOSE_CSE(("reg %s is mark as index checked ",
-          Disassembler::register_name(value.lo_register())));
-
-    return true;
-  }
-
   int index = 0;
   int checked_index = bound_index();
   register RawLocation *raw_location = raw_location_at(checked_index);
@@ -2451,15 +2294,6 @@ void VirtualStackFrame::set_value_must_be_index_checked(
   }
 
   value.set_must_be_index_checked();
-
-#if ENABLE_CSE
-  if ( !value.is_two_word() ) {
-    VERBOSE_CSE(("reg %s is index checked before ",
-          Disassembler::register_name(value.lo_register())));
-     RegisterAllocator::set_checked_before(value.lo_register());
-  }
-#endif
-
 
   int checked_index = bound_index();
   register RawLocation *raw_location = raw_location_at(checked_index);
@@ -2742,9 +2576,6 @@ Assembler::Register VirtualStackFrame::try_to_free_length_register() {
     if ( reg != Assembler::no_reg ) {
       RegisterAllocator::reference(reg);
 
-      //cse
-      RegisterAllocator::wipe_notation_of(reg);
-
       return reg;
     }
     return Assembler::no_reg;
@@ -2776,13 +2607,6 @@ void VirtualStackFrame::dump(bool as_comment) {
     jvm_sprintf(p, " (vsp=%d,sp=%d) ", virtual_stack_pointer(), stack_pointer());
     p += jvm_strlen(p);
   }
-
-#if ENABLE_CSE
-  jvm_sprintf(p, "cse_tag=[0x%08x]", (jint)_cse_tag);
-  p += jvm_strlen(p);
-  //dump register notation
-  RegisterAllocator::dump_notation();
-#endif
 
   for (VSFStream s(this); !s.eos(); s.next()) {
     if ((p - str) > sizeof(str) - 50) {
@@ -3174,7 +2998,4 @@ extern "C" void vsf_restore(address* regs) {
 }
 #endif
 
-#ifdef ABORT_CSE_TRACKING
-#undef ABORT_CSE_TRACKING
-#endif
 #endif

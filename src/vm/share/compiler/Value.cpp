@@ -315,14 +315,9 @@ void Value::copy(Value& result) {
     result.set_registers(lo_register(), hi_register());
     RegisterAllocator::reference(lo_register());
     RegisterAllocator::reference(hi_register());
-    //cse
-    RegisterAllocator::wipe_notation_of(lo_register());
-    RegisterAllocator::wipe_notation_of(hi_register());
   } else {
     result.set_register(lo_register());
     RegisterAllocator::reference(lo_register());
-    //cse
-    RegisterAllocator::wipe_notation_of(lo_register());
   }
 }
 

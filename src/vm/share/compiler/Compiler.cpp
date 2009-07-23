@@ -74,11 +74,6 @@ Compiler::Compiler( Method* method, const int active_bci ) {
 
   _failure = reservation_failed;
   BytecodeCompileClosure::initialize(method, active_bci);
-
-#if ENABLE_CSE
-  VirtualStackFrame::init_status_of_current_snippet_tracking();
-  RegisterAllocator::wipe_all_notations();
-#endif
 }
 
 #ifndef PRODUCT

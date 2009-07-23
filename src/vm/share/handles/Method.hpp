@@ -914,32 +914,6 @@ public:
     }
   }
 
-#if ENABLE_COMPILER && ENABLE_CSE
-  //scan the byte code snippet start from begin bci to end bci.  If the snippet contains
-  //byte code which can't be skipped based on semantic or constraint of our 
-  //implementation. We return false. Otherwise, we fill the three kinds of dependency
-  //bitmap and return true.
-  bool is_snippet_can_be_elminate(jint begin_bci, jint end_bci, 
-                              int& bitmap_of_depending_locals, 
-                              int& bitmap_of_depending_field, 
-                              int& bitmap_of_depending_array_type);
- 
-  //check whether two pieces of byte code are same. and return the bci of first different byte
-  //code following the snippet if checking result is true.
-  //begin_bci is the begin bci of sequence in notation
-  //end_bci is the end bci of sequence in notation
-  //cur_bci is the current bci to be compiled
-  bool compare_bytecode(const jint begin_bci, const jint end_bci, 
-                         jint cur_bci, jint& next_bci);
-
-  //clean the register notation if any variable appeared in their dependency set are 
-  //changed(the value in the register is obsolete).
-  //For example, if we keep the result of local_1 + local_2 in R1, if the local_1 is changed,
-  //the value of R1 doesn't stand for the result of after that changing. So we mark
-  //notation and the value in the register as absolete.
-  void wipe_out_dirty_recorded_snippet(int bci, Bytecodes::Code code) ;
-#endif
-
  private:
   // Returns the compiled code for this method.
   ReturnOop compiled_code_unchecked() const;
