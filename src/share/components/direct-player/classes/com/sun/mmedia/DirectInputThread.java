@@ -35,6 +35,7 @@ class DirectInputThread extends Thread {
     private volatile long posToRead = 0;
     private volatile int sizeToRead = 0;
     private volatile int nativePtr = 0;
+    private int read;
     private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 1024 ];
     private final Object dismissLock = new Object();
@@ -59,7 +60,7 @@ class DirectInputThread extends Thread {
                         seek();
                         int len = sizeToRead > tmpBuf.length ?
                                         tmpBuf.length : sizeToRead;
-                        owner.stream.read(tmpBuf, 0, len);
+                        read = owner.stream.read(tmpBuf, 0, len);
                     } catch ( MediaException ex) {
                         owner.abort( ex.getMessage() );
                         break;
