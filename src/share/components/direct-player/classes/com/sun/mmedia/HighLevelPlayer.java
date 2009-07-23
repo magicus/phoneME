@@ -930,11 +930,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
+        setState( STARTED );
         if (!lowLevelPlayer.doStart()) {
             throw new MediaException("start");
         }
 
-        setState( STARTED );
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
 
         // Finish any pending startup stuff in subclass
