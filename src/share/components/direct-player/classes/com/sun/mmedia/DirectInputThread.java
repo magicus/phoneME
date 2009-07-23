@@ -33,9 +33,15 @@ class DirectInputThread extends Thread {
 
     private volatile long curPos = 0;
     private volatile long posToRead = 0;
-    private volatile int sizeToRead = 0;
+    private volatile int lenToRead = 0;
     private volatile int nativePtr = 0;
     private int nRead;
+
+    private boolean requestPending = false;
+    private long    reqPos = 0;
+    private int     reqLen = 0;
+    private int     reqBufPtr = 0;
+
     final private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 1024 ];
     private final Object dismissLock = new Object();
@@ -52,54 +58,73 @@ class DirectInputThread extends Thread {
 
         for(;;)
         {
-            synchronized( this )
-            {
-                while( 0 < sizeToRead )
-                {
-                    try {
-                        seek();
-                        
-                        if( isDismissed() ) {
-                            return;
-                        }
-
-                        int len = sizeToRead > tmpBuf.length ?
-                                        tmpBuf.length : sizeToRead;
-                        nRead = 0;
-                        nRead = owner.stream.read(tmpBuf, 0, len);
-                    } catch ( MediaException ex) {
-                        owner.abort( ex.getMessage() );
-                        return;
-                    } catch ( IOException e ) {
-                        owner.abort("Stream reading IOException: "
-                                + e.getMessage() );
-                        return;
-                    }
-
-                    if( isDismissed() ) {
-                        return;
-                    }
-
-                    // call native copying + javacall_media_written()
-                    nWriteData( tmpBuf, nRead );
-
-                    if( isDismissed() ) {
-                        return;
-                    }
-                }
-
-                try {
-                    this.wait();
-                } catch (InterruptedException ex) {
-                    owner.abort("Stream reading thread was interrupted");
+            synchronized( this ) {
+                if( isDismissed ) {
                     return;
                 }
 
+                if( requestPending )
+                {
+                   lenToRead = reqLen;
+                   posToRead = reqPos;
+                   nativePtr = reqBufPtr;
+                   requestPending = false;
+                }
+                else
+                {
+                   lenToRead = 0;
+                }
             }
+
+            while( 0 < lenToRead )
+            {
+                try {
+                    seek();
+
+                    if( isDismissed ) {
+                        return;
+                    }
+
+                    int len = lenToRead > tmpBuf.length ?
+                                    tmpBuf.length : lenToRead;
+                    nRead = owner.stream.read(tmpBuf, 0, len);
+                } catch ( MediaException ex) {
+                    owner.abort( ex.getMessage() );
+                    return;
+                } catch ( IOException e ) {
+                    owner.abort("Stream reading IOException: "
+                            + e.getMessage() );
+                    return;
+                }
+
+                if( isDismissed ) {
+                    return;
+                }
+
+                // call native copying + javacall_media_written()
+                nWriteData( tmpBuf, nRead );
+
+                if( isDismissed ) {
+                    return;
+                }
+            }
+
+            synchronized( this ) {
+                if( isDismissed ) {
+                    return;
+                }
+                if( !requestPending )
+                {
+                    try {
+                        this.wait();
+                    } catch (InterruptedException ex) {
+                        owner.abort("Stream reading thread was interrupted");
+                        return;
+                    }
+                }
+            }
+
             
-            if( isDismissed() ) {
-                return;
-            }
         }
 
     }
@@ -126,9 +151,10 @@ class DirectInputThread extends Thread {
     {
         synchronized( this )
         {
-            this.posToRead = position;
-            this.sizeToRead = length;
-            this.nativePtr = bufPtr;
+            this.requestPending = true;
+            this.reqPos = position;
+            this.reqLen = length;
+            this.reqBufPtr = bufPtr;
             this.notify();
         }
     }
@@ -141,10 +167,4 @@ class DirectInputThread extends Thread {
         }
     }
 
-    private boolean isDismissed()
-    {
-        synchronized( dismissLock ) {
-            return isDismissed;
-        }
-    }
 }
