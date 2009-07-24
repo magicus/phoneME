@@ -288,6 +288,20 @@ public:
   void add_no_expand(Oop *oop);
 
   /**
+   * Remove element from the ROMVector.
+   */
+  void remove_element_at(const jint index) {
+    const int last = size()-1;
+    GUARANTEE(index <= last, "sanity");
+    ObjArray::Raw array = this->array();
+    if( last > 0 ) {
+      array().obj_at_put( index, array().obj_at( last ) );
+    }
+    array().obj_at_clear(last);
+    set_size(last);
+  }
+
+  /**
    * Forget about all objects that have been stored in the ROMVector
    */
   void flush() {

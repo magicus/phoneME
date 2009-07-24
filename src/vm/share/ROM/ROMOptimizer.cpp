@@ -559,9 +559,7 @@ void ROMOptimizer::make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS) {
   for (SystemClassStream st; st.has_next();) {
     klass = st.next();
     AccessFlags flags = klass().access_flags();
-    if( !flags.is_final() && !has_subclasses(&klass)
-        && ( is_in_hidden_package(&klass)
-             || (!flags.is_public() && is_in_restricted_package(&klass)) ) ) {
+    if( !flags.is_final() && !has_subclasses(&klass) && is_hidden(&klass) ) {
       flags.set_is_final();
       klass().set_access_flags(flags);
 #if USE_ROM_LOGGING
@@ -592,13 +590,14 @@ void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->cr();
 #endif
 
-  UsingFastOops fast_oops;
-  InstanceClass::Fast klass;
-  for (SystemClassStream st; st.has_next();) {
-    klass = st.next();
-    if( !klass().is_final() &&
-        ( is_in_hidden_package(&klass) || is_in_restricted_package(&klass) ) ) {
-      make_virtual_methods_final(&klass, &log_vector JVM_CHECK);
+  {
+    UsingFastOops fast_oops;
+    InstanceClass::Fast klass;
+    for (SystemClassStream st; st.has_next();) {
+      klass = st.next();
+      if( !klass().is_final() && is_in_restricted_package(&klass) ) {
+        make_virtual_methods_final(&klass, &log_vector JVM_CHECK);
+      }
     }
   }
 
@@ -927,9 +926,7 @@ inline void ROMOptimizer::fill_interface_implementation_cache(void) {
     InstanceClass::Raw cls = java_cls.obj();
 
 #if USE_SOURCE_IMAGE_GENERATOR      
-    const bool not_reachable_by_applications = is_in_hidden_package(&cls) ||
-      ( !cls().is_public() && is_in_restricted_package(&cls) );
-    
+    const bool not_reachable_by_applications = is_hidden(&cls);    
 #elif (ENABLE_MONET && !ENABLE_LIB_IMAGES)
     const bool not_reachable_by_applications = true;
 #endif
@@ -1173,12 +1170,7 @@ bool ROMOptimizer::is_in_public_vtable(InstanceClass* ic, Method* method) {
   const int vtable_index = method->vtable_index();
   InstanceClass::Raw klass = ic->obj();
   for( ; klass.not_null(); klass = klass().super() ) {
-    if( is_in_hidden_package(&klass) ||
-      (!klass().is_public() && is_in_restricted_package(&klass)) ) {    
-      continue; // Not a public base class
-    }
-
-    if (vtable_index < klass().vtable_length()) {
+    if( !is_hidden(&klass) && vtable_index < klass().vtable_length()) {
       return true;
     }
   }
@@ -1192,8 +1184,7 @@ bool ROMOptimizer::is_in_public_itable(InstanceClass* ic, Method* method) {
     const int offset = ci().itable_offset_at(index);
     if (offset > 0) {
       InstanceClass::Raw intf = ci().itable_interface_at(index);
-      if( is_in_hidden_package(&intf) ||
-          (!intf().is_public() && is_in_restricted_package(&intf)) ) {
+      if( is_hidden(&intf) ) {
         continue; // Not a public interface
       }
 
@@ -1964,8 +1955,7 @@ inline int ROMOptimizer::rename_non_public_class(InstanceClass* klass) {
   // The following types of classes may be renamed:
   // [1] all classes in hidden packages
   // [2] package-private classes in restricted packages
-  if( is_in_hidden_package(klass) ||
-      (!klass->is_public() && is_in_restricted_package(klass)) ) {
+  if( is_hidden(klass) ) {
     Symbol::Raw name = klass->name();
     record_original_class_info(klass, &name);
     klass->set_name(Symbols::unknown());

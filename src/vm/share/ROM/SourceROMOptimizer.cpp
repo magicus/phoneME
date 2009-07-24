@@ -162,6 +162,77 @@ int ROMOptimizer::get_max_alternate_constant_pool_count() {
   return max;
 }
 
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+inline void ROMOptimizer::optimize_package_lists(JVM_SINGLE_ARG_TRAPS) {
+  ROMVector* rom_profiles = profiles_vector();
+  GUARANTEE(rom_profiles != NULL, "Sanity");
+
+  const int profiles_count = rom_profiles->size();
+
+  {
+    UsingFastOops fast_oops;
+    ROMProfile::Fast current_profile;
+    ROMVector::Fast current_packages;
+    Symbol::Fast current_package;
+
+    for( int current_id = 0; current_id < profiles_count; current_id++ ) {
+      current_profile = rom_profiles->element_at(current_id);
+      {
+        current_packages = current_profile().restricted_packages();
+        const int len = current_packages().size();
+        for( int i = 0; i < len; i++ ) {
+          current_package = current_packages().element_at(i);
+          int other_id;
+          for( other_id = 0; other_id < profiles_count; other_id++ ) {
+            if( other_id != current_id ) {
+              ROMProfile::Raw other_profile = rom_profiles->element_at(other_id);
+              ROMVector::Raw other_packages = other_profile().restricted_packages();
+              if( !name_matches_pattern( &current_package, &other_packages ) ) {
+                break;
+              }
+            }
+          }
+          if( other_id == profiles_count ) {
+            add_package_to_list(restricted_packages(), &current_package JVM_CHECK);
+          }
+        }
+      }
+      { // IMPL_NOTE: Tables of hidden packages are not written to ROM image.
+        // This optimization can only speed up searching for hidden packages.
+        // Consider marking classes as hidden earlier to eliminate the need for
+        // this optimization and to make the search even faster.
+        current_packages = current_profile().hidden_packages();
+        const int len = current_packages().size();
+        for( int i = 0; i < len; i++ ) {
+          current_package = current_packages().element_at(i);
+          int other_id;
+          for( other_id = 0; other_id < profiles_count; other_id++ ) {
+            if( other_id != current_id ) {
+              ROMProfile::Raw other_profile = rom_profiles->element_at(other_id);
+              ROMVector::Raw other_packages = other_profile().hidden_packages();
+              if( !name_matches_pattern( &current_package, &other_packages ) ) {
+                break;
+              }
+            }
+          }
+          if( other_id == profiles_count ) {
+            add_package_to_list(hidden_packages(), &current_package JVM_CHECK);
+          }
+        }
+      }
+    }
+  }
+  {
+    for( int profile_id = 0; profile_id < profiles_count; profile_id++ ) {
+      ROMProfile::Raw profile = rom_profiles->element_at(profile_id);
+      remove_packages( profile().restricted_packages(), restricted_packages() );
+      remove_packages( profile().hidden_packages(),     hidden_packages()     );
+    }
+  }
+}
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+
 void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
   ROMVector disable_compilation_log;
   ROMVector quick_natives_log;
@@ -200,6 +271,10 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
 
   reset_false_if_level();
   read_config_file(config_file JVM_CHECK);
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  optimize_package_lists(JVM_SINGLE_ARG_CHECK);
+#endif
 
 #if USE_ROM_LOGGING
   write_disable_compilation_log();
@@ -361,12 +436,36 @@ void ROMOptimizer::abort(void) {
   JVM::exit(-1);
 }
 
+void
+ROMOptimizer::config_message( const char category[], const char msg[] ) const {
+  tty->print_cr( "\n%s %s(%d):      %s", category,
+                 config_parsing_file(), config_parsing_line_number(), msg );
+}
+
+inline void ROMOptimizer::config_warning( const char msg[] ) const {
+  config_message( "Warning", msg );
+}
+
 void ROMOptimizer::config_error( const char msg[] ) const {
-  tty->print_raw("\nError ");
-  tty->print_raw( config_parsing_file() );
-  tty->print_cr("(%d):\n      %s", config_parsing_line_number(), msg);
+  config_message( "Error", msg );
   abort();
 }
+
+bool ROMOptimizer::validate_pattern( const char pattern[] ) const {
+  const int len = jvm_strlen(pattern);
+  if( !len ) {
+    config_warning( "Class or package name or pattern not specified" );
+    return false;
+  }
+  for( int i = 0; i < len; i++ ) {
+    switch( pattern[i] ) {
+      case '*': if( i == 0 || i != (len-1) || pattern[i-1] != '.' )
+      case '?': config_error( "Only patterns with .* at the end are supported" );
+    }
+  }
+  return true;
+}
+
 
 // Parse and process the config line.
 void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
@@ -449,6 +548,8 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
   }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT      
   if (jvm_strcmp(name, "HiddenClass") == 0) {
+    if( !validate_pattern(value) ) return;
+
     UsingFastOops fastOops;
     Symbol::Fast class_pattern =
       SymbolTable::slashified_symbol_for(value JVM_CHECK);
@@ -464,26 +565,33 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
     return;
   }
   if (jvm_strcmp(name, "InitAtBuild") == 0) {
+    if( !validate_pattern(value) ) return;
     add_class_to_list(init_at_build_classes(), name, value JVM_CHECK);
     return;
   }
   if (jvm_strcmp(name, "InitAtLoad") == 0) {
+    if( !validate_pattern(value) ) return;
     add_class_to_list(init_at_load_classes(), name, value JVM_CHECK);
     return;
   }
   if (jvm_strcmp(name, "DontRenameClass") == 0) {
+    if( !validate_pattern(value) ) return;
     add_class_to_list(dont_rename_classes(), name, value JVM_CHECK);
     return;
   }
   if (jvm_strcmp(name, "DontRenameNonPublicFields") == 0) {
+    if( !validate_pattern(value) ) return;
     add_class_to_list(dont_rename_fields_classes(), name, value JVM_CHECK);
     return;
   }
   if (jvm_strcmp(name, "DontRenameNonPublicMethods") == 0) {
+    if( !validate_pattern(value) ) return;
     add_class_to_list(dont_rename_methods_classes(), name,value JVM_CHECK);
     return;
   }
   if (jvm_strcmp(name, "HiddenPackage") == 0) {
+    if( !validate_pattern(value) ) return;
+
     // Hidden packages are also restricted.
     add_package_to_list(hidden_packages(), value JVM_CHECK);
     add_package_to_list(restricted_packages(), value JVM_CHECK);
@@ -499,6 +607,7 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
     return;
   }
   if (jvm_strcmp(name, "RestrictedPackage") == 0) {
+    if( !validate_pattern(value) ) return;
     add_package_to_list(restricted_packages(), value JVM_CHECK);
     return;
   }
@@ -604,27 +713,9 @@ void ROMOptimizer::add_class_to_list(ObjArray *list, const char *flag,
   SHOULD_NOT_REACH_HERE();
 }
 
-// IMPL_NOTE: Make list ROMVector, not ObjArray. Here and everywhere!!!
-void ROMOptimizer::add_package_to_list(ROMVector *vector, const char *pkgname 
-                                       JVM_TRAPS) {
-  int len = jvm_strlen(pkgname) + 1;
-  if (len > 255) {
-    tty->print_cr("error: restricted or hidden package name may not exceed "
-                  "255 bytes");
-    tty->print_cr("(%s)", pkgname);
-    Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW);
-  }
-
-  UsingFastOops fast_oops;
-  Symbol::Fast package = SymbolTable::slashified_symbol_for(pkgname JVM_CHECK);
-  if (!vector->contains(&package)) {
-    vector->add_element(&package JVM_CHECK);
-  }
-}
-
 bool
-ROMOptimizer::name_matches_patterns_list(const char name[], const int name_len,
-                                         ROMVector* patterns) {
+ROMOptimizer::name_matches_pattern(const char name[], const int name_len,
+                                    ROMVector* patterns) {
   GUARANTEE(patterns != NULL, "Sanity");
   const int list_len = patterns->size();
   for( int i = 0; i < list_len; i++ ) {
@@ -639,6 +730,11 @@ ROMOptimizer::name_matches_patterns_list(const char name[], const int name_len,
     }
   }
   return false;
+}
+
+inline bool
+ROMOptimizer::name_matches_pattern(Symbol* s, ROMVector* patterns) {
+  return name_matches_pattern( s->utf8_data(), s->length(), patterns );
 }
 
 bool ROMOptimizer::class_list_contains(ObjArray *list, InstanceClass *klass) {
@@ -658,8 +754,7 @@ bool ROMOptimizer::class_list_contains(ObjArray *list, InstanceClass *klass) {
 bool ROMOptimizer::class_matches_classes_list(InstanceClass* klass, 
                                               ROMVector* patterns) {
   Symbol::Raw name = klass->original_name();
-  const int len = name().length();
-  return name_matches_patterns_list(name().utf8_data(), len,  patterns);
+  return name_matches_pattern(&name, patterns);
 }
 
 bool ROMOptimizer::class_matches_packages_list(InstanceClass* klass,
@@ -669,7 +764,67 @@ bool ROMOptimizer::class_matches_packages_list(InstanceClass* klass,
   if( len <= 0 ) {
     len = name().length();
   }
-  return name_matches_patterns_list(name().utf8_data(), len, patterns);
+  return name_matches_pattern(name().utf8_data(), len, patterns);
+}
+
+void ROMOptimizer::remove_packages(ROMVector* vector, Symbol* pattern) {
+  GUARANTEE(vector != NULL, "Sanity");
+
+  const char* name = pattern->utf8_data();
+  const int name_len = pattern->length();
+
+  int list_len = vector->size();
+  for( int i = 0; i < list_len; ) {
+    Symbol::Raw current = vector->element_at(i);
+    if( current.is_null() ) { // end of list
+      break;
+    }    
+
+    const char* current_name = current().utf8_data();
+    const int current_len = current().length();
+    if( Universe::name_matches_pattern( current_name, current_len,
+                                        name, name_len ) ) {
+      vector->remove_element_at(i);
+      list_len--;
+    } else {
+      i++;
+    }
+  }
+}
+
+void ROMOptimizer::remove_packages(OopDesc* from_vector, ROMVector* patterns) {
+  ROMVector::Raw from( from_vector );
+  const int len = patterns->size();
+  for( int i = 0; i < len; i++ ) {
+    Symbol::Raw pattern = patterns->element_at(i);
+    remove_packages( &from, &pattern );
+  }
+}
+
+void ROMOptimizer::add_package_to_list(ROMVector* vector, Symbol* package
+                                       JVM_TRAPS) {
+  if( name_matches_pattern( package, vector ) ) {
+    return;
+  }
+  remove_packages(vector, package);
+  vector->add_element(package JVM_NO_CHECK_AT_BOTTOM);
+}
+
+void ROMOptimizer::add_package_to_list(ROMVector* vector, const char* pkgname
+                                       JVM_TRAPS) {
+  {
+    const int len = jvm_strlen(pkgname) + 1;
+    if (len > 255) {
+      tty->print_cr("error: restricted or hidden package name may not exceed "
+                    "255 bytes");
+      tty->print_cr("(%s)", pkgname);
+      Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW);
+    }
+  }
+
+  UsingFastOops fast_oops;
+  Symbol::Fast package = SymbolTable::slashified_symbol_for(pkgname JVM_CHECK);
+  add_package_to_list(vector, &package JVM_NO_CHECK_AT_BOTTOM);
 }
 
 bool ROMOptimizer::is_init_at_build(InstanceClass* klass) {

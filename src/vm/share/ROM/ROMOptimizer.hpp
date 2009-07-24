@@ -345,7 +345,7 @@ public:
                                    JavaClass *dependency JVM_TRAPS);
   static void process_quickening_failure(Method *method);
   bool may_be_initialized(InstanceClass *klass);
-  bool is_in_restricted_package(InstanceClass* klass) {
+  bool is_in_restricted_package(InstanceClass* klass) const {
 #if USE_SOURCE_IMAGE_GENERATOR
     return class_matches_packages_list(klass, restricted_packages());
 #else
@@ -354,13 +354,17 @@ public:
     return false;
 #endif
   }
-  bool is_in_hidden_package(InstanceClass* klass) {
+  bool is_in_hidden_package(InstanceClass* klass) const {
 #if USE_SOURCE_IMAGE_GENERATOR
     return class_matches_packages_list(klass, hidden_packages());
 #else
     (void)klass;
     return false;
 #endif
+  }
+  bool is_hidden(InstanceClass* klass) const {
+    return is_in_restricted_package(klass) &&
+           ( !klass->is_public() || is_in_hidden_package(klass) );
   }
   ReturnOop original_fields(InstanceClass *klass, bool &is_orig);
   void set_classes_as_romized();
@@ -430,14 +434,21 @@ private:
   void read_config_file(JVM_SINGLE_ARG_TRAPS);
   void read_config_file(const JvmPathChar* config_file JVM_TRAPS);
   void read_hardcoded_config(JVM_SINGLE_ARG_TRAPS);
+  void optimize_package_lists(JVM_SINGLE_ARG_TRAPS);
   static void abort( void );
+  void config_message( const char category[], const char msg[] ) const;
+  void config_warning( const char msg[] ) const;
   void config_error( const char msg[] ) const;
+  bool validate_pattern( const char pattern[] ) const;
   void process_config_line(char* config_line JVM_TRAPS);
   void include_config_file(const char* config_file JVM_TRAPS);
   static char parse_config(char* line, const char*& name, const char*& value);
   void add_class_to_list(ObjArray *list, const char *flag, const char *classname
                          JVM_TRAPS);
-  void add_package_to_list(ROMVector *vector, const char *pkgname JVM_TRAPS);
+  void add_package_to_list(ROMVector* vector, const char *pkgname JVM_TRAPS);
+  void add_package_to_list(ROMVector* vector, Symbol* pkgname JVM_TRAPS);
+  void remove_packages(ROMVector* from, Symbol* pattern);
+  void remove_packages(OopDesc* from_vector, ROMVector* patterns);
   bool class_list_contains(ObjArray *list, InstanceClass *klass);
   void enable_quick_natives(const char* pattern JVM_TRAPS);
   void write_quick_natives_log();
@@ -486,8 +497,9 @@ private:
   void make_virtual_methods_final(InstanceClass *ic, ROMVector *log_vector
                                   JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool name_matches_patterns_list(const char name[], const int name_len,
+  static bool name_matches_pattern(const char name[], const int name_len,
                                          ROMVector* patterns);
+  static bool name_matches_pattern(Symbol* s, ROMVector* patterns);
 #endif
 
   bool has_subclasses(InstanceClass *klass);
@@ -630,10 +642,10 @@ private:
   };
 
   jint get_package_flags(InstanceClass* klass) {
-    if( is_in_hidden_package(klass) ) {
-      return HIDDEN_PACKAGE;
-    }
     if( is_in_restricted_package(klass) ) {
+      if( is_in_hidden_package(klass) ) {
+        return HIDDEN_PACKAGE;
+      }
       return RESTRICTED_PACKAGE;
     }
     return UNRESTRICTED_PACKAGE;
