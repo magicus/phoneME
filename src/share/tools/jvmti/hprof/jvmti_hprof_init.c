@@ -47,12 +47,6 @@
  *
  */
 
-/* The default output filenames. */
-
-#define DEFAULT_TXT_SUFFIX	".txt"
-#define DEFAULT_OUTPUTFILE	"java.hprof"
-#define DEFAULT_OUTPUTTEMP	"java.hprof.temp"
-
 /* The only global variable, defined by this library */
 GlobalData *gdata;
 
@@ -805,7 +799,7 @@ parse_options(char *command_line_options)
     if ( gdata->net_port > 0 ) {
         LOG2("Agent_OnLoad", "Connecting to socket");
         gdata->fd = connect_to_socket(gdata->net_hostname, (unsigned short)gdata->net_port);
-        if (gdata->fd <= 0) {
+        if (gdata->fd < 0) {
 	    char errmsg[120];
     
             (void)md_snprintf(errmsg, sizeof(errmsg),
@@ -838,7 +832,6 @@ parse_options(char *command_line_options)
 	    error_exit_process(1);
         }
     }
-
 }
 
 /* ------------------------------------------------------------------- */

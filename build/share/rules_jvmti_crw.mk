@@ -107,6 +107,9 @@ endif
 $(CVM_CRW_JARDIR)/$(CVM_CRW_JAR): $(CVM_CRW_TRACKER)
 	@echo "... $@"
 	$(AT)$(CVM_JAR) cf $@ -C $(CVM_CRW_CLASSES) com/
+	$(AT)unzip -l $@ | fgrep .class | awk '{print $$4}' | sed -e 's|/|.|g' | sed -e 's|.class||' > $(CVM_CRW_BUILD_TOP)/MIDPPermittedClasses.txt
+	$(AT)$(CVM_JAR) uf $@ -C $(CVM_CRW_BUILD_TOP) MIDPPermittedClasses.txt
+	$(AT)-rm -f $(CVM_CRW_BUILD_TOP)/MIDPPermittedClasses.txt
 
 $(CVM_CRW_CLASSES)/%.class: %.java
 	@echo "Compiling crw classes..."

@@ -614,8 +614,6 @@ objectReference(jvmtiHeapReferenceKind reference_kind,
     }
    
     switch ( reference_kind ) {
-        case JVMTI_HEAP_REFERENCE_CLASS_LOADER:
-        case JVMTI_HEAP_REFERENCE_INTERFACE:
         default:
             /* Currently we don't need these */
             return JVMTI_VISIT_OBJECTS;
@@ -631,6 +629,8 @@ objectReference(jvmtiHeapReferenceKind reference_kind,
             break;
         case JVMTI_HEAP_REFERENCE_SIGNERS:
         case JVMTI_HEAP_REFERENCE_PROTECTION_DOMAIN:
+        case JVMTI_HEAP_REFERENCE_CLASS_LOADER:
+        case JVMTI_HEAP_REFERENCE_INTERFACE:
             reference_index = 0;
             break;
     }

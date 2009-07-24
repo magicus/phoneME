@@ -74,6 +74,12 @@ typedef unsigned SerialNumber;
 
 #define PRELUDE_FILE		"jvm.hprof.txt"
 
+/* The default output filenames. */
+
+#define DEFAULT_TXT_SUFFIX	".txt"
+#define DEFAULT_OUTPUTFILE	"java.hprof"
+#define DEFAULT_OUTPUTTEMP	"java.hprof.temp"
+
 /* File I/O buffer size to be used with any file i/o operation */
 
 #define FILE_IO_BUFFER_SIZE	(1024*64)

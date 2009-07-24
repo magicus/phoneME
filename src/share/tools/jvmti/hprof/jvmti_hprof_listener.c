@@ -314,6 +314,11 @@ listener_loop_function(jvmtiEnv *jvmti, JNIEnv *env, void *p)
                     } rawMonitorExit(gdata->data_access_lock);
                 } else if (cmd == 0x0007) {
                     gdata->max_trace_depth = recv_u2();
+                } else if (cmd == 0x0008) {
+                    rawMonitorEnter(gdata->data_access_lock); {
+                        trace_cleanup();
+                        trace_init();
+                    } rawMonitorExit(gdata->data_access_lock);
                 }
                 break;
             }
