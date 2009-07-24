@@ -132,8 +132,13 @@ endif
 endif
 endif
 
+ifeq ($(USE_STATIC_RUNTIME), true)
+LOCAL_CFLAGS_debug = -MTd -Gm -EHsc -Zi -Od -D_DEBUG -D_LIB -FD -W3
+LOCAL_CFLAGS_nodebug = -MT -EHsc -O2 -D_LIB -W3
+else
 LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_LIB -FD -W3
 LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_LIB -W3
+endif
 
 CXXFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
 CFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
