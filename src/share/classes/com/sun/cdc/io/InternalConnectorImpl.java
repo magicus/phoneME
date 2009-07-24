@@ -117,7 +117,6 @@ public class InternalConnectorImpl implements InternalConnector {
             throws IOException {
 	String oemPrefix= "";
         /* Test for null argument */
-	System.out.println ("InternalConnector " + name + " " + mode + " " + timeouts);
         if (name == null) {
             throw new IllegalArgumentException("Null URL");
         }
@@ -164,7 +163,6 @@ public class InternalConnectorImpl implements InternalConnector {
              */
             String className = getClassRoot() + "." + "j2me"+ "." + protocol +
                ".Protocol";
-	    System.out.println ("  " + className);
             Class clazz = Class.forName(className, true,
                                         getProtocolClassLoader());
             
