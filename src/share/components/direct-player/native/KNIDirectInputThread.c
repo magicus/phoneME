@@ -31,14 +31,15 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     jlong curPos = 0;
     jint sizeToRead = 0;
     jint addrToWrite = 0;
-    jint nRead = 0;
+    jint lenToWrite = 0;
     jfieldID fieldNativePtr;
     jfieldID fieldCurPos;
-    char *buf = NULL;
+    jbyte *pDest = NULL;
     
-    KNI_StartHandles(2);
+    KNI_StartHandles(3);
     KNI_DeclareHandle(instance);
     KNI_DeclareHandle(clazz);
+    KNI_DeclareHandle( javaBuf );
     
     /* Get this object instance and clazz */
     KNI_GetThisPointer(instance);
@@ -47,14 +48,34 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     fieldNativePtr = KNI_GetFieldID( clazz, "nativePtr", "I" );
     fieldCurPos = KNI_GetFieldID( clazz, "curPos", "J" ); // Long!
     
-    
     addrToWrite = KNI_GetIntField( instance, fieldNativePtr );
+    lenToWrite = KNI_GetParameterAsInt(2);
+    KNI_GetParameterAsObject(1, javaBuf);
+    pDest = ( jbyte* )addrToWrite;
+    KNI_GetRawArrayRegion( javaBuf, 0, lenToWrite, pDest );
     
-    // Long!
-    nRead = KNI_GetLongField( instance,
-                              KNI_GetFieldID( clazz, "nRead", "J" ) );
+    //Update of the current position
+    curPos = KNI_GetLongField( instance, fieldCurPos ); //Long!
+    curPos += lenToWrite;
+    KNI_SetLongField( instance, fieldCurPos, curPos );
+ 
+    {
+        jint handle = KNI_GetParameterAsInt(3);
+        KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    
+        javacall_media_data_written(
+        javacall_handle handle,
+        javacall_int32 length,
+        /*OUT*/ javacall_bool *new_request,
+        /*OUT*/ javacall_int64 *new_offset,
+        /*OUT*/ javacall_int32 *new_length,
+        /*OUT*/ void **new_data);
+    }
 
-    buf = ( char* )addrToWrite;
+    
+    
+    
+
     
     KNI_EndHandles();
     KNI_ReturnVoid();

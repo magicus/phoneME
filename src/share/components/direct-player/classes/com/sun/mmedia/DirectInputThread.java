@@ -31,10 +31,14 @@ import javax.microedition.media.protocol.SourceStream;
 
 class DirectInputThread extends Thread {
 
+    //Caution: these fields are used by native (read-write) !!!
     private volatile long curPos = 0;
     private volatile long posToRead = 0;
     private volatile int lenToRead = 0;
     private volatile int nativePtr = 0;
+
+
+    //Caution: these fields are used by native (read only) !!!
     private int nRead;
 
     private boolean requestPending = false;
@@ -43,7 +47,7 @@ class DirectInputThread extends Thread {
     private int     reqBufPtr = 0;
 
     final private HighLevelPlayer owner;
-    private byte[] tmpBuf = new byte [ 1024 ];
+    private byte[] tmpBuf = new byte [ 0x1000 ];  // 4 Kbytes
     private boolean isDismissed = false;
 
     DirectInputThread(HighLevelPlayer p) {
@@ -51,7 +55,7 @@ class DirectInputThread extends Thread {
     }
     
 
-    private native void nWriteData( byte [] buf, int len );
+    private native void nWriteData( byte [] buf, int len, int handle );
 
     public void run(){
 
@@ -78,6 +82,7 @@ class DirectInputThread extends Thread {
                         //owner.abort("Stream reading thread was interrupted");
                         return;
                     }
+                   continue;
                 }
             }
 
@@ -107,7 +112,7 @@ class DirectInputThread extends Thread {
                 }
 
                 // call native copying + javacall_media_written()
-                nWriteData( tmpBuf, nRead );
+                nWriteData( tmpBuf, nRead, owner.getNativeHandle() );
 
                 if( isDismissed ) {
                     return;
