@@ -1073,7 +1073,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * <code>Player</code>.
      * @see #getTimeBase
      */
-    public void setTimeBase(TimeBase master) throws MediaException {
+    public synchronized void setTimeBase(TimeBase master) throws MediaException {
         chkClosed(true);
         if (state == STARTED) {
             throw new IllegalStateException("Cannot call setTimeBase on a player in the STARTED state");
@@ -1372,26 +1372,23 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      *
      * @return    The controls value
      */
-    public final Control[] getControls() {
+    public synchronized final Control[] getControls() {
         chkClosed(true);
 
-        synchronized( this )
+        if( null == controls )
         {
-            if( null == controls )
-            {
-                Vector v = new Vector(3);
-                // average maximum number of controls
+            Vector v = new Vector(3);
+            // average maximum number of controls
 
-                Enumeration ctrlNames = getPossibleControlNames().elements();
-                while( ctrlNames.hasMoreElements() ) {
-                    Object c = getControl( ( String )ctrlNames.nextElement() );
-                    if ((c != null) && !v.contains(c)) {
-                        v.addElement(c);
-                    }
+            Enumeration ctrlNames = getPossibleControlNames().elements();
+            while( ctrlNames.hasMoreElements() ) {
+                Object c = getControl( ( String )ctrlNames.nextElement() );
+                if ((c != null) && !v.contains(c)) {
+                    v.addElement(c);
                 }
-                controls = new Control[v.size()];
-                v.copyInto( controls );
             }
+            controls = new Control[v.size()];
+            v.copyInto( controls );
         }
 
         return controls;
@@ -1463,7 +1460,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * @return       <code>Control</code> for the class or interface
      * name.
      */
-    public Control getControl(String type) {
+    public synchronized Control getControl(String type) {
         chkClosed(true);
 
         if (type == null) {
@@ -1473,18 +1470,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         String fullName = getFullControlName( type );
 
         Control c = null;
-        synchronized( this )
+        c = ( Control )htControls.get( fullName );
+        if( null == c &&
+            null == controls &&
+            getPossibleControlNames().contains( fullName ) )
         {
-            c = ( Control )htControls.get( fullName );
-            if( null == c &&
-                null == controls &&
-                getPossibleControlNames().contains( fullName ) )
+            c = lowLevelPlayer.doGetNewControl( fullName );
+            if( null != c )
             {
-                c = lowLevelPlayer.doGetNewControl( fullName );
-                if( null != c )
-                {
-                    htControls.put( fullName, c );
-                }
+                htControls.put( fullName, c );
             }
         }
         return c;
