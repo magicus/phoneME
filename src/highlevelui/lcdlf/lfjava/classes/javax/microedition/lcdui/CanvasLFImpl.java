@@ -516,35 +516,20 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
     private boolean vkb_popupOpen; 
 
     public boolean processKeyPressed(int keyCode) {
-        boolean ret = true;
-        if (keyCode == EventConstants.SOFT_BUTTON1 ||
-            keyCode == EventConstants.SOFT_BUTTON2) {
-            ret = false;
-        } else {
-            uCallKeyEvent(EventConstants.PRESSED, keyCode);
-        }
-        return ret;
+	uCallKeyEvent(EventConstants.PRESSED, keyCode);
+
+        return true;
     }
 
     public boolean processKeyReleased(int keyCode) {
-        boolean ret = true;
-        if (keyCode == EventConstants.SOFT_BUTTON1 ||
-            keyCode == EventConstants.SOFT_BUTTON2) {
-            ret = false;
-        } else {
-            uCallKeyEvent(EventConstants.RELEASED, keyCode);
-        }
-        return ret;
+	uCallKeyEvent(EventConstants.RELEASED, keyCode);
+
+        return true;
     }
 
     public boolean processKeyRepeated(int keyCode) {
-        boolean ret = true;
-        if (keyCode == EventConstants.SOFT_BUTTON1 ||
-            keyCode == EventConstants.SOFT_BUTTON2) {
-            ret = false;
-        } else {
-            uCallKeyEvent(EventConstants.REPEATED, keyCode);
-        }
-        return ret;
+	uCallKeyEvent(EventConstants.REPEATED, keyCode);
+
+        return true;
     }
 }
