@@ -479,7 +479,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     /**
      * Send STOPPED_AT_TIME event. Call this after stopping the player
      */
-    void satev() {
+    synchronized void satev() {
         // Update the time base to use the system time
         // before stopping.
         updateTimeBase(false);
@@ -864,17 +864,20 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        if (!lowLevelPlayer.doStart()) {
-            throw new MediaException("start");
+        synchronized( this )
+        {
+            if (!lowLevelPlayer.doStart()) {
+                throw new MediaException("start");
+            }
+
+            setState( STARTED );
+            sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
+
+            // Finish any pending startup stuff in subclass
+            // Typically used to start any threads that might potentially
+            // generate events before the STARTED event is delivered
+            lowLevelPlayer.doPostStart();
         }
-
-        setState( STARTED );
-        sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
-
-        // Finish any pending startup stuff in subclass
-        // Typically used to start any threads that might potentially
-        // generate events before the STARTED event is delivered
-        lowLevelPlayer.doPostStart();
 
     };
 
