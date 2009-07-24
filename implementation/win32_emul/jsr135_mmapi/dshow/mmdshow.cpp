@@ -69,6 +69,7 @@ class dshow_player : public player_callback,
     virtual void        size_changed( int16 w, int16 h );
     virtual void        audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample);
     virtual void        playback_finished();
+    virtual void        data_request(javacall_int64 offset, javacall_int32 length, void* buffer);
 
     // IWaveStream methods:
 	virtual long        getFormat(int* pChannels, long* pSampleRate);
@@ -213,6 +214,18 @@ void dshow_player::playback_finished()
         PRINTF( "*** player::stop = %i\n", r );
     }
 }
+
+struct 
+
+void dshow_player::data_request(javacall_int64 offset, javacall_int32 length, void* buffer)
+{
+    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
+                                      appId,
+                                      playerId, 
+                                      JAVACALL_OK,
+                                      void *data );
+}
+
 
 void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 {
