@@ -49,8 +49,6 @@ endif
 
 # Please modify the lines below if you build for Win32
 ifeq ($(TARGET_OS), win32)
-# Exclude libc to avoid conflicts with msvcrt library
-    LD_FLAGS += -nodefaultlib:libcmt.lib
 # Please change path to libraries directory
     JSR_239_LIB_DIR = $(JSR_239_SDK_DIR)/lib/win32-x86-vc6
     
