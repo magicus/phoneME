@@ -115,11 +115,26 @@ public class InternalConnectorImpl implements InternalConnector {
      */
     public Connection open(String name, int mode, boolean timeouts)
             throws IOException {
+	String oemPrefix= "";
         /* Test for null argument */
 	System.out.println ("InternalConnector " + name + " " + mode + " " + timeouts);
         if (name == null) {
             throw new IllegalArgumentException("Null URL");
         }
+        try {
+            /*
+             * Check for OEM specific http and https handler override.
+             */
+            oemPrefix =(String)java.security.AccessController.doPrivileged( 
+                new GetPropertyAction(
+                    "oem.http.handler.prefix"));
+        } catch (Throwable t) {
+            // do nothing
+        }
+
+	if (name.startsWith("http")) {
+	    name = oemPrefix + name;
+	}
         
         /* Look for : as in "http:", "file:", or whatever */
         int colon = name.indexOf(':');
