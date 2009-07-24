@@ -126,7 +126,7 @@ public class InternalConnectorImpl implements InternalConnector {
              */
             oemPrefix =(String)java.security.AccessController.doPrivileged( 
                 new GetPropertyAction(
-                    "oem.http.handler.prefix"));
+				      "oem.http.handler.prefix", ""));
         } catch (Throwable t) {
             // do nothing
         }
