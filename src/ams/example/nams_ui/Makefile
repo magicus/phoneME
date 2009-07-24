@@ -123,24 +123,37 @@ EXE = .exe
 
 CFLAGS = /c /D_UNICODE /DUNICODE
 
-ifeq ($(USE_DEBUG), true)
+ifeq ($(USE_STATIC_RUNTIME), true)
 
+ifeq ($(USE_DEBUG), true)
+DEBUG_CFLAGS 	+= -Zi -Od -MTd
+LD_FLAGS 	+= -debug 
+LD_FLAGS += -nodefaultlib:libcmt.lib -nodefaultlib:msvcrt.lib -nodefaultlib:msvcrtd.lib
+else # USE_DEBUG
+# flags inherited from the VM : -Ox -Os -Gy -GF
+EXTRA_CFLAGS    += -nologo -DWIN32 -D_WINDOWS 
+EXTRA_CFLAGS 	+= -MT
+LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
+		   -opt:REF -opt:ICF,8
+LD_FLAGS += -nodefaultlib:libcmtd.lib -nodefaultlib:msvcrt.lib -nodefaultlib:msvcrtd.lib
+endif # USE_DEBUG
+
+else
+
+ifeq ($(USE_DEBUG), true)
 DEBUG_CFLAGS 	+= -Zi -Od -MDd
 LD_FLAGS 	+= -debug 
-# Force use of debug libraries
-LD_FLAGS	+= -nodefaultlib:msvcrt.lib msvcrtd.lib
-
+LD_FLAGS += -nodefaultlib:libcmt.lib -nodefaultlib:libcmtd.lib -nodefaultlib:msvcrt.lib
 else # USE_DEBUG
-
 # flags inherited from the VM : -Ox -Os -Gy -GF
 EXTRA_CFLAGS    += -nologo -DWIN32 -D_WINDOWS 
 EXTRA_CFLAGS 	+= -MD
 LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
 		   -opt:REF -opt:ICF,8
-# Force use of non-debug libraries
-LD_FLAGS 	+= -nodefaultlib:msvcrtd.lib msvcrt.lib
-
+LD_FLAGS += -nodefaultlib:libcmt.lib -nodefaultlib:libcmtd.lib -nodefaultlib:msvcrtd.lib
 endif # USE_DEBUG
+
+endif
 
 EXTRA_CFLAGS += -I$(WIN_DRIVE)$(JAVACALL_OUTPUT_DIR)/inc
 

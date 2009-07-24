@@ -46,7 +46,19 @@ EXTRA_CPPFLAGS += -Zm400
 EXTRA_CFLAGS += -Zm1000
 
 # Platform-specific linker flags and libraries
-LD_FLAGS+=-nodefaultlib:libcmt.lib
+ifeq ($(USE_STATIC_RUNTIME), true)
+ifeq ($(USE_DEBUG), true)
+LD_FLAGS += -nodefaultlib:libcmt.lib -nodefaultlib:msvcrt.lib -nodefaultlib:msvcrtd.lib
+else
+LD_FLAGS += -nodefaultlib:libcmtd.lib -nodefaultlib:msvcrt.lib -nodefaultlib:msvcrtd.lib
+endif
+else
+ifeq ($(USE_DEBUG), true)
+LD_FLAGS += -nodefaultlib:libcmt.lib -nodefaultlib:libcmtd.lib -nodefaultlib:msvcrt.lib
+else
+LD_FLAGS += -nodefaultlib:libcmt.lib -nodefaultlib:libcmtd.lib -nodefaultlib:msvcrtd.lib
+endif
+endif
 LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.lib) 
 LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.res)
 LIBS += Comdlg32.lib shell32.lib advapi32.lib
