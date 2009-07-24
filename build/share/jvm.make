@@ -869,6 +869,24 @@ endif
 # /Gy (Enable function-level linking)
 # /GF (Enable read -only string pooling)
 
+ifeq ($(USE_STATIC_RUNTIME), true)
+
+ifeq ($(NO_DEBUG_SYMBOLS), true)
+CPP_DBG_FLAGS_debug     = -MT -Ox
+else
+CPP_DBG_FLAGS_debug     = -MTd -Zi -Od
+endif
+
+CPP_DBG_FLAGS_release   = -MT -Zi
+ifeq ($(PRODUCT_DEBUG), true)
+CPP_DBG_FLAGS_product   = -MT -Zi
+else
+CPP_DBG_FLAGS_product   = -MT
+endif
+CPP_DBG_FLAGS          += $(CPP_DBG_FLAGS_$(BUILD))
+
+else
+
 ifeq ($(NO_DEBUG_SYMBOLS), true)
 CPP_DBG_FLAGS_debug     = -MD -Ox
 else
@@ -882,6 +900,8 @@ else
 CPP_DBG_FLAGS_product   = -MD
 endif
 CPP_DBG_FLAGS          += $(CPP_DBG_FLAGS_$(BUILD))
+
+endif
 
 CPP_OPT_FLAGS_debug     =
 CPP_OPT_FLAGS_release   = -Ox -Os -Gy -GF
@@ -930,7 +950,7 @@ LINK_OPT_FLAGS         += $(LINK_PROF_FLAGS)
 LINK_FLAGS_EXPORT       = -MAP -incremental:no \
 		          -nologo -subsystem:console -machine:i386
 LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS)
-LINK_FLAGS             += $(LINK_FLAGS_EXPORT) wsock32.lib
+LINK_FLAGS             += $(LINK_FLAGS_EXPORT) -MANIFEST wsock32.lib
 
 ifeq ($(ENABLE_PCSL), true)
 PCSL_LIBS               = `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib)`   \
