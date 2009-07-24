@@ -864,20 +864,17 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        synchronized( this )
-        {
-            if (!lowLevelPlayer.doStart()) {
-                throw new MediaException("start");
-            }
-
-            setState( STARTED );
-            sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
-
-            // Finish any pending startup stuff in subclass
-            // Typically used to start any threads that might potentially
-            // generate events before the STARTED event is delivered
-            lowLevelPlayer.doPostStart();
+        if (!lowLevelPlayer.doStart()) {
+            throw new MediaException("start");
         }
+
+        setState( STARTED );
+        sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
+
+        // Finish any pending startup stuff in subclass
+        // Typically used to start any threads that might potentially
+        // generate events before the STARTED event is delivered
+        lowLevelPlayer.doPostStart();
 
     };
 
