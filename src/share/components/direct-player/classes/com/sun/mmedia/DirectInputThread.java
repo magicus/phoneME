@@ -72,6 +72,12 @@ class DirectInputThread extends Thread {
                 else
                 {
                    lenToRead = 0;
+                    try {
+                        this.wait();
+                    } catch (InterruptedException ex) {
+                        //owner.abort("Stream reading thread was interrupted");
+                        return;
+                    }
                 }
             }
 
@@ -107,25 +113,7 @@ class DirectInputThread extends Thread {
                     return;
                 }
             }
-
-            synchronized( this ) {
-                if( isDismissed ) {
-                    return;
-                }
-                if( !requestPending )
-                {
-                    try {
-                        this.wait();
-                    } catch (InterruptedException ex) {
-                        owner.abort("Stream reading thread was interrupted");
-                        return;
-                    }
-                }
-            }
-
-            
         }
-
     }
 
     private void seek() throws IOException, MediaException
