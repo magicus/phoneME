@@ -555,15 +555,6 @@ public class Display {
      */
     private static final int WANTS_FOREGROUND_FOR_ALERT = 2;
 
-    /** Automatic orientation. */
-    private static final int ORIENTATION_AUTO = 0;
-
-    /** Portrait orientation. */
-    private static final int ORIENTATION_PORTRAIT = 1;
-
-    /** Landscape orientation. */
-    private static final int ORIENTATION_LANDSCAPE = 2;
-
     /**
      * Since the current Displayable can't be set to null we use a
      * separate state to keep track of if the MIDlet wants the foreground or
@@ -713,8 +704,10 @@ public class Display {
         this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
     }
 
-    private int orientation;
-
+    private boolean initial_orientation = false;
+    private boolean current_orientation = false;
+    private boolean restore_orientation = false;
+    
     /**
      * Release any resources, such as threads, which migth refer
      * back to the application-level, which in turn may have
@@ -758,13 +751,6 @@ com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
     Display(Object theOwner, DisplayDevice dd) {
         owner = theOwner;
         displayDevice = dd;
-
-        if (owner instanceof MIDlet) {
-            orientation = ORIENTATION_PORTRAIT;
-        } else {
-            orientation = ORIENTATION_AUTO;
-        }
-
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
@@ -808,12 +794,15 @@ com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH, HEIGHT,
                              gciScreenWidget.getDrawingSurface());
+        initial_orientation = (WIDTH > HEIGHT);
+
         // #else
         width = displayDevice.getWidth();
         height = displayDevice.getHeight();
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     width,
                                                     height);
+        initial_orientation = (width > height);
         // #endif ENABLE_GCI
 
         // #ifdef ENABLE_OPENGL
@@ -832,6 +821,8 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
             System.out.println("System dialog " + this);
         // #endif ENABLE_OPENGL
 
+        current_orientation = initial_orientation;
+        restore_orientation = initial_orientation;
         /**
          * Sets this Display as creator of screen Graphics instance to
          * provide internal Graphics users with extended information
@@ -3362,9 +3353,9 @@ System.out.println("Display: disabling openGL");
 
                             screenGraphics.translate(-tranX, -tranY);
                             screenGraphics.setClip(x1, y1, width, height);
-
+                            
                             // #ifdef ENABLE_OPENGL
-                            if (useOpenGL) {
+		            if (useOpenGL) {
                                 // flush the offscreen buffer to the backing
                                 // surface
                                 com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
@@ -3859,20 +3850,6 @@ System.out.println("Display: disabling openGL");
          * @see OrientationListener interface
          */
         public void handleRotationEvent(int state) {
-            try {
-                handleRotationEventInternal(state);
-            } finally {
-                if (owner instanceof MIDlet) {
-                    if (displayDevice.getReverseOrientation()) {
-                        orientation = ORIENTATION_LANDSCAPE;
-                    } else {
-                        orientation = ORIENTATION_PORTRAIT;
-                    }
-                }
-            }
-        }
-
-        private void handleRotationEventInternal(int state) {
             // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
             boolean isPortrait = !Display.this.displayDevice.getReverseOrientation();
             if (
@@ -3902,6 +3879,8 @@ System.out.println("Display: disabling openGL");
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
+                current_orientation = Display.this.width > Display.this.height;
+                /*System.out.println("CURRENT ORIENTATION STATUS is " + current_orientation);*/
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
             // #ifdef ENABLE_CHAMELEON
@@ -4188,16 +4167,9 @@ System.out.println("in handle background event for " + Display.this + ": use32bi
 
             } // synchronized
 
-            if (orientation != ORIENTATION_AUTO) {
-                int displayOrientation = ORIENTATION_PORTRAIT;
-
-                if (displayDevice.getReverseOrientation()) {
-                    displayOrientation = ORIENTATION_LANDSCAPE;
-                }
-
-                if (displayOrientation != orientation) {
-                    consumer.handleRotationEventInternal(-1);
-                }
+            if (current_orientation != restore_orientation) {
+                /*java.lang.System.out.println("handleDisplayForegroundNotifyEvent: ROTATE");*/
+                consumer.handleRotationEvent(-1);
             }
 
             // SYNC NOTE: The implementation of dsPaint() could call
@@ -4226,6 +4198,11 @@ System.out.println("in handle background event for " + Display.this + ": use32bi
         public void handleDisplayBackgroundNotifyEvent() {
             // A copy of current LF object
             DisplayableLF currentCopy;
+                if (current_orientation != initial_orientation) {
+                    restore_orientation = current_orientation;
+                    /*java.lang.System.out.println("handleDisplayBackgroundNotifyEvent: ROTATE");*/
+                    consumer.handleRotationEvent(-1);
+                }
 
             synchronized (LCDUILock) {
                 if (!hasForeground) {
