@@ -97,7 +97,7 @@ static DWORD WINAPI InvocationRequestListenerProc( LPVOID lpParam ){
         int pos = 0, len = sizeof(buffer)/sizeof(buffer[0]);
         int rc = javacall_chapi_enum_handlers_by_suffix(value, &pos, buffer, &len);
         printf( ", pos = %X", pos );
-       	javacall_chapi_enum_finish(pos);
+        javacall_chapi_enum_finish(pos);
         if( rc != 0 )
             continue;
 
