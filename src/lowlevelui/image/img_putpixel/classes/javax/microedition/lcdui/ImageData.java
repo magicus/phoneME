@@ -160,8 +160,6 @@ final class ImageData implements AbstractImageData {
         this.isMutable = isMutable;
 
         pixelData = new byte[width * height * sizeOfPixel];
-        if (width >= 320 && height >= 320)
-                System.out.println("*** allocating large image with pixel size " + sizeOfPixel);
 
         if (allocateAlpha) {
             alphaData = new byte[width * height];
