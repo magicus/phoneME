@@ -33,6 +33,8 @@ extern "C" {
 
 #include <sni.h>
 
+#include "jsr211_platform_invoc.h"
+
 /**
  * Status code for threads waiting for registry store access and 
  * invocation events
@@ -115,14 +117,14 @@ struct _jsr211_request_data {
     unsigned char * bytes;
     unsigned int count;
 };
-typedef struct _jsr211_request_data jsr211_request_data;
+//typedef struct _jsr211_request_data jsr211_request_data;
 
 struct _jsr211_response_data {
     int dataExchangeID;
     unsigned char * bytes;
     unsigned int count;
 };
-typedef struct _jsr211_response_data jsr211_response_data;
+//typedef struct _jsr211_response_data jsr211_response_data;
 
 
 #ifdef __cplusplus
