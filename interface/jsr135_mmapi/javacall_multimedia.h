@@ -677,7 +677,6 @@ javacall_result javacall_media_stream_length(
  * Get the data for the JAVACALL_EVENT_MEDIA_DATA_REQUEST event.
  * 
  * @param handle Handle to the native player.
- * @param length Length of data actually written, in bytes.
  * @param offset Stream offset to read from, in bytes.
  * @param length Buffer length. Maximum data length to write
  *               to buffer, in bytes.
@@ -688,7 +687,6 @@ javacall_result javacall_media_stream_length(
  */
 javacall_result javacall_media_get_data_request(
     javacall_handle handle,
-    javacall_int32 length,
     /*OUT*/ javacall_int64 *offset,
     /*OUT*/ javacall_int32 *length,
     /*OUT*/ void **data);
