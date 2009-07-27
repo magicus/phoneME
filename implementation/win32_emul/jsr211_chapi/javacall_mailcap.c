@@ -1338,7 +1338,7 @@ javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string* action_names, int nActionNames,
         javacall_const_utf16_string* access_allowed_ids,  int nAccesses){
 
-    static javacall_utf16 unusedSuiteId[] = {'0','0','0','0','0','0','0','0'}; // UNUSED_SUITE_ID string representation
+    static javacall_utf16 unusedSuiteId[] = {'0','0','0','0','0','0','0','0', '\0'}; // UNUSED_SUITE_ID string representation
 	int result;
 	javautil_storage file=0;
 	int len;
@@ -1696,6 +1696,9 @@ javacall_result javacall_chapi_enum_handlers_by_suite_id(
 
         javautil_debug_print(JAVACALL_LOG_INFORMATION,
                 "core", "suite_id=%s pos_id=%s\n", suite_id, *pos_id);
+#ifdef DEBUG_OUTPUT
+	wprintf(L"JAVACALL::javacall_chapi_enum_handlers_by_suite_id(%s,%d)\n",suite_id,*pos_id);
+#endif
 
 	if (!index){
 		result = update_registry();
@@ -1705,7 +1708,7 @@ javacall_result javacall_chapi_enum_handlers_by_suite_id(
 	while (index < g_handler_infos_used){
 		if ((g_handler_infos[index]->flag & TYPE_INFO_JAVA_HANDLER)) {
                     if (g_handler_infos[index]->suite_id != NULL) {
-                        if (javautil_str_wcscmp(g_handler_infos[index]->suite_id,suite_id)) {
+                        if( javautil_str_wcscmp(g_handler_infos[index]->suite_id, suite_id) == 0 ) {
                             result=get_id(g_handler_infos[index],buffer,length);
                             if (!result){
 				*pos_id = index+1;
