@@ -1,22 +1,22 @@
 /*
  * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -54,14 +54,14 @@ public class LCDUIEnvironment {
 
     /**
      * Creates lcdui event producers/handlers/listeners.
-     * 
+     *
      * @param internalSecurityToken
      * @param eventQueue
      * @param isolateId
      * @param foregroundController
      */
     public LCDUIEnvironment(SecurityToken internalSecurityToken,
-                            EventQueue eventQueue, 
+                            EventQueue eventQueue,
                             int isolateId,
                             ForegroundController foregroundController) {
         this(internalSecurityToken, eventQueue,
@@ -70,14 +70,14 @@ public class LCDUIEnvironment {
 
     /**
      * Creates lcdui event producers/handlers/listeners.
-     * 
+     *
      * @param internalSecurityToken
      * @param eventQueue
      * @param idPolicy
      * @param foregroundController
      */
     public LCDUIEnvironment(SecurityToken internalSecurityToken,
-                            EventQueue eventQueue, 
+                            EventQueue eventQueue,
                             DisplayIdPolicy idPolicy,
                             ForegroundController foregroundController) {
 
@@ -122,7 +122,7 @@ public class LCDUIEnvironment {
          * Set a listener in the event queue for LCDUI events
          *
          * Bad style of type casting, but DisplayEventHandlerImpl
-         * implements both DisplayEventHandler & ItemEventConsumer IFs 
+         * implements both DisplayEventHandler & ItemEventConsumer IFs
          */
         new LCDUIEventListener(
             internalSecurityToken,
@@ -133,6 +133,7 @@ public class LCDUIEnvironment {
         new ForegroundEventListener(eventQueue, displayContainer);
 
         // Initialize a handler to process rotation events
+/*
         String orientClassName = Configuration.getProperty("com.sun.midp.orientClassName");
         if (orientClassName != null && orientClassName.length() > 0) {
             orientHandler = OrientationFactory.createOrientHandler(orientClassName);
@@ -141,10 +142,11 @@ public class LCDUIEnvironment {
                 orientHandler.addListener(orientationListener);
             }
         }
+*/
     }
 
     /**
-     * Gets DisplayContainer instance. 
+     * Gets DisplayContainer instance.
      *
      * @return DisplayContainer
      */
@@ -152,8 +154,8 @@ public class LCDUIEnvironment {
         return displayContainer;
     }
 
-    /** 
-     * Called during system shutdown.  
+    /**
+     * Called during system shutdown.
      */
     public void shutDown() {
 
@@ -175,17 +177,19 @@ public class LCDUIEnvironment {
 
     /** This is nested inside LCDUIEnvironment so that it can see the private fields. */
     private class OrientationListenerImpl implements OrientationListener {
-    
+
         /**
-         * Calls when orientation is changed. 
+         * Calls when orientation is changed.
          *
          * @param orientation the orientation state
          */
         public void orientationChanged(int orientation) {
+/*
             DisplayAccess da = displayContainer.findForegroundDisplay();
             if (da != null) {
                 da.getDisplayEventConsumer().handleRotationEvent(orientation);
             }
+*/
         }
     }
 }
