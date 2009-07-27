@@ -30,20 +30,32 @@
 
 package javax.microedition.rms;
 
+import com.sun.midp.security.SecurityToken;
+
 class Tunnel extends com.sun.midp.rms.Tunnel {
-	Tunnel() {
-		com.sun.midp.rms.Tunnel.inst = this;
-	}
 
-	public RecordStore openRecordStore(int suiteId, String storeName, 
-							boolean createIfNecessary) throws RecordStoreException {
-		RecordStore res = RecordStore.doOpen(suiteId, storeName, createIfNecessary);
-		res.setWritable();
-		return res;
-	}
+    static void connectTunnel(SecurityToken token) {
+        com.sun.midp.rms.Tunnel.setTunnel(token, new Tunnel());
+    }
 
-	public void deleteRecordStore(int suiteID, String storeName) throws RecordStoreException {
-		RecordStore.deleteRecordStore(storeName, suiteID);
-	}
+    private Tunnel() {}
 
+    public RecordStore openRecordStore(int suiteId, String storeName, 
+        boolean createIfNecessary) throws RecordStoreException {
+    
+        RecordStore res = RecordStore.openRecordStoreInPackage(suiteId,
+                          storeName, createIfNecessary);
+        
+        res.setWritable();
+        return res;
+    }
+
+    public void deleteRecordStore(int suiteID, String storeName)
+        throws RecordStoreException {
+        RecordStore.deleteRecordStore(storeName, suiteID);
+    }
+
+    public void closeRecordStoresForMidlet(int suiteId, String className) {
+        RecordStore.closeRecordStoresForMidlet(suiteId, className);
+    }
 }

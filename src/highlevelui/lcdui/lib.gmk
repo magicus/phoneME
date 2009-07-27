@@ -72,15 +72,24 @@ $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java: \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.jpp
 	@$(call runjpp,$^,$@)
 
+$(GENERATED_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java: \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.jpp
+	@$(call runjpp,$^,$@)
+
+$(GENERATED_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java: \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.jpp
+	@$(call runjpp,$^,$@)
+
 # Java files for the library
 #
 SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java \
     $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameAccess.java \
-    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CommandAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TextPolicy.java \
@@ -98,7 +107,6 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironment.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/PhoneDial.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DefaultDisplayIdPolicy.java \
-    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandler.java \
@@ -111,8 +119,12 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/SystemAlert.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayStaticAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayFactory.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationFactory.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationHandler.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationListener.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/FontAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OEMFont.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TactileFeedback.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationHandler.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationListener.java \
@@ -189,6 +201,10 @@ endif
 # Define Jpp
 ifeq ($(USE_DIRECTDRAW), true)
   JPP_DEFS += -DENABLE_DIRECT_DRAW
+endif
+
+ifeq ($(USE_OPENGL), true)
+  JPP_DEFS += -DENABLE_OPENGL
 endif
 
 ifeq ($(USE_MULTIPLE_DISPLAYS), true)

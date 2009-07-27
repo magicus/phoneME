@@ -42,9 +42,16 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-void lcdlf_refresh(int hardwareId, int x, int y, int w, int h) {
-  lfjport_refresh(hardwareId, x, y, w, h);
+#if ENABLE_OPENGL
+void lcdlf_refresh(int hardwareId, int x, int y, int w, int h,
+                   boolean useOpenGL) {
+  lfjport_refresh(hardwareId, x, y, w, h, useOpenGL);
 }
+#else
+void lcdlf_refresh(int hardwareId, int x, int y, int w, int h) {
+  lfjport_refresh(hardwareId, x, y, w, h );
+}
+#endif
 
 /**
  * Change screen orientation flag

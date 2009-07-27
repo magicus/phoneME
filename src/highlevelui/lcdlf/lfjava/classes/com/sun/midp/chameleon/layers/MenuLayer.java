@@ -33,7 +33,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-
+import com.sun.midp.lcdui.TactileFeedback;
 /**
  * A special popup layer which implements a system
  * menu. The system menu is a collection of commands,
@@ -196,6 +196,7 @@ public class MenuLayer extends ScrollablePopupLayer {
 
             if (itemIndexWhenPressed != PRESS_OUT_OF_BOUNDS && itemIndexWhenPressed >= 0) {
                 // press on valid menu item
+                TactileFeedback.playTactileFeedback();
                 selI = scrollIndex + itemIndexWhenPressed;
                 requestRepaint();
                 // if (btnLayer != null) btnLayer.serviceRepaints();

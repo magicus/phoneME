@@ -102,6 +102,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/ChamDisplayTunnel.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/SubMenuCommand.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/MIDPWindow.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/MidpNullWindow.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/InputMode.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/BasicInputMode.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/InputModeMediator.java \

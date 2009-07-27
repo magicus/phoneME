@@ -60,11 +60,6 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
      */
     protected int maxOStreams = 1;
 
-    public void open(String url, int mode, boolean timeouts)
-        throws IOException {
-        open1(url, mode, timeouts);
-    }
-
     /*
      * Open the input stream if it has not already been opened.
      * @exception IOException is thrown if it has already been
@@ -142,8 +137,13 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
     }
     
     protected void connect() throws IOException {
+        if (connected) {
+            return;
+        }
+
         try {
-            AccessController.checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+            AccessController.checkPermission(
+                AccessController.TRUSTED_APP_PERMISSION_NAME);
         } catch (SecurityException exc) {
             String newUserAgentValue;
             String origUserAgentValue = getRequestProperty("User-Agent");
@@ -162,7 +162,7 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
             }
             reqProperties.put("User-Agent", newUserAgentValue);
         }
-        getStreamConnection();
+
         super.connect();
     }
 

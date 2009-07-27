@@ -69,7 +69,6 @@ extern "C" {
 #include "javanotify_location.h"
 #endif /* ENABLE_JSR_179 */
 #ifdef ENABLE_JSR_211
-#include "jsr211_constants.h"
 #include "jsr211_platform_invoc.h"
 #endif /* ENABLE_JSR_211 */
 #if ENABLE_JSR_234
@@ -145,8 +144,6 @@ typedef enum {
 #ifdef ENABLE_JSR_211
     JSR211_JC_EVENT_PLATFORM_FINISH    ,
     JSR211_JC_EVENT_JAVA_INVOKE        ,
-    JSR211_JC_EVENT_REQUEST_RECEIVED   ,
-    JSR211_JC_EVENT_RESPONSE_RECEIVED  ,
 #endif
 #if ENABLE_JSR_234
     MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
@@ -157,7 +154,7 @@ typedef enum {
 #endif /* ENABLE_ON_DEVICE_DEBUG */
     MIDP_JC_EVENT_ROTATION             ,
     MIDP_JC_EVENT_DISPLAY_DEVICE_STATE_CHANGED,
-    MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED,
+	MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED,
     MIDP_JC_EVENT_MENU_SELECTION,
     MIDP_JC_EVENT_SET_VM_ARGS          ,
     MIDP_JC_EVENT_SET_HEAP_SIZE        ,
@@ -180,13 +177,11 @@ typedef enum {
     JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE,
     JSR290_JC_EVENT_FLUID_LISTENER_STARTED,
     JSR290_JC_EVENT_FLUID_LISTENER_WARNING,
-    JSR290_JC_EVENT_FLUID_LISTENER_DOCUMENT_AVAILABLE,
     JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE,
     JSR290_JC_EVENT_FLUID_CANCEL_REQUEST,
     JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST,
     JSR290_JC_EVENT_COMPLETION_NOTIFICATION,
     JSR290_JC_EVENT_HANDLE_EVENT,
-    JSR290_JC_EVENT_DISPLAY_BOX,
 #endif /*ENABLE_JSR_290*/
 #ifdef ENABLE_JSR_257
     JSR257_JC_EVENT_CONTACTLESS,
@@ -339,14 +334,6 @@ typedef struct {
     int invoc_id;
     jsr211_platform_event *jsr211event;
 } jsr211_jc_event_platform_event;
-
-typedef struct {
-    jsr211_request_data * data;
-} jsr211_jc_event_request_data;
-
-typedef struct {
-    jsr211_response_data * data;
-} jsr211_jc_event_response_data;
 #endif
 
 #if !ENABLE_CDC
@@ -378,8 +365,7 @@ typedef struct {
     javacall_utf16_string       text;
     javacall_utf16_string       text1;
     float                       percentage;
-    javacall_int32              failure_type;
-    javacall_int32              result;
+    javacall_result             result;
 } jsr290_jc_event_fluid;
 
 typedef struct {
@@ -477,8 +463,6 @@ typedef struct {
         jsr75_jc_event_root_changed        jsr75RootchangedEvent;
 #ifdef ENABLE_JSR_211
         jsr211_jc_event_platform_event     jsr211PlatformEvent;
-        jsr211_jc_event_request_data       jsr211RequestEvent;
-        jsr211_jc_event_response_data      jsr211ResponseEvent;
 #endif
 
         midp_event_heap_size               heap_size;
@@ -498,8 +482,8 @@ typedef struct {
 
 #ifdef ENABLE_JSR_290
         jsr290_jc_event_fluid                         jsr290FluidEvent;
-        jsr290_jc_event_completion_notification       jsr290NotificationEvent;
-        jsr290_jc_event_handle_event_request	      jsr290HandleEventRequest;
+	jsr290_jc_event_completion_notification       jsr290NotificationEvent;
+	jsr290_jc_event_handle_event_request	      jsr290HandleEventRequest;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_257

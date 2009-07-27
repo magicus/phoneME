@@ -26,6 +26,7 @@
 package com.sun.midp.chameleon.layers;
 
 public interface VirtualKeyListener {
-    public void processKeyPressed(int keyCode);
-    public void processKeyReleased(int keyCode);
+    public boolean processKeyPressed(int keyCode);
+    public boolean processKeyReleased(int keyCode);
+    public boolean processKeyRepeated(int keyCode);
 }

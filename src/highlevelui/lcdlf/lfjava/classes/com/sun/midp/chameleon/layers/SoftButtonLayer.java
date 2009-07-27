@@ -41,10 +41,11 @@ import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
+import com.sun.midp.lcdui.TactileFeedback;
 /**
  * Soft button layer.
  */
-public class SoftButtonLayer extends CLayer implements CommandListener {
+public class SoftButtonLayer extends CLayer implements CommandListener, VirtualKeyListener {
 
     /**
      * Labels for each of the softbuttons.
@@ -321,7 +322,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                             break;
                     }
                 } // if
-
             } // for
 
             // If we have a command for the left button, we pop it out
@@ -333,6 +333,11 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 System.arraycopy(screenCmds, index + 1,
                         scrCmds, index, numS - index);
             }
+
+	    /* If only BACK is active, hide it. */
+	    if ((type == Command.BACK) && (numS == 0)) {
+		soft1 = null ;
+	    }
         }
 
         // Now fill in the 'right' soft button, possibly with a menu
@@ -432,7 +437,34 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                     ret = true;
                 }
             }
-        }
+        } else {
+	    /*
+	     * If the SYSTEM_KEY_CLEAR is pressed (aka backspace or clear)
+	     * treat it as if the Command.BACK was selected from the soft
+	     * button menu layer.
+	     */
+	    if ((keyCode == -8)
+		&& (type == EventConstants.RELEASED)) {
+		int cmdCount = scrCmds.length;
+		for (int i = 0; i < cmdCount; i++) {
+		    if (scrCmds[i].getCommandType() == Command.BACK) {
+			if (tunnel != null) {
+			    tunnel.callScreenListener(scrCmds[i], scrListener);
+			    return true;
+			}
+		    }
+		}
+		cmdCount = itmCmds.length;
+		for (int i = 0; i < cmdCount; i++) {
+		    if (itmCmds[i].getCommandType() == Command.BACK) {
+			if (tunnel != null) {
+			    tunnel.callItemListener(itmCmds[i], itemListener);
+			    return true;
+			}
+		    }
+		}
+	    }
+	}
         return ret;
     }
 
@@ -445,7 +477,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @return true always
      */
     public boolean pointerInput(int type, int x, int y) {
-
         if (type != EventConstants.PRESSED) {
             return true;
         }
@@ -453,14 +484,16 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
             switch (SoftButtonSkin.BUTTON_ALIGN_X[i]) {
                 case Graphics.LEFT:
-                    if (x < cached_button_anchor_x[i] ||
+                    //if (x < cached_button_anchor_x[i] ||
+                    if (
                             (x > cached_button_anchor_x[i] +
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;
                     }
                     break;
                 case Graphics.RIGHT:
-                    if (x > cached_button_anchor_x[i] ||
+                    //if (x > cached_button_anchor_x[i] ||
+                    if (
                             (x < cached_button_anchor_x[i] -
                                     SoftButtonSkin.BUTTON_MAX_WIDTH[i])) {
                         continue;
@@ -568,6 +601,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @param buttonID the button pushed
      */
     protected void softPress(int buttonID) {
+        TactileFeedback.playTactileFeedback();
         switch (buttonID) {
             case 0:
                 soft1();
@@ -967,5 +1001,21 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             menuLayer.update(layers);
         }
     }
+
+    /**
+     *  VirtualKeyListener interface methods implementation
+     */
+    public boolean processKeyPressed(int keyCode) {
+        return keyInput(EventConstants.PRESSED, keyCode);
+    }
+    
+    public boolean processKeyReleased(int keyCode) {
+        return keyInput(EventConstants.RELEASED, keyCode);
+    }
+    
+    public boolean processKeyRepeated(int keyCode) {
+        return keyInput(EventConstants.REPEATED, keyCode);
+    }
+    
 }
 

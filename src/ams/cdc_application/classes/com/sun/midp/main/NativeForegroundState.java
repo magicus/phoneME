@@ -52,4 +52,10 @@ public class NativeForegroundState {
      * @param displayId Display ID
      */
     private static native void setState(int displayId);
+
+    /**
+     * Get foreground display native state
+     *
+     */
+    public static native int getState();
 }

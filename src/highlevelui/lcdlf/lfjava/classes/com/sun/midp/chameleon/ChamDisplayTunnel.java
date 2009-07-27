@@ -31,6 +31,8 @@ import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.ItemCommandListener;
 
+import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+
 /**
  * The ChamDisplayTunnel interface is a special interface which
  * defines the relationship between Chameleon and the lcdui
@@ -153,6 +155,14 @@ public interface ChamDisplayTunnel {
      * @param keyCode key code
      */
     public void callKeyReleased(int keyCode);
+
+    /**
+     * Create popup layer that represents java virtual keyboard popup
+     *   associated with this Display
+     * @return VirtualKeyboard layer instance connected to the current input session
+     *   associated with this Display
+     **/
+    public VirtualKeyboardLayer getVirtualKeyboardPopup();
 
 }
 

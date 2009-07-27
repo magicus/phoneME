@@ -1,24 +1,24 @@
 #
 #
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
 # 2 only, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
 # included at /legal/license.txt).
-# 
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
-# 
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
@@ -31,7 +31,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.appmanager.MIDletSuiteInfo \
         com.sun.midp.chameleon.input.InputModeFactory \
         com.sun.midp.chameleon.input.NativeInputMode \
-        com.sun.midp.chameleon.input.VirtualKeyboardInputMode \
+        com.sun.midp.chameleon.input.NativeVirtualKeyboardInputMode \
         com.sun.midp.chameleon.layers.SoftButtonLayer \
         com.sun.midp.chameleon.skins.resources.LoadedSkinData \
         com.sun.midp.chameleon.skins.resources.LoadedSkinProperties \
@@ -53,6 +53,8 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.lcdui.DisplayDeviceAccess \
         com.sun.midp.lcdui.DisplayDevice \
         com.sun.midp.lcdui.DisplayDeviceContainer \
+        com.sun.midp.lcdui.TactileFeedback \
+        com.sun.midp.lcdui.NativeVirtualKeyboard \
         com.sun.midp.log.Logging \
         com.sun.midp.log.LoggingBase \
         com.sun.midp.main.CDCInit \
@@ -87,16 +89,26 @@ MIDP_CNI_CLASSES += \
         com.sun.pisces.SurfaceNativeFinalizer \
         com.sun.pisces.PiscesFinalizer \
         com.sun.pisces.Transform6 \
-        com.sun.pisces.PiscesRenderer \
+        com.sun.pisces.PiscesRendererMIDPImpl \
         com.sun.pisces.NativeSurface \
         com.sun.pisces.AbstractSurface \
         com.sun.pisces.GraphicsSurface
+endif
+
+ifeq ($(USE_JSR_226), true)
+MIDP_CNI_CLASSES += \
+        com.sun.perseus.midp.SVGCanvas
 endif
 
 ifeq ($(CVM_INCLUDE_JUMP), true)
 MIDP_CNI_CLASSES += \
         com.sun.midp.jump.JumpInit \
         com.sun.midp.jump.isolate.MIDletContainer
+endif
+
+ifeq ($(USE_OPENGL), true)
+MIDP_CNI_CLASSES += \
+        com.sun.midp.lcdui.OpenGLEnvironment
 endif
 
 # The MIDP rom.config file

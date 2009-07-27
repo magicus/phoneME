@@ -43,7 +43,9 @@ import com.sun.midp.chameleon.skins.resources.TextFieldResources;
 import com.sun.midp.chameleon.skins.resources.PTIResources;
 import com.sun.midp.chameleon.skins.resources.InputModeResources;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.lcdui.EventConstants;
 
+import com.sun.midp.main.Configuration;
 
 import java.util.*;
 
@@ -1174,6 +1176,36 @@ class TextFieldLFImpl extends ItemLFImpl implements
         acceptPTI();
         
         if (pressedIn) {
+	    NativeVirtualKeyboard vk = null;
+	    if (Constants.TEXT_INPUT_NATIVEVK_SUPPORTED) {
+		vk = (NativeVirtualKeyboard)VirtualKeyboardFactory.getVirtualKeyboard(VirtualKeyboardFactory.NATIVE_VK, null);
+	    }
+	    
+            String showKeyboard = 
+                Configuration.getProperty("com.sun.midp.showVirtKeyboard");
+            while (vk != null && showKeyboard != null && showKeyboard.equals("true") 
+		   && editable) {
+		
+		String newText = null;
+		int constraints = tf.getConstraints();
+		int modes = NativeVirtualKeyboard.MODE_EDIT_INITIAL_TEXT;
+		if ((constraints & TextField.PASSWORD) != 0) {
+		    modes |= NativeVirtualKeyboard.MODE_PASSWORD;
+		}
+		
+		try {
+		    newText = vk.editText(
+					  tf.getString(), tf.getMaxSize(),  modes, 
+					  constraints & TextField.CONSTRAINT_MASK);
+		} catch (InterruptedException e) {
+		    e.printStackTrace(System.err);
+		    break;
+		}
+		
+		tf.setString(newText);
+		break;
+	    }
+            
             int newId = getIndexAt(x, y);
             if (newId >= 0 &&
                 newId <= tf.buffer.length() &&
@@ -1182,10 +1214,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 cursor.option = Text.PAINT_USE_CURSOR_INDEX;
                 lRequestPaint();
             }
-
-            pressedIn = false;
-        }
+	    pressedIn = false;
+	}
     }
+
 
     /**
      * Get character index at the pointer position
@@ -1346,11 +1378,33 @@ class TextFieldLFImpl extends ItemLFImpl implements
         uCallKeyPressed(keyCode);
     }
 
-    public void processKeyPressed(int keyCode) {
-        cachedInputSession.processKey(keyCode, false);
+    public boolean processKeyPressed(int keyCode) {
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } else {
+            cachedInputSession.processKey(keyCode, false);
+        }
+        return ret; 
     }
 
-    public void processKeyReleased(int keyCode) {
+    public boolean processKeyReleased(int keyCode) {
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } 
+        return ret; 
+    }
+
+    public boolean processKeyRepeated(int keyCode) { 
+        boolean ret = true;
+        if (keyCode == EventConstants.SOFT_BUTTON1 ||
+            keyCode == EventConstants.SOFT_BUTTON2) {
+            ret = false;
+        } 
+        return ret; 
     }
 
 
@@ -1950,10 +2004,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
         if (d != null) {
             if (!vkb_popupOpen) {
-               if (d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+               if (d.getInputSession().getCurrentInputMode() instanceof JavaVirtualKeyboardInputMode) {
+                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup(item.owner.getLF());
                     if (keyboardPopup != null ) {
-                        keyboardPopup.setVirtualKeyboardLayerListener(this);
+                        keyboardPopup.addVirtualKeyboardLayerListener(this);
                         keyboardPopup.setKeyboardType(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
                         d.showPopup(keyboardPopup);
                         vkb_popupOpen = true;
@@ -1961,10 +2015,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
                     }
                 }
             } else {
-                if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode)) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+                if (!(d.getInputSession().getCurrentInputMode() instanceof JavaVirtualKeyboardInputMode)) {
+                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup(item.owner.getLF());
                     if (keyboardPopup != null ) {
-                        keyboardPopup.setVirtualKeyboardLayerListener(null);
+                        keyboardPopup.removeVirtualKeyboardLayerListener(null);
                         d.hidePopup(keyboardPopup);
                         vkb_popupOpen = false;
                         lRequestInvalidate(true, true);
@@ -1998,9 +2052,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         Display d = getCurrentDisplay();
         if (vkb_popupOpen && d != null) {
-            VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
+            VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup(item.owner.getLF());
             if (keyboardPopup != null ) {
-                keyboardPopup.setVirtualKeyboardLayerListener(null);
+                keyboardPopup.removeVirtualKeyboardLayerListener(null);
                 d.hidePopup(keyboardPopup);
                 vkb_popupOpen = false;
                 lRequestInvalidate(true, true);

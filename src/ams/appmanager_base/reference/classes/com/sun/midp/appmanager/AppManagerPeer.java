@@ -1048,12 +1048,11 @@ class AppManagerPeer implements CommandListener {
      * @param suiteId ID of the suite to launch
      * @param midletClassname MIDlet to run, may be null, then will be launched
      *        the single MIDlet or MIDlet selector
-     * @param debugMode debug option for the suite to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode whether the suite should be launched in debug mode
      * @param lock whether the running suite should be locked
      */
-    void launchSuite(int suiteId, String midletClassname, int debugMode,
-                     boolean lock) {
+    void launchSuite(int suiteId, String midletClassname, boolean isDebugMode,
+            boolean lock) {
 
         RunningMIDletSuiteInfo msi = findUserInstalledSuiteRmsi(suiteId);
         if (msi == null) {
@@ -1072,7 +1071,7 @@ class AppManagerPeer implements CommandListener {
             midletClassname = msi.midletToRun;
         }
         
-        msi.debugMode = debugMode;
+        msi.isDebugMode = isDebugMode;
 
         if (lock) {
             msi.lock();

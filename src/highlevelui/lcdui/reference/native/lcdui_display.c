@@ -65,6 +65,9 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_refresh0) {
     int x1 = KNI_GetParameterAsInt(3);
     jint displayId = KNI_GetParameterAsInt(2);
     jint hardwareId = KNI_GetParameterAsInt(1);
+#if ENABLE_OPENGL
+    jboolean useOpenGL = KNI_GetParameterAsBoolean(7);
+#endif
 
 #ifdef JVM_HINT_VISUAL_OUTPUT
     {
@@ -80,7 +83,11 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_refresh0) {
 
     if (midpHasForeground(displayId)) {
       // Paint only if this is the foreground MIDlet
+#if ENABLE_OPENGL
+      lcdlf_refresh(hardwareId, x1, y1, x2, y2, useOpenGL);
+#else
       lcdlf_refresh(hardwareId, x1, y1, x2, y2);
+#endif
     }
 
     KNI_ReturnVoid();

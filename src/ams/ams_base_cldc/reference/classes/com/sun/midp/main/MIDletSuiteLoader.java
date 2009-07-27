@@ -244,7 +244,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
                 state.runtimeInfo.memoryTotal = MIDletSuiteUtils.memoryTotal;
                 state.runtimeInfo.priority    = MIDletSuiteUtils.priority;
                 state.runtimeInfo.profileName = MIDletSuiteUtils.profileName;
-                state.debugMode = MIDletSuiteUtils.debugMode;
+                state.isDebugMode = MIDletSuiteUtils.isDebugMode;
 
             } else if (state.lastSuiteId !=
                     MIDletSuite.UNUSED_SUITE_ID) {

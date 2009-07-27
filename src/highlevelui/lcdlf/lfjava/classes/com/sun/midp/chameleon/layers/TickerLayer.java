@@ -99,17 +99,11 @@ public class TickerLayer extends CLayer {
      * @param text the text to be displayed on the ticker
      * @return * @return true if visability of layer was changed
      */
-    public boolean setText(String newText) {
+    public boolean setText(String text) {
         boolean oldVisable = super.visible;
         synchronized (this) {
-            if (null != newText) {
-                // According to the spec, linebreak characters should 
-                // not be displayed in the ticker and could be used as 
-                // separators. We will use a single white space as the
-                // separator.
-                text = newText.trim().replace('\n', ' ');
-            }
-            super.visible = (text != null && text.length() > 0);
+            this.text = text;
+            super.visible = (text != null && text.trim().length() > 0);
             textLen = (text == null) ? 0 : TickerSkin.FONT.stringWidth(text);
             setDirty();
         }

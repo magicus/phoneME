@@ -181,12 +181,12 @@ public class MVMManager extends MIDlet
      * @param suiteId ID of the midlet suite
      * @param className class name of the midlet to run
      * @param displayName display name of the midlet to run
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     * MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the midlet must be started in debug mode,
+     *                    false otherwise
      */
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
-                                          int debugMode) {
+                                          boolean isDebugMode) {
         /* For the case of showing MIDlet selector, we need AMS to have
          * foreground. */
         MIDletProxy thisMidlet = midletProxyList.findMIDletProxy(
@@ -194,17 +194,15 @@ public class MVMManager extends MIDlet
         midletProxyList.setForegroundMIDlet(thisMidlet);
 
         if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
-            /*
-             * IMPL NOTE: this forces only one running MIDlet in debug mode -
+            /* IMPL NOTE: this forces only one running MIDlet in debug mode -
              * the VM currently does not support more MIDlets in debug mode
-             * at the same time.
-             */
-            debugMode = Constants.MIDP_NO_DEBUG;
+             * at the same time. */
+            isDebugMode = false;
         }
 
         try {
-            appManager.launchSuite(suiteId, className, debugMode, true);
-            if (debugMode != Constants.MIDP_NO_DEBUG) {
+            appManager.launchSuite(suiteId, className, isDebugMode, true);
+            if (isDebugMode) {
                 suiteUnderDebugId = suiteId;
             }
         } catch (Exception ex) {
@@ -624,7 +622,7 @@ public class MVMManager extends MIDlet
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
             MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun, null, 
-                                     suiteInfo.debugMode);
+                    suiteInfo.isDebugMode);
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }

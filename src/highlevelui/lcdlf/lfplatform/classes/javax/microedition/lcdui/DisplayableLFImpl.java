@@ -361,6 +361,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             GameMap.registerDisplayAccess(owner, currentDisplay.accessor);
             stickyKeyMask = currentKeyMask = 0;
         } else {
+            GameMap.registerDisplayAccess(null, null);
             // set the keymask to -1 when
             // the displayable is not a GameCanvas.
             stickyKeyMask = currentKeyMask = -1;
@@ -427,6 +428,10 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     void lCallHide() {
         if (state == SHOWN) {
             updateNativeTicker(owner.ticker, null);
+        }
+
+        if (GameMap.getDisplayAccess(owner) != null) {
+            GameMap.registerDisplayAccess(null, null);
         }
 
         // Delete native resources
@@ -883,15 +888,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     private void setTicker(Ticker t) {
 
         if (nativeId != INVALID_NATIVE_ID) {
-    	    // According to the spec, linebreak characters should 
-    	    // not be displayed in the ticker and could be used as 
-    	    // separators. We will use a single white space as the
-    	    // separator.
-            String displayedMessage = null;
-            if (null != t) {
-                displayedMessage = t.getString().trim().replace('\n', ' ');
-            }
-            setTicker0(nativeId, displayedMessage);
+            setTicker0(nativeId, (t == null) ? null : t.displayedMessage);
         }
     }
 

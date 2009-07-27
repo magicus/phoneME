@@ -98,6 +98,9 @@ public class ScreenResources {
         ScreenSkin.IMAGE_BG = SkinLoader.getImage(
                 SkinPropertiesIDs.SCREEN_IMAGE_BG);
 
+        ScreenSkin.IMAGE_BG_HL = SkinLoader.getCompositeImage(
+                SkinPropertiesIDs.SCREEN_IMAGE_BG_HL, 3);
+
         ScreenSkin.TOUCH_RADIUS = SkinLoader.getInt(
                  SkinPropertiesIDs.TOUCH_RADIUS);
 

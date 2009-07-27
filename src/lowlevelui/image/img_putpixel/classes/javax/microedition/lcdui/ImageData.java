@@ -32,6 +32,9 @@ package javax.microedition.lcdui;
  */
 final class ImageData implements AbstractImageData {
 
+    private static final int PIXEL_SIZE = ImageDataFactory.bytesInPixel();
+    private static int sizeOfPixel = ImageDataFactory.bytesInPixel();
+
     /**
      * The width, height of this Image
      */
@@ -60,6 +63,18 @@ final class ImageData implements AbstractImageData {
      * Must remain 0 unless pixelData is null.
      */
     private int nativePixelData;
+
+    /**
+     * 16-bit image native romized pixel data.
+     * Used only if ENABLE_DYNAMIC_PIXEL_FORMAT=true
+     */
+    private int nativePixelData16;
+
+    /**
+     * 32-bit image native romized pixel data.
+     * Used only if ENABLE_DYNAMIC_PIXEL_FORMAT=true
+     */
+    private int nativePixelData32;
     
     /**
      * Image native romized alpha data.
@@ -117,7 +132,7 @@ final class ImageData implements AbstractImageData {
         this.height = height;
         this.isMutable = isMutable;
 
-        int length = width * height * 2;
+        int length = width * height * sizeOfPixel;
         byte[] newPixelData = new byte[length];
         System.arraycopy(pixelData, 0, newPixelData, 0, length);
 
@@ -144,7 +159,9 @@ final class ImageData implements AbstractImageData {
         this.height = height;
         this.isMutable = isMutable;
 
-        pixelData = new byte[width * height * 2];
+        pixelData = new byte[width * height * sizeOfPixel];
+        if (width >= 320 && height >= 320)
+                System.out.println("*** allocating large image with pixel size " + sizeOfPixel);
 
         if (allocateAlpha) {
             alphaData = new byte[width * height];

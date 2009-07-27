@@ -1143,9 +1143,8 @@ public abstract class Installer {
             checkConfiguration();
             matchProfile();
 
-            Object chmObject = null;
             try {
-            	chmObject = state.chmanager.preInstall(this,
+                state.chmanager.preInstall(this,
                        (InstallState)state,
                        (MIDletSuite)state,
                        (info.authPath == null ?
@@ -1200,7 +1199,7 @@ public abstract class Installer {
             registerPushConnections();
 
             /** Do the Content Handler registration updates now */
-            state.chmanager.install(chmObject);
+            state.chmanager.install();
 
             /*
              * Store suite will remove the suite including push connections,

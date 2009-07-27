@@ -32,7 +32,6 @@ import com.sun.midp.links.Link;
 import com.sun.midp.links.LinkPortal;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.services.SystemServiceLinkPortal;
-import com.sun.midp.configurator.Constants;
 
 /**
  * The first class loaded in an application Isolate by the MIDP AMS to
@@ -63,20 +62,16 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
         this.externalAppId = Integer.parseInt(args[6]);
 
         if (args.length > 7) {
-            int debugMode = Integer.parseInt(args[7]);
+            boolean isDebugMode = Integer.parseInt(args[7]) != 0;
 
-            if (debugMode != Constants.MIDP_NO_DEBUG) {
+            if (isDebugMode) {
                 currentIsolate = Isolate.currentIsolate();
                 currentIsolate.attachDebugger();
-            }
 
-            if (debugMode == Constants.MIDP_DEBUG_SUSPEND) {
                 // wait for a connection from debugger
-                // this is probably unnecessary because JavaDebugger on CLDC
-                // side waits for the connection anyway
                 while (!currentIsolate.isDebuggerConnected()) {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(300);
                     } catch (Exception e) {
                         // ignore
                     }

@@ -37,8 +37,6 @@ import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.configurator.Constants;
-
 import javax.microedition.lcdui.AlertType;
 
 /**
@@ -111,10 +109,10 @@ public class MIDletSuiteUtils {
     static String profileName;
 
     /**
-     * debug option for the MIDlet to be launched, one of:
-     * MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * true if the new midlet must be started in debug
+     * mode, false otherwise.
      */
-    static int debugMode;
+    static boolean isDebugMode;
 
     /**
      * Display an exception to the user.
@@ -123,7 +121,7 @@ public class MIDletSuiteUtils {
      * @param exceptionMsg exception message
      */
     static void displayException(SecurityToken securityToken,
-                                 String exceptionMsg) {
+				 String exceptionMsg) {
 
         SystemAlert alert = new SystemAlert(securityToken, "Exception", 
 					    exceptionMsg, null, 
@@ -155,7 +153,7 @@ public class MIDletSuiteUtils {
     public static boolean execute(
             int id, String midlet, String displayName) {
         return executeWithArgs(
-            id, midlet, displayName, null, null, null, Constants.MIDP_NO_DEBUG);
+            id, midlet, displayName, null, null, null, false);
     }
 
     /**
@@ -171,19 +169,19 @@ public class MIDletSuiteUtils {
      * @param id ID of an installed suite
      * @param midlet class name of MIDlet to invoke
      * @param displayName name to display to the user
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return true if the MIDlet suite MUST first exit before the
-     *         MIDlet is run
+     * MIDlet is run
      *
      * @exception SecurityException if the caller does not have permission
-     *            to manage midlets
+     *   to manage midlets
      */
     public static boolean execute(
-            int id, String midlet, String displayName, int debugMode) {
+            int id, String midlet, String displayName, boolean isDebugMode) {
         return executeWithArgs(
-            id, midlet, displayName, null, null, null, debugMode);
+            id, midlet, displayName, null, null, null, isDebugMode);
     }
 
     /**
@@ -214,7 +212,7 @@ public class MIDletSuiteUtils {
 
         return executeWithArgs(
             securityToken, suiteId, midlet,
-            displayName, null, null, null, Constants.MIDP_NO_DEBUG);
+            displayName, null, null, null, false);
     }
 
     /**
@@ -232,22 +230,22 @@ public class MIDletSuiteUtils {
      * @param suiteId ID of an installed suite
      * @param midlet class name of MIDlet to invoke
      * @param displayName name to display to the user
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return true if the MIDlet suite MUST first exit before the
-     *         MIDlet is run
+     * MIDlet is run
      *
      * @exception SecurityException if the caller does not have permission
-     *            to manage midlets
+     *   to manage midlets
      */
     public static boolean execute(
             SecurityToken securityToken, int suiteId,
-            String midlet, String displayName, int debugMode) {
+            String midlet, String displayName, boolean isDebugMode) {
 
         return executeWithArgs(
             securityToken, suiteId, midlet,
-            displayName, null, null, null, debugMode);
+            displayName, null, null, null, isDebugMode);
     }
 
     /**
@@ -281,8 +279,7 @@ public class MIDletSuiteUtils {
             String arg0, String arg1, String arg2) {
 
         return executeWithArgs(
-            null, suiteId, midlet, displayName, arg0, arg1, arg2,
-            Constants.MIDP_NO_DEBUG);
+            null, suiteId, midlet, displayName, arg0, arg1, arg2, false);
     }
 
     /**
@@ -304,21 +301,21 @@ public class MIDletSuiteUtils {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return true if the MIDlet suite MUST first exit before the
-     *         MIDlet is run
+     * MIDlet is run
      *
      * @exception SecurityException if the caller does not have permission
-     *            to manage midlets
+     *   to manage midlets
      */
     public static boolean executeWithArgs(
             int suiteId, String midlet, String displayName,
-            String arg0, String arg1, String arg2, int debugMode) {
+            String arg0, String arg1, String arg2, boolean isDebugMode) {
 
         return executeWithArgs(
-            null, suiteId, midlet, displayName, arg0, arg1, arg2, debugMode);
+            null, suiteId, midlet, displayName, arg0, arg1, arg2, isDebugMode);
     }
 
     /**
@@ -354,7 +351,7 @@ public class MIDletSuiteUtils {
 
         return executeWithArgs(
             securityToken, 0, suiteId, midlet,
-            displayName, arg0, arg1, arg2, Constants.MIDP_NO_DEBUG);
+            displayName, arg0, arg1, arg2, false);
     }
 
     /**
@@ -377,23 +374,23 @@ public class MIDletSuiteUtils {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return true if the MIDlet suite MUST first exit before the
-     *         MIDlet is run
+     * MIDlet is run
      *
      * @exception SecurityException if the caller does not have permission
-     *            to manage midlets
+     *   to manage midlets
      */
     public static boolean executeWithArgs(
             SecurityToken securityToken, int suiteId, String midlet,
             String displayName, String arg0, String arg1, String arg2,
-            int debugMode) {
+            boolean isDebugMode) {
 
         return executeWithArgs(
             securityToken, 0, suiteId, midlet,
-            displayName, arg0, arg1, arg2, debugMode);
+            displayName, arg0, arg1, arg2, isDebugMode);
     }
 
     /**
@@ -418,24 +415,24 @@ public class MIDletSuiteUtils {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return true if the MIDlet suite MUST first exit before the
-     *         MIDlet is run
+     * MIDlet is run
      *
      * @exception SecurityException if the caller does not have permission
-     *            to manage midlets
+     *   to manage midlets
      */
     public static boolean executeWithArgs(
             SecurityToken securityToken, int externalAppId,
             int suiteId, String midlet, String displayName,
             String arg0, String arg1, String arg2,
-            int debugMode) {
+            boolean isDebugMode) {
 
         return executeWithArgs(
             securityToken, externalAppId, suiteId, midlet, displayName,
-            arg0, arg1, arg2, -1, -1, -1, null, debugMode);
+            arg0, arg1, arg2, -1, -1, -1, null, isDebugMode);
     }
 
     /**
@@ -468,14 +465,14 @@ public class MIDletSuiteUtils {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the new midlet must be started in debug
+     *                    mode, false otherwise
      *
      * @return true if the MIDlet suite MUST first exit before the
-     *         MIDlet is run
+     * MIDlet is run
      *
      * @exception SecurityException if the caller does not have permission
-     *            to manage midlets
+     *   to manage midlets
      */
     public static boolean executeWithArgs(
             SecurityToken securityToken, int externalAppId,
@@ -483,7 +480,7 @@ public class MIDletSuiteUtils {
             String arg0, String arg1, String arg2,
             int memoryReserved, int memoryTotal, int priority,
             String profileName,
-            int debugMode) {
+            boolean isDebugMode) {
 
         MIDletSuiteStorage midletSuiteStorage;
 
@@ -498,7 +495,7 @@ public class MIDletSuiteUtils {
         return AmsUtil.executeWithArgs(
             midletSuiteStorage, externalAppId, suiteId,
             midlet, displayName, arg0, arg1, arg2,
-            memoryReserved, memoryTotal, priority, profileName, debugMode);
+            memoryReserved, memoryTotal, priority, profileName, isDebugMode);
     }
 
     /**

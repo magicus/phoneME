@@ -81,11 +81,11 @@ KNIDECL(com_sun_midp_rms_RecordStoreUtil_exists) {
  * @param name name of the record store
  * @param extension extension number to add to the end of the file name
  *
- * @return true if successful or false if an IOException occurred
+ * @throws RecordStoreException if deletion encountered an error
  *         internally.
  */
 
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_rms_RecordStoreUtil_deleteFile) {
     int extension = KNI_GetParameterAsInt(3);
     jboolean existed = KNI_FALSE;
@@ -118,6 +118,6 @@ KNIDECL(com_sun_midp_rms_RecordStoreUtil_deleteFile) {
 
     KNI_EndHandles();
 
-    KNI_ReturnBoolean(existed);
+    KNI_ReturnVoid();
 }
 

@@ -55,9 +55,4 @@ public class RecordStoreException
      */ 
     public RecordStoreException() {
     } 
-    
-    // instantiate javax.microedition.rms.Tunnel
-    static {
-    	new Tunnel();
-    }
 } 

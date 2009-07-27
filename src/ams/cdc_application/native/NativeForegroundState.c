@@ -39,3 +39,12 @@ KNIDECL(com_sun_midp_main_NativeForegroundState_setState) {
     gForegroundDisplayId = KNI_GetParameterAsInt(1);
     KNI_ReturnVoid();
 }
+
+/**
+ * Gets the foreground display. 0 equals no display
+ *
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_main_NativeForegroundState_getState) {
+    KNI_ReturnInt(gForegroundDisplayId);
+}

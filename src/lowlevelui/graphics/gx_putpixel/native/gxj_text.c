@@ -378,7 +378,16 @@ drawString(jint pixel, const jshort *clip,
     }
 
     widthRemaining = width;
-    pixelColor = GXJ_RGB24TORGB16(pixel);
+
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+    if (pp_enable_32bit_mode) {
+        pixelColor = GXJ_MIDPTOOPAQUEPIXEL_32(pixel);
+    } else {
+        pixelColor = GXJ_MIDPTOOPAQUEPIXEL_16(pixel);
+    }
+#else
+    pixelColor = GXJ_MIDPTOOPAQUEPIXEL(pixel);
+#endif
 
     switch (direction) {
         case RIGHT_TO_LEFT:

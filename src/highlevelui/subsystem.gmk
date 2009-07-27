@@ -113,7 +113,21 @@ endif
 # Description: Optional for certain platforms
 #####################################################################
 
-include $(SUBSYSTEM_HIGHUI_DIR)/virtual_keyboard/lib.gmk
+include $(SUBSYSTEM_HIGHUI_DIR)/vk_manager/lib.gmk
+
+#####################################################################
+# Java Virtual keyboard Subsystem
+# Description: java virtual keyboard 
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/vkjava/lib.gmk
+
+#####################################################################
+# Platform Virtual keyboard Subsystem
+# Description: java virtual keyboard 
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/vkplatform/lib.gmk
 
 
 #####################################################################
@@ -259,5 +273,6 @@ SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_APP_EXTRA_INCLUDES)
 #
 ifeq ($(TARGET_VM), cdc_vm)
 SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_CDCUI_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_CDCUI_NATIVE_FILES)
 endif
 

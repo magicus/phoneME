@@ -37,6 +37,8 @@ import sun.misc.MIDPConfig;
  */
 class ImageDataFactory implements AbstractImageDataFactory {
 
+    private static final int PIXEL_SIZE = bytesInPixel();
+
     /**
      * PNG Header Data
      */
@@ -127,7 +129,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
     public ImageData createImmutableCopy(ImageData mutableSource) {
         int width  = mutableSource.getWidth();
         int height = mutableSource.getHeight();
-        int length = width * height * 2;
+        int length = width * height * PIXEL_SIZE;
 
         return  new ImageData(width, height, false,
                               mutableSource.getPixelData());
@@ -387,17 +389,14 @@ class ImageDataFactory implements AbstractImageDataFactory {
     /**
      * Function to decode an <code>ImageData</code> from romized data.
      *
-     * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
+     * @param romIndex romized image id
      * @return <code>ImageData</code> created from romized data.
      * @throws IllegalArgumentException if the id is invalid
      */
-    public ImageData createImmutableImageData(int imageDataArrayPtr,
-            int imageDataArrayLength) {
+    public ImageData createImmutableImageData(int romIndex) {
 
         ImageData data = new ImageData();
-        if (!loadRomizedImage(data, imageDataArrayPtr,
-                    imageDataArrayLength)) {
+        if (!loadRomizedImage(data, romIndex)) {
             throw new IllegalArgumentException();
         }
         return data;
@@ -720,13 +719,11 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * directly out of the rom image.
      *
      * @param data The <code>ImageData</code> to load to
-     * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
+     * @param romIndex romized image id
      * @return true if romized image was loaded successfully,
      *         false - otherwise
      */
-    private native boolean loadRomizedImage(ImageData data,
-            int imageDataArrayPtr, int imageDataArrayLength);
+    private native boolean loadRomizedImage(ImageData data, int romIndex);
 
     /**
      * Native function to load an <code>ImageData</code> from ARGB data.
@@ -763,4 +760,11 @@ class ImageDataFactory implements AbstractImageDataFactory {
                                    int x, int y,
                                    int width, int height,
                                    int transform);
+
+    /**
+     * Return how many bytes are in a pixel.
+     *
+     * @return number of bytes in native pixel
+     */
+    static native int bytesInPixel();
 }

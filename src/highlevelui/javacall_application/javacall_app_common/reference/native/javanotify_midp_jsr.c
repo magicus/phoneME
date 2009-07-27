@@ -85,10 +85,6 @@ extern "C" {
 #include <javacall_contactless.h>
 #endif
 
-#ifdef ENABLE_JSR_290
-#include <javacall_fluid_image.h>
-#endif
-
 #ifdef ENABLE_ON_DEVICE_DEBUG
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
@@ -857,7 +853,6 @@ void /*OPTIONAL*/javanotify_location_proximity(
 #endif /* ENABLE_JSR_179 */
 
 #ifdef ENABLE_JSR_211
-
 /*
  * Called by platform to notify java VM that invocation of native handler
  * is finished. This is <code>ContentHandlerServer.finish()</code> substitute
@@ -975,53 +970,6 @@ void javanotify_chapi_java_invoke(
     midp_jc_event_send(&e);
 }
 
-javacall_result javanotify_chapi_process_msg_request( int queueID, int dataExchangeID, 
-                                                      int msg, const unsigned char * bytes, size_t count ) {
-    midp_jc_event_union e;
-    jsr211_request_data * data = (jsr211_request_data *)jsr211_malloc( sizeof(*data) );
-
-    REPORT_INFO(LC_CORE, "javanotify_chapi_process_msg_request() >>\n");
-
-    data->queueID = queueID;
-    data->msg = msg;
-    data->dataExchangeID = dataExchangeID;
-    data->bytes = NULL;
-    data->count = count;
-    if( count > 0 ){
-        data->bytes = (unsigned char *)jsr211_malloc( count );
-        memcpy( data->bytes, bytes, count );
-    } else if( bytes != NULL ){
-        data->bytes = "";
-    }
-
-    e.eventType = JSR211_JC_EVENT_REQUEST_RECEIVED;
-    e.data.jsr211RequestEvent.data = data;
-
-    midp_jc_event_send(&e);
-}
-
-javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const unsigned char * bytes, size_t count ) {
-    midp_jc_event_union e;
-    jsr211_response_data * data = (jsr211_response_data *)jsr211_malloc( sizeof(*data) );
-
-    REPORT_INFO(LC_CORE, "javanotify_chapi_process_msg_result() >>\n");
-
-    data->dataExchangeID = dataExchangeID;
-    data->bytes = NULL;
-    data->count = count;
-    if( count > 0 ){
-        data->bytes = (unsigned char *)jsr211_malloc( count );
-        memcpy( data->bytes, bytes, count );
-    } else if( bytes != NULL ){
-        data->bytes = "";
-    }
-
-    e.eventType = JSR211_JC_EVENT_RESPONSE_RECEIVED;
-    e.data.jsr211ResponseEvent.data = data;
-
-    midp_jc_event_send(&e);
-}
-
 #endif /* ENABLE_JSR_211 */
 
 #ifdef ENABLE_JSR_290
@@ -1035,6 +983,7 @@ javanotify_fluid_image_notify_dirty (
 
     e.eventType = JSR290_JC_EVENT_FLUID_INVALIDATE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.result      = 0;
 
     midp_jc_event_send(&e);
 }
@@ -1054,15 +1003,13 @@ javanotify_fluid_listener_completed (
 void
 javanotify_fluid_listener_failed (
     javacall_handle                       fluid_image,
-    javacall_const_utf16_string           failure,
-    const javacall_fluid_failure_types    failure_type
+    javacall_const_utf16_string           failure
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_FAILED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
     e.data.jsr290FluidEvent.text = javautil_wcsdup(failure);
-    e.data.jsr290FluidEvent.failure_type = failure_type;
 
     midp_jc_event_send(&e);
 }
@@ -1105,20 +1052,6 @@ javanotify_fluid_listener_warning (
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_WARNING;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
     e.data.jsr290FluidEvent.text = javautil_wcsdup(warning);
-
-    midp_jc_event_send(&e);
-}
-
-void
-javanotify_fluid_listener_document_available (
-    javacall_handle                       fluid_image,
-    javacall_handle                       document
-    ) {
-	midp_jc_event_union e;
-
-    e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_DOCUMENT_AVAILABLE;
-    e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.spare = document;
 
     midp_jc_event_send(&e);
 }
@@ -1188,28 +1121,7 @@ void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
 
     REPORT_INFO(LC_CORE, "javanotify_fluid_event_request() >>\n");
     e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
-    e.data.jsr290HandleEventRequest.request_handle = request_handle;
-    midp_jc_event_send(&e);
-}
-
-void
-javanotify_fluid_display_box (
-    javacall_handle                       fluid_image,
-    javacall_handle                       request,
-    javacall_const_utf16_string           message,
-    javacall_const_utf16_string           defaultValue,
-    const javacall_fluid_message_box_type type
-    ) {
-
-    midp_jc_event_union e;
-
-    e.eventType = JSR290_JC_EVENT_DISPLAY_BOX;
-    e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.spare       = request;
-    e.data.jsr290FluidEvent.text        = javautil_wcsdup(message);
-    e.data.jsr290FluidEvent.text1       = javautil_wcsdup(defaultValue);
-    e.data.jsr290FluidEvent.result      = type;
-
+	e.data.jsr290HandleEventRequest.request_handle = request_handle;
     midp_jc_event_send(&e);
 }
 

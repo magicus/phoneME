@@ -308,7 +308,26 @@ extern "C" {
  */
 #define MIDP_OUT_OF_MEMORY_HANDLED 80
 
+/**
+* Notification sent by platform. this event is not handled by MIDP.
+* dispatched by com_sun_midp_events_NativeEventMonitor_waitForNativeEvent
+*/
+#define PLATFORM_EVENT 81
+
 /** @} */
+
+
+/**
+ * @name Minor event type IDs of PLATFORM_NOTIFICATION_EVENT.
+ *
+ * Some of JSRs should use this event when receiving the externel event from platform side
+ * because CVMmutexLock cannot be called on specific callback functions directly.
+ * 
+ * @{
+ */
+#define SMS_RECEIVED 1
+/** @} */
+
 
 /**
  * @name Minor event type IDs.

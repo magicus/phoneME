@@ -41,12 +41,12 @@ interface ODTControllerEventConsumer {
      * @param suiteId ID of the midlet suite
      * @param className class name of the midlet to run
      * @param displayName display name of the midlet to run
-     * @param debugMode debug option for the MIDlet to be launched, one of:
-     *                  MIDP_NO_DEBUG, MIDP_DEBUG_SUSPEND, MIDP_DEBUG_NO_SUSPEND
+     * @param isDebugMode true if the midlet must be started in debug mode,
+     *                    false otherwise
      */
     public void handleODDStartMidletEvent(int suiteId, String className,
                                           String displayName,
-                                          int debugMode);
+                                          boolean isDebugMode);
 
     /**
      * Processes MIDP_ODD_EXIT_MIDLET_EVENT.

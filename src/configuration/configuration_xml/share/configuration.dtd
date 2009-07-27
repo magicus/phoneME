@@ -172,7 +172,7 @@
 -->
 <!ELEMENT rawimage EMPTY>
 <!ATTLIST rawimage
-        Format    (Putpixel | ARGB)         #REQUIRED
+        Format    (Putpixel | ARGB | RGBA | ABGR)  #REQUIRED
         Colors    (565 | 888)               #REQUIRED
         Endian    (Little | Big)            #REQUIRED
 >

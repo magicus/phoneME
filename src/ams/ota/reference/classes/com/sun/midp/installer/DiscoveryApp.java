@@ -47,6 +47,8 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import javax.microedition.lcdui.List;
 
+import com.sun.midp.io.FileUrl;
+
 /**
  * The Graphical MIDlet suite Discovery Application.
  * <p>
@@ -122,6 +124,8 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
      * The saved URL is retrieved and the list of MIDlets are retrieved.
      */
     public DiscoveryApp() {
+        String storageName;
+
         display = Display.getDisplay(this);
         
         typeOfInstall = InstallerResource.HTTP_INSTALL;
@@ -212,7 +216,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
          *           OTA provisioning
          * ams.url = <some url> when running OTA from KToolbar */
         String amsUrl = System.getProperty("ams.url");
-        if (amsUrl != null && !amsUrl.trim().equals("")) {
+        if (amsUrl != null && !amsUrl.equals("")) {
             defaultInstallListUrl = amsUrl.trim();
             return;
         }
@@ -229,7 +233,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
                 dis = new DataInputStream(bas);
                 lastTypeOfInstall = dis.readInt();
                 if(urlTextBox == null)
-                   typeOfInstall = lastTypeOfInstall; 
+                   typeOfInstall=lastTypeOfInstall; 
                 
             }
             // if this method invoked from constructor or
@@ -433,8 +437,8 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         displayName =
             Resource.getString(ResourceConstants.INSTALL_APPLICATION);
         try {
-            midletStateHandler.startMIDlet( GraphicalInstaller.class.getName(),
-            									displayName);
+            midletStateHandler.startMIDlet(
+                "com.sun.midp.installer.GraphicalInstaller", displayName);
             /*
              * Give the create MIDlet notification 1 second to get to
              * AMS.
@@ -580,16 +584,17 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             StreamConnection conn = null;
             InputStreamReader in = null;
             String errorMessage;
+            long startTime;
 
-            // long startTime = System.currentTimeMillis();
+            startTime = System.currentTimeMillis();
 
             try {
-                parent.displayProgressForm(
-                    InstallerResource.getString(
-                    typeOfInstall,InstallerResource.PREPARE_INSTALLATION_LIST_LABEL),
-                    "", url, 0,
-                    InstallerResource.getString(
-                    typeOfInstall,InstallerResource.CONNECTING_GAUGE_LABEL));
+                    parent.displayProgressForm(
+                        InstallerResource.getString(
+                        typeOfInstall,InstallerResource.PREPARE_INSTALLATION_LIST_LABEL),
+                        "", url, 0,
+                        InstallerResource.getString(
+                        typeOfInstall,InstallerResource.CONNECTING_GAUGE_LABEL));
                        
                 
                 conn = (StreamConnection)Connector.open(url, Connector.READ);
