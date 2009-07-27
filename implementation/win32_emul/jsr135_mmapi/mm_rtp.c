@@ -565,6 +565,7 @@ static media_basic_interface _rtp_basic_itf =
     rtp_resume,
     NULL,
     NULL,
+    NULL,
     //rtp_get_java_buffer_size,
     //rtp_set_whole_content_size,
     //rtp_get_buffer_address,

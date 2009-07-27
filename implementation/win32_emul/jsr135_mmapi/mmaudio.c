@@ -767,6 +767,7 @@ static media_basic_interface _audio_basic_itf = {
     audio_resume,
     NULL,
     NULL,
+    NULL,
     //audio_get_java_buffer_size,
     //audio_set_whole_content_size,
     //audio_get_buffer_address,

@@ -297,6 +297,7 @@ static media_basic_interface _basic_itf = {
     interactive_midi_resume,
     NULL,
     NULL,
+    NULL,
     interactive_midi_get_time,
     interactive_midi_set_time,
     interactive_midi_get_duration,

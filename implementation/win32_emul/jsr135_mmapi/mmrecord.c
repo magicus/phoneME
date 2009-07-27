@@ -439,6 +439,7 @@ static media_basic_interface _recorder_basic_itf = {
     recorder_resume,
     NULL,
     NULL,
+    NULL,
     recorder_get_time,
     recorder_set_time,
     recorder_get_duration,

@@ -621,6 +621,7 @@ static media_basic_interface _video_basic_itf = {
     video_resume,
     NULL,
     NULL,
+    NULL,
     //video_get_java_buffer_size,
     //video_set_whole_content_size,
     //video_get_buffer_address,

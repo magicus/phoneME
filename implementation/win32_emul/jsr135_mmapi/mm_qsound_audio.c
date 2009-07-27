@@ -3090,6 +3090,7 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_resume,
     NULL,
     NULL,
+    NULL,
     //audio_qs_get_java_buffer_size,
     //audio_qs_set_whole_content_size,
     //audio_qs_get_buffer_address,

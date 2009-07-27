@@ -69,7 +69,7 @@ class dshow_player : public player_callback,
     virtual void        size_changed( int16 w, int16 h );
     virtual void        audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample);
     virtual void        playback_finished();
-    virtual void        data_request(javacall_int64 offset, javacall_int32 length, void* buffer);
+    virtual result      data(int64 offset, int32 len, void *pdata, int32 *plen);
 
     // IWaveStream methods:
 	virtual long        getFormat(int* pChannels, long* pSampleRate);
@@ -108,7 +108,7 @@ public:
 
     long                  bytes_buffered;
     bool                  all_data_arrived;
-    long                  whole_content_size;
+    javacall_int64        whole_content_size;
     bool                  eom_sent;
 
     long                  volume;
@@ -128,6 +128,14 @@ public:
     size_t                out_queue_w; // write index
     size_t                out_queue_r; // read  index
     size_t                out_queue_n; // samples in queue
+
+    HANDLE                dwr_event;
+    HANDLE                dwr_mutex;
+    bool                  dwr_in_progress;
+    int64                 dwr_offset;
+    int32                 dwr_len;
+    int32                 dwr_len_sofar;
+    BYTE*                 dwr_pdata;
 };
 
 dshow_player* dshow_player::players[ MAX_DSHOW_PLAYERS ];
@@ -215,17 +223,27 @@ void dshow_player::playback_finished()
     }
 }
 
-struct 
-
-void dshow_player::data_request(javacall_int64 offset, javacall_int32 length, void* buffer)
+player_callback::result dshow_player::data(int64 offset, int32 len, void *pdata, int32 *plen)
 {
+    dwr_offset    = offset;
+    dwr_len       = len;
+    dwr_len_sofar = 0;
+    dwr_pdata     = (BYTE*)pdata;
+
+    dwr_in_progress = true;
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
                                       appId,
                                       playerId, 
                                       JAVACALL_OK,
-                                      void *data );
-}
+                                      NULL );
 
+    WaitForSingleObject( dwr_event, INFINITE );
+    dwr_in_progress = false;
+
+    *plen = dwr_len_sofar;
+
+    return player_callback::result_success;
+}
 
 void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 {
@@ -413,6 +431,11 @@ static javacall_result dshow_create(int appId,
     p->out_queue_r      = 0;
     p->out_queue_n      = 0;
 
+    p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
+    p->dwr_mutex        = CreateMutex( NULL, FALSE, NULL );
+    p->dwr_in_progress  = false;
+
+
     *pHandle =(javacall_handle)p;
 
     lcd_set_color_key( JAVACALL_FALSE, 0 );
@@ -451,6 +474,9 @@ static javacall_result dshow_destroy(javacall_handle handle)
     if( NULL != p->ppl ) delete p->ppl;
 
     DeleteCriticalSection( &(p->cs) );
+
+    CloseHandle( p->dwr_event );
+    CloseHandle( p->dwr_mutex );
 
     delete p;
 
@@ -830,15 +856,48 @@ static javacall_result dshow_resume(javacall_handle handle)
 
 javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 length)
 {
+    dshow_player* p = (dshow_player*)handle;
+
+    p->whole_content_size = length;
+
+    if( p->dwr_offset + p->dwr_len > p->whole_content_size )
+    {
+        // TODO: ???
+    }
+
+    return JAVACALL_OK;
+}
+
+javacall_result dshow_get_data_request(javacall_handle handle,
+                                       javacall_int64* new_offset,
+                                       javacall_int32* new_length,
+                                       void**          new_data)
+{
+    dshow_player* p = (dshow_player*)handle;
+
+    *new_offset = p->dwr_offset;
+    *new_length = p->dwr_len;
+    *new_data   = p->dwr_pdata;
+
+    return JAVACALL_OK;
 }
 
 javacall_result dshow_data_written(javacall_handle handle,
                                    javacall_int32  length,
-                                   javacall_bool*  new_request,
-                                   javacall_int64* new_offset,
-                                   javacall_int32* new_length,
-                                   void**          new_data)
+                                   javacall_bool*  new_request)
 {
+    dshow_player* p = (dshow_player*)handle;
+
+    p->dwr_len_sofar      += length;
+    p->dwr_offset         += length;
+    p->dwr_pdata          += length;
+
+    if( p->dwr_len_sofar == p->dwr_len )
+    {
+        SetEvent( p->dwr_event );
+    }
+
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_get_time(javacall_handle handle, long* ms)
@@ -1068,6 +1127,7 @@ static media_basic_interface _dshow_basic_itf =
     dshow_pause,
     dshow_resume,
     dshow_stream_length,
+    dshow_get_data_request,
     dshow_data_written,
     dshow_get_time,
     dshow_set_time,

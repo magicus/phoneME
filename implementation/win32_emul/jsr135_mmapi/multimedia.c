@@ -1144,6 +1144,26 @@ javacall_result javacall_media_stream_length(
     return ret;
 }
 
+javacall_result javacall_media_get_data_request(
+    javacall_handle handle,
+    /*OUT*/ javacall_int64 *offset,
+    /*OUT*/ javacall_int32 *length,
+    /*OUT*/ void **data)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_BASIC_ITF(pItf, get_data_request)) {
+        ret = pItf->vptrBasic->get_data_request(pPlayer->mediaHandle,
+                                                new_offset,
+                                                new_length,
+                                                new_data);
+    }
+
+    return ret;
+}
+
 /**
  * Tell the native player that requested data has been written.
  * 
@@ -1160,10 +1180,7 @@ javacall_result javacall_media_stream_length(
 javacall_result javacall_media_data_written(
     javacall_handle handle,
     javacall_int32 length,
-    /*OUT*/ javacall_bool *new_request,
-    /*OUT*/ javacall_int64 *new_offset,
-    /*OUT*/ javacall_int32 *new_length,
-    /*OUT*/ void **new_data)
+    /*OUT*/ javacall_bool *new_request)
 {
     javacall_result ret = JAVACALL_FAIL;
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
@@ -1172,10 +1189,7 @@ javacall_result javacall_media_data_written(
     if (QUERY_BASIC_ITF(pItf, data_written)) {
         ret = pItf->vptrBasic->data_written(pPlayer->mediaHandle,
                                             length,
-                                            new_request,
-                                            new_offset,
-                                            new_length,
-                                            new_data);
+                                            new_request);
     }
 
     return ret;
