@@ -35,7 +35,7 @@ public:
         result_illegal_argument = 1,
         result_illegal_state    = 2,
         result_media            = 3,
-        result_security         = 4,
+        result_security         = 4
     };
 
     static const int32 unrealized = 100;
@@ -62,6 +62,4 @@ public:
     virtual result set_loop_count(int32 count) = 0;
     //virtual result add_player_listener(player_listener *pplayer_listener) = 0;
     //virtual result remove_player_listener(player_listener *pplayer_listener) = 0;
-
-    virtual bool data(nat32 len, const void *pdata) = 0;
 };

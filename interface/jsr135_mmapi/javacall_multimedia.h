@@ -544,15 +544,15 @@ javacall_result javacall_media_destroy(javacall_handle handle);
  * Ask to the native layer if it will handle media download from specific URL.
  * Is media download for specific URL (provided in javacall_media_create)
  * will be handled by native layer or Java layer?
- * If isHandled is JAVACALL_TRUE, Java do not call 
+ * If isHandled is JAVACALL_TRUE, Java do not call
  * javacall_media_do_buffering function
  * In this case, native layer should handle all of data gathering by itself
  * 
  * @param handle    Handle to the library
  * @param isHandled JAVACALL_TRUE if native player will handle media download
  * 
- * @retval JAVACALL_OK      
- * @retval JAVACALL_FAIL    
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL
  */
 javacall_result javacall_media_download_handled_by_device(javacall_handle handle,
                                                   /*OUT*/ javacall_bool* isHandled);
@@ -562,7 +562,7 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
  * This function will be called by Java Layer to start Realize native player.
  * 
  * @param handle        Handle to the library
- * @param mime          Mime type unicode string. 
+ * @param mime          Mime type unicode string.
  *                      NULL if unknown
  * @param mimeLength    String length of media MIME type.
  * 
@@ -588,7 +588,7 @@ javacall_result javacall_media_realize(javacall_handle handle,
  * @param handle    Handle to the library
  * 
  * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
+ * @retval JAVACALL_FAIL
  */
 javacall_result javacall_media_prefetch(javacall_handle handle);
 
@@ -683,7 +683,7 @@ javacall_result javacall_media_stream_length(
  * @param data   Buffer addres to write data to.
  * 
  * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
+ * @retval JAVACALL_FAIL
  */
 javacall_result javacall_media_get_data_request(
     javacall_handle handle,
@@ -699,7 +699,7 @@ javacall_result javacall_media_get_data_request(
  * @param new_request Additional data requested.
  * 
  * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
+ * @retval JAVACALL_FAIL
  */
 javacall_result javacall_media_data_written(
     javacall_handle handle,
