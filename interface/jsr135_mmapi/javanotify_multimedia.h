@@ -93,10 +93,7 @@ typedef enum {
     /**
      * Posted when the native player requests stream data.
      *
-     * Additional data:
-     *     javacall_int64 offset    Data offset within stream.
-     *     javacall_int32 length    Requested data block length.
-     *     void *pointer            Buffer addres to write data to.
+     * Additional data: none.
      */
     JAVACALL_EVENT_MEDIA_DATA_REQUEST,
 

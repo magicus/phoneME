@@ -593,6 +593,29 @@ javacall_result javacall_media_realize(javacall_handle handle,
 javacall_result javacall_media_prefetch(javacall_handle handle);
 
 /**
+ * Request to acquire device resources used to play media data.
+ * You could implement this function to control device resource usage.
+ * If there is no valid device resource to play media data, return JAVACALL_FAIL.
+ * 
+ * @param handle    Handle to the library
+ * 
+ * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
+ * @retval JAVACALL_FAIL    Java VM will raise the media exception
+ */
+javacall_result javacall_media_acquire_device(javacall_handle handle);
+
+/**
+ * Release device resource. 
+ * Java MMAPI call this function to release limited device resources.
+ * 
+ * @param handle    Handle to the library
+ * 
+ * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
+ * @retval JAVACALL_FAIL    Nothing happened now. Same as JAVACALL_OK.
+ */
+javacall_result javacall_media_release_device(javacall_handle handle);
+
+/**
  * Try to start media playing.<br>
  * If this API return JAVACALL_FAIL, MMAPI will raise the media exception.<br>
  * If this API return JAVACALL_OK, MMAPI will return from start method.
@@ -651,14 +674,31 @@ javacall_result javacall_media_stream_length(
     javacall_int64 length);
 
 /**
+ * Get the data for the JAVACALL_EVENT_MEDIA_DATA_REQUEST event.
+ * 
+ * @param handle Handle to the native player.
+ * @param length Length of data actually written, in bytes.
+ * @param offset Stream offset to read from, in bytes.
+ * @param length Buffer length. Maximum data length to write
+ *               to buffer, in bytes.
+ * @param data   Buffer addres to write data to.
+ * 
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL   
+ */
+javacall_result javacall_media_get_data_request(
+    javacall_handle handle,
+    javacall_int32 length,
+    /*OUT*/ javacall_int64 *offset,
+    /*OUT*/ javacall_int32 *length,
+    /*OUT*/ void **data);
+
+/**
  * Tell the native player that requested data has been written.
  * 
  * @param handle      Handle to the native player.
  * @param length      Length of data actually written, in bytes.
  * @param new_request Additional data requested.
- * @param new_offset  New stream offset to read from.
- * @param new_length  New buffer length.
- * @param new_data    New buffer address.
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
@@ -666,10 +706,7 @@ javacall_result javacall_media_stream_length(
 javacall_result javacall_media_data_written(
     javacall_handle handle,
     javacall_int32 length,
-    /*OUT*/ javacall_bool *new_request,
-    /*OUT*/ javacall_int64 *new_offset,
-    /*OUT*/ javacall_int32 *new_length,
-    /*OUT*/ void **new_data);
+    /*OUT*/ javacall_bool *new_request);
 
 /**
  * Get current media time (position) in ms unit
