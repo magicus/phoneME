@@ -71,6 +71,7 @@ class dshow_player : public player_callback,
     virtual void        audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample);
     virtual void        playback_finished();
     virtual result      data(int64 offset, int32 len, nat8 *pdata, int32 *plen);
+    virtual result      get_stream_length(int64 *plength);
 
     // IWaveStream methods:
 	virtual long        getFormat(int* pChannels, long* pSampleRate);
@@ -237,6 +238,11 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
     *plen = dwr_len;
 
     return player_callback::result_success;
+}
+
+player_callback::result dshow_player::get_stream_length(int64 *plength)
+{
+    return player_callback::result_io;
 }
 
 void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
@@ -482,6 +488,9 @@ static javacall_result dshow_close(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** close ***\n" );
+
+    p->dwr_len = 0;
+    SetEvent( p->dwr_event );
 
     if( NULL != p->pModule )
     {
@@ -733,21 +742,23 @@ javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 lengt
 
     p->whole_content_size = length;
 
-    return JAVACALL_OK;
+    player::result r = p->ppl->set_stream_length(length);
+
+    return (player::result_success==r) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 javacall_result dshow_get_data_request(javacall_handle handle,
-                                       javacall_int64* new_offset,
-                                       javacall_int32* new_length,
-                                       void**          new_data)
+                                       javacall_int64* offset,
+                                       javacall_int32* length,
+                                       void**          data)
 {
     dshow_player* p = (dshow_player*)handle;
 
-    *new_offset = p->dwr_offset;
-    *new_length = p->dwr_len;
-    *new_data   = p->dwr_pdata;
+    *offset = p->dwr_offset;
+    *length = p->dwr_len;
+    *data   = p->dwr_pdata;
 
-    PRINTF( "--- get_data_request: @%ld %d", *new_offset, *new_length );
+    PRINTF( "--- get_data_request: @%ld %d", *offset, *length );
 
     return JAVACALL_OK;
 }
