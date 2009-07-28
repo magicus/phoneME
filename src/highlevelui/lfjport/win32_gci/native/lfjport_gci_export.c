@@ -188,6 +188,7 @@ void lfjport_set_softbutton_label_on_native_layer (unsigned short *label,
     (void)len;
     (void)index;
     // Not implemented
+}
 
 /**
  * get currently enabled hardware display id
