@@ -795,9 +795,11 @@ class Thread implements Runnable {
 	    }
 	} catch (Throwable uncaughtException) {
 	    exit(uncaughtException);
+	    inheritedAccessControlContext = null;
 	    return;
 	}
 	exit(null);
+	inheritedAccessControlContext = null;
     }
 
     /**
