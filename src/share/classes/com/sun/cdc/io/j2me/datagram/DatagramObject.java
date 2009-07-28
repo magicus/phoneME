@@ -50,20 +50,24 @@ public class DatagramObject extends UniversalOutputStream implements Datagram {
     public DatagramObject(int p) {
         port  = p;
         host  = "localhost";
-   //    dgram = new DatagramPacket(port, InetAddress.getByName(host));
     }
 
     public String getAddress() {
-        InetAddress addr = dgram.getAddress();
-        if(addr == null) {
+        if (dgram == null) {
             return null;
-        } else {
-           if (host == null) {
-             return "datagram://:" + port;
-           } else {
-               return "datagram://" + host + ":" + port;
-            } 
         }
+
+        InetAddress addr = dgram.getAddress();
+
+        if (addr == null) {
+            return null;
+        }
+
+        if (host == null) {
+            return "datagram://:" + port;
+        }
+
+        return "datagram://" + host + ":" + port;
     }
 
     public byte[] getData() {
