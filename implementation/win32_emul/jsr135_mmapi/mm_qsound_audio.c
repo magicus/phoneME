@@ -99,8 +99,10 @@ static void sendBuffering(int appId, int playerId)
 {
     JC_MM_DEBUG_PRINT2("sendBuffering app=%d player=%d\n", appId, playerId);
 
+    /*
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
         appId, playerId, JAVACALL_OK, NULL);
+    */
 }
 
 

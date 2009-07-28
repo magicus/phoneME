@@ -23,6 +23,7 @@
 */
 
 #include <math.h>
+#include <process.h>
 
 #include "../multimedia.h"
 #include "player_dshow.hpp"
@@ -69,7 +70,7 @@ class dshow_player : public player_callback,
     virtual void        size_changed( int16 w, int16 h );
     virtual void        audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample);
     virtual void        playback_finished();
-    virtual result      data(int64 offset, int32 len, void *pdata, int32 *plen);
+    virtual result      data(int64 offset, int32 len, nat8 *pdata, int32 *plen);
 
     // IWaveStream methods:
 	virtual long        getFormat(int* pChannels, long* pSampleRate);
@@ -84,6 +85,10 @@ public:
     int                   gmIdx;
     jc_fmt                mediaType;
     javacall_utf16_string uri;
+
+    javacall_const_utf16_string mime;
+    long                        mimeLength;
+
     bool                  is_video;
 
     int                   channels;
@@ -99,11 +104,6 @@ public:
     int                   out_height;
     javacall_pixel*       out_frame;
 
-    BYTE                  buf[ XFER_BUFFER_SIZE ];
-
-    bool                  realizing;
-    bool                  prefetching;
-    bool                  prefetched;
     bool                  playing;
 
     long                  bytes_buffered;
@@ -130,11 +130,8 @@ public:
     size_t                out_queue_n; // samples in queue
 
     HANDLE                dwr_event;
-    HANDLE                dwr_mutex;
-    bool                  dwr_in_progress;
     int64                 dwr_offset;
     int32                 dwr_len;
-    int32                 dwr_len_sofar;
     BYTE*                 dwr_pdata;
 };
 
@@ -223,14 +220,12 @@ void dshow_player::playback_finished()
     }
 }
 
-player_callback::result dshow_player::data(int64 offset, int32 len, void *pdata, int32 *plen)
+player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata, int32 *plen)
 {
     dwr_offset    = offset;
     dwr_len       = len;
-    dwr_len_sofar = 0;
     dwr_pdata     = (BYTE*)pdata;
 
-    dwr_in_progress = true;
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
                                       appId,
                                       playerId, 
@@ -238,9 +233,8 @@ player_callback::result dshow_player::data(int64 offset, int32 len, void *pdata,
                                       NULL );
 
     WaitForSingleObject( dwr_event, INFINITE );
-    dwr_in_progress = false;
 
-    *plen = dwr_len_sofar;
+    *plen = dwr_len;
 
     return player_callback::result_success;
 }
@@ -400,9 +394,6 @@ static javacall_result dshow_create(int appId,
     p->uri              = NULL;
     p->is_video         = ( JC_FMT_FLV == mediaType || JC_FMT_VIDEO_3GPP == mediaType || JC_FMT_MPEG_4_SVP == mediaType || JC_FMT_MPEG_1 == mediaType );
 
-    p->realizing        = false;
-    p->prefetching      = false;
-    p->prefetched       = false;
     p->playing          = false;
 
     p->all_data_arrived = false;
@@ -432,9 +423,6 @@ static javacall_result dshow_create(int appId,
     p->out_queue_n      = 0;
 
     p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
-    p->dwr_mutex        = CreateMutex( NULL, FALSE, NULL );
-    p->dwr_in_progress  = false;
-
 
     *pHandle =(javacall_handle)p;
 
@@ -476,7 +464,6 @@ static javacall_result dshow_destroy(javacall_handle handle)
     DeleteCriticalSection( &(p->cs) );
 
     CloseHandle( p->dwr_event );
-    CloseHandle( p->dwr_mutex );
 
     delete p;
 
@@ -540,8 +527,6 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
 
     p->pModule->addPlayer( p );
 
-    p->prefetched = true;
-
     return JAVACALL_OK;
 }
 
@@ -565,6 +550,22 @@ static javacall_result dshow_release_device(javacall_handle handle)
 static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
 {
     return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
+}
+
+static void realize_thread( void* param )
+{
+    dshow_player* p = (dshow_player*)param;
+
+    PRINTF( "*** creating dshow player ***\n" );
+
+    bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
+
+    PRINTF( "*** dshow player created, realize complete ***\n" );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     ok ? JAVACALL_OK : JAVACALL_FAIL, NULL );
 }
 
 static javacall_result dshow_realize(javacall_handle handle, 
@@ -646,15 +647,21 @@ static javacall_result dshow_realize(javacall_handle handle,
         p->mediaType = JC_FMT_UNSUPPORTED;
     }
 
+    p->mime       = mime;
+    p->mimeLength = mimeLength;
+
     if( JC_FMT_UNSUPPORTED != p->mediaType )
     {
-        if( create_player_dshow( mimeLength, (const char16*)mime, p, &(p->ppl) ) )
-        {
-            p->realizing = true;
-
-            return JAVACALL_OK;
-        }
+        _beginthread( realize_thread, 0, p );
+        return JAVACALL_OK;
     }
+
+    /*
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     ok ? JAVACALL_OK : JAVACALL_FAIL, NULL );
+    */
 
     return JAVACALL_FAIL;
 }
@@ -663,148 +670,14 @@ static javacall_result dshow_prefetch(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** prefetch ***\n" );
-    p->prefetching = true;
-    return JAVACALL_OK;
-}
 
-/*
-static javacall_result dshow_get_java_buffer_size(javacall_handle handle,
-    long* java_buffer_size,
-    long* first_chunk_size)
-{
-    dshow_player* p = (dshow_player*)handle;
-
-    *java_buffer_size = XFER_BUFFER_SIZE;
-
-    if( p->prefetched )
-    {
-        PRINTF( "*** 0x%08X get_java_buffer_size: XFER_BUFFER_SIZE ***\n", handle );
-        *first_chunk_size = XFER_BUFFER_SIZE;
-    }
-    else if( p->prefetching )
-    {
-        PRINTF( "*** 0x%08X get_java_buffer_size: prefetching, 0 ***\n", handle );
-        *first_chunk_size = 0;
-    }
-    else // if( p->realizing )
-    {
-        PRINTF( "*** 0x%08X get_java_buffer_size: realizing, XFER_BUFFER_SIZE ***\n", handle );
-        *first_chunk_size = XFER_BUFFER_SIZE;
-    }
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     JAVACALL_OK, NULL );
 
     return JAVACALL_OK;
 }
-
-static javacall_result dshow_set_whole_content_size(javacall_handle handle,
-    long whole_content_size)
-{
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** 0x%08X set_whole_content_size: %ld***\n", handle, whole_content_size );
-    p->whole_content_size = whole_content_size;
-    p->ppl->data( nat32(whole_content_size), NULL );
-    return JAVACALL_OK;
-}
-
-static javacall_result dshow_get_buffer_address(javacall_handle handle,
-    const void** buffer,
-    long* max_size)
-{
-    dshow_player* p = (dshow_player*)handle;
-
-    *buffer   = p->buf;
-    *max_size = XFER_BUFFER_SIZE;
-
-    return JAVACALL_OK;
-}
-
-static javacall_result dshow_do_buffering(javacall_handle handle, 
-    const void* buffer,
-    long *length, 
-    javacall_bool *need_more_data, 
-    long *next_chunk_size)
-{
-    dshow_player* p = (dshow_player*)handle;
-
-    PRINTF( "     0x%08X do_buffering...\n", handle );
-
-    if( 0 != *length && NULL != buffer )
-    {
-        assert( buffer == p->buf );
-
-        p->bytes_buffered += *length;
-        p->ppl->data( *length, buffer );
-
-        if( p->prefetched )
-        {
-            *need_more_data  = JAVACALL_TRUE;
-        }
-        else if( p->prefetching )
-        {
-            *need_more_data  = JAVACALL_FALSE;
-        }
-        else if( p->realizing )
-        {
-            long preload_size = XFER_BUFFER_SIZE * 50;
-
-            if( JC_FMT_FLV == p->mediaType ) preload_size = 400 * 1024;
-
-            if( -1 != p->whole_content_size )
-            {
-                preload_size = p->whole_content_size;
-            }
-
-            *need_more_data  = ( p->bytes_buffered < preload_size ) 
-                               ? JAVACALL_TRUE : JAVACALL_FALSE;
-
-            if( JAVACALL_FALSE == *need_more_data )
-            {
-                PRINTF( "*** calling player::realize()***\n" );
-                if( player::result_success != p->ppl->realize() )
-                {
-                    PRINTF( "*** player::realize() failed! ***\n" );
-                    return JAVACALL_FAIL;
-                }
-                PRINTF( "*** player::realize() finished***\n" );
-
-                PRINTF( "*** calling player::prefetch()***\n" );
-                if( player::result_success != p->ppl->prefetch() )
-                {
-                    PRINTF( "*** player::prefetch() failed! ***\n" );
-                    return JAVACALL_FAIL;
-                }
-                PRINTF( "*** player::prefetch() finished***\n" );
-            }
-        }
-        else
-        {
-            assert( FALSE );
-        }
-
-        *next_chunk_size = XFER_BUFFER_SIZE;
-
-        javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
-                                          p->appId, p->playerId, JAVACALL_OK, NULL);
-    }
-    else
-    {
-        PRINTF( "           [all data arrived]\n" );
-        p->all_data_arrived = true;
-        //p->ppl->data( 0, NULL );
-
-        *need_more_data  = JAVACALL_FALSE;
-        *next_chunk_size = 0;
-    }
-
-    return JAVACALL_OK;
-}
-
-static javacall_result dshow_clear_buffer(javacall_handle handle)
-{
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** clear buffer ***\n" );
-    return JAVACALL_OK;
-}
-*/
 
 static javacall_result dshow_start(javacall_handle handle)
 {
@@ -860,11 +733,6 @@ javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 lengt
 
     p->whole_content_size = length;
 
-    if( p->dwr_offset + p->dwr_len > p->whole_content_size )
-    {
-        // TODO: ???
-    }
-
     return JAVACALL_OK;
 }
 
@@ -879,6 +747,8 @@ javacall_result dshow_get_data_request(javacall_handle handle,
     *new_length = p->dwr_len;
     *new_data   = p->dwr_pdata;
 
+    PRINTF( "--- get_data_request: @%ld %d", *new_offset, *new_length );
+
     return JAVACALL_OK;
 }
 
@@ -887,16 +757,10 @@ javacall_result dshow_data_written(javacall_handle handle,
                                    javacall_bool*  new_request)
 {
     dshow_player* p = (dshow_player*)handle;
-
-    p->dwr_len_sofar      += length;
-    p->dwr_offset         += length;
-    p->dwr_pdata          += length;
-
-    if( p->dwr_len_sofar == p->dwr_len )
-    {
-        SetEvent( p->dwr_event );
-    }
-
+    PRINTF( "--- data_written: %d", length );
+    p->dwr_len = length;
+    SetEvent( p->dwr_event );
+    *new_request = JAVACALL_FALSE;
     return JAVACALL_OK;
 }
 

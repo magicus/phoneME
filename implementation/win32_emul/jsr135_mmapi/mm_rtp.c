@@ -99,8 +99,10 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
         sprintf( str, "   %i %i %i %i >> \n", size, p->queue_size, p->playing, p->buffering );
         RTP_DBG( str );
 
+        /*
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
             p->appId, p->playerId, JAVACALL_OK, NULL);
+        */
 
         if( NULL != p->queue_head && p->playing && !p->buffering )
         {

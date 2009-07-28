@@ -714,10 +714,10 @@ javacall_handle javacall_media_create2(int playerId, javacall_media_format_type 
  * Native player create.
  * This function create internal information structure that will be used from other native API.
  */
-javacall_result javacall_media_create(int appId,
-                                      int playerId,
+javacall_result javacall_media_create(javacall_int32 appId,
+                                      javacall_int32 playerId,
                                       javacall_const_utf16_string uri, 
-                                      long uriLength,
+                                      javacall_int32 uriLength,
                                       javacall_handle *handle)
 {
     javacall_impl_player* pPlayer = NULL;
@@ -1156,9 +1156,9 @@ javacall_result javacall_media_get_data_request(
 
     if (QUERY_BASIC_ITF(pItf, get_data_request)) {
         ret = pItf->vptrBasic->get_data_request(pPlayer->mediaHandle,
-                                                new_offset,
-                                                new_length,
-                                                new_data);
+                                                offset,
+                                                length,
+                                                data);
     }
 
     return ret;
