@@ -38,9 +38,6 @@ class DirectInputThread extends Thread {
     private volatile int nativePtr = 0;
 
 
-    //Caution: these fields are used by native (read only) !!!
-    private int nRead;
-
     private boolean requestPending = false;
     private long    reqPos = 0;
     private int     reqLen = 0;
@@ -50,12 +47,25 @@ class DirectInputThread extends Thread {
     private byte[] tmpBuf = new byte [ 0x1000 ];  // 4 Kbytes
     private boolean isDismissed = false;
 
-    DirectInputThread(HighLevelPlayer p) {
+    DirectInputThread(HighLevelPlayer p) throws MediaException {
+        long len = p.stream.getContentLength();
+        if( -1 != len )
+        {
+            nNotifyStreamLen( p.getNativeHandle(), len );
+        }
+        else
+        {
+            throw new MediaException(
+                    "Cannot playback stream with unknown length" );
+        }
         this.owner = p;
     }
     
 
     private native void nWriteData( byte [] buf, int len, int handle );
+    private native void nGetRequestParams( int handle );
+    private native void nNotifyEndOfStream( int handle );
+    private native void nNotifyStreamLen( int handle, long len );
 
     public void run(){
 
@@ -68,10 +78,8 @@ class DirectInputThread extends Thread {
 
                 if( requestPending )
                 {
-                   lenToRead = reqLen;
-                   posToRead = reqPos;
-                   nativePtr = reqBufPtr;
-                   requestPending = false;
+                    nGetRequestParams( owner.getNativeHandle() );
+                    requestPending = false;
                 }
                 else
                 {
@@ -88,6 +96,8 @@ class DirectInputThread extends Thread {
 
             while( 0 < lenToRead )
             {
+                int read = 0;
+                
                 try {
                     seek();
 
@@ -97,7 +107,11 @@ class DirectInputThread extends Thread {
 
                     int len = lenToRead > tmpBuf.length ?
                                     tmpBuf.length : lenToRead;
-                    nRead = owner.stream.read(tmpBuf, 0, len);
+                    read = owner.stream.read(tmpBuf, 0, len);
+                    if( -1 == read )
+                    {
+                        nNotifyEndOfStream( owner.getNativeHandle() );
+                    }
                 } catch ( MediaException ex) {
                     owner.abort( ex.getMessage() );
                     return;
@@ -112,7 +126,7 @@ class DirectInputThread extends Thread {
                 }
 
                 // call native copying + javacall_media_written()
-                nWriteData( tmpBuf, nRead, owner.getNativeHandle() );
+                nWriteData( tmpBuf, read, owner.getNativeHandle() );
 
                 if( isDismissed ) {
                     return;
@@ -139,14 +153,11 @@ class DirectInputThread extends Thread {
         owner.stream.seek(posToRead);
     }
 
-    public void requestData( long position, int length, int bufPtr )
+    public void requestData()
     {
         synchronized( this )
         {
             this.requestPending = true;
-            this.reqPos = position;
-            this.reqLen = length;
-            this.reqBufPtr = bufPtr;
             this.notify();
         }
     }
