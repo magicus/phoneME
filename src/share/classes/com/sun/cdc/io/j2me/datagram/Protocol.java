@@ -53,7 +53,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
      */
     private int port = 0;
 
-    private boolean open;
+    protected boolean open;
 
     public  String getLocalAddress() throws IOException {
         if (!open) {
