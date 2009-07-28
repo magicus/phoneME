@@ -291,7 +291,7 @@ void imgj_get_argb(const java_imagedata * srcImageDataPtr,
           pixel = srcPixelData[b*srcWidth + a];
           alpha = srcAlphaData[b*srcWidth + a];
           rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-#if ENABLE_32BITS_PIXEL_FORMAT
+#if ENABLE_32BITS_PIXEL_FORMAT || ENABLE_DYNAMIC_PIXEL_FORMAT
             GXJ_PIXELTOMIDP(pixel);
 #else
             GXJ_PIXELTOMIDP(pixel, alpha);
