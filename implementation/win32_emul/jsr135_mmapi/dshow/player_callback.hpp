@@ -42,4 +42,5 @@ public:
     virtual void audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample) = 0;
     virtual void playback_finished() = 0;
     virtual result data(int64 offset, int32 len, nat8 *pdata, int32 *plen) = 0;
+    virtual result get_stream_length(int64 *plength) = 0;
 };

@@ -62,4 +62,6 @@ public:
     virtual result set_loop_count(int32 count) = 0;
     //virtual result add_player_listener(player_listener *pplayer_listener) = 0;
     //virtual result remove_player_listener(player_listener *pplayer_listener) = 0;
+
+    virtual result set_stream_length(int64 length) = 0;
 };
