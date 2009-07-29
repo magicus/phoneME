@@ -25,6 +25,8 @@
 #include "KNICommon.h"
 #include "sni.h"
 
+static void get_data_request_params( KNIDECLARGS javacall_handle handle );
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     jint jHandle = KNI_GetParameterAsInt(3);
