@@ -247,6 +247,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
+    synchronized void abort( String msg )
+    {
+        if( CLOSED != getState() )
+        {
+            close();
+            sendEvent(PlayerListener.ERROR, msg );
+        }
+    }
+
     private void setHandledByJava()
     {
         handledByJava = true;
@@ -365,8 +374,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             
     void continueDownload() {
         /* predownload media data to fill native buffers */
-        if (mediaDownload != null) {
-            mediaDownload.continueDownload();
+        if ( null != directInputThread ) {
+            directInputThread.requestData();
         }
     }
 
@@ -560,7 +569,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
-    protected MediaDownload mediaDownload = null;
+    //protected MediaDownload mediaDownload = null;
+    private DirectInputThread directInputThread;
+
+    DirectInputThread getDirectInputThread() {
+        return directInputThread;
+    }
 
     /**
      * Check to see if the Player is closed.  If the
@@ -578,6 +592,18 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
+    void resumeRealize()
+    {
+        final Object realizeLock = directInputThread;
+        if( null != realizeLock )
+        {
+            synchronized( realizeLock )
+            {
+                realizeLock.notify();
+            }
+        }
+    }
+    
     /**
      * Constructs portions of the <code>Player</code> without
      * acquiring the scarce and exclusive resources.
@@ -618,7 +644,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             nRealize(hNative, type);
         }
 
-        mediaDownload = null;
+        directInputThread = null;
 
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
@@ -638,15 +664,18 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(MEDIA_FORMAT_TONE)) {
-                mediaDownload = new MediaDownload(hNative, stream);
-                try {
-                    mediaDownload.fgDownload();
-                } catch(IOException ex1) {
-                    ex1.printStackTrace();
-                    throw new MediaException("Can not start download Thread: " + ex1);
-                }catch(Exception ex) {
-                    ex.printStackTrace();
-                    throw new MediaException( "Can not start download Thread: " + ex );
+                directInputThread = new DirectInputThread( this );
+
+                directInputThread.start();
+
+                final Object realizeLock = directInputThread;
+                synchronized( realizeLock )
+                {
+                    try {
+                        realizeLock.wait();
+                    } catch (InterruptedException ex) {
+                        abort( "Realize() was interrupted" );
+                    }
                 }
             }
         }
@@ -702,6 +731,17 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     }
 
+    void resumePrefetch()
+    {
+        final Object prefetchLock = directInputThread;
+        if( null != prefetchLock )
+        {
+            synchronized( prefetchLock )
+            {
+                prefetchLock.notify();
+            }
+        }
+    }
     /**
      * Acquires the scarce and exclusive resources
      * and processes as much data as necessary
@@ -753,6 +793,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
+        //this method may pause inside and wait for resumePrefetch()
         lowLevelPlayer.doPrefetch();
 
         VolumeControl vc = ( VolumeControl )getControl(
@@ -1031,6 +1072,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
+        if( null != directInputThread )
+        {
+            directInputThread.close();
+        }
+        
         if( null != lowLevelPlayer )
         {
             lowLevelPlayer.doDeallocate();
