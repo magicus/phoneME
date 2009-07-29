@@ -294,9 +294,7 @@ public:
     const int last = size()-1;
     GUARANTEE(index <= last, "sanity");
     ObjArray::Raw array = this->array();
-    if( last > 0 ) {
-      array().obj_at_put( index, array().obj_at( last ) );
-    }
+    array().obj_at_put( index, array().obj_at( last ) );
     array().obj_at_clear(last);
     set_size(last);
   }

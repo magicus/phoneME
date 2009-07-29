@@ -345,27 +345,24 @@ public:
                                    JavaClass *dependency JVM_TRAPS);
   static void process_quickening_failure(Method *method);
   bool may_be_initialized(InstanceClass *klass);
-  bool is_in_restricted_package(InstanceClass* klass) const {
+
 #if USE_SOURCE_IMAGE_GENERATOR
-    return class_matches_packages_list(klass, restricted_packages());
+  bool is_in_restricted_package (InstanceClass* klass) const;
+  bool is_in_hidden_package     (InstanceClass* klass) const;
+  bool is_hidden                (InstanceClass* klass) const;
 #else
+  bool is_in_restricted_package (InstanceClass* ) const {
     // IMPL_NOTE: Monet: all classes can be considered as restricted
-    (void)klass;
     return false;
-#endif
-  }
-  bool is_in_hidden_package(InstanceClass* klass) const {
-#if USE_SOURCE_IMAGE_GENERATOR
-    return class_matches_packages_list(klass, hidden_packages());
-#else
-    (void)klass;
+  bool is_in_hidden_package(InstanceClass* ) const {
     return false;
-#endif
   }
-  bool is_hidden(InstanceClass* klass) const {
-    return is_in_restricted_package(klass) &&
-           ( !klass->is_public() || is_in_hidden_package(klass) );
+  bool is_hidden(InstanceClass* ) const {
+    // IMPL_NOTE: Monet: all classes can be considered as restricted
+    return false;
   }
+#endif // USE_SOURCE_IMAGE_GENERATOR
+
   ReturnOop original_fields(InstanceClass *klass, bool &is_orig);
   void set_classes_as_romized();
   bool is_overridden(InstanceClass *ic, Method *method);

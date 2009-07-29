@@ -101,21 +101,19 @@ public:
   }
 
   virtual void handle_matching_method(Method *m JVM_TRAPS) {
-    if (m->is_quick_native()) {
+    if( TaggedJavaStack
+        || !UseQuickNativeMethods
+        || m->is_quick_native()
+        || !m->is_native()
+        || m->uses_monitors() ) {
       return;
     }
-    if (!m->is_native()) {
-      return;
-    }
-    if (m->uses_monitors()) {
-      // Synchronized method must use interpreter method entry.
-      return;
-    }
-    address quick_entry = NULL;
 
-    if (!TaggedJavaStack && UseQuickNativeMethods) {
-      Signature::Raw signature = m->signature();
-      switch (signature().return_type()) {
+    address quick_entry;
+    Signature::Raw signature = m->signature();
+    switch (signature().return_type()) {
+      default:
+        return;
       case T_VOID:
         quick_entry = (address)quick_void_native_method_entry;
         break;
@@ -129,19 +127,15 @@ public:
       case T_OBJECT:
         quick_entry = (address)quick_obj_native_method_entry;
         break;
-      }
     }
+    m->set_quick_native_code(m->get_native_code());
+    m->set_fixed_entry(quick_entry);
 
-    if (quick_entry != NULL) {
-      m->set_quick_native_code(m->get_native_code());
-      m->set_fixed_entry(quick_entry);
-
-      jint old_size = m->object_size();
-      m->set_code_size((jushort)0);
-      jint new_size = m->object_size();
-      ROMTools::shrink_object(m, old_size, old_size - new_size);
-      _log_vector->add_element(m JVM_CHECK);
-    }
+    const jint old_size = m->object_size();
+    m->set_code_size((jushort)0);
+    const jint new_size = m->object_size();
+    ROMTools::shrink_object(m, old_size, old_size - new_size);
+    _log_vector->add_element(m JVM_CHECK);
   }
 };
 
@@ -220,6 +214,29 @@ inline void ROMOptimizer::optimize_package_lists(JVM_SINGLE_ARG_TRAPS) {
           }
         }
       }
+      { // IMPL_NOTE: Tables of hidden classes are not written to ROM image.
+        // This optimization can only speed up searching for hidden classes.
+        // Consider marking classes as hidden earlier to eliminate the need for
+        // this optimization and to make the search even faster.
+        current_packages = current_profile().hidden_classes();
+        const int len = current_packages().size();
+        for( int i = 0; i < len; i++ ) {
+          current_package = current_packages().element_at(i);
+          int other_id;
+          for( other_id = 0; other_id < profiles_count; other_id++ ) {
+            if( other_id != current_id ) {
+              ROMProfile::Raw other_profile = rom_profiles->element_at(other_id);
+              ROMVector::Raw other_packages = other_profile().hidden_classes();
+              if( !name_matches_pattern( &current_package, &other_packages ) ) {
+                break;
+              }
+            }
+          }
+          if( other_id == profiles_count ) {
+            add_package_to_list(hidden_classes(), &current_package JVM_CHECK);
+          }
+        }
+      }
     }
   }
   {
@@ -227,11 +244,58 @@ inline void ROMOptimizer::optimize_package_lists(JVM_SINGLE_ARG_TRAPS) {
       ROMProfile::Raw profile = rom_profiles->element_at(profile_id);
       remove_packages( profile().restricted_packages(), restricted_packages() );
       remove_packages( profile().hidden_packages(),     hidden_packages()     );
+      remove_packages( profile().hidden_classes(),      hidden_classes()      );
     }
   }
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
+bool ROMOptimizer::is_in_restricted_package( InstanceClass* klass ) const {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  if( !class_matches_packages_list(klass, restricted_packages()) ) {
+    ROMVector* rom_profiles = profiles_vector();
+    const int profiles_count = rom_profiles->size();
+    for( int i = 0; i < profiles_count; i++ ) {
+      ROMProfile::Raw profile = rom_profiles->element_at(i);
+      ROMVector::Raw restricted_packages = profile().restricted_packages();
+      if( !class_matches_packages_list(klass, &restricted_packages) ) {
+        return false;
+      } 
+    }
+  }
+  return true;
+#else
+  return class_matches_packages_list(klass, restricted_packages());
+#endif  
+}
+
+bool ROMOptimizer::is_in_hidden_package( InstanceClass* klass ) const {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  if( !class_matches_classes_list(klass, hidden_classes()) &&
+      !class_matches_packages_list(klass, hidden_packages()) ) {
+    ROMVector* rom_profiles = profiles_vector();
+    const int profiles_count = rom_profiles->size();
+    for( int i = 0; i < profiles_count; i++ ) {
+      ROMProfile::Raw profile = rom_profiles->element_at(i);
+      ROMVector::Raw hidden_packages = profile().hidden_packages();
+      ROMVector::Raw hidden_classes = profile().hidden_classes();
+      if( !class_matches_classes_list (klass, &hidden_classes) &&
+          !class_matches_packages_list(klass, &hidden_packages) ) {
+        return false;
+      } 
+    }
+  }
+  return true;
+#else
+  return class_matches_classes_list (klass, hidden_classes() ) ||
+         class_matches_packages_list(klass, hidden_packages());
+#endif
+}
+
+bool ROMOptimizer::is_hidden( InstanceClass* klass ) const {
+  return is_in_hidden_package(klass) ||
+         ( !klass->is_public() && is_in_restricted_package(klass) );
+}
 
 void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
   ROMVector disable_compilation_log;
@@ -720,10 +784,6 @@ ROMOptimizer::name_matches_pattern(const char name[], const int name_len,
   const int list_len = patterns->size();
   for( int i = 0; i < list_len; i++ ) {
     Symbol::Raw pattern = patterns->element_at(i);
-    if (pattern.is_null()) { // end of list
-      break;
-    }    
-
     if( Universe::name_matches_pattern(name, name_len,
           pattern().utf8_data(), pattern().length()) ) {
       return true;
@@ -776,9 +836,6 @@ void ROMOptimizer::remove_packages(ROMVector* vector, Symbol* pattern) {
   int list_len = vector->size();
   for( int i = 0; i < list_len; ) {
     Symbol::Raw current = vector->element_at(i);
-    if( current.is_null() ) { // end of list
-      break;
-    }    
 
     const char* current_name = current().utf8_data();
     const int current_len = current().length();
@@ -863,13 +920,14 @@ void ROMOptimizer::merge_string_bodies(JVM_SINGLE_ARG_TRAPS) {
   /*
    * (2) Merge the body of all Strings into a single array.
    */
-  UsingFastOops level1;
-  TypeArray::Fast body = Universe::new_char_array(num_chars JVM_CHECK);
-  TypeArray::Fast new_body;
-  int new_num_chars = compress_and_merge_strings(&all_strings, &body);
+  UsingFastOops fast_oops;
+  TypeArray::Fast body =
+    Universe::new_char_array(num_chars JVM_ZCHECK(body));
+  const int new_num_chars = compress_and_merge_strings(&all_strings, &body);
 
-  if (new_num_chars < num_chars) {
-    new_body = Universe::new_char_array(new_num_chars JVM_CHECK);
+  if( new_num_chars < num_chars ) {
+    TypeArray::Raw new_body =
+      Universe::new_char_array(new_num_chars JVM_ZCHECK(new_body));
     TypeArray::array_copy(&body, 0, &new_body, 0, new_num_chars);
     replace_string_bodies(&all_strings, &new_body);
   }
@@ -924,7 +982,7 @@ jint ROMOptimizer::find_duplicate_chars(jchar *pool, jint pool_size,
   jint num_bytes = num_chars*sizeof(jchar);
 
   for (int i=0; i<=limit; i++) {
-    if (*pool == m1 && jvm_memcmp(pool, match, num_bytes) == 0) {
+    if (jvm_memcmp(pool, match, num_bytes) == 0) {
       return i;
     }
     pool ++;
@@ -943,7 +1001,7 @@ void ROMOptimizer::replace_string_bodies(ROMVector *all_strings,
 
 void ROMOptimizer::record_original_class_info(InstanceClass *klass,
                                               Symbol *name) {
-  int class_id = klass->class_id();
+  const int class_id = klass->class_id();
   romizer_original_class_name_list()->obj_at_put(class_id, name);
 
   _log_stream->print("renamed Class  ");
@@ -954,14 +1012,14 @@ void ROMOptimizer::record_original_class_info(InstanceClass *klass,
 
 void ROMOptimizer::record_original_field_info(InstanceClass *klass,
                                               int name_index JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  ConstantPool::Fast cp = klass->constants();
-  Symbol::Fast name = cp().symbol_at(name_index);
-
   _log_stream->print("renamed Field  ");
   klass->print_name_on(_log_stream);
   _log_stream->print(".");
-  name().print_symbol_on(_log_stream);
+  {
+    ConstantPool::Raw cp = klass->constants();
+    Symbol::Raw name = cp().symbol_at(name_index);
+    name().print_symbol_on(_log_stream);
+  }
   _log_stream->cr();
 
   record_original_fields(klass JVM_CHECK);
@@ -1044,11 +1102,11 @@ ROMOptimizer::get_index_from_alternate_constant_pool(InstanceClass *klass,
 
 
 void ROMOptimizer::record_original_method_info(Method *method JVM_TRAPS) {
-  int class_id = method->holder_id();
-  UsingFastOops level1;
-  ObjArray::Fast old  = romizer_original_method_info()->obj_at(class_id);
-  ObjArray::Fast info = Universe::new_obj_array(3 JVM_CHECK);
-  Symbol::Fast name = method->name();
+  ObjArray::Raw info = Universe::new_obj_array(3 JVM_ZCHECK(info));
+  const int class_id = method->holder_id();
+
+  ObjArray::Raw old  = romizer_original_method_info()->obj_at(class_id);
+  Symbol::Raw name = method->name();
 
   info().obj_at_put(ROM::INFO_OFFSET_METHOD,    method);
   info().obj_at_put(ROM::INFO_OFFSET_NAME,      &name);
@@ -1076,7 +1134,7 @@ void ROMOptimizer::enable_quick_natives(const char * pattern JVM_TRAPS) {
 
 #if USE_ROM_LOGGING
 void ROMOptimizer::write_quick_natives_log( void ) {
-  int size = _quick_natives_log->size();
+  const int size = _quick_natives_log->size();
   _quick_natives_log->sort();
 
   _log_stream->cr();
@@ -1143,7 +1201,7 @@ void ROMOptimizer::enable_kvm_natives(const char * pattern JVM_TRAPS) {
 
 void ROMOptimizer::write_kvm_natives_log() {
 #if USE_ROM_LOGGING
-  int size = _kvm_natives_log->size();
+  const int size = _kvm_natives_log->size();
   _kvm_natives_log->sort();
 
   _log_stream->cr();
@@ -1161,7 +1219,7 @@ void ROMOptimizer::write_kvm_natives_log() {
 
 ReturnOop ROMOptimizer::build_method_table(const ROMVector * methods
                                            JVM_TRAPS) {
-  int size = methods->size();
+  const int size = methods->size();
   ObjArray::Raw table = Universe::new_obj_array(size * 3 JVM_CHECK_(0));
 
   for (int i=0; i<size; i++) {
@@ -1230,10 +1288,9 @@ void ROMOptimizer::write_jni_natives_log() {
 // compact_field_tables() compacts the InstanceClass::fields() table.
 void ROMOptimizer::remove_unused_static_fields(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
-  int num_classes = Universe::number_of_java_classes();
+  const int num_classes = Universe::number_of_java_classes();
   ObjArray::Fast directory = Universe::new_obj_array(num_classes JVM_CHECK);
   InstanceClass::Fast klass;
-  TypeArray::Fast reloc_info;
 
   if (VerifyGC) {
     ObjectHeap::verify();
@@ -1245,9 +1302,10 @@ void ROMOptimizer::remove_unused_static_fields(JVM_SINGLE_ARG_TRAPS) {
   {
     for (SystemClassStream st; st.has_next_optimizable();) {
       klass = st.next();
-      int nbytes = klass().static_field_size();
+      const int nbytes = klass().static_field_size();
       if (nbytes > 0 && !dont_rename_fields_in_class(&klass)) {
-        reloc_info = Universe::new_int_array(nbytes / BytesPerWord JVM_CHECK);
+        TypeArray::Raw reloc_info =
+          Universe::new_int_array(nbytes / BytesPerWord JVM_CHECK);
         directory().obj_at_put(klass().class_id(), &reloc_info);
       }
     }
@@ -1285,12 +1343,8 @@ void ROMOptimizer::mark_static_fieldrefs(ObjArray *directory) {
   for (SystemClassStream st; st.has_next_optimizable();) {
     InstanceClass::Raw klass = st.next();
     ConstantPool::Raw cp = klass().constants();
-    TypeArray::Raw reloc_info;
-    int n = cp().length();
-    int offset, class_id, idx;
-    BasicType type;
-
-    for (int i=0; i<n; i++) {
+    const int n = cp().length();
+    for( int i = 0; i < n; i++ ) {
       ConstantTag tag = cp().tag_at(i);
       switch (tag.value()) {
       case JVM_CONSTANT_ResolvedStaticBooleanFieldref:
@@ -1302,18 +1356,19 @@ void ROMOptimizer::mark_static_fieldrefs(ObjArray *directory) {
       case JVM_CONSTANT_ResolvedStaticIntFieldref:
       case JVM_CONSTANT_ResolvedStaticLongFieldref:
       case JVM_CONSTANT_ResolvedStaticObjectFieldref:
-      case JVM_CONSTANT_ResolvedStaticArrayFieldref:
+      case JVM_CONSTANT_ResolvedStaticArrayFieldref: {
         // Note: field offset starts from beginning of InstanceClass/TaskMirror
-        type = cp().resolved_field_type_at(i, offset, class_id);
-        reloc_info = directory->obj_at(class_id);
-        idx = (offset - JavaClass::static_field_start()) / BytesPerWord;
-        if (reloc_info().not_null()) {
+        int offset, class_id;
+        BasicType type = cp().resolved_field_type_at(i, offset, class_id);
+        TypeArray::Raw reloc_info = directory->obj_at(class_id);
+        if( reloc_info().not_null() ) {
+          int idx = (offset - JavaClass::static_field_start()) / BytesPerWord;
           reloc_info().int_at_put(idx, 1); // Mark the field at this offset
           if (is_two_word(type)) {
             reloc_info().int_at_put(idx+1, 1);
           }
         }
-        break;
+      } break;
       case JVM_CONSTANT_Fieldref:
         // This looks like unused Fieldref
         break;
@@ -1399,25 +1454,16 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
   // GC should not happen in the middle.
   GCDisabler no_gc_must_happen_in_this_function;
 
-  UsingFastOops fast_oops;
-  InstanceClass::Fast klass;
-  TypeArray::Fast reloc_info;
-  TypeArray::Fast fields;
-  Oop::Fast holder;
   const int static_field_start = JavaClass::static_field_start();
 
   for (SystemClassStream st; st.has_next_optimizable();) {
-    klass = st.next();
-    fields = klass().fields();
-
-    int fields_shrink_size = 0;
-    size_t old_klass_size = klass().object_size();
-
-    reloc_info = directory->obj_at(klass().class_id());
+    InstanceClass::Raw klass = st.next();
+    TypeArray::Raw reloc_info = directory->obj_at(klass().class_id());
     if (reloc_info.is_null()) {
       // nothing to compact for this class.
       continue;
     }
+
 #if ENABLE_ISOLATES
     // We have only one task_mirror to fix, since romization runs in
     // single-task mode.
@@ -1425,12 +1471,15 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
       directory->obj_at_clear(klass().class_id());
       continue;
     }
-    holder = klass().task_mirror();
+    Oop::Raw holder = klass().task_mirror();
 #else
-    holder = klass.obj();
+    Oop::Raw holder = klass.obj();
 #endif
 
+    int fields_shrink_size = 0;
+    size_t old_klass_size = klass().object_size();
     const size_t old_static_field_size = klass().static_field_size();
+
 #if USE_EMBEDDED_VTABLE_BITMAP
     const size_t old_vtable_bitmap_start = klass().vtable_bitmap_start();    
 #endif
@@ -1530,7 +1579,9 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
                         klass().nonstatic_map_size();
       jubyte *map_start = map_ptr;
 
-      for (int i = 0; i < fields().length(); i += 5) {
+      TypeArray::Raw fields = klass().fields();
+      const int fields_len = fields().length();
+      for (int i = 0; i < fields_len; i += 5) {
         Field f(&klass, i);
         if (f.is_static()) {
           GUARANTEE((f.offset() > offset), 
@@ -1641,29 +1692,25 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
 }
 
 void
-ROMOptimizer::fix_field_tables_after_static_field_removal(ObjArray *directory)
-{
-  UsingFastOops fast_oops;
-  InstanceClass::Fast klass;
-  TypeArray::Fast reloc_info;
-  TypeArray::Fast fields;
-
+ROMOptimizer::fix_field_tables_after_static_field_removal(ObjArray* directory) {
   for (SystemClassStream st; st.has_next_optimizable();) {
-    klass = st.next();
-    fields = klass().fields();
-
-    reloc_info = directory->obj_at(klass().class_id());
+    InstanceClass::Raw klass = st.next();
+    TypeArray::Raw reloc_info = directory->obj_at(klass().class_id());
     if (reloc_info.is_null()) {
       // nothing to compact for this class.
       continue;
-    }    
-    fix_one_field_table(&klass, &fields, &reloc_info);
-
-    bool is_orig;
-    fields = original_fields(&klass, is_orig);
-    if (is_orig) {
-      // This class also has an original fields table. Fix that one as well
+    }
+    {
+      TypeArray::Raw fields = klass().fields();
       fix_one_field_table(&klass, &fields, &reloc_info);
+    }
+    {
+      bool is_orig;
+      TypeArray::Raw fields = original_fields(&klass, is_orig);
+      if (is_orig) {
+        // This class also has an original fields table. Fix that one as well
+        fix_one_field_table(&klass, &fields, &reloc_info);
+      }
     }
   }
 }

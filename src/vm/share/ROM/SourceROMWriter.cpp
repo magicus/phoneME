@@ -771,8 +771,6 @@ void SourceROMWriter::finalize_streams() {
 }
 
 void SourceROMWriter::write_objects(JVM_SINGLE_ARG_TRAPS) {
-  Oop null_obj;
-
   SourceObjectWriter obj_writer(&_declare_stream, main_stream(), &_reloc_stream,
                           &_optimizer);
   obj_writer.set_writer(this);
@@ -1012,18 +1010,14 @@ int SourceROMWriter::write_rom_hashtable(const char *table_name,
     int num_buckets = table->length();
     _optimizer_log_stream.print_cr("\n[String Table]\n");
 
-    UsingFastOops level1;
-    ObjArray::Fast bucket;
-    String::Fast string;
-
     for (int b = 0; b<num_buckets; b++) {
-      bucket = table->obj_at(b);
-      if (bucket().length() == 0) {
+      ObjArray::Raw bucket = table->obj_at(b);
+      const int bucket_size = bucket().length();
+      if (bucket_size == 0) {
         continue;
       }
-      int bucket_size = bucket().length();
-      for (int index=0; index<bucket_size; index++) {
-        string = bucket().obj_at(index);
+      for( int index = 0; index < bucket_size; index++ ) {
+        String::Raw string = bucket().obj_at(index);
         _optimizer_log_stream.print("romstring = \"");
         string().print_string_on(&_optimizer_log_stream);
         _optimizer_log_stream.print_cr("\"");
@@ -1151,7 +1145,6 @@ SourceROMWriter::print_rom_hashtable_content(const char *element_name,
           String::Raw s = oop.obj();
           main_stream()->print(" hash=0x%x", s().hash());
         }
-
         main_stream()->print(" */\n\t");
       } else {
         if ((index % 4) == 3) {
@@ -1218,13 +1211,11 @@ void SourceROMWriter::write_original_info_strings(JVM_SINGLE_ARG_TRAPS) {
   }
 
   // (3) The constant strings for the original class names
-  JavaClass::Fast klass;
-  InstanceClass::Fast ic;
   Symbol::Fast orig_name;
   for (i=0; i<class_count; i++) {
-    klass = Universe::class_from_id(i);
+    JavaClass::Raw klass = Universe::class_from_id(i);
     if (klass.not_null() && klass().is_instance_class()) {
-      ic = klass.obj();
+      InstanceClass::Raw ic = klass.obj();
       name = ic().name();
       if (name().equals(Symbols::unknown())) {
         orig_name = ic().original_name();
@@ -1250,28 +1241,23 @@ void SourceROMWriter::write_original_class_info_table(JVM_SINGLE_ARG_TRAPS) {
 
   // (1) Print ROM::_alternate_constant_pool
   main_stream()->print_cr("const char* const _rom_alternate_constant_pool_src[] = {");
-  int total_written = 0;
-  Symbol::Fast symbol;
   for (i=0; ; i++) {
     ConstantTag tag = orig_cp().tag_at(i);
     if (tag.is_invalid()) {
       break;
     }
     main_stream()->print("\t");
-    symbol = orig_cp().symbol_at(i);
+    Symbol::Raw symbol = orig_cp().symbol_at(i);
     write_constant_string_ref(&symbol);
     main_stream()->print_cr(",");
   }
-  if (total_written == 0) {
-    main_stream()->print_cr("0");
-  }
+  main_stream()->print_cr("0");
   main_stream()->print_cr("};");
   main_stream()->print_cr("const int _rom_alternate_constant_pool_count = %d;", i);
   main_stream()->cr();
 
   // (2) Print the individual OriginalMethodInfo's
   ObjArray::Fast info;
-  InstanceClass::Fast ic;
   Method::Fast method;
   Symbol::Fast name;
   for (i=0; i<class_count; i++) {
@@ -1282,9 +1268,8 @@ void SourceROMWriter::write_original_class_info_table(JVM_SINGLE_ARG_TRAPS) {
     }
 
     if (GenerateROMComments) {
-      ic = Universe::class_from_id(i);
-      main_stream()->cr();
-      main_stream()->print("/* ");
+      main_stream()->print("\n/* ");
+      InstanceClass::Raw ic = Universe::class_from_id(i);
       ic().print_name_on(main_stream());
       main_stream()->print_cr("*/");
     }
@@ -1327,9 +1312,8 @@ void SourceROMWriter::write_original_class_info_table(JVM_SINGLE_ARG_TRAPS) {
     }
 
     if (GenerateROMComments) {
-      ic = Universe::class_from_id(i);
-      main_stream()->cr();
-      main_stream()->print("/* ");
+      InstanceClass::Raw ic = Universe::class_from_id(i);
+      main_stream()->print("\n/* ");
       ic().print_name_on(main_stream());
       main_stream()->print_cr("*/");
     }
@@ -1371,7 +1355,7 @@ void SourceROMWriter::write_original_class_info_table(JVM_SINGLE_ARG_TRAPS) {
     klass = Universe::class_from_id(i);
     bool class_renamed = false;
     if (klass.not_null() && klass().is_instance_class()) {
-      ic = klass.obj();
+      InstanceClass::Raw ic = klass.obj();
       name = ic().name();
       if (name.equals(Symbols::unknown())) {
         orig_name = ic().original_name();
@@ -1431,14 +1415,15 @@ void SourceROMWriter::write_constant_string(Symbol* s JVM_TRAPS) {
   constant_string_table()->put(s JVM_CHECK);
   constant_string_table()->set_int_attribute(s, 0, n JVM_CHECK);
 
-  main_stream()->print("static const char _rom_str%d[] = {", n);
+  int c;
   if (s->is_valid_method_signature(NULL)) {
-    main_stream()->print("(char)0x1,");
+    c = '1';
   } else if (s->is_valid_field_type()) {
-    main_stream()->print("(char)0x2,");
+    c = '2';
   } else {
-    main_stream()->print("(char)0x3,");
+    c = '3';
   }
+  main_stream()->print("static const char _rom_str%d[] = {(char)0x%c,", n, c);
   s->print_as_c_array_on(main_stream());
   main_stream()->print_cr("0};");
 }
