@@ -51,7 +51,7 @@ LD_FLAGS +=
 GCC_LIBS = -lpthread -lm
 
 ifeq ($(USE_JSR_135),true)
-GCC_LIBS += -framework Carbon -framework QuartzCore -framework QuickTime 
+GCC_LIBS += -framework Carbon -framework QuartzCore -framework QuickTime -framework AudioUnit -framework AudioToolbox -framework CoreServices
 endif
 
 # don't omit frame pointer on darwin
