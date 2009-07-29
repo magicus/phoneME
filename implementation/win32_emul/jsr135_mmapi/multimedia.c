@@ -514,6 +514,7 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
     case JC_FMT_AMR:
     case JC_FMT_AMR_WB:
     case JC_FMT_AMR_WB_PLUS:
+    case JC_FMT_MS_PCM:
         return &g_dshow_itf;
         break;
 #endif // ENABLE_JSR_135_DSHOW
@@ -538,10 +539,13 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
         return &g_audio_itf;
 #endif // ENABLE_MMAPI_LIME
 
+#ifndef ENABLE_JSR_135_DSHOW
+    case JC_FMT_MS_PCM:
+#endif // ENABLE_JSR_135_DSHOW
+
     case JC_FMT_TONE:
     case JC_FMT_MIDI:
     case JC_FMT_SP_MIDI:
-    case JC_FMT_MS_PCM:
         return &g_qsound_itf;
 
 #if( defined( ENABLE_AMR ) && !defined( ENABLE_JSR_135_DSHOW ) )
