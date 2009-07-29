@@ -337,6 +337,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
                     prefetchLock.wait();
                 } catch (InterruptedException ex) {
                 }
+                System.out.println( "DirectPlayer: Prefetch resumed" );
             }
         }
         else {

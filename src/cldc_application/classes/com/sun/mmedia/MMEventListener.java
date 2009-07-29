@@ -150,6 +150,8 @@ class MMEventListener implements EventListener {
 
         case EVENT_MEDIA_DATA_REQUEST:
             p = HighLevelPlayer.get(nevt.intParam1);
+            System.out.println( "MMEventListener: Data request, Player ID "
+                    + nevt.intParam1 );
             if (p != null) {
                 p.continueDownload();
             }
@@ -160,12 +162,14 @@ class MMEventListener implements EventListener {
             if (p != null) {
                 p.resumeRealize();
             }
+            break;
 
         case EVENT_MEDIA_PREFETCH_FINISHED:
             p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.resumePrefetch();
             }
+            break;
 
         case EVENT_MEDIA_SNAPSHOT_FINISHED:
             p = HighLevelPlayer.get( nevt.intParam1 );

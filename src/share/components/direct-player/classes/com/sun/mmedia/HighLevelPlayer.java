@@ -375,6 +375,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     void continueDownload() {
         /* predownload media data to fill native buffers */
         if ( null != directInputThread ) {
+            System.out.println( "HighLevelPlayer: continued Download" );
             directInputThread.requestData();
         }
     }
@@ -666,6 +667,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
+        System.out.println( "HighLevelPlayer: realize() resumed" );
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
             if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
