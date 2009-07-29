@@ -616,6 +616,17 @@ javacall_result javacall_media_acquire_device(javacall_handle handle);
 javacall_result javacall_media_release_device(javacall_handle handle);
 
 /**
+ * MMAPI call this function to clear(delete) buffered media data
+ * You have to clear any resources created from previous buffering
+ * 
+ * @param handle    Handle to the library
+ * 
+ * @retval JAVACALL_OK      Can clear buffer
+ * @retval JAVACALL_FAIL    Can't clear buffer. JVM can't erase resources.
+ */
+javacall_result javacall_media_clear_buffer(javacall_handle handle);
+
+/**
  * Try to start media playing.<br>
  * If this API return JAVACALL_FAIL, MMAPI will raise the media exception.<br>
  * If this API return JAVACALL_OK, MMAPI will return from start method.
