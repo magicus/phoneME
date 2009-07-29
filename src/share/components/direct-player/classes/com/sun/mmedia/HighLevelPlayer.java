@@ -638,6 +638,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             type = stream.getContentDescriptor().getContentType();
         }
 
+        directInputThread = null;
+
         if( !handledByJava )
         {
             if( !handledByDevice && !mediaFormat.equals(MEDIA_FORMAT_TONE) )
@@ -648,8 +650,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             /* try to realize native player */
             nRealize(hNative, type);
         }
-
-        directInputThread = null;
 
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
