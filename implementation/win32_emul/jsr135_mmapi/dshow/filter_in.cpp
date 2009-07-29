@@ -170,7 +170,7 @@ public:
     virtual HRESULT __stdcall JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName);
     virtual HRESULT __stdcall QueryVendorInfo(LPWSTR *pVendorInfo);
     // filter_in
-    virtual bool data(nat32 len, const void *pdata);
+    // virtual bool data(nat32 len, const void *pdata);
     // IAMFilterMiscFlags
     virtual ULONG __stdcall GetMiscFlags();
 
@@ -699,65 +699,49 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
     }
     if(tstart < 0) return E_INVALIDARG;
     if(tend < tstart) return VFW_E_START_TIME_AFTER_END;
-    if(tstart > 0xffffffffi64 * 10000000i64) return E_INVALIDARG;
     if(tend - tstart > 0x7fffffffi64 * 10000000i64) return E_INVALIDARG;
     if(tstart % 10000000 || tend % 10000000) return E_INVALIDARG;
 
-    nat32 pos = nat32(tstart / 10000000);
-    nat32 len = nat32(tend / 10000000 - pos);
-
-#if write_level > 0
-    print("%u %u\n", pos, len);
-#endif
+    int64 pos = int64(tstart / 10000000);
+    int32 len = int32(tend / 10000000 - pos);
 
     EnterCriticalSection(&data_cs);
-    while(pconnected &&
-        !flushing &&
-        !(data_total < pos) &&
-        !(data_total - pos < len) &&
-        (data_l < pos || data_l - pos < len))
-    {
-        LeaveCriticalSection(&data_cs);
-        WaitForSingleObject(event_unblock, INFINITE);
-        EnterCriticalSection(&data_cs);
-    }
+
     if(flushing)
     {
         r = VFW_E_TIMEOUT;
     }
-    else if(data_l < pos)
-    {
-        /*if(data_finished) r = E_INVALIDARG;
-        else*/
-        {
-            len = 0;
-            r = S_FALSE;
-        }
-    }
     else
     {
-        if(data_l - pos < len)
+        bits8 *pb;
+        HRESULT r2 = pSample->GetPointer(&pb);
+        if(r2 != S_OK)
         {
-            len = data_l - pos;
-            r = S_FALSE;
+            if(FAILED(r2)) r = r2;
+            else r = VFW_E_RUNTIME_ERROR;
         }
-        else r = S_OK;
-        if(len)
+        else
         {
-            bits8 *pb;
-            HRESULT r2 = pSample->GetPointer(&pb);
-            if(r2 != S_OK)
+            int32 len2;
+            player_callback::result r2 = pfilter->pcallback->data(
+                pos, len, pb, &len2);
+            if(r2 == player_callback::result_success)
             {
-                if(FAILED(r2)) r = r2;
-                else r = VFW_E_RUNTIME_ERROR;
+                if(len2 < len)
+                    r = S_FALSE;
+                else
+                    r = S_OK;
+                len = len2;
             }
             else
             {
-                memcpy(pb, (bits8 *)data_p + pos, len);
+                r = E_FAIL;
             }
         }
     }
+
     LeaveCriticalSection(&data_cs);
+
     if(FAILED(r)) return r;
 
     HRESULT r2 = pSample->SetActualDataLength(len);
@@ -788,55 +772,35 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
 
     if(llPosition < 0) return E_INVALIDARG;
     if(lLength < 0) return VFW_E_START_TIME_AFTER_END;
-    if(llPosition > 0xffffffff) return E_INVALIDARG;
-
-    nat32 pos = nat32(llPosition);
-    nat32 len = nat32(lLength);
 
     HRESULT r;
+
     EnterCriticalSection(&data_cs);
-    while(pconnected &&
-        !flushing &&
-        !(data_total < pos) &&
-        !(data_total - pos < len) &&
-        (data_l < pos || data_l - pos < len))
-    {
-        LeaveCriticalSection(&data_cs);
-        WaitForSingleObject(event_unblock, INFINITE);
-        EnterCriticalSection(&data_cs);
-    }
+
     if(flushing)
     {
         r = VFW_E_TIMEOUT;
-#if write_level > 0
-        print("wp1, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
-#endif
-    }
-    else if(data_l < pos)
-    {
-        /*if(data_finished) r = E_INVALIDARG;
-        else */r = S_FALSE;
-#if write_level > 0
-        print("wp2, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
-#endif
     }
     else
     {
-        if(data_l - pos < len)
+        int32 len;
+        player_callback::result r2 = pfilter->pcallback->data(
+            llPosition, lLength, pBuffer, &len);
+        if(r2 == player_callback::result_success)
         {
-            len = data_l - pos;
-            r = S_FALSE;
-#if write_level > 0
-            print("wp3, pconnected=%p, flushing=%s, pos=%u, len=%u, data_total=%u, data_l=%u\n", pconnected, flushing ? "true" : "false", pos, len, data_total, data_l);
-#endif
+            if(len < lLength)
+                r = S_FALSE;
+            else
+                r = S_OK;
         }
-        else r = S_OK;
-        if(len)
+        else
         {
-            memcpy(pBuffer, (bits8 *)data_p + pos, len);
+            r = E_FAIL;
         }
     }
+
     LeaveCriticalSection(&data_cs);
+
     return r;
 }
 
@@ -1227,7 +1191,7 @@ inline nat32 filter_in_filter::round(nat32 n)
     return n;
 }
 
-bool filter_in_filter::data(nat32 len, const void *pdata)
+/*bool filter_in_filter::data(nat32 len, const void *pdata)
 {
 #if write_level > 0
     print("filter_in_filter::data(%u, 0x%p) called...\n", len, pdata);
@@ -1261,7 +1225,7 @@ bool filter_in_filter::data(nat32 len, const void *pdata)
         SetEvent(ppin->event_unblock);
     }
     return true;
-}
+}*/
 
 ULONG __stdcall filter_in_filter::GetMiscFlags()
 {
