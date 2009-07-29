@@ -25,6 +25,8 @@
 
 package com.sun.mmedia;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
@@ -374,8 +376,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             
     void continueDownload() {
         /* predownload media data to fill native buffers */
-        if (mediaDownload != null) {
-            mediaDownload.continueDownload();
+        if ( null != directInputThread ) {
+            directInputThread.requestData();
         }
     }
 
@@ -569,7 +571,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
-    protected MediaDownload mediaDownload = null;
+    //protected MediaDownload mediaDownload = null;
+    DirectInputThread directInputThread;
 
     /**
      * Check to see if the Player is closed.  If the
@@ -587,6 +590,16 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
+    final private Object realizeLock = new Object();
+
+    void finishRealize()
+    {
+        synchronized( realizeLock )
+        {
+            realizeLock.notify();
+        }
+    }
+    
     /**
      * Constructs portions of the <code>Player</code> without
      * acquiring the scarce and exclusive resources.
@@ -627,7 +640,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             nRealize(hNative, type);
         }
 
-        mediaDownload = null;
+        directInputThread = null;
 
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
@@ -647,15 +660,18 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(MEDIA_FORMAT_TONE)) {
-                mediaDownload = new MediaDownload(hNative, stream);
-                try {
-                    mediaDownload.fgDownload();
-                } catch(IOException ex1) {
-                    ex1.printStackTrace();
-                    throw new MediaException("Can not start download Thread: " + ex1);
-                }catch(Exception ex) {
-                    ex.printStackTrace();
-                    throw new MediaException( "Can not start download Thread: " + ex );
+                directInputThread = new DirectInputThread( this );
+
+                directInputThread.start();
+                directInputThread.requestData();
+
+                synchronized( realizeLock )
+                {
+                    try {
+                        realizeLock.wait();
+                    } catch (InterruptedException ex) {
+                        abort( "Realize() was interrupted" );
+                    }
                 }
             }
         }
@@ -711,6 +727,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     }
 
+    final Object prefetchLock = new Object();
+
+    void resumePrefetch()
+    {
+        synchronized( prefetchLock )
+        {
+            prefetchLock.notify();
+        }
+    }
     /**
      * Acquires the scarce and exclusive resources
      * and processes as much data as necessary

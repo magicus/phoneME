@@ -26,6 +26,8 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 
@@ -46,6 +48,11 @@ class DirectInputThread extends Thread {
     final private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 0x1000 ];  // 4 Kbytes
     private boolean isDismissed = false;
+    private boolean isFrozen = false;
+
+    private final Object dataWriteLock = new Object();
+    private final Object requestLock;
+    private final Object streamReadLock = new Object();
 
     DirectInputThread(HighLevelPlayer p) throws MediaException {
         long len = p.stream.getContentLength();
@@ -59,6 +66,7 @@ class DirectInputThread extends Thread {
                     "Cannot playback stream with unknown length" );
         }
         this.owner = p;
+        requestLock = this;
     }
     
 
@@ -69,23 +77,24 @@ class DirectInputThread extends Thread {
 
     public void run(){
 
+mainloop:
         for(;;)
         {
-            synchronized( this ) {
+            synchronized( requestLock ) {
                 if( isDismissed ) {
                     return;
                 }
 
                 if( requestPending )
                 {
-                    nGetRequestParams( owner.getNativeHandle() );
+                    lenToRead = 1;
                     requestPending = false;
                 }
                 else
                 {
                    lenToRead = 0;
                     try {
-                        this.wait();
+                        requestLock.wait();
                     } catch (InterruptedException ex) {
                         //owner.abort("Stream reading thread was interrupted");
                         return;
@@ -94,23 +103,30 @@ class DirectInputThread extends Thread {
                 }
             }
 
+            if( lenToRead > 0 )
+            {
+                nGetRequestParams( owner.getNativeHandle() );
+                if( isDismissed ) {
+                    return;
+                }
+            }
+
             while( 0 < lenToRead )
             {
                 int read = 0;
                 
                 try {
-                    seek();
-
-                    if( isDismissed ) {
-                        return;
-                    }
-
-                    int len = lenToRead > tmpBuf.length ?
-                                    tmpBuf.length : lenToRead;
-                    read = owner.stream.read(tmpBuf, 0, len);
-                    if( -1 == read )
+                    synchronized( streamReadLock )
                     {
-                        nNotifyEndOfStream( owner.getNativeHandle() );
+                        seek();
+
+                        if( isDismissed ) {
+                            return;
+                        }
+
+                        int len = lenToRead > tmpBuf.length ?
+                                        tmpBuf.length : lenToRead;
+                        read = owner.stream.read(tmpBuf, 0, len);
                     }
                 } catch ( MediaException ex) {
                     owner.abort( ex.getMessage() );
@@ -121,15 +137,33 @@ class DirectInputThread extends Thread {
                     return;
                 }
 
-                if( isDismissed ) {
-                    return;
-                }
+                synchronized( dataWriteLock )
+                {
+                    if( isDismissed ) {
+                        return;
+                    }
 
-                // call native copying + javacall_media_written()
-                nWriteData( tmpBuf, read, owner.getNativeHandle() );
-
-                if( isDismissed ) {
-                    return;
+                    if( isFrozen )
+                    {
+                        try {
+                            dataWriteLock.wait();
+                        } catch (InterruptedException ex) {
+                        }
+                        if( isDismissed ) {
+                            return;
+                        }
+                        continue mainloop;
+                    }
+                    else {
+                        if( -1 == read )
+                        {
+                            nNotifyEndOfStream( owner.getNativeHandle() );
+                        }
+                        else
+                        {
+                            nWriteData( tmpBuf, read, owner.getNativeHandle() );
+                        }
+                    }
                 }
             }
         }
@@ -155,20 +189,49 @@ class DirectInputThread extends Thread {
 
     public void requestData()
     {
-        synchronized( this )
+        synchronized( requestLock )
         {
             this.requestPending = true;
-            this.notify();
+            requestLock.notify();
         }
     }
 
     public void dismiss()
     {
-        synchronized( this )
+        synchronized( streamReadLock )
         {
-            isDismissed = true;
-            this.notify();
+            synchronized( dataWriteLock )
+            {
+                synchronized( requestLock )
+                {
+                    isDismissed = true;
+                    requestLock.notify();
+                }
+                dataWriteLock.notify();
+            }
         }
     }
 
+
+    // this method may take some time to execute
+    public void stopWritingAndFreeze()
+    {
+        synchronized( dataWriteLock )
+        {
+            {
+                isFrozen = true;
+            }
+        }
+    }
+
+    public void unfreeze()
+    {
+        synchronized( dataWriteLock )
+        {
+            {
+                isFrozen = false;
+                dataWriteLock.notify();
+            }
+        }
+    }
 }
