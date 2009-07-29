@@ -329,11 +329,15 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
         if (!getOwner().handledByDevice) {
             /* predownload media data to fill native buffers */
-            if (getOwner().mediaDownload != null) {
-                try {
-                    getOwner().mediaDownload.fgDownload();
-                } catch (IOException ex) {
-                    throw new MediaException("Can not start media download thread : " + ex);
+            final Object prefetchLock = getOwner().getDirectInputThread();
+
+            if ( prefetchLock != null) {
+                synchronized( prefetchLock )
+                {
+                    try {
+                        prefetchLock.wait();
+                    } catch (InterruptedException ex) {
+                    }
                 }
             }
         }
@@ -364,6 +368,12 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      */
     protected void doPrefetch() throws MediaException {
 
+        final DirectInputThread inputThread = getOwner().getDirectInputThread();
+        if( null != inputThread )
+        {
+            inputThread.unfreeze();
+        }
+        
         prefetchData();
         acquireDevice();
         
@@ -413,16 +423,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             midiControl.playerStarted();
         }
         
-        if ( getOwner().mediaDownload != null) {
-            try {
-                getOwner().mediaDownload.bgDownload();
-            } catch(Exception ex) {
-                try {
-                    getOwner().stop();
-                } catch(MediaException mEx) {
-                }
-            }
-        }
     }
     
     /**
@@ -523,8 +523,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         
         releaseRadioAccess();
 
-        if (getOwner().mediaDownload != null) {
-            getOwner().mediaDownload.deallocate();
+        final DirectInputThread inputThread = getOwner().getDirectInputThread();
+        if ( null != inputThread ) {
+            inputThread.stopWritingAndFreeze();
         }
 
         nReleaseDevice(getOwner().getNativeHandle());

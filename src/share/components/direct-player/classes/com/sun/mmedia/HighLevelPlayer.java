@@ -25,8 +25,6 @@
 
 package com.sun.mmedia;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
@@ -572,7 +570,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     }
 
     //protected MediaDownload mediaDownload = null;
-    DirectInputThread directInputThread;
+    private DirectInputThread directInputThread;
+
+    DirectInputThread getDirectInputThread() {
+        return directInputThread;
+    }
 
     /**
      * Check to see if the Player is closed.  If the
@@ -590,13 +592,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
-    final private Object realizeLock = new Object();
-
-    void finishRealize()
+    void resumeRealize()
     {
-        synchronized( realizeLock )
+        final Object realizeLock = directInputThread;
+        if( null != realizeLock )
         {
-            realizeLock.notify();
+            synchronized( realizeLock )
+            {
+                realizeLock.notify();
+            }
         }
     }
     
@@ -663,8 +667,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 directInputThread = new DirectInputThread( this );
 
                 directInputThread.start();
-                directInputThread.requestData();
 
+                final Object realizeLock = directInputThread;
                 synchronized( realizeLock )
                 {
                     try {
@@ -727,13 +731,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     }
 
-    final Object prefetchLock = new Object();
-
     void resumePrefetch()
     {
-        synchronized( prefetchLock )
+        final Object prefetchLock = directInputThread;
+        if( null != prefetchLock )
         {
-            prefetchLock.notify();
+            synchronized( prefetchLock )
+            {
+                prefetchLock.notify();
+            }
         }
     }
     /**
@@ -787,6 +793,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
+        //this method may pause inside and wait for resumePrefetch()
         lowLevelPlayer.doPrefetch();
 
         VolumeControl vc = ( VolumeControl )getControl(
@@ -1065,6 +1072,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
+        if( null != directInputThread )
+        {
+            directInputThread.close();
+        }
+        
         if( null != lowLevelPlayer )
         {
             lowLevelPlayer.doDeallocate();
