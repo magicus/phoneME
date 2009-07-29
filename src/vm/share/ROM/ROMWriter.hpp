@@ -572,11 +572,10 @@ public:
   virtual void write_constant_string(Symbol* /*s*/ JVM_TRAPS) 
                {JVM_IGNORE_TRAPS;}
   virtual void write_constant_string_ref(Symbol* /*s*/) {}
-  virtual void write_restricted_packages(JVM_SINGLE_ARG_TRAPS)
-               {JVM_IGNORE_TRAPS;}
+  virtual void write_restricted_packages( void ) {}
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
   virtual void write_hidden_classes( void ) {}
-  virtual void write_restricted_in_profiles( void ) {}
+  virtual void write_restricted_in_profiles( void ) const {}
 #endif
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
 #if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES        
@@ -876,12 +875,78 @@ public:
   friend class SourceROMWriter;
 };
 
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+#define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)  \
+   template(hidden_classes,         "Hidden cls maps" )
+#else
+#define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)
+#endif
+
+#if ENABLE_ISOLATES
+#define ISOLATES_MEMORY_COUNTERS_DO(template)  \
+  template(task_mirror,             " task mirrors"   )
+#else
+#define ISOLATES_MEMORY_COUNTERS_DO(template)
+#endif
+
+#define MEMORY_COUNTERS_DO(template)  \
+  template(instance_class,          "InstanceClass"   )\
+  template(inited_class,            " inited"         )\
+  template(renamed_class,           " renamed"        )\
+  template(static_fields,           " static fields"  )\
+  template(vtable,                  " vtables"        )\
+  template(itable,                  " itables"        )\
+  template(array_class,             "ArrayClass"      )\
+  template(class_info,              "ClassInfo"       )\
+  template(method,                  "Method"          )\
+  template(method_header,           " header"         )\
+  template(method_body,             " body"           )\
+  template(compiled_method,         " compiled"       )\
+  template(native_method,           " native"         )\
+  template(abstract_method,         " abstract"       )\
+  template(virtual_method,          " virtual"        )\
+  template(renamed_method,          " renamed"        )\
+  template(renamed_abstract_method, "  abstract"      )\
+  template(clinit_method,           " <clinit>"       )\
+  template(exception_table,         " except. tab"    )\
+  template(constant_pool,           "Constant Pool"   )\
+  template(stackmap,                "Stackmaps"       )\
+  template(longmaps,                " longmaps"       )\
+  template(symbol,                  "Symbol"          )\
+  template(encoded_symbol,          " encoded"        )\
+  template(string,                  "String"          )\
+  template(array1,                  "Array_1"         )\
+  template(array2s,                 "Array_2(short)"  )\
+  template(array2c,                 "Array_2(char)"   )\
+  template(array4,                  "Array_4"         )\
+  template(array8,                  "Array_8"         )\
+  template(obj_array,               "Object Array"    )\
+  template(meta,                    "Meta objects"    )\
+  template(other,                   "Other objects"   )\
+  template(pers_handles,            "Pers. Handles"   )\
+  template(symbol_table,            "Symbol Table"    )\
+  template(string_table,            "String Table"    )\
+  template(variable_parts,          "Method vars"     )\
+  template(restricted_pkgs,         "Restricted pkg"  )\
+  template(line_number_tables,      "Linenum tables"  )\
+  template(total,                   "Total"           )\
+  MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)\
+  ISOLATES_MEMORY_COUNTERS_DO(template)
+
 class MemCounter {
-  static MemCounter* all_counters[41];
+  enum {
+    #define COUNT_MEMORY_COUNTER(n,s) _##n,
+      MEMORY_COUNTERS_DO(COUNT_MEMORY_COUNTER)
+    #undef COUNT_MEMORY_COUNTER
+    number_of_memory_counters
+  };
+
+  static MemCounter* all_counters[number_of_memory_counters];
   static int counter_number;  
 
 public:
-  const char * name;
+  const char* name;
   int text_bytes, text_objects;
   int data_bytes, data_objects;
   int heap_bytes, heap_objects;  
@@ -890,19 +955,19 @@ public:
 #endif
   MemCounter(const char *n);
 
-  int all_bytes() {
+  int all_bytes() const {
     return text_bytes + data_bytes + heap_bytes;
   }
 
-  int all_objects() {
+  int all_objects() const {
     return text_objects + data_objects + heap_objects;
   }
 
-  int dynamic_bytes() {
+  int dynamic_bytes() const {
     return data_bytes + heap_bytes;
   }
 
-  int dynamic_objects() {
+  int dynamic_objects() const {
     return data_objects + heap_objects;
   }
 
@@ -958,47 +1023,9 @@ public:
   static void reset_counters();
 };
 
-extern MemCounter mc_instance_class;
-extern MemCounter mc_inited_class;
-extern MemCounter mc_renamed_class;
-extern MemCounter mc_static_fields;
-extern MemCounter mc_vtable;
-extern MemCounter mc_itable;
-extern MemCounter mc_array_class;
-extern MemCounter mc_class_info;
-extern MemCounter mc_method;
-extern MemCounter mc_method_header;
-extern MemCounter mc_method_body;
-extern MemCounter mc_compiled_method;
-extern MemCounter mc_native_method;
-extern MemCounter mc_abstract_method;
-extern MemCounter mc_virtual_method;
-extern MemCounter mc_renamed_method;
-extern MemCounter mc_renamed_abstract_method;
-extern MemCounter mc_clinit_method;
-extern MemCounter mc_exception_table;
-extern MemCounter mc_constant_pool;
-extern MemCounter mc_stackmap;
-extern MemCounter mc_longmaps;
-extern MemCounter mc_symbol;
-extern MemCounter mc_encoded_symbol;
-extern MemCounter mc_string;
-extern MemCounter mc_array1;
-extern MemCounter mc_array2s;
-extern MemCounter mc_array2c;
-extern MemCounter mc_array4;
-extern MemCounter mc_array8;
-extern MemCounter mc_obj_array;
-extern MemCounter mc_meta;
-extern MemCounter mc_other;
-extern MemCounter mc_pers_handles;
-extern MemCounter mc_symbol_table;
-extern MemCounter mc_string_table;
-extern MemCounter mc_variable_parts;
-extern MemCounter mc_restricted_pkgs;
-extern MemCounter mc_task_mirror;
-extern MemCounter mc_line_number_tables;
-extern MemCounter mc_total;
+#define DECLARE_MEMORY_COUNTER(n,s) extern MemCounter mc_##n;
+MEMORY_COUNTERS_DO(DECLARE_MEMORY_COUNTER)
+#undef DECLARE_MEMORY_COUNTER
 
 /*
  * Macros for quickly looping through the romizer hashtable

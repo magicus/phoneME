@@ -67,9 +67,7 @@ private:
 #if ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
   void write_compiled_method_table(JVM_SINGLE_ARG_TRAPS);
 #endif
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
   void print_packages_list(ROMVector* patterns);
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   static void handle_jar_entry(const char* name, int length, JarFileParser* jf
                                JVM_TRAPS);
   void get_all_names_in_classpath(ObjArray* classpath,
@@ -159,7 +157,7 @@ public:
   void write_original_info_strings(JVM_SINGLE_ARG_TRAPS);
   void write_constant_string(Symbol* s JVM_TRAPS);
   void write_constant_string_ref(Symbol* s);
-  virtual void write_restricted_packages(JVM_SINGLE_ARG_TRAPS);
+  virtual void write_restricted_packages(void);
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   virtual void write_hidden_classes( void );
   virtual void write_restricted_in_profiles();

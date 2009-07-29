@@ -505,33 +505,15 @@ void ROM::initialize_alternate_constant_pool(JVM_SINGLE_ARG_TRAPS) {
 
 #endif //!PRODUCT || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 
-bool ROM::is_restricted_package(const char *name, int pkg_length) {
-
-  char *rp = (char*)&_rom_restricted_packages[0];
-  char *rp2;
-
-  while (*rp) {
-    const int len = *((unsigned char*)rp); // may be up to 255;
-    rp ++;
-   
-    //Checking for the asterisk case...
-    rp2 = rp;
-    rp2 += (len - 2);
-    if(jvm_strncmp(rp2, "/" "*", 2) == 0) {
-      //If foo.bar.* has been hidden, we don't want classes in 
-      // foo.* to be hidden.
-      if(pkg_length < (len-2)) return false;
-      if(jvm_strncmp(rp, name, pkg_length) == 0) {
-        return true;
-      }
+bool ROM::name_matches_patterns(const char* name, const int name_len,
+                                const char* patterns) {
+  GUARANTEE(patterns != NULL, "Sanity");
+  for( int len; (len = *(unsigned char*)patterns++) != 0; patterns += len ) {
+    if( Universe::name_matches_pattern(name, name_len, patterns, len) ) {
+      return true;
     }
-
-    if( len == pkg_length && jvm_memcmp(rp, name, pkg_length) == 0 ) {
-      return true; // we have a match. The package is restricted.
-    }
-    rp += len;
   }
-  return false;
+  return false;  
 }
 
 void ROM::relocate_data_block( void ) {
@@ -1227,26 +1209,6 @@ void ROM::ROM_print_hrticks(void print_hrticks(const char *name,
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-bool ROM::is_restricted_package_in_profile(const char* name, int name_len) {
-  const int current_profile_id = Universe::current_profile_id();
-  GUARANTEE(unsigned(current_profile_id) < unsigned(_rom_profiles_count),
-            "Sanity");
-
-  const char* const* profile_wildcards = 
-    _rom_profiles_restricted_packages[current_profile_id];  
-  GUARANTEE(profile_wildcards != NULL, "Sanity");
-
-  for( const char* wildcard; (wildcard = *profile_wildcards++) != NULL; ) {
-    const int wildcard_len = jvm_strlen(wildcard);
-    const bool name_matches_pattern = 
-      Universe::name_matches_pattern(name, name_len, wildcard, wildcard_len);
-    if (name_matches_pattern) {
-      return true;
-    }
-  }
-  return false;  
-}
-
 bool ROM::is_hidden_class_in_profile(const jushort class_id) {  
   const int index = class_id / BitsPerByte - _rom_profile_bitmap_row_base;
   const int shift = class_id % BitsPerByte;

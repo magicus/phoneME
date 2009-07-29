@@ -390,7 +390,9 @@ public:
 
   static bool is_valid_text_object(const OopDesc* /*obj*/) PRODUCT_RETURN0;
 
-  static bool is_restricted_package(const char* name, int len);
+  static bool is_restricted_package(const char name[], const int name_len) {
+    return name_matches_patterns(name, name_len, _rom_restricted_packages);
+  }
   static ReturnOop string_from_table(String *string, juint hash_value);
   static ReturnOop symbol_for(const utf8 s, juint hash_value, int len);
 
@@ -402,13 +404,22 @@ public:
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   static bool is_hidden_class_in_profile(const jushort class_id);
-  static bool is_restricted_package_in_profile(const char *name, 
-                                               int name_len);
-  static int profiles_count() { return _rom_profiles_count; }
+  static bool is_restricted_package_in_profile(const char name[],
+                                               const int name_len) {
+    const int current_profile_id = Universe::current_profile_id();
+    GUARANTEE(unsigned(current_profile_id) < unsigned(_rom_profiles_count),
+              "Sanity");
+    const char* packages = _rom_profiles_restricted_packages[current_profile_id];
+    return name_matches_patterns(name, name_len, packages);
+  }
+  static int profiles_count( void ) { return _rom_profiles_count; }
   static const char* const* profiles_names(void) { return _rom_profiles_names; }
 #endif
 
 private:
+  static bool name_matches_patterns(const char* name, const int len,
+                                    const char* patterns);
+
   // Used in ROM initialization only -- is the address inside the
   // source data used to initialize the heap?
   inline static bool heap_src_block_contains(address target);

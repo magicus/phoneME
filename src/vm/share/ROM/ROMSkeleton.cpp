@@ -150,8 +150,8 @@ extern "C" {
 
   const char* const        _rom_profiles_names[] = { "DEFAULT_PROFILE", 0 };
 
-  const char *_rom_restricted_packages_0[] = {0}; // DEFAULT_PROFILE
-  const char* const* const _rom_profiles_restricted_packages[] = {
+  const char _rom_restricted_packages_0[] = {0}; // DEFAULT_PROFILE
+  const char* const _rom_profiles_restricted_packages[] = {
     _rom_restricted_packages_0,
   };
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT

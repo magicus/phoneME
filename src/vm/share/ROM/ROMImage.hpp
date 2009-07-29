@@ -168,7 +168,7 @@ extern const int                _rom_profile_bitmap_row_size;
 extern const int                _rom_profiles_count;
 extern const char* const        _rom_profiles_names[];
 extern const unsigned char      _rom_hidden_classes_bitmaps[];
-extern const char* const* const _rom_profiles_restricted_packages[];
+extern const char* const        _rom_profiles_restricted_packages[];
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 /*
  * Flags that describes the options used by this the ROM image.

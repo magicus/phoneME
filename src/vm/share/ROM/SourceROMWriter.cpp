@@ -709,7 +709,7 @@ void SourceROMWriter::write_stuff_body(SourceObjectWriter* obj_writer
 
   // (5) Restricted packages.
   print_separator("Restricted packages info");
-  write_restricted_packages(JVM_SINGLE_ARG_CHECK);
+  write_restricted_packages();
 
   // (6) Global singletons
   print_separator("Global singletons");
@@ -1429,7 +1429,7 @@ void SourceROMWriter::write_constant_string(Symbol* s JVM_TRAPS) {
 }
 
 void SourceROMWriter::write_constant_string_ref(Symbol* s) {
-  int n = constant_string_table()->get_int_attribute(s, 0);
+  const int n = constant_string_table()->get_int_attribute(s, 0);
   main_stream()->print("(const char*)_rom_str%d", n);
   if (GenerateROMComments) {
     main_stream()->print(" /* ");
@@ -1441,37 +1441,38 @@ void SourceROMWriter::write_constant_string_ref(Symbol* s) {
 // Write the restricted packages in a packed string table. Each string
 // be shorter than 256 bytes. We first write the length, then the string
 // body. The end of the table is delimited by a length of 0.
-void SourceROMWriter::write_restricted_packages(JVM_SINGLE_ARG_TRAPS) {
-  main_stream()->print_cr("const char _rom_restricted_packages[] = {");
-  int num_bytes = 1;
+void SourceROMWriter::print_packages_list(ROMVector* patterns) {
+  GUARANTEE(patterns->not_null(), "Sanity");
+
+  int num_bytes = 1;  // Terminating 0
   int num_pkgs = 0;
 
-  ROMVector::Raw restricted_packages = _optimizer.restricted_packages()->obj();
-  const int list_len = restricted_packages().size();
-  for (int i=0; i<list_len; i++) {
-    Symbol::Raw byte_array = restricted_packages().element_at(i); 
-    if (byte_array.is_null()) {
-      break;
-    }
-    const int len = byte_array().length();
-    if (len > 0) {
-      GUARANTEE(len > 0 && len < 255, "sanity");
-      main_stream()->print("\t((char)0x%x),", len); 
-      num_bytes ++;
-      for (int j=0; j<len; j++) { 
-        main_stream()->print("'%c',", byte_array().byte_at(j)); 
-      }    
-      num_bytes += len;
+  const int patterns_count = patterns->size();  
+  for( int pat = 0; pat < patterns_count; pat++ ) {  
+    Symbol::Raw package( patterns->element_at(pat) );
+    const int len = package().length();
+    if( len ) {
+      GUARANTEE(len < 256, "sanity");
+      num_bytes += len+1; // Length + characters
       num_pkgs ++;
-      main_stream()->cr();
+      main_stream()->print("\n  0x%02x,", len);
+      for( int i = 0; i < len; i++ ) {
+        main_stream()->print("'%c',", package().byte_at(i)); 
+      }
     }
-  }
-  main_stream()->print_cr("\t((char)0x0)");
-  main_stream()->print_cr("};");
+  } 
+  main_stream()->print_cr("\n  0");
 
-  mc_restricted_pkgs.text_bytes   = num_bytes;
-  mc_restricted_pkgs.text_objects = num_pkgs;
+  mc_restricted_pkgs.text_bytes   += num_bytes;
+  mc_restricted_pkgs.text_objects += num_pkgs;
   mc_total.add_text(num_bytes);
+}
+
+
+void SourceROMWriter::write_restricted_packages( void ) {
+  main_stream()->print("const char _rom_restricted_packages[] = {");
+  print_packages_list(_optimizer.restricted_packages());
+  main_stream()->print_cr("}; // _rom_restricted_packages");
 }
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
@@ -1479,22 +1480,6 @@ void SourceROMWriter::print_profile_name( const int profile_id ) {
   ROMProfile::Raw rom_profile = _optimizer.profiles_vector()->element_at(profile_id);
   Symbol::Raw profile_name = rom_profile().profile_name();
   profile_name().print_symbol_on(main_stream());
-}
-
-inline void SourceROMWriter::print_packages_list(ROMVector* patterns) {
-  GUARANTEE(patterns != NULL, "Sanity");  
-  if (patterns->is_null()) {
-    return;
-  }
-  GUARANTEE(patterns->not_null(), "Sanity");  
-
-  const int patterns_count = patterns->size();  
-  for (int pat = 0; pat < patterns_count; pat++) {  
-    main_stream()->print("  \"");
-    Symbol::Raw package( patterns->element_at(pat) );
-    package().print_symbol_on(main_stream());
-    main_stream()->print_cr("\",");
-  } 
 }
 
 void SourceROMWriter::write_restricted_in_profiles() {
@@ -1509,28 +1494,26 @@ void SourceROMWriter::write_restricted_in_profiles() {
     GUARANTEE(profile_name.not_null(), "Sanity");
 
     main_stream()->print(
-      "const char* const _rom_restricted_packages_%d[] = { // ", p);
+      "const char _rom_restricted_packages_%d[] = { // ", p);
     profile_name().print_symbol_on(main_stream());
-    main_stream()->cr();
 
     // Writing restricted packages list.
     {
       ROMVector::Raw patterns = profile().restricted_packages();
-      GUARANTEE(profile_name.not_null(), "Sanity");
       print_packages_list(&patterns);
     }
 
-    main_stream()->print("  0\n}; // ");
+    main_stream()->print("}; // ");
     profile_name().print_symbol_on(main_stream());
     main_stream()->cr();
     main_stream()->cr();
   }
 
-  main_stream()->print_cr("const char* const* const _rom_profiles_restricted_packages[] = {");
+  main_stream()->print_cr("const char* const _rom_profiles_restricted_packages[] = {");
   for (p = 0; p < profiles_count; p++ ) {
     main_stream()->print_cr("  _rom_restricted_packages_%d,", p);    
   }
-  main_stream()->print_cr("}; // _rom_restricted_packages");
+  main_stream()->print_cr("}; // _rom_profiles_restricted_packages");
 
   main_stream()->cr();
 }
@@ -1566,6 +1549,7 @@ void SourceROMWriter::write_hidden_classes(void) {
   // Writing profiles bitmaps  
   main_stream()->print_cr(
       "const unsigned char _rom_hidden_classes_bitmaps[] = {");
+  int total_size;
   if( bitmap_row_size != 0 ) {
     for (int profile_id = 0;; main_stream()->cr()) {
       main_stream()->print( "  // Profile " );
@@ -1581,11 +1565,17 @@ void SourceROMWriter::write_hidden_classes(void) {
       if( ++profile_id >= profiles_count ) {
         break;
       }
-    } 
+    }
+    total_size = bitmap_row_size * profiles_count;
   } else {
     main_stream()->print_cr("  0 // No profile-local hidden classes" );
+    total_size = 1;
   }
-  main_stream()->print_cr("}; // _rom_hidden_classes_bitmaps\n");  
+  main_stream()->print_cr("}; // _rom_hidden_classes_bitmaps\n");   
+
+  mc_hidden_classes.text_bytes   = total_size;
+  mc_hidden_classes.text_objects = profiles_count;
+  mc_total.add_text(total_size);
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 

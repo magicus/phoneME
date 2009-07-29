@@ -39,55 +39,16 @@ FileStreamState ROMWriter::_main_segment_stream_states[ROM::SEGMENTS_STREAMS_COU
 FileStreamState ROMWriter::_rom_generated_header_state;
 #endif
 
-#define ALL_SUBTYPES -1
+enum { ALL_SUBTYPES = -1 };
 
 #if USE_ROM_LOGGING
-MemCounter mc_instance_class         ("InstanceClass");
-MemCounter mc_inited_class           (" inited");
-MemCounter mc_renamed_class          (" renamed");
-MemCounter mc_static_fields          (" static fields");
-MemCounter mc_vtable                 (" vtables");
-MemCounter mc_itable                 (" itables");
-MemCounter mc_array_class            ("ArrayClass");
-MemCounter mc_class_info             ("ClassInfo");
-MemCounter mc_method                 ("Method");
-MemCounter mc_method_header          (" header");
-MemCounter mc_method_body            (" body");
-MemCounter mc_native_method          (" native");
-MemCounter mc_abstract_method        (" abstract");
-MemCounter mc_virtual_method         (" virtual");
-MemCounter mc_compiled_method        (" compiled");
-MemCounter mc_renamed_method         (" renamed");
-MemCounter mc_renamed_abstract_method("  abstract");
-MemCounter mc_clinit_method          (" <clinit>");
-MemCounter mc_exception_table        (" except. tab");
-MemCounter mc_constant_pool          ("Constant Pool");
-MemCounter mc_stackmap               ("Stackmaps");
-MemCounter mc_longmaps               (" longmaps");
-MemCounter mc_symbol                 ("Symbol");
-MemCounter mc_encoded_symbol         (" encoded");
-MemCounter mc_string                 ("String");
-MemCounter mc_array1                 ("Array_1");
-MemCounter mc_array2s                ("Array_2(short)");
-MemCounter mc_array2c                ("Array_2(char)");
-MemCounter mc_array4                 ("Array_4");
-MemCounter mc_array8                 ("Array_8");
-MemCounter mc_obj_array              ("Object Array");
-MemCounter mc_meta                   ("Meta objects");
-MemCounter mc_other                  ("Other objects");
-MemCounter mc_pers_handles           ("Pers. Handles");
-MemCounter mc_symbol_table           ("Symbol Table");
-MemCounter mc_string_table           ("String Table");
-MemCounter mc_variable_parts         ("Method vars");
-MemCounter mc_restricted_pkgs        ("Restricted pkg");
-#if ENABLE_ISOLATES
-MemCounter mc_task_mirror            (" task mirrors");
-#endif
-MemCounter mc_line_number_tables     ("Linenum tables");
-MemCounter mc_total                  ("Total");
 
-MemCounter* MemCounter::all_counters[41];
-int MemCounter::counter_number = 0;
+#define DEFINE_MEMORY_COUNTER(n,s) MemCounter mc_##n(s);
+  MEMORY_COUNTERS_DO(DEFINE_MEMORY_COUNTER)
+#undef DEFINE_MEMORY_COUNTER
+
+MemCounter* MemCounter::all_counters[MemCounter::number_of_memory_counters];
+int MemCounter::counter_number;
 
 void MemCounter::reset_counters() {
   for (int i=0; i<counter_number; i++) {    
@@ -98,9 +59,6 @@ void MemCounter::reset_counters() {
 MemCounter::MemCounter(const char *n) {
   name = n;
   reset();
-  if (counter_number >= ARRAY_SIZE(all_counters)) {
-    BREAKPOINT;
-  }
   all_counters[counter_number++] = this;  
 }
 #endif
@@ -108,14 +66,14 @@ MemCounter::MemCounter(const char *n) {
 // Define all static fields of ROMWriter
 ROMWRITER_INT_FIELDS_DO(ROMWRITER_DEFINE_INT)
 OopDesc*   ROMWriter::_romwriter_oops[ROMWriter::_number_of_oop_fields];
-int        ROMWriter::_last_oop_streaming_offset = 0;
-int        ROMWriter::_streaming_index = 0;
-OopDesc *  ROMWriter::_streaming_oop = NULL;
-TypeArray* ROMWriter::_streaming_fieldmap = NULL;
+int        ROMWriter::_last_oop_streaming_offset;
+int        ROMWriter::_streaming_index;
+OopDesc *  ROMWriter::_streaming_oop;
+TypeArray* ROMWriter::_streaming_fieldmap;
 
 void ROMWriter::oops_do(void do_oop(OopDesc**)) {
   if (is_active()) {
-    for (int i=_number_of_oop_fields-1; i>=0; i--) {
+    for( int i = _number_of_oop_fields; --i >= 0; ) {
       do_oop(&_romwriter_oops[i]);
     }
     ROMOptimizer::oops_do(do_oop);
@@ -137,7 +95,6 @@ void ROMWriter::restore_file_streams() {
 }
 
 void ROMWriter::initialize() {
-
 }
 
 void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
@@ -427,34 +384,31 @@ void ROMWriter::add_pending_object(Oop *object JVM_TRAPS) {
   if (write_by_reference(object)) {
     return;
   }
-  UsingFastOops fast_oops;
-  PendingLink::Fast link;
 
 #ifdef AZZERT
   if (object->is_thread()) {
     BREAKPOINT;
   }
 #endif
-  if (pending_links_cache()->not_null()) {
-    link = pending_links_cache()->obj();
+
+  PendingLink::Raw link = pending_links_cache()->obj();
+  if( link.not_null() ) {
     *pending_links_cache() = pending_links_cache()->next();
     link().clear_next();
   } else {
     link = Universe::new_mixed_oop(MixedOopDesc::Type_PendingLink,
                                    PendingLink::allocation_size(), 
                                    PendingLink::pointer_count()
-                                   JVM_CHECK);
+                                   JVM_ZCHECK(link));
   }
-
   link().set_pending_obj(object);
   
   if (pending_links_head()->is_null()) {
     *pending_links_head() = link.obj();
-    *pending_links_tail() = link.obj();
   } else {
     pending_links_tail()->set_next(&link);
-    *pending_links_tail() = link.obj();
   }
+  *pending_links_tail() = link.obj();
 }
 
 ReturnOop ROMWriter::remove_pending_object() {
@@ -535,6 +489,9 @@ void ROMWriter::write_report(Stream *st, jlong elapsed) {
     mc_symbol_table.print(st);
     mc_string_table.print(st);
     mc_restricted_pkgs.print(st);
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+    mc_hidden_classes.print(st);
+#endif
     mc_variable_parts.print(st);
     mc_line_number_tables.print(st);
     MemCounter::print_separator(st);
