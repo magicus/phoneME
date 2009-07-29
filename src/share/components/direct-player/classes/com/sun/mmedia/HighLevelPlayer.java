@@ -640,6 +640,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if( !handledByJava )
         {
+            if( !handledByDevice && !mediaFormat.equals(MEDIA_FORMAT_TONE) )
+            {
+                directInputThread = new DirectInputThread( this );
+                directInputThread.start();
+            }
             /* try to realize native player */
             nRealize(hNative, type);
         }
@@ -664,13 +669,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             /* predownload media data to recognize media format and/or 
                specific media parameters (e.g. duration) */
             if (!mediaFormat.equals(MEDIA_FORMAT_TONE)) {
-                directInputThread = new DirectInputThread( this );
-
-                directInputThread.start();
-
                 final Object realizeLock = directInputThread;
-                synchronized( realizeLock )
-                {
+                synchronized( realizeLock ) {
                     try {
                         realizeLock.wait();
                     } catch (InterruptedException ex) {
