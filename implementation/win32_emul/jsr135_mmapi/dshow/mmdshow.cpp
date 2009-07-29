@@ -54,7 +54,7 @@ static void PRINTF( const char* fmt, ... ) {
     vsprintf( str8, fmt, args );
     va_end(args);
 
-    //OutputDebugString( str8 );
+    OutputDebugString( str8 );
 }
 
 #define MAX_DSHOW_PLAYERS   1024
@@ -649,6 +649,13 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         p->mediaType = JC_FMT_AMR;
         mime = (javacall_const_utf16_string)L"audio/amr";
+        mimeLength = wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mimeLength, L"audio/wav" ) ||
+             mime_equal( mime, mimeLength, L"audio/x-wav" ))
+    {
+        p->mediaType = JC_FMT_MS_PCM;
+        mime = (javacall_const_utf16_string)L"audio/wav";
         mimeLength = wcslen( (const wchar_t*)mime );
     }
     else
