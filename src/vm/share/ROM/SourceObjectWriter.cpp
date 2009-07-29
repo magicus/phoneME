@@ -1330,32 +1330,30 @@ void SourceObjectWriter::count(Oop *object, int adjustment) {
 
   switch (instance_size.value()) {
     case InstanceSize::size_symbol:
-      count(mc_symbol, num_bytes);
+      count(MemCounter::symbol(), num_bytes);
       break;
     case InstanceSize::size_generic_near:
     case InstanceSize::size_java_near:
     case InstanceSize::size_obj_near:
-      count(mc_meta, num_bytes);
+      count(MemCounter::meta(), num_bytes);
       break;
 
     case InstanceSize::size_type_array_1:
-      count(mc_array1, num_bytes);
+      count(MemCounter::array1(), num_bytes);
       break;
     case InstanceSize::size_type_array_2:
-      if (object->is_char_array()) {
-        count(mc_array2c, num_bytes);
-      } else {
-        count(mc_array2s, num_bytes);
-      }
+      count(object->is_char_array() ? MemCounter::array2c()
+                                    : MemCounter::array2s(),
+            num_bytes);
       break;
     case InstanceSize::size_type_array_4:
-      count(mc_array4, num_bytes);
+      count(MemCounter::array4(), num_bytes);
       break;
     case InstanceSize::size_type_array_8:
-      count(mc_array8, num_bytes);
+      count(MemCounter::array8(), num_bytes);
       break;
     case InstanceSize::size_obj_array:
-      count(mc_obj_array, num_bytes);
+      count(MemCounter::obj_array(), num_bytes);
       break;
 
     case InstanceSize::size_method: {
@@ -1365,38 +1363,38 @@ void SourceObjectWriter::count(Oop *object, int adjustment) {
 
         if (has_split_variable_part(method)) {
           num_bytes = method->object_size() + adjustment;
-          mc_variable_parts.add_data_bytes(sizeof(MethodVariablePart));
-          mc_total.add_data_bytes(sizeof(MethodVariablePart));
+          MemCounter::variable_parts().add_data_bytes(sizeof(MethodVariablePart));
+          MemCounter::total().add_data_bytes(sizeof(MethodVariablePart));
         }
 
-        count(mc_method, num_bytes);
-        count(mc_method_header, header_size);
+        count(MemCounter::method(), num_bytes);
+        count(MemCounter::method_header(), header_size);
         if (body_size > 0) {
-          count(mc_method_body, body_size);
+          count(MemCounter::method_body(), body_size);
         }
         if (method->is_native()) {
-          count(mc_native_method, num_bytes);
+          count(MemCounter::native_method(), num_bytes);
         }
         if (method->is_abstract()) {
-          count(mc_abstract_method, num_bytes);
+          count(MemCounter::abstract_method(), num_bytes);
         }
         if (!method->is_static()) {
-          count(mc_virtual_method, num_bytes);
+          count(MemCounter::virtual_method(), num_bytes);
         }
         Symbol name = method->name();
         if (name.equals(Symbols::class_initializer_name())) {
-          count(mc_clinit_method, num_bytes);
+          count(MemCounter::clinit_method(), num_bytes);
         }
         if (name.equals(Symbols::unknown())) {
-          count(mc_renamed_method, num_bytes);
+          count(MemCounter::renamed_method(), num_bytes);
           if (method->is_abstract()) {
-            count(mc_renamed_abstract_method, num_bytes);
+            count(MemCounter::renamed_abstract_method(), num_bytes);
           }
         }
         TypeArray::Raw exception_table = method->exception_table();
         if (exception_table().length() > 0) {
           int bytes = exception_table().length() * 2 + 8;
-          count(mc_exception_table, bytes);
+          count(MemCounter::exception_table(), bytes);
         }
 #if ENABLE_ROM_JAVA_DEBUGGER
         LineVarTable::Raw lvt = method->line_var_table();
@@ -1407,42 +1405,42 @@ void SourceObjectWriter::count(Oop *object, int adjustment) {
         if (!lvt.is_null() && !lnt.is_null() && lnt().count() > 0) {
           int bytes = lnt().length() * (lnt().is_compressed() ?
                                         sizeof(jubyte) : sizeof(jshort));
-          count(mc_line_number_tables, bytes);
+          count(MemCounter::line_number_tables(), bytes);
         }
 #endif
       }
       break;
 
     case InstanceSize::size_compiled_method:
-      count(mc_compiled_method, num_bytes);
+      count(MemCounter::compiled_method(), num_bytes);
       break;
 
     case InstanceSize::size_constant_pool:
-      count(mc_constant_pool, num_bytes);
+      count(MemCounter::constant_pool(), num_bytes);
       break;
 
     case InstanceSize::size_obj_array_class:
     case InstanceSize::size_type_array_class:
-      count(mc_array_class, num_bytes);
+      count(MemCounter::array_class(), num_bytes);
       break;
 
     case InstanceSize::size_class_info:
       {
         ClassInfo::Raw info = object;
-        count(mc_class_info, num_bytes);
+        count(MemCounter::class_info(), num_bytes);
 
         if (info().vtable_length() > 0) {
-          count(mc_vtable, info().vtable_length() * sizeof(jobject));
+          count(MemCounter::vtable(), info().vtable_length() * sizeof(jobject));
         }
         if (info().itable_length() > 0) {
-          count(mc_itable, info().itable_size());
+          count(MemCounter::itable(), info().itable_size());
         }
       }
       break;
 
     case InstanceSize::size_stackmap_list:
       {
-        count(mc_stackmap, num_bytes);
+        count(MemCounter::stackmap(), num_bytes);
         StackmapList entry = object;
         int entry_count = entry.entry_count();
         for (int i = 0; i < entry_count; i++) {
@@ -1451,25 +1449,25 @@ void SourceObjectWriter::count(Oop *object, int adjustment) {
             SETUP_ERROR_CHECKER_ARG;
             int skip = writer()->skip_words_of(&longmap JVM_NO_CHECK);
             GUARANTEE(!CURRENT_HAS_PENDING_EXCEPTION, "sanity");
-            count(mc_longmaps, longmap.object_size() - skip* sizeof(int));
+            count(MemCounter::longmaps(), longmap.object_size() - skip* sizeof(int));
           }
         }
       }
       break;
 
     case InstanceSize::size_far_class:
-      count(mc_meta, num_bytes);
+      count(MemCounter::meta(), num_bytes);
       break;
 
     case InstanceSize::size_instance_class: {
-        count(mc_instance_class, num_bytes);
+        count(MemCounter::instance_class(), num_bytes);
         InstanceClass *ic = (InstanceClass *)object;
         if (!ic->is_fake_class() && ic->is_initialized()) {
-          count(mc_inited_class, num_bytes);
+          count(MemCounter::inited_class(), num_bytes);
         }
         Symbol name = ic->name();
         if (name.equals(Symbols::unknown())) {
-          count(mc_renamed_class, num_bytes);
+          count(MemCounter::renamed_class(), num_bytes);
         }
         if (ic->has_embedded_static_oops()) {
           // Classes with embedded oop static fields must live in heap so that
@@ -1478,27 +1476,24 @@ void SourceObjectWriter::count(Oop *object, int adjustment) {
                    "Classes with embedded static oop fields must live in heap");
         }
         if (ic->static_field_size() > 0) {
-          count(mc_static_fields, ic->static_field_size());
+          count(MemCounter::static_fields(), ic->static_field_size());
         }
       }
       break;
 #if ENABLE_ISOLATES
     case InstanceSize::size_task_mirror:
       { 
-        count(mc_task_mirror, num_bytes);
+        count(MemCounter::task_mirror(), num_bytes);
         break;
       }
 #endif
     default:
-      if (object->is_string()) {
-        count(mc_string, num_bytes);
-      } else {
-        count(mc_other, num_bytes);
-      }
+      count(object->is_string() ? MemCounter::string() : MemCounter::other(),
+            num_bytes);
       break;
   }
 
-  count(mc_total, num_bytes);
+  count(MemCounter::total(), num_bytes);
 }
 
 void SourceObjectWriter::count(MemCounter& counter, int bytes) {
@@ -1518,12 +1513,12 @@ void SourceObjectWriter::count(MemCounter& counter, int bytes) {
      break;
 #endif  
   default:
-      SHOULD_NOT_REACH_HERE();
+     SHOULD_NOT_REACH_HERE();
   }
 }
 
-bool SourceObjectWriter::is_subtype(ROMWriter::BlockType type_to_check, ROMWriter::BlockType type) {
-  
+bool SourceObjectWriter::is_subtype(ROMWriter::BlockType type_to_check,
+                                    ROMWriter::BlockType type) {  
   if (type_to_check == type) {
     return true;
   } 

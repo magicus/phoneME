@@ -1463,9 +1463,9 @@ void SourceROMWriter::print_packages_list(ROMVector* patterns) {
   } 
   main_stream()->print_cr("\n  0");
 
-  mc_restricted_pkgs.text_bytes   += num_bytes;
-  mc_restricted_pkgs.text_objects += num_pkgs;
-  mc_total.add_text(num_bytes);
+  MemCounter::restricted_pkgs().text_bytes   += num_bytes;
+  MemCounter::restricted_pkgs().text_objects += num_pkgs;
+  MemCounter::total().add_text(num_bytes);
 }
 
 
@@ -1573,9 +1573,9 @@ void SourceROMWriter::write_hidden_classes(void) {
   }
   main_stream()->print_cr("}; // _rom_hidden_classes_bitmaps\n");   
 
-  mc_hidden_classes.text_bytes   = total_size;
-  mc_hidden_classes.text_objects = profiles_count;
-  mc_total.add_text(total_size);
+  MemCounter::hidden_classes().text_bytes   = total_size;
+  MemCounter::hidden_classes().text_objects = profiles_count;
+  MemCounter::total().add_text(total_size);
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 

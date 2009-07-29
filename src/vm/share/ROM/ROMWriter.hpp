@@ -877,155 +877,151 @@ public:
 
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-#define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)  \
-   template(hidden_classes,         "Hidden cls maps" )
+#define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)\
+   template(hidden_classes        )
 #else
 #define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)
 #endif
 
 #if ENABLE_ISOLATES
-#define ISOLATES_MEMORY_COUNTERS_DO(template)  \
-  template(task_mirror,             " task mirrors"   )
+#define ISOLATES_MEMORY_COUNTERS_DO(template)\
+  template(task_mirror            )
 #else
 #define ISOLATES_MEMORY_COUNTERS_DO(template)
 #endif
 
-#define MEMORY_COUNTERS_DO(template)  \
-  template(instance_class,          "InstanceClass"   )\
-  template(inited_class,            " inited"         )\
-  template(renamed_class,           " renamed"        )\
-  template(static_fields,           " static fields"  )\
-  template(vtable,                  " vtables"        )\
-  template(itable,                  " itables"        )\
-  template(array_class,             "ArrayClass"      )\
-  template(class_info,              "ClassInfo"       )\
-  template(method,                  "Method"          )\
-  template(method_header,           " header"         )\
-  template(method_body,             " body"           )\
-  template(compiled_method,         " compiled"       )\
-  template(native_method,           " native"         )\
-  template(abstract_method,         " abstract"       )\
-  template(virtual_method,          " virtual"        )\
-  template(renamed_method,          " renamed"        )\
-  template(renamed_abstract_method, "  abstract"      )\
-  template(clinit_method,           " <clinit>"       )\
-  template(exception_table,         " except. tab"    )\
-  template(constant_pool,           "Constant Pool"   )\
-  template(stackmap,                "Stackmaps"       )\
-  template(longmaps,                " longmaps"       )\
-  template(symbol,                  "Symbol"          )\
-  template(encoded_symbol,          " encoded"        )\
-  template(string,                  "String"          )\
-  template(array1,                  "Array_1"         )\
-  template(array2s,                 "Array_2(short)"  )\
-  template(array2c,                 "Array_2(char)"   )\
-  template(array4,                  "Array_4"         )\
-  template(array8,                  "Array_8"         )\
-  template(obj_array,               "Object Array"    )\
-  template(meta,                    "Meta objects"    )\
-  template(other,                   "Other objects"   )\
-  template(pers_handles,            "Pers. Handles"   )\
-  template(symbol_table,            "Symbol Table"    )\
-  template(string_table,            "String Table"    )\
-  template(variable_parts,          "Method vars"     )\
-  template(restricted_pkgs,         "Restricted pkg"  )\
-  template(line_number_tables,      "Linenum tables"  )\
-  template(total,                   "Total"           )\
+#define MEMORY_COUNTERS_DO(template)\
+  template(instance_class         )\
+  template(inited_class           )\
+  template(renamed_class          )\
+  template(static_fields          )\
+  template(vtable                 )\
+  template(itable                 )\
+  template(array_class            )\
+  template(class_info             )\
+  template(method                 )\
+  template(method_header          )\
+  template(method_body            )\
+  template(compiled_method        )\
+  template(native_method          )\
+  template(abstract_method        )\
+  template(virtual_method         )\
+  template(renamed_method         )\
+  template(renamed_abstract_method)\
+  template(clinit_method          )\
+  template(exception_table        )\
+  template(constant_pool          )\
+  template(stackmap               )\
+  template(longmaps               )\
+  template(symbol                 )\
+  template(encoded_symbol         )\
+  template(string                 )\
+  template(array1                 )\
+  template(array2s                )\
+  template(array2c                )\
+  template(array4                 )\
+  template(array8                 )\
+  template(obj_array              )\
+  template(meta                   )\
+  template(other                  )\
+  template(pers_handles           )\
+  template(symbol_table           )\
+  template(string_table           )\
+  template(variable_parts         )\
+  template(restricted_pkgs        )\
+  template(line_number_tables     )\
+  template(total                  )\
   MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)\
   ISOLATES_MEMORY_COUNTERS_DO(template)
 
 class MemCounter {
+private:
   enum {
-    #define COUNT_MEMORY_COUNTER(n,s) _##n,
+    #define COUNT_MEMORY_COUNTER(n) _##n,
       MEMORY_COUNTERS_DO(COUNT_MEMORY_COUNTER)
     #undef COUNT_MEMORY_COUNTER
     number_of_memory_counters
   };
 
-  static MemCounter* all_counters[number_of_memory_counters];
-  static int counter_number;  
+  static MemCounter _data[number_of_memory_counters];
+
+  static MemCounter& at(const int i) {
+    GUARANTEE(unsigned(i) < number_of_memory_counters, "Sanity");
+    return _data[i];
+  }
+
+  void print(Stream* stream, const char name[]);
+  void print_raw(Stream* stream, const char name[]);
 
 public:
-  const char* name;
   int text_bytes, text_objects;
   int data_bytes, data_objects;
   int heap_bytes, heap_objects;  
 #if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
   int tm_bytes, tm_objects;  
 #endif
-  MemCounter(const char *n);
-
-  int all_bytes() const {
+  int all_bytes(void) const {
     return text_bytes + data_bytes + heap_bytes;
   }
 
-  int all_objects() const {
+  int all_objects(void) const {
     return text_objects + data_objects + heap_objects;
   }
 
-  int dynamic_bytes() const {
+  int dynamic_bytes(void) const {
     return data_bytes + heap_bytes;
   }
 
-  int dynamic_objects() const {
+  int dynamic_objects(void) const {
     return data_objects + heap_objects;
   }
 
-  void add_text(int bytes) {
+  void add_text(const int bytes) {
     text_objects ++;
     text_bytes += bytes;
   }
-  void add_text_bytes(int bytes) {
+  void add_text_bytes(const int bytes) {
     text_bytes += bytes;
   }
-  void add_data(int bytes) {
+  void add_data(const int bytes) {
     data_objects ++;
     data_bytes += bytes;
   }
-  void add_data_bytes(int bytes) {
+  void add_data_bytes(const int bytes) {
     data_bytes += bytes;
   }
-  void add_heap(int bytes) {
+  void add_heap(const int bytes) {
     heap_objects ++;
     heap_bytes += bytes;
   }
-  void add_heap_bytes(int bytes) {
+  void add_heap_bytes(const int bytes) {
     heap_bytes += bytes;
   }
 #if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES  
-  void add_tm(int bytes) { 
+  void add_tm(const int bytes) { 
     tm_objects ++; 
     tm_bytes += bytes; 
   } 
-  void add_tm_bytes(int bytes) { 
+  void add_tm_bytes(const int bytes) { 
     tm_bytes += bytes; 
   } 
 #endif 
-  void reset() {
-    text_objects = 0;
-    data_objects = 0;
-    heap_objects = 0;
-    text_bytes   = 0;
-    data_bytes   = 0;
-    heap_bytes   = 0;
-#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
-    tm_bytes = tm_objects = 0;
-#endif  
-  }
 
-  void print(Stream *stream);
   static void print_percent(Stream *stream, const char *name, 
                             int objs, int bytes, int all_bytes);
   static void print_percent(Stream *stream, int n, int total);
   static void print_header(Stream *stream);
   static void print_separator(Stream *stream);
 
-  static void reset_counters();
-};
+  static void print_all(Stream* stream);
+  static void reset(void) {
+    jvm_memset(&_data, 0, sizeof _data);
+  }
 
-#define DECLARE_MEMORY_COUNTER(n,s) extern MemCounter mc_##n;
-MEMORY_COUNTERS_DO(DECLARE_MEMORY_COUNTER)
-#undef DECLARE_MEMORY_COUNTER
+#define DEFINE_MEM_COUNTER_ACCESSOR(n) static MemCounter& n(void) { return at(_##n); }
+  MEMORY_COUNTERS_DO(DEFINE_MEM_COUNTER_ACCESSOR)
+#undef DEFINE_MEM_COUNTER_ACCESSOR
+};
 
 /*
  * Macros for quickly looping through the romizer hashtable
