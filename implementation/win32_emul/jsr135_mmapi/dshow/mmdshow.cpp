@@ -570,6 +570,12 @@ static void realize_thread( void* param )
 
     PRINTF( "*** creating dshow player ***\n" );
 
+    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
+                                      appId,
+                                      playerId, 
+                                      JAVACALL_OK,
+                                      NULL );
+
     bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
 
     PRINTF( "*** dshow player create finished (%s), realize complete ***\n",
