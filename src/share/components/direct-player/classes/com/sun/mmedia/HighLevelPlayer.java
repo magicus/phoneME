@@ -361,23 +361,23 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
         this.deviceName = deviceName;
-        if (state == REALIZED) {
+        if (true || state == REALIZED) {
             synchronized (deviceNotAvailableSync) {
-                if (available != !deviceNotAvailable) {
+                //if (available != !deviceNotAvailable) {
                     if (available) {
-                        deviceNotAvailable = false;
+                        //deviceNotAvailable = false;
                         sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
                     } else {
-                        deviceNotAvailable = true;
+                        //deviceNotAvailable = true;
                         sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
                     }
-                }
+                //}
             }
             return;
         }
-        if (available && state > REALIZED) {
-            return;
-        }
+        //if (available && state > REALIZED) {
+        //    return;
+        //}
         
         new Thread(new Runnable() {
             public void run() {
@@ -392,15 +392,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     }
                     if (getState() == REALIZED) {
                         synchronized (deviceNotAvailableSync) {
-                            if (available != !deviceNotAvailable) {
+                            //if (available != !deviceNotAvailable) {
                                 if (available) {
-                                    deviceNotAvailable = false;
+                                    //deviceNotAvailable = false;
                                     sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
                                 } else {
-                                    deviceNotAvailable = true;
+                                    //deviceNotAvailable = true;
                                     sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
                                 }
-                            }
+                            //}
                         }
                     }
                 } catch (IllegalStateException ise) {
@@ -1647,6 +1647,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         Enumeration mp = mplayers.elements();
         while (mp.hasMoreElements()) {
+            
             PlayerWrapper pw = (PlayerWrapper)mp.nextElement();
             HighLevelPlayer p = pw.getPlayer();
             if (p != null) {
