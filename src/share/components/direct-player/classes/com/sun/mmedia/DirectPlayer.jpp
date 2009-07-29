@@ -322,23 +322,26 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private void prefetchData() throws MediaException
     {
         int hNative = getOwner().getNativeHandle();
+        final Object prefetchLock = getOwner().getDirectInputThread();
+            
         /* prefetch native player */
-        if (!nPrefetch(hNative)) {
-            throw new MediaException("Can not prefetch");
-        }
-
-        if (!getOwner().handledByDevice) {
+        if ( !getOwner().handledByDevice && null != prefetchLock ) {
             /* predownload media data to fill native buffers */
-            final Object prefetchLock = getOwner().getDirectInputThread();
 
-            if ( prefetchLock != null) {
-                synchronized( prefetchLock )
-                {
-                    try {
-                        prefetchLock.wait();
-                    } catch (InterruptedException ex) {
-                    }
+            synchronized( prefetchLock )
+            {
+                if (!nPrefetch(hNative)) {
+                    throw new MediaException("Can not prefetch");
                 }
+                try {
+                    prefetchLock.wait();
+                } catch (InterruptedException ex) {
+                }
+            }
+        }
+        else {
+            if (!nPrefetch(hNative)) {
+                throw new MediaException("Can not prefetch");
             }
         }
     }

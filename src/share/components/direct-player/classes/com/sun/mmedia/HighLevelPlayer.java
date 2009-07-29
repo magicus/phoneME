@@ -644,11 +644,26 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         {
             if( !handledByDevice && !mediaFormat.equals(MEDIA_FORMAT_TONE) )
             {
+            /* predownload media data to recognize media format and/or
+               specific media parameters (e.g. duration) */
+
                 directInputThread = new DirectInputThread( this );
                 directInputThread.start();
+                final Object realizeLock = directInputThread;
+                synchronized( realizeLock ) {
+                    /* try to realize native player */
+                    nRealize(hNative, type);
+                    try {
+                        realizeLock.wait();
+                    } catch (InterruptedException ex) {
+                        abort( "Realize() was interrupted" );
+                    }
+                }
             }
-            /* try to realize native player */
-            nRealize(hNative, type);
+            else {
+                /* try to realize native player */
+                nRealize(hNative, type);
+            }
         }
 
         if (!handledByDevice && !handledByJava) {
@@ -664,18 +679,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     setHandledByJava();
                 } else {
                     throw new MediaException("Unsupported media format ('" + type + "','" + mediaFormat + "')");
-                }
-            }
-            /* predownload media data to recognize media format and/or 
-               specific media parameters (e.g. duration) */
-            if (!mediaFormat.equals(MEDIA_FORMAT_TONE)) {
-                final Object realizeLock = directInputThread;
-                synchronized( realizeLock ) {
-                    try {
-                        realizeLock.wait();
-                    } catch (InterruptedException ex) {
-                        abort( "Realize() was interrupted" );
-                    }
                 }
             }
         }
