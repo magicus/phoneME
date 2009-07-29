@@ -1083,14 +1083,26 @@ javanotify_fluid_listener_percentage (
     
 void
 javanotify_fluid_listener_started (
-    javacall_handle                       fluid_image,
-    javacall_handle                       new_image
+    javacall_handle                       fluid_image
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_STARTED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.spare = new_image;
+
+    midp_jc_event_send(&e);
+}
+    
+void
+javanotify_fluid_image_spawned (
+    javacall_handle                       fluid_image,
+    javacall_handle                       spawn_request
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_IMAGE_SPAWNED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.spare       = spawn_request;
 
     midp_jc_event_send(&e);
 }
@@ -1111,17 +1123,18 @@ javanotify_fluid_listener_warning (
 
 void
 javanotify_fluid_listener_document_available (
-    javacall_handle                       fluid_image,
-    javacall_handle                       document
+    javacall_handle                       fluid_image
     ) {
 	midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_DOCUMENT_AVAILABLE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.spare = document;
 
     midp_jc_event_send(&e);
 }
+
+#include <stdio.h>
+#include <javacall_logging.h>
 
 void
 javanotify_fluid_request_resource (
