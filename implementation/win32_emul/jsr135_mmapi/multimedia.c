@@ -948,6 +948,21 @@ javacall_result javacall_media_release_device(javacall_handle handle)
 }
 
 /**
+ *
+ */
+javacall_result javacall_media_clear_buffer(javacall_handle handle)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_BASIC_ITF(pItf, clear_buffer)) {
+        ret = pItf->vptrBasic->clear_buffer(pPlayer->mediaHandle);
+    }
+    return ret;
+}
+
+/**
  * Is this protocol handled by device? If yes return JAVACALL_OK.
  */
 javacall_result javacall_media_download_handled_by_device(javacall_handle handle,

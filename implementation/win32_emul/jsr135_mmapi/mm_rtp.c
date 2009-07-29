@@ -559,6 +559,7 @@ static media_basic_interface _rtp_basic_itf =
     rtp_destroy,
     rtp_acquire_device,
     rtp_release_device,
+    rtp_clear_buffer,
     rtp_realize,
     rtp_prefetch,
     rtp_start,

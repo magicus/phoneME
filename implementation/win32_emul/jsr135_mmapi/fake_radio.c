@@ -159,6 +159,7 @@ static media_basic_interface _fake_radio_basic_itf = {
     fake_radio_release_device,
     NULL,
     NULL,
+    NULL,
     fake_radio_start,
     fake_radio_stop,
     fake_radio_pause,

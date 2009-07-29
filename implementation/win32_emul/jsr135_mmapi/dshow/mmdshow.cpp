@@ -995,6 +995,7 @@ static media_basic_interface _dshow_basic_itf =
     dshow_destroy,
     dshow_acquire_device,
     dshow_release_device,
+    NULL,
     dshow_realize,
     dshow_prefetch,
     dshow_start,

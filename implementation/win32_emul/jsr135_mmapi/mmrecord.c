@@ -433,6 +433,7 @@ static media_basic_interface _recorder_basic_itf = {
     recorder_release_device,
     NULL,
     NULL,
+    NULL,
     recorder_start,
     recorder_stop,
     recorder_pause,

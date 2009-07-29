@@ -759,6 +759,7 @@ static media_basic_interface _audio_basic_itf = {
     audio_destroy,
     audio_acquire_device,
     audio_release_device,
+    NULL, // clear buffer
     NULL, // realize
     NULL, // prefetch
     audio_start,

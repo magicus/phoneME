@@ -3084,6 +3084,7 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_destroy,
     audio_qs_acquire_device,
     audio_qs_release_device,
+    audio_qs_clear_buffer,
     audio_qs_realize,
     audio_qs_prefetch,
     audio_qs_start,

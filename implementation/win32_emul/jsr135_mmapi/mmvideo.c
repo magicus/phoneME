@@ -613,6 +613,7 @@ static media_basic_interface _video_basic_itf = {
     video_destroy,
     video_acquire_device,
     video_release_device,
+    video_clear_buffer,
     NULL, // realize
     NULL, // prefetch
     video_start,

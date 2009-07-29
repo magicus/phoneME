@@ -291,6 +291,7 @@ static media_basic_interface _basic_itf = {
     interactive_midi_release_device,
     NULL,
     NULL,
+    NULL,
     interactive_midi_start,
     interactive_midi_stop,
     interactive_midi_pause,
