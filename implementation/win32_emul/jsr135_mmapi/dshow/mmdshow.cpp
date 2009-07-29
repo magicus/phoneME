@@ -571,8 +571,8 @@ static void realize_thread( void* param )
     PRINTF( "*** creating dshow player ***\n" );
 
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
-                                      appId,
-                                      playerId, 
+                                      p->appId,
+                                      p->playerId, 
                                       JAVACALL_OK,
                                       NULL );
 
