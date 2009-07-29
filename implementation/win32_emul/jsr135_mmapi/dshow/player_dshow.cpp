@@ -398,7 +398,12 @@ class player_dshow : public player
     // result add_player_listener(player_listener *pplayer_listener)
     // result remove_player_listener(player_listener *pplayer_listener)
 
-    bool data(nat32 len, const void *pdata)
+    result set_stream_length(int64 /*length*/)
+    {
+        return result_success;
+    }
+
+    /*bool data(nat32 len, const void *pdata)
     {
         if(state == unrealized || state == realized || state == prefetched ||
             state == started)
@@ -410,7 +415,7 @@ class player_dshow : public player
         }
 
         return pfi->data(len, pdata);
-    }
+    }*/
 
     friend bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer);
 };
