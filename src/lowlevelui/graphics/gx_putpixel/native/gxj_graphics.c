@@ -264,8 +264,8 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
 
 #define SRC_PIXEL_TO_DEST_WITH_ALPHA_32(pSrc, pDest) \
         src = *pSrc++;  \
-        As = src >> 26; \
-        if (As == 0x3F) {   \
+        As = src >> 24; \
+        if (As == 0xFF) {   \
             *pDest = GXJ_MIDPTOOPAQUEPIXEL_32(src);  \
         } else if (As != 0) {   \
             *pDest = alphaComposition32(src, *pDest);   \
@@ -274,8 +274,8 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
 
 #define SRC_PIXEL_TO_DEST_WITH_ALPHA_16(pSrc, pDest) \
         src = *pSrc++;  \
-        As = src >> 26; \
-        if (As == 0x3F) {   \
+        As = src >> 24; \
+        if (As == 0xFF) {   \
             *pDest = GXJ_MIDPTOOPAQUEPIXEL_16(src);  \
         } else if (As != 0) {   \
             *pDest = alphaComposition16(src, *pDest, (unsigned char)As);   \
@@ -296,8 +296,8 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
 
 #define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
         src = *pSrc++;  \
-        As = src >> 26; \
-        if (As == 0x3F) {   \
+        As = src >> 24; \
+        if (As == 0xFF) {   \
             *pDest = GXJ_MIDPTOOPAQUEPIXEL(src);  \
         } else if (As != 0) {   \
             *pDest = alphaComposition32(src, *pDest);   \
@@ -311,8 +311,8 @@ extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
 
 #define SRC_PIXEL_TO_DEST_WITH_ALPHA(pSrc, pDest) \
         src = *pSrc++;  \
-        As = src >> 26; \
-        if (As == 0x3F) {   \
+        As = src >> 24; \
+        if (As == 0xFF) {   \
             *pDest = GXJ_MIDPTOOPAQUEPIXEL(src);  \
         } else if (As != 0) {   \
             *pDest = alphaComposition16(src, *pDest, (unsigned char)As);   \
