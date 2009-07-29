@@ -26,8 +26,6 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 
@@ -47,26 +45,22 @@ class DirectInputThread extends Thread {
 
     final private HighLevelPlayer owner;
     private byte[] tmpBuf = new byte [ 0x1000 ];  // 4 Kbytes
-    private boolean isDismissed = false;
+    private volatile boolean isDismissed = false;
     private boolean isFrozen = false;
 
     private final Object dataWriteLock = new Object();
-    private final Object requestLock;
-    private final Object streamReadLock = new Object();
+    private final Object requestLock = new Object();
 
     DirectInputThread(HighLevelPlayer p) throws MediaException {
         long len = p.stream.getContentLength();
-        if( -1 != len )
-        {
+        if( -1 != len ) {
             nNotifyStreamLen( p.getNativeHandle(), len );
         }
-        else
-        {
+        else {
             throw new MediaException(
                     "Cannot playback stream with unknown length" );
         }
         this.owner = p;
-        requestLock = this;
     }
     
 
@@ -78,56 +72,45 @@ class DirectInputThread extends Thread {
     public void run(){
 
 mainloop:
-        for(;;)
-        {
-            synchronized( requestLock ) {
-                if( isDismissed ) {
-                    return;
-                }
+        for(;;) {
+            if( isDismissed ) {
+                return;
+            }
 
-                if( requestPending )
-                {
-                    lenToRead = 1;
+            synchronized( requestLock ) {
+                if( requestPending ) {
                     requestPending = false;
                 }
-                else
-                {
-                   lenToRead = 0;
+                else {
                     try {
                         requestLock.wait();
                     } catch (InterruptedException ex) {
                         //owner.abort("Stream reading thread was interrupted");
                         return;
                     }
-                   continue;
+                    continue;
                 }
             }
 
-            if( lenToRead > 0 )
-            {
-                nGetRequestParams( owner.getNativeHandle() );
+            nGetRequestParams( owner.getNativeHandle() );
+
+            while( 0 < lenToRead ) {
+                int read = 0;
+                
                 if( isDismissed ) {
                     return;
                 }
-            }
 
-            while( 0 < lenToRead )
-            {
-                int read = 0;
-                
                 try {
-                    synchronized( streamReadLock )
-                    {
-                        seek();
+                    seek();
 
-                        if( isDismissed ) {
-                            return;
-                        }
-
-                        int len = lenToRead > tmpBuf.length ?
-                                        tmpBuf.length : lenToRead;
-                        read = owner.stream.read(tmpBuf, 0, len);
+                    if( isDismissed ) {
+                        return;
                     }
+
+                    int len = lenToRead > tmpBuf.length ?
+                                    tmpBuf.length : lenToRead;
+                    read = owner.stream.read(tmpBuf, 0, len);
                 } catch ( MediaException ex) {
                     owner.abort( ex.getMessage() );
                     return;
@@ -137,30 +120,22 @@ mainloop:
                     return;
                 }
 
-                synchronized( dataWriteLock )
-                {
+                synchronized( dataWriteLock ) {
                     if( isDismissed ) {
                         return;
                     }
 
-                    if( isFrozen )
-                    {
+                    if( isFrozen ) {
                         try {
                             dataWriteLock.wait();
-                        } catch (InterruptedException ex) {
-                        }
-                        if( isDismissed ) {
-                            return;
-                        }
+                        } catch (InterruptedException ex) {}
                         continue mainloop;
                     }
                     else {
-                        if( -1 == read )
-                        {
+                        if( -1 == read ) {
                             nNotifyEndOfStream( owner.getNativeHandle() );
                         }
-                        else
-                        {
+                        else {
                             nWriteData( tmpBuf, read, owner.getNativeHandle() );
                         }
                     }
@@ -169,69 +144,53 @@ mainloop:
         }
     }
 
-    private void seek() throws IOException, MediaException
-    {
-        if( owner.stream.tell() == posToRead )
-        {
+    private void seek() throws IOException, MediaException {
+        if( owner.stream.tell() == posToRead ) {
             return;
         }
         if( owner.stream.getSeekType() ==
                 SourceStream.NOT_SEEKABLE ||
             ( posToRead != 0 &&
               owner.stream.getSeekType() !=
-                SourceStream.RANDOM_ACCESSIBLE ) )
-        {
+                SourceStream.RANDOM_ACCESSIBLE ) ) {
             throw new MediaException("The stream is not seekable");
         }
 
         owner.stream.seek(posToRead);
     }
 
-    public void requestData()
-    {
-        synchronized( requestLock )
-        {
-            this.requestPending = true;
+    public void requestData() {
+        synchronized( requestLock ) {
+            requestPending = true;
             requestLock.notify();
         }
     }
 
-    public void dismiss()
-    {
-        synchronized( streamReadLock )
-        {
-            synchronized( dataWriteLock )
-            {
-                synchronized( requestLock )
-                {
-                    isDismissed = true;
-                    requestLock.notify();
-                }
-                dataWriteLock.notify();
-            }
+    public void close() {
+        isDismissed = true;
+        synchronized (requestLock) {
+            requestLock.notify();
         }
+        synchronized( dataWriteLock ) {
+            dataWriteLock.notify();
+        }
+        try {
+            this.join();
+        } catch (InterruptedException ex) {}
     }
 
 
     // this method may take some time to execute
-    public void stopWritingAndFreeze()
-    {
-        synchronized( dataWriteLock )
-        {
-            {
-                isFrozen = true;
-            }
+    public void stopWritingAndFreeze() {
+        synchronized( dataWriteLock ) {
+            isFrozen = true;
         }
     }
 
-    public void unfreeze()
-    {
-        synchronized( dataWriteLock )
-        {
-            {
-                isFrozen = false;
-                dataWriteLock.notify();
-            }
+    public void unfreeze() {
+        synchronized( dataWriteLock ) {
+            isFrozen = false;
+            dataWriteLock.notify();
         }
     }
 }
