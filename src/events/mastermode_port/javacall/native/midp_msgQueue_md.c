@@ -340,9 +340,17 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type      = FLUID_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
+        pNewMidpEvent->intParam1 = JSR290_LISTENER_STARTED;
+        break;
+    case JSR290_JC_EVENT_FLUID_IMAGE_SPAWNED:
+        pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewMidpEvent->type      = FLUID_EVENT;
+        pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
         pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290FluidEvent.spare));
         pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
-        pNewMidpEvent->intParam1 = JSR290_LISTENER_STARTED;
+        pNewMidpEvent->intParam1 = JSR290_IMAGE_SPAWNED;
         break;
     case JSR290_JC_EVENT_FLUID_LISTENER_WARNING:
         pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
@@ -367,8 +375,6 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type      = FLUID_EVENT;
         pNewMidpEvent->intParam2 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image));
         pNewMidpEvent->intParam3 = (int)((jlong)(event->data.jsr290FluidEvent.fluid_image) >> 32);
-        pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290FluidEvent.spare));
-        pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290FluidEvent.spare) >> 32);
         pNewMidpEvent->intParam1 = JSR290_LISTENER_DOCUMENT_AVAILABLE;
         break;
     case JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE:
