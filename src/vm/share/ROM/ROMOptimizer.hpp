@@ -354,6 +354,7 @@ public:
   bool is_in_restricted_package (InstanceClass* ) const {
     // IMPL_NOTE: Monet: all classes can be considered as restricted
     return false;
+  }
   bool is_in_hidden_package(InstanceClass* ) const {
     return false;
   }

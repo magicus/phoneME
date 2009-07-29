@@ -2309,7 +2309,7 @@ ROMWriter.hpp                    NativesTable.hpp
 ROMWriter.hpp                    Method.hpp
 ROMWriter.hpp                    InstanceClass.hpp
 ROMWriter.hpp                    ConstantPool.hpp
-ROMWriter.hpp                    ROM.hpp
+ROMWriter.hpp                    ROMOptimizer.hpp
 ROMWriter.hpp                    ObjArray.hpp
 ROMWriter.hpp                    TypeArray.hpp
 ROMWriter.hpp                    FilePath.hpp
@@ -2329,8 +2329,6 @@ ROMWriter.cpp                    BinaryROMWriter.hpp
 ROMWriter.cpp                    InstanceClass.hpp
 ROMWriter.cpp                    OopDesc.inline.hpp
 ROMWriter.cpp                    JarFileParser.hpp
-
-ROMWriter.hpp                    ROMOptimizer.hpp
 
 ROMWriter.cpp                    Method.hpp
 ROMWriter.cpp                    CompiledMethod.hpp
