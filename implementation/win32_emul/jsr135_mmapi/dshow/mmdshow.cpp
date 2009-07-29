@@ -223,6 +223,9 @@ void dshow_player::playback_finished()
 
 player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata, int32 *plen)
 {
+
+    PRINTF( "*** data(@%I64d l=%i) ***\n",offset,len );
+
     dwr_offset    = offset;
     dwr_len       = len;
     dwr_pdata     = (BYTE*)pdata;
@@ -569,7 +572,15 @@ static void realize_thread( void* param )
 
     bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
 
-    PRINTF( "*** dshow player created, realize complete ***\n" );
+    PRINTF( "*** dshow player create finished (%s), realize complete ***\n",
+            (ok ? "success" : "fail") );
+
+    if( ok && 
+        NULL != p->ppl && 
+        -1 != p->whole_content_size )
+    {
+        player::result r = p->ppl->set_stream_length(p->whole_content_size);
+    }
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
                                      p->appId,
@@ -747,11 +758,19 @@ javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 lengt
 {
     dshow_player* p = (dshow_player*)handle;
 
+    PRINTF( "*** stream_length(%I64d) ***\n", length );
+
     p->whole_content_size = length;
 
-    player::result r = p->ppl->set_stream_length(length);
-
-    return (player::result_success==r) ? JAVACALL_OK : JAVACALL_FAIL;
+    if( NULL != p->ppl ) 
+    {
+        player::result r = p->ppl->set_stream_length(length);
+        return (player::result_success==r) ? JAVACALL_OK : JAVACALL_FAIL;
+    }
+    else
+    {
+        return JAVACALL_OK;
+    }
 }
 
 javacall_result dshow_get_data_request(javacall_handle handle,
@@ -765,7 +784,7 @@ javacall_result dshow_get_data_request(javacall_handle handle,
     *length = p->dwr_len;
     *data   = p->dwr_pdata;
 
-    PRINTF( "--- get_data_request: @%ld %d", *offset, *length );
+    PRINTF( "--- get_data_request: @%I64d %d", *offset, *length );
 
     return JAVACALL_OK;
 }
