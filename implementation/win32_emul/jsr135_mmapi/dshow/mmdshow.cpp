@@ -570,12 +570,6 @@ static void realize_thread( void* param )
 
     PRINTF( "*** creating dshow player ***\n" );
 
-    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
-                                      p->appId,
-                                      p->playerId, 
-                                      JAVACALL_OK,
-                                      NULL );
-
     bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
 
     PRINTF( "*** dshow player create finished (%s), realize complete ***\n",
@@ -712,23 +706,34 @@ static javacall_result dshow_prefetch(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+static void starter_thread( void* param )
+{
+    dshow_player* p = (dshow_player*)param;
+
+    PRINTF( "*** starting dshow player ***\n" );
+
+    bool ok = ( player::result_success == p->ppl->start() );
+
+    PRINTF( "*** dshow player startup finished (%s), start complete ***\n",
+            (ok ? "success" : "fail") );
+
+    p->playing = ok;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     ok ? JAVACALL_OK : JAVACALL_FAIL, NULL );
+}
+
 static javacall_result dshow_start(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
-    player::result r;
     PRINTF( "*** start, mt = %ld/%ld***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
     p->eom_sent = false;
-    if( player::result_success == p->ppl->start() )
-    {
-        PRINTF( "*** started, mt = %ld/%ld ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
-        p->playing = true;
-        return JAVACALL_OK;
-    }
-    else
-    {
-        PRINTF( "*** start failed ***\n" );
-        return JAVACALL_FAIL;
-    }
+
+    _beginthread( starter_thread, 0, p );
+
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_stop(javacall_handle handle)
