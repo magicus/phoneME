@@ -62,6 +62,18 @@ final class ImageData implements AbstractImageData {
      * Must remain 0 unless pixelData is null.
      */
     private int nativePixelData;
+
+    /**
+     * 16-bit image native romized pixel data.
+     * Used only if ENABLE_DYNAMIC_PIXEL_FORMAT=true
+     */
+    private int nativePixelData16;
+
+    /**
+     * 32-bit image native romized pixel data.
+     * Used only if ENABLE_DYNAMIC_PIXEL_FORMAT=true
+     */
+    private int nativePixelData32;
     
     /**
      * Image native romized alpha data.
@@ -92,7 +104,6 @@ final class ImageData implements AbstractImageData {
     ImageData(int width, int height, boolean isMutable,
               boolean clearPixelData,
               boolean allocateAlpha) {
-
         initImageData(width, height, isMutable, allocateAlpha);
 
         if (clearPixelData) {
@@ -118,8 +129,7 @@ final class ImageData implements AbstractImageData {
         this.width = width;
         this.height = height;
         this.isMutable = isMutable;
-
-        int length = width * height * PIXEL_SIZE;
+        int length = width * height * ImageDataFactory.bytesInPixel();
         byte[] newPixelData = new byte[length];
         System.arraycopy(pixelData, 0, newPixelData, 0, length);
 
@@ -146,7 +156,7 @@ final class ImageData implements AbstractImageData {
         this.height = height;
         this.isMutable = isMutable;
 
-        pixelData = new byte[width * height * PIXEL_SIZE];
+        pixelData = new byte[width * height * ImageDataFactory.bytesInPixel()];
 
         if (allocateAlpha) {
             alphaData = new byte[width * height];
