@@ -1732,7 +1732,7 @@ static CVMBool iterateHeapAction(CVMExecEnv *ee, void *data)
     return CVM_TRUE;
 }
 
-extern int nullifyRefs;
+int nullifyRefs = 0;
 
 CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
