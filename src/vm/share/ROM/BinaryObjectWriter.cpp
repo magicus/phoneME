@@ -351,30 +351,28 @@ void BinaryObjectWriter::count(Oop *object, int adjustment) {
 
   switch (instance_size.value()) {
     case InstanceSize::size_symbol:
-      count(MemCounter::symbol(), num_bytes);
+      count(mc_symbol(), num_bytes);
       break;
     case InstanceSize::size_generic_near:
     case InstanceSize::size_java_near:
     case InstanceSize::size_obj_near:
-      count(MemCounter::meta(), num_bytes);
+      count(mc_meta(), num_bytes);
       break;
 
     case InstanceSize::size_type_array_1:
-      count(MemCounter::array1(), num_bytes);
+      count(mc_array1(), num_bytes);
       break;
     case InstanceSize::size_type_array_2:
-      count(object->is_char_array() ? MemCounter::array2c()
-                                    : MemCounter::array2s(),
-            num_bytes);
+      count(object->is_char_array() ? mc_array2c() : mc_array2s(), num_bytes);
       break;
     case InstanceSize::size_type_array_4:
-      count(MemCounter::array4(), num_bytes);
+      count(mc_array4(), num_bytes);
       break;
     case InstanceSize::size_type_array_8:
-      count(MemCounter::array8(), num_bytes);
+      count(mc_array8(), num_bytes);
       break;
     case InstanceSize::size_obj_array:
-      count(MemCounter::obj_array(), num_bytes);
+      count(mc_obj_array(), num_bytes);
       break;
 
     case InstanceSize::size_method: {
@@ -384,72 +382,72 @@ void BinaryObjectWriter::count(Oop *object, int adjustment) {
 
         if (has_split_variable_part(method)) {
           num_bytes = method->object_size() + adjustment;
-          MemCounter::variable_parts().add_data_bytes(sizeof(MethodVariablePart));
-          MemCounter::total().add_data_bytes(sizeof(MethodVariablePart));
+          mc_variable_parts().add_data_bytes(sizeof(MethodVariablePart));
+          mc_total().add_data_bytes(sizeof(MethodVariablePart));
         }
 
-        count(MemCounter::method(), num_bytes);
-        count(MemCounter::method_header(), header_size);
+        count(mc_method(), num_bytes);
+        count(mc_method_header(), header_size);
         if (body_size > 0) {
-          count(MemCounter::method_body(), body_size);
+          count(mc_method_body(), body_size);
         }
         if (method->is_native()) {
-          count(MemCounter::native_method(), num_bytes);
+          count(mc_native_method(), num_bytes);
         }
         if (method->is_abstract()) {
-          count(MemCounter::abstract_method(), num_bytes);
+          count(mc_abstract_method(), num_bytes);
         }
         if (!method->is_static()) {
-          count(MemCounter::virtual_method(), num_bytes);
+          count(mc_virtual_method(), num_bytes);
         }
         Symbol name = method->name();
         if (name.equals(Symbols::class_initializer_name())) {
-          count(MemCounter::clinit_method(), num_bytes);
+          count(mc_clinit_method(), num_bytes);
         }
         if (name.equals(Symbols::unknown())) {
-          count(MemCounter::renamed_method(), num_bytes);
+          count(mc_renamed_method(), num_bytes);
           if (method->is_abstract()) {
-            count(MemCounter::renamed_abstract_method(), num_bytes);
+            count(mc_renamed_abstract_method(), num_bytes);
           }
         }
         TypeArray::Raw exception_table = method->exception_table();
         if (exception_table().length() > 0) {
           int bytes = exception_table().length() * 2 + 8;
-          count(MemCounter::exception_table(), bytes);
+          count(mc_exception_table(), bytes);
         }
       }
       break;
 
     case InstanceSize::size_compiled_method:
-      count(MemCounter::compiled_method(), num_bytes);
+      count(mc_compiled_method(), num_bytes);
       break;
 
     case InstanceSize::size_constant_pool:
-      count(MemCounter::constant_pool(), num_bytes);
+      count(mc_constant_pool(), num_bytes);
       break;
 
     case InstanceSize::size_obj_array_class:
     case InstanceSize::size_type_array_class:
-      count(MemCounter::array_class(), num_bytes);
+      count(mc_array_class(), num_bytes);
       break;
 
     case InstanceSize::size_class_info:
       {
         ClassInfo::Raw info = object;
-        count(MemCounter::class_info(), num_bytes);
+        count(mc_class_info(), num_bytes);
 
         if (info().vtable_length() > 0) {
-          count(MemCounter::vtable(), info().vtable_length() * sizeof(jobject));
+          count(mc_vtable(), info().vtable_length() * sizeof(jobject));
         }
         if (info().itable_length() > 0) {
-          count(MemCounter::itable(), info().itable_size());
+          count(mc_itable(), info().itable_size());
         }
       }
       break;
 
     case InstanceSize::size_stackmap_list:
       {
-        count(MemCounter::stackmap(), num_bytes);
+        count(mc_stackmap(), num_bytes);
         StackmapList entry = object;
         int entry_count = entry.entry_count();
         for (int i = 0; i < entry_count; i++) {
@@ -458,42 +456,41 @@ void BinaryObjectWriter::count(Oop *object, int adjustment) {
             SETUP_ERROR_CHECKER_ARG;
             int skip = writer()->skip_words_of(&longmap JVM_NO_CHECK);
             GUARANTEE(!CURRENT_HAS_PENDING_EXCEPTION, "sanity");
-            count(MemCounter::longmaps(), longmap.object_size() - skip* sizeof(int));
+            count(mc_longmaps(), longmap.object_size() - skip* sizeof(int));
           }
         }
       }
       break;
 
     case InstanceSize::size_far_class:
-      count(MemCounter::meta(), num_bytes);
+      count(mc_meta(), num_bytes);
       break;
 
     case InstanceSize::size_instance_class: {
-        count(MemCounter::instance_class(), num_bytes);
+        count(mc_instance_class(), num_bytes);
         InstanceClass *ic = (InstanceClass *)object;
         if (!ic->is_romized() && ic->is_initialized()) {
-          count(MemCounter::inited_class(), num_bytes);
+          count(mc_inited_class(), num_bytes);
         }
         Symbol name = ic->name();
         if (name.equals(Symbols::unknown())) {
-          count(MemCounter::renamed_class(), num_bytes);
+          count(mc_renamed_class(), num_bytes);
         }
         if (ic->static_field_size() > 0) {
           // Classes with static fields must live in heap so that
           // write barriers by byte codes can be done efficiently
           GUARANTEE(_current_type == ROMWriter::HEAP_BLOCK,
                     "Classes with static fields must live in heap");
-          count(MemCounter::static_fields(), ic->static_field_size());
+          count(mc_static_fields(), ic->static_field_size());
         }
       }
       break;
     default:
-      count(object->is_string() ? MemCounter::string() : MemCounter::other(),
-            num_bytes);
+      count(object->is_string() ? mc_string() : mc_other(), num_bytes);
       break;
   }
 
-  count(MemCounter::total(), num_bytes);
+  count(mc_total(), num_bytes);
 }
 
 void BinaryObjectWriter::count(MemCounter& counter, int bytes) {

@@ -1801,7 +1801,7 @@ public:
   }
 };
 
-BytecodeQuickenClosure *BytecodeQuickenClosure::current = NULL;
+BytecodeQuickenClosure *BytecodeQuickenClosure::current;
 
 // This is called by InterpreterRuntime.cpp and ConstantPool.cpp when
 // a bytecode quickening operation fails.

@@ -754,127 +754,6 @@ public:
   void finish();
 };
 
-class ObjectWriter : public RomOopVisitor {
-protected:
-  int _offset;
-  int _variable_parts_offset;
-  bool _string_started;
-  ROMWriter::BlockType _current_type;
-  ObjArray _method_variable_parts;
-  ROMOptimizer *optimizer;
-  Method _saved_current_method;
-  Method _saved_alt_method;
-
-public:
-  ObjectWriter() : _method_variable_parts() {
-  }
-
-  virtual void start_block(ROMWriter::BlockType /*type*/, int /*preset_count*/
-                           JVM_TRAPS)          {JVM_IGNORE_TRAPS;}
-  virtual void end_block(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
-  int variable_parts_offset() { return _variable_parts_offset;}
-
-#define INTERPRETER_ENTRIES_DO(template)          \
-  template(interpreter_method_entry)              \
-  template(interpreter_fast_method_entry_0)       \
-  template(interpreter_fast_method_entry_1)       \
-  template(interpreter_fast_method_entry_2)       \
-  template(interpreter_fast_method_entry_3)       \
-  template(interpreter_fast_method_entry_4)       \
-  \
-  template(fixed_interpreter_fast_method_entry_0) \
-  template(fixed_interpreter_fast_method_entry_1) \
-  template(fixed_interpreter_fast_method_entry_2) \
-  template(fixed_interpreter_fast_method_entry_3) \
-  template(fixed_interpreter_fast_method_entry_4) \
-  \
-  template(quick_void_native_method_entry)        \
-  template(quick_int_native_method_entry)         \
-  template(quick_obj_native_method_entry)         \
-  \
-  template(shared_fast_getbyte_accessor)          \
-  template(shared_fast_getshort_accessor)         \
-  template(shared_fast_getchar_accessor)          \
-  template(shared_fast_getint_accessor)           \
-  template(shared_fast_getlong_accessor)          \
-  template(shared_fast_getbyte_static_accessor)   \
-  template(shared_fast_getshort_static_accessor)  \
-  template(shared_fast_getchar_static_accessor)   \
-  template(shared_fast_getint_static_accessor)    \
-  template(shared_fast_getlong_static_accessor)   \
-  \
-  template(shared_fast_getfloat_accessor)         \
-  template(shared_fast_getdouble_accessor)        \
-  template(shared_fast_getfloat_static_accessor)  \
-  template(shared_fast_getdouble_static_accessor)
-
-
-#if ENABLE_COMPILER
-#define COMPILER_ENTRIES_DO(template)      \
-  template(fixed_interpreter_method_entry)
-#else
-#define COMPILER_ENTRIES_DO(template)
-#endif
-
-#if ENABLE_THUMB_COMPILER
-#define THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template) \
-  template(jvm_ladd)  \
-  template(jvm_lsub)  \
-  template(jvm_land)  \
-  template(jvm_lor)   \
-  template(jvm_lxor)  \
-  template(jvm_lcmp)  \
-  template(jvm_lmin)  \
-  template(jvm_lmax)  \
-  template(jvm_lmul)  \
-  template(jvm_lshl)  \
-  template(jvm_lshr)  \
-  template(jvm_lushr)
-#else
-#define THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template)
-#endif
-
-#if defined(ARM) && ENABLE_FLOAT && !ENABLE_SOFT_FLOAT
-#define COMPILER_FLOAT_ENTRIES_DO(template) \
-  template(jvm_fadd)  \
-  template(jvm_fsub)  \
-  template(jvm_fmul)  \
-  template(jvm_fdiv)  \
-  template(jvm_frem)  \
-  template(jvm_dadd)  \
-  template(jvm_dsub)  \
-  template(jvm_dmul)  \
-  template(jvm_ddiv)  \
-  template(jvm_drem)  \
-  template(jvm_fcmpl)  \
-  template(jvm_fcmpg)  \
-  template(jvm_dcmpl)  \
-  template(jvm_dcmpg)  \
-  template(jvm_i2d)  \
-  template(jvm_d2i)  \
-  template(jvm_f2i)  \
-  template(jvm_i2f)  \
-  template(jvm_d2l)  \
-  template(jvm_l2d)  \
-  template(jvm_f2l)  \
-  template(jvm_l2f)  \
-  template(jvm_d2f)  \
-  template(jvm_f2d)  
-#else
-#define COMPILER_FLOAT_ENTRIES_DO(template)
-#endif 
-
-#define EXECUTION_ENTRIES_DO(template)            \
-  INTERPRETER_ENTRIES_DO(template)                \
-  COMPILER_ENTRIES_DO(template)                   \
-  THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template) \
-  COMPILER_FLOAT_ENTRIES_DO(template) 
-  
-#define ROM_DEFINE_ENTRY(x)             {(address) &x, STR(x)},
-
-  friend class SourceROMWriter;
-};
-
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
 #define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)\
@@ -1021,6 +900,132 @@ public:
 #define DEFINE_MEM_COUNTER_ACCESSOR(n) static MemCounter& n(void) { return at(_##n); }
   MEMORY_COUNTERS_DO(DEFINE_MEM_COUNTER_ACCESSOR)
 #undef DEFINE_MEM_COUNTER_ACCESSOR
+};
+
+class ObjectWriter : public RomOopVisitor {
+protected:
+  int _offset;
+  int _variable_parts_offset;
+  bool _string_started;
+  ROMWriter::BlockType _current_type;
+  ObjArray _method_variable_parts;
+  ROMOptimizer *optimizer;
+  Method _saved_current_method;
+  Method _saved_alt_method;
+
+#define DEFINE_MEM_COUNTER_ACCESSOR(n)\
+    static MemCounter& mc_##n(void) { return MemCounter::n(); }
+  MEMORY_COUNTERS_DO(DEFINE_MEM_COUNTER_ACCESSOR)
+#undef DEFINE_MEM_COUNTER_ACCESSOR
+
+public:
+  ObjectWriter() : _method_variable_parts() {
+  }
+
+  virtual void start_block(ROMWriter::BlockType /*type*/, int /*preset_count*/
+                           JVM_TRAPS)          {JVM_IGNORE_TRAPS;}
+  virtual void end_block(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
+  int variable_parts_offset() { return _variable_parts_offset;}
+
+#define INTERPRETER_ENTRIES_DO(template)          \
+  template(interpreter_method_entry)              \
+  template(interpreter_fast_method_entry_0)       \
+  template(interpreter_fast_method_entry_1)       \
+  template(interpreter_fast_method_entry_2)       \
+  template(interpreter_fast_method_entry_3)       \
+  template(interpreter_fast_method_entry_4)       \
+  \
+  template(fixed_interpreter_fast_method_entry_0) \
+  template(fixed_interpreter_fast_method_entry_1) \
+  template(fixed_interpreter_fast_method_entry_2) \
+  template(fixed_interpreter_fast_method_entry_3) \
+  template(fixed_interpreter_fast_method_entry_4) \
+  \
+  template(quick_void_native_method_entry)        \
+  template(quick_int_native_method_entry)         \
+  template(quick_obj_native_method_entry)         \
+  \
+  template(shared_fast_getbyte_accessor)          \
+  template(shared_fast_getshort_accessor)         \
+  template(shared_fast_getchar_accessor)          \
+  template(shared_fast_getint_accessor)           \
+  template(shared_fast_getlong_accessor)          \
+  template(shared_fast_getbyte_static_accessor)   \
+  template(shared_fast_getshort_static_accessor)  \
+  template(shared_fast_getchar_static_accessor)   \
+  template(shared_fast_getint_static_accessor)    \
+  template(shared_fast_getlong_static_accessor)   \
+  \
+  template(shared_fast_getfloat_accessor)         \
+  template(shared_fast_getdouble_accessor)        \
+  template(shared_fast_getfloat_static_accessor)  \
+  template(shared_fast_getdouble_static_accessor)
+
+
+#if ENABLE_COMPILER
+#define COMPILER_ENTRIES_DO(template)      \
+  template(fixed_interpreter_method_entry)
+#else
+#define COMPILER_ENTRIES_DO(template)
+#endif
+
+#if ENABLE_THUMB_COMPILER
+#define THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template) \
+  template(jvm_ladd)  \
+  template(jvm_lsub)  \
+  template(jvm_land)  \
+  template(jvm_lor)   \
+  template(jvm_lxor)  \
+  template(jvm_lcmp)  \
+  template(jvm_lmin)  \
+  template(jvm_lmax)  \
+  template(jvm_lmul)  \
+  template(jvm_lshl)  \
+  template(jvm_lshr)  \
+  template(jvm_lushr)
+#else
+#define THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template)
+#endif
+
+#if defined(ARM) && ENABLE_FLOAT && !ENABLE_SOFT_FLOAT
+#define COMPILER_FLOAT_ENTRIES_DO(template) \
+  template(jvm_fadd)  \
+  template(jvm_fsub)  \
+  template(jvm_fmul)  \
+  template(jvm_fdiv)  \
+  template(jvm_frem)  \
+  template(jvm_dadd)  \
+  template(jvm_dsub)  \
+  template(jvm_dmul)  \
+  template(jvm_ddiv)  \
+  template(jvm_drem)  \
+  template(jvm_fcmpl)  \
+  template(jvm_fcmpg)  \
+  template(jvm_dcmpl)  \
+  template(jvm_dcmpg)  \
+  template(jvm_i2d)  \
+  template(jvm_d2i)  \
+  template(jvm_f2i)  \
+  template(jvm_i2f)  \
+  template(jvm_d2l)  \
+  template(jvm_l2d)  \
+  template(jvm_f2l)  \
+  template(jvm_l2f)  \
+  template(jvm_d2f)  \
+  template(jvm_f2d)  
+#else
+#define COMPILER_FLOAT_ENTRIES_DO(template)
+#endif 
+
+#define EXECUTION_ENTRIES_DO(template)            \
+  INTERPRETER_ENTRIES_DO(template)                \
+  COMPILER_ENTRIES_DO(template)                   \
+  THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template) \
+  COMPILER_FLOAT_ENTRIES_DO(template) 
+  
+#define ROM_DEFINE_ENTRY(x)             {(address) &x, STR(x)},
+
+  friend class SourceROMWriter;
 };
 
 /*

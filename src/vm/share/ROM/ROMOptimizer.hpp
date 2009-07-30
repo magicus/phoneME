@@ -550,23 +550,19 @@ private:
   void fix_one_field_table(InstanceClass *klass, TypeArray *fields, 
                            TypeArray *reloc_info);
   void compact_field_tables(JVM_SINGLE_ARG_TRAPS);
-  void compact_method_tablses(JVM_SINGLE_ARG_TRAPS);
   int compact_one_interface(InstanceClass* ic);
   void compact_interface_classes(JVM_SINGLE_ARG_TRAPS);
   bool is_field_removable(InstanceClass *ic, int field_index, bool from_table);
   void compact_method_tables(JVM_SINGLE_ARG_TRAPS);
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
   bool is_method_removable_from_table(Method *method);
-  bool is_member_reachable_by_apps(jint package_flags, 
+  static bool is_member_reachable_by_apps(jint package_flags, 
                                    AccessFlags class_flags,
                                    AccessFlags member_flags);
-  bool field_may_be_renamed(jint package_flags, AccessFlags class_flags,
-                            AccessFlags member_flags, Symbol* name) {
-    if( is_member_reachable_by_apps(package_flags, class_flags, member_flags) ||
-        Symbols::is_system_symbol(name) ) {  
-      return false;
-    }
-    return true;
+  static bool field_may_be_renamed(jint package_flags, AccessFlags class_flags,
+                                   AccessFlags member_flags, Symbol* name) {
+    return !is_member_reachable_by_apps(package_flags, class_flags, member_flags) &&
+           !Symbols::is_system_symbol(name);  
   }
 
   bool method_may_be_renamed      (InstanceClass* ic, Method* method);
@@ -640,10 +636,10 @@ private:
   };
 
   jint get_package_flags(InstanceClass* klass) {
+    if( is_in_hidden_package(klass) ) {
+      return HIDDEN_PACKAGE;
+    }
     if( is_in_restricted_package(klass) ) {
-      if( is_in_hidden_package(klass) ) {
-        return HIDDEN_PACKAGE;
-      }
       return RESTRICTED_PACKAGE;
     }
     return UNRESTRICTED_PACKAGE;
