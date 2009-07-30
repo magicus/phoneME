@@ -398,9 +398,11 @@ class player_dshow : public player
     // result add_player_listener(player_listener *pplayer_listener)
     // result remove_player_listener(player_listener *pplayer_listener)
 
-    result set_stream_length(int64 /*length*/)
+    result set_stream_length(int64 length)
     {
-        return result_success;
+        if(pfi->set_stream_length(length))
+            return result_success;
+        return result_media;
     }
 
     /*bool data(nat32 len, const void *pdata)

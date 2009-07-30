@@ -68,12 +68,7 @@ class filter_in_pin : public IPin, IAsyncReader
     AM_MEDIA_TYPE amt;
 
     CRITICAL_SECTION data_cs;
-    nat32 data_l;
-    void *data_p;
-    nat32 data_a;
-    nat32 data_total;
-
-    HANDLE event_unblock;
+    int64 stream_len;
 
     IPin *pconnected;
     bool flushing;
@@ -170,7 +165,7 @@ public:
     virtual HRESULT __stdcall JoinFilterGraph(IFilterGraph *pGraph, LPCWSTR pName);
     virtual HRESULT __stdcall QueryVendorInfo(LPWSTR *pVendorInfo);
     // filter_in
-    // virtual bool data(nat32 len, const void *pdata);
+    virtual bool set_stream_length(int64 length);
     // IAMFilterMiscFlags
     virtual ULONG __stdcall GetMiscFlags();
 
@@ -470,7 +465,6 @@ HRESULT __stdcall filter_in_pin::Disconnect()
     if(!pconnected) return S_FALSE;
     pconnected->Release();
     pconnected = null;
-    SetEvent(event_unblock);
     return S_OK;
 }
 
@@ -621,7 +615,6 @@ HRESULT __stdcall filter_in_pin::BeginFlush()
 #endif
     if(flushing) return S_FALSE;
     flushing = true;
-    SetEvent(event_unblock);
     return S_OK;
 }
 
@@ -722,20 +715,29 @@ HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
         }
         else
         {
-            int32 len2;
-            player_callback::result r2 = pfilter->pcallback->data(
-                pos, len, pb, &len2);
-            if(r2 == player_callback::result_success)
+            int32 total_len = 0;
+            for(;;)
             {
-                if(len2 < len)
-                    r = S_FALSE;
+                int32 block_len;
+                player_callback::result r2 = pfilter->pcallback->data(
+                    pos + total_len,
+                    len - total_len,
+                    pb + total_len,
+                    &block_len);
+                if(r2 == player_callback::result_success)
+                {
+                    total_len += block_len;
+                    if(total_len == len)
+                    {
+                        r = S_OK;
+                        break;
+                    }
+                }
                 else
-                    r = S_OK;
-                len = len2;
-            }
-            else
-            {
-                r = E_FAIL;
+                {
+                    r = E_FAIL;
+                    break;
+                }
             }
         }
     }
@@ -783,19 +785,29 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
     }
     else
     {
-        int32 len;
-        player_callback::result r2 = pfilter->pcallback->data(
-            llPosition, lLength, pBuffer, &len);
-        if(r2 == player_callback::result_success)
+        int32 total_len = 0;
+        for(;;)
         {
-            if(len < lLength)
-                r = S_FALSE;
+            int32 block_len;
+            player_callback::result r2 = pfilter->pcallback->data(
+                llPosition + total_len,
+                lLength - total_len,
+                pBuffer + total_len,
+                &block_len);
+            if(r2 == player_callback::result_success)
+            {
+                total_len += block_len;
+                if(total_len == lLength)
+                {
+                    r = S_OK;
+                    break;
+                }
+            }
             else
-                r = S_OK;
-        }
-        else
-        {
-            r = E_FAIL;
+            {
+                r = E_FAIL;
+                break;
+            }
         }
     }
 
@@ -811,24 +823,9 @@ HRESULT __stdcall filter_in_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
 #endif
     if(!pTotal || !pAvailable) return E_POINTER;
 
-    if(data_total < 0xffffffff)
-    {
-        *pTotal = data_total;
-        *pAvailable = data_total;
-#if write_level > 0
-        print("%I64i %I64i\n", *pTotal, *pAvailable);
-#endif
-        return S_OK;
-    }
-    else
-    {
-        *pTotal = data_total;
-        *pAvailable = data_l;
-#if write_level > 0
-        print("%I64i %I64i\n", *pTotal, *pAvailable);
-#endif
-        return VFW_S_ESTIMATED;
-    }
+    *pTotal = stream_len;
+    *pAvailable = stream_len;
+    return S_OK;
 }
 
 //----------------------------------------------------------------------------
@@ -1032,8 +1029,6 @@ ULONG __stdcall filter_in_filter::Release()
     {
         if(pclock) pclock->Release();
         if(ppin->pconnected) ppin->pconnected->Release();
-        if(ppin->data_a) delete[] (bits8 *)ppin->data_p;
-        CloseHandle(ppin->event_unblock);
         DeleteCriticalSection(&ppin->data_cs);
         if(ppin->amt.pUnk) ppin->amt.pUnk->Release();
         if(ppin->amt.cbFormat) delete[] (bits8 *)ppin->amt.pbFormat;
@@ -1179,60 +1174,18 @@ HRESULT __stdcall filter_in_filter::QueryVendorInfo(LPWSTR *pVendorInfo)
     return E_NOTIMPL;
 }
 
-inline nat32 filter_in_filter::round(nat32 n)
-{
-    n--;
-    n |= n >> 1;
-    n |= n >> 2;
-    n |= n >> 4;
-    n |= n >> 8;
-    n |= n >> 16;
-    n++;
-    return n;
-}
-
-/*bool filter_in_filter::data(nat32 len, const void *pdata)
-{
-#if write_level > 0
-    print("filter_in_filter::data(%u, 0x%p) called...\n", len, pdata);
-#endif
-    if(len)
-    {
-        EnterCriticalSection(&ppin->data_cs);
-        if(pdata)
-        {
-            nat32 l2 = ppin->data_l + min(len, 0xffffffff - ppin->data_l);
-            if(ppin->data_a < l2)
-            {
-                nat32 a = round(l2);
-                void *p = new bits8[a];
-                if(ppin->data_a)
-                {
-                    if(ppin->data_l) memcpy(p, ppin->data_p, ppin->data_l);
-                    delete[] (bits8 *)ppin->data_p;
-                }
-                ppin->data_p = p;
-                ppin->data_a = a;
-            }
-            memcpy((bits8 *)ppin->data_p + ppin->data_l, pdata, len);
-            ppin->data_l = l2;
-        }
-        else
-        {
-            ppin->data_total = len;
-        }
-        LeaveCriticalSection(&ppin->data_cs);
-        SetEvent(ppin->event_unblock);
-    }
-    return true;
-}*/
-
 ULONG __stdcall filter_in_filter::GetMiscFlags()
 {
 #if write_level > 0
     print("filter_in_filter::GetMiscFlags called...\n");
 #endif
     return AM_FILTER_MISC_FLAGS_IS_SOURCE;
+}
+
+bool filter_in_filter::set_stream_length(int64 length)
+{
+    ppin->stream_len = length;
+    return true;
 }
 
 bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_in_filter **ppfilter)
@@ -1255,20 +1208,11 @@ bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallb
         delete pfilter;
         return false;
     }
-    pfilter->ppin->event_unblock = CreateEvent(null, false, false, null);
-    if(!pfilter->ppin->event_unblock)
-    {
-        DeleteCriticalSection(&pfilter->ppin->data_cs);
-        delete pfilter->ppin;
-        delete pfilter;
-        return false;
-    }
     if(pamt->cbFormat)
     {
         pfilter->ppin->amt.pbFormat = new bits8[pamt->cbFormat];
         if(!pfilter->ppin->amt.pbFormat)
         {
-            CloseHandle(pfilter->ppin->event_unblock);
             DeleteCriticalSection(&pfilter->ppin->data_cs);
             delete pfilter->ppin;
             delete pfilter;
@@ -1289,9 +1233,7 @@ bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallb
     pfilter->ppin->amt.pUnk = pamt->pUnk;
     if(pfilter->ppin->amt.pUnk) pfilter->ppin->amt.pUnk->AddRef();
     pfilter->ppin->amt.cbFormat = pamt->cbFormat;
-    pfilter->ppin->data_l = 0;
-    pfilter->ppin->data_a = 0;
-    pfilter->ppin->data_total = 0xffffffff;
+    pfilter->ppin->stream_len = 0;
     pfilter->ppin->pconnected = null;
     pfilter->ppin->flushing = false;
     pfilter->pgraph = null;

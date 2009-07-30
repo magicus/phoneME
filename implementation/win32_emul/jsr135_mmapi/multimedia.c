@@ -206,7 +206,7 @@ void mmSetStatusLine( const char* fmt, ... ) {
     vsprintf( str8, fmt, args );
 	va_end(args);
     if (JAVACALL_OK == 
-        javautil_unicode_utf8_to_utf16(str8, strlen(str8), 
+        javautil_unicode_utf8_to_utf16(str8, (javacall_int32)strlen(str8), 
                                         str16, 256, &str16_len)) {
 
         if( NULL == f ) {
@@ -396,11 +396,11 @@ javacall_media_format_type fmt_enum2str( jc_fmt fmt )
 javacall_media_format_type fmt_mime2str( const char* mime )
 {
     int          idx;
-    unsigned int mimelen = strlen( mime );
+    unsigned int mimelen = (unsigned int)strlen( mime );
     const char*  ct;
     const char*  semicol_pos = strchr( mime, ';' );
 
-    if( NULL != semicol_pos ) mimelen = semicol_pos - mime;
+    if( NULL != semicol_pos ) mimelen = (unsigned int)(semicol_pos - mime);
 
     for( idx = 0; idx < nCaps; idx++ )
     {
@@ -432,7 +432,7 @@ javacall_result fmt_str2mime(
             int len;
             
             if (p == NULL) {
-                len = strlen(s);
+                len = (int)strlen(s);
             }
             else {
                 len = (int)(p - s);
@@ -648,7 +648,7 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
 
     for( i = 0; i < sizeof( map ) / sizeof( map[ 0 ] ); i++ )
     {
-        extlen = wcslen( map[ i ].ext );
+        extlen = (int)wcslen( map[ i ].ext );
 
         if( uriLength > extlen )
         {
