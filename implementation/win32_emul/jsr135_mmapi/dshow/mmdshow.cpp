@@ -737,23 +737,35 @@ static javacall_result dshow_start(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+static void stopper_thread( void* param )
+{
+    dshow_player* p = (dshow_player*)param;
+
+    PRINTF( "*** stopping dshow player ***\n" );
+
+    p->get_media_time();
+    bool ok = ( player::result_success == p->ppl->stop() );
+
+    PRINTF( "*** dshow player stop finished (%s) ***\n",
+            (ok ? "success" : "fail") );
+
+    p->playing = ok;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     ok ? JAVACALL_OK : JAVACALL_FAIL, NULL );
+}
+
 static javacall_result dshow_stop(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     player::result r;
     PRINTF( "*** stop, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
-    p->get_media_time();
-    if( player::result_success == p->ppl->stop() )
-    {
-        p->playing = false;
-        PRINTF( "*** ...stopped, mt=%ld/%ld ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
-        return JAVACALL_OK;
-    }
-    else
-    {
-        PRINTF( "*** ...stop failed ***\n" );
-        return JAVACALL_FAIL;
-    }
+
+    _beginthread( stopper_thread, 0, p );
+
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_pause(javacall_handle handle)
