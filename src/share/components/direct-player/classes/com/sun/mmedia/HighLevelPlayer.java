@@ -830,6 +830,19 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     {
         return ( isDevicePlayer() && !hasToneSequenceSet ) ;
     }
+
+    void resumeStart()
+    {
+        final Object startLock = directInputThread;
+        if( null != startLock )
+        {
+            synchronized( startLock )
+            {
+                startLock.notify();
+            }
+        }
+    }
+
     /**
      * Starts the <code>Player</code> as soon as possible.
      * If the <code>Player</code> was previously stopped
@@ -865,6 +878,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * have security permission to start the <code>Player</code>.
      */
     public synchronized void start() throws MediaException {
+        DirectDebugOut.nDebugPrint("HighLevelPlayer.start() entered");
         if (getState() >= STARTED) {
             return;
         }
@@ -884,6 +898,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         if (vmPaused) {
+            DirectDebugOut.nDebugPrint("HighLevelPlayer.start() is returning because vmPaused");
             return;
         }
         
@@ -910,9 +925,25 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        if (!lowLevelPlayer.doStart()) {
+        final Object startLock = directInputThread;
+        if( null != startLock )
+        {
+            synchronized( startLock )
+            {
+                if (!lowLevelPlayer.doStart()) {
+                    throw new MediaException("start");
+                }
+
+                // Wait for native JavaNotify event, see MMEventListener
+                try {
+                    startLock.wait();
+                } catch (InterruptedException ex) {}
+            }
+        }
+        else if (!lowLevelPlayer.doStart()) {
             throw new MediaException("start");
         }
+
 
         setState( STARTED );
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
@@ -921,6 +952,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         // Typically used to start any threads that might potentially
         // generate events before the STARTED event is delivered
         lowLevelPlayer.doPostStart();
+
+        DirectDebugOut.nDebugPrint("HighLevelPlayer.start() is returning");
 
     };
 
