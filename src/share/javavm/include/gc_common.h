@@ -505,7 +505,6 @@ CVMgcTotalMemory(CVMExecEnv* ee);
 extern CVMBool
 CVMgcStopTheWorldAndGC(CVMExecEnv* ee, CVMUint32 numBytes);
 
-#ifdef CVM_INSPECTOR
 /* Purpose: Synchronizes all threads on a consistent state in preparation
    for a GC or similar cycles. */
 extern CVMBool
@@ -517,7 +516,6 @@ CVMgcStopTheWorldAndDoAction(CVMExecEnv *ee, void *data,
                                             CVMUint32 preActionStatus),
 		 void (*retryAfterActionCallback)(CVMExecEnv *ee, void *data),
 		 void* retryData);
-#endif
 
 /*
  * Start a GC cycle. Will clear class marks if necessary.

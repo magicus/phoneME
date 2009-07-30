@@ -1671,3 +1671,97 @@ CNIsun_misc_CVM_setNoVerification(CVMExecEnv* ee,
     }
     return CNI_VOID;
 }
+
+/******************************************************
+ * CVM.nullifyRefsToDeadApp() can be used to forcefully 
+ * nullify references to application objects after setting
+ * the corresponding classloader using CVM.setDeadLoader().
+ ******************************************************/
+
+static CVMBool 
+nullifyRefCallBack(CVMObject** refPtr, void* data) {
+    CVMObject* ref = *refPtr;
+    CVMClassBlock *cb;
+    CVMClassLoaderICell* currLoader; 
+    CVMClassLoaderICell* deadLoader = (CVMClassLoaderICell*)data;
+    CVMObject* deadLoaderObj;
+    CVMObject* currLoaderObj;
+    
+    if (CVMobjectIsInROM(ref)) {
+        return CVM_TRUE;
+    }
+
+    cb = CVMobjectGetClass(ref);
+    currLoader = CVMcbClassLoader(cb);
+
+    if (currLoader != NULL) {
+        deadLoaderObj = (CVMObject*)deadLoader->ref_DONT_ACCESS_DIRECTLY;
+        currLoaderObj = (CVMObject*)currLoader->ref_DONT_ACCESS_DIRECTLY;
+        if (currLoaderObj == deadLoaderObj) {
+            /*CVMconsolePrintf("===nullify ref to %C\n", cb);*/
+            *refPtr = NULL;
+        }
+    }
+    return CVM_TRUE;
+}
+
+static CVMBool
+iterateHeapCallBack(CVMObject* obj, CVMClassBlock* cb,
+                    CVMUint32 size, void* data)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    CVMGCOptions gcOpts = {
+	/* isUpdatingObjectPointers */ CVM_FALSE,
+        /* discoverWeakReferences   */ CVM_FALSE,
+        /* isProfilingPass          */ CVM_FALSE
+    };
+    CVMGCOptions *gcOptsPtr = &gcOpts;
+
+    CVMobjectWalkRefsWithSpecialHandling(ee, gcOptsPtr, obj,
+                                         CVMobjectGetClassWord(obj), {
+        if (*refPtr != 0) {
+            (*nullifyRefCallBack)(refPtr, data);
+	}
+    }, nullifyRefCallBack, data);
+    return CVM_TRUE;
+}
+
+static CVMBool iterateHeapAction(CVMExecEnv *ee, void *data)
+{
+    CVMgcimplIterateHeap(ee, iterateHeapCallBack, data);
+    return CVM_TRUE;
+}
+
+extern int nullifyRefs;
+
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
+                                CVMStackVal32 *arguments,
+                                CVMMethodBlock **p_mb)
+{
+    CVMClassLoaderICell* deadLoader = (CVMClassLoaderICell*)&arguments[0].j.r;
+
+    if (nullifyRefs) {
+
+#ifdef CVM_JIT
+        CVMD_gcSafeExec(ee, {
+            CVMsysMutexLock(ee, &CVMglobals.jitLock);
+        });
+#endif
+
+        CVMD_gcSafeExec(ee, {
+            CVMsysMutexLock(ee, &CVMglobals.heapLock);
+            CVMgcStopTheWorldAndDoAction(ee, deadLoader, NULL,
+                iterateHeapAction, NULL, NULL, NULL);
+            CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
+        });
+
+#ifdef CVM_JIT
+        CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
+    }
+
+    return CNI_VOID;
+}
+
+

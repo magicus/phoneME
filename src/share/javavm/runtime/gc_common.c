@@ -1222,7 +1222,6 @@ stopTheWorldAndDoAction(CVMExecEnv *ee, void *data,
 		 void (*retryAfterActionCallback)(CVMExecEnv *ee, void *data),
 		 void* retryData);
 
-#ifdef CVM_INSPECTOR
 CVMBool
 CVMgcStopTheWorldAndDoAction(CVMExecEnv *ee, void *data,
                  CVMUint32 (*preActionCallback)(CVMExecEnv *ee, void *data),
@@ -1236,7 +1235,6 @@ CVMgcStopTheWorldAndDoAction(CVMExecEnv *ee, void *data,
     return stopTheWorldAndDoAction(ee, data, preActionCallback, actionCallback,
 	       postActionCallback, retryAfterActionCallback, retryData);
 }
-#endif /* CVM_INSPECTOR */
 
 /* Purpose: Acquire all GC locks, stop all threads, and then call back to do
             action specific work. When the action is done, the world is

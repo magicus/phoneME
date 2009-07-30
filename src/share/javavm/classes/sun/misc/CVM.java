@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes;
+import java.util.Vector;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.io.File;
@@ -982,4 +983,34 @@ public final class CVM {
     /* Used to set java.lang.ClassLoader.noVerification */
     public static native void setNoVerification(ClassLoader cl,
                                                 boolean noVerification);
+
+
+
+    /************************************************************
+     * Together setDeadLoader() and nullifyRefsToDeadApp() can 
+     * be used to forcefully nullify references 
+     * to application objects. WARNING: use with caution.
+     ***********************************************************/
+    private static Vector deadLoaders;
+
+    public static void setDeadLoader(Object app) {
+        if (deadLoaders == null) {
+            deadLoaders = new Vector();
+        }
+
+        ClassLoader cl = app.getClass().getClassLoader();
+        if (cl != null) {
+            deadLoaders.addElement(cl);
+        }
+    }
+
+    public static void nullifyRefsToDeadApp() {
+        if (!deadLoaders.isEmpty()) {
+            System.out.println("************** nullify refs to app ************");
+            ClassLoader cl = (ClassLoader)deadLoaders.remove(0);
+            nullifyRefsToDeadApp0(cl);
+        }
+    }
+
+    public static native void nullifyRefsToDeadApp0(ClassLoader cl);
 }
