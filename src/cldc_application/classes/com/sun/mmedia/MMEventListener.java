@@ -39,20 +39,21 @@ class MMEventListener implements EventListener {
      */
     private static final int EVENT_MEDIA_REALIZE_FINISHED      =  1;
     private static final int EVENT_MEDIA_PREFETCH_FINISHED     =  2;
-    private static final int EVENT_MEDIA_DATA_REQUEST          =  3;
-    private static final int EVENT_MEDIA_LENGTH_REQUEST        =  4;
-    private static final int EVENT_MEDIA_DEVICE_AVAILABLE      =  5;
-    private static final int EVENT_MEDIA_DEVICE_UNAVAILABLE    =  6;
-    private static final int EVENT_MEDIA_ERROR                 =  7;
-    private static final int EVENT_MEDIA_END_OF_MEDIA          =  8;
-    private static final int EVENT_MEDIA_DURATION_UPDATED      =  9;
-    private static final int EVENT_MEDIA_BUFFERING_STARTED     = 10;
-    private static final int EVENT_MEDIA_BUFFERING_STOPPED     = 11;
-    private static final int EVENT_MEDIA_RECORD_ERROR          = 12;
-    private static final int EVENT_MEDIA_RECORD_SIZE_LIMIT     = 13;
-    private static final int EVENT_MEDIA_VOLUME_CHANGED        = 14;
-    private static final int EVENT_MEDIA_SYSTEM_VOLUME_CHANGED = 15;
-    private static final int EVENT_MEDIA_SNAPSHOT_FINISHED     = 16;
+    private static final int EVENT_MEDIA_START_FINISHED        =  3;
+    private static final int EVENT_MEDIA_DATA_REQUEST          =  4;
+    private static final int EVENT_MEDIA_LENGTH_REQUEST        =  5;
+    private static final int EVENT_MEDIA_DEVICE_AVAILABLE      =  6;
+    private static final int EVENT_MEDIA_DEVICE_UNAVAILABLE    =  7;
+    private static final int EVENT_MEDIA_ERROR                 =  8;
+    private static final int EVENT_MEDIA_END_OF_MEDIA          =  9;
+    private static final int EVENT_MEDIA_DURATION_UPDATED      = 10;
+    private static final int EVENT_MEDIA_BUFFERING_STARTED     = 11;
+    private static final int EVENT_MEDIA_BUFFERING_STOPPED     = 12;
+    private static final int EVENT_MEDIA_RECORD_ERROR          = 13;
+    private static final int EVENT_MEDIA_RECORD_SIZE_LIMIT     = 14;
+    private static final int EVENT_MEDIA_VOLUME_CHANGED        = 15;
+    private static final int EVENT_MEDIA_SYSTEM_VOLUME_CHANGED = 16;
+    private static final int EVENT_MEDIA_SNAPSHOT_FINISHED     = 17;
 
     MMEventListener() {
         MMEventHandler.setListener(this);
