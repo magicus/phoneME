@@ -571,8 +571,9 @@ CVMmemManagerDestroy()
     if (memList != NULL) {
         CVMMemPrivateData *d = memList;
         while (d != NULL) {
+            CVMMemPrivateData *next = d->next;
             free(d);
-            d = d->next;
+            d = next;
         }
     }
 
