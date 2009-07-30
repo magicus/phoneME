@@ -3594,6 +3594,11 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
 	    arrayClassID = 
 		CVMtypeidIncrementArrayDepth(ee, CVMcbClassName(cb),
 					     nDimensions - 1);
+	    if (arrayClassID == CVM_TYPEID_ERROR) {
+		/* Exception must have been thrown. Let it stand */
+		CVMassert(CVMlocalExceptionOccurred(ee));
+		return NULL;
+	    }
 	    computedArrayClassID = CVM_TRUE;
 	} else {
 	    arrayClassID = CVMcbClassName(cb);
@@ -3601,6 +3606,11 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
     } else {
         arrayClassID = CVMtypeidIncrementArrayDepth(ee, CVMcbClassName(cb),
                                                     nDimensions);
+	if (arrayClassID == CVM_TYPEID_ERROR) {
+	    /* Exception must have been thrown. Let it stand */
+	    CVMassert(CVMlocalExceptionOccurred(ee));
+	    return NULL;
+	}
 	computedArrayClassID = CVM_TRUE;
     }
 
@@ -3611,7 +3621,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
     }
     if (cb == NULL) {
 	/* Exception must have been thrown. Let it stand */
-	CVMassert(CVMexceptionOccurred(ee));
+	CVMassert(CVMlocalExceptionOccurred(ee));
 	return NULL;
     }
 
