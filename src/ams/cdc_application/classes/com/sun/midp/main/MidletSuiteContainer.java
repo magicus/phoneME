@@ -34,4 +34,9 @@ class MidletSuiteContainer extends SuiteContainerAdapter implements com.sun.midp
     public MidletSuiteContainer(MIDletSuiteStorage storage) {
         super(storage);
     }
+
+    public String getCallingMidletClassName() {
+        return
+        MIDletStateHandler.getMidletStateHandler().getFirstRunningMidlet();
+    }
 }
