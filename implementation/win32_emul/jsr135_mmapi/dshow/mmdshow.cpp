@@ -728,6 +728,7 @@ static void starter_thread( void* param )
 static javacall_result dshow_start(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
+    player::result r;
     PRINTF( "*** start, mt = %ld/%ld***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
     p->eom_sent = false;
 
