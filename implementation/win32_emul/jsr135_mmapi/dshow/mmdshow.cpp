@@ -54,7 +54,7 @@ static void PRINTF( const char* fmt, ... ) {
     vsprintf( str8, fmt, args );
     va_end(args);
 
-    OutputDebugString( str8 );
+    OutputDebugStringA( str8 );
 }
 
 #define MAX_DSHOW_PLAYERS   1024
@@ -198,7 +198,7 @@ void dshow_player::size_changed( int16 w, int16 h )
 }
 
 void dshow_player::audio_format_changed(nat32 samples_per_second, 
-                                        nat32 _channels, nat32 bits_per_sample)
+                                        nat32 _channels, nat32 /*bits_per_sample*/)
 {
     channels = _channels;
     rate     = samples_per_second;
@@ -213,7 +213,7 @@ void dshow_player::playback_finished()
         long t = get_media_time();
         PRINTF( "*** playback finished, t=%ld\n", t );
         javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
-                                          appId, playerId, JAVACALL_OK, (void*)t );
+                                          appId, playerId, JAVACALL_OK, (void*)(size_t)t );
 
         PRINTF( "*** stopping...\n" );
         player::result r = ppl->stop();
@@ -243,7 +243,7 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
     return player_callback::result_success;
 }
 
-player_callback::result dshow_player::get_stream_length(int64 *plength)
+player_callback::result dshow_player::get_stream_length(int64 * /*plength*/)
 {
     return player_callback::result_io;
 }
@@ -255,7 +255,7 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
     if( out_queue_n + nbytes > OUT_QUEUE_SIZE )
     {
         PRINTF( "### overflow ###\n" );
-        nbytes = OUT_QUEUE_SIZE - out_queue_n;
+        nbytes = (nat32)(OUT_QUEUE_SIZE - out_queue_n);
     }
 
     if( 0 != nbytes )
@@ -585,7 +585,7 @@ static void realize_thread( void* param )
         NULL != p->ppl && 
         -1 != p->whole_content_size )
     {
-        player::result r = p->ppl->set_stream_length(p->whole_content_size);
+        /*player::result r = */ p->ppl->set_stream_length(p->whole_content_size);
     }
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
@@ -620,7 +620,7 @@ static javacall_result dshow_realize(javacall_handle handle,
         default:
             return JAVACALL_FAIL;
         }
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
 
     if( mime_equal( mime, mimeLength, L"audio/mp3"  ) ||
@@ -634,7 +634,7 @@ static javacall_result dshow_realize(javacall_handle handle,
 
         p->mediaType = JC_FMT_MPEG1_LAYER3;
         mime = (javacall_const_utf16_string)L"audio/mpeg";
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
              mime_equal( mime, mimeLength, L"video/x-flv" ) ||
@@ -642,38 +642,38 @@ static javacall_result dshow_realize(javacall_handle handle,
     {
         p->mediaType = JC_FMT_FLV;
         mime = (javacall_const_utf16_string)L"video/x-flv";
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/3gpp" ) )
     {
         p->mediaType = JC_FMT_VIDEO_3GPP;
         mime = (javacall_const_utf16_string)L"video/3gpp";
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/mp4" ) )
     {
         p->mediaType = JC_FMT_MPEG_4_SVP;
         mime = (javacall_const_utf16_string)L"video/mp4";
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"video/mpeg" ) )
     {
         p->mediaType = JC_FMT_MPEG_1;
         mime = (javacall_const_utf16_string)L"video/mpeg";
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"audio/amr" ) )
     {
         p->mediaType = JC_FMT_AMR;
         mime = (javacall_const_utf16_string)L"audio/amr";
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
     else if( mime_equal( mime, mimeLength, L"audio/wav" ) ||
              mime_equal( mime, mimeLength, L"audio/x-wav" ))
     {
         p->mediaType = JC_FMT_MS_PCM;
         mime = (javacall_const_utf16_string)L"audio/wav";
-        mimeLength = wcslen( (const wchar_t*)mime );
+        mimeLength = (long)wcslen( (const wchar_t*)mime );
     }
     else
     {
@@ -851,17 +851,17 @@ static javacall_result dshow_get_duration(javacall_handle handle, long* ms)
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_switch_to_foreground(javacall_handle handle, 
-    int options)
+static javacall_result dshow_switch_to_foreground(javacall_handle /*handle*/,
+    int /*options*/)
 {
-    dshow_player* p = (dshow_player*)handle;
+    // dshow_player* p = (dshow_player*)handle;
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_switch_to_background(javacall_handle handle,
-    int options)
+static javacall_result dshow_switch_to_background(javacall_handle /*handle*/,
+    int /*options*/)
 {
-    dshow_player* p = (dshow_player*)handle;
+    // dshow_player* p = (dshow_player*)handle;
     return JAVACALL_OK;
 }
 
@@ -915,27 +915,27 @@ static javacall_result dshow_set_mute(javacall_handle handle,
                        R A T E    C O N T R O L
 \*****************************************************************************/
 
-javacall_result dshow_get_max_rate(javacall_handle handle, long* maxRate)
+javacall_result dshow_get_max_rate(javacall_handle /*handle*/, long* /*maxRate*/)
 {
-    dshow_player* p = (dshow_player*)handle;
+    // dshow_player* p = (dshow_player*)handle;
     return JAVACALL_OK;
 }
 
-javacall_result dshow_get_min_rate(javacall_handle handle, long* minRate)
+javacall_result dshow_get_min_rate(javacall_handle /*handle*/, long* /*minRate*/)
 {
-    dshow_player* p = (dshow_player*)handle;
+    // dshow_player* p = (dshow_player*)handle;
     return JAVACALL_OK;
 }
 
-javacall_result dshow_set_rate(javacall_handle handle, long rate)
+javacall_result dshow_set_rate(javacall_handle /*handle*/, long /*rate*/)
 {
-    dshow_player* p = (dshow_player*)handle;
+    // dshow_player* p = (dshow_player*)handle;
     return JAVACALL_OK;
 }
 
-javacall_result dshow_get_rate(javacall_handle handle, long* rate)
+javacall_result dshow_get_rate(javacall_handle /*handle*/, long* /*rate*/)
 {
-    dshow_player* p = (dshow_player*)handle;
+    // dshow_player* p = (dshow_player*)handle;
     return JAVACALL_OK;
 }
 
@@ -1003,13 +1003,13 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_set_video_alpha(javacall_handle handle, javacall_bool on, javacall_pixel color)
+static javacall_result dshow_set_video_alpha(javacall_handle /*handle*/, javacall_bool on, javacall_pixel color)
 {
     lcd_set_color_key( on, color );
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode)
+static javacall_result dshow_set_video_fullscreenmode(javacall_handle /*handle*/, javacall_bool /*fullScreenMode*/)
 {
     return JAVACALL_FAIL;
 }

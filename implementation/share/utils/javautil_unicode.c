@@ -101,7 +101,7 @@ javacall_result javautil_unicode_utf16_ulength(javacall_const_utf16_string str,
     for(ptr = str; *ptr != 0; ptr++) {
     }
 
-    *length = ptr-str;
+    *length = (javacall_int32)(ptr-str);
     return JAVACALL_OK;
 }
 
@@ -1122,7 +1122,7 @@ javacall_result javautil_unicode_substring(javacall_const_utf16_string src,
                 }
 
                 if (temp == begin) {
-                    startUnit = ptr - src;
+                    startUnit = (javacall_int32)(ptr - src);
                 }
 
                 if (temp == end) {
@@ -1133,7 +1133,7 @@ javacall_result javautil_unicode_substring(javacall_const_utf16_string src,
         }
         else{
             if (temp == begin){
-                startUnit = ptr - src - 1;
+                startUnit = (javacall_int32)(ptr - src - 1);
             }
 
             if (temp == end){
@@ -1146,7 +1146,7 @@ javacall_result javautil_unicode_substring(javacall_const_utf16_string src,
         return JAVACALL_INVALID_ARGUMENT;
     }
     
-    dstLen = ptr - src - startUnit;
+    dstLen = (javacall_int32)(ptr - src - startUnit);
     if (destLen < dstLen) {
         return JAVACALL_OUT_OF_MEMORY;
     }
