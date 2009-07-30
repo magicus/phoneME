@@ -76,7 +76,7 @@ SIM_TOOLKIT_SOURCES = \
 JC_SAT_APPLET_PATH=com/sun/satsa/satapplet
 JC_SAT_APPLET_SOURCES = \
     $(JSR_177_DIR)/src/share/tool/javacard/$(JC_SAT_APPLET_PATH)/SATApplet.java
-    
+
 JC_GSM_APPLET_PATH=com/sun/satsa/gsmapplet
 JC_GSM_APPLET_SOURCES = \
     $(JSR_177_DIR)/src/share/tool/javacard/$(JC_GSM_APPLET_PATH)/AccessSATImpl.java \
@@ -106,11 +106,11 @@ ifeq ($(JSR_177_USE_EMULATOR),true)
     ifndef JC_DIR
         JC_DIR = /java/re/jcdevkit/2.2.1/archive/fcs/binaries/domestic/linux/java_card_kit-2_2_1
     endif
-    
+
     ifeq ($(wildcard $(JC_DIR)/lib/apdutool.jar),)
         $(error JC_DIR must point to the Java Card Development Kit directory: $(JC_DIR))
     endif
-    
+
     JC_API = $(JC_DIR)/lib/api.jar
     JC_CONVERTER = $(JC_DIR)/lib/converter.jar
     JC_VERIFIER=$(JC_DIR)/lib/offcardverifier.jar
@@ -142,7 +142,7 @@ $(JCRMIC_TOOL): $(JCRMIC_SOURCES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
 	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(JCRMIC_TOOL)
-	
+
 # acl_data tool
 #
 ACL_DATA_DIR = $(JSR_177_BUILD_DIR)/acl_data
@@ -199,7 +199,7 @@ WIM_DATA_SOURCES =                                         \
     $(JSR_177_DIR)/src/share/tool/wim_data/PIN.java        \
     $(JSR_177_DIR)/src/share/tool/wim_data/TLV.java        \
     $(JSR_177_DIR)/src/share/tool/wim_data/Utils.java
-    
+
 $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(WIM_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
 	@echo " ... generating " $@
 	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
@@ -214,17 +214,16 @@ APPLETS_LIST = toolkit   \
                pkiapplet \
                aclapplet
 
-APPLETS = $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap     \
+toolkit_applet=$(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap
+APPLETS = $(toolkit_applet) \
 	      $(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap \
 	      $(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap \
 	      $(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap \
 	      $(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/javacard/aclapplet.cap
-$(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap: $(SIM_TOOLKIT_SOURCES)
+$(toolkit_applet): $(SIM_TOOLKIT_SOURCES)
 
-TOOLKIT_EXP=$(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp
-TOOLKIT_CLASSES=$(foreach class,$(subst .java,.class,$(notdir $(SIM_TOOLKIT_SOURCES))),$(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/$(class))
-$(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap: $(JC_SAT_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
-$(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap: $(JC_GSM_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
+$(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap: $(JC_SAT_APPLET_SOURCES) $(toolkit_applet)
+$(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap: $(JC_GSM_APPLET_SOURCES) $(toolkit_applet)
 $(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap: $(JC_PKI_APPLET_SOURCES)
 $(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/javacard/aclapplet.cap: $(JC_ACL_APPLET_SOURCES)
 
@@ -279,12 +278,6 @@ $(SIM_TEST):
 
 $(APPLETS): 
 	$(call applets,$@,$^)
-
-$(TOOLKIT_EXP):
-	$(call applets,(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap,$(SIM_TOOLKIT_SOURCES))
-	
-$(TOOLKIT_CLASSES):
-	$(AT)$(JSR177_JAVAC) -source 1.2 -target 1.2 -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(SIM_TOOLKIT_SOURCES)
 
 $(JAVACARD_CLASSES)/%.scr:
 	$(AT)$(JSR177_JAVA) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o $@ -nobanner $^
