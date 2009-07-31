@@ -69,6 +69,9 @@ class filter_in_pin : public IPin, IAsyncReader
 
     CRITICAL_SECTION data_cs;
     int64 stream_len;
+    nat32 requests;
+    IMediaSample *req_pms[1024];
+    DWORD_PTR req_user[1024];
 
     IPin *pconnected;
     bool flushing;
@@ -656,23 +659,54 @@ HRESULT __stdcall filter_in_pin::RequestAllocator(IMemAllocator *pPreferred, ALL
     return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::Request(IMediaSample * /*pSample*/, DWORD_PTR /*dwUser*/)
+HRESULT __stdcall filter_in_pin::Request(IMediaSample *pSample, DWORD_PTR dwUser)
 {
 #if write_level > 0
     print("filter_in_pin::Request called...\n");
 #endif
-    return E_FAIL;
+    if(!pSample) return E_POINTER;
+
+    if(flushing) return VFW_E_WRONG_STATE;
+
+    if(requests >= 1024) return E_OUTOFMEMORY;
+
+    req_pms[requests] = pSample;
+    req_user[requests] = dwUser;
+
+    requests++;
+
+    return S_OK;
 }
 
-HRESULT __stdcall filter_in_pin::WaitForNext(DWORD /*dwTimeout*/, IMediaSample **ppSample, DWORD_PTR * /*pdwUser*/)
+HRESULT __stdcall filter_in_pin::WaitForNext(DWORD dwTimeout, IMediaSample **ppSample, DWORD_PTR *pdwUser)
 {
 #if write_level > 0
     print("filter_in_pin::WaitForNext called...\n");
 #endif
     if(!ppSample) return E_POINTER;
     *ppSample = null;
-    if(flushing) return VFW_E_WRONG_STATE;
-    return E_FAIL;
+
+    for(;;)
+    {
+        if(flushing) return VFW_E_WRONG_STATE;
+
+        if(requests) break;
+
+        if(!dwTimeout) return S_OK;
+
+        Sleep(1);
+
+        if(dwTimeout != INFINITE) dwTimeout--;
+    }
+
+    requests--;
+
+    HRESULT r = SyncReadAligned(req_pms[requests]);
+    if(r != S_OK) return r;
+    *ppSample = req_pms[requests];
+    *pdwUser = req_user[requests];
+
+    return S_OK;
 }
 
 HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
@@ -1234,6 +1268,7 @@ bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallb
     if(pfilter->ppin->amt.pUnk) pfilter->ppin->amt.pUnk->AddRef();
     pfilter->ppin->amt.cbFormat = pamt->cbFormat;
     pfilter->ppin->stream_len = 0;
+    pfilter->ppin->requests = 0;
     pfilter->ppin->pconnected = null;
     pfilter->ppin->flushing = false;
     pfilter->pgraph = null;
