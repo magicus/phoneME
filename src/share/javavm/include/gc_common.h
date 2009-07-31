@@ -635,13 +635,11 @@ CVMgcEnsureStackmapsForRootScans(CVMExecEnv *ee);
 extern CVMBool 
 CVMgcDestroyHeap();
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Scans objects in the specified memory range and invoke the callback
             function on each object. */
 extern CVMBool
 CVMgcScanObjectRange(CVMExecEnv* ee, CVMUint32* base, CVMUint32* top,
                      CVMObjectCallbackFunc callback, void* callbackData);
-#endif
 
 #ifdef CVM_JVMPI
 /* Purpose: Posts the JVMPI_EVENT_ARENA_NEW events. */

@@ -2124,8 +2124,6 @@ CVMgcimplTimeOfLastMajorGC()
     return CVMglobals.gc.lastMajorGCTime;
 }
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
-
 typedef struct CallbackInfo CallbackInfo;
 struct CallbackInfo
 {
@@ -2145,7 +2143,6 @@ CVMgcCallBackIfNotSynthesized(CVMObject *obj, CVMClassBlock *cb,
     }
     return CVM_TRUE;
 }
-
 
 /*
  * Heap iteration. Call (*callback)() on each object in the heap.
@@ -2178,8 +2175,6 @@ CVMgcimplIterateHeap(CVMExecEnv* ee,
     }
     return CVM_TRUE;
 }
-
-#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)*/
 
 #if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
 /* Dumps info about the configuration of the overall GC. */

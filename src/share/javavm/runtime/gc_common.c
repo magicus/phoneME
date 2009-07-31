@@ -1659,8 +1659,6 @@ void CVMgcLockerUnlock(CVMGCLocker *self, CVMExecEnv *current_ee)
 
 /*===========================================================================*/
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
-
 /*
  * Scan objects in contiguous range, and do per-object callback in support
  * of heap dump.
@@ -1691,8 +1689,6 @@ CVMgcScanObjectRange(CVMExecEnv* ee, CVMUint32* base, CVMUint32* top,
     CVMassert(curr == top); /* This had better be exact */
     return CVM_TRUE; /* Complete scan DONE. */
 }
-
-#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)*/
 
 #ifdef CVM_JVMPI
 

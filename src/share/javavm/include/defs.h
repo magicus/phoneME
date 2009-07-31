@@ -250,13 +250,11 @@ typedef void (*CVMRefCallbackFunc)(CVMObject** refAddr, void* data);
  */
 typedef CVMBool (*CVMRefLivenessQueryFunc)(CVMObject** refAddr, void* data);
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /*
  * A per-object callback function, to be called during heap dumps
  */
 typedef CVMBool (*CVMObjectCallbackFunc)(CVMObject* obj, CVMClassBlock* cb, 
                                          CVMUint32  objSize, void* data);
-#endif
 
 /*
  * Scan all GC references in a frame. Each frame carries a pointer
