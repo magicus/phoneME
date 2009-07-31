@@ -584,6 +584,13 @@ static void realize_thread( void* param )
     PRINTF( "*** dshow player creation finished (%s) ***\n",
             (ok ? "success" : "fail") );
 
+    if( ok && 
+        NULL != p->ppl && 
+        -1 != p->whole_content_size )
+    {
+        p->ppl->set_stream_length(p->whole_content_size);
+    }
+
     if( ok )
     {
         PRINTF( "*** realizing dshow player... ***\n" );
@@ -592,13 +599,6 @@ static void realize_thread( void* param )
 
     PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
             (ok ? "success" : "fail") );
-
-    if( ok && 
-        NULL != p->ppl && 
-        -1 != p->whole_content_size )
-    {
-        /*player::result r = */ p->ppl->set_stream_length(p->whole_content_size);
-    }
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
                                      p->appId,
