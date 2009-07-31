@@ -36,9 +36,7 @@ int ROMOptimizer::_time_counters[ROMOptimizer::STATE_COUNT];
 
 #if USE_ROM_LOGGING
 inline void ROMOptimizer::log_non_restricted_packages( void ) {
-  _log_stream->cr();
-  _log_stream->print_cr("[classes in non-restricted packages]");
-  _log_stream->cr();
+  _log_stream->print_cr("\n[classes in non-restricted packages]\n");
 
   for (SystemClassStream st; st.has_next();) {
     InstanceClass::Raw klass = st.next();
@@ -50,36 +48,21 @@ inline void ROMOptimizer::log_non_restricted_packages( void ) {
 }
 
 void ROMOptimizer::log_time_counters( void ) {
-#define PRINT_TIME_COUNTER(x) \
-        _log_stream->print_cr("    ROMOptimizer[%-36s] =%6d ms", \
-                              STR(x), _time_counters[x]); \
-        total += _time_counters[x]
+  static const char* const names[] = {
+    #define DEFINE_ROMOPTIMIZER_STATE_NAME(n) #n,
+      ROMOPTIMIZER_STATES_DO(DEFINE_ROMOPTIMIZER_STATE_NAME)
+    #undef DEFINE_ROMOPTIMIZER_STATE_NAME
+  };
+  static const char format[] = "    ROMOptimizer[%-30s] =%6d ms";
 
   int total = 0;
   _log_stream->print_cr("[ROMOptimizer timings]");
-  PRINT_TIME_COUNTER(STATE_MAKE_RESTRICTED_PACKAGES_FINAL);
-  PRINT_TIME_COUNTER(STATE_INITIALIZE_CLASSES);
-  PRINT_TIME_COUNTER(STATE_QUICKEN_METHODS);
-  PRINT_TIME_COUNTER(STATE_RESOLVE_CONSTANT_POOL);
-  PRINT_TIME_COUNTER(STATE_REMOVE_REDUNDATE_STACKMAPS);
-  PRINT_TIME_COUNTER(STATE_MERGE_STRING_BODIES);
-  PRINT_TIME_COUNTER(STATE_RESIZE_CLASS_LIST);
-  PRINT_TIME_COUNTER(STATE_REPLACE_EMPTY_ARRAYS);
-  PRINT_TIME_COUNTER(STATE_INLINE_METHODS);
-  PRINT_TIME_COUNTER(STATE_OPTIMIZE_FAST_ACCESSORS);
-  PRINT_TIME_COUNTER(STATE_REMOVE_DEAD_METHODS);
-  PRINT_TIME_COUNTER(STATE_RENAME_NON_PUBLIC_SYMBOLS);
-  PRINT_TIME_COUNTER(STATE_REMOVE_UNUSED_STATIC_FIELDS);
-  PRINT_TIME_COUNTER(STATE_COMPACT_FIELD_TABLES);
-  PRINT_TIME_COUNTER(STATE_REMOVE_UNUSED_SYMBOLS);
-  PRINT_TIME_COUNTER(STATE_REWRITE_CONSTANT_POOLS);
-  PRINT_TIME_COUNTER(STATE_COMPACT_TABLES);
-  PRINT_TIME_COUNTER(STATE_PRECOMPILE_METHODS);
-  PRINT_TIME_COUNTER(STATE_REMOVE_DUPLICATED_OBJECTS);
-  PRINT_TIME_COUNTER(STATE_MARK_HIDDEN_CLASSES);
-
-  _log_stream->print_cr("    ROMOptimizer[%-36s] =%6d ms", "*total*", total);
-#undef PRINT_TIME_COUNTER
+  for (int i = 0; i < STATE_COUNT; i++) {
+    const int time = _time_counters[i];
+    _log_stream->print_cr(format, names[i], time);
+    total += time;
+  }
+  _log_stream->print_cr(format, "*total*", total);
 }
 #endif // USE_ROM_LOGGING
 
@@ -87,8 +70,8 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
   _log_stream = log_stream;
 
   do {
-    int last_state = state();
-    jlong started_ms = Os::monotonic_time_millis();
+    const jlong started_ms = Os::monotonic_time_millis();
+    const int last_state = state();
 
     switch (state()) {
     case STATE_MAKE_RESTRICTED_PACKAGES_FINAL:
@@ -313,8 +296,8 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
       SHOULD_NOT_REACH_HERE();
     }
 
-    jlong end_ms = Os::monotonic_time_millis();
-    _time_counters[last_state] += (int)(end_ms - started_ms);
+    const jlong end_ms = Os::monotonic_time_millis();
+    _time_counters[last_state] += int(end_ms - started_ms);
   } while (!is_done() && !ROMWriter::work_timer_has_expired());
 
 #if USE_ROM_LOGGING
@@ -368,8 +351,6 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
       min_set().copy( hidden_set );
       max_set().copy( hidden_set );
     }
-
-    min_set().print_class_names(tty, "!!!! Hiding ");
 
     while( ++profile_id < profiles_count ) {
       profile = profiles_vector()->element_at(profile_id);
@@ -488,9 +469,9 @@ inline void ROMOptimizer::allocate_empty_arrays(JVM_SINGLE_ARG_TRAPS) {
 
 void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
   _log_stream = log_stream;
-  set_state(STATE_FIRST_STATE);
+  set_state(0);
 
-  jvm_memset(_time_counters, 0, sizeof(int)*STATE_COUNT);
+  jvm_memset(_time_counters, 0, sizeof _time_counters);
 
 #if USE_AOT_COMPILATION
   precompile_method_list()->initialize(JVM_SINGLE_ARG_CHECK);
@@ -1332,84 +1313,77 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
   MethodInvocationClosure mic;
+  mic.initialize(JVM_SINGLE_ARG_CHECK);
+
+  // build accessible methods closure
+  {
+    AllocationDisabler no_memory_allocations_in_this_scope;
+    for (SystemClassStream st; st.has_next_optimizable();) {
+      InstanceClass::Raw klass = st.next();
+      ObjArray::Raw methods = klass().methods();
+
+      const int len = methods().length();
+      for (int i = 0; i < len; i++) {
+        Method::Raw method = methods().obj_at(i);      
+        if (method.not_null() && is_invocation_closure_root(&klass, &method) ) {
+          mic.add_method(&method);
+        }
+      }
+    }
+  }
+
   int removed_count = 0;
   int removed_bytes = 0;
   int removed_bytecodes = 0;
 
-  mic.initialize(JVM_SINGLE_ARG_CHECK);
-
-  // build accessible methods closure
-  UsingFastOops level1;
-  ObjArray::Fast methods;
-  Method::Fast method;
-  InstanceClass::Fast klass;
-  for (SystemClassStream st; st.has_next_optimizable();) {
-    klass = st.next();
-    
-    methods = klass().methods();
-
-    for (int i=0; i<methods().length(); i++) {
-      method = methods().obj_at(i);
-      
-      if (method.is_null()) {
-        // A nulled-out method
-        continue;
-      }
-
-      if( is_invocation_closure_root(&klass, &method) ) {
-        mic.add_method(&method JVM_CHECK);
-      }
-    }
-  }
-
   // remove all methods not in closure
-  ClassInfo::Fast ci;  
-  for (SystemClassStream stream; stream.has_next_optimizable();) {
-    klass = stream.next();
-    
-    methods = klass().methods();
+  {
+    UsingFastOops fast_oops;
+    ObjArray::Fast methods;
+    InstanceClass::Fast klass;
+    Method::Fast method;
 
-    for (int i=0; i<methods().length(); i++) {
-      method = methods().obj_at(i);
-      
-      if (method.is_null()) {
-        // A nulled-out method
-        continue;
-      }
-      ci = klass().class_info();
-      bool is_dead = false;
-      
-      if (!mic.contains(&method)) {
-        is_dead = true;
-      }
+    for (SystemClassStream stream; stream.has_next_optimizable();) {
+      klass = stream.next();      
+      methods = klass().methods();
 
-      if (is_dead) {
-        log_vector.add_element(&method JVM_CHECK);
-
-        removed_count ++;
-        removed_bytes += method().object_size();
-        removed_bytecodes += method().code_size();
-        
-        int vindex = method().vtable_index();
-        // put nulls to method table and vtable if needed
-        if (vindex > -1) {
-          clean_vtables(&klass, &method, vindex);
-          if (ci().is_interface()) {
-            clean_itables(&klass, vindex - JavaVTable::base_vtable_size());
-          }
+      const int len = methods().length();
+      for (int i = 0; i < len; i++) {
+        method = methods().obj_at(i);
+        if (method.is_null()) {
+          // A nulled-out method
+          continue;
         }
-        methods().obj_at_clear(i);
 
-        // Mark the method as impossible to compile to guarantee it won't be 
-        // precompiled. We don't remove it from _precompile_method_list so
-        // that the method is listed in AOT compilation log.
-        method().set_impossible_to_compile();
-     }
+        if (!mic.contains(&method)) {
+          log_vector.add_element(&method JVM_CHECK);
+
+          removed_count ++;
+          removed_bytes += method().object_size();
+          removed_bytecodes += method().code_size();
+          
+          const int vindex = method().vtable_index();
+          // put nulls to method table and vtable if needed
+          if (vindex > -1) {
+            clean_vtables(&klass, &method, vindex);
+            ClassInfo::Raw ci = klass().class_info();
+            if (ci().is_interface()) {
+              clean_itables(&klass, vindex - JavaVTable::base_vtable_size());
+            }
+          }
+          methods().obj_at_clear(i);
+
+          // Mark the method as impossible to compile to guarantee it won't be 
+          // precompiled. We don't remove it from _precompile_method_list so
+          // that the method is listed in AOT compilation log.
+          method().set_impossible_to_compile();
+        }
+      }
     }
   }
 
   log_vector.sort();
-  for (int i=0; i<log_vector.size(); i++) {
+  for (int i = 0; i < log_vector.size(); i++) {
     Method::Raw method = log_vector.element_at(i);
     _log_stream->print("dead method: ");
 #ifndef PRODUCT

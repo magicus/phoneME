@@ -584,23 +584,28 @@ InstanceClass::lookup_method_in_all_interfaces(Symbol* name,
                                                Symbol* signature,
                                                int& interface_class_id,
                                                int& itable_index) {
-  Method::Raw method = find_local_method(name, signature);
-  if (method.not_null()) {
-    interface_class_id = class_id();         // returns to caller
-    itable_index = method().itable_index();  // returns to caller
-    return method.obj();
+  {
+    Method::Raw method = find_local_method(name, signature);
+    if (method.not_null()) {
+      interface_class_id = class_id();         // returns to caller
+      itable_index = method().itable_index();  // returns to caller
+      return method.obj();
+    }
   }
 
-  InstanceClass::Raw interface_class;
-  TypeArray::Raw interfaces = local_interfaces();
-  int n_interfaces = interfaces().length();
+  {
+    TypeArray::Raw interfaces = local_interfaces();
+    const int n_interfaces = interfaces().length();
 
-  for (int i = 0; i < n_interfaces; ++i) {
-    interface_class = Universe::class_from_id(interfaces().ushort_at(i));
-    method = interface_class().lookup_method_in_all_interfaces(name, signature,
-                                            interface_class_id, itable_index);
-    if (method.not_null()) {
-      return method.obj();
+    for (int i = 0; i < n_interfaces; ++i) {
+      InstanceClass::Raw interface_class =
+        Universe::class_from_id(interfaces().ushort_at(i));
+      Method::Raw method =
+        interface_class().lookup_method_in_all_interfaces(name, signature,
+                                              interface_class_id, itable_index);
+      if (method.not_null()) {
+        return method.obj();
+      }
     }
   }
   return NULL;

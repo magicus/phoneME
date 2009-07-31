@@ -234,32 +234,35 @@ class ROMOptimizer {
   };
   static OopDesc* _romoptimizer_oops[_number_of_oop_fields];
 
+// The order is important. Some optimizations depend on
+// the results of earlier optimizations. Do not change.
+#define ROMOPTIMIZER_STATES_DO(template)  \
+  template(MAKE_RESTRICTED_PACKAGES_FINAL )\
+  template(INITIALIZE_CLASSES             )\
+  template(QUICKEN_METHODS                )\
+  template(RESOLVE_CONSTANT_POOL          )\
+  template(REMOVE_REDUNDATE_STACKMAPS     )\
+  template(MERGE_STRING_BODIES            )\
+  template(RESIZE_CLASS_LIST              )\
+  template(REPLACE_EMPTY_ARRAYS           )\
+  template(INLINE_METHODS                 )\
+  template(OPTIMIZE_FAST_ACCESSORS        )\
+  template(REMOVE_DEAD_METHODS            )\
+  template(RENAME_NON_PUBLIC_SYMBOLS      )\
+  template(REMOVE_UNUSED_STATIC_FIELDS    )\
+  template(COMPACT_FIELD_TABLES           )\
+  template(REMOVE_UNUSED_SYMBOLS          )\
+  template(REWRITE_CONSTANT_POOLS         )\
+  template(COMPACT_TABLES                 )\
+  template(PRECOMPILE_METHODS             )\
+  template(REMOVE_DUPLICATED_OBJECTS      )\
+  template(MARK_HIDDEN_CLASSES            )
+
   enum {
-    // The order is important. Some optimizations depend on
-    // the results of earlier optimizations. Do not change.
-    STATE_MAKE_RESTRICTED_PACKAGES_FINAL =  1,
-    STATE_INITIALIZE_CLASSES             =  2,
-    STATE_QUICKEN_METHODS                =  3,
-    STATE_RESOLVE_CONSTANT_POOL          =  4,
-    STATE_REMOVE_REDUNDATE_STACKMAPS     =  5,
-    STATE_MERGE_STRING_BODIES            =  6,
-    STATE_RESIZE_CLASS_LIST              =  7,
-    STATE_REPLACE_EMPTY_ARRAYS           =  8,
-    STATE_INLINE_METHODS                 =  9,
-    STATE_OPTIMIZE_FAST_ACCESSORS        = 10,
-    STATE_REMOVE_DEAD_METHODS            = 11,
-    STATE_RENAME_NON_PUBLIC_SYMBOLS      = 12,
-    STATE_REMOVE_UNUSED_STATIC_FIELDS    = 13,
-    STATE_COMPACT_FIELD_TABLES           = 14,
-    STATE_REMOVE_UNUSED_SYMBOLS          = 15,
-    STATE_REWRITE_CONSTANT_POOLS         = 16,
-    STATE_COMPACT_TABLES                 = 17,
-    STATE_PRECOMPILE_METHODS             = 18,
-    STATE_REMOVE_DUPLICATED_OBJECTS      = 19,
-    STATE_MARK_HIDDEN_CLASSES            = 20,
-    STATE_DONE                           = 21,
-    STATE_COUNT,
-    STATE_FIRST_STATE                    = STATE_MAKE_RESTRICTED_PACKAGES_FINAL
+    #define DEFINE_ROMOPTIMIZER_STATE(n) STATE_##n,
+      ROMOPTIMIZER_STATES_DO(DEFINE_ROMOPTIMIZER_STATE)
+    #undef DEFINE_ROMOPTIMIZER_STATE
+    STATE_COUNT
   };
 
   static int _time_counters[STATE_COUNT];
@@ -290,13 +293,13 @@ public:
     set_state(state() + 1);
   }
   static bool is_active() {
-    return (STATE_FIRST_STATE <= state() && state() < STATE_DONE);
+    return state() < STATE_COUNT;
   }
   static bool is_done() {
-    return (state() >= STATE_DONE);
+    return state() >= STATE_COUNT;
   }
   static int number_of_states() {
-    return STATE_DONE;
+    return STATE_COUNT;
   }
   
   static void init_handles();
