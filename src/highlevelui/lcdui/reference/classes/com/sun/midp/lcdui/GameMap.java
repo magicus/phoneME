@@ -29,6 +29,7 @@ package com.sun.midp.lcdui;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.game.GameCanvas;
 import java.util.Hashtable;
+import java.lang.ref.WeakReference;
 
 /**
  * A class that maps between DisplayAccess objects and Displayable, GameCanvas.
@@ -39,11 +40,11 @@ public class GameMap {
     /**
      * The Displayable associated with the DisplayAccess
      */
-    static private Displayable displayable;
+    static private WeakReference displayable;
     /**
      * The DisplayAccess associated with the GameCanvas
      */
-    static private DisplayAccess displayAccess;
+    static private WeakReference displayAccess;
 
     /**
      * The GraphicsAccess tunnel instance handed out from
@@ -71,9 +72,9 @@ public class GameMap {
      */
     public static void registerDisplayAccess(Displayable c, DisplayAccess d) {
         synchronized (lock) {
-	        displayable = c;
-	        displayAccess = d;
-	    }
+                displayable = c == null ? null : new WeakReference(c);
+                displayAccess = d == null ? null : new WeakReference(d);
+            }
     }
 
     /**
@@ -83,11 +84,11 @@ public class GameMap {
      */
     public static DisplayAccess getDisplayAccess(Displayable c) {
         synchronized (lock) {
-  	        if (c == displayable) {
-                return displayAccess;
-  	        } else {
-                return null;
-	        }
+            if (displayAccess != null && displayable != null && c == (Displayable) displayable.get()) {
+                return  (DisplayAccess) displayAccess.get();
+            } else {
+               return null;
+            }
         }
     }
 

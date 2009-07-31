@@ -430,10 +430,6 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             updateNativeTicker(owner.ticker, null);
         }
 
-        if (GameMap.getDisplayAccess(owner) != null) {
-            GameMap.registerDisplayAccess(null, null);
-        }
-
         // Delete native resources
         deleteNativeResource();
         

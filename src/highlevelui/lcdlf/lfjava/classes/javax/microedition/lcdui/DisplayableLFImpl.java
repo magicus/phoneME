@@ -424,10 +424,6 @@ class DisplayableLFImpl implements DisplayableLF {
         }
 
         state = HIDDEN;
-
-        if (GameMap.getDisplayAccess(owner) != null) {
-            GameMap.registerDisplayAccess(null, null);
-        }
     }
 
     /**
