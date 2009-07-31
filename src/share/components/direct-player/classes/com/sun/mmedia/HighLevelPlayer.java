@@ -676,6 +676,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         {
             /* try to realize native player */
             nRealize(hNative, type);
+            MMEventListener.setProperties(hNative);
         }
 
         mediaDownload = null;
