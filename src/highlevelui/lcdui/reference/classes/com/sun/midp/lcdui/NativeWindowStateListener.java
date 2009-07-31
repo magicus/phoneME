@@ -1,42 +1,50 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
 
-package com.sun.midp.main;
+package com.sun.midp.lcdui;
 
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midletsuite.SuiteContainerAdapter;
+import javax.microedition.lcdui.Display;
 
-class MidletSuiteContainer extends SuiteContainerAdapter implements com.sun.midp.rms.SuiteContainer {
-    public MidletSuiteContainer(MIDletSuiteStorage storage) {
-        super(storage);
+
+/**
+ * This is the "tunnel" to deliver EventTypes.NATIVE_WINDOW_LOST_FOCUS events
+ * to Dsplay class.
+ */
+public class NativeWindowStateListener {
+    private static Listener listener;
+
+    public static void setListener(Listener listener) {
+        NativeWindowStateListener.listener = listener;
     }
 
-    public String getCallingMidletClassName() {
-        return
-        MIDletStateHandler.getMidletStateHandler().getFirstRunningMidlet();
+    public static void nativeWindowLostFocus() {
+        listener.nativeWindowLostFocus();
+    }
+
+    public static interface Listener {
+        public void nativeWindowLostFocus();
     }
 }

@@ -110,19 +110,28 @@ public class Protocol extends com.sun.cdc.io.j2me.datagram.Protocol {
     }
     
     public void send(Datagram dgram) throws IOException, SecurityException {
+        if (!open) {
+            throw new IOException("Connection closed");
+        }
+
         try {
-            AccessController.checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+            AccessController.checkPermission(
+                AccessController.TRUSTED_APP_PERMISSION_NAME);
         } catch (SecurityException exc) {
             /*
              * JTWI security check, untrusted MIDlets cannot open
              * WAP gateway ports 9200-9203.
              */
-            int remotePort = getPort(dgram.getAddress());
-            if (remotePort >= 9200 && remotePort <= 9203) {
-                throw new SecurityException(
+            String addr = dgram.getAddress();
+            if (addr != null) {
+                int remotePort = getPort(addr);
+                if (remotePort >= 9200 && remotePort <= 9203) {
+                    throw new SecurityException(
                         "Target port denied to untrusted applications");
+                }
             }
         }
+
         super.send(dgram);
     }
 }

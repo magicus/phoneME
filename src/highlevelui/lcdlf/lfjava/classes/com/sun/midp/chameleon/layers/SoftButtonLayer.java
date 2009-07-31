@@ -76,6 +76,12 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
      * null if there is no command associated with button #1.
      */
     protected Command soft1;
+    
+    /**
+     * True if the BACK button is the only command on the screen, which needs to
+     * be hidden.     
+     */         
+    private boolean backButtonHidden;
 
     /**
      * The set of commands associated with soft button #2.
@@ -275,6 +281,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         // reset the commands
         soft1 = null;
         soft2 = null;
+        backButtonHidden = false;
 
         if (numS > 0) {
             int index = -1;
@@ -334,10 +341,11 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                         scrCmds, index, numS - index);
             }
 
-	    /* If only BACK is active, hide it. */
-	    if ((type == Command.BACK) && (numS == 0)) {
-		soft1 = null ;
-	    }
+            /* If only BACK is active, hide it. */
+            if ((type == Command.BACK) && (numS == 0)) {
+                soft1 = null;
+                backButtonHidden = true;
+            }
         }
 
         // Now fill in the 'right' soft button, possibly with a menu
@@ -423,8 +431,12 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                     setInteractive(true);
                     ret = true;
                 } else if (type == EventConstants.RELEASED) {
-                    soft1();
-                    ret = true;
+                    if (backButtonHidden) {
+                        ret = processBackCommand();
+                    } else {
+                        soft1();
+                        ret = true;
+                    }
                 }
             }
         } else if (keyCode == EventConstants.SOFT_BUTTON2) {
@@ -438,34 +450,40 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 }
             }
         } else {
-	    /*
-	     * If the SYSTEM_KEY_CLEAR is pressed (aka backspace or clear)
-	     * treat it as if the Command.BACK was selected from the soft
-	     * button menu layer.
-	     */
-	    if ((keyCode == -8)
-		&& (type == EventConstants.RELEASED)) {
-		int cmdCount = scrCmds.length;
-		for (int i = 0; i < cmdCount; i++) {
-		    if (scrCmds[i].getCommandType() == Command.BACK) {
-			if (tunnel != null) {
-			    tunnel.callScreenListener(scrCmds[i], scrListener);
-			    return true;
-			}
-		    }
-		}
-		cmdCount = itmCmds.length;
-		for (int i = 0; i < cmdCount; i++) {
-		    if (itmCmds[i].getCommandType() == Command.BACK) {
-			if (tunnel != null) {
-			    tunnel.callItemListener(itmCmds[i], itemListener);
-			    return true;
-			}
-		    }
-		}
-	    }
-	}
+            /*
+             * If the SYSTEM_KEY_CLEAR is pressed (aka backspace or clear)
+             * treat it as if the Command.BACK was selected from the soft
+             * button menu layer.
+             */
+            if ((keyCode == -8)
+                && (type == EventConstants.RELEASED)) {
+                ret = processBackCommand();
+            }
+        }
         return ret;
+    }
+    
+    private boolean processBackCommand() {
+        int cmdCount = scrCmds.length;
+        for (int i = 0; i < cmdCount; i++) {
+            if (scrCmds[i].getCommandType() == Command.BACK) {
+                if (tunnel != null) {
+                    tunnel.callScreenListener(scrCmds[i], scrListener);
+                    return true;
+                }
+            }
+        }
+        cmdCount = itmCmds.length;
+        for (int i = 0; i < cmdCount; i++) {
+            if (itmCmds[i].getCommandType() == Command.BACK) {
+                if (tunnel != null) {
+                    tunnel.callItemListener(itmCmds[i], itemListener);
+                    return true;
+                }
+            }
+        }
+        setInteractive(false);
+        return false;
     }
 
     /**
@@ -726,7 +744,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         }
 
         // for full screen mode we should check if soft key is useful
-        if (menuUP) {
+        // back button is active even if hidden
+        if (menuUP || backButtonHidden) {
             return true;
         } else {
             return isCommandActive(soft1);

@@ -117,6 +117,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundController.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/SystemAlert.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/NativeWindowStateListener.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayStaticAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationFactory.java \
