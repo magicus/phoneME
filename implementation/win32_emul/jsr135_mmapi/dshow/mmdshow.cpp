@@ -559,20 +559,38 @@ static javacall_result dshow_release_device(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+static javacall_result dshow_clear_buffer(javacall_handle handle)
+{
+    //dshow_player* p = (dshow_player*)handle;
+    PRINTF( "*** clear buffer ***\n" );
+    return JAVACALL_OK;
+}
+
 static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
 {
     return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
 }
 
+//=============================================================================
+
 static void realize_thread( void* param )
 {
     dshow_player* p = (dshow_player*)param;
 
-    PRINTF( "*** creating dshow player ***\n" );
+    PRINTF( "*** creating dshow player... ***\n" );
 
     bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
 
-    PRINTF( "*** dshow player create finished (%s), realize complete ***\n",
+    PRINTF( "*** dshow player creation finished (%s) ***\n",
+            (ok ? "success" : "fail") );
+
+    if( ok )
+    {
+        PRINTF( "*** realizing dshow player... ***\n" );
+        ok = ( player::result_success == p->ppl->realize() );
+    }
+
+    PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
             (ok ? "success" : "fail") );
 
     if( ok && 
@@ -683,14 +701,26 @@ static javacall_result dshow_realize(javacall_handle handle,
         return JAVACALL_OK;
     }
 
-    /*
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
+    return JAVACALL_FAIL;
+}
+
+//=============================================================================
+
+static void prefetch_thread( void* param )
+{
+    dshow_player* p = (dshow_player*)param;
+
+    PRINTF( "*** prefetching dshow player... ***\n" );
+
+    bool ok = ( player::result_success == p->ppl->prefetch() );
+
+    PRINTF( "*** dshow player prefetch finished (%s)***\n",
+            (ok ? "success" : "fail") );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
                                      p->appId,
                                      p->playerId, 
                                      ok ? JAVACALL_OK : JAVACALL_FAIL, NULL );
-    */
-
-    return JAVACALL_FAIL;
 }
 
 static javacall_result dshow_prefetch(javacall_handle handle)
@@ -698,13 +728,12 @@ static javacall_result dshow_prefetch(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** prefetch ***\n" );
 
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
-                                     JAVACALL_OK, NULL );
+    _beginthread( prefetch_thread, 0, p );
 
     return JAVACALL_OK;
 }
+
+//=============================================================================
 
 static void starter_thread( void* param )
 {
@@ -737,6 +766,8 @@ static javacall_result dshow_start(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+//=============================================================================
+
 static void stopper_thread( void* param )
 {
     dshow_player* p = (dshow_player*)param;
@@ -767,6 +798,8 @@ static javacall_result dshow_stop(javacall_handle handle)
 
     return JAVACALL_OK;
 }
+
+//=============================================================================
 
 static javacall_result dshow_pause(javacall_handle handle)
 {
@@ -1045,7 +1078,7 @@ static media_basic_interface _dshow_basic_itf =
     dshow_destroy,
     dshow_acquire_device,
     dshow_release_device,
-    NULL,
+    dshow_clear_buffer,
     dshow_realize,
     dshow_prefetch,
     dshow_start,
