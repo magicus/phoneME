@@ -250,12 +250,26 @@ void MethodInvocationClosure::add_method(Method* method) {
     method->iterate(0, method->code_size(), &ba JVM_CHECK);
   }
 
-  // find all subclasses of the method class and
+  InstanceClass::Raw holder = method->holder();
+
+  // find all super- and subclasses of the method class and
   // add methods with the same index in vtable
   {
     const int vindex = method->vtable_index(); 
     if (vindex > -1) {
-      InstanceClass::Raw holder = method->holder();
+      // IMPL_NOTE: Do we really need to add methods from superclasses?
+      {
+        InstanceClass::Raw super = holder.obj();
+        while (super = super().super(), super.not_null()) {
+          ClassInfo::Raw info = super().class_info();
+          if (info().vtable_length() <= vindex) {
+            break;
+          }
+          Method::Raw m = info().vtable_method_at(vindex);
+          add_method(&m);
+        }
+      }
+    
       for (SystemClassStream st; st.has_next();) {
         InstanceClass::Raw klass = st.next();
         if (klass().is_subclass_of(&holder)) {
@@ -271,11 +285,8 @@ void MethodInvocationClosure::add_method(Method* method) {
 
   // If this method belongs to an interface,
   // consider all implementation methods reachable.
-  {
-    InstanceClass::Raw klass = method->holder();
-    if (klass().is_interface()) {
-      add_interface_method(method);
-    }
+  if (holder().is_interface()) {
+    add_interface_method(method);
   }
 }
 
