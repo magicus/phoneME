@@ -80,7 +80,15 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
 			    ? (gxj_alpha_type *)&(img->alphaData->elements[0])
 			    : NULL;
     } else {
+#if ENABLE_DYNAMIC_PIXEL_FORMAT
+        if (pp_enable_32bit_mode) {
+   	    sbuf->pixelData = (gxj_pixel_type *)img->nativePixelData32;
+        } else {
+   	    sbuf->pixelData = (gxj_pixel_type *)img->nativePixelData16;
+        }
+#else
 	sbuf->pixelData = (gxj_pixel_type *)img->nativePixelData;
+#endif
 	sbuf->alphaData = (gxj_alpha_type *)img->nativeAlphaData;
     }
 

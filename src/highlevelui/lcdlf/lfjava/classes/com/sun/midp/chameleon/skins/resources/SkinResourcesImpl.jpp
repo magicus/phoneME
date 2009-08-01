@@ -216,12 +216,7 @@ public class SkinResourcesImpl extends SkinResources {
                 if (Constants.CHAM_ROMIZED_IMAGES && graphicsAccess != null) {
                     int romIndex = skinData.romizedImageIndexes[imageIdx];
                     if (romIndex != -1) {
-                        int imageDataPtr = getRomizedImageDataArrayPtr(
-                                romIndex);
-                        int imageDataLength = getRomizedImageDataArrayLength(
-                                romIndex);
-                        image = graphicsAccess.getRomizedImage(imageDataPtr,
-                                imageDataLength);
+                        image = graphicsAccess.getRomizedImage(romIndex);
                     }
                 } 
                 

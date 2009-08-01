@@ -40,13 +40,11 @@ public interface GraphicsAccess {
     /**
      * Return a romized image resource based on the identifier.
      *
-     * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
+     * @param romIndex romized image id
      * @return the romized Image, null if the identifier was invalid
      *         or the Image did not exist.
      */
-    public Image getRomizedImage(int imageDataArrayPtr,
-            int imageDataArrayLength);
+    public Image getRomizedImage(int romIndex);
     //#endif
 
     /**
