@@ -887,9 +887,9 @@ abstract class ItemLFImpl implements ItemLF {
 
 	} else {
 	    if (preferredWidth > 
-		Display.WIDTH - Constants.VERT_SCROLLBAR_WIDTH) {
+		Display.getPrimaryDisplayWidth() - Constants.VERT_SCROLLBAR_WIDTH) {
 		preferredWidth = 
-		    Display.WIDTH - Constants.VERT_SCROLLBAR_WIDTH;
+		    Display.getPrimaryDisplayWidth() - Constants.VERT_SCROLLBAR_WIDTH;
 	    }
 	}
 
