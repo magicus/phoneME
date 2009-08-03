@@ -292,6 +292,7 @@ createLogFile(char* prefix, char* kind, int pid)
     if (fd == -1) {
 	perror(fileName);
     }
+    free(fileName);
     return fd;
 }
 
