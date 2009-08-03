@@ -375,7 +375,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     void continueDownload() {
         /* predownload media data to fill native buffers */
         if ( null != directInputThread ) {
-            System.out.println( "HighLevelPlayer: continued Download" );
             directInputThread.requestData();
         }
     }

@@ -163,7 +163,6 @@ mainloop:
         synchronized( requestLock ) {
             requestPending = true;
             requestLock.notify();
-            System.out.println( "DirectInputThread: data requested" );
         }
     }
 

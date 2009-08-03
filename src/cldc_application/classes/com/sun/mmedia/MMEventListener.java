@@ -72,11 +72,9 @@ class MMEventListener implements EventListener {
      */
     public void process(Event event) {
         NativeEvent nevt = (NativeEvent)event;
-        System.out.println("MMEventListener: event " + nevt.intParam4 + " received");
         HighLevelPlayer p;
 
 		if( EventTypes.MMAPI_EVENT != nevt.getType() ) {
-                    System.out.println("MMEventListener: returning because it's not a multimedia event");
                     return;
                 }
 		
@@ -156,8 +154,6 @@ class MMEventListener implements EventListener {
 
         case EVENT_MEDIA_DATA_REQUEST:
             p = HighLevelPlayer.get(nevt.intParam1);
-            System.out.println( "MMEventListener: Data request, Player ID "
-                    + nevt.intParam1 );
             DirectDebugOut.nDebugPrint("Java: MMEventListener: Data request");
             if (p != null) {
                 p.continueDownload();
@@ -194,6 +190,5 @@ class MMEventListener implements EventListener {
             break;
                 
         }
-        System.out.println("MMEventListener: returning from process() method");
     }
 }
