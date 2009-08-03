@@ -886,7 +886,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
 #else
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
-    int romIndex = KNI_GetParameterAsInt(2);
+    int imageId = KNI_GetParameterAsInt(2);
 
     int imageDataPtr;
     int imageDataLength;
