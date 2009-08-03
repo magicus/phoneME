@@ -213,6 +213,7 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
     toSpace       = CVMssAllocSemiSpace(heapSize);
     
     if ((fromSpace == 0) || (toSpace == 0)) {
+        free(heap);
 	free(fromSpace);
 	free(toSpace);
 	return CVM_FALSE;
@@ -229,6 +230,7 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
     heap->forwarded        = (CVMUint32*)calloc(heap->sizeOfBitmaps, 1);
 
     if (heap->forwarded == 0) {
+	free(heap);
 	free(fromSpace);
 	free(toSpace);
 	return CVM_FALSE;
