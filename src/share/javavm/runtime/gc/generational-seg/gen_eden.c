@@ -363,6 +363,7 @@ CVMgenEdenAlloc(CVMUint32* space, CVMUint32 totalNumBytes)
     extraSpace = CVMgenAllocEdenSpace(eden->allocTop, extraSpaceBytes) ;
 
     if (eden == NULL || extraSpace == NULL) {
+	free(thisGen);
 	free(eden);
 	free(extraSpace);
 	return NULL;
