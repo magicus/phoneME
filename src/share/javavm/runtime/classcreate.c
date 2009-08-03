@@ -3193,6 +3193,8 @@ CVMreadStackMapTable(CVMExecEnv* ee, CICcontext* context,
 	lastPC = pc;
     }
     CVMassert(context->ptr == startOffset + length);
+    free(locals);
+    free(stack);
     return maps;
 }
 
