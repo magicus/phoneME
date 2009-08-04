@@ -28,7 +28,6 @@ package com.sun.midp.chameleon.layers;
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.log.Logging;

@@ -478,6 +478,11 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
         if (imageData != null) {
             return Image.createImage(imageData, 0, imageData.length);
         } else {
+            if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
+                Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
+                    imageName + " not found for AlertLF.");
+            }
+
             // Use a empty immutable image as placeholder
             return Image.createImage(Image.createImage(16, 16));
         }
