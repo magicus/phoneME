@@ -453,13 +453,28 @@ class MIDPConfig{
     }
 
     /* 
-     * A utility method used to load resources using the caller's
-     * classloaders. This is useful when application and system
-     * code are loaded by different classloaders.
+     * Call getResourceAsStream on the first MIDlet class loader on the stack.
      */
-    public static InputStream
-    getResourceAsStream(String name){
-        int i = 1; /* skip tha caller, which must be system code */
+    public static InputStream getMIDletResourceAsStream(String name) {
+        ClassLoader cl = getMIDletClassLoader();
+
+        if (cl == null) {
+            return null;
+        }
+
+        return cl.getResourceAsStream(name);
+    }
+
+    /* 
+     * A utility method used to load a resource using all of the caller's
+     * classloaders. This is useful when application and system
+     * code are loaded by different classloaders. Note this will
+     * throw a security exception if the MIDlet does not have permission
+     * to get resources other than its own, unless called by system code
+     * within a doPriviledged method.
+     */
+    public static InputStream getSystemResourceAsStream(String name) {
+        int i = 1; /* skip the caller, which must be system code */
         InputStream is = null;
         ClassLoader lastFailedLoader = null;
         
