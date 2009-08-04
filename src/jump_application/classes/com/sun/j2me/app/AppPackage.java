@@ -118,6 +118,16 @@ public class AppPackage {
      * @throws NullPointerException if <code>name</code> is <code>null</code>.
      */     
     public InputStream getResourceAsStream(String name) {
-        return MIDPConfig.getResourceAsStream(name);    
+        if (CVM.isMIDPContext()) {
+            return MIDPConfig.getMIDletResourceAsStream(name);
+        }
+
+        /*
+         * Note: this code is fine for system code, but not a CDC
+         * application, since it may only search the boot class path and
+         * not in the JAR of the application, also the application could be
+         * running in some type of container as MIDlets do.
+         */
+        return AppPackage.class.getResourceAsStream(name);
     }
 }
