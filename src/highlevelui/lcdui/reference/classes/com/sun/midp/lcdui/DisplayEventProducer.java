@@ -198,5 +198,22 @@ public class DisplayEventProducer {
         eventQueue.post(
             LCDUIEvent.createScreenRepaintEvent(d));
     }
+
+    /**
+     * Schedules a call to change display orientation.
+     *
+     * @param d The Display
+     * @param landscape <code>true</code> if the display should be set 
+     *      landscape orientation, <code>false</code> if the display should
+     *      be set portrait orientation
+     */
+    public void sendScreenRotateEvent(DisplayAccess d, boolean landscape) {
+        NativeEvent event = new NativeEvent(EventTypes.ROTATION_EVENT);
+        event.intParam4 = d.getDisplayId();
+        if (landscape) {
+            event.intParam1 = 1;
+        }
+        eventQueue.post(event);
+    }
 }
 

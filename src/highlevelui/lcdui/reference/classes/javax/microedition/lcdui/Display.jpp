@@ -38,6 +38,7 @@ import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.events.EventQueue;
 
 import com.sun.midp.lcdui.NativeWindowStateListener;
+import com.sun.midp.lcdui.DisplayOrientationAccess;
 
 import java.util.Hashtable;
 
@@ -720,6 +721,60 @@ public class Display {
         }
         NativeWindowStateListener.setListener(
             new NativeWindowStateListenerListener());
+
+        class DisplayOrientationAccessImpl implements
+                DisplayOrientationAccess.Access {
+            public void setPrimaryDisplayLandscape(
+                    Object midlet, boolean landscape) {
+                DisplayAccess da =
+                        displayContainer.findPrimaryDisplayByOwner(midlet);
+                if (da != null) {
+                    displayEventProducer.sendScreenRotateEvent(da, landscape);
+                } else {
+                    synchronized (midletScreens) {
+                        MIDletScreen midletScreen =
+                            midletScreens.getMIDletScreen(midlet);
+                        if (landscape) {
+                            switch (midletScreen.dimensionId) {
+                            case PORTRAIT_DIMENSION_ID:
+                                midletScreen.dimensionId =
+                                        LANDSCAPE_DIMENSION_ID;
+                                break;
+                            case PORTRAIT_FULLSCREEN_DIMENSION_ID:
+                                midletScreen.dimensionId =
+                                        LANDSCAPE_FULLSCREEN_DIMENSION_ID;
+                                break;
+                            }
+                        } else {
+                            switch (midletScreen.dimensionId) {
+                            case LANDSCAPE_DIMENSION_ID:
+                                midletScreen.dimensionId =
+                                        PORTRAIT_DIMENSION_ID;
+                                break;
+                            case LANDSCAPE_FULLSCREEN_DIMENSION_ID:
+                                midletScreen.dimensionId =
+                                        PORTRAIT_FULLSCREEN_DIMENSION_ID;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            public boolean isPrimaryDisplayLandscape(Object midlet) {
+                MIDletScreen midletScreen =
+                    midletScreens.getMIDletScreen(midlet);
+                switch (midletScreen.dimensionId) {
+                case LANDSCAPE_DIMENSION_ID:
+                case LANDSCAPE_FULLSCREEN_DIMENSION_ID:
+                    return true;
+                default:
+                    return false;
+                }
+            }
+        }
+        DisplayOrientationAccess.setAccess(
+            new DisplayOrientationAccessImpl());
     }
 
 

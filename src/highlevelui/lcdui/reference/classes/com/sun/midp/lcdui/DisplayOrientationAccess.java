@@ -31,23 +31,31 @@ import com.sun.midp.security.Permissions;
 
 
 /**
- * This is the "tunnel" to deliver EventTypes.NATIVE_WINDOW_LOST_FOCUS events
+ * This is the "tunnel" to deliver display orientation configuration
  * to Display class.
  */
-public class NativeWindowStateListener {
-    private static Listener listener;
+public class DisplayOrientationAccess {
+    private static Access access;
 
-    public static void setListener(Listener listener) {
+    public static void setAccess(Access access) {
         AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
-        NativeWindowStateListener.listener = listener;
+        DisplayOrientationAccess.access = access;
     }
 
-    public static void nativeWindowLostFocus() {
+    public static void setPrimaryDisplayLandscape(
+            Object midlet, boolean landscape) {
         AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
-        listener.nativeWindowLostFocus();
+        access.setPrimaryDisplayLandscape(midlet, landscape);
     }
 
-    public static interface Listener {
-        public void nativeWindowLostFocus();
+    public static boolean isPrimaryDisplayLandscape(Object midlet) {
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+        return access.isPrimaryDisplayLandscape(midlet);
+    }
+
+    public static interface Access {
+        public void setPrimaryDisplayLandscape(
+                Object midlet, boolean landscape);
+        public boolean isPrimaryDisplayLandscape(Object midlet);
     }
 }
