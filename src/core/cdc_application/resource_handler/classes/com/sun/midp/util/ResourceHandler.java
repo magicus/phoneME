@@ -117,6 +117,10 @@ public class ResourceHandler {
             AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
+        if (resourceFilename == null) {
+            throw new IllegalArgumentException("Resource file name is null");
+        }
+
         // converting the file name into the resource name
         int start = resourceFilename.lastIndexOf('/');
         if (start < 0) {
@@ -129,11 +133,29 @@ public class ResourceHandler {
         }
 
 	// Add a leading slash to fetch top level resources by name
-        String resourceName = "/" + resourceFilename.substring(start,
+        final String resourceName = "/" + resourceFilename.substring(start,
                 resourceFilename.length());
 
 	try {
-	    InputStream is = Class.class.getResourceAsStream(resourceName);
+            InputStream is =
+                (InputStream)java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedAction() {
+                        public Object run() {
+                            return Class.class.getResourceAsStream(
+                                resourceName);
+                        }
+                    });
+
+            if (is == null) {
+                /*
+                 * Resource could not be found, which is can happen
+                 * normally based on how the resources are built, one
+                 * example would be if .raw files are used instead of .png.
+                 * The code in this case is in SkinResourcesImpl.getImage.
+                 */
+                return null;
+            }
+
 	    ByteArrayOutputStream baos =  new ByteArrayOutputStream(1024);
 
 	    byte[] bytes = new byte[512];
@@ -146,7 +168,7 @@ public class ResourceHandler {
 	    return  baos.toByteArray();
 
 	} catch (Exception e) {
-	    // Resource could not be found
+	    // Resource found, but could not be read
 	    System.err.println("Could not load: " + resourceName);
 	    e.printStackTrace();
 	}

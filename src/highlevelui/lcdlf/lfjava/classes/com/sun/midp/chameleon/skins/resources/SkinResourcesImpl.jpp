@@ -239,6 +239,7 @@ public class SkinResourcesImpl extends SkinResources {
                 }
             }
         } catch (Throwable t) {
+            t.printStackTrace();
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                 Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
                         "Exception caught while loading Image resource " +
@@ -252,6 +253,8 @@ public class SkinResourcesImpl extends SkinResources {
                 resources.images[imageIdx] = image;
             }
         } else {
+            new java.io.FileNotFoundException(imageIdentifier +
+                " not found for LCDUI Skin").printStackTrace();
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                 Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
                         "No resource found when loading Image resource: " + 
