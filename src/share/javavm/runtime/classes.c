@@ -295,7 +295,6 @@ CVMclassGetFieldBlock(const CVMClassBlock* cb, const CVMFieldTypeID tid,
  * Iterate over all classes, both romized and dynamically loaded,
  * and call 'callback' on each class.
  */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMTI) || defined(CVM_JVMPI)
 void
 CVMclassIterateAllClasses(CVMExecEnv* ee, 
 			  CVMClassCallbackFunc callback,
@@ -307,7 +306,6 @@ CVMclassIterateAllClasses(CVMExecEnv* ee,
     /* Iterate over all dynamically loaded classes. */
     CVMclassIterateDynamicallyLoadedClasses(ee, callback, data);
 }
-#endif
 
 /*
  * Iterate over the loaded classes, and call 'callback'

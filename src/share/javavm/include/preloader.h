@@ -122,12 +122,10 @@ CVMpreloaderInitInvokeCost();
 /*
  * Iterate over all preloaded classes, and call 'callback' on each class.
  */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMTI) || defined(CVM_JVMPI)
 extern void
 CVMpreloaderIterateAllClasses(CVMExecEnv* ee, 
 			      CVMClassCallbackFunc callback,
 			      void* data);
-#endif
 
 #if defined(CVM_INSPECTOR) || defined(CVM_DEBUG_ASSERTS) || defined(CVM_JVMPI)
 

@@ -1831,12 +1831,10 @@ typedef void (*CVMStackCallbackFunc)( CVMObject**, void*);
  * Iterate over all classes, both romized and dynamically loaded,
  * and call 'callback' on each class.
  */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMTI) || defined(CVM_JVMPI)
 extern void
 CVMclassIterateAllClasses(CVMExecEnv* ee, 
 			  CVMClassCallbackFunc callback,
 			  void* data);
-#endif
 
 /*
  * Iterate over the loaded classes table, and call 'callback'

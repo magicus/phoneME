@@ -1713,7 +1713,9 @@ iterateHeapCallBack(CVMObject* obj, CVMClassBlock* cb,
     CVMGCOptions gcOpts = {
 	/* isUpdatingObjectPointers */ CVM_FALSE,
         /* discoverWeakReferences   */ CVM_FALSE,
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
         /* isProfilingPass          */ CVM_FALSE
+#endif
     };
     CVMGCOptions *gcOptsPtr = &gcOpts;
 
@@ -1730,6 +1732,16 @@ static CVMBool iterateHeapAction(CVMExecEnv *ee, void *data)
 {
     CVMgcimplIterateHeap(ee, iterateHeapCallBack, data);
     return CVM_TRUE;
+}
+
+extern void
+CVMgcScanStatics(CVMExecEnv *ee, CVMGCOptions* gcOpts,
+	         CVMRefCallbackFunc callback, void* data);
+
+static void
+scanClassCallBack(CVMExecEnv* ee, CVMClassBlock* cb, void* data)
+{
+    CVMscanClassIfNeeded(ee, cb, nullifyRefCallBack, data);
 }
 
 int nullifyRefs = 0;
@@ -1751,8 +1763,27 @@ CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
 
         CVMD_gcSafeExec(ee, {
             CVMsysMutexLock(ee, &CVMglobals.heapLock);
+
+            CVMgcClearClassMarks(ee, NULL);
+
+            /* scan preloader statics */
+            {
+                CVMAddr  numRefStatics = CVMpreloaderNumberOfRefStatics();
+	        CVMAddr* refStatics    = CVMpreloaderGetRefStatics();
+                CVMwalkContiguousRefs(refStatics, numRefStatics,
+                                      nullifyRefCallBack,
+				      deadLoader);
+            }
+
+            /* scan dynamic loaded class statics */
+            /*CVMsetDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
+            CVMclassIterateAllClasses(ee, scanClassCallBack, deadLoader);
+            /*CVMclearDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
+
+            /* iterate the heap objects */
             CVMgcStopTheWorldAndDoAction(ee, deadLoader, NULL,
                 iterateHeapAction, NULL, NULL, NULL);
+
             CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
         });
 
