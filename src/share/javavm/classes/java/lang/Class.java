@@ -1306,11 +1306,8 @@ class Class implements java.io.Serializable {
         ClassLoader cl;
         name = resolveName(name);
 
-        if (CVM.callerCLIsMIDCLs()) {
-            cl = ClassLoader.getCallerClassLoader();
-	} else {
-            cl = getClassLoader0();
-	}
+        cl = getClassLoader0();
+
         if (cl==null) {
             // A system class.
             return ClassLoader.getSystemResourceAsStream(name);
