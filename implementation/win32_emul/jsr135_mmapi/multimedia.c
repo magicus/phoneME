@@ -25,7 +25,6 @@
 #include "lime.h" // Lime has to be the first include for some reason
 
 #include "multimedia.h"
-#include "mmmididev.h"
 #include "javautil_unicode.h"
 #include "javacall_memory.h"
 #include <stdio.h>
@@ -492,8 +491,6 @@ extern media_interface g_dshow_itf;
 #endif // ENABLE_JSR_135_DSHOW
 
 extern media_interface g_qsound_itf;
-extern media_interface g_amr_audio_itf;
-extern media_interface g_qsound_interactive_midi_itf;
 extern media_interface g_record_itf;
 extern media_interface g_fake_radio_itf;
 extern media_interface g_rtp_itf;
@@ -539,25 +536,11 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
         return &g_audio_itf;
 #endif // ENABLE_MMAPI_LIME
 
-#ifndef ENABLE_JSR_135_DSHOW
-    case JC_FMT_MS_PCM:
-#endif // ENABLE_JSR_135_DSHOW
-
     case JC_FMT_TONE:
     case JC_FMT_MIDI:
     case JC_FMT_SP_MIDI:
         return &g_qsound_itf;
 
-#if( defined( ENABLE_AMR ) && !defined( ENABLE_JSR_135_DSHOW ) )
-    case JC_FMT_AMR:
-    case JC_FMT_AMR_WB:
-    case JC_FMT_AMR_WB_PLUS:
-  #if( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT ) )
-        return &g_amr_audio_itf;
-  #elif( defined( AMR_USE_LIME ) )
-        return &g_audio_itf;
-  #endif // AMR_USE_**
-#endif // ENABLE_AMR
     default:
         return NULL;
     }
@@ -610,15 +593,16 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         javacall_media_format_type  fmt;
     } map[] =
     {
-        { L".wav",  JAVACALL_MEDIA_FORMAT_MS_PCM },
         { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".midi", JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   },
-#if defined( ENABLE_AMR ) || defined( ENABLE_JSR_135_DSHOW )
+
+#if defined( ENABLE_JSR_135_DSHOW )
         { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
-#endif // ENABLE_AMR
+#endif
 
 #if defined(ENABLE_JSR_135_DSHOW) || defined(ENABLE_MMAPI_LIME)
+        { L".wav",  JAVACALL_MEDIA_FORMAT_MS_PCM },
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
         { L".flv",  JAVACALL_MEDIA_FORMAT_FLV },
         { L".fxm",  JAVACALL_MEDIA_FORMAT_FLV },

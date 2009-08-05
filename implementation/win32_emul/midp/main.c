@@ -179,6 +179,7 @@ main(int argc, char *argv[]) {
 
     /* uncomment this like to force the debugger to start */
     /* _asm int 3; */
+    /*MessageBox( NULL, "start your debugger!", "hacker", MB_OK | MB_TASKMODAL );*/
 
     /* get the configuration file name */
     propFileName = get_properties_file_name(&propFileNameLen, 

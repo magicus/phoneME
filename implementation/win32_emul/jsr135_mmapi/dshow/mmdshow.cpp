@@ -498,7 +498,11 @@ static javacall_result dshow_close(javacall_handle handle)
     if( NULL != p->pModule )
     {
         p->pModule->removePlayer( p );
-        //if( p->our_module ) p->pModule->destroy();
+        if( p->our_module )
+        {
+            //Sleep( 500 );
+            //p->pModule->destroy();
+        }
         p->pModule = NULL;
     }
 
@@ -527,6 +531,16 @@ static javacall_result dshow_acquire_device(javacall_handle handle)
     if( NULL == p->pModule )
     {
         IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
+
+        /*
+        IEffectModule* em = gm->createEffectModule();
+        em->addPlayer( p );
+        Sleep( 1500 );
+        em->removePlayer( p );
+        Sleep( 1500 );
+        em->destroy();
+        */
+
         p->pModule = gm->createEffectModule();
         p->our_module = true;
 
@@ -552,7 +566,11 @@ static javacall_result dshow_release_device(javacall_handle handle)
     if( NULL != p->pModule )
     {
         p->pModule->removePlayer( p );
-        //if( p->our_module ) p->pModule->destroy();
+        if( p->our_module ) 
+        {
+            //Sleep( 500 );
+            //p->pModule->destroy();
+        }
         p->pModule = NULL;
     }
 

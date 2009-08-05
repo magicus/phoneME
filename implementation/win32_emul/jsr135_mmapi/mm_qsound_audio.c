@@ -27,10 +27,6 @@
 #define INTERNAL_SOUNDBANK      0
 #include "mm_qsound_audio.h"
 
-#if( defined( ENABLE_AMR ) && defined( AMR_USE_QSOUND ) )
-#include "amr/AMRDecoder.h"
-#endif // ENABLE_AMR
-
 #include "javacall_memory.h"
 #include "javautil_unicode.h"
 
@@ -42,16 +38,6 @@
  * GLOBALS
  **********************************/
 globalMan g_QSoundGM[GLOBMAN_INDEX_MAX];   // IMPL_NOTE... NEED REVISIT
-
-extern int wav_setStreamPlayerData(ah_wav *wav);
-
-#if( defined( USE_QT_SDK ) )
-extern javacall_result MMAPIQTDecoderOpen(ah_wav *wav);
-extern javacall_result MMAPIQTDecoderClose(ah_wav *wav);
-extern javacall_result MMAPIQTStartDecode(ah_wav *wav);
-extern javacall_result MMAPIQTDecode(ah_wav *wav, void* buffer, int samples);
-extern javacall_result MMAPIQTSetTime(ah_wav *wav, long *ms);
-#endif // USE_QT_SDK
 
 
 size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param );
@@ -72,17 +58,6 @@ static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
 #define MAX_PCM_BUFFERED_SIZE(wav) (10 * PCM_PACKET_SIZE(wav))
 
 #define MAX_METADATA_KEYS 64
-
-#define WAV_METADATA_KEYS_COUNT 6
-
-javacall_const_utf16_string s_wav_metadata_keys[WAV_METADATA_KEYS_COUNT] = {
-    METADATA_KEY_AUTHOR,
-    METADATA_KEY_COPYRIGHT,
-    METADATA_KEY_DATE,
-    METADATA_KEY_TITLE,
-    METADATA_KEY_COMMENT,
-    METADATA_KEY_SOFTWARE
-};
 
 /******************************************************************************/
 
@@ -110,39 +85,25 @@ static void sendBuffering(int appId, int playerId)
 
 static void MQ234_CALLBACK eom_event_trigger(void *userData)
 {
-    switch(((ah_common *)userData)->mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            ah_midi* hm = (ah_midi*)userData;
-            // needs to be in milliseconds, so dive by 10
-            long ms = mQ234_PlayControl_GetPosition(hm->synth) / 10;
-            sendEOM(hm->hdr.isolateID, hm->hdr.playerID, ms);
-            mQ234_PlayControl_Play(hm->synth, FALSE);
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_ERROR_PRINT("Unexpected mediaType in trigger");
-            JC_MM_ASSERT( FALSE );
-    }
+    ah* h = (ah*)userData;
+    // needs to be in milliseconds, so dive by 10
+    long ms = mQ234_PlayControl_GetPosition(h->synth) / 10;
+    sendEOM(h->isolateID, h->playerID, ms);
+    mQ234_PlayControl_Play(h->synth, FALSE);
 }
 
 static void MQ234_CALLBACK fill_midi(void* userData,
                                      void* buffer, long position, int size)
 {
     unsigned char *rb = NULL;
+    ah* h = (ah*)userData;
 
     if( userData != NULL )
     {
-        rb = ((ah_common *)userData)->dataBuffer;
+        rb = h->dataBuffer;
         if ( rb != NULL )
         {
-            int bytes_left = ((ah_common *)userData)->dataBufferLen - position;
+            int bytes_left = h->dataBufferLen - position;
             int n = size > bytes_left ? bytes_left : size;
 
             if (n > 0)
@@ -152,254 +113,6 @@ static void MQ234_CALLBACK fill_midi(void* userData,
         }
     }
 }
-
-/******************************************************************************/
-/* convert original media data to 16bit PCM */
-
-#if( defined( USE_QT_SDK ) )
-static void MQ234_CALLBACK fill_qt(void* userData,
-                                   void* buffer, int samples) {
-    ah_wav* pWAV = (ah_wav *)userData;
-    int bytesCnt = samples * pWAV->channels * 2;
-    if (!pWAV->hdr.playing) {
-        memset(buffer, 0, bytesCnt);
-        return;
-    } else {
-        if (pWAV->hdr.dataEnded && pWAV->playPos >= pWAV->playBufferLen) {
-            /* All data has been transferred and played */
-            int ms = (pWAV->bytesPerMilliSec != 0)
-                ? (pWAV->playPos / pWAV->bytesPerMilliSec)
-                : 0;
-            sendEOM(pWAV->hdr.isolateID, pWAV->hdr.playerID, ms);
-            pWAV->hdr.eom = 1;
-            pWAV->hdr.playing = 0;
-            memset(buffer, 0, bytesCnt);
-        } else {
-            MMAPIQTDecode(pWAV, buffer, samples);
-        }
-    }
-}
-#endif // USE_QT_SDK
-
-/* Get next audio samples for qsound callback
-   POST-condition: value (*pBytesGet) is correct or 0 */
-static void* getNextSamples(void* userData, int bytesCnt, int* pBytesGet)
-{
-    void* pSB = NULL;
-    int currentPos;
-    ah_common* pHDR = (ah_common *)userData;
-
-    if (pBytesGet)
-        *pBytesGet = 0;
-
-    switch (pHDR->mediaType) {
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        {
-            ah_wav* pWAV = (ah_wav *)userData;
-
-            if (!pWAV->hdr.playing)
-                return NULL;
-
-            currentPos = pWAV->playPos;
-
-            if (pHDR->dataEnded && pWAV->playPos >= pWAV->playBufferLen) {
-                /* All data has been transferred and played */
-                if (pWAV->hdr.eom) {
-                    return NULL;
-                } else {
-                    int ms = (pWAV->bytesPerMilliSec != 0)
-                        ? (currentPos / pWAV->bytesPerMilliSec)
-                        : 0;
-                    sendEOM(pWAV->hdr.isolateID, pWAV->hdr.playerID, ms);
-                    pWAV->hdr.eom = 1;
-                    pWAV->hdr.playing = 0;
-                    return NULL;
-                }
-            }
-
-            pSB = pWAV->playBuffer + currentPos;
-            if (currentPos + bytesCnt > pWAV->playBufferLen)
-                bytesCnt = pWAV->playBufferLen - currentPos;
-
-            pWAV->playPos += bytesCnt;
-            if (pBytesGet)
-                *pBytesGet = bytesCnt;
-
-            if (pHDR->mediaType == JC_FMT_MS_PCM) {
-                if (pWAV->buffering && (pWAV->hdr.dataStopped || pWAV->hdr.dataEnded)) {
-                    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
-                             pWAV->hdr.isolateID, pWAV->hdr.playerID, JAVACALL_OK, 
-                            (void*)(pWAV->playPos / pWAV->bytesPerMilliSec));
-                    pWAV->buffering = JAVACALL_FALSE;
-                }
-                if (!pWAV->hdr.dataEnded && 
-                    pWAV->playBufferLen - pWAV->playPos <= MIN_PCM_BUFFERED_SIZE(*pWAV)) {
-                    sendBuffering(pWAV->hdr.isolateID, pWAV->hdr.playerID);
-                    if (!pWAV->buffering && pWAV->playBufferLen == pWAV->playPos) {
-                        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,
-                                pWAV->hdr.isolateID, pWAV->hdr.playerID, JAVACALL_OK, 
-                                (void*)(pWAV->playPos / pWAV->bytesPerMilliSec));
-                        pWAV->buffering = JAVACALL_TRUE;
-                    }
-                }
-            }
-         }
-         break;
-
-        default:
-            JC_MM_DEBUG_ERROR_PRINT("Unknown mediaType for stream read");
-            JC_MM_ASSERT(FALSE);
-            return NULL;
-    }
-
-    return pSB;
-}
-
-static void MQ234_CALLBACK fill_pcm_2c_16b(void* userData,
-                                             void* buffer, int samples)
-{
-    const int numChannels = 2;
-    const int sampleSize  = 2; /* In bytes */
-    int bytesCnt = samples * numChannels * sampleSize;
-
-    void *pSB;
-    int bytesGet;
-
-    pSB = getNextSamples(userData, bytesCnt, &bytesGet);
-
-    if (pSB)
-        memcpy(buffer, pSB, bytesGet);
-
-    memset((char*)buffer + bytesGet, 0, bytesCnt - bytesGet);
-}
-
-static void MQ234_CALLBACK fill_pcm_1c_16b(void* userData,
-                                             void* buffer, int samples)
-{
-    const int numChannels = 1;
-    const int sampleSize  = 2; /// In bytes
-    int bytesCnt = samples * numChannels * sampleSize;
-
-    void *pSB;
-    int bytesGet;
-
-    pSB = getNextSamples(userData, bytesCnt, &bytesGet);
-
-    if (pSB)
-        memcpy(buffer, pSB, bytesGet);
-
-    memset((char*)buffer + bytesGet, 0, bytesCnt - bytesGet);
-}
-
-
-static void MQ234_CALLBACK fill_pcm_2c_8b(void* userData,
-                                          void* buffer, int samples)
-{
-    const int numChannels = 2;
-    const int sampleSize  = 1; /* In bytes */
-    int bytesCnt = samples * numChannels * sampleSize;
-
-    void *pSB;
-    int bytesGet;
-
-    pSB = getNextSamples(userData, bytesCnt, &bytesGet);
-
-    /* Destination buffer has 16bit depth. So - upscale */
-    if (pSB) {
-        char*  pSource = (char*)pSB;
-        short* pDest   = (short*)buffer;
-        int i;
-        for (i = 0; i < bytesGet; i++) {
-            pDest[i] = (pSource[i] << 8) ^ 0x8000;
-        }
-    }
-    memset((char*)buffer + bytesGet * 2, 0, (bytesCnt - bytesGet) * 2);
-}
-
-
-static void MQ234_CALLBACK fill_pcm_1c_8b(void* userData,
-                                            void* buffer, int samples)
-{
-    const int numChannels = 1;
-    const int sampleSize  = 1; /* In bytes */
-    int bytesCnt = samples * numChannels * sampleSize;
-
-    void *pSB;
-    int bytesGet;
-
-    pSB = getNextSamples(userData, bytesCnt, &bytesGet);
-
-    /* Destination buffer has 16bit depth. So - upscale */
-    if (pSB) {
-        char*  pSource = (char*)pSB;
-        short* pDest   = (short*)buffer;
-        int i;
-        for (i = 0; i < bytesGet; i++) {
-            pDest[i] = (pSource[i] << 8) ^ 0x8000;
-        }
-    }
-    memset((char*)buffer + bytesGet * 2, 0, (bytesCnt - bytesGet) * 2);
-}
-
-
-static void MQ234_CALLBACK fill_pcm_2c_24b(void* userData,
-                                           void* buffer, int samples)
-{
-    const int numChannels = 2;
-    const int sampleSize  = 3; /// In bytes
-    int bytesCnt = samples * numChannels * sampleSize;
-
-    void *pSB;
-    int bytesGet;
-    int samplesGet;
-
-    pSB = getNextSamples(userData, bytesCnt, &bytesGet);
-    samplesGet = bytesGet / 3;
-
-    /* Destination buffer has 16bit depth. So - downscale
-       On Intel's 24bit pcm usually stored as little-endian */
-    if (pSB) {
-        unsigned char*  pSource = (unsigned char*)pSB;
-        unsigned short* pDest   = (unsigned short*)buffer;
-        int i;
-        for (i = 0; i < samplesGet; i++) {
-            pDest[i] = (pSource[2] << 8) | pSource[1];
-            pSource += 3;
-        }
-    }
-    memset((char*)buffer + samplesGet * 2, 0, (samples * numChannels - samplesGet) * 2);
-}
-
-
-static void MQ234_CALLBACK fill_pcm_1c_24b(void* userData,
-                                            void* buffer, int samples)
-{
-    const int numChannels = 1;
-    const int sampleSize  = 3; /// In bytes
-    int bytesCnt = samples * numChannels * sampleSize;
-
-    void *pSB;
-    int bytesGet;
-    int samplesGet;
-
-    pSB = getNextSamples(userData, bytesCnt, &bytesGet);
-    samplesGet = bytesGet/3;
-
-    /* Destination buffer has 16bit depth. So - downscale
-       On Intel's 24bit pcm usually stored as little-endian */
-    if (pSB) {
-        unsigned char*  pSource = (unsigned char*)pSB;
-        unsigned short* pDest   = (unsigned short*)buffer;
-        int i;
-        for (i = 0; i < samplesGet; i++) {
-            pDest[i] = (pSource[2] << 8) | pSource[1];
-            pSource += 3;
-        }
-    }
-    memset((char*)buffer + samplesGet * 2, 0, (samples * numChannels - samplesGet) * 2);
-}
-
 
 /******************************************************************************/
 
@@ -767,6 +480,9 @@ static javacall_result audio_qs_create(int appId, int playerId,
     ah *newHandle = NULL;
     int isolateId = appId;
     int gmIdx = -1;
+    MQ234_ERROR e;
+    IPlayControl* synth;
+
     javacall_result res = isolateIDtoGM( isolateId, &gmIdx );
     
     if( JAVACALL_OK != res )
@@ -778,111 +494,56 @@ static javacall_result audio_qs_create(int appId, int playerId,
     
     JC_MM_DEBUG_PRINT1("audio create %s\n", __FILE__);
     JC_MM_ASSERT(gmIdx>=0);
-    switch(mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            MQ234_ERROR e;
-            IPlayControl* synth;
 
-            newHandle = MALLOC(sizeof(ah_midi));
-            memset(newHandle, '\0', sizeof(ah_midi));
-            /*
-            newHandle->hdr.dataBuffer       = NULL;
-            newHandle->hdr.dataBufferLen    = 0;
-            newHandle->hdr.dataPos          = 0;
-            */
-            e = mQ234_CreateSynthPlayer(g_QSoundGM[gmIdx].gm, &(synth), NULL);
-            JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
+    newHandle = MALLOC(sizeof(ah));
+    memset(newHandle, '\0', sizeof(ah));
+    /*
+    newHandle->dataBuffer       = NULL;
+    newHandle->dataBufferLen    = 0;
+    newHandle->dataPos          = 0;
+    */
+    e = mQ234_CreateSynthPlayer(g_QSoundGM[gmIdx].gm, &(synth), NULL);
+    JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
 
-            e = mQ234_AttachSynthPlayer(g_QSoundGM[gmIdx].gm, synth, 0);
-            JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
+    e = mQ234_AttachSynthPlayer(g_QSoundGM[gmIdx].gm, synth, 0);
+    JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
 
-            newHandle->hdr.mediaType        = mediaType;
-            newHandle->hdr.isolateID        = isolateId;
-            newHandle->hdr.playerID         = playerId;
-            newHandle->hdr.gmIdx            = gmIdx;
-            newHandle->hdr.wholeContentSize = -1;
-            newHandle->hdr.dataStopped      = JAVACALL_TRUE;
-            newHandle->hdr.dataEnded        = JAVACALL_FALSE;
-            // need some data to recognize sp-midi
-            if (mediaType == JC_FMT_MIDI) {
-                newHandle->hdr.needProcessHeader = JAVACALL_TRUE;
-            } else {
-                newHandle->hdr.needProcessHeader = JAVACALL_FALSE;
-            }
+    newHandle->mediaType        = mediaType;
+    newHandle->isolateID        = isolateId;
+    newHandle->playerID         = playerId;
+    newHandle->gmIdx            = gmIdx;
+    newHandle->wholeContentSize = -1;
+    newHandle->dataStopped      = JAVACALL_TRUE;
+    newHandle->dataEnded        = JAVACALL_FALSE;
 
-            newHandle->hdr.controls[CON135_METADATA] =
-                (IControl*)mQ234_PlayControl_getMetaDataControl(synth);
-            newHandle->hdr.controls[CON135_MIDI] =
-                (IControl*)mQ234_PlayControl_getMIDIControl(synth);
-            newHandle->hdr.controls[CON135_PITCH] =
-                (IControl*)mQ234_PlayControl_getPitchControl(synth);
-            newHandle->hdr.controls[CON135_RATE] =
-                (IControl*)mQ234_PlayControl_getRateControl(synth);
-            newHandle->hdr.controls[CON135_TEMPO] =
-                (IControl*)mQ234_PlayControl_getTempoControl(synth);
-
-            newHandle->hdr.controls[CON135_VOLUME] =
-                (IControl*)mQ234_PlayControl_getVolumeControl(synth);
-
-            newHandle->midi.synth    = synth;
-            newHandle->midi.mtime    = -1;
-        }
-        break;
-
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        {
-            IEffectModule* ef;
-            newHandle = MALLOC(sizeof(ah_wav));
-            memset(newHandle, '\0', sizeof(ah_wav));
-            /*
-            newHandle->hdr.dataBuffer       = NULL;
-            newHandle->hdr.dataBufferLen    = 0;
-            newHandle->hdr.dataPos          = 0;
-            newHandle->wav.playBuffer       = NULL;
-            newHandle->wav.playBufferLen    = 0;
-            newHandle->wav.lastChunkOffset  = 0;
-            newHandle->wav.playPos          = 0;
-            */
-            newHandle->hdr.mediaType        = mediaType;
-            newHandle->hdr.isolateID        = isolateId;
-            newHandle->hdr.playerID         = playerId;
-            newHandle->hdr.gmIdx            = gmIdx;
-            newHandle->hdr.wholeContentSize = -1;
-            newHandle->hdr.needProcessHeader= JAVACALL_FALSE;
-            newHandle->hdr.dataStopped      = JAVACALL_TRUE;
-            newHandle->hdr.dataEnded        = JAVACALL_FALSE;
-            newHandle->wav.em               = NULL;
-            newHandle->wav.buffering        = JAVACALL_FALSE;
-
-            ef = g_QSoundGM[gmIdx].EM135;
-
-            newHandle->hdr.controls[CON135_RATE] =
-                (IControl*)mQ234_EffectModule_getRateControl(ef);
-            newHandle->hdr.controls[CON135_VOLUME] =
-                (IControl*)mQ234_EffectModule_getVolumeControl(ef);
-
-            // default rate required by JSR 135 SPEC is 100000, since it's not supported on WAV,
-            // set it manualy
-            mQ135_Rate_SetRate((IRateControl*)newHandle->hdr.controls[CON135_RATE], 100000);
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1("[jc-media] Unsupported media type %d\n", mediaType);
-            JC_MM_ASSERT( FALSE );
+    // need some data to recognize sp-midi
+    if (mediaType == JC_FMT_MIDI) {
+        newHandle->needProcessHeader = JAVACALL_TRUE;
+    } else {
+        newHandle->needProcessHeader = JAVACALL_FALSE;
     }
+
+    newHandle->controls[CON135_METADATA] =
+        (IControl*)mQ234_PlayControl_getMetaDataControl(synth);
+    newHandle->controls[CON135_MIDI] =
+        (IControl*)mQ234_PlayControl_getMIDIControl(synth);
+    newHandle->controls[CON135_PITCH] =
+        (IControl*)mQ234_PlayControl_getPitchControl(synth);
+    newHandle->controls[CON135_RATE] =
+        (IControl*)mQ234_PlayControl_getRateControl(synth);
+    newHandle->controls[CON135_TEMPO] =
+        (IControl*)mQ234_PlayControl_getTempoControl(synth);
+
+    newHandle->controls[CON135_VOLUME] =
+        (IControl*)mQ234_PlayControl_getVolumeControl(synth);
+
+    newHandle->synth    = synth;
+    newHandle->mtime    = -1;
 
     JC_MM_DEBUG_INFO_PRINT3("audio_create: mt:%d nh:%d gmi:%d\n",
                             mediaType, (int)newHandle, gmIdx);
 
-    newHandle->hdr.state = PL135_UNREALIZED;
+    newHandle->state = PL135_UNREALIZED;
     *pHandle = (javacall_handle)newHandle;
     return res;
 }
@@ -892,9 +553,9 @@ static javacall_result audio_qs_create(int appId, int playerId,
  */
 static javacall_result audio_qs_get_format(javacall_handle handle, jc_fmt* fmt) {
     ah *h = (ah*)handle;
-    *fmt = h->hdr.mediaType;
+    *fmt = h->mediaType;
     JC_MM_DEBUG_INFO_PRINT1("audio_format: %d \n",
-                            h->hdr.mediaType);
+                            h->mediaType);
     return JAVACALL_OK;
 }
 
@@ -906,70 +567,39 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
 {
     ah *h             = (ah*)handle;
     javacall_result r = JAVACALL_FAIL;
-    int gmIdx         = h->hdr.gmIdx;
+    int gmIdx         = h->gmIdx;
     JC_MM_DEBUG_PRINT1("audio_destroy %s\n",__FILE__);
 
-    if (h->hdr.dataBuffer) {
-        FREE(h->hdr.dataBuffer);
-        h->hdr.dataBuffer = NULL;
+    if (h->dataBuffer) {
+        FREE(h->dataBuffer);
+        h->dataBuffer = NULL;
     }
 
-    switch(h->hdr.mediaType)
+    if(h->doneCallback != NULL)
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-
-            if(h->midi.doneCallback != NULL)
-            {
-                mQ234_EventTrigger_Destroy(h->midi.doneCallback);
-                h->midi.doneCallback = NULL;
-            }
-            if( h->midi.synth != NULL )
-            {
-                mQ234_PlayControl_Destroy(h->midi.synth);
-                h->midi.synth = NULL;
-            }
-            if( h->midi.midiStream != NULL )
-            {
-                FREE( h->midi.midiStream );
-                h->midi.midiStream = NULL;
-            }
-            if( h->midi.storage != NULL )
-            {
-                mQ234_HostStorage_Destroy( h->midi.storage );
-                h->midi.storage = NULL;
-            }
-
-            // need to destroy controls...??
-            FREE(h);
-            gmDetach(gmIdx);
-            r = JAVACALL_OK;
-        }
-        break;
-
-        case JC_FMT_AMR:
-            if (h->wav.playBuffer) {
-                FREE(h->wav.playBuffer);
-            }
-        case JC_FMT_MS_PCM:
-        {
-            mQ234_WaveStream_Destroy(h->wav.stream);
-            // need to destroy controls...??
-            FREE(h);
-            gmDetach(gmIdx);
-            r = JAVACALL_OK;
-        }
-
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1("[jc-media] Trying to close unsupported media type %d\n", h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        mQ234_EventTrigger_Destroy(h->doneCallback);
+        h->doneCallback = NULL;
     }
+    if( h->synth != NULL )
+    {
+        mQ234_PlayControl_Destroy(h->synth);
+        h->synth = NULL;
+    }
+    if( h->midiStream != NULL )
+    {
+        FREE( h->midiStream );
+        h->midiStream = NULL;
+    }
+    if( h->storage != NULL )
+    {
+        mQ234_HostStorage_Destroy( h->storage );
+        h->storage = NULL;
+    }
+
+    // need to destroy controls...??
+    FREE(h);
+    gmDetach(gmIdx);
+    r = JAVACALL_OK;
 
     return r;
 }
@@ -977,28 +607,18 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
 static javacall_result audio_qs_close(javacall_handle handle){
 
     ah *h             = (ah*)handle;
-    javacall_result r = JAVACALL_FAIL;
-    int gmIdx         = h->hdr.gmIdx;
+    javacall_result r = JAVACALL_OK;
+    int gmIdx         = h->gmIdx;
 
-    switch(h->hdr.mediaType)
+    if( h->synth != NULL )
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            if( h->midi.synth != NULL )
-            {
-                mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->midi.synth);    
-                mQ234_PlayControl_Destroy(h->midi.synth);
-                h->midi.synth = NULL;
-            }
-            break;
-        }
+        mQ234_DetachSynthPlayer(g_QSoundGM[gmIdx].gm, h->synth);    
+        mQ234_PlayControl_Destroy(h->synth);
+        h->synth = NULL;
     }
-    JC_MM_DEBUG_PRINT2("audio_close: h:%d  mt:%d\n", (int)handle, h->hdr.mediaType);
-    h->hdr.state = PL135_CLOSED;
+
+    JC_MM_DEBUG_PRINT2("audio_close: h:%d  mt:%d\n", (int)handle, h->mediaType);
+    h->state = PL135_CLOSED;
 
     return r;
 }
@@ -1010,7 +630,7 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
 
     *controls = JAVACALL_MEDIA_CTRL_VOLUME;
 
-    switch(h->hdr.mediaType)
+    switch(h->mediaType)
     {
         case JC_FMT_TONE:
         case JC_FMT_DEVICE_TONE:
@@ -1028,13 +648,8 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
             *controls |= JAVACALL_MEDIA_CTRL_RATE;
             *controls |= JAVACALL_MEDIA_CTRL_PITCH;
             break;
-        case JC_FMT_MS_PCM:
-            *controls |= JAVACALL_MEDIA_CTRL_METADATA;
-        case JC_FMT_AMR:
-            *controls |= JAVACALL_MEDIA_CTRL_RATE;
-            break;
         default:
-            JC_MM_DEBUG_PRINT1("[jc-media] get_player_controls: unsupported media type %d\n", h->hdr.mediaType);
+            JC_MM_DEBUG_PRINT1("[jc-media] get_player_controls: unsupported media type %d\n", h->mediaType);
             JC_MM_ASSERT( FALSE );
             break;
     }
@@ -1048,214 +663,75 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
 static javacall_result audio_qs_acquire_device(javacall_handle handle)
 {
     ah*         h     = (ah *)handle;
-    int         gmIdx = h->hdr.gmIdx;
+    int         gmIdx = h->gmIdx;
     long        r     = -1;
 
     MQ234_ERROR e;
     int         sRate;
-    switch(h->hdr.mediaType)
+
+    if(h->dataBuffer != NULL)
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-            if(h->hdr.dataBuffer != NULL)
-            {
-                MQ234_HostBlock *pHostBlock = NULL;
-                ISynthPerformance *sp = NULL;
+        MQ234_HostBlock *pHostBlock = NULL;
+        ISynthPerformance *sp = NULL;
 
-                /* if HostStorage is still not created, create it! */
-                if( h->midi.storage == NULL )
-                {
-                    h->midi.storage =
-                        mQ234_CreateHostStorage(&(h->midi), fill_midi);
-                    JC_MM_ASSERT(h->midi.storage != NULL);
-                }
+        /* if HostStorage is still not created, create it! */
+        if( h->storage == NULL )
+        {
+            h->storage =
+                mQ234_CreateHostStorage(h, fill_midi);
+            JC_MM_ASSERT(h->storage != NULL);
+        }
 
-                /* create new HostBlock unconditionally */
-                pHostBlock = MALLOC(sizeof(MQ234_HostBlock));
-                JC_MM_ASSERT(pHostBlock != NULL);
+        /* create new HostBlock unconditionally */
+        pHostBlock = MALLOC(sizeof(MQ234_HostBlock));
+        JC_MM_ASSERT(pHostBlock != NULL);
 
-                /* initialize new HostBlock */
-                pHostBlock->length   = h->hdr.dataBufferLen;
-                pHostBlock->position = 0;
-                pHostBlock->storage  = h->midi.storage;
+        /* initialize new HostBlock */
+        pHostBlock->length   = h->dataBufferLen;
+        pHostBlock->position = 0;
+        pHostBlock->storage  = h->storage;
 
-                /* use the new HostBlock to change data to be played */
-                /* NB: this function also checks if the Tone Sequence buffered
-                   is valid */
-                e = mQ234_SetSynthPlayerData(g_QSoundGM[gmIdx].gm,
-                    h->midi.synth, pHostBlock);
+        /* use the new HostBlock to change data to be played */
+        /* NB: this function also checks if the Tone Sequence buffered
+           is valid */
+        e = mQ234_SetSynthPlayerData(g_QSoundGM[gmIdx].gm,
+            h->synth, pHostBlock);
 
-                /* destroy the previously used HostBlock, if any */
-                if( h->midi.midiStream != NULL )
-                {
-                    FREE(h->midi.midiStream);
-                }
+        /* destroy the previously used HostBlock, if any */
+        if( h->midiStream != NULL )
+        {
+            FREE(h->midiStream);
+        }
 
-                /* remember the currently used HostBlock */
-                h->midi.midiStream = pHostBlock;
+        /* remember the currently used HostBlock */
+        h->midiStream = pHostBlock;
 
-                /* NB: the following condition is not met if
-                   the buffered Tone Sequence was invalid */
-                if(e == MQ234_ERROR_NO_ERROR)
-                {
-                    sp = mQ234_PlayControl_GetSynthPerformance(h->midi.synth);
-                    JC_MM_ASSERT(sp != NULL);
-                    h->midi.doneCallback =
-                        mQ234_CreateEventTrigger(handle, eom_event_trigger);
-                    JC_MM_ASSERT(h->midi.doneCallback != NULL);
-                    mQ234_SynthPerformance_SetDoneCallback(sp,
-                        h->midi.doneCallback);
+        /* NB: the following condition is not met if
+           the buffered Tone Sequence was invalid */
+        if(e == MQ234_ERROR_NO_ERROR)
+        {
+            sp = mQ234_PlayControl_GetSynthPerformance(h->synth);
+            JC_MM_ASSERT(sp != NULL);
+            h->doneCallback =
+                mQ234_CreateEventTrigger(handle, eom_event_trigger);
+            JC_MM_ASSERT(h->doneCallback != NULL);
+            mQ234_SynthPerformance_SetDoneCallback(sp,
+                h->doneCallback);
 
-                    r = h->hdr.dataBufferLen;
+            r = h->dataBufferLen;
 
-                    if( -1 != h->midi.mtime ) {
-                        mQ234_PlayControl_SetPosition( h->midi.synth, h->midi.mtime );
-                    }
-                }
-
-                /* NB: r==-1 here may mean that the buffered Tone Sequence
-                   was invalid */
-                if (-1 == r) {
-                    JC_MM_DEBUG_PRINT("Synth data NOT set!\n");
-                } else {
-                    JC_MM_DEBUG_PRINT("Synth data set.\n");
-                }
+            if( -1 != h->mtime ) {
+                mQ234_PlayControl_SetPosition( h->synth, h->mtime );
             }
-        break;
+        }
 
-        case JC_FMT_MS_PCM:
-            if( NULL != h->wav.stream )
-            {
-                if( NULL != h->wav.em )
-                {
-                    mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
-                    h->wav.em = NULL;
-                }
-                mQ234_WaveStream_Destroy( h->wav.stream );
-                h->wav.stream = NULL;
-            }
-
-            sRate = h->wav.rate;
-
-            if(16 == h->wav.bits)
-            {
-                switch(h->wav.channels) {
-                    case 1:
-                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                            &(h->wav), fill_pcm_1c_16b, 1, sRate);
-                        break;
-                    case 2:
-                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                            &(h->wav), fill_pcm_2c_16b, 2, sRate);
-                        break;
-                    default:
-                        h->wav.stream = NULL;
-                        break;
-                }
-            } else if(8 == h->wav.bits) {
-                switch(h->wav.channels) {
-                    case 1:
-                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                            &(h->wav), fill_pcm_1c_8b, 1, sRate);
-                        break;
-                    case 2:
-                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                            &(h->wav), fill_pcm_2c_8b, 2, sRate);
-                        break;
-                    default:
-                        h->wav.stream = NULL;
-                        break;
-                }
-            } else if(24 == h->wav.bits) {
-                switch(h->wav.channels) {
-                    case 1:
-                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                            &(h->wav), fill_pcm_1c_24b, 1, sRate);
-                        break;
-                    case 2:
-                        h->wav.stream = mQ234_CreateWaveStreamPlayer(
-                            &(h->wav), fill_pcm_2c_24b, 2, sRate);
-                        break;
-                    default:
-                        h->wav.stream = NULL;
-                        break;
-                }
-            } else {
-                h->wav.stream = NULL;
-            }
-
-            if(h->wav.stream != NULL) {
-                mQ234_EffectModule_addPlayer(
-                    g_QSoundGM[gmIdx].EM135, h->wav.stream);
-                h->wav.em = g_QSoundGM[gmIdx].EM135;
-            }
-
-            JC_MM_DEBUG_PRINT4( 
-                "wavBuffered: bytes=%d rate=%d channels=%d bits=%d\n",
-                h->wav.playBufferLen, h->wav.rate,
-                h->wav.channels, h->wav.bits);
-        break;
-#if( defined( ENABLE_AMR ) && ( defined( AMR_USE_QSOUND ) || defined( AMR_USE_QT )))
-        case JC_FMT_AMR:
-            if( NULL != h->wav.stream )
-            {
-                if( NULL != h->wav.em )
-                {
-                    mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
-                    h->wav.em = NULL;
-                }
-                mQ234_WaveStream_Destroy( h->wav.stream );
-                h->wav.stream = NULL;
-            }
-
-#if( defined( AMR_USE_QSOUND ))
-            if (h->hdr.mediaType == JC_FMT_AMR) { 
-                if (1 != AMRDecoder_setStreamPlayerData(&h->wav)) {
-                    return JAVACALL_FAIL;
-                }
-            }
-            switch( h->wav.channels )
-            {
-            case 1:
-                h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_pcm_1c_16b, 1, h->wav.rate );
-                break;
-            case 2:
-                h->wav.stream = mQ234_CreateWaveStreamPlayer(&(h->wav), fill_pcm_2c_16b, 2, h->wav.rate );
-                break;
-            default:
-                h->wav.stream = NULL;
-                break;
-            }
-#elif( defined( AMR_USE_QT ) )
-            if (MMAPIQTDecoderOpen(&h->wav) != JAVACALL_OK) {
-                return JAVACALL_FAIL;
-            }
-            if (JAVACALL_OK == MMAPIQTStartDecode(&h->wav)) {
-                h->wav.stream = mQ234_CreateWaveStreamPlayer(&h->wav, fill_qt, h->wav.channels, h->wav.rate);
-            } else {
-                MMAPIQTDecoderClose(&h->wav);
-                return JAVACALL_FAIL;
-            }
-#endif 
-            h->wav.bytesPerMilliSec = (h->wav.rate * h->wav.channels * (16 >> 3)) / 1000;
-
-            if(h->wav.stream != NULL)
-            {
-                e = mQ234_EffectModule_addPlayer(g_QSoundGM[gmIdx].EM135, h->wav.stream);
-                h->wav.em = g_QSoundGM[gmIdx].EM135;
-                JC_MM_ASSERT( MQ234_ERROR_NO_ERROR == e );
-            }
-        break;
-#endif // ENABLE_AMR
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to play unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        /* NB: r==-1 here may mean that the buffered Tone Sequence
+           was invalid */
+        if (-1 == r) {
+            JC_MM_DEBUG_PRINT("Synth data NOT set!\n");
+        } else {
+            JC_MM_DEBUG_PRINT("Synth data set.\n");
+        }
     }
 
     return JAVACALL_OK;
@@ -1266,103 +742,48 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
  */
 static javacall_result audio_qs_release_device(javacall_handle handle){
     ah *h = (ah*)handle;
-    int gmIdx         = h->hdr.gmIdx;
+    int gmIdx         = h->gmIdx;
 
     JC_MM_DEBUG_PRINT("audio_qs_release_device\n");
 
-    switch(h->hdr.mediaType)
+    if(h->doneCallback != NULL)
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            if(h->midi.doneCallback != NULL)
-            {
-                mQ234_EventTrigger_Destroy(h->midi.doneCallback);
-                h->midi.doneCallback = NULL;
-            }
+        mQ234_EventTrigger_Destroy(h->doneCallback);
+        h->doneCallback = NULL;
+    }
 
-            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
-            {
-                h->midi.mtime = mQ234_PlayControl_GetPosition( h->midi.synth );
-            }
+    if( h->midiStream != NULL && h->storage != NULL )
+    {
+        h->mtime = mQ234_PlayControl_GetPosition( h->synth );
+    }
 
-            if( h->midi.midiStream != NULL )
-            {
-                FREE( h->midi.midiStream );
-                h->midi.midiStream = NULL;
-            }
-            if( h->midi.storage != NULL )
-            {
-                mQ234_HostStorage_Destroy( h->midi.storage );
-                h->midi.storage = NULL;
-            }
-            h->hdr.dataStopped      = JAVACALL_TRUE;
-            h->hdr.dataEnded        = JAVACALL_FALSE;
+    if( h->midiStream != NULL )
+    {
+        FREE( h->midiStream );
+        h->midiStream = NULL;
+    }
+    if( h->storage != NULL )
+    {
+        mQ234_HostStorage_Destroy( h->storage );
+        h->storage = NULL;
+    }
+    h->dataStopped      = JAVACALL_TRUE;
+    h->dataEnded        = JAVACALL_FALSE;
 
-			break;
-		}
-        case JC_FMT_AMR:
-        case JC_FMT_MS_PCM:
-			if( NULL != h->wav.stream )
-			{
-				if( NULL != h->wav.em )
-				{
-					mQ234_EffectModule_removePlayer( h->wav.em, h->wav.stream );
-					h->wav.em = NULL;
-				}
-				mQ234_WaveStream_Destroy( h->wav.stream );
-				h->wav.stream = NULL;
-			}
-            if (h->hdr.mediaType == JC_FMT_AMR) {
-				if (h->wav.playBuffer) {
-					FREE(h->wav.playBuffer);
-                                        h->wav.playBuffer = NULL;
-				}
-			}
-
-#if( defined( AMR_USE_QT ) )
-            if (h->hdr.mediaType == JC_FMT_AMR) {
-				if (h->wav.decoder) {
-					MMAPIQTDecoderClose(&h->wav);
-					h->wav.decoder = NULL;
-				}
-            }
-#endif
-    	    h->hdr.dataBuffer       = NULL;
-            h->hdr.dataBufferLen    = 0;
-            h->hdr.dataPos          = 0;
-            h->wav.playBuffer       = NULL;
-            h->wav.playBufferLen    = 0;
-            h->wav.lastChunkOffset  = 0;
-            h->wav.playPos          = 0;
-
-            h->hdr.wholeContentSize = -1;
-            h->hdr.needProcessHeader= JAVACALL_FALSE;
-            h->hdr.dataStopped      = JAVACALL_TRUE;
-            h->hdr.dataEnded        = JAVACALL_FALSE;
-            h->wav.em               = NULL;
-            h->wav.buffering        = JAVACALL_FALSE;
-
-			break;
-	}
-    if (h->hdr.dataBuffer) {
-        FREE(h->hdr.dataBuffer);
-        h->hdr.dataBuffer = NULL;
+    if (h->dataBuffer) {
+        FREE(h->dataBuffer);
+        h->dataBuffer = NULL;
     }
 
     return JAVACALL_OK;
 }
-
 
 /**
  *
  */
 static javacall_result audio_qs_realize(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength){
     ah* h = (ah *)handle;
-    h->hdr.state = PL135_REALIZED;
+    h->state = PL135_REALIZED;
     return JAVACALL_OK;
 }
 
@@ -1371,11 +792,11 @@ static javacall_result audio_qs_realize(javacall_handle handle, javacall_const_u
  */
 static javacall_result audio_qs_prefetch(javacall_handle handle){
     ah* h = (ah *)handle;
-    h->hdr.state = PL135_PREFETCHED;
+    h->state = PL135_PREFETCHED;
     return JAVACALL_OK;
 }
 
-
+/*
 #define DEFAULT_BUFFER_SIZE  (1024 * 1024)
 #define DEFAULT_PACKET_SIZE  1024
 
@@ -1385,20 +806,20 @@ static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
 {
     ah* h = (ah*)handle;
 
-    if (h->hdr.mediaType == JC_FMT_DEVICE_TONE || h->hdr.mediaType == JC_FMT_DEVICE_MIDI) {
-        *java_buffer_size = h->hdr.wholeContentSize;
+    if (h->mediaType == JC_FMT_DEVICE_TONE || h->mediaType == JC_FMT_DEVICE_MIDI) {
+        *java_buffer_size = h->wholeContentSize;
         *first_data_size  = 0;
     } else {
-        if (h->hdr.dataBufferLen == 0 || h->hdr.mediaType == JC_FMT_MS_PCM) {
-            if (h->hdr.wholeContentSize > 0 && h->hdr.wholeContentSize < DEFAULT_BUFFER_SIZE) {
-                *java_buffer_size = h->hdr.wholeContentSize;
+        if (h->dataBufferLen == 0 || h->mediaType == JC_FMT_MS_PCM) {
+            if (h->wholeContentSize > 0 && h->wholeContentSize < DEFAULT_BUFFER_SIZE) {
+                *java_buffer_size = h->wholeContentSize;
             } else {
                 *java_buffer_size = DEFAULT_BUFFER_SIZE;
             }
             *first_data_size  = DEFAULT_PACKET_SIZE;
         } else {
-            *java_buffer_size = h->hdr.dataBufferLen;
-            *first_data_size  = h->hdr.dataBufferLen;
+            *java_buffer_size = h->dataBufferLen;
+            *first_data_size  = h->dataBufferLen;
         }
     }
     return JAVACALL_OK;
@@ -1408,7 +829,7 @@ static javacall_result audio_qs_set_whole_content_size(javacall_handle handle,
                                                        long whole_content_size)
 {
     ah* h = (ah*)handle;
-    h->hdr.wholeContentSize = whole_content_size;
+    h->wholeContentSize = whole_content_size;
     return JAVACALL_OK;
 }
 
@@ -1417,84 +838,86 @@ static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
                                                    long* max_size)
 {
     ah* h = (ah*)handle;
-    int gmIdx = h->hdr.gmIdx;
+    int gmIdx = h->gmIdx;
     long size, wavDataOffset;
 
-    if (h->hdr.dataEnded) {
+    if (h->dataEnded) {
         *buffer = NULL;
         *max_size = 0;
         return JAVACALL_FAIL;
     }
 
-    if (h->hdr.dataBuffer == NULL) {
-        if (h->hdr.wholeContentSize <= 0) {
+    if (h->dataBuffer == NULL) {
+        if (h->wholeContentSize <= 0) {
             size = DEFAULT_BUFFER_SIZE;
         } else {
-            size = h->hdr.wholeContentSize;
+            size = h->wholeContentSize;
         }
-        h->hdr.dataBuffer = MALLOC(size);
-        if (h->hdr.dataBuffer == NULL) {
+        h->dataBuffer = MALLOC(size);
+        if (h->dataBuffer == NULL) {
             JC_MM_DEBUG_PRINT("[jc-media] get_buffer_address: Cannot allocate buffer\n");
-            h->hdr.dataBufferLen = 0;
-            h->hdr.dataPos = 0;
+            h->dataBufferLen = 0;
+            h->dataPos = 0;
             return JAVACALL_OUT_OF_MEMORY;
         }
-        h->hdr.dataBufferLen = size;
-        h->hdr.dataPos = 0;
+        h->dataBufferLen = size;
+        h->dataPos = 0;
     } else {
-        size = h->hdr.dataBufferLen - h->hdr.dataPos;
-        if (h->hdr.wholeContentSize != h->hdr.dataBufferLen && size < DEFAULT_PACKET_SIZE) {
-            long new_size = h->hdr.dataBufferLen * 2;
+        size = h->dataBufferLen - h->dataPos;
+        if (h->wholeContentSize != h->dataBufferLen && size < DEFAULT_PACKET_SIZE) {
+            long new_size = h->dataBufferLen * 2;
             
             if (new_size < DEFAULT_PACKET_SIZE) {
                 new_size = DEFAULT_PACKET_SIZE;
             }
-            if (h->hdr.mediaType == JC_FMT_MS_PCM && h->wav.playBuffer) {
-                /* For MS_PCM playBuffer is a part of dataBuffer.
-                   So, saving buffer offset is required before REALLOC */
-                wavDataOffset = h->wav.playBuffer - h->hdr.dataBuffer;
+            if (h->mediaType == JC_FMT_MS_PCM && h->wav.playBuffer) {
+                // For MS_PCM playBuffer is a part of dataBuffer.
+                //   So, saving buffer offset is required before REALLOC
+                wavDataOffset = h->wav.playBuffer - h->dataBuffer;
             }
-            h->hdr.dataBuffer = REALLOC(h->hdr.dataBuffer, new_size);
-            if (h->hdr.dataBuffer == NULL) {
+            h->dataBuffer = REALLOC(h->dataBuffer, new_size);
+            if (h->dataBuffer == NULL) {
                 JC_MM_DEBUG_PRINT("[jc-media] get_buffer_address: Cannot re-allocate buffer\n");
-                FREE(h->hdr.dataBuffer);
-                h->hdr.dataBuffer = NULL;
-                h->hdr.dataBufferLen = 0;
-                h->hdr.dataPos = 0;
+                FREE(h->dataBuffer);
+                h->dataBuffer = NULL;
+                h->dataBufferLen = 0;
+                h->dataPos = 0;
                 return JAVACALL_OUT_OF_MEMORY;
             }
-            if (h->hdr.mediaType == JC_FMT_MS_PCM && h->wav.playBuffer) {
-                /* Restoring playBuffer */
-                h->wav.playBuffer = h->hdr.dataBuffer + wavDataOffset;
+            if (h->mediaType == JC_FMT_MS_PCM && h->wav.playBuffer) {
+                /* Restoring playBuffer
+                h->wav.playBuffer = h->dataBuffer + wavDataOffset;
             }
-            h->hdr.dataBufferLen = new_size;
-            size = h->hdr.dataBufferLen - h->hdr.dataPos;
+            h->dataBufferLen = new_size;
+            size = h->dataBufferLen - h->dataPos;
         }
     }
     *max_size = size;
-    *buffer = h->hdr.dataBuffer + h->hdr.dataPos;
+    *buffer = h->dataBuffer + h->dataPos;
     return JAVACALL_OK;
 }
+*/
 
 /**
  * Buffer media data.
  */
+/*
 static javacall_result audio_qs_do_buffering(
                             javacall_handle handle, const void* buffer,
                             long *length, javacall_bool *need_more_data, 
                             long *min_data_size){
 
     ah* h = (ah *)handle;
-    JC_MM_ASSERT(h->hdr.dataBuffer != NULL);
+    JC_MM_ASSERT(h->dataBuffer != NULL);
 
     if (NULL != buffer) {
-        if (h->hdr.needProcessHeader) {
-            doProcessHeader(h, h->hdr.dataBuffer, h->hdr.dataPos + *length);
+        if (h->needProcessHeader) {
+            doProcessHeader(h, h->dataBuffer, h->dataPos + *length);
         }
-        JC_MM_ASSERT(buffer == h->hdr.dataBuffer + h->hdr.dataPos);
-        h->hdr.dataPos += *length;
+        JC_MM_ASSERT(buffer == h->dataBuffer + h->dataPos);
+        h->dataPos += *length;
         
-        switch(h->hdr.mediaType)
+        switch(h->mediaType)
         {
         case JC_FMT_TONE:
         case JC_FMT_MIDI:
@@ -1510,9 +933,9 @@ static javacall_result audio_qs_do_buffering(
                 return JAVACALL_FAIL;
             }
             *need_more_data = h->wav.rate == 0
-                || h->hdr.state > PL135_REALIZED
+                || h->state > PL135_REALIZED
                 && h->wav.playBufferLen - h->wav.playPos < MAX_PCM_BUFFERED_SIZE(h->wav)
-                && h->hdr.dataEnded == JAVACALL_FALSE
+                && h->dataEnded == JAVACALL_FALSE
                 ? JAVACALL_TRUE
                 : JAVACALL_FALSE;
             
@@ -1522,18 +945,19 @@ static javacall_result audio_qs_do_buffering(
         default:
             JC_MM_DEBUG_PRINT1(
                 "[jc-media] Trying to play unsupported media type %d\n",
-                h->hdr.mediaType);
+                h->mediaType);
             JC_MM_ASSERT( FALSE );
         }
     } else {
-        if (!h->hdr.dataEnded) {
-            h->hdr.dataStopped = JAVACALL_TRUE;
+        if (!h->dataEnded) {
+            h->dataStopped = JAVACALL_TRUE;
         }
         *need_more_data = JAVACALL_FALSE;
         *min_data_size  = 0;
     }    
     return JAVACALL_OK;
 }
+*/
 
 /**
  * Delete temp file
@@ -1544,36 +968,11 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
 
     JC_MM_DEBUG_PRINT("audio_qs_clear_buffer\n");
 
-    if (h->hdr.dataBuffer != NULL) {
-        
-        FREE(h->hdr.dataBuffer);
-        h->hdr.dataBuffer = NULL;
-        
-        switch(h->hdr.mediaType)
-        {
-            case JC_FMT_TONE:
-            case JC_FMT_MIDI:
-            case JC_FMT_SP_MIDI:
-            case JC_FMT_DEVICE_TONE:
-            case JC_FMT_DEVICE_MIDI:
-            case JC_FMT_MS_PCM:
-            break;
-            case JC_FMT_AMR:
-                if(h->wav.playBuffer != NULL)
-                {
-                    FREE(h->wav.playBuffer);
-                    h->wav.playBufferLen = 0;
-                    h->wav.playBuffer = NULL;
-                }
-            break;
-            default:
-                JC_MM_DEBUG_PRINT1(
-                    "[jc-media] Trying to clear unsupported media type %d\n",
-                    h->hdr.mediaType);
-                JC_MM_ASSERT( FALSE );
-                return JAVACALL_FAIL;
-        }
+    if (h->dataBuffer != NULL) {
+        FREE(h->dataBuffer);
+        h->dataBuffer = NULL;
     }
+
     return JAVACALL_OK;
 }
 
@@ -1582,47 +981,15 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
  */
 static javacall_result audio_qs_start(javacall_handle handle){
 
-    javacall_result r = JAVACALL_FAIL;
     ah *h = (ah *)handle;
-    long duration;
 
-    h->hdr.state = PL135_STARTED;
+    h->state = PL135_STARTED;
    
     //printf("audio_start...\n");
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        {
-            if (h->wav.stream != NULL) {
-                h->hdr.playing = 1;
-                h->hdr.eom = 0;
-                r = JAVACALL_OK;
-            }
-        }
-        break;
+    mQ234_PlayControl_Play(h->synth, TRUE);
 
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            //printf("audio_start MIDI/TONE\n");
-            mQ234_PlayControl_Play(h->midi.synth, TRUE);
-            r = JAVACALL_OK;
-            //printf("audio_start MIDI/TONE started\n");
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to play unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
     //printf( "...audio_start: h=0x%08X\n", (int)handle);
-    return r;
+    return JAVACALL_OK;
 }
 
 /**
@@ -1630,124 +997,47 @@ static javacall_result audio_qs_start(javacall_handle handle){
  */
 static javacall_result audio_qs_stop(javacall_handle handle){
 
-    javacall_result r = JAVACALL_FAIL;
     ah *h = (ah *)handle;
-    JC_MM_DEBUG_PRINT1("audio_stop %s\n",__FILE__);
-
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        {
-            h->hdr.playing = 0;
-            r = JAVACALL_OK;
-        }
-        break;
-
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            mQ234_PlayControl_Play(h->midi.synth, FALSE);
-            r = JAVACALL_OK;
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to stop unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
     JC_MM_DEBUG_PRINT1("audio_stop: h=0x%08X\n", (int)handle);
+    mQ234_PlayControl_Play(h->synth, FALSE);
 
-    return r;
+    return JAVACALL_OK;
 }
 
 /**
  *
  */
 static javacall_result audio_qs_pause(javacall_handle handle){
-    javacall_result r = JAVACALL_FAIL;
-    ah *h = (ah *)handle;
-
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        {
-            h->hdr.playing = 0;
-            r = JAVACALL_OK;
-        }
-        break;
-
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            mQ234_PlayControl_Play(h->midi.synth, FALSE);
-            r = JAVACALL_OK;
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to stop unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    JC_MM_DEBUG_PRINT("audio_pause\n");
-
-    return r;
+    return audio_qs_stop(handle);
 }
 
 /**
  *
  */
 static javacall_result audio_qs_resume(javacall_handle handle){
-    javacall_result r = JAVACALL_FAIL;
-    ah *h = (ah *)handle;
-
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        {
-            h->hdr.playing = 1;
-            r = JAVACALL_OK;
-        }
-        break;
-
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            mQ234_PlayControl_Play(h->midi.synth, TRUE);
-
-            r = JAVACALL_OK;
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to play unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    JC_MM_DEBUG_PRINT("audio_resume\n");
-
-    return r;
+    return audio_qs_start(handle);
 }
 
+static javacall_result audio_qs_stream_length(javacall_handle handle, 
+                                              javacall_int64 length)
+{
+    return JAVACALL_OK;
+}
+
+static javacall_result audio_qs_get_data_request(javacall_handle handle, 
+                                                 javacall_int64 *offset, 
+                                                 javacall_int32 *length, 
+                                                 void **data)
+{
+    return JAVACALL_OK;
+}
+
+static javacall_result audio_qs_data_written(javacall_handle handle, 
+                                             javacall_int32 length, 
+                                             javacall_bool *new_request)
+{
+    return JAVACALL_OK;
+}
 
 /**
  *
@@ -1755,48 +1045,23 @@ static javacall_result audio_qs_resume(javacall_handle handle){
 static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
 
     ah *h = (ah *)handle;
+    long pos;
+    IRateControl *pRateControl = NULL;
+
     *ms = -1;
 
-    switch(h->hdr.mediaType)
+    if( h->midiStream != NULL && h->storage != NULL )
+        pos = mQ234_PlayControl_GetPosition(h->synth);
+    else
+        pos = h->mtime;
+
+    if(pos >= 0) *ms =  pos / 10;  // needs to be in millis
+
+    pRateControl = mQ234_PlayControl_getRateControl( h->synth );
+    if( NULL != pRateControl )
     {
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        {
-            if(h->wav.bytesPerMilliSec != 0)
-                *ms = h->wav.playPos / h->wav.bytesPerMilliSec;
-        }
-        break;
-
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            long pos;
-            IRateControl *pRateControl = NULL;
-
-            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
-                pos = mQ234_PlayControl_GetPosition(h->midi.synth);
-            else
-                pos = h->midi.mtime;
-
-            if(pos >= 0) *ms =  pos / 10;  // needs to be in millis
-            pRateControl = mQ234_PlayControl_getRateControl( h->midi.synth );
-            if( NULL != pRateControl )
-            {
-                javacall_int64 rate = mQ135_Rate_GetRate( pRateControl );
-                *ms =
-                   ( long )( ( ( javacall_int64 )( *ms ) * rate ) / 100000L );
-            }
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get time for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        javacall_int64 rate = mQ135_Rate_GetRate( pRateControl );
+        *ms = (long)( ( (javacall_int64)( *ms ) * rate ) / 100000L );
     }
 
     return JAVACALL_OK;
@@ -1810,57 +1075,14 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
     ah *h = (ah *)handle;
     long currtime;
 
-    switch(h->hdr.mediaType)
+    if( h->midiStream != NULL && h->storage != NULL )
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            if( h->midi.midiStream != NULL && h->midi.storage != NULL )
-            {
-                currtime = mQ234_PlayControl_SetPosition(h->midi.synth, (*ms)*10) != 0 ?
-                mQ234_PlayControl_GetPosition(h->midi.synth)/10 : 0;
-            }
-            else
-            {
-                currtime = h->midi.mtime = (*ms)*10;
-            }
-        }
-        break;
-
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR: // will need revisit when real streaming will be used
-        {
-            int newPos;
-#if( defined( AMR_USE_QT ) )
-            if (h->hdr.mediaType == JC_FMT_AMR) {
-                if (h->wav.decoder != NULL) {
-                    MMAPIQTSetTime(&h->wav, ms);
-                } else {
-                    return JAVACALL_FAIL;
-                }
-            }
-#endif
-            newPos = h->wav.bytesPerMilliSec * (*ms);
-
-            if (newPos > h->wav.playBufferLen)
-                newPos = h->wav.playBufferLen;
-
-            h->wav.playPos = newPos;
-
-            currtime = h->wav.bytesPerMilliSec != 0
-                ? newPos / h->wav.bytesPerMilliSec
-                : 0;
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set time for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        currtime = mQ234_PlayControl_SetPosition(h->synth, (*ms)*10) != 0 ?
+        mQ234_PlayControl_GetPosition(h->synth)/10 : 0;
+    }
+    else
+    {
+        currtime = h->mtime = (*ms)*10;
     }
 
     JC_MM_DEBUG_PRINT3("audio_set_time: h=0x%08X ms:%ld ct:%ld\n", (int)handle, *ms, currtime);
@@ -1876,45 +1098,17 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
 static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
 
     ah *h = (ah *)handle;
-    *ms = -1;
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            long dur = mQ234_PlayControl_GetDuration(h->midi.synth);
-            if (dur > 0)
-                *ms = dur / 10;// + 1600;
-            // IMPL_NOTE: (1): add 1600 as get durations seems to be out by that
-            // IMPL_NOTE: (2): removed because it leads to failure of some setMediaTime
-            //                 tests.
-        }
-        break;
 
-        case JC_FMT_MS_PCM:
-        {
-            if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
-                *ms = h->wav.dataChunkLen / h->wav.bytesPerMilliSec;
-        }
-        break;
+    long dur = mQ234_PlayControl_GetDuration(h->synth);
 
-        case JC_FMT_AMR: // will need revisit when real streaming will be used
-        {
-            if(h->wav.bytesPerMilliSec != 0 && (h->hdr.dataEnded || h->hdr.dataStopped))
-                *ms = h->hdr.dataBufferLen / h->wav.bytesPerMilliSec;
-        }
-        break;
+    if (dur > 0)
+        *ms = dur / 10;// + 1600;
+    else
+        *ms = -1;
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get duration for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
+    // IMPL_NOTE: (1): add 1600 as get durations seems to be out by that
+    // IMPL_NOTE: (2): removed because it leads to failure of some setMediaTime
+    //                 tests.
 
     JC_MM_DEBUG_PRINT2("audio_duration: h=0x%08X dur=%ld\n", (int)handle, *ms);
 
@@ -1944,33 +1138,11 @@ static javacall_result audio_qs_switch_to_background(javacall_handle handle,
 static javacall_result audio_qs_get_volume(javacall_handle handle, long* level) {
 
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_FAIL;
-    *level = 0;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *level = (long) mQ135_Volume_GetLevel(
-                (IVolumeControl*)h->hdr.controls[CON135_VOLUME]);
-            r = JAVACALL_OK;
-        }
-        break;
+    *level = (long) mQ135_Volume_GetLevel(
+        (IVolumeControl*)h->controls[CON135_VOLUME]);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get volume for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 /**
@@ -1981,31 +1153,10 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_FAIL;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *level = (long) mQ135_Volume_SetLevel(
-                (IVolumeControl*)h->hdr.controls[CON135_VOLUME], (int)(*level));
-            r = JAVACALL_OK;
-        }
-        break;
+    *level = (long) mQ135_Volume_SetLevel(
+        (IVolumeControl*)h->controls[CON135_VOLUME], (int)(*level));
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set volume for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 /**
@@ -2014,35 +1165,13 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
 static javacall_result audio_qs_is_mute(javacall_handle handle, javacall_bool* mute ) {
 
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_FAIL;
-    int muted = 0;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            muted = (long) mQ135_Volume_IsMuted(
-                (IVolumeControl*)h->hdr.controls[CON135_VOLUME]);
-            r = JAVACALL_OK;
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get mute for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
+    int muted = (long) mQ135_Volume_IsMuted(
+                      (IVolumeControl*)h->controls[CON135_VOLUME]);
 
     *mute = (muted == 0) ? JAVACALL_FALSE : JAVACALL_TRUE;
 
-    return r;
+    return JAVACALL_OK;
 }
 
 /**
@@ -2052,33 +1181,12 @@ static javacall_result audio_qs_set_mute(javacall_handle handle,
                                       javacall_bool mute){
 
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_FAIL;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            mQ135_Volume_SetMute(
-                (IVolumeControl*)h->hdr.controls[CON135_VOLUME],
-                (mute == JAVACALL_FALSE) ? 0 : 1);
-            r = JAVACALL_OK;
-        }
-        break;
+    mQ135_Volume_SetMute(
+        (IVolumeControl*)h->controls[CON135_VOLUME],
+        (mute == JAVACALL_FALSE) ? 0 : 1);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set mute for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 
@@ -2087,34 +1195,16 @@ static javacall_result audio_qs_get_channel_volume(javacall_handle handle,
                                                    long channel, long *volume)
 {
     ah *h = (ah *)handle;
-    int gmIdx         = h->hdr.gmIdx;
+    int gmIdx         = h->gmIdx;
     javacall_result r = JAVACALL_OK;
     int vol;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
+    while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
 
-            mQ135_MIDI_GetChannelVolume(
-                (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                (int)channel, &vol);
-            *volume = (long)vol;
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get channel volume " \
-                "for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
+    mQ135_MIDI_GetChannelVolume(
+        (IMIDIControl*)h->controls[CON135_MIDI],
+        (int)channel, &vol);
+    *volume = (long)vol;
 
     return r;
 }
@@ -2125,60 +1215,42 @@ static javacall_result audio_qs_set_channel_volume(javacall_handle handle,
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_FAIL;
 
-    switch(h->hdr.mediaType)
+    int tries;
+    int v = -1;
+    JSR135ErrorCode ec = JSR135Error_No_Error;
+    for( tries = 5; tries > 0; tries-- )
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
+
+        ec = mQ135_MIDI_SetChannelVolume(
+            (IMIDIControl*)h->controls[CON135_MIDI],
+            (int)channel, (int)volume);
+
+
+        /* This is necessary because only mQ234_Read will
+         * cause this command to be executed. The mQ234_Read
+         * will happen on the next poll in the RenderThread
+         */
+
+        if( ec != JSR135Error_No_Error )
         {
-            int tries;
-            int v = -1;
-            JSR135ErrorCode ec = JSR135Error_No_Error;
-            for( tries = 5; tries > 0; tries-- )
-            {
-
-                ec = mQ135_MIDI_SetChannelVolume(
-                    (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                    (int)channel, (int)volume);
-
-
-                /* This is needed because an mQ234_Read is needed to
-                 * cause this command to executed. The mQ234_Read
-                 * will happned on the next poll in the runRenderThread
-                 */
-
-                if( ec != JSR135Error_No_Error )
-                {
-                    return JAVACALL_FAIL;
-                }
-
-                Sleep(20);
-                ec = mQ135_MIDI_GetChannelVolume(
-                    (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                    (int)channel, &v );
-
-                if( ec != JSR135Error_No_Error )
-                {
-                    return JAVACALL_FAIL;
-                }
-
-                if( v == volume ) // success
-                {
-                    r = JAVACALL_OK;
-                    break;
-                }
-            }
+            return JAVACALL_FAIL;
         }
-        break;
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set channel volume for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        Sleep(20);
+        ec = mQ135_MIDI_GetChannelVolume(
+            (IMIDIControl*)h->controls[CON135_MIDI],
+            (int)channel, &v );
+
+        if( ec != JSR135Error_No_Error )
+        {
+            return JAVACALL_FAIL;
+        }
+
+        if( v == volume ) // success
+        {
+            r = JAVACALL_OK;
+            break;
+        }
     }
 
     return r;
@@ -2189,51 +1261,32 @@ static javacall_result audio_qs_set_program(javacall_handle handle,
 {
     ah *h = (ah *)handle;
 
-    switch(h->hdr.mediaType)
+    int             b, p, retry;
+    JSR135ErrorCode e;
+
+    e = mQ135_MIDI_SetProgram(
+            (IMIDIControl*)h->controls[CON135_MIDI],
+            (int)channel, (int)bank, (int)program);
+
+    if( JSR135Error_No_Error != e ) return JAVACALL_FAIL;
+
+    for( retry = 0; retry < 5; retry++ )
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
+        e = mQ135_MIDI_GetProgram(
+                (IMIDIControl*)h->controls[CON135_MIDI],
+                channel, &b, &p);
+
+        if( JSR135Error_No_Error != e ) return JAVACALL_FAIL;
+
+        if( ( b == bank || -1 == bank ) && p == program )
         {
-            int             b, p, retry;
-            JSR135ErrorCode e;
-
-            e = mQ135_MIDI_SetProgram(
-                    (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                    (int)channel, (int)bank, (int)program);
-
-            if( JSR135Error_No_Error != e ) return JAVACALL_FAIL;
-
-            for( retry = 0; retry < 5; retry++ )
-            {
-                e = mQ135_MIDI_GetProgram(
-                        (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                        channel, &b, &p);
-
-                if( JSR135Error_No_Error != e ) return JAVACALL_FAIL;
-
-                if( ( b == bank || -1 == bank ) && p == program )
-                {
-                    return JAVACALL_OK;
-                }
-
-                Sleep( 20 );
-            }
-
-            return JAVACALL_FAIL;
+            return JAVACALL_OK;
         }
-        break;
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set program for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-            return JAVACALL_FAIL;
+        Sleep( 20 );
     }
+
+    return JAVACALL_FAIL;
 }
 
 static javacall_result audio_qs_short_midi_event(javacall_handle handle,
@@ -2241,37 +1294,19 @@ static javacall_result audio_qs_short_midi_event(javacall_handle handle,
 {
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
-    int gmIdx         = h->hdr.gmIdx;
+    int gmIdx         = h->gmIdx;
 
-    switch(h->hdr.mediaType)
+    if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
-            {
-                mQ135_MIDI_ShortMidiEvent(
-                    (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                    (int)type, (int)data1, (int)data2);
-                g_QSoundGM[gmIdx].bDelayedMIDI = TRUE;
-                ReleaseMutex( g_QSoundGM[gmIdx].hMutexREAD );
-            }
-            else
-            {
-                r = JAVACALL_FAIL;
-            }
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to short midi event for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        mQ135_MIDI_ShortMidiEvent(
+            (IMIDIControl*)h->controls[CON135_MIDI],
+            (int)type, (int)data1, (int)data2);
+        g_QSoundGM[gmIdx].bDelayedMIDI = TRUE;
+        ReleaseMutex( g_QSoundGM[gmIdx].hMutexREAD );
+    }
+    else
+    {
+        r = JAVACALL_FAIL;
     }
 
     return r;
@@ -2283,39 +1318,21 @@ static javacall_result audio_qs_long_midi_event(javacall_handle handle,
 {
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
-    int gmIdx         = h->hdr.gmIdx;
+    int gmIdx         = h->gmIdx;
     int numused;
 
-    switch(h->hdr.mediaType)
+    if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
     {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 500 ) )
-            {
-                mQ135_MIDI_LongMidiEvent(
-                    (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                    (char *)data, (int)offset, (int)*length, &numused);
-                *length = (long)numused;
-                g_QSoundGM[gmIdx].bDelayedMIDI = TRUE;
-                ReleaseMutex( g_QSoundGM[gmIdx].hMutexREAD );
-            }
-            else
-            {
-                r = JAVACALL_FAIL;
-            }
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to long midi event for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        mQ135_MIDI_LongMidiEvent(
+            (IMIDIControl*)h->controls[CON135_MIDI],
+            (char *)data, (int)offset, (int)*length, &numused);
+        *length = (long)numused;
+        g_QSoundGM[gmIdx].bDelayedMIDI = TRUE;
+        ReleaseMutex( g_QSoundGM[gmIdx].hMutexREAD );
+    }
+    else
+    {
+        r = JAVACALL_FAIL;
     }
 
     return r;
@@ -2329,45 +1346,14 @@ static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            IMetaDataControl* mdc 
-                = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
+    IMetaDataControl* mdc 
+        = (IMetaDataControl*)( h->controls[CON135_METADATA] );
 
-            char *keys[MAX_METADATA_KEYS];
-            int i = 0;
-            mQ135_MetaData_getKeys(mdc, keys, MAX_METADATA_KEYS);
-            while(keys[i] != NULL) i++;
-            *keyCounts = (long)i;
-        }
-        break;
-
-        case JC_FMT_MS_PCM:
-        {
-            char **key = &(h->wav.metaData.iartData);
-            int i=0;
-            *keyCounts = 0;
-            for (; i < WAV_METADATA_KEYS_COUNT; i++) {
-                if (key[i]) {
-                    (*keyCounts)++;
-                }
-            }
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get key counts for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
+    char *keys[MAX_METADATA_KEYS];
+    int i = 0;
+    mQ135_MetaData_getKeys(mdc, keys, MAX_METADATA_KEYS);
+    while(keys[i] != NULL) i++;
+    *keyCounts = (long)i;
 
     return r;
 }
@@ -2382,57 +1368,19 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
     int l, newl = 0;
     IMetaDataControl* mdc = NULL;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            if (index >= MAX_METADATA_KEYS || index < 0) {
-                r = JAVACALL_FAIL;
-                break;
-            }
-            mdc = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
-
-            mQ135_MetaData_getKeys(mdc, keys, MAX_METADATA_KEYS);
-            l = strlen(keys[index]);
-            javautil_unicode_utf8_to_utf16(keys[index], l, buf, bufLength, &newl);
-            if (newl < bufLength)
-                buf[newl] = 0;
-            else
-                buf[bufLength - 1] = 0;
-        }
-        break;
-
-        case JC_FMT_MS_PCM:
-        {
-            char **key = &(h->wav.metaData.iartData);
-            int i=0, j=0, len;
-            for (; i < WAV_METADATA_KEYS_COUNT; i++) {
-                if (key[i]) {
-                    if (index == j) {
-                        len = wcslen(s_wav_metadata_keys[i]);
-                        if (bufLength <= len)
-                            len = bufLength - 1;
-                        memcpy(buf, s_wav_metadata_keys[i], len * sizeof(javacall_utf16));
-                        buf[len] = 0;
-                        break;
-                    }
-                    j++;
-                }
-            }
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get key index for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+    if (index >= MAX_METADATA_KEYS || index < 0) {
+        return JAVACALL_FAIL;
     }
+
+    mdc = (IMetaDataControl*)( h->controls[CON135_METADATA] );
+
+    mQ135_MetaData_getKeys(mdc, keys, MAX_METADATA_KEYS);
+    l = strlen(keys[index]);
+    javautil_unicode_utf8_to_utf16(keys[index], l, buf, bufLength, &newl);
+    if (newl < bufLength)
+        buf[newl] = 0;
+    else
+        buf[bufLength - 1] = 0;
 
     return r;
 }
@@ -2446,69 +1394,27 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
     int keyLen8 = 0, newl = 0;
     char *key8 = NULL, *val8 = NULL;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            IMetaDataControl* mdc 
-                = (IMetaDataControl*)( h->hdr.controls[CON135_METADATA] );
+    IMetaDataControl* mdc 
+        = (IMetaDataControl*)( h->controls[CON135_METADATA] );
 
-            r = javautil_unicode_utf16_to_utf8(key, wcslen(key), 0, 0, &keyLen8);
-            if (r == JAVACALL_OK) {
-                key8 = MALLOC(keyLen8 + 1);
-                javautil_unicode_utf16_to_utf8(key, wcslen(key), key8, keyLen8, &keyLen8);
-                key8[keyLen8] = 0;
+    r = javautil_unicode_utf16_to_utf8(key, wcslen(key), 0, 0, &keyLen8);
 
-                val8 = MALLOC(bufLength);
-                mQ135_MetaData_getKeyValue(mdc, key8, val8, bufLength);
-                
-                javautil_unicode_utf8_to_utf16(val8, strlen(val8), buf, bufLength, &newl);
-                if (newl < bufLength)
-                    buf[newl] = 0;
-                else
-                    buf[bufLength - 1] = 0;
+    if (r == JAVACALL_OK) {
+        key8 = MALLOC(keyLen8 + 1);
+        javautil_unicode_utf16_to_utf8(key, wcslen(key), key8, keyLen8, &keyLen8);
+        key8[keyLen8] = 0;
 
-                FREE(val8);
-                FREE(key8);
-            }
-        }
-        break;
+        val8 = MALLOC(bufLength);
+        mQ135_MetaData_getKeyValue(mdc, key8, val8, bufLength);
+        
+        javautil_unicode_utf8_to_utf16(val8, strlen(val8), buf, bufLength, &newl);
+        if (newl < bufLength)
+            buf[newl] = 0;
+        else
+            buf[bufLength - 1] = 0;
 
-        case JC_FMT_MS_PCM:
-        {
-            int i = 0;
-            char **value = &(h->wav.metaData.iartData);
-            buf[0] = 0;
-            r = JAVACALL_FAIL;
-            for (; i < WAV_METADATA_KEYS_COUNT; i++) {
-                if (0 == wcscmp(s_wav_metadata_keys[i], key)) {
-                    if (value[i]) {
-                        r = JAVACALL_OK;
-                        if (javautil_unicode_utf8_to_utf16(value[i], strlen(value[i]), buf, bufLength, &newl) == JAVACALL_OK) {
-                            if (newl < bufLength) 
-                                buf[newl] = 0;
-                            else
-                                buf[bufLength - 1] = 0;
-                        } else {
-                            r = JAVACALL_OUT_OF_MEMORY;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get key index for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
+        FREE(val8);
+        FREE(key8);
     }
 
     return r;
@@ -2519,180 +1425,68 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
 static javacall_result audio_qs_get_max_rate(javacall_handle handle, long *maxRate)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
     
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *maxRate = mQ135_Rate_GetMaxRate((
-                IRateControl*)h->hdr.controls[CON135_RATE]);
-        }
-        break;
+    *maxRate = mQ135_Rate_GetMaxRate((
+        IRateControl*)h->controls[CON135_RATE]);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get max rate for "\
-                " unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_get_min_rate(javacall_handle handle, long *minRate)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *minRate = mQ135_Rate_GetMinRate(
-                (IRateControl*)h->hdr.controls[CON135_RATE]);
-        }
-        break;
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get min rate for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-    return r;
+    *minRate = mQ135_Rate_GetMinRate(
+        (IRateControl*)h->controls[CON135_RATE]);
+
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_set_rate(javacall_handle handle, long rate)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
     long setRate;
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            setRate = mQ135_Rate_SetRate(
-                (IRateControl*)h->hdr.controls[CON135_RATE], rate);
-        }
-        break;
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set rate for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-    return r;
+    setRate = mQ135_Rate_SetRate(
+        (IRateControl*)h->controls[CON135_RATE], rate);
+
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_get_rate(javacall_handle handle, long* rate)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_MS_PCM:
-        case JC_FMT_AMR:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *rate = mQ135_Rate_GetRate(
-                (IRateControl*)h->hdr.controls[CON135_RATE]);
-        }
-        break;
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get rate for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-    return r;
+    *rate = mQ135_Rate_GetRate(
+        (IRateControl*)h->controls[CON135_RATE]);
+
+    return JAVACALL_OK;
 }
 
 /* TempoControl Functions ************************************************/
 static javacall_result audio_qs_get_tempo(javacall_handle handle, long *tempo)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *tempo = mQ135_Tempo_GetTempo(
-                (ITempoControl*)h->hdr.controls[CON135_TEMPO]);
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get tempo for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
+    *tempo = mQ135_Tempo_GetTempo(
+        (ITempoControl*)h->controls[CON135_TEMPO]);
 
     JC_MM_DEBUG_PRINT1("audio_get_tempo: rate:%ld\n", *tempo);
 
-    return r;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_set_tempo(javacall_handle handle, long tempo)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
     long setTempo;
 
     JC_MM_DEBUG_PRINT1("audio_set_tempo: rate:%ld\n", tempo);
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            setTempo = mQ135_Tempo_SetTempo(
-                (ITempoControl*)h->hdr.controls[CON135_TEMPO], tempo);
-        }
-        break;
+    setTempo = mQ135_Tempo_SetTempo(
+        (ITempoControl*)h->controls[CON135_TEMPO], tempo);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set tempo for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 
@@ -2702,117 +1496,43 @@ static javacall_result audio_qs_get_max_pitch(javacall_handle handle,
                                               long *maxPitch)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *maxPitch = mQ135_Pitch_GetMaxPitch(
-                (IPitchControl*)h->hdr.controls[CON135_PITCH]);
-        }
-        break;
+    *maxPitch = mQ135_Pitch_GetMaxPitch(
+        (IPitchControl*)h->controls[CON135_PITCH]);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get max pitch for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_get_min_pitch(javacall_handle handle,
                                               long *minPitch)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *minPitch = mQ135_Pitch_GetMinPitch(
-                (IPitchControl*)h->hdr.controls[CON135_PITCH]);
-        }
-        break;
+    *minPitch = mQ135_Pitch_GetMinPitch(
+        (IPitchControl*)h->controls[CON135_PITCH]);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get min pitch for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_set_pitch(javacall_handle handle, long pitch)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
     long setPitch;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            setPitch = mQ135_Pitch_SetPitch(
-                (IPitchControl*)h->hdr.controls[CON135_PITCH], pitch);
-        }
-        break;
+    setPitch = mQ135_Pitch_SetPitch(
+        (IPitchControl*)h->controls[CON135_PITCH], pitch);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to set pitch for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_get_pitch(javacall_handle handle, long* pitch)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *pitch = mQ135_Pitch_GetPitch(
-                (IPitchControl*)h->hdr.controls[CON135_PITCH]);
-        }
-        break;
+    *pitch = mQ135_Pitch_GetPitch(
+        (IPitchControl*)h->controls[CON135_PITCH]);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get pitch for unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 
@@ -2825,28 +1545,10 @@ static javacall_result audio_qs_is_bank_query_supported(javacall_handle handle,
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            *supported = mQ135_MIDI_IsBankQuerySupported(
-                (IMIDIControl*)h->hdr.controls[CON135_MIDI]);
-        }
-        break;
+    *supported = mQ135_MIDI_IsBankQuerySupported(
+        (IMIDIControl*)h->controls[CON135_MIDI]);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to query bank support for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_get_bank_list(javacall_handle handle,
@@ -2854,32 +1556,12 @@ static javacall_result audio_qs_get_bank_list(javacall_handle handle,
                                               long* numlist)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            JSR135ErrorCode e = mQ135_MIDI_GetBankList(
-                (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                custom, banklist, numlist);
-            if(e != JSR135Error_No_Error) r = JAVACALL_FAIL;
-        }
-        break;
+    JSR135ErrorCode e = mQ135_MIDI_GetBankList(
+        (IMIDIControl*)h->controls[CON135_MIDI],
+        custom, banklist, numlist);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get bank list for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return (e != JSR135Error_No_Error) ? JAVACALL_FAIL : JAVACALL_OK;
 }
 
 static javacall_result audio_qs_get_key_name(javacall_handle handle,
@@ -2890,37 +1572,18 @@ static javacall_result audio_qs_get_key_name(javacall_handle handle,
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            JSR135ErrorCode e;
+    JSR135ErrorCode e;
 
-            memset(keyname, '\0', *keynameLen);
-            e = mQ135_MIDI_GetKeyName(
-                (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                bank, program, key, keyname, *keynameLen);
-            if(e == JSR135Error_Not_Found)
-                *keynameLen = 0;
-            else if(e != JSR135Error_No_Error)
-                r = JAVACALL_FAIL;
-            else
-                *keynameLen = strlen(keyname);
-
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get key name for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
+    memset(keyname, '\0', *keynameLen);
+    e = mQ135_MIDI_GetKeyName(
+        (IMIDIControl*)h->controls[CON135_MIDI],
+        bank, program, key, keyname, *keynameLen);
+    if(e == JSR135Error_Not_Found)
+        *keynameLen = 0;
+    else if(e != JSR135Error_No_Error)
+        r = JAVACALL_FAIL;
+    else
+        *keynameLen = strlen(keyname);
 
     return r;
 }
@@ -2932,35 +1595,16 @@ static javacall_result audio_qs_get_program_name(javacall_handle handle,
     ah *h = (ah *)handle;
     javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            JSR135ErrorCode e;
+    JSR135ErrorCode e;
 
-            memset(progname, '\0', *prognameLen);
-            e = mQ135_MIDI_GetProgramName(
-                (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                bank, program, progname, *prognameLen);
-            if(e != JSR135Error_No_Error)
-                r = JAVACALL_FAIL;
-            else
-                *prognameLen = strlen(progname);
-
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get program name for " \
-                " unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
+    memset(progname, '\0', *prognameLen);
+    e = mQ135_MIDI_GetProgramName(
+        (IMIDIControl*)h->controls[CON135_MIDI],
+        bank, program, progname, *prognameLen);
+    if(e != JSR135Error_No_Error)
+        r = JAVACALL_FAIL;
+    else
+        *prognameLen = strlen(progname);
 
     return r;
 }
@@ -2970,74 +1614,31 @@ static javacall_result audio_qs_get_program_list(javacall_handle handle,
                                                  long* proglistLen)
 {
     ah *h = (ah *)handle;
-    javacall_result r = JAVACALL_OK;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            JSR135ErrorCode e;
+    JSR135ErrorCode e;
 
-            memset(proglist, '\0', *proglistLen);
-            e = mQ135_MIDI_GetProgramList(
-                (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                bank, proglist, proglistLen);
-            if(e != JSR135Error_No_Error)
-                r = JAVACALL_FAIL;
-        }
-        break;
+    memset(proglist, '\0', *proglistLen);
+    e = mQ135_MIDI_GetProgramList(
+        (IMIDIControl*)h->controls[CON135_MIDI],
+        bank, proglist, proglistLen);
 
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to get program name for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return (e != JSR135Error_No_Error) ? JAVACALL_FAIL : JAVACALL_OK;
 }
 
 static javacall_result audio_qs_get_program(javacall_handle handle,
                                             long channel, long* prog)
 {
     ah *h = (ah *)handle;
-    int gmIdx         = h->hdr.gmIdx;
-    javacall_result r = JAVACALL_OK;
+    int gmIdx         = h->gmIdx;
     JSR135ErrorCode e;
 
-    switch(h->hdr.mediaType)
-    {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        {
-            while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
+    while( g_QSoundGM[gmIdx].bDelayedMIDI ) Sleep( 0 );
 
-            e = mQ135_MIDI_GetProgram(
-                (IMIDIControl*)h->hdr.controls[CON135_MIDI],
-                channel, &prog[0], &prog[1]);
+    e = mQ135_MIDI_GetProgram(
+        (IMIDIControl*)h->controls[CON135_MIDI],
+        channel, &prog[0], &prog[1]);
 
-            if(e != JSR135Error_No_Error) r = JAVACALL_FAIL;
-
-        }
-        break;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to query bank support for " \
-                "unsupported media type %d\n",
-                h->hdr.mediaType);
-            JC_MM_ASSERT( FALSE );
-    }
-
-    return r;
+    return (e != JSR135Error_No_Error) ? JAVACALL_FAIL : JAVACALL_OK;
 }
 
 /*****************************************************************************/
@@ -3049,8 +1650,8 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
 static void doProcessHeader(ah* h, const void* buf, long buf_length) {
     const unsigned char* buffer = (const unsigned char*)buf;
     
-    if (h->hdr.needProcessHeader && buffer != NULL && buf_length > 0) {
-        if (buf_length >= 6 && h->hdr.mediaType == JC_FMT_MIDI) {
+    if (h->needProcessHeader && buffer != NULL && buf_length > 0) {
+        if (buf_length >= 6 && h->mediaType == JC_FMT_MIDI) {
             int i;
             int maxSearch = 512;
             
@@ -3062,12 +1663,12 @@ static void doProcessHeader(ah* h, const void* buf, long buf_length) {
                     (buffer[i + 2] == 0x7F) &&
                     (buffer[i + 4] == 0x0B) &&
                     (buffer[i + 5] == 0x01)) {
-                    h->hdr.mediaType = JC_FMT_SP_MIDI;
+                    h->mediaType = JC_FMT_SP_MIDI;
                     break;
                 }
             }
         }
-        h->hdr.needProcessHeader = JAVACALL_FALSE;
+        h->needProcessHeader = JAVACALL_FALSE;
     }
 }
 
@@ -3091,14 +1692,9 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_stop,
     audio_qs_pause,
     audio_qs_resume,
-    NULL,
-    NULL,
-    NULL,
-    //audio_qs_get_java_buffer_size,
-    //audio_qs_set_whole_content_size,
-    //audio_qs_get_buffer_address,
-    //audio_qs_do_buffering,
-    //audio_qs_clear_buffer,
+    audio_qs_stream_length,
+    audio_qs_get_data_request,
+    audio_qs_data_written,
     audio_qs_get_time,
     audio_qs_set_time,
     audio_qs_get_duration,
@@ -3184,21 +1780,6 @@ media_interface g_qsound_itf = {
     &_audio_qs_rate_itf,
     &_audio_qs_tempo_itf,
     &_audio_qs_pitch_itf,
-    NULL,
-    NULL
-};
-
-/* Limited audio interface for AMR format */
-media_interface g_amr_audio_itf = {
-    &_audio_qs_basic_itf,
-    &_audio_qs_volume_itf,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    &_audio_qs_rate_itf,
-    NULL,
-    NULL,
     NULL,
     NULL
 };

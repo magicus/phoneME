@@ -78,51 +78,13 @@ typedef struct {
     IControl*               controls[CONT_MAX];
     javacall_bool           needProcessHeader;
     player_state_enum       state;
-} ah_common;
 
-typedef struct {
-    ah_common               hdr;
     IPlayControl            *synth;
     IEventTrigger           *doneCallback;
     MQ234_HostBlock         *midiStream;
     IHostStorage            *storage;
     long                    mtime; /* stores media time when state < PREFETCHED */
-} ah_midi;
-
-
-struct wav_meta_data {
-    char *iartData; /* artist -> AUTHOR_KEY */
-    char *icopData; /* copyright -> COPYRIGHT_KEY */
-    char *icrdData; /* creation date -> DATE_KEY */
-    char *inamData; /* name -> TITLE_KEY */
-    char *icmtData; /* comments -> COMMENT_KEY */
-    char *isftData; /* software -> SOFTWARE_KEY */
-};
-
-typedef struct {
-    ah_common               hdr;
-    int                     bits;
-    int                     rate;
-    int                     channels;
-    IWaveStream             *stream;
-    IEffectModule           *em;
-    /* Decoded data variables */
-    unsigned char           *playBuffer;
-    int                     playBufferLen;
-    int                     dataChunkLen;
-    int                     playPos;
-    int                     bytesPerMilliSec;
-    javacall_bool           buffering;
-    struct wav_meta_data    metaData;
-    int                     lastChunkOffset;
-    javacall_handle         decoder;
-} ah_wav;
-
-typedef union {
-    ah_common               hdr; /* Used when format is unknown */
-    ah_midi                 midi;
-    ah_wav                  wav;
-} ah; 
+} ah;
 
 typedef struct
 {
