@@ -40,6 +40,8 @@ import com.sun.midp.main.NativeForegroundState;
 public class OpenGLEnvironment{
 
     private boolean midpIsRendering;
+    private boolean useOpenGL=false;
+
     /** 
      * Prepare openGL renderer to switch between lcdui and some exernal
      * API - can be either JSR226 or JSR239
@@ -123,13 +125,15 @@ public class OpenGLEnvironment{
     }
     
     public void enableOpenGL(int width, int height) {
-        System.out.println("OpenGLEnvironmentProxy: enabling OpenGL");
+        //System.out.println("OpenGLEnvironmentProxy: enabling OpenGL");
         initMidpGL(width, height);
+        useOpenGL = true;
     }
     
     public void disableOpenGL() {
-        System.out.println("OpenGLEnvironmentProxy: disabling OpenGL");
+        //System.out.println("OpenGLEnvironmentProxy: disabling OpenGL");
         disableOpenGL0();
+        useOpenGL = false;
     }
     
     public void raiseOpenGL() {
@@ -148,6 +152,11 @@ public class OpenGLEnvironment{
     public void switchColorDepth(int param) {
         switchColorDepth0(param);
     }
+
+    public boolean isOpenGLEnabled() {
+        return useOpenGL;
+    }
+
     
     private native void flushOpenGL0(int[] regionArray,
                                      int numberOfRegions, int displayId);

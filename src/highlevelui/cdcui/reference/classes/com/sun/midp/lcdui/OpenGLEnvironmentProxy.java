@@ -136,4 +136,8 @@ public class OpenGLEnvironmentProxy{
         env.setSoftButtonHeight(height);
     }
 
+    public boolean isOpenGLEnabled() {
+        return env.isOpenGLEnabled();
+    }
+
 }

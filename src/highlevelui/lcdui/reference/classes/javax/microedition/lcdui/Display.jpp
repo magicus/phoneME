@@ -644,7 +644,7 @@ public class Display {
       * default
      */
     private boolean useOpenGL = false;
-    private static boolean lastUsed32bit = false;
+    private static boolean lastUsed32Bit = false;
     private boolean use32Bit = false;
     private boolean useVirtualKeyboard = true;
 
@@ -795,24 +795,14 @@ public class Display {
      * a reference to the Display.
      */
     private void close() {
-System.out.println("In display.close for " + this + ": use32Bit is " + use32Bit);
         displayClosed = true;
-        // #ifdef ENABLE_OPENGL
+        // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
         if (useOpenGL) {
-System.out.println("Display.close: disabling OpenGL");
-            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl =
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-            ogl.disableOpenGL();
-            //ogl.endMidpRendering();
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl =
+                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                ogl.disableOpenGL();
         }
-        // #endif ENABLE_OPENGL
-
-        if (use32Bit) {
-        // #ifdef ENABLE_OPENGL
-com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
-        // #endif ENABLE_OPENGL
-            use32Bit = false;
-        }
+        // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
 
         // #ifdef ENABLE_CHAMELEON
         /*
@@ -890,21 +880,24 @@ com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
                                                     height);
         // #endif ENABLE_GCI
 
-        // #ifdef ENABLE_OPENGL
+        // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
         com.sun.midp.midlet.MIDletStateHandler handler =
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
         if (handler != null) {
-System.out.println("handler is not null!");
             String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
             if (String.valueOf("YES").equalsIgnoreCase(propval)) {
-System.out.println("Display.constructor: enabling OpenGL for " + this);
-                useOpenGL = true; use32Bit = true;
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().enableOpenGL(width, height);
+                accessor.enableOpenGL();
+            } else {
+                lastUsed32Bit = false;
             }
         }
-        else
-            System.out.println("System dialog " + this);
-        // #endif ENABLE_OPENGL
+        else {
+            if (lastUsed32Bit) {
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
+                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
+            }
+        }
+        // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
 
         /**
          * Sets this Display as creator of screen Graphics instance to
@@ -2555,15 +2548,6 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
                 // #ifdef ENABLE_GCI
                 gciScreenWidget.getDrawingSurface().renderingBegin();
                 // #endif
-                // #ifdef ENABLE_OPENGL
-/*
-                if (useOpenGL) {
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl =
-                      com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                    ogl.startMidpRendering();
-                }
-*/
-                // #endif
 
                 // #ifdef ENABLE_CHAMELEON
                 if (window.setGraphicsForCanvas(screenGraphics)) {
@@ -3363,15 +3347,19 @@ System.out.println("Display.constructor: enabling OpenGL for " + this);
          * Called to enable OpenGL rendering path instead of default
          */
         public void enableOpenGL() {
-System.out.println("Display: enabling openGL");
+            // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
+            use32Bit = true;
+            lastUsed32Bit = true;
             useOpenGL = true;
+            com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().
+                enableOpenGL(width, height);
+            // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
         }
 
         /**
          * Called to enable default rendering path
          */
         public void disableOpenGL() {
-System.out.println("Display: disabling openGL");
             useOpenGL = false;
         }
 
@@ -4219,17 +4207,15 @@ System.out.println("Display: disabling openGL");
                 if (hasForeground) {
                     return;
                 }
-System.out.println("handleForeground for " + Display.this);
-                // #ifdef ENABLE_OPENGL
+                // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
                 if (useOpenGL) {
-System.out.println(this + " : handleForegroundNotifyEvent: calling raiseOpenGL");
                     com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().raiseOpenGL();
                     if (use32Bit) {
-System.out.println("in handle background event for " + Display.this + ": use32bit is " + use32Bit);
+                        lastUsed32Bit = true;
                         com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(1);
                     }
                 }
-                // #endif ENABLE_OPENGL
+                // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
                 currentCopy = current;
                 // When foreground-background state changes we loose control
                 // under the current display mode on the device
@@ -4353,17 +4339,14 @@ System.out.println("in handle background event for " + Display.this + ": use32bi
                 if (!hasForeground) {
                     return;
                 }
-                // #ifdef ENABLE_OPENGL
+                // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
                 if (useOpenGL) {
-System.out.println(this + " : handleBackgroundNotifyEvent: calling lowerOpenGL");
                     com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
                     if (use32Bit) {
-System.out.println("in handle background event for " + Display.this + ": use32bit is " + use32Bit);
-                        lastUsed32bit = true;
                         com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
                     }
                 }
-                // #endif ENABLE_OPENGL
+                // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
 
                 currentCopy = current;
 

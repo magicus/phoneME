@@ -97,6 +97,7 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_flushOpenGL0) {
                               regionArray);
         /* here we need to call midpGL_flush() */
         midpGL_flush(regionArray, numRegions);
+        javacall_free(regionArray);
         KNI_EndHandles();
     }
     KNI_ReturnVoid();
@@ -276,10 +277,10 @@ KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_initMidpGL) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_disableOpenGL0) {
 
-    midpGL_disableOpenGL();
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
     jcapp_switch_color_depth(0);
 #endif
+    midpGL_disableOpenGL();
     KNI_ReturnVoid();
 }
 
@@ -301,7 +302,6 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_switchColorDepth0) {
     jint param = KNI_GetParameterAsInt(1);
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
-BREWprintf("calling switchColorDepth with %d\n", param);
     jcapp_switch_color_depth(param);
 #endif
     KNI_ReturnVoid();
