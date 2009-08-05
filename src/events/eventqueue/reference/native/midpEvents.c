@@ -528,7 +528,7 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, jint queueId) {
 #if ENABLE_EVENT_SPYING
     if (queueId != gsEventSpyingQueueId) {
         GET_EVENT_QUEUE_BY_ID(pEventQueue, gsEventSpyingQueueId);
-        if (pEventQueue->isActive) {
+        if (pEventQueue->isActive && event.type != EVENT_QUEUE_SHUTDOWN) {
             if (0 == duplicateMIDPEventFields(&event)) {
                 StoreMIDPEventInVmThreadImp(event, gsEventSpyingQueueId); 
             } else {
