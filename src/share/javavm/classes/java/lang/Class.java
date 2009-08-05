@@ -1304,14 +1304,39 @@ class Class implements java.io.Serializable {
      */
     public InputStream getResourceAsStream(String name) {
         ClassLoader cl;
+
         name = resolveName(name);
 
-        cl = getClassLoader0();
+        if (CVM.callerIsMidlet()) {
+            /*
+             * This is work around for the many MIDlet's that expect that
+             * calling getResouresAsStream on a *system* class such as
+             * java.lang.String class will get a resources out of the
+             * MIDlet's JAR.
+             *
+             * The MIDP spec says that a MIDlet can only get resources
+             * from its JAR when it calls Class.getResourceAsStream(), it
+             * meant "midlet".getClass().getResourceAsStream().
+             *
+             * The MIDP TCK tests for the positive case using the class of the
+             * test case. The TCK should also test for a negative case of
+             * String.getResourceAsStream, but it does not. System classes
+             * for CLDC VMs search the application class path for resources
+             * and will get resources from a MIDlet's JAR on the class path.
+             *
+             * We only want this work around for MIDlets not the MIDP
+             * implemention code (which should be able to get any resource).
+             */
+            cl = ClassLoader.getCallerClassLoader();
+        } else {
+            cl = getClassLoader0();
+        }
 
         if (cl==null) {
-            // A system class.
+            // This is system class.
             return ClassLoader.getSystemResourceAsStream(name);
         }
+
         return cl.getResourceAsStream(name);
     }
 
