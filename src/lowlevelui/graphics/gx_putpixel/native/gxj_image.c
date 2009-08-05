@@ -387,6 +387,7 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
   if (pp_enable_32bit_mode) {
 #endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT || ENABLE_32BITS_PIXEL_FORMAT
   for (srcY = src_y, destY = yStart, yCounter = 0;
        yCounter < height;
        srcY++, destY+=yIncr, yCounter++) {
@@ -418,9 +419,11 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
       }
     } /*for x*/
   } /* for y */
+#endif
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
   } else {
 #endif
+#if ENABLE_DYNAMIC_PIXEL_FORMAT || !ENABLE_32BITS_PIXEL_FORMAT
   for (srcY = src_y, destY = yStart, yCounter = 0;
        yCounter < height;
        srcY++, destY+=yIncr, yCounter++) {
@@ -456,6 +459,7 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
       }
     } /*for x*/
   } /* for y */
+#endif
 #if ENABLE_DYNAMIC_PIXEL_FORMAT
   }
 #endif
@@ -567,7 +571,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
         } else {
             imageSize = pixelSize * sizeof (gxj_pixel16_type);
         }
-#elif ENABLED_32BITS_PIXEL_FORMAT
+#elif ENABLE_32BITS_PIXEL_FORMAT
         imageSize = pixelSize * sizeof (gxj_pixel32_type);
 #else
         imageSize = pixelSize * sizeof (gxj_pixel16_type);
