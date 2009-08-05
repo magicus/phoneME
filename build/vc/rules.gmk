@@ -51,8 +51,7 @@ endif
 
 include $(JAVACALL_DIR)/build/common.gmk
 
-TEMP_OBJECTS1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
-TEMP_OBJECTS=$(patsubst %.cpp,%.obj,$(TEMP_OBJECTS1))
+TEMP_OBJECTS=$(patsubst %.c,%.obj,$(patsubst %.cpp,%.obj,$(PORTING_SOURCE)))
 ifneq ($(FILTER_OBJECTS)x,x)
 PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP_OBJECTS))
 else # ifneq ($(FILTER_OBJECTS)x,x)
@@ -72,14 +71,14 @@ endif
 NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
 
 ifneq ($(UTILITIES)x, x)
-UTILITY_OBJECTS=$(addsuffix .obj,$(UTILITIES))
+PORTING_SOURCE += $(addsuffix .c,$(UTILITIES))
 endif
 
 ifneq ($(NOTIFIER_OBJECTS)x,x)
 NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
 EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
 endif
-PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
+PORTING_SOURCE += $(addsuffix .c,$(PROPERTY_FILES))
 
 TARGET_VM ?= cldc
 
@@ -109,7 +108,7 @@ endif
 endif
 endif
 
-LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_LIB -FD -W3
+LOCAL_CFLAGS_debug = -MDd -EHsc -Zi -Od -D_DEBUG -D_LIB -FD -W3 #  -Gm
 LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_LIB -W3
 
 CXXFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
@@ -183,6 +182,24 @@ local_vc:: $(JAVACALL_OUTPUT_LIB_DIR)/javacall_nams_ui$(BUILD_EXT).lib
 
 endif
 
+ifeq ($(USE_2005_MP),true)
+all_jc_sources = $(PORTING_OBJECTS) $(UTILITY_OBJECTS) $(PROPERTY_OBJECTS)
+$(info UTILITY_OBJECTS=$(UTILITY_OBJECTS))
+$(info PROPERTY_OBJECTS=$(PROPERTY_OBJECTS))
+porting_objects_w_path=$(addprefix $(JAVACALL_OUTPUT_OBJ_DIR)/,$(PORTING_OBJECTS))
+missing_jc_obj=$(filter $(notdir $(subst .obj,.%,$(filter-out $(wildcard $(porting_objects_w_path)),$(porting_objects_w_path)))),$(PORTING_SOURCE))
+
+jc_lib_dep:=$(JAVACALL_OUTPUT_OBJ_DIR)/.jc_lib_dep
+
+$(jc_lib_dep) : $(jc_common_dep) $(PORTING_SOURCE)
+	echo `$(call fixcygpath, $(filter $(addprefix %/,$(missing_jc_obj)),$^) $(subst $(jc_common_dep),,$?))` | tr ' ' '\n' | sort -u > $@
+
+$(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: $(jc_lib_dep)
+	@echo "...Compiling: $?"
+	$(AT)cd $(JAVACALL_OUTPUT_OBJ_DIR); $(COMPILE.c) -MP$(NUM_JOBS) -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall @`$(call fixcygpath, $(jc_lib_dep))`
+	@echo "...Generating Library: $@"
+	$(AT)cd $(JAVACALL_OUTPUT_OBJ_DIR); $(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $(all_jc_sources) $(ADDITIONAL_LIBS))`
+else
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
@@ -190,6 +207,7 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+endif
 
 $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
