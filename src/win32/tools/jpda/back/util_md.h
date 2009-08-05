@@ -24,7 +24,8 @@
  * information or have any questions. 
  *
  */
-#include <stdlib.h>      /* for _MAx_PATH */
+#include <stdlib.h>      /* for _MAX_PATH */
+#include <stdio.h>
 
 typedef unsigned __int64 UNSIGNED_JLONG;
 typedef unsigned long UNSIGNED_JINT;
