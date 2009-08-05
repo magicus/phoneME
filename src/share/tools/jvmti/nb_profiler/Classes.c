@@ -112,7 +112,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_netbeans_lib_profiler_server_system_Clas
     assert(type != NULL);
     ret = (*env)->NewObjectArray(env, n_linked_classes, type, NULL);
     if (ret == NULL) {
-        return NULL;
+        goto cleanup;
     }
   
     j = 0;
@@ -122,6 +122,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_netbeans_lib_profiler_server_system_Clas
         }
     }
   
+ cleanup:
     free(class_status);
     res = (*_jvmti)->Deallocate(_jvmti, (unsigned char*) classes);
     assert(res == JVMTI_ERROR_NONE);

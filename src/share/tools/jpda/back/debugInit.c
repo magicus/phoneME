@@ -637,7 +637,7 @@ jniFatalError(JNIEnv *env, const char *msg, jvmtiError error, int exit_code)
         (void)snprintf(buf, sizeof(buf), "JDWP %s, jvmtiError=%s(%d)",
                     msg, jvmtiErrorText(error), error);
     } else {
-        (void)snprintf(buf, sizeof(buf), "JDWP %s", buf);
+        (void)snprintf(buf, sizeof(buf), "JDWP %s", msg);
     }
     if (env != NULL) {
         (*((*env)->FatalError))(env, buf);
