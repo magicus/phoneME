@@ -1651,7 +1651,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             
             PlayerWrapper pw = (PlayerWrapper)mp.nextElement();
             HighLevelPlayer p = pw.getPlayer();
-            if (p != null) {
+            if (p != null && p.getState() != STARTED) {
                 p.notifyDeviceAvailable(true, "Native player is now available");
             }
         }
