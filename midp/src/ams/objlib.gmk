@@ -1,0 +1,55 @@
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+
+# Create library from object files
+#
+# IMPL_NOTE: win32 platform has limitation of environment (32K),
+#   so too long command lines (especially for linker) are truncated.
+#   To avoid it object files are put to a library.
+#
+# For compatibility with AR that creates temp lib file addding 'tmp-' prefix
+# to lib name, short name $(OBJLIBNAME) was used
+
+OBJLIBNAME = libobj$(LIB_SUFFIX)
+OBJLIB = $(OBJ_DIR)/$(OBJLIBNAME)
+OBJLIB_SCRIPT = $(OBJLIB)-list
+
+ifeq ($(MRI_OPT), )
+
+$(OBJLIB): $(OBJ_FILES)
+	@echo " ... libing $@" $(LOG)
+	$(AT)$(CREATE_LIB) $(LIB_OUTPUT)$@ $(OBJ_FILES) $(LOG) 
+	$(AT)$(RANLIB) $@ $(LOG)
+
+else 
+
+$(OBJLIB): $(OBJ_FILES)
+	$(shell echo $(MRI_CREATE)$(OBJLIBNAME) > $(OBJLIB_SCRIPT))
+	$(foreach path, $(OBJ_FILES), $(shell echo $(MRI_ADD)`$(call fixcygpath,$(path))` >> $(OBJLIB_SCRIPT)))
+	$(shell echo $(MRI_SAVE) >> $(OBJLIB_SCRIPT))
+	$(shell cd $(OBJ_DIR); $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT); $(RANLIB) $(OBJLIBNAME))
+
+endif
+

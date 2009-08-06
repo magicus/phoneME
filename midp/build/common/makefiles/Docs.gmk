@@ -1,0 +1,231 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for javadoc-generated documentation. To be included into
+# the top level makefile.
+#
+######################################################################
+
+DOC_DIR       = $(MIDP_OUTPUT_DIR)/doc
+
+# Variables used for building Javadoc documentation
+#
+JAVADOC_DIR       = $(DOC_DIR)/javadoc
+JAVADOC_HTML_DIR  = $(JAVADOC_DIR)/html
+JAVADOC_TOOLS_DIR = $(JAVADOC_DIR)/html_tools
+JAVADOC_HTML_ALL_DIR  = $(JAVADOC_DIR)/html_all
+
+CLDC_JAVADOC_PACKAGES += \
+    com.sun.cldc.io \
+    com.sun.cldc.util.j2me \
+    com.sun.cldc.util \
+    com.sun.cldchi.io \
+    com.sun.cldchi.jvm \
+    java.io \
+    java.lang.ref \
+    java.lang 
+
+CLDC_JAVADOC_SOURCEPATH = $(CLDC_DIR)/src/javaapi/cldc1.1$(PATHSEP)$(CLDC_DIR)/src/javaapi/share
+
+JAVADOC_ALL_PACKAGES += $(MIDP_JAVADOC_PACKAGES) $(CLDC_JAVADOC_PACKAGES)
+
+JAVADOC_ALL_SOURCEPATH += $(MIDP_JAVADOC_SOURCEPATH) $(GENERATED_DIR)/classes $(CLDC_JAVADOC_SOURCEPATH)
+
+ALL_SOURCE_PATH := $(shell echo $(JAVADOC_ALL_SOURCEPATH)|tr ' ' '$(PATHSEP)')
+
+# Name is defined in Defs-pre.gmk
+#
+GROUPNAME = $(PROJECT_NAME)
+
+JAVADOCTITLE  = "$(GROUPNAME)"
+JAVADOCWINDOWTITLE  = "$(GROUPNAME)"
+JAVADOCHEADER = '<strong>$(GROUPNAME)</strong>'
+JAVADOCBOTTOM = 'Copyright 1990-2007 Sun Microsystems, Inc.'
+
+# Search path for tool source
+#
+TOOL_SRCPATH := $(SUBSYSTEM_DIR)/security/common/classes
+TOOL_SRCPATH := $(TOOL_SRCPATH):$(CONFIGURATOR_DIR)/classes
+TOOL_SRCPATH := $(TOOL_SRCPATH):$(SUBSYSTEM_DIR)/tool/jadtool/classes
+TOOL_SRCPATH := $(TOOL_SRCPATH):$(SUBSYSTEM_DIR)/tool/mekeytool/classes
+ifeq ($(USE_JSR_120), true)
+TOOL_SRCPATH := $(TOOL_SRCPATH):$(JSR_120_DIR)/src/tool/wmatool/classes
+ifeq ($(USE_JSR_205), true)
+TOOL_SRCPATH := $(TOOL_SRCPATH):$(JSR_205_DIR)/src/tool/wmatool/classes
+endif
+endif
+
+# Packages defined by the tools
+#
+TOOLS_PACKAGES = \
+	com.sun.midp.mekeytool \
+	com.sun.midp.jadtool \
+        com.sun.wma \
+	$(CONFIGURATOR_PACKAGE)
+
+MIDP_JAVADOC_ALL += \
+	-group "CLDC Packages" \
+	$(shell echo $(CLDC_JAVADOC_PACKAGES) | tr ' ' $(PATHSEP))
+
+GROUP_DOC_ALL += $(MIDP_JAVADOC_ALL)
+
+
+GROUP_TOOLS = -group "Tools Packages" 'com.sun*'
+
+X_MIDP_JAVADOC_SOURCEPATH =`echo $(MIDP_JAVADOC_SOURCEPATH)|tr -s [\ ] $(PATHSEP)`
+
+JAVADOC_FLAGS = \
+	-d $(JAVADOC_HTML_DIR) \
+	-bootclasspath "" \
+	-classpath $(CLDC_OUTPUT_DIR)/classes.zip \
+	-private -use \
+        -J-mx180m  \
+	-sourcepath $(X_MIDP_JAVADOC_SOURCEPATH)$(PATHSEP)$(CLDC_JAVADOC_SOURCEPATH) \
+        -doctitle $(JAVADOCTITLE) \
+        -windowtitle $(JAVADOCWINDOWTITLE) \
+        -header $(JAVADOCHEADER) \
+        -bottom $(JAVADOCBOTTOM) \
+	$(MIDP_JAVADOC_ALL)
+
+JAVADOC_ALL_FLAGS = \
+	-d $(JAVADOC_HTML_ALL_DIR) \
+	-bootclasspath "" \
+	-classpath $(MIDP_CLASSES_ZIP) \
+	-private -use \
+        -J-mx180m  \
+	-sourcepath $(ALL_SOURCE_PATH) \
+        -doctitle $(JAVADOCTITLE) \
+        -windowtitle $(JAVADOCWINDOWTITLE) \
+        -header $(JAVADOCHEADER) \
+        -bottom $(JAVADOCBOTTOM) \
+	$(GROUP_DOC_ALL)
+
+JAVADOC_TOOLS_FLAGS = \
+	-d $(JAVADOC_TOOLS_DIR) \
+	-private -use \
+        -J-mx180m  \
+	-sourcepath $(TOOL_SRCPATH) \
+        -doctitle $(JAVADOCTITLE) \
+        -windowtitle $(JAVADOCWINDOWTITLE) \
+        -header $(JAVADOCHEADER) \
+        -bottom $(JAVADOCBOTTOM) \
+        $(GROUP_TOOLS)
+
+# Variables used for building doxygen documentation
+#
+DOXYGEN_DIR = $(DOC_DIR)/doxygen
+
+# The default location of doxygen binary
+# Note: User should change this (or overwrite
+# in command line mode) in order to use it.
+#
+DOXYGEN_CMD = /usr/bin/doxygen
+
+DOXYGEN_CFG = $(BUILD_COMMON_CONFIG_DIR)/doxygen.conf
+DOXYGEN_CONFIG_FILE = $(DOXYGEN_DIR)/doxygen.conf
+
+# Include share/inc/*.h and include/*.h files
+# in doxygen target. (Note this may over generate
+# for porting interface documentation.)
+#
+DOXYGEN_INPUT_LIST += $(shell (find $(SUBSYSTEM_DIR) -name "*.h" \
+	| egrep "/share/inc/|/include/" \
+	| egrep -v "/SCCS/|/comm/" \
+	| egrep -v "midpNUTS.h|fileInstallerInternal.h" \
+	| xargs grep -l '@ingroup ' ))
+
+#DOXYGEN_EXCLUDE_LIST +=
+#    $(SUBSYSTEM_DIR)/ams/common/native/share/inc/fileInstallerInternal.h
+
+# Makes sure to tell users to use their copy of doxygen
+#
+VERIFY_DOXYGEN_CMD:
+	@if [ ! -f "$(DOXYGEN_CMD)" ]; then \
+	   echo "ERROR: Please set DOXYGEN_CMD to point to your doxygen executable"; \
+	   /bin/false; \
+	fi;
+	
+# Style sheets and other configuration templates
+#
+DOXYGEN_SUPPORT_LIST += \
+    $(DOXYGEN_DIR)/doxygen_style.css
+
+PROJECT_DOXYGEN_SUPPORT_LIST += \
+    $(DOXYGEN_DIR)/doxygen_header.txt \
+    $(DOXYGEN_DIR)/doxygen_footer.txt
+
+$(DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(MIDP_DIR)/build/common/config/%
+	@(cp $< $@) $(LOG)
+
+$(PROJECT_DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(PROJECT_MIDP_DIR)/build/common/config/%
+	@(cp $< $@) $(LOG)
+
+$(DOXYGEN_CONFIG_FILE): $(DOXYGEN_DIR) $(DOXYGEN_CFG)
+	-@(sed -e 'sz<OUTPUT_DIR>z$(DOXYGEN_DIR)z' \
+	    -e 's;<INPUT_LIST>;$(DOXYGEN_INPUT_LIST);' \
+	    -e 'sz<EXCLUDE_LIST>z$(DOXYGEN_EXCLUDE_LIST)z' \
+	    -e 'sz<DOXYGEN_DIR>z$(DOXYGEN_DIR)z' \
+	    -e 'sz<PROJECT_NAME>z$(PROJECT_NAME)z' \
+	    -e 'sz<PROJECT_VERSION>z$(PROJECT_VERSION)z' \
+	< $(DOXYGEN_CFG) > $@) $(LOG)
+
+docs_doxy: VERIFY_DOXYGEN_CMD $(DOXYGEN_DIR) $(DOXYGEN_CONFIG_FILE) $(DOXYGEN_SUPPORT_LIST) $(PROJECT_DOXYGEN_SUPPORT_LIST)
+	$(A)echo +++ $(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE) $(LOG_ONLY)
+	-@($(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE)) $(LOG)
+
+docs_javadoc: $(JAVADOC_HTML_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_CLASSES_ZIP)
+	$(A)echo +++ $(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
+	$(A)$(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
+	$(A)$(remove_filelist) $(LOG)
+	$(A)$(remove_generatedlist) $(LOG)
+
+docs_javadoc_all: $(JAVADOC_HTML_ALL_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_CLASSES_ZIP)
+	$(A)echo +++ $(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
+	$(A)$(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
+	$(A)$(remove_filelist) $(LOG)
+	$(A)$(remove_generatedlist) $(LOG)
+
+docs_html: verify docs_doxy # docs_javadoc is disabled
+
+docs_tools: $(JAVADOC_TOOLS_DIR)
+	$(A)echo +++ env CLASSPATH=$(CLASSBIN) \
+		$(JAVADOC_CMD) $(JAVADOC_TOOLS_FLAGS) $(TOOLS_PACKAGES) $(LOG_ONLY)
+	-@env CLASSPATH=$(CLASSBIN) \
+		$(JAVADOC_CMD) $(JAVADOC_TOOLS_FLAGS) $(TOOLS_PACKAGES) $(LOG)
+
+docs_all: docs_html docs_tools
+
+$(JAVADOC_TOOLS_DIR) $(JAVADOC_HTML_DIR) $(JAVADOC_HTML_ALL_DIR) $(DOXYGEN_DIR):
+	-@(mkdir -p $@) $(LOG)
+
+clean ::
+	-@rm -fr $(DOC_DIR) $(LOG)
+
+# Avoid accidents
+#
+.PHONY: docs_all docs_html docs_tools docs_javadoc docs_doxy
+
