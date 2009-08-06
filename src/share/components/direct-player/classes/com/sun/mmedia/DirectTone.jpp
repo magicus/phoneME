@@ -149,6 +149,7 @@ final class DirectTone extends DirectPlayer {
         return DefaultConfiguration.MIME_AUDIO_TONE;
     }
 
+    protected native void nSetSequence( int handle, byte[] seq );
     /**
      * Sets the tone sequence.<p>
      * 
@@ -169,11 +170,8 @@ final class DirectTone extends DirectPlayer {
 
         long contentSize = sequence.length;
         if (contentSize > 0) {
-            //MediaDownload.nSetWholeContentSize(hNative, contentSize);
+            nSetSequence( hNative, sequence );
         }
-
-        //MediaDownload.nBuffering(hNative, sequence,  0, sequence.length);
-        //MediaDownload.nBuffering(hNative, null, 0, 0);
 
         getOwner().hasToneSequenceSet = true;
     }

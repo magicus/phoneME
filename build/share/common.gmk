@@ -240,6 +240,7 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIDirectInputThread.c \
 	KNIDirectDebugOut.c \
 	KNIDirectPlayer.c \
+	KNIDirectTone.c \
 	KNIDirectVolume.c \
 	KNIDirectMetaData.c \
 	KNITonePlayer.c \
