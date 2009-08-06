@@ -600,5 +600,6 @@ media_interface g_rtp_itf =
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };

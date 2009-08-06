@@ -272,6 +272,14 @@ typedef struct {
 } media_midi_interface;
 
 /**
+ * function pointer vector table for Tone control
+ */
+typedef struct {
+    javacall_result (*tone_alloc_buffer)(javacall_handle handle, int length, void** ptr);
+    javacall_result (*tone_sequence_written)(javacall_handle handle);
+} media_tone_interface;
+
+/**
  * function pointer vector table for MetaData control
  */
 typedef struct {
@@ -364,6 +372,7 @@ typedef struct {
     media_video_interface*      vptrVideo;
     media_snapshot_interface*   vptrSnapshot;
     media_midi_interface*       vptrMidi;
+    media_tone_interface*       vptrTone;
     media_metadata_interface*   vptrMetaData;
     media_rate_interface*       vptrRate;
     media_tempo_interface*      vptrTempo;

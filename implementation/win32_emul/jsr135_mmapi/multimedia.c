@@ -567,6 +567,9 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
 #define QUERY_MIDI_ITF(_pitf_, _method_)  \
     ( (_pitf_) && (_pitf_)->vptrMidi && (_pitf_)->vptrMidi->##_method_ )
 
+#define QUERY_TONE_ITF(_pitf_, _method_)  \
+    ( (_pitf_) && (_pitf_)->vptrTone && (_pitf_)->vptrTone->##_method_ )
+
 #define QUERY_METADATA_ITF(_pitf_, _method_)  \
     ( (_pitf_) && (_pitf_)->vptrMetaData && (_pitf_)->vptrMetaData->##_method_ )
 
@@ -1780,6 +1783,35 @@ javacall_result javacall_media_long_midi_event(javacall_handle handle,
 
     if (QUERY_MIDI_ITF(pItf, long_midi_event)) {
         ret = pItf->vptrMidi->long_midi_event(pPlayer->mediaHandle, data, offset, length);
+    }
+
+    return ret;
+}
+
+/* Tone Control functions */
+/*****************************************************************************/
+
+javacall_result javacall_media_tone_alloc_buffer(javacall_handle handle, int length, void** ptr)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_TONE_ITF(pItf, tone_alloc_buffer)) {
+        ret = pItf->vptrTone->tone_alloc_buffer(pPlayer->mediaHandle, length, ptr);
+    }
+
+    return ret;
+}
+
+javacall_result javacall_media_tone_sequence_written(javacall_handle handle)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_TONE_ITF(pItf, tone_sequence_written)) {
+        ret = pItf->vptrTone->tone_sequence_written(pPlayer->mediaHandle);
     }
 
     return ret;

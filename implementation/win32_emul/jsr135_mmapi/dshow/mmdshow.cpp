@@ -388,7 +388,7 @@ static javacall_result dshow_create(int appId,
         return JAVACALL_OUT_OF_MEMORY;
 
     p->gmIdx = -1;
-    javacall_result res = isolateIDtoGM( appId, &(p->gmIdx) );
+    javacall_result res = appIDtoGM( appId, &(p->gmIdx) );
     
     if( JAVACALL_OK != res )
     {
@@ -1140,6 +1140,7 @@ media_interface g_dshow_itf =
     &_dshow_basic_itf,
     &_dshow_volume_itf,
     &_dshow_video_itf,
+    NULL,
     NULL,
     NULL,
     NULL,

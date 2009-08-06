@@ -61,10 +61,9 @@ typedef enum
 
 typedef struct {
     jc_fmt                  mediaType;
-    int                     isolateID;
-    int                     playerID;
+    int                     appId;
+    int                     playerId;
     int                     gmIdx;
-    long                    wholeContentSize;
     int                     playing;
     int                     eom;
     
@@ -72,8 +71,9 @@ typedef struct {
     unsigned char           *dataBuffer;
     int                     dataBufferLen;
     int                     dataPos;
-    javacall_bool           dataStopped; /* No more data now */
-    javacall_bool           dataEnded; /* All data transferred */
+    int                     streamLen;
+    //javacall_bool           dataStopped; /* No more data now */
+    //javacall_bool           dataEnded; /* All data transferred */
     
     IControl*               controls[CONT_MAX];
     javacall_bool           needProcessHeader;
@@ -107,7 +107,7 @@ typedef struct
 extern "C" {
 #endif //__cplusplus
 
-javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx );
+javacall_result appIDtoGM(int appID, /*OUT*/ int *gmIdx );
 void            gmDetach(int gmIdx);
 
 #ifdef __cplusplus

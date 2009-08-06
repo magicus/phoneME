@@ -30,6 +30,17 @@
 #include "javacall_memory.h"
 #include "javautil_unicode.h"
 
+static void PRINTF( const char* fmt, ... ) {
+    char           str8[ 256 ];
+    va_list        args;
+
+    va_start(args, fmt);
+    vsprintf( str8, fmt, args );
+    va_end(args);
+
+    OutputDebugStringA( str8 );
+}
+
 #if( 1 == INTERNAL_SOUNDBANK )
 #include "mQCore/soundbank.incl"
 #endif /*INTERNAL_SOUNDBANK*/
@@ -88,7 +99,7 @@ static void MQ234_CALLBACK eom_event_trigger(void *userData)
     ah* h = (ah*)userData;
     // needs to be in milliseconds, so dive by 10
     long ms = mQ234_PlayControl_GetPosition(h->synth) / 10;
-    sendEOM(h->isolateID, h->playerID, ms);
+    sendEOM(h->appId, h->playerId, ms);
     mQ234_PlayControl_Play(h->synth, FALSE);
 }
 
@@ -167,7 +178,7 @@ static void MQ234_CALLBACK  mq_mutex_unlock( void* m )
 
 /******************************************************************************/
 
-static javacall_result gmInit(int isolateID, int gmIdx)
+static javacall_result gmInit(int appId, int gmIdx)
 {
     MQ234_CreateOptions opts;
     MQ234_SynthConfig synthConfig;
@@ -300,13 +311,13 @@ static javacall_result gmInit(int isolateID, int gmIdx)
      * properely destroy them
      */
 
-    g_QSoundGM[gmIdx].isolateId  = isolateID;
+    g_QSoundGM[gmIdx].isolateId  = appId;
     g_QSoundGM[gmIdx].pcm_handle = pcm_out_open_channel( ENV_BITS,
                                                  ENV_CHANNELS,
                                                  ENV_RATE,
                                                  ENV_BLOCK_BYTES,
                                                  mmaudio_get_isolate_mix,
-                                                 (void*)isolateID );
+                                                 (void*)appId );
 
     JC_MM_DEBUG_PRINT1( "# pcm_out_open_channel returned 0x%08X\n",
             (int)(g_QSoundGM[gmIdx].pcm_handle) );
@@ -329,14 +340,14 @@ static javacall_result gmInit(int isolateID, int gmIdx)
     return res;
 }
 
-javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx )
+javacall_result appIDtoGM(int appId, /*OUT*/ int *gmIdx )
 {
     int i = GLOBMAN_INDEX_MAX-1;
     javacall_result res = JAVACALL_FAIL;
 
     while(i>=0)
     {
-        if((g_QSoundGM[i].gm != NULL) && (g_QSoundGM[i].isolateId == isolateID))
+        if((g_QSoundGM[i].gm != NULL) && (g_QSoundGM[i].isolateId == appId))
         {
             g_QSoundGM[i].isolateRefs++;
             *gmIdx = i;
@@ -355,7 +366,7 @@ javacall_result isolateIDtoGM(int isolateID, /*OUT*/ int *gmIdx )
     {
         if(g_QSoundGM[i].gm == NULL)
         {
-            res = gmInit(isolateID, i);
+            res = gmInit(appId, i);
             *gmIdx = i;
             return res;
         }
@@ -387,10 +398,10 @@ static int mmaudio_destory(int gmIdx)
 size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param )
 {
     MQ234_ERROR err;
-    int isolateid = (int)param;
+    int appId = (int)param;
     int gmIdx = -1;
 
-    javacall_result res = isolateIDtoGM(isolateid, &gmIdx);
+    javacall_result res = appIDtoGM(appId, &gmIdx);
     
     JC_MM_ASSERT( JAVACALL_OK == res );
     
@@ -420,13 +431,13 @@ size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param )
 /*---------------------------------------------------------------------------*/
 
 // NEED REVISIT: need handle to structure for the synth on this isolate.
-javacall_result mmaudio_tone_note(long isolateid, long note, long dur, long vol)
+javacall_result mmaudio_tone_note(long appId, long note, long dur, long vol)
 {
     unsigned char msg[2];
     unsigned char status;
     int tchnl = 5; // NEED REVISIT: Need to see which channel should actually be used for tones.
     int gmidx = -1;
-    javacall_result res = isolateIDtoGM( isolateid, &gmidx );
+    javacall_result res = appIDtoGM( appId, &gmidx );
     
     if( JAVACALL_NO_AUDIO_DEVICE == res )
     {
@@ -478,13 +489,14 @@ static javacall_result audio_qs_create(int appId, int playerId,
                                        /* OUT */ javacall_handle *pHandle)
 {
     ah *newHandle = NULL;
-    int isolateId = appId;
     int gmIdx = -1;
     MQ234_ERROR e;
     IPlayControl* synth;
 
-    javacall_result res = isolateIDtoGM( isolateId, &gmIdx );
+    javacall_result res = appIDtoGM( appId, &gmIdx );
     
+    PRINTF( " --- create(%S)", URI );
+
     if( JAVACALL_OK != res )
     {
         gmDetach( gmIdx );
@@ -497,24 +509,18 @@ static javacall_result audio_qs_create(int appId, int playerId,
 
     newHandle = MALLOC(sizeof(ah));
     memset(newHandle, '\0', sizeof(ah));
-    /*
-    newHandle->dataBuffer       = NULL;
-    newHandle->dataBufferLen    = 0;
-    newHandle->dataPos          = 0;
-    */
+
     e = mQ234_CreateSynthPlayer(g_QSoundGM[gmIdx].gm, &(synth), NULL);
     JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
 
     e = mQ234_AttachSynthPlayer(g_QSoundGM[gmIdx].gm, synth, 0);
     JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
 
+    newHandle->streamLen        = -1;
     newHandle->mediaType        = mediaType;
-    newHandle->isolateID        = isolateId;
-    newHandle->playerID         = playerId;
+    newHandle->appId            = appId;
+    newHandle->playerId         = playerId;
     newHandle->gmIdx            = gmIdx;
-    newHandle->wholeContentSize = -1;
-    newHandle->dataStopped      = JAVACALL_TRUE;
-    newHandle->dataEnded        = JAVACALL_FALSE;
 
     // need some data to recognize sp-midi
     if (mediaType == JC_FMT_MIDI) {
@@ -570,11 +576,6 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
     int gmIdx         = h->gmIdx;
     JC_MM_DEBUG_PRINT1("audio_destroy %s\n",__FILE__);
 
-    if (h->dataBuffer) {
-        FREE(h->dataBuffer);
-        h->dataBuffer = NULL;
-    }
-
     if(h->doneCallback != NULL)
     {
         mQ234_EventTrigger_Destroy(h->doneCallback);
@@ -596,7 +597,13 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
         h->storage = NULL;
     }
 
+    if (h->dataBuffer) {
+        FREE(h->dataBuffer);
+        h->dataBuffer = NULL;
+    }
+
     // need to destroy controls...??
+
     FREE(h);
     gmDetach(gmIdx);
     r = JAVACALL_OK;
@@ -767,13 +774,6 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
         mQ234_HostStorage_Destroy( h->storage );
         h->storage = NULL;
     }
-    h->dataStopped      = JAVACALL_TRUE;
-    h->dataEnded        = JAVACALL_FALSE;
-
-    if (h->dataBuffer) {
-        FREE(h->dataBuffer);
-        h->dataBuffer = NULL;
-    }
 
     return JAVACALL_OK;
 }
@@ -783,7 +783,15 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
  */
 static javacall_result audio_qs_realize(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength){
     ah* h = (ah *)handle;
-    h->state = PL135_REALIZED;
+
+    PRINTF("- realize(%S)", mime );
+
+    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
+                                      h->appId,
+                                      h->playerId, 
+                                      JAVACALL_OK,
+                                      NULL );
+
     return JAVACALL_OK;
 }
 
@@ -792,172 +800,17 @@ static javacall_result audio_qs_realize(javacall_handle handle, javacall_const_u
  */
 static javacall_result audio_qs_prefetch(javacall_handle handle){
     ah* h = (ah *)handle;
+
+    PRINTF("- prefetch" );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, NULL );
+
     h->state = PL135_PREFETCHED;
     return JAVACALL_OK;
 }
-
-/*
-#define DEFAULT_BUFFER_SIZE  (1024 * 1024)
-#define DEFAULT_PACKET_SIZE  1024
-
-static javacall_result audio_qs_get_java_buffer_size(javacall_handle handle,
-                                                     long* java_buffer_size,
-                                                     long* first_data_size)
-{
-    ah* h = (ah*)handle;
-
-    if (h->mediaType == JC_FMT_DEVICE_TONE || h->mediaType == JC_FMT_DEVICE_MIDI) {
-        *java_buffer_size = h->wholeContentSize;
-        *first_data_size  = 0;
-    } else {
-        if (h->dataBufferLen == 0 || h->mediaType == JC_FMT_MS_PCM) {
-            if (h->wholeContentSize > 0 && h->wholeContentSize < DEFAULT_BUFFER_SIZE) {
-                *java_buffer_size = h->wholeContentSize;
-            } else {
-                *java_buffer_size = DEFAULT_BUFFER_SIZE;
-            }
-            *first_data_size  = DEFAULT_PACKET_SIZE;
-        } else {
-            *java_buffer_size = h->dataBufferLen;
-            *first_data_size  = h->dataBufferLen;
-        }
-    }
-    return JAVACALL_OK;
-}
-
-static javacall_result audio_qs_set_whole_content_size(javacall_handle handle,
-                                                       long whole_content_size)
-{
-    ah* h = (ah*)handle;
-    h->wholeContentSize = whole_content_size;
-    return JAVACALL_OK;
-}
-
-static javacall_result audio_qs_get_buffer_address(javacall_handle handle,
-                                                   const void** buffer,
-                                                   long* max_size)
-{
-    ah* h = (ah*)handle;
-    int gmIdx = h->gmIdx;
-    long size, wavDataOffset;
-
-    if (h->dataEnded) {
-        *buffer = NULL;
-        *max_size = 0;
-        return JAVACALL_FAIL;
-    }
-
-    if (h->dataBuffer == NULL) {
-        if (h->wholeContentSize <= 0) {
-            size = DEFAULT_BUFFER_SIZE;
-        } else {
-            size = h->wholeContentSize;
-        }
-        h->dataBuffer = MALLOC(size);
-        if (h->dataBuffer == NULL) {
-            JC_MM_DEBUG_PRINT("[jc-media] get_buffer_address: Cannot allocate buffer\n");
-            h->dataBufferLen = 0;
-            h->dataPos = 0;
-            return JAVACALL_OUT_OF_MEMORY;
-        }
-        h->dataBufferLen = size;
-        h->dataPos = 0;
-    } else {
-        size = h->dataBufferLen - h->dataPos;
-        if (h->wholeContentSize != h->dataBufferLen && size < DEFAULT_PACKET_SIZE) {
-            long new_size = h->dataBufferLen * 2;
-            
-            if (new_size < DEFAULT_PACKET_SIZE) {
-                new_size = DEFAULT_PACKET_SIZE;
-            }
-            if (h->mediaType == JC_FMT_MS_PCM && h->wav.playBuffer) {
-                // For MS_PCM playBuffer is a part of dataBuffer.
-                //   So, saving buffer offset is required before REALLOC
-                wavDataOffset = h->wav.playBuffer - h->dataBuffer;
-            }
-            h->dataBuffer = REALLOC(h->dataBuffer, new_size);
-            if (h->dataBuffer == NULL) {
-                JC_MM_DEBUG_PRINT("[jc-media] get_buffer_address: Cannot re-allocate buffer\n");
-                FREE(h->dataBuffer);
-                h->dataBuffer = NULL;
-                h->dataBufferLen = 0;
-                h->dataPos = 0;
-                return JAVACALL_OUT_OF_MEMORY;
-            }
-            if (h->mediaType == JC_FMT_MS_PCM && h->wav.playBuffer) {
-                /* Restoring playBuffer
-                h->wav.playBuffer = h->dataBuffer + wavDataOffset;
-            }
-            h->dataBufferLen = new_size;
-            size = h->dataBufferLen - h->dataPos;
-        }
-    }
-    *max_size = size;
-    *buffer = h->dataBuffer + h->dataPos;
-    return JAVACALL_OK;
-}
-*/
-
-/**
- * Buffer media data.
- */
-/*
-static javacall_result audio_qs_do_buffering(
-                            javacall_handle handle, const void* buffer,
-                            long *length, javacall_bool *need_more_data, 
-                            long *min_data_size){
-
-    ah* h = (ah *)handle;
-    JC_MM_ASSERT(h->dataBuffer != NULL);
-
-    if (NULL != buffer) {
-        if (h->needProcessHeader) {
-            doProcessHeader(h, h->dataBuffer, h->dataPos + *length);
-        }
-        JC_MM_ASSERT(buffer == h->dataBuffer + h->dataPos);
-        h->dataPos += *length;
-        
-        switch(h->mediaType)
-        {
-        case JC_FMT_TONE:
-        case JC_FMT_MIDI:
-        case JC_FMT_SP_MIDI:
-        case JC_FMT_DEVICE_TONE:
-        case JC_FMT_DEVICE_MIDI:
-        case JC_FMT_AMR:
-            *need_more_data = JAVACALL_TRUE;
-            *min_data_size  = DEFAULT_PACKET_SIZE;
-            break;
-        case JC_FMT_MS_PCM:
-            if (wav_setStreamPlayerData(&h->wav) != 1) {
-                return JAVACALL_FAIL;
-            }
-            *need_more_data = h->wav.rate == 0
-                || h->state > PL135_REALIZED
-                && h->wav.playBufferLen - h->wav.playPos < MAX_PCM_BUFFERED_SIZE(h->wav)
-                && h->dataEnded == JAVACALL_FALSE
-                ? JAVACALL_TRUE
-                : JAVACALL_FALSE;
-            
-            *min_data_size = DEFAULT_PACKET_SIZE;
-            return JAVACALL_OK;
-
-        default:
-            JC_MM_DEBUG_PRINT1(
-                "[jc-media] Trying to play unsupported media type %d\n",
-                h->mediaType);
-            JC_MM_ASSERT( FALSE );
-        }
-    } else {
-        if (!h->dataEnded) {
-            h->dataStopped = JAVACALL_TRUE;
-        }
-        *need_more_data = JAVACALL_FALSE;
-        *min_data_size  = 0;
-    }    
-    return JAVACALL_OK;
-}
-*/
 
 /**
  * Delete temp file
@@ -970,7 +823,9 @@ static javacall_result audio_qs_clear_buffer(javacall_handle handle){
 
     if (h->dataBuffer != NULL) {
         FREE(h->dataBuffer);
-        h->dataBuffer = NULL;
+        h->dataBuffer    = NULL;
+        h->dataBufferLen = 0;
+        h->dataPos       = 0;
     }
 
     return JAVACALL_OK;
@@ -988,6 +843,11 @@ static javacall_result audio_qs_start(javacall_handle handle){
     //printf("audio_start...\n");
     mQ234_PlayControl_Play(h->synth, TRUE);
 
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, NULL );
+
     //printf( "...audio_start: h=0x%08X\n", (int)handle);
     return JAVACALL_OK;
 }
@@ -1000,6 +860,11 @@ static javacall_result audio_qs_stop(javacall_handle handle){
     ah *h = (ah *)handle;
     JC_MM_DEBUG_PRINT1("audio_stop: h=0x%08X\n", (int)handle);
     mQ234_PlayControl_Play(h->synth, FALSE);
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, NULL );
 
     return JAVACALL_OK;
 }
@@ -1021,6 +886,22 @@ static javacall_result audio_qs_resume(javacall_handle handle){
 static javacall_result audio_qs_stream_length(javacall_handle handle, 
                                               javacall_int64 length)
 {
+    ah *h = (ah *)handle;
+
+    PRINTF( "- stream length(%i)", (int)length );
+
+    if(length > INT_MAX) return JAVACALL_OUT_OF_MEMORY;
+
+    h->streamLen = (int)length;
+
+    if( h->dataBufferLen < (int)length )
+    {
+        h->dataBufferLen = (int)length;
+        h->dataBuffer    = realloc( h->dataBuffer, h->dataBufferLen );
+
+        if( NULL == h->dataBuffer ) return JAVACALL_OUT_OF_MEMORY;
+    }
+
     return JAVACALL_OK;
 }
 
@@ -1029,6 +910,25 @@ static javacall_result audio_qs_get_data_request(javacall_handle handle,
                                                  javacall_int32 *length, 
                                                  void **data)
 {
+    ah *h = (ah *)handle;
+
+    if( -1 == h->streamLen )
+    {
+        PRINTF( "  request: size unknown" );
+        if( h->dataPos == h->dataBufferLen )
+        {
+            PRINTF( "  request: enlarging buffer" );
+            h->dataBufferLen += 512;
+            h->dataBuffer = realloc( h->dataBuffer, h->dataBufferLen );
+        }
+    }
+
+    *data   = h->dataBuffer + h->dataPos;
+    *offset = h->dataPos;
+    *length = h->dataBufferLen - h->dataPos;
+
+    PRINTF( "- request(%i @%i)", (int)*length, (int)*offset );
+
     return JAVACALL_OK;
 }
 
@@ -1036,6 +936,35 @@ static javacall_result audio_qs_data_written(javacall_handle handle,
                                              javacall_int32 length, 
                                              javacall_bool *new_request)
 {
+    ah *h = (ah *)handle;
+
+    PRINTF( "  - done(%i)", (int)length );
+
+    h->dataPos += length;
+
+    if( -1 != h->streamLen && h->dataPos == h->streamLen )
+    {
+        h->state = PL135_REALIZED;
+
+        PRINTF( "  - realized." );
+
+        if (h->needProcessHeader)
+        {
+            doProcessHeader(h, h->dataBuffer, h->dataBufferLen);
+        }
+
+        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
+                                         h->appId,
+                                         h->playerId, 
+                                         JAVACALL_OK, NULL );
+
+        *new_request = JAVACALL_FALSE;
+    }
+    else
+    {
+        *new_request = JAVACALL_TRUE;
+    }
+
     return JAVACALL_OK;
 }
 
@@ -1643,6 +1572,34 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
 
 /*****************************************************************************/
 
+javacall_result audio_qs_tone_alloc_buffer(javacall_handle handle, int length, void** ptr)
+{
+    ah *h = (ah *)handle;
+
+    if( length > h->dataBufferLen )
+    {
+        h->dataBuffer = realloc( h->dataBuffer, length );
+        if( NULL == h->dataBuffer ) return JAVACALL_OUT_OF_MEMORY;
+    }
+
+    h->dataBufferLen = length;
+    h->dataPos       = length;
+    h->streamLen     = length;
+
+    *ptr = h->dataBuffer;
+
+    return JAVACALL_OK;
+}
+
+javacall_result audio_qs_tone_sequnce_written(javacall_handle handle)
+{
+    //ah *h = (ah *)handle;
+
+    return JAVACALL_OK;
+}
+
+/*****************************************************************************/
+
 /**
  * Retrieve needed parameters from the header. 
  * Now we distinquish MIDI and SP-MIDI.
@@ -1729,6 +1686,11 @@ static media_midi_interface _audio_qs_midi_itf = {
     audio_qs_get_program
 };
 
+static media_tone_interface _audio_qs_tone_itf = {
+    audio_qs_tone_alloc_buffer,
+    audio_qs_tone_sequnce_written
+};
+
 /**
  * MetaData javacall function interface
  */
@@ -1776,6 +1738,7 @@ media_interface g_qsound_itf = {
     NULL,
     NULL,
     &_audio_qs_midi_itf,
+    &_audio_qs_tone_itf,
     &_audio_qs_metadata_itf,
     &_audio_qs_rate_itf,
     &_audio_qs_tempo_itf,

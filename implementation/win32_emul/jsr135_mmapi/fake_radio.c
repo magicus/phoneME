@@ -192,5 +192,6 @@ media_interface g_fake_radio_itf = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };

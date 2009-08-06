@@ -477,6 +477,7 @@ media_interface g_record_itf = {
     NULL,
     NULL,
     NULL,
+    NULL,
     &_recorder_record_itf,
     NULL
 }; 

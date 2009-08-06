@@ -808,6 +808,7 @@ media_interface g_audio_itf = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL, // IMPL_NOTE: _audio_rate_itf excluded because of problems with Java StopTimeControl
     NULL,
     NULL,
