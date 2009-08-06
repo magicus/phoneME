@@ -163,6 +163,11 @@ public abstract class ProtocolBase implements MessageConnection,
         appPackage = AppPackage.getInstance();
         // IMPL_NOTE: should be moved to a JSROP initializer
         //    com.sun.jump.driver.wma.Listener.startListener();
+
+        // #ifdef ENABLE_CDC 
+        // ##todo: move to jpp
+        com.sun.midp.wma.WmaLifeCycleListener.registerProtocol(this);
+        // #endif ENABLE_CDC
     }
     /**
      * Construct a new message object from the given type.
