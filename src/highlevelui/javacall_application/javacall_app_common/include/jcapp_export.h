@@ -28,6 +28,7 @@
 #define _JCAPP_EXPORT_H_
 
 #include <kni.h>
+#include "javacall_defs.h"
 /**
  * @defgroup highui_jcapp Javacall Application External Interface
  * @ingroup highui
@@ -72,7 +73,7 @@ extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h);
  *
  * @param mode The screen mode
  */
-extern void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode);
+extern javacall_result jcapp_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Change screen orientation flag

@@ -93,8 +93,8 @@ int lcdlf_get_screen_height(int hardwareId) {
  *
  * @param mode The screen mode
  */
-void lcdlf_set_fullscreen_mode(int hardwareId, jboolean mode) {
-  lfjport_set_fullscreen_mode(hardwareId, mode);
+javacall_result lcdlf_set_fullscreen_mode(int hardwareId, jboolean mode) {
+  return lfjport_set_fullscreen_mode(hardwareId, mode);
 }
 
 /**

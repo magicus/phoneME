@@ -37,8 +37,10 @@
 
 #include <lcdlf_export.h>
 #include <midpEventUtil.h>
+#include <midpError.h>
 #include <gxapi_graphics.h>
 #include <imgapi_image.h>
+#include "javacall_defs.h"
 
 /**
  * Calls platform specific function to redraw a portion of the display.
@@ -113,13 +115,16 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_refresh0) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_DisplayDevice_setFullScreen0) {
+    javacall_result result;
     jboolean mode = KNI_GetParameterAsBoolean(3);
     jint displayId = KNI_GetParameterAsInt(2);
     jint hardwareId = KNI_GetParameterAsInt(1);
 
     if (midpHasForeground(displayId)) {
-      lcdlf_set_fullscreen_mode(hardwareId, mode);
+      result = lcdlf_set_fullscreen_mode(hardwareId, mode);
     }
+    if (result == JAVACALL_OUT_OF_MEMORY)
+        KNI_ThrowNew(midpOutOfMemoryError, NULL);
     KNI_ReturnVoid();
 }
 

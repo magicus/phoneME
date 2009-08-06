@@ -46,6 +46,7 @@ extern "C" {
 
 #include <gxapi_graphics.h>
 #include <imgapi_image.h>
+#include "javacall_defs.h"
 
 /**
  * Refresh the given area.  For double buffering purposes.
@@ -89,7 +90,7 @@ int lfjport_get_screen_height(int hardwareId);
  *
  * @param mode The screen mode
  */
-void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode);
+javacall_result lfjport_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Resets native resources when foreground is gained by a new display.

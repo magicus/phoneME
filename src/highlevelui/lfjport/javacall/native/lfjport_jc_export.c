@@ -105,13 +105,12 @@ int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
  * @param mode true for full screen mode
  *             false for normal
  */
-void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
+javacall_result lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
     REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:lfjport_ui_setFullScreenMode(%1)\n",
                        mode);
 
     /* Suppress unused parameter warnings */
-    jcapp_set_fullscreen_mode(hardwareId, mode);
-    return;
+    return jcapp_set_fullscreen_mode(hardwareId, mode);
 }
 
 /**

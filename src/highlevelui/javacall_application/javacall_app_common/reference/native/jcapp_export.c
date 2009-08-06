@@ -231,11 +231,15 @@ void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
  * @param mode true for full screen mode
  *             false for normal
  */
-void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode) {    
+javacall_result jcapp_set_fullscreen_mode(int hardwareId, jboolean mode) {
+    javacall_result res;
 
-    javacall_lcd_set_full_screen_mode(hardwareId, mode);
+    res = javacall_lcd_set_full_screen_mode(hardwareId, mode);
+    if (res != JAVACALL_OK)
+        return res;
     jcapp_get_screen_buffer(hardwareId);
     jcapp_reset_screen_buffer(hardwareId);
+    return JAVACALL_OK;
 }
 
 /**
