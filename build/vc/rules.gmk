@@ -51,38 +51,30 @@ endif
 
 include $(JAVACALL_DIR)/build/common.gmk
 
-TEMP_OBJECTS=$(patsubst %.c,%.obj,$(patsubst %.cpp,%.obj,$(PORTING_SOURCE)))
+ifneq ($(FILTER_OUT_SOURCES)x,x)
+$(info PORTING_SOURCE before $(PORTING_SOURCE))
+PORTING_SOURCE:=$(filter-out $(FILTER_OUT_SOURCES),$(PORTING_SOURCE))
+$(info PORTING_SOURCE after  $(PORTING_SOURCE))
+endif
+temp_objects:=$(patsubst %.c,%.obj,$(patsubst %.cpp,%.obj,$(PORTING_SOURCE)))
 ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP_OBJECTS))
-else # ifneq ($(FILTER_OBJECTS)x,x)
-PORTING_OBJECTS+=$(TEMP_OBJECTS)
-endif # ifneq ($(FILTER_OBJECTS)x,x)
-
-ifeq ($(USE_NATIVE_AMS_UI), true)
-
-ifneq ($(FILTER_OBJECTS_NAMS_UI)x,x)
-NAMS_UI_OBJECTS+=$(filter-out $(FILTER_OBJECTS_NAMS_UI),$(TEMP_OBJECTS))
-else
-NAMS_UI_OBJECTS+=$(TEMP_OBJECTS)
+temp_objects:=$(filter-out $(FILTER_OBJECTS),$(temp_objects))
 endif
+PORTING_OBJECTS += $(temp_objects)
 
-endif
-
-NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
-
-ifneq ($(UTILITIES)x, x)
-PORTING_SOURCE += $(addsuffix .c,$(UTILITIES))
-endif
-
+NOTIFIER_OBJECTS:=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
 ifneq ($(NOTIFIER_OBJECTS)x,x)
-NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
-EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
+NOTIFIERS_LIB:=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
+$(NOTIFIERS_LIB): $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+
+local_vc:: $(NOTIFIERS_LIB)
 endif
-PORTING_SOURCE += $(addsuffix .c,$(PROPERTY_FILES))
 
 TARGET_VM ?= cldc
 
-local_vc:: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
+local_vc:: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
 	output_properties_files
 
 ifeq ($(VC8CE_ARCH_PATH),)
@@ -171,9 +163,7 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C
 ifeq ($(USE_NATIVE_AMS_UI), true)
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall_nams_ui$(BUILD_EXT).lib: \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NAMS_UI_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
@@ -183,9 +173,7 @@ local_vc:: $(JAVACALL_OUTPUT_LIB_DIR)/javacall_nams_ui$(BUILD_EXT).lib
 endif
 
 ifeq ($(USE_2005_MP),true)
-all_jc_sources = $(PORTING_OBJECTS) $(UTILITY_OBJECTS) $(PROPERTY_OBJECTS)
-$(info UTILITY_OBJECTS=$(UTILITY_OBJECTS))
-$(info PROPERTY_OBJECTS=$(PROPERTY_OBJECTS))
+all_jc_sources = $(PORTING_OBJECTS)
 porting_objects_w_path=$(addprefix $(JAVACALL_OUTPUT_OBJ_DIR)/,$(PORTING_OBJECTS))
 missing_jc_obj=$(filter $(notdir $(subst .obj,.%,$(filter-out $(wildcard $(porting_objects_w_path)),$(porting_objects_w_path)))),$(PORTING_SOURCE))
 
@@ -202,17 +190,10 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: $(jc_lib_dep)
 else
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
 endif
-
-$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
-	@echo "...Generating Library: $@"
-	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
 
 ifeq ($(TARGET_VM), cldc)
 

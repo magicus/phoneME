@@ -1,6 +1,5 @@
-#   
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -27,8 +26,12 @@
 #Please set the list in your configuration
 #example:
 #JSR_LIST=MIDP JSR_120 JSR_135 JSR_177 JSR_211
-         
+
 #JSR folders for source and include files
+
+ifndef _jc_list_gmk_
+_jc_list_gmk_ := defined
+
 MIDP_JC_DIR=midp
 COMMON_JC_DIR=common
 JSR_120_JC_DIR=jsr120_wma
@@ -38,3 +41,5 @@ JSR_211_JC_DIR=jsr211_chapi
 JSR_290_JC_DIR=jsr290_fluid
 NATIVE_AMS_JC_DIR=nams
 NATIVE_AMS_UI_JC_DIR=nams_ui
+
+endif #_jc_list_gmk_
