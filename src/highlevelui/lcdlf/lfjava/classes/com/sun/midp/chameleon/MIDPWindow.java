@@ -108,7 +108,7 @@ public class MIDPWindow extends CWindow {
     /**
      * Current screen mode
      */
-    int screenMode;
+    int screenMode=NO_SOFT_BUTTON_MODE;
 
     /**
      * Current soft button mode.
