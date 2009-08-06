@@ -37,6 +37,8 @@ import  com.sun.j2me.app.AppIsolate;
 import  com.sun.j2me.log.Logging;
 import  com.sun.j2me.log.LogChannels;
 
+import  java.lang.ref.WeakReference;
+
 import java.io.IOException;
 
 public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl {
@@ -333,6 +335,14 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
+        synchronized (evtLock)
+        {
+            if (evtQ == null)
+            {
+                evtQ = new EvtQ(this);
+            }
+        }
+
         // Set event listener
         new MMEventListener();
         state = UNREALIZED;
@@ -585,14 +595,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         // Deliver the event to the listeners.
-        synchronized (evtLock) {
-            if (evtQ == null) {
-                evtQ = new EvtQ(this);
-            }
-            evtQ.sendEvent(evt, evtData);
-            // try to let listener run
-            Thread.currentThread().yield();
-        }
+        evtQ.sendEvent(evt, evtData);
 
         if (evt == PlayerListener.CLOSED || evt == PlayerListener.ERROR) {
             closedDelivered = true;
@@ -1798,7 +1801,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         /**
          * the player instance
          */
-        private HighLevelPlayer p;
+        WeakReference pRef;
+        
         /**
          * event type array
          */
@@ -1819,7 +1823,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
          *        this event queue.
          */
         EvtQ(HighLevelPlayer p) {
-            this.p = p;
+            pRef = new WeakReference(p);
             evtQ = new String[p.eventQueueSize];
             evtDataQ = new Object[p.eventQueueSize];
             start();
@@ -1836,20 +1840,23 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
             // Wait if the event queue is full.
             // This potentially will block the Player's main thread.
-            while ((head + 1) % p.eventQueueSize == tail) {
-                try {
-                    wait(1000);
-                } catch (Exception e) {
+            HighLevelPlayer p = (HighLevelPlayer)pRef.get();
+            if (p != null) {
+                while ((head + 1) % p.eventQueueSize == tail) {
+                    try {
+                        wait(1000);
+                    } catch (Exception e) {
+                    }
                 }
+                evtQ[head] = evt;
+                evtDataQ[head] = evtData;
+                if (++head == p.eventQueueSize) {
+                    head = 0;
+                }
+                notifyAll();
+                // try to let other threads run
+                Thread.currentThread().yield();
             }
-            evtQ[head] = evt;
-            evtDataQ[head] = evtData;
-            if (++head == p.eventQueueSize) {
-                head = 0;
-            }
-            notifyAll();
-            // try to let other threads run
-            Thread.currentThread().yield();
         }
 
         /**
@@ -1865,9 +1872,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             // in case that posting the initial event
             // takes a long time
             boolean evtSent = false;
-
+            
             for (;;) {
-
+                HighLevelPlayer p;
                 synchronized (this) {
 
                     // If the queue is empty, we'll wait
@@ -1877,6 +1884,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                         } catch (Exception e) {
                         }
                     }
+                    p = (HighLevelPlayer)pRef.get();
+                    if (p == null) {
+                        break;
+                    }
+
                     if (head != tail) {
                         evt = evtQ[tail];
                         evtData = evtDataQ[tail];
@@ -1905,7 +1917,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                                 p.updateTimeBase(false);
                                 p.setState(Player.PREFETCHED);
                                 if (p.loopCount > 1 || p.loopCount == -1) {
-
                                     p.loopAfterEOM = true;
                                 }
                             }
@@ -1925,6 +1936,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     while (en.hasMoreElements()) {
                         try {
                             l = (PlayerListener) en.nextElement();
+                            System.out.println("PlayerUpdate : " + evt);
                             l.playerUpdate(src_p, evt, evtData);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -1959,9 +1971,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 synchronized (this) {
                     if (head == tail && evtSent && !evtToGo) {
                         synchronized (p.evtLock) {
-                            p.evtQ = null;
-                            break;
-                            // Exit the event thread.
+							head = 0;
+							tail = 0;
                         }
                     }
                 }
