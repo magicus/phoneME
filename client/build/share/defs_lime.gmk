@@ -41,6 +41,6 @@ LIME_OUTPUT_OBJ_DIR=$(JAVACALL_OUTPUT_OBJ_DIR)/lime/obj$(BUILD_EXT)
 else
 
 #compile and link lime statically
-PORTING_OBJECTS +=$(patsubst %.c,%.obj,$(notdir $(wildcard $(LIME_DIR)/client/src/native/*.c)))
+PORTING_SOURCE += $(notdir $(wildcard $(LIME_DIR)/client/src/native/*.c))
 
 endif
