@@ -29,6 +29,7 @@ import com.sun.j2me.proxy.suite.*;
 import com.sun.j2me.proxy.midlet.*;
 import java.security.*;
 import com.sun.midp.io.j2me.ProtocolBase;
+import java.util.*;
 
 public class WmaLifeCycleListener implements LifeCycleListener {
 
@@ -43,7 +44,7 @@ public class WmaLifeCycleListener implements LifeCycleListener {
     public void midletDestroyed(MIDletSuite suite, String className) {
 
         ProtocolBase protocol;
-        while ((protocol = getProtocols(suite)) != null) {
+        while ((protocol = getRemoveNextProtocol(suite)) != null) {
             try {
                 protocol.close();
             } catch (java.io.IOException ioe) {}
@@ -132,18 +133,41 @@ public class WmaLifeCycleListener implements LifeCycleListener {
 
         singletoneThis.addProtocol(protocol, suite);
     }
+   
+    /**  
+     * Contains (midletSuite, Vector(Protocols)) pairs
+     */
+    private Hashtable table = new Hashtable();
 
     private void addProtocol(ProtocolBase protocol, MIDletSuite suite) {
-        //## todo: add impl!
+        Object obj = table.get(suite);
+        if (obj == null) {
+            Vector vec = new Vector();
+            vec.add(protocol);
+            table.put(suite, vec);
+        } else {
+            Vector vec = (Vector)obj;
+            vec.add(protocol);
+        }
     }
 
     /**
-     *  returns all protocols for given midlet suite 
-     *  and removes entry from the list
+     *  returns protocols for given midlet suite 
+     *  removes entry from the list
      *  removes midlet suite entry finally
      */
-    private ProtocolBase getProtocols(MIDletSuite suite) {
-        //## todo: add impl!
+    private ProtocolBase getRemoveNextProtocol(MIDletSuite suite) {
+        Object obj = table.get(suite);
+        if (obj != null) {
+            Vector vec = (Vector)obj;
+            if (vec.isEmpty()) {
+                table.remove(suite);
+                return null;
+            } else { 
+                return (ProtocolBase)vec.remove(0);
+            }
+        }
+
         return null;
     }
 
