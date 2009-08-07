@@ -165,7 +165,6 @@ public abstract class ProtocolBase implements MessageConnection,
         //    com.sun.jump.driver.wma.Listener.startListener();
 
         // #ifdef ENABLE_CDC 
-        // ##todo: move to jpp
         com.sun.midp.wma.WmaLifeCycleListener.registerProtocol(this);
         // #endif ENABLE_CDC
     }
