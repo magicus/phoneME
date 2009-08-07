@@ -1682,28 +1682,39 @@ static CVMBool
 nullifyRefCallBack(CVMObject** refPtr, void* data) {
     CVMObject* ref = *refPtr;
     CVMClassBlock *cb;
-    CVMClassLoaderICell* currLoader; 
-    CVMClassLoaderICell* deadLoader = (CVMClassLoaderICell*)data;
-    CVMObject* deadLoaderObj;
-    CVMObject* currLoaderObj;
-    
-    if (CVMobjectIsInROM(ref)) {
+
+    if (ref == NULL || CVMobjectIsInROM(ref)) {
         return CVM_TRUE;
     }
 
     cb = CVMobjectGetClass(ref);
-    currLoader = CVMcbClassLoader(cb);
 
-    if (currLoader != NULL) {
-        deadLoaderObj = (CVMObject*)deadLoader->ref_DONT_ACCESS_DIRECTLY;
-        currLoaderObj = (CVMObject*)currLoader->ref_DONT_ACCESS_DIRECTLY;
-        if (currLoaderObj == deadLoaderObj) {
-            /*CVMconsolePrintf("===nullify ref to %C\n", cb);*/
+    if (data == NULL) {
+        if (cb != CVMsystemClass(java_lang_Class)) {
+            /* CVMconsolePrintf("===nullify application, size: %d\tClass: %C\n",
+                    CVMobjectSizeGivenClass(*refPtr,cb), cb); */
             *refPtr = NULL;
+        }
+    } else {
+
+        CVMClassLoaderICell* currLoader = CVMcbClassLoader(cb);
+        CVMClassLoaderICell* deadLoader = (CVMClassLoaderICell*)data;
+        CVMObject* deadLoaderObj;
+        CVMObject* currLoaderObj;
+
+        if (currLoader != NULL) {
+            deadLoaderObj = (CVMObject*)deadLoader->ref_DONT_ACCESS_DIRECTLY;
+            currLoaderObj = (CVMObject*)currLoader->ref_DONT_ACCESS_DIRECTLY;
+            if (currLoaderObj == deadLoaderObj) {
+                /* CVMconsolePrintf("===nullify size: %d\tClass: %C\n",
+                        CVMobjectSizeGivenClass(*refPtr,cb), cb); */
+                *refPtr = NULL;
+            }
         }
     }
     return CVM_TRUE;
 }
+
 
 static CVMBool
 iterateHeapCallBack(CVMObject* obj, CVMClassBlock* cb,
@@ -1711,7 +1722,7 @@ iterateHeapCallBack(CVMObject* obj, CVMClassBlock* cb,
 {
     CVMExecEnv *ee = CVMgetEE();
     CVMGCOptions gcOpts = {
-	/* isUpdatingObjectPointers */ CVM_FALSE,
+        /* isUpdatingObjectPointers */ CVM_FALSE,
         /* discoverWeakReferences   */ CVM_FALSE,
 #if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
         /* isProfilingPass          */ CVM_FALSE
@@ -1719,11 +1730,21 @@ iterateHeapCallBack(CVMObject* obj, CVMClassBlock* cb,
     };
     CVMGCOptions *gcOptsPtr = &gcOpts;
 
+    /* Here we might want to check if CVMcbClassLoader(cb) is the same
+     * as the class loader passed in data, and perform different actions
+     * for application objects, and objects of classes not loaded by the
+     * application's class loader.
+     * Nullifying all refernces in application classes, is not safe!
+     * Nullifying references in none application objects is more risky
+     * than nullifying references in application objects, but provides
+     * better protection against system memory leak bugs. For now, we
+     * nullify all heap references to application objects.
+     */
     CVMobjectWalkRefsWithSpecialHandling(ee, gcOptsPtr, obj,
                                          CVMobjectGetClassWord(obj), {
         if (*refPtr != 0) {
             (*nullifyRefCallBack)(refPtr, data);
-	}
+        }
     }, nullifyRefCallBack, data);
     return CVM_TRUE;
 }
@@ -1736,12 +1757,34 @@ static CVMBool iterateHeapAction(CVMExecEnv *ee, void *data)
 
 extern void
 CVMgcScanStatics(CVMExecEnv *ee, CVMGCOptions* gcOpts,
-	         CVMRefCallbackFunc callback, void* data);
+                 CVMRefCallbackFunc callback, void* data);
 
 static void
 scanClassCallBack(CVMExecEnv* ee, CVMClassBlock* cb, void* data)
 {
-    CVMscanClassIfNeeded(ee, cb, nullifyRefCallBack, data);
+    CVMClassLoaderICell* currLoader = CVMcbClassLoader(cb); 
+    CVMClassLoaderICell* deadLoader = (CVMClassLoaderICell*)data;
+     if ((currLoader != NULL) && (deadLoader->ref_DONT_ACCESS_DIRECTLY ==
+                                 currLoader->ref_DONT_ACCESS_DIRECTLY)) {
+
+       /* 
+        * Nullifying any static reference from application classes, is
+        * highly benficial for application leaking by thread. The leaking
+        * thread holds the class loader, and thus the classes, and thus
+        * any static data.
+        * Nullifying application statics is low risk.
+        */
+        CVMscanClassIfNeeded(ee, cb, nullifyRefCallBack, NULL);
+    } else {
+       /* 
+        * Nullifying static references to application objects, is
+        * a guard aginst system bugs. Use this for testing to reduce the likelihood
+        * of such bugs remaining in the shipping product. Consider turning it off
+        * in final product, since the risk of causing NPE in the system may outweigh
+        * the potential benefit.
+        */
+        CVMscanClassIfNeeded(ee, cb, nullifyRefCallBack, data);
+    }
 }
 
 int nullifyRefs = 0;
@@ -1767,20 +1810,29 @@ CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
             CVMgcClearClassMarks(ee, NULL);
 
             /* scan preloader statics */
+            /* Nullifying static references to application objects, is
+             * a guard aginst system bugs. Use this for testing to reduce the likelihood
+             * of such bugs remaining in the shipping product. Consider turning it off
+             * in final product, since the risk of causing NPE in the system may outweigh
+             * the potential benefit.
+             */
+            /* CVMconsolePrintf("===nullify preloader statics\n"); */
             {
                 CVMAddr  numRefStatics = CVMpreloaderNumberOfRefStatics();
-	        CVMAddr* refStatics    = CVMpreloaderGetRefStatics();
+                CVMAddr* refStatics    = CVMpreloaderGetRefStatics();
                 CVMwalkContiguousRefs(refStatics, numRefStatics,
                                       nullifyRefCallBack,
-				      deadLoader);
+                                      deadLoader);
             }
 
             /* scan dynamic loaded class statics */
+            /* CVMconsolePrintf("===nullify dynamic classes statics\n"); */
             /*CVMsetDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
             CVMclassIterateAllClasses(ee, scanClassCallBack, deadLoader);
             /*CVMclearDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
 
             /* iterate the heap objects */
+            /* CVMconsolePrintf("===nullify heap references\n"); */
             CVMgcStopTheWorldAndDoAction(ee, deadLoader, NULL,
                 iterateHeapAction, NULL, NULL, NULL);
 
