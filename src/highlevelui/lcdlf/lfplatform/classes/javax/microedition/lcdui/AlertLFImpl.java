@@ -28,6 +28,8 @@ package javax.microedition.lcdui;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 import com.sun.midp.util.ResourceHandler;
 
 import java.util.Timer;
