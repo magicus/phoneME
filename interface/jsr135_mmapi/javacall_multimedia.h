@@ -883,7 +883,7 @@ javacall_result javacall_media_stop_tone(int appID);
 javacall_result javacall_media_play_dualtone(int appID, long noteA, long noteB, long duration, long volume);
 
 javacall_result javacall_media_tone_alloc_buffer(javacall_handle handle, int length, void** ptr);
-javacall_result javacall_media_tone_sequnce_written(javacall_handle handle);
+javacall_result javacall_media_tone_sequence_written(javacall_handle handle);
 
 /** @} */
 /** @} */
