@@ -495,7 +495,7 @@ static javacall_result audio_qs_create(int appId, int playerId,
 
     javacall_result res = appIDtoGM( appId, &gmIdx );
     
-    PRINTF( " --- create(%S)", URI );
+    PRINTF( "\n ----- create(%S)", URI );
 
     if( JAVACALL_OK != res )
     {
@@ -576,6 +576,8 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
     int gmIdx         = h->gmIdx;
     JC_MM_DEBUG_PRINT1("audio_destroy %s\n",__FILE__);
 
+    PRINTF( "- destroy" );
+
     if(h->doneCallback != NULL)
     {
         mQ234_EventTrigger_Destroy(h->doneCallback);
@@ -616,6 +618,8 @@ static javacall_result audio_qs_close(javacall_handle handle){
     ah *h             = (ah*)handle;
     javacall_result r = JAVACALL_OK;
     int gmIdx         = h->gmIdx;
+
+    PRINTF( "- close" );
 
     if( h->synth != NULL )
     {
@@ -675,6 +679,8 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
 
     MQ234_ERROR e;
     int         sRate;
+
+    PRINTF( "- acquire device" );
 
     if(h->dataBuffer != NULL)
     {
@@ -751,6 +757,7 @@ static javacall_result audio_qs_release_device(javacall_handle handle){
     ah *h = (ah*)handle;
     int gmIdx         = h->gmIdx;
 
+    PRINTF( "- release device" );
     JC_MM_DEBUG_PRINT("audio_qs_release_device\n");
 
     if(h->doneCallback != NULL)
@@ -840,6 +847,8 @@ static javacall_result audio_qs_start(javacall_handle handle){
 
     h->state = PL135_STARTED;
    
+    PRINTF( "- start" );
+
     //printf("audio_start...\n");
     mQ234_PlayControl_Play(h->synth, TRUE);
 
@@ -859,6 +868,8 @@ static javacall_result audio_qs_stop(javacall_handle handle){
 
     ah *h = (ah *)handle;
     JC_MM_DEBUG_PRINT1("audio_stop: h=0x%08X\n", (int)handle);
+    PRINTF( "- stop" );
+
     mQ234_PlayControl_Play(h->synth, FALSE);
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
@@ -1003,6 +1014,8 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long* ms){
 
     ah *h = (ah *)handle;
     long currtime;
+
+    PRINTF( "- set time (%ld)", *ms );
 
     if( h->midiStream != NULL && h->storage != NULL )
     {
@@ -1576,6 +1589,8 @@ javacall_result audio_qs_tone_alloc_buffer(javacall_handle handle, int length, v
 {
     ah *h = (ah *)handle;
 
+    PRINTF( "- alloc buffer (%i)", length );
+
     if( length > h->dataBufferLen )
     {
         h->dataBuffer = realloc( h->dataBuffer, length );
@@ -1591,9 +1606,10 @@ javacall_result audio_qs_tone_alloc_buffer(javacall_handle handle, int length, v
     return JAVACALL_OK;
 }
 
-javacall_result audio_qs_tone_sequnce_written(javacall_handle handle)
+javacall_result audio_qs_tone_sequence_written(javacall_handle handle)
 {
     //ah *h = (ah *)handle;
+    PRINTF( "- sequence written" );
 
     return JAVACALL_OK;
 }
@@ -1688,7 +1704,7 @@ static media_midi_interface _audio_qs_midi_itf = {
 
 static media_tone_interface _audio_qs_tone_itf = {
     audio_qs_tone_alloc_buffer,
-    audio_qs_tone_sequnce_written
+    audio_qs_tone_sequence_written
 };
 
 /**
