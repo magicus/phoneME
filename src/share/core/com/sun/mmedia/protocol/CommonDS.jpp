@@ -33,6 +33,9 @@ import javax.microedition.media.protocol.*;
 import javax.microedition.io.file.*;
 // #endif
 import java.util.Hashtable;
+// #ifdef ENABLE_CDC [
+import java.security.*;
+// #endif ]
 
 /**
  * A DataSource wrapper for InputStreams.
@@ -93,6 +96,33 @@ public class CommonDS extends BasicDS implements SourceStream {
             }
         }
         // #endif ]
+        
+        for (int num = 1;; num++) {
+            final int fNum = num;
+            String classNamePref = 
+            // #ifdef ENABLE_CDC [
+                (String) AccessController.doPrivileged(new PrivilegedAction() {
+                        public Object run() {
+                            return
+            // #endif ]
+                System.getProperty("mmapi-inputStream.classname."+fNum);
+            // #ifdef ENABLE_CDC [
+                        }
+                    });
+            // #endif ]
+            if (classNamePref == null) {
+                break;
+            }
+            if (is.getClass().getName().startsWith(classNamePref)) {
+                try {
+                    contentLength = is.available();
+                } catch (IOException e) {
+                    contentLength = -1;
+                }
+                break;
+            }
+        }
+
     }
 
     public void connect() throws IOException {
