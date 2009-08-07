@@ -87,7 +87,7 @@ ifeq ($(USE_NATIVE_AMS_UI), true)
 JSR_LIST += NATIVE_AMS_UI
 NATIVE_AMS_UI_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
 SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS_UI=1
-FILTER_OBJECTS_NAMS_UI += main.obj lcd.obj nams.obj
+FILTER_OUT_SOURCES += main.c lcd.c nams.c
 else
 SPECIFIC_DEFINITIONS += -DENABLE_NATIVE_AMS_UI=0
 endif
@@ -156,7 +156,7 @@ SOURCE_CLEANUP_LIST += javacall/implementation/win32/midp/res/images
 endif
 
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
-#from the javacall library by setting FILTER_OBJECTS variable
+#from the javacall library by setting FILTER_OUT_SOURCES variable
 
 # Implementation of javacall events is different for cdc and cldc
 VPATH+=$(JAVACALL_DIR)/implementation/win32_x86_cldc/common
