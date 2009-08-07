@@ -1089,19 +1089,23 @@ CVMstackmapFindBasicBlocks(CVMStackmapContext* con)
 	}
 
         /* JVMPI needs this in order to support instruction tracing: */
-#if (!defined(CVM_JVMTI) && !defined(CVM_JVMPI_TRACE_INSTRUCTION))
+#if (!defined(CVM_JVMPI_TRACE_INSTRUCTION))
 	/*
 	 * We counted the potential backwards branches. Now count the
 	 * other GC points.
 	 */
 	if (CVMbcAttr(instr, GCPOINT) ||
-	    (con->doConditionalGcPoints && CVMbcAttr(instr, COND_GCPOINT)))
-#else /* JVMTI and/or CVM_JVMPI_TRACE_INSTRUCTION */
+	    (con->doConditionalGcPoints && CVMbcAttr(instr, COND_GCPOINT))
+#ifdef CVM_JVMTI
+            || CVMjvmtiIsEnabled()
+#endif
+            ) {
+#else /* CVM_JVMPI_TRACE_INSTRUCTION */
 	/* Mark all instructions as GC points because a thread can be
 	   suspended anywhere.  */
 #endif /* (!defined(CVM_JVMPI_TRACE_INSTRUCTION)) */
 	CVMstackmapMarkGCPoint(con, gcPointsBitmap, (CVMUint16)(pc - codeBegin));
-
+        }
 	/*
 	 * Also count the number of invocations in this method.
 	 */
