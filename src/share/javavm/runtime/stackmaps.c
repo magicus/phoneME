@@ -1088,24 +1088,28 @@ CVMstackmapFindBasicBlocks(CVMStackmapContext* con)
 	    }
 	}
 
-        /* JVMPI needs this in order to support instruction tracing: */
-#if (!defined(CVM_JVMPI_TRACE_INSTRUCTION))
-	/*
-	 * We counted the potential backwards branches. Now count the
-	 * other GC points.
-	 */
-	if (CVMbcAttr(instr, GCPOINT) ||
-	    (con->doConditionalGcPoints && CVMbcAttr(instr, COND_GCPOINT))
-#ifdef CVM_JVMTI
-            || CVMjvmtiIsEnabled()
+        {
+            /*
+             * We counted the potential backwards branches. Now count the
+             * other GC points.
+             */
+            CVMBool needStackMap = CVMbcAttr(instr, GCPOINT) ||
+                (con->doConditionalGcPoints && CVMbcAttr(instr, COND_GCPOINT));
+#ifdef CVM_JVMPI_TRACE_INSTRUCTION
+            /* JVMPI needs this in order to support instruction tracing: */
+            needStackMap = CVM_TRUE;
 #endif
-            ) {
-#else /* CVM_JVMPI_TRACE_INSTRUCTION */
-	/* Mark all instructions as GC points because a thread can be
-	   suspended anywhere.  */
-#endif /* (!defined(CVM_JVMPI_TRACE_INSTRUCTION)) */
-	CVMstackmapMarkGCPoint(con, gcPointsBitmap, (CVMUint16)(pc - codeBegin));
+#ifdef CVM_JVMTI
+            /* If JVMTI is enable, mark all instructions as GC points
+               because a thread can be suspended anywhere.  */
+            needStackMap |= CVMjvmtiIsEnabled();
+#endif
+            if (needStackMap) {
+                CVMstackmapMarkGCPoint(con, gcPointsBitmap,
+                                       (CVMUint16)(pc - codeBegin));
+            }
         }
+
 	/*
 	 * Also count the number of invocations in this method.
 	 */
