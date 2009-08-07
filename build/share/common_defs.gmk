@@ -92,6 +92,10 @@ $(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/cbs/Protocol.java: \
 	$(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/Protocol.jpp
 	@$(call runjpp,$^,$@)
 
+$(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/ProtocolBase.java: \
+	$(JSR_120_DIR)/src/share/protocol/share/com/sun/midp/io/j2me/ProtocolBase.jpp
+	@$(call runjpp,$^,$@)
+
 # Java files for the ( jsr_120 ) module
 #
 MODULE_JSR_120_COMMON_JAVA_FILES += \
@@ -114,7 +118,7 @@ endif
 
 
 MODULE_JSR_120_SMS_JAVA_FILES = \
-    $(JSR_120_DIR)/src/share/protocol/share/com/sun/midp/io/j2me/ProtocolBase.java \
+    $(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/ProtocolBase.java \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/BinaryObject.java \
     $(JSR_120_GENERATED_DIR)/classes/com/sun/midp/io/j2me/sms/Protocol.java \
     $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/MessageObject.java \
