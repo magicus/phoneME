@@ -52,6 +52,9 @@ MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
 endif
 
+MODULE_JSR_120_COMMON_JAVA_FILES += \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/WmaLifeCycleListener.java 
+
 JPP_DEFS             += -DENABLE_CDC
 
 include $(JSR_120_DIR)/build/share/common_defs.gmk

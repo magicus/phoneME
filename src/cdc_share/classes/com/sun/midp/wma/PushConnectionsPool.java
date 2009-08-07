@@ -28,6 +28,8 @@ package com.sun.midp.wma;
 
 import com.sun.midp.push.reservation.*;
 
+import java.security.*;
+
 
 public class PushConnectionsPool implements Runnable {
 
@@ -37,12 +39,17 @@ public class PushConnectionsPool implements Runnable {
     static Thread listenerThread = null;
 
     static void startListenerThreadIfNeed() {
-	synchronized(This) {
-	    if (listenerThread == null) {
-		listenerThread = new Thread(This);
-		listenerThread.start();
-	    }
-	}
+        synchronized(This) {
+            if (listenerThread == null) {
+                AccessController.doPrivileged(new PrivilegedAction() {
+                    public Object run() {
+                        listenerThread = new Thread(This);
+                        listenerThread.start(); 
+                        return null;
+                    }
+                });
+            }
+        }
     }
 
     public static void addReservation(ConnectionReservationImpl reservation) 
