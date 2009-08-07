@@ -325,17 +325,15 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
 #if ENABLE_REENTRY
             } else { /* Reinvocation after unblocking the thread. */
 
-				/* waiting for mms_send_completed event */
-                if (info->pResult == NULL||info->status == WMA_ERR) {
+                if (info->status == WMA_ERR) {
                     KNI_ThrowNew(midpInterruptedIOException, "Sending SMS");
-                    break;
-                } 				
-                messageStateData = info->pResult;
-                pMessageBuffer = messageStateData->pMessageBuffer;
-                pAddress = messageStateData->pAddress;
-                pdContext = messageStateData->pdContext;
-
-                trySend = KNI_TRUE;
+                } else if (info->pResult != NULL) { //if previous call returned WOULDBLOCK
+                    messageStateData = info->pResult;
+                    pMessageBuffer = messageStateData->pMessageBuffer;
+                    pAddress = messageStateData->pAddress;
+                    pdContext = messageStateData->pdContext;
+                    trySend = KNI_TRUE;
+                } 
             }
 #endif
 
