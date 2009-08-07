@@ -449,7 +449,7 @@ commonRef_idToRef(JNIEnv *env, jlong id)
                 jobject lref;
                 
                 lref = JNI_FUNC_PTR(env,NewLocalRef)(env, node->ref);
-                if ( lref == NULL ) {
+                if ( lref == NULL || JNI_FUNC_PTR(env,IsSameObject)(env, lref, NULL)) {
                     /* Object was GC'd shortly after we found the node */
                     deleteNodeByID(env, node->seqNum, ALL_REFS);
                 } else {
