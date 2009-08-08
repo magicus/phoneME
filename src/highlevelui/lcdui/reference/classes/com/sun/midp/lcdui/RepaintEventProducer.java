@@ -187,27 +187,31 @@ public class RepaintEventProducer implements EventListener {
             eventInProcess = event;
         }
 
-        /*
-         * Target DisplayEventConsumer is obtained directly from event field.
-         * Assumed that target consumer is not null.
-         */
-        event.display.handleRepaintEvent(
+        try {
+            /*
+             * Target DisplayEventConsumer is obtained directly from event
+             * field. Assumed that target consumer is not null.
+             */
+            event.display.handleRepaintEvent(
                 event.paintX1, event.paintY1, 
                 event.paintX2, event.paintY2, 
                 event.paintTarget);
+        } finally {
+            /*
+             * Clear the event object, to avoid memory leak when
+             * returning the processed event to the pool.
+             */
+            event.setRepaintFields(null, 0, 0, 0, 0, null);
 
-        // Clear the event object, to avoid memory leak when
-        // returning the processed event to the pool.
-        event.setRepaintFields(null, 0, 0, 0, 0, null);
-
-        synchronized (this) {
-            /* Change the ID here to signal waitForRepaint. */
-            eventInProcess.perUseID++;
+            synchronized (this) {
+                /* Change the ID here to signal waitForRepaint. */
+                eventInProcess.perUseID++;
             
-            eventInProcess = null;
+                eventInProcess = null;
 
-            // ServiceRepaints may be blocking.
-            notifyAll();
+                // ServiceRepaints may be blocking.
+                notifyAll();
+            }
         }
     }
 
