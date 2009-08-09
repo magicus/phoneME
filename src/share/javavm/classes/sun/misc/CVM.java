@@ -1000,15 +1000,20 @@ public final class CVM {
 
         ClassLoader cl = app.getClass().getClassLoader();
         if (cl != null) {
-            deadLoaders.addElement(cl);
+            deadLoaders.addElement(new java.lang.ref.WeakReference(cl));
         }
     }
 
     public static void nullifyRefsToDeadApp() {
         if (!deadLoaders.isEmpty()) {
             System.out.println("************** nullify refs to app ************");
-            ClassLoader cl = (ClassLoader)deadLoaders.remove(0);
-            nullifyRefsToDeadApp0(cl);
+	    java.lang.ref.Reference clRef = (java.lang.ref.Reference) deadLoaders.remove(0);
+	    if (clRef != null) {
+		ClassLoader cl = (ClassLoader) clRef.get();
+		if (cl != null) {
+		    nullifyRefsToDeadApp0(cl);
+		}
+	    }
         }
     }
 
