@@ -163,10 +163,10 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // -----------------------------
 
     // Get video width
-    protected native int nGetWidth(int handle);
+    native int nGetWidth(int handle);
 
     // Get video height
-    protected native int nGetHeight(int handle);
+    native int nGetHeight(int handle);
 
     // Set display location of video
     protected native boolean nSetLocation(int handle, int x, int y, int w, int h);

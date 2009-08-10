@@ -203,6 +203,15 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         started = false;
     }
     
+    void notifySizeChanged() {
+        if (source instanceof DirectPlayer) {
+            DirectPlayer p = (DirectPlayer) source;
+            int hNative = p.getOwner().getNativeHandle();
+            sw = p.nGetWidth(hNative);
+            sh = p.nGetHeight(hNative);
+        }
+    }
+    
     /**
      * Init display mode
      */
@@ -352,14 +361,22 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * return source video width
      */
     public int getSourceWidth() {
-        return sw;
+        if (sw > 0) {
+            return sw;
+        } else {
+            return DEFAULT_WIDTH;
+        }
     }
     
     /**
      * return source video height
      */
     public int getSourceHeight() {
-        return sh;
+        if (sh > 0) {
+            return sh;
+        } else {
+            return DEFAULT_HEIGHT;
+        }
     }
 
     /**
