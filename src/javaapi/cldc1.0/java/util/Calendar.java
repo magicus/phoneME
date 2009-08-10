@@ -351,8 +351,6 @@ public abstract class Calendar {
    */
   private static final int gregorianCutoverYear = 1582;
 
-  private Date date = null;
-
   /** if both of these are set, the set() method will recalculate
    * the HOUR_OF_DAY using 12hr time.
    */
@@ -395,14 +393,7 @@ public abstract class Calendar {
    * @see #setTime
    */
   public final Date getTime() {
-    if (date == null)
-      return date = new Date( getTimeInMillis() );
-    else {
-      synchronized (date) {
-        date.setTime( getTimeInMillis() );
-        return date;
-      }
-    }
+      return new Date( getTimeInMillis() );
   }
 
   /**

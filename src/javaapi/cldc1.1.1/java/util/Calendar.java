@@ -324,8 +324,6 @@ public abstract class Calendar {
      */
     private TimeZone zone;
 
-    private Date dateObj = null;
-
     /**
      * Constructs a Calendar with the default time zone.
      *
@@ -354,14 +352,7 @@ public abstract class Calendar {
      * @see #setTime
      */
     public final Date getTime() {
-        if (dateObj == null) {
-            return dateObj = new Date( getTimeInMillis() );
-        } else {
-            synchronized (dateObj) {
-                dateObj.setTime( getTimeInMillis() );
-                return dateObj;
-            }
-        }
+        return new Date( getTimeInMillis() );
     }
 
     /**
