@@ -110,7 +110,11 @@ extern gxj_screen_buffer gxj_system_screen_buffer;
                                    (((x) & 0x07E0) << 5) | (((x) & 0x0600) >> 1) | \
                                    (((x) & 0xF800) << 8) | (((x) & 0xE000) << 3) | 0xFF000000)
 
-#define GXJ_PIXELTOMIDP_16(x, a) ( GXJ_PIXELTOOPAQUEMIDP_16(x) | ((((int)(a)) << 24) & 0xFF000000) )
+#define GXJ_PIXELTOMIDP_16(x, a) ( (((x) & 0x001F) << 3) | (((x) & 0x001C) >> 2) | \
+                                   (((x) & 0x07E0) << 5) | (((x) & 0x0600) >> 1) | \
+                                   (((x) & 0xF800) << 8) | (((x) & 0xE000) << 3) | \
+                                   ((((int)(a)) << 24) & 0xFF000000) )
+
 #define GXJ_MIDPTOPIXEL_16(x) GXJ_MIDPTOOPAQUEPIXEL_16(x) 
 
 #elif ENABLE_RGBA8888_PIXEL_FORMAT
@@ -155,7 +159,11 @@ extern gxj_screen_buffer gxj_system_screen_buffer;
                                    (((x) & 0x07E0) << 5) | (((x) & 0x0600) >> 1) | \
                                    (((x) & 0xF800) << 8) | (((x) & 0xE000) << 3) | 0xFF000000)
 
-#define GXJ_PIXELTOMIDP(x, a) ( GXJ_PIXELTOOPAQUEMIDP(x) | ((((int)(a)) << 24) & 0xFF000000) )
+#define GXJ_PIXELTOMIDP(x, a) ( (((x) & 0x001F) << 3) | (((x) & 0x001C) >> 2) | \
+                                   (((x) & 0x07E0) << 5) | (((x) & 0x0600) >> 1) | \
+                                   (((x) & 0xF800) << 8) | (((x) & 0xE000) << 3) |
+                                   ((((int)(a)) << 24) & 0xFF000000) )
+
 #define GXJ_MIDPTOPIXEL(x) GXJ_MIDPTOOPAQUEPIXEL(x) 
 
 #endif
