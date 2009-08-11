@@ -1,6 +1,5 @@
 #
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -105,7 +104,7 @@ PCSL_LIB=$(WIN_DRIVE)$(PCSL_LIB_DIR)/libpcsl_file.lib \
          $(WIN_DRIVE)$(PCSL_LIB_DIR)/libpcsl_string.lib \
          $(WIN_DRIVE)$(PCSL_LIB_DIR)/libpcsl_escfilenames.lib
 
-JAVACALL_LIB=$(WIN_DRIVE)$(JAVACALL_OUTPUT_DIR)/lib/javacall_nams_ui$(DEBUG_SUFFIX).lib
+JAVACALL_LIB=$(WIN_DRIVE)$(JAVACALL_OUTPUT_DIR)/lib/javacall$(DEBUG_SUFFIX).lib
 
 MIDP_OBJ_DIR=$(MIDP_OUTPUT_DIR)/obj$(DEBUG_SUFFIX)/i386
 MIDP_EXE_DIR=$(MIDP_OUTPUT_DIR)/bin/i386
