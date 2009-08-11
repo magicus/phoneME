@@ -1749,12 +1749,6 @@ iterateHeapCallBack(CVMObject* obj, CVMClassBlock* cb,
     return CVM_TRUE;
 }
 
-static CVMBool iterateHeapAction(CVMExecEnv *ee, void *data)
-{
-    CVMgcimplIterateHeap(ee, iterateHeapCallBack, data);
-    return CVM_TRUE;
-}
-
 extern void
 CVMgcScanStatics(CVMExecEnv *ee, CVMGCOptions* gcOpts,
                  CVMRefCallbackFunc callback, void* data);
@@ -1789,6 +1783,39 @@ scanClassCallBack(CVMExecEnv* ee, CVMClassBlock* cb, void* data)
 
 int nullifyRefs = 0;
 
+static CVMBool scanRefAction(CVMExecEnv *ee, void *data)
+{
+    CVMgcClearClassMarks(ee, NULL);
+
+    /* scan preloader statics */
+    /* Nullifying static references to application objects, is
+     * a guard aginst system bugs. Use this for testing to reduce the likelihood
+     * of such bugs remaining in the shipping product. Consider turning it off
+     * in final product, since the risk of causing NPE in the system may outweigh
+     * the potential benefit.
+     */
+    /* CVMconsolePrintf("===nullify preloader statics\n"); */
+    {
+        CVMAddr  numRefStatics = CVMpreloaderNumberOfRefStatics();
+        CVMAddr* refStatics    = CVMpreloaderGetRefStatics();
+        CVMwalkContiguousRefs(refStatics, numRefStatics,
+                              nullifyRefCallBack,
+                              data);
+    }
+
+    /* scan dynamic loaded class statics */
+    /* CVMconsolePrintf("===nullify dynamic classes statics\n"); */
+    /*CVMsetDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
+    CVMclassIterateAllClasses(ee, scanClassCallBack, data);
+    /*CVMclearDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
+
+    /* iterate the heap objects */
+    /* CVMconsolePrintf("===nullify heap references\n"); */
+    CVMgcimplIterateHeap(ee, iterateHeapCallBack, data);
+
+    return CVM_TRUE;
+}
+
 CNIEXPORT CNIResultCode
 CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
                                 CVMStackVal32 *arguments,
@@ -1807,34 +1834,8 @@ CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
         CVMD_gcSafeExec(ee, {
             CVMsysMutexLock(ee, &CVMglobals.heapLock);
 
-            CVMgcClearClassMarks(ee, NULL);
-
-            /* scan preloader statics */
-            /* Nullifying static references to application objects, is
-             * a guard aginst system bugs. Use this for testing to reduce the likelihood
-             * of such bugs remaining in the shipping product. Consider turning it off
-             * in final product, since the risk of causing NPE in the system may outweigh
-             * the potential benefit.
-             */
-            /* CVMconsolePrintf("===nullify preloader statics\n"); */
-            {
-                CVMAddr  numRefStatics = CVMpreloaderNumberOfRefStatics();
-                CVMAddr* refStatics    = CVMpreloaderGetRefStatics();
-                CVMwalkContiguousRefs(refStatics, numRefStatics,
-                                      nullifyRefCallBack,
-                                      deadLoader);
-            }
-
-            /* scan dynamic loaded class statics */
-            /* CVMconsolePrintf("===nullify dynamic classes statics\n"); */
-            /*CVMsetDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
-            CVMclassIterateAllClasses(ee, scanClassCallBack, deadLoader);
-            /*CVMclearDebugFlags(CVM_DEBUGFLAG(TRACE_GCSCAN));*/
-
-            /* iterate the heap objects */
-            /* CVMconsolePrintf("===nullify heap references\n"); */
             CVMgcStopTheWorldAndDoAction(ee, deadLoader, NULL,
-                iterateHeapAction, NULL, NULL, NULL);
+                scanRefAction, NULL, NULL, NULL);
 
             CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
         });
@@ -1846,5 +1847,4 @@ CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
 
     return CNI_VOID;
 }
-
 
