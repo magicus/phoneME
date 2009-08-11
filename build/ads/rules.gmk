@@ -49,15 +49,10 @@ endif # ifneq ($(FILTER_OBJECTS)x,x)
 
 NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
 
-ifneq ($(UTILITIES)x, x)
-UTILITY_OBJECTS=$(addsuffix .obj,$(UTILITIES))
-endif
-
 ifneq ($(NOTIFIER_OBJECTS)x,x)
 NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
 EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
 endif
-PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
 local_ads: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
     $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj
@@ -97,8 +92,6 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PROPERTY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	$(AT)$(AR) $(ARFLAGS) `$(call fixcygpath, $@)` `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
