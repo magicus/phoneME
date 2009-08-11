@@ -30,7 +30,7 @@ VPATH+=$(LIME_DIR)/client/src/native
 ifneq ($(SHARED_LIB_SUFFIX),.dll)
 
 #compile and link lime statically
-PORTING_OBJECTS +=$(patsubst %.c,%.obj,$(notdir $(wildcard $(LIME_DIR)/client/src/native/*.c)))
+PORTING_SOURCE += $(notdir $(wildcard $(LIME_DIR)/client/src/native/*.c))
 
 else
 
