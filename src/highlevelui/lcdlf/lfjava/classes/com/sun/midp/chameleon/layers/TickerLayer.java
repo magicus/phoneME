@@ -108,6 +108,8 @@ public class TickerLayer extends CLayer {
                 // separators. We will use a single white space as the
                 // separator.
                 text = newText.trim().replace('\n', ' ');
+            } else {
+                text = null;
             }
             super.visible = (text != null && text.length() > 0);
             textLen = (text == null) ? 0 : TickerSkin.FONT.stringWidth(text);
