@@ -929,6 +929,10 @@ public class Display {
         current = initialDisplayable;
         current.lSetDisplay(Display.this);
         pendingCurrent = initialDisplayable;
+                
+        // #ifdef ENABLE_CHAMELEON
+        lSetMode(MIDPWindow.NO_SOFT_BUTTON_MODE);
+        // #endif ENABLE_CHAMELEON
     }
 
     /**
