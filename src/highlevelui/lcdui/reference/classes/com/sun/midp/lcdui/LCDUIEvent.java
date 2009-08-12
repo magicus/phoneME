@@ -129,6 +129,24 @@ class LCDUIEvent extends Event {
     }
 
     /**
+     * Create a screen rotation event.
+     *
+     * @param display parent Display of the Displayable
+     * @param landscape new Display orientation value
+     * @return initialized event
+     */
+    static LCDUIEvent createScreenRotationEvent(
+        DisplayEventConsumer display, boolean landscape) {
+        LCDUIEvent e = new LCDUIEvent(EventTypes.ROTATION_EVENT);
+        e.display = display;
+        e.minorCode = 0;
+        if (landscape) {
+            e.minorCode = 1;
+        }
+        return e;
+    }
+
+    /**
      * Create a screen change event.
      *
      * @param parent parent Display of the Displayable
