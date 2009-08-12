@@ -28,6 +28,7 @@ package com.sun.mmedia;
 import java.io.IOException;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
+import java.lang.ref.WeakReference;
 
 class DirectInputThread extends Thread {
 
@@ -43,7 +44,8 @@ class DirectInputThread extends Thread {
     private int     reqLen = 0;
     private int     reqBufPtr = 0;
 
-    final private HighLevelPlayer owner;
+    private WeakReference wrPlayer;
+
     private byte[] tmpBuf = new byte [ 0x1000 ];  // 4 Kbytes
     private volatile boolean isDismissed = false;
     private boolean isFrozen = false;
@@ -60,7 +62,7 @@ class DirectInputThread extends Thread {
             throw new MediaException(
                     "Cannot playback stream with unknown length" );
         }
-        this.owner = p;
+        wrPlayer = new WeakReference( p );
     }
     
 
@@ -73,7 +75,8 @@ class DirectInputThread extends Thread {
 
 mainloop:
         for(;;) {
-            if( isDismissed ) {
+            HighLevelPlayer owner = (HighLevelPlayer) wrPlayer.get();
+            if ( null == owner || isDismissed ) {
                 return;
             }
 
@@ -83,7 +86,7 @@ mainloop:
                 }
                 else {
                     try {
-                        requestLock.wait();
+                        requestLock.wait( 1000 );
                     } catch (InterruptedException ex) {
                         //owner.abort("Stream reading thread was interrupted");
                         return;
@@ -102,7 +105,7 @@ mainloop:
                 }
 
                 try {
-                    seek();
+                    seek( owner.stream );
 
                     if( isDismissed ) {
                         return;
@@ -126,9 +129,15 @@ mainloop:
                     }
 
                     if( isFrozen ) {
-                        try {
-                            dataWriteLock.wait();
-                        } catch (InterruptedException ex) {}
+                        do {
+                            try {
+                                dataWriteLock.wait( 1000 );
+                            } catch (InterruptedException ex) {}
+                            owner = (HighLevelPlayer) wrPlayer.get();
+                            if ( null == owner || isDismissed ) {
+                                return;
+                            }
+                        } while( isFrozen );
                         continue mainloop;
                     }
                     else {
@@ -144,19 +153,19 @@ mainloop:
         }
     }
 
-    private void seek() throws IOException, MediaException {
-        if( owner.stream.tell() == posToRead ) {
+    private void seek( SourceStream stream ) throws IOException, MediaException {
+        if( stream.tell() == posToRead ) {
             return;
         }
-        if( owner.stream.getSeekType() ==
+        if( stream.getSeekType() ==
                 SourceStream.NOT_SEEKABLE ||
             ( posToRead != 0 &&
-              owner.stream.getSeekType() !=
+              stream.getSeekType() !=
                 SourceStream.RANDOM_ACCESSIBLE ) ) {
             throw new MediaException("The stream is not seekable");
         }
 
-        owner.stream.seek(posToRead);
+        stream.seek(posToRead);
     }
 
     public void requestData() {
