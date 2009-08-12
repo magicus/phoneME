@@ -41,6 +41,7 @@ import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.content.CHManager;
 
 import com.sun.midp.events.*;
 
@@ -53,7 +54,7 @@ import com.sun.midp.events.*;
 abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase 
     implements EventListener {
 
-    /** ID of the test suite being run */
+	/** ID of the test suite being run */
     protected int suiteId = MIDletSuite.UNUSED_SUITE_ID;
 
     /** Our event queue. */
@@ -61,6 +62,8 @@ abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase
     
     /** True if all events in our queue were processed. */
     private boolean eventsInQueueProcessed;
+
+    private final CHManager chmanager;
 
     /**
      * Constructor.
@@ -76,6 +79,8 @@ abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase
 
         eventQueue = EventQueue.getEventQueue();
         eventQueue.registerEventListener(EventTypes.AUTOTESTER_EVENT, this);
+        
+        chmanager = CHManager.getManager(null);
     }
 
     /**
@@ -114,6 +119,58 @@ abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase
         }
     }    
 
+	/**
+	 * Send an event to ourselves.
+	 * Main idea of it is to process all events that are in the
+	 * queue at the moment when the test isolate has exited
+	 * (because when testing CHAPI there may be requests to
+	 * start new isolates). When this event arrives, all events
+	 * that were placed in the queue before it are guaranteed
+	 * to be processed.
+	 */
+	private void waitForOwnEvent() {
+		synchronized (this) {
+		    eventsInQueueProcessed = false;
+
+		    NativeEvent event = new NativeEvent(
+		            EventTypes.AUTOTESTER_EVENT);
+		    eventQueue.sendNativeEventToIsolate(event,
+		            MIDletSuiteUtils.getIsolateId());
+		
+		    // and wait until it arrives
+		    do {
+		        try {
+		            wait();
+		        } catch(InterruptedException ie) {
+		            // ignore
+		        }
+		    } while (!eventsInQueueProcessed);
+		}
+	}
+
+	private Isolate getIsolateToWaitFor(Isolate[] isolatesBefore) {
+		Isolate[] isolatesAfter = Isolate.getIsolates();
+
+		for (int i = 0; i < isolatesAfter.length; i++) {
+		    int j;
+		    for (j = 0; j < isolatesBefore.length; j++) {
+		        try {
+		            if (isolatesBefore[j].equals(isolatesAfter[i])) {
+		                break;
+		            }
+		        } catch (Exception e) {
+		            // isolatesAfter[i] might already exit,
+		            // no need to wait for it
+		            break;
+		        }
+		    }
+
+		    if (j == isolatesBefore.length)
+		        return isolatesAfter[i];
+		}
+		return null;
+	}
+
     /**
      * Installs and performs the tests.
      */
@@ -133,71 +190,27 @@ abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase
                 Isolate testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
                     midletInfo.classname, midletInfo.name, null, null, null);
 
-                testIsolate.waitForExit();
-
-                boolean newIsolatesFound;
-                do {
-                    newIsolatesFound = false;
-
-                    /*
-                     * Send an event to ourselves.
-                     * Main idea of it is to process all events that are in the
-                     * queue at the moment when the test isolate has exited
-                     * (because when testing CHAPI there may be requests to
-                     * start new isolates). When this event arrives, all events
-                     * that were placed in the queue before it are guaranteed
-                     * to be processed.
-                     */
-                    synchronized (this) {
-                        eventsInQueueProcessed = false;
-
-                        NativeEvent event = new NativeEvent(
-                                EventTypes.AUTOTESTER_EVENT);
-                        eventQueue.sendNativeEventToIsolate(event,
-                                MIDletSuiteUtils.getIsolateId());
-                    
-                        // and wait until it arrives
-                        do {
-                            try {
-                                wait();
-                            } catch(InterruptedException ie) {
-                                // ignore
-                            }
-                        } while (!eventsInQueueProcessed);
-                    }
-
-                    Isolate[] isolatesAfter = Isolate.getIsolates();
-
-                    /*
-                     * Wait for termination of all isolates contained in
-                     * isolatesAfter[], but not in isolatesBefore[].
-                     * This is needed to pass some tests (for example, CHAPI)
-                     * that starting several isolates.
-                     */
-                    int i, j;
-                    for (i = 0; i < isolatesAfter.length; i++) {
-                        for (j = 0; j < isolatesBefore.length; j++) {
-                            try {
-                                if (isolatesBefore[j].equals(isolatesAfter[i])) {
-                                    break;
-                                }
-                            } catch (Exception e) {
-                                // isolatesAfter[i] might already exit,
-                                // no need to wait for it
-                                break;
-                            }
-                        }
-
-                        if (j == isolatesBefore.length) {
-                            try {
-                                newIsolatesFound = true;
-                                isolatesAfter[i].waitForExit();
-                            } catch (Exception e) {
-                                // ignore: the isolate might already exit
-                            }
-                        }
-                    }
-                } while (newIsolatesFound);
+        		/*
+        		 * Wait for termination of all isolates contained in
+        		 * isolatesAfter[], but not in isolatesBefore[].
+        		 * This is needed to pass some tests (for example, CHAPI)
+        		 * that starting several isolates.
+        		 */
+                while( testIsolate != null ){
+                	try {
+                		testIsolate.waitForExit();
+                	} catch( Exception x ){}
+                	testIsolate = null;
+                	
+                	for(;;){
+                        testIsolate = getIsolateToWaitFor(isolatesBefore);
+                        if( testIsolate == null &&
+                        		chmanager.getPendingRequestsCount() == 0 )
+                        	break;
+                        // let the CHAPI to start a midlet
+                        waitForOwnEvent();
+                	}
+                }
 
                 if (loopCount > 0) {
                     loopCount -= 1;

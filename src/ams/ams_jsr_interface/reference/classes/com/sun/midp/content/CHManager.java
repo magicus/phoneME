@@ -187,6 +187,13 @@ public class CHManager {
     }
 
     /**
+     * returns the number of invocations in the invocation store
+     */
+	public int getPendingRequestsCount() {
+		return 0;
+	}
+	
+    /**
      * Notification that a MIDlet is about to be created.
      * Stub implementation used when CHAPI is not present.
      *
