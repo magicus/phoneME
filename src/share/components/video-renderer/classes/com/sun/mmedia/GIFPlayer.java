@@ -42,9 +42,10 @@ import javax.microedition.media.protocol.SourceStream;
  * A player for the GIF89a.
  */
 final class GIFPlayer extends LowLevelPlayer implements Runnable {
-    /* Single image decoder */
-    private GIFImageDecoder imageDecoder;
-    
+
+
+    private GIFDecoder gifDecoder = null;
+
     /* the width of a video frame */
     private int videoWidth;
 
@@ -82,15 +83,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
     /* For zero duration GIFs (e.g. non-animated) wait time between STARTED and END_OF_MEDIA */
     private static final long ZERO_DURATION_WAIT = 50;
 
-    /* a table of frame durations (default rate) */    
-    private Vector frameTimes;
-
-    /* the frame count, shows number of rendered frames, and index of next frame to render  */
-    private int frameCount;
-
-    /* Last frame duration while scanning frames */
-    private int scanFrameTime;
-
     /* elapsed media time since start of stream (default rate) */
     private long mediaTimeOffset;
 
@@ -109,10 +101,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
     /* the rate control object for the GIF Player */
     private RateCtrl rateControl;
     
-    /* the duration of the movie in microseconds (default rate) */
-    private long duration;
-
-    /* the seek type of the stream: either <code>NOT_SEEKABLE</code>, 
+    /* the seek type of the stream: either <code>NOT_SEEKABLE</code>,
      * <code>SEEKABLE_TO_START</code> or <code>RANDOM_ACCESSIBLE</code>
      */
     private int seekType;
@@ -125,11 +114,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
     /* The lock object of play thread */
     private Object playLock = new Object();
-
-    /* image data */
-    private byte[] imageData;
-    private int imageDataLength;
-    private int lzwCodeSize;
 
     GIFPlayer( HighLevelPlayer owner ) {
         super( owner );
@@ -180,7 +164,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * @return    the duration in microseconds.
      */
     protected long doGetDuration() {
-        return duration;
+        return gifDecoder.getDuration();
     }
 
     /**
@@ -213,6 +197,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         if (getOwner().getState() == Player.STARTED)
             doStop();
 
+        long duration = gifDecoder.getDuration();
         if (now > duration)
             now = duration;
 
@@ -227,14 +212,14 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             if (count + 1 < frameCount) {
                 // rewind to beginning
                 frameCount = 0;
-                seekFirstFrame();         
+                gifDecoder.seekFirstFrame();
             }
 
             // skip frames
             while (frameCount <= count && getFrame())
                 // We need to decode all frames to have the correct pixels
                 // for frames with transparent color
-                decodeFrame();
+                gifDecoder.decodeFrame( referenceFrame );
 
             displayTime = getDuration(frameCount) / 1000;
             //System.out.println("SetMediaTime: displayTime = " + displayTime + "; frameCount=" + frameCount);
@@ -259,14 +244,13 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      *                           be realized.
      */
     protected void doRealize() throws MediaException {          
-        duration = Player.TIME_UNKNOWN;
-        frameCount = 0;
         mediaTimeOffset = 0;
 
         seekType = getOwner().stream.getSeekType();
+        gifDecoder = new GIFDecoder( getOwner().stream );
 
         // parse GIF header
-        if (parseHeader()) {
+        if ( gifDecoder.parseHeader()) {
             scanFrames();
 
             // initialize video control
@@ -303,18 +287,18 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
         try { 
             frameCount = 0;
-            seekFirstFrame();         
+            gifDecoder.seekFirstFrame();
 
             // get first frame
             if (!getFrame())
                 throw new MediaException("can't get first frame");
 
-            decodeFrame();
+            gifDecoder.decodeFrame( referenceFrame );
 
             // If duration is 0 prepare the last frame once.
-            if (duration == 0) {
+            if ( gifDecoder.getDuration() == 0) {
                 while (getFrame())
-                    decodeFrame();
+                    gifDecoder.decodeFrame( referenceFrame );
             }
             renderFrame();
 
@@ -430,8 +414,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         }
 
         frameTimes = null;
-        imageDecoder = null;
-        imageData = null;
+        gifDecoder = null;
     }
     
     /* This means that 'Record Size Limit (reached)' event received */
@@ -629,7 +612,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                 done = true;
                 return;
             }
-            decodeFrame();
+            gifDecoder.decodeFrame( referenceFrame );
 
             // frame interval in milliseconds
             frameInterval = getFrameInterval(frameCount) / 1000;
@@ -692,27 +675,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         }
     }
     
-    /*
-     * Rewinds the stream to the position of the first frame
-     * to be able to read it again
-     */
-    private void seekFirstFrame() throws IOException {
-        if (seekType == SourceStream.RANDOM_ACCESSIBLE) {
-            // seek to the beginning of the first frame
-            getOwner().stream.seek(firstFramePos);
-        } else { // SEEKABLE_TO_START           
-            // seek to the start of stream and parse the header
-            getOwner().stream.seek(0);
-            parseHeader();
-        }
-        imageDecoder.clearImage();
-    }
-    
-    private void decodeFrame() {
-        if (imageData != null && imageDecoder != null && referenceFrame != null)
-            imageDecoder.decodeImage(lzwCodeSize, imageDataLength, imageData, referenceFrame);
-    }
-
     /**
      * Renders a frame.
      */
@@ -721,538 +683,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             videoRenderer.render(referenceFrame);
     }
     
-    /**
-     * Scans the input stream for GIF frames and builds a table
-     * of frame durations.
-     */
-    private void scanFrames() throws MediaException {       
-        //System.out.println("scanFrames at pos " + stream.tell());
-        frameCount = 0;
-        scanFrameTime = 0;
-        duration = 0;
-
-        frameTimes = new Vector();
-
-        boolean eos = false;
-        
-        do {
-            int id;
-
-            try {
-                id = readUnsignedByte();
-                //System.out.println("scanFrames: id=" + id);
-            } catch (IOException e) {
-                id = 0x3b;
-            }
-
-            if (id == 0x21) {
-                parseControlExtension(true);
-            } else if (id == 0x2c) {
-                parseImageDescriptor(true);
-                frameCount++;
-                frameTimes.addElement(new Long(scanFrameTime));
-                duration += scanFrameTime;
-                scanFrameTime = 0; // ?? reset to zero
-            } else if (id == 0x3b) {
-                eos = true;
-            } else {
-                eos = true;
-            }
-        } while (!eos); 
-
-        // reset the frame counter
-        frameCount = 0;
-
-        try {
-            seekFirstFrame();
-        } catch (IOException e) {
-            throw new MediaException(e.getMessage());
-        }
-    }
-
-    /**
-     * Reads data from the stream object and constructs a GIF frame.
-     *
-     * @return  true if the frame was read successfully, 
-     *          otherwise false.
-     */    
-    private boolean getFrame() {            
-        //System.out.println("getFrame at pos " + stream.tell());
-
-        if (getOwner().stream.tell() == 0)
-            parseHeader();
-
-        boolean eos = false;
-        
-        imageData = null;
-        
-        do {
-            int id;
-
-            try {
-                id = readUnsignedByte();
-                //System.out.println("getFrame: id=" + id);
-            } catch (IOException e) {
-                id = 0x3b;
-            }
-            
-            if (id == 0x21) {
-                parseControlExtension(false);
-            } else if (id == 0x2c) {
-                parseImageDescriptor(false);
-            } else if (id == 0x3b) {
-                eos = true;
-            } else {
-                eos = true;
-            }
-        } while (!eos && imageData == null);    
-
-        if (imageData != null) {
-            frameCount++;
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Parses the GIF header.
-     *
-     * @return    true, if the header was parsed successfully
-     *            and the the GIF signature and version are
-     *            correct,
-     *            otherwise false.
-     */
-    private boolean parseHeader() {
-        //System.out.println("parseHeader at pos " + stream.tell());
-
-        byte [] header = new byte[6];            
-
-        try {
-            getOwner().stream.read(header, 0, 6);
-        } catch (IOException e) {
-            return false;
-        }
-
-        // check that signature spells GIF
-        if (header[0] != 'G' || header[1] != 'I' || header[2] != 'F')
-            return false;
-
-        // check that version spells either 87a or 89a
-        if (header[3] != '8' || header[4] != '7' && header[4] != '9' || 
-            header[5] != 'a')
-            return false;
-
-        return parseLogicalScreenDescriptor();
-    }
-
-    /**
-     *  Description of the Method
-     *
-     * @param  bin  Description of the Parameter
-     */
-    private boolean parseLogicalScreenDescriptor() {
-        //System.out.println("parseLogicalScreenDescriptor at pos " + stream.tell());
-
-        byte [] logicalScreenDescriptor = new byte[7];
-        byte [] globalColorTable = null;
-
-        try {
-            getOwner().stream.read(logicalScreenDescriptor, 0, 7);
-        } catch (IOException e) {
-            return false;
-        }
-            
-        // logical screen width
-        videoWidth = readShort(logicalScreenDescriptor, 0);
-
-        // logical screen height
-        videoHeight = readShort(logicalScreenDescriptor, 2);
-
-        // flags
-        int flags = logicalScreenDescriptor[4];
-
-        // global color table flag
-        boolean globalTable = ((flags >> 7) & 0x01) == 1;
-
-        // color resolution
-        int resolution = ((flags >> 4) & 0x07) + 1;
-
-        // sort flag: not used in player
-        //int sortFlag = (flags >> 3) & 0x01;
-
-        // global color table depth
-        int tableDepth = (flags & 0x07) + 1;
-
-        // background color index
-        int index = logicalScreenDescriptor[5] & 0xff;
-
-        // pixel aspect ratio: not used inplayer
-        //int pixelAspectRatio = logicalScreenDescriptor[6];
-
-        imageDecoder = new GIFImageDecoder(videoWidth, videoHeight, resolution);
-
-        if (globalTable) {
-            int size = 3 * (1 << tableDepth);
-            globalColorTable = new byte[size];
-
-            try {
-                getOwner().stream.read(globalColorTable, 0, size);
-            } catch (IOException e) {
-            }
-
-            imageDecoder.setGlobalPalette(tableDepth, globalColorTable, index);
-        }
-    
-        firstFramePos = getOwner().stream.tell();
-
-        return true;
-    }
-
-    /**
-     * Reads a 16-bit unsigned short value from data starting
-     * at the specified offset.
-     *
-     * @param data   the byte array
-     * @param offset offset into the byte array
-     * @return       the short value
-     */
-    private int readShort(byte data[], int offset) {
-        int lo = data[offset] & 0xff;
-        int hi = data[offset + 1] & 0xff;
-        
-        return lo + (hi << 8);
-    }
-
-    /**
-     * Reads a 16-bit unsigned short value from the source stream.
-     *
-     * @return       the short value
-     */
-    private int readShort() {
-        int val = 0;
-
-        try {
-            int lo = readUnsignedByte();
-            int hi = readUnsignedByte();
-
-            val = lo + (hi << 8);
-        } catch (IOException e) {
-        }
-
-        return val;
-    }
-
-    /**
-     * Parses the Image Descriptor.
-     *
-     * Each image in the Data Stream is composed of an Image Descriptor, 
-     * an optional Local Color Table, and the image data. Each image must 
-     * fit within the boundaries of the Logical Screen, as defined in the 
-     * Logical Screen Descriptor.
-     */
-    private void parseImageDescriptor(boolean scan) {
-        //System.out.println("parseImageDescriptor at pos " + stream.tell());
-        byte [] imageDescriptor = new byte[9];
-        byte [] localColorTable = null;
-
-        try {
-            getOwner().stream.read(imageDescriptor, 0, 9);
-        } catch (IOException e) {
-        }
-
-        // packed fields
-        int flags = imageDescriptor[8];
-
-        // local color table flag
-        boolean localTable = ((flags >> 7) & 1) == 1;
-
-        int tableDepth = (flags & 0x07) + 1;
-
-        if (localTable) {
-            int size = 3 * (1 << tableDepth);
-
-            localColorTable = new byte[size];
-
-            try {
-                getOwner().stream.read(localColorTable, 0, size);
-            } catch (IOException e) {
-            }
-        }
-
-        if (!scan) {
-            // image left position
-            int leftPos = readShort(imageDescriptor, 0);
-
-            // image top position
-            int topPos = readShort(imageDescriptor, 2);
-
-            // image width
-            int width = readShort(imageDescriptor, 4);
-
-            // image height
-            int height = readShort(imageDescriptor, 6);
-
-            // interlace flag
-            boolean interlaceFlag = ((flags >> 6) & 0x01) == 1;
-
-            // sort flag: not used in player
-            //int sortFlag = (flags >> 5) & 0x01;
-
-            imageDecoder.newFrame(leftPos, topPos, width, height, interlaceFlag);
-
-            // local color table size
-            if (localTable)
-                imageDecoder.setLocalPalette(tableDepth, localColorTable);
-        }
-
-        parseImageData();
-    }
-
-    /**
-     * Parses the Image Data.
-     *
-     * The image data for a table based image consists of a sequence of 
-     * sub-blocks, of size at most 255 bytes each, containing an index 
-     * into the active color table, for each pixel in the image. Pixel 
-     * indices are in order of left to right and from top to bottom. Each 
-     * index must be within the range of the size of the active color 
-     * table, starting at 0. The sequence of indices is encoded using the 
-     * LZW Algorithm with variable-length code.
-     */
-    private void parseImageData() {
-        //System.out.println("parseImageData at pos " + stream.tell());
-        int idx = 0;
-
-        try {
-            lzwCodeSize = readUnsignedByte();
-
-            if (imageData == null)
-                imageData = new byte[1024];
-         
-            int size;
-            
-            do {
-                size = readUnsignedByte();
-                
-                if (imageData.length < idx + size) {
-                    // increase image data buffer
-                    byte[] data = new byte[ idx + ((size>1024)?size:1024) ];
-                    System.arraycopy(imageData, 0, data, 0, idx);
-                    imageData = data;
-                }
-                
-                if (size > 0)
-                    idx += getOwner().stream.read(imageData, idx, size);
-            
-            } while (size != 0);
-                                    
-            //imageDataLength = idx;
-        } catch (IOException e) {
-            //imageDataLength = 0;
-        }
-        // Supporting unfinished GIFs
-        imageDataLength = idx;
-        //System.out.println("parsed image data bytes: " + idx);
-    }
-
-    /**
-     * Parses the Plain Text Extension.
-     *
-     */
-    private void parsePlainTextExtension() {
-        try {
-            // block size
-            int size = readUnsignedByte();
-            if (size != 12) {
-                // ERROR
-            }
-
-            // text grid left position
-            int leftPos = readShort();
-
-            // text grid top position
-            int topPos = readShort();
-
-            // text grid width
-            int width = readShort();
-
-            // text grid height
-            int height = readShort();
-
-            // character cell width
-            int cellWidth = readUnsignedByte();
-
-            // character cell height
-            int cellHeight = readUnsignedByte();
-
-            // text foreground color index
-            int fgIndex = readUnsignedByte();
-
-            // text background color index
-            int bgIndex = readUnsignedByte();
-
-            // plain text data
-            do {
-                size = readUnsignedByte();
-
-                if (size > 0) {
-                    byte[] data = new byte[size];
-
-                    getOwner().stream.read(data, 0, size);
-                }
-            } while (size != 0);
-        } catch (IOException e) {
-        }
-    }
-
-    /**
-     * Parses the Control Extension.
-     *
-     */
-    private void parseControlExtension(boolean scan) {
-        //System.out.println("parseControlExtension at pos " + stream.tell());
-        try {
-            int label = readUnsignedByte();
-
-            if (label == 0xff) {
-                parseApplicationExtension();
-            } else if (label == 0xfe) {
-                parseCommentExtension();
-            } else if (label == 0xf9) {
-                parseGraphicControlExtension(scan);
-            } else if (label == 0x01) {
-                parsePlainTextExtension();
-            } else {
-                // unkown control extension
-            }
-        } catch (IOException e) {
-        }
-    }
-
-    /**
-     * Parses the Application Extension.
-     *
-     */
-    private void parseApplicationExtension() {
-        //System.out.println("parseApplicationExtension at pos " + stream.tell());
-        try {
-            // block size
-            int size = readUnsignedByte();
-
-            if (size != 11) {
-                // System.out.println("ERROR");
-            }
-
-            // application identifier
-            byte[] data = new byte[8];
-            getOwner().stream.read(data, 0, 8);
-
-            // application authentication code
-            data = new byte[3];
-            getOwner().stream.read(data, 0, 3);
-
-            do {
-                size = readUnsignedByte();
-
-                if (size > 0) {
-                    data = new byte[size];
-
-                    getOwner().stream.read(data, 0, size);
-                }
-            } while (size != 0);
-        } catch (IOException e) {
-        }
-    }
-
-    /**
-     * Parses the Comment Extension.
-     *
-     */
-    private void parseCommentExtension() {
-        //System.out.println("parseCommentExtension at pos " + stream.tell());
-        try {
-            int size;
-
-            do {
-                size = readUnsignedByte();
-
-                if (size > 0) {
-                    byte[] data = new byte[size];
-
-                    getOwner().stream.read(data, 0, size);
-                }
-            } while (size != 0);
-        } catch (IOException e) {
-        }
-    }
-
-    /**
-     * Parses the Graphic Control Extension.
-     *
-     */
-    private void parseGraphicControlExtension(boolean scan) {
-        //System.out.println("parseGraphicControlExtension at pos " + stream.tell());
-        
-        byte [] graphicControl = new byte[6];
-
-        try {
-            getOwner().stream.read(graphicControl, 0, 6);
-        } catch (IOException e) {
-        }
-
-        // block size: not used in player - validation only
-        //int size = graphicControl[0] & 0xff;
-
-        //if (size != 4) {
-            // ERROR: invalid block size in graphic control
-        //}
-
-        if (scan) {
-            // delay time
-            scanFrameTime = readShort(graphicControl, 2) * 10000;
-        } else {
-            // packed field
-            int flags = graphicControl[1] & 0xff;
-
-            // transparency flag
-            boolean transparencyFlag = (flags & 0x01) == 1;
-
-            // user input: not used in player
-            //int userInput = (flags & 0x02) == 2;
-
-            // undraw mode
-            int undrawMode = (flags >> 2) & 0x07;
-
-            int transparencyColorIndex = -1;
-
-            if (transparencyFlag)
-                // transparent color index
-                transparencyColorIndex = graphicControl[4] & 0xff;
-
-            imageDecoder.setGraphicsControl(undrawMode, transparencyColorIndex);
-        }
-        // block terminator: shoud be 0
-        //int terminator = graphicControl[5] & 0xff;
-    }
-
-
-    /** 
-     * A byte array designed to hold one byte of data.
-     * see: readUnsignedByte().
-     */
-    private byte[] oneByte = new byte[1];
-
-    /**
-     * Reads one byte from the source stream.
-     */
-    private int readUnsignedByte() throws IOException {
-        if (getOwner().stream.read(oneByte, 0, 1) == -1)
-            throw new IOException();
-
-        return oneByte[0] & 0xff;
-    }
-
     /**
      * Inner class implementing the frame positioning control interface.
      * 
