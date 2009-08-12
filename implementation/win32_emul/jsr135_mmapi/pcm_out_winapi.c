@@ -22,36 +22,45 @@
  * information or have any questions. 
  */
 
-//=============================================================================
+/*---------------------------------------------------------------------------*/
 
 #include "multimedia.h"
 #include "pcm_out.h"
 
-//=============================================================================
+/*---------------------------------------------------------------------------*/
 
-#ifdef PCM_VIA_DSOUND
+#ifndef PCM_VIA_DSOUND
+
+#define HDRS_COUNT      10
 
 typedef struct tag_pcm_channel
 {
     get_ch_data         gd_callback;
     void*               cb_param;
 
-    int                 bits;       /* 8 or 16                */
-    int                 nch;        /* mono=1, stereo=2       */
-    long                rate;       /* 44100, 22050 etc       */
+    int                 bits;              /* 8 or 16                    */
+    int                 nch;               /* mono=1, stereo=2           */
+    long                rate;              /* 44100, 22050 etc           */
 
-    DWORD               blk_size;   /* data block size, bytes        */
-    DWORD               blk_ready;  /* number of ready bytes in blk  */
-    BYTE*               blk;        /* data block                    */
+    DWORD               blk_size;          /* data block size, bytes     */
 
-    LPDIRECTSOUNDBUFFER pDSB;
-    DWORD               dsbuf_size; /* DirectSound buffer size       */
-    DWORD               dsbuf_offs; /* current DS buf write position */
+    HWAVEOUT            hwo;               /* audio device handle        */
+    volatile int        hdrs_free;         /* number of free headers     */
+    int                 cur_hdr;           /* current header to write to */
+    WAVEHDR             hdrs[ HDRS_COUNT ];
+    CRITICAL_SECTION    cs;
 } pcm_channel_t;
 
-//=============================================================================
+/*---------------------------------------------------------------------------*/
 
-LPDIRECTSOUND           g_pDS;
+static void CALLBACK wave_out_proc( HWAVEOUT hwo,
+                                    UINT uMsg,
+                                    DWORD_PTR dwInstance,
+                                    DWORD_PTR dwParam1,
+                                    DWORD_PTR dwParam2 );
+
+/*---------------------------------------------------------------------------*/
+
 HANDLE                  g_hMixThread;
 volatile BOOL           g_bMixStopFlag = FALSE;
 
@@ -61,11 +70,6 @@ pcm_channel_t*          g_Ch[ PCM_MAX_CHANNELS + 1 ];
 volatile int            g_ChNum = 0;
 HANDLE                  g_hChMutex = NULL;
 
-//=============================================================================
-#ifdef __cplusplus
-extern "C" {
-#endif
-//=============================================================================
 
 DWORD WINAPI mixing_thread( void* arg );
 
@@ -76,12 +80,10 @@ pcm_handle_t pcm_out_open_channel( int          bits,
                                    get_ch_data  gd_callback,
                                    void*        cb_param )
 {
-    HRESULT         r;
-    HWND            hwnd;
-    WAVEFORMATEX    wfmt;
-    DSBUFFERDESC    bdsc; 
-
     pcm_channel_t*  ch;
+    MMRESULT        mmr;
+    WAVEFORMATEX    wfmt;
+    int             i;
 
     if( PCM_MAX_CHANNELS == g_ChNum ) return NULL;
 
@@ -90,33 +92,11 @@ pcm_handle_t pcm_out_open_channel( int          bits,
 
     if( 0 == g_ChNum )
     {
-        JC_MM_ASSERT( NULL == g_pDS );
-
-        #ifdef ENABLE_JSR_135_DSHOW
-        r = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-        if( DS_OK != r && S_FALSE != r )
-        {
-            return NULL;
-        }
-        #endif //ENABLE_JSR_135_DSHOW
-
-        r = DirectSoundCreate(NULL, &g_pDS, NULL);
-        if( DS_OK != r )
-        {
-            return NULL;
-        }
-
-        if( NULL == ( hwnd = GetForegroundWindow() ) ) hwnd = GetDesktopWindow();
-        g_pDS->SetCooperativeLevel(hwnd, DSSCL_NORMAL);
-
+        /* first channel ==> init globals */
         memset( g_Ch, 0, sizeof( g_Ch ) );
         
         JC_MM_ASSERT( NULL == g_hChMutex );
         g_hChMutex = CreateMutex( NULL, FALSE, NULL );
-    }
-    else /* not first channel ==> hardware device is already opened */
-    {
-        JC_MM_ASSERT( NULL != g_pDS );
     }
 
     /* create and initialize new channel */
@@ -132,16 +112,21 @@ pcm_handle_t pcm_out_open_channel( int          bits,
     ch->rate        = rate;
 
     ch->blk_size    = blk_size;
-    ch->blk         = (BYTE*)MALLOC( blk_size );
-    ch->blk_ready   = 0;
 
-    ch->dsbuf_size  = min( DSBSIZE_MAX, 8 * blk_size );
-    ch->dsbuf_offs  = 0;
+    ch->hdrs_free   = HDRS_COUNT;
+    ch->cur_hdr     = 0;
 
-    JC_MM_ASSERT( NULL != ch->blk );
+    memset( ch->hdrs, 0, sizeof( ch->hdrs ) );
+
+    for( i = 0; i < HDRS_COUNT; i++ )
+    {
+        ch->hdrs[ i ].dwBufferLength = blk_size;
+        ch->hdrs[ i ].lpData = MALLOC( blk_size );
+    }
+
+    InitializeCriticalSection( &(ch->cs) );
 
     memset( &wfmt, 0, sizeof( WAVEFORMATEX ) );
-    memset( &bdsc, 0, sizeof( DSBUFFERDESC ) );
 
     wfmt.nSamplesPerSec  = rate;
     wfmt.nChannels       = nch;
@@ -151,19 +136,18 @@ pcm_handle_t pcm_out_open_channel( int          bits,
     wfmt.nBlockAlign     = (WORD)((wfmt.wBitsPerSample * wfmt.nChannels)/8);
     wfmt.nAvgBytesPerSec = wfmt.nSamplesPerSec * wfmt.nBlockAlign;
 
-    bdsc.dwSize        = sizeof( DSBUFFERDESC );
-    bdsc.dwBufferBytes = ch->dsbuf_size;
-    bdsc.dwFlags       = DSBCAPS_STATIC |
-                         DSBCAPS_GETCURRENTPOSITION2 |
-                         DSBCAPS_GLOBALFOCUS;
-    bdsc.lpwfxFormat   = &wfmt;
+    mmr = waveOutOpen( &(ch->hwo),      
+                       WAVE_MAPPER,
+                       &wfmt,      
+                       (DWORD_PTR)wave_out_proc,
+                       (DWORD_PTR)ch,
+                       CALLBACK_FUNCTION );
 
-    r = g_pDS->CreateSoundBuffer( &bdsc, &(ch->pDSB), NULL );
-    JC_MM_ASSERT(r == DS_OK);
-
-    r = ch->pDSB->Play( 0, 0, DSBPLAY_LOOPING );
-    JC_MM_ASSERT(r == DS_OK);
-
+    if( MMSYSERR_NOERROR != mmr )
+    {
+        free( ch );
+        return NULL;
+    }
 
     /* Add new channel to channel list.
        We don't need locks here because channel addition
@@ -211,11 +195,22 @@ void pcm_out_close_channel( pcm_handle_t hch )
         ReleaseMutex( g_hChMutex );
     }
 
+    /* wait for channel to process all pending headers */
+
+    while( hch->hdrs_free < HDRS_COUNT ) Sleep( 5 );
+
     /* channel cleanup */
 
-    hch->pDSB->Stop();
-    hch->pDSB->Release();
-    FREE( hch->blk );
+    waveOutReset( hch->hwo );
+    waveOutClose( hch->hwo );
+
+    DeleteCriticalSection( &(hch->cs) );
+
+    for( i = 0; i < HDRS_COUNT; i++ )
+    {
+        FREE( hch->hdrs[ i ].lpData );
+    }
+
     FREE( hch );
 
     /* stop mixing thread and release hardware
@@ -229,9 +224,6 @@ void pcm_out_close_channel( pcm_handle_t hch )
             JC_MM_DEBUG_WARNING_PRINT( "Failed to wait for mixing thread shutdown\n" );
         }
 
-        g_pDS->Release();
-        g_pDS = NULL;
-
         CloseHandle( g_hChMutex );
         g_hChMutex = NULL;
     }
@@ -239,85 +231,30 @@ void pcm_out_close_channel( pcm_handle_t hch )
 
 /*---------------------------------------------------------------------------*/
 
-DWORD get_available_space( pcm_channel_t* pch )
+static void CALLBACK wave_out_proc( HWAVEOUT hwo,
+                                    UINT uMsg,
+                                    DWORD_PTR dwInstance,
+                                    DWORD_PTR dwParam1,
+                                    DWORD_PTR dwParam2 )
 {
-    DWORD   ret;
-    HRESULT hr;
-    DWORD   dwPlayCsr; //, dwWriteCsr;
-
-    hr = pch->pDSB->GetCurrentPosition( &dwPlayCsr, NULL );
-
-    if( DS_OK == hr )
+    pcm_channel_t* ch = (pcm_channel_t*)dwInstance;
+    if( WOM_DONE == uMsg )
     {
-        if( pch->dsbuf_offs <= dwPlayCsr )
-            ret = dwPlayCsr - pch->dsbuf_offs;
-        else
-            ret = pch->dsbuf_size - ( pch->dsbuf_offs - dwPlayCsr );
+        EnterCriticalSection( &(ch->cs) );
+        ch->hdrs_free++;
+        LeaveCriticalSection( &(ch->cs) );
     }
-    else
-    {
-        ret = 0;
-    }
-
-    return ret;
 }
 
-void output_channel( pcm_channel_t* pch )
-{
-    HRESULT hr;
-    void*   ptr1;
-    DWORD   cb1;
-    void*   ptr2;
-    DWORD   cb2;
-
-    hr = pch->pDSB->Lock( pch->dsbuf_offs, pch->blk_ready,
-                          &ptr1, &cb1,
-                          &ptr2, &cb2,
-                          0 );
-
-    if( DSERR_BUFFERLOST == hr )
-    {
-        if( DS_OK == pch->pDSB->Restore() )
-        {
-            // second attempt
-            hr = pch->pDSB->Lock( pch->dsbuf_offs, pch->blk_ready,
-                                  &ptr1, &cb1,
-                                  &ptr2, &cb2,
-                                  0 );
-        }
-        else
-        {
-            // TODO: unable to restore buffer, signal an error.
-        }
-    }
-
-    if( DS_OK == hr )
-    {
-        JC_MM_ASSERT( cb1 + cb2 == pch->blk_ready );
-
-        if( 0 != cb1 ) memcpy( ptr1, pch->blk,       cb1 );
-        if( 0 != cb2 ) memcpy( ptr2, pch->blk + cb1, cb2 );
-
-        hr = pch->pDSB->Unlock( ptr1, cb1, ptr2, cb2 );
-        JC_MM_ASSERT( DS_OK == hr );
-
-        pch->blk_ready  -= ( cb1 + cb2 ); // must be 0 now
-        pch->dsbuf_offs += ( cb1 + cb2 );
-
-        if( pch->dsbuf_offs >= pch->dsbuf_size )
-            pch->dsbuf_offs -= pch->dsbuf_size;
-    }
-}
+/*---------------------------------------------------------------------------*/
 
 DWORD WINAPI mixing_thread( void* arg )
 {
     int             c;
-    pcm_channel_t*  pch;
+    pcm_channel_t*  ch;
     BOOL            should_sleep;
-    //long            read, bytes_mixed;
-
-    //int smpl_size   = playback_nch * playback_bits / 8;
-    //int blk_time_ms = 1000 * playback_blk / smpl_size / playback_rate;
+    int             nread;
+    MMRESULT        mmr;
 
     while( !g_bMixStopFlag )
     {
@@ -327,25 +264,33 @@ DWORD WINAPI mixing_thread( void* arg )
         {
             for( c = 0; c < g_ChNum; c++ )
             {
-                pch = g_Ch[ c ];
+                ch = g_Ch[ c ];
 
-                if( 0 == pch->blk_ready )
+                if( ch->hdrs_free > 0 )
                 {
-                    pch->blk_ready = pch->gd_callback( pch->blk,
-                                                       pch->blk_size, 
-                                                       pch->cb_param );
-                }
+                    nread = ch->gd_callback( ch->hdrs[ ch->cur_hdr ].lpData,
+                                             ch->blk_size, 
+                                             ch->cb_param );
+                    if( nread > 0 )
+                    {
+                        WAVEHDR* pwh = ch->hdrs + ch->cur_hdr;
 
-                if( pch->blk_ready > 0 )
-                {
-                    DWORD avail = get_available_space( pch );
-                    if( avail > pch->blk_ready )
-                    {
-                        output_channel( pch );
-                        if( avail > pch->dsbuf_size / 2 ) should_sleep = FALSE;
-                    }
-                    else
-                    {
+                        if(pwh->dwFlags & WHDR_PREPARED)
+                            waveOutUnprepareHeader(ch->hwo, pwh, sizeof(WAVEHDR));
+
+                        pwh->dwBufferLength = nread;
+
+                        mmr = waveOutPrepareHeader( ch->hwo, pwh, sizeof( WAVEHDR ) );
+                        mmr = waveOutWrite( ch->hwo, pwh, sizeof( WAVEHDR ) );
+
+                        EnterCriticalSection( &(ch->cs) );
+                        ch->hdrs_free--;
+                        LeaveCriticalSection( &(ch->cs) );
+
+                        ch->cur_hdr++;
+                        if( HDRS_COUNT == ch->cur_hdr ) ch->cur_hdr = 0;
+
+                        if( ch->hdrs_free > HDRS_COUNT / 2 ) should_sleep = FALSE;
                     }
                 }
 
@@ -366,4 +311,4 @@ DWORD WINAPI mixing_thread( void* arg )
 } /* extern "C" */
 #endif
 
-#endif // PCM_VIA_DSOUND
+#endif /* PCM_VIA_DSOUND */
