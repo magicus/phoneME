@@ -441,7 +441,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             // due to an I/O error...
             // In this case, the duration needs to be updated.
             if ( gifDecoder.getFrameCount() < gifDecoder.getFrameNum() ) {
-                Long duration = gifDecoder.getDuration( gifDecoder.getFrameCount() );
+                long duration = gifDecoder.getDuration( gifDecoder.getFrameCount() );
                 gifDecoder.setDuration(duration);
 
                 getOwner().sendEvent(PlayerListener.DURATION_UPDATED, new Long(duration));
