@@ -24,7 +24,6 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
-import java.util.Vector;
 
 import javax.microedition.media.Control;
 import javax.microedition.media.Player;
@@ -34,8 +33,6 @@ import javax.microedition.media.control.VideoControl;
 import javax.microedition.media.control.FramePositioningControl;
 import javax.microedition.media.control.RateControl;
 import javax.microedition.media.control.StopTimeControl;
-import com.sun.mmedia.protocol.BasicDS;
-import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.protocol.SourceStream;
 
 /**
@@ -45,12 +42,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
 
     private GIFDecoder gifDecoder = null;
-
-    /* the width of a video frame */
-    private int videoWidth;
-
-    /* the height of a video frame */
-    private int videoHeight;
 
     /* a full GIF frame, also called the reference frame */
     private int[] referenceFrame = null;
@@ -67,7 +58,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
     /* Used to synchronize access to mediatime- and rate- ralated fields
      */
-    private Object mediaTimeLock = new Object();
+    private final Object mediaTimeLock = new Object();
 
     /* the start time in milliseconds.
      * startTime is initialized upon start of the play thread.
@@ -106,14 +97,11 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      */
     private int seekType;
 
-    /* the position in the source stream directly after the GIF header */
-    private long firstFramePos;
-
     /* stopped flag */
     private boolean stopped;
 
     /* The lock object of play thread */
-    private Object playLock = new Object();
+    private final Object playLock = new Object();
 
     GIFPlayer( HighLevelPlayer owner ) {
         super( owner );
@@ -209,19 +197,18 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             int count = framePosControl.mapTimeToFrame(now);
             //System.out.println("SetMediaTime to " + now + " (frame = " + count + "), frameCount=" + frameCount);
 
-            if (count + 1 < frameCount) {
+            if (count + 1 < gifDecoder.getFrameCount() ) {
                 // rewind to beginning
-                frameCount = 0;
                 gifDecoder.seekFirstFrame();
             }
 
             // skip frames
-            while (frameCount <= count && getFrame())
+            while ( gifDecoder.getFrameCount() <= count && gifDecoder.getFrame() )
                 // We need to decode all frames to have the correct pixels
                 // for frames with transparent color
                 gifDecoder.decodeFrame( referenceFrame );
 
-            displayTime = getDuration(frameCount) / 1000;
+            displayTime = gifDecoder.getDuration( gifDecoder.getFrameCount() ) / 1000;
             //System.out.println("SetMediaTime: displayTime = " + displayTime + "; frameCount=" + frameCount);
 
             renderFrame();
@@ -251,7 +238,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
         // parse GIF header
         if ( gifDecoder.parseHeader()) {
-            scanFrames();
+            gifDecoder.scanFrames();
 
             // initialize video control
             videoRenderer = Configuration.getConfiguration().getVideoRenderer(
@@ -259,7 +246,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             videoControl = (VideoControl)videoRenderer.getVideoControl();
             videoRenderer.initRendering(VideoRenderer.XRGB888 | 
                                         VideoRenderer.USE_ALPHA,
-                                        videoWidth, videoHeight);
+                                        gifDecoder.getWidth(), gifDecoder.getHeight());
 
             // initialize frame positioning control
             framePosControl = new FramePosCtrl();
@@ -283,21 +270,20 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      */
     protected void doPrefetch() throws MediaException {
         if (referenceFrame == null)
-            referenceFrame = new int[videoWidth * videoHeight];
+            referenceFrame = new int[gifDecoder.getWidth() * gifDecoder.getHeight()];
 
         try { 
-            frameCount = 0;
             gifDecoder.seekFirstFrame();
 
             // get first frame
-            if (!getFrame())
+            if (!gifDecoder.getFrame())
                 throw new MediaException("can't get first frame");
 
             gifDecoder.decodeFrame( referenceFrame );
 
             // If duration is 0 prepare the last frame once.
             if ( gifDecoder.getDuration() == 0) {
-                while (getFrame())
+                while (gifDecoder.getFrame())
                     gifDecoder.decodeFrame( referenceFrame );
             }
             renderFrame();
@@ -315,7 +301,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      *            otherwise false.
      */
     protected boolean doStart() {
-        if (duration == 0) { // e.g. for non-animated GIFs
+        if (gifDecoder.getDuration() == 0) { // e.g. for non-animated GIFs
             new Thread(new Runnable() {
                 public void run() {
                     try {
@@ -337,7 +323,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                     playLock.notifyAll();
                 }
             } else {
-                displayTime = getFrameInterval(frameCount) / 1000;
+                displayTime = gifDecoder.getFrameInterval() / 1000;
                 
                 // Ensure that previous thread has finished
                 playThreadFinished();
@@ -413,7 +399,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             videoRenderer = null;
         }
 
-        frameTimes = null;
         gifDecoder = null;
     }
     
@@ -455,8 +440,9 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             // the run loop may have terminated prematurely, possibly
             // due to an I/O error...
             // In this case, the duration needs to be updated.
-            if (frameCount < frameTimes.size()) {
-                duration = getDuration(frameCount);
+            if ( gifDecoder.getFrameCount() < gifDecoder.getFrameNum() ) {
+                Long duration = gifDecoder.getDuration( gifDecoder.getFrameCount() );
+                gifDecoder.setDuration(duration);
 
                 getOwner().sendEvent(PlayerListener.DURATION_UPDATED, new Long(duration));
             }
@@ -517,73 +503,6 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
     }
     
     /**
-     * Returns the duration in microseconds.
-     */
-    private long getDuration(int frameCount) {
-        long duration = 0;
-         
-        for (int i = 0; i < frameCount; i++) {
-            duration += ((Long)frameTimes.elementAt(i)).longValue();
-        }
-                    
-        return duration;    
-    }
-
-    private long getFrameInterval(int frameCount) {
-        long interval = 0;
-         
-        if (frameCount > 0 && frameCount <= frameTimes.size()) {
-            interval = ((Long)frameTimes.elementAt(frameCount - 1)).longValue();
-        }
-
-        return interval;    
-    }
-
-    /**
-     * Maps media time to the corresponding frame.
-     *
-     * Returns the frame number.
-     */
-    private int timeToFrame(long mediaTime) {
-        int frame = 0;
-
-        long elapsedTime = 0;
-
-        for (int i = 0; i < frameTimes.size(); i++) {
-            long interval = ((Long)frameTimes.elementAt(i)).longValue();
-
-            elapsedTime += interval;
-
-            if (elapsedTime <= mediaTime)
-                frame++;
-            else
-                break;
-        }
-        
-        return frame;
-    }
-
-    /**
-     * Maps a frame to the corresponding media time.
-     *
-     * Returns the time in microseconds.
-     */
-    private long frameToTime(int frameNumber) {
-        long elapsedTime = 0;
-
-        for (int i = 0; i < frameTimes.size(); i++) {
-            long interval = ((Long)frameTimes.elementAt(i)).longValue();
-            
-            if (i < frameNumber)
-                elapsedTime += interval;
-            else
-                break;
-        }
-
-        return elapsedTime;
-    }
-
-    /**
      * Decodes and renders a GIF Frame.
      */
     private void processFrame() {
@@ -591,12 +510,12 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         long mediaTime = doGetMediaTime() / 1000;
 
         // frame interval in milliseconds
-        long frameInterval = getFrameInterval(frameCount) / 1000;
+        long frameInterval = gifDecoder.getFrameInterval() / 1000;
         //System.out.println("Frame: " + frameCount + ", length: " + frameInterval + ", at: " + mediaTime + ", displayTime: " + displayTime);
 
         if (mediaTime + EARLY_THRESHOLD > displayTime) {
             // get the next frame
-            if (!getFrame()) {
+            if (!gifDecoder.getFrame()) {
                 // wait until end of last frame
                 synchronized (playLock) {
                     try {
@@ -615,7 +534,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             gifDecoder.decodeFrame( referenceFrame );
 
             // frame interval in milliseconds
-            frameInterval = getFrameInterval(frameCount) / 1000;
+            frameInterval = gifDecoder.getFrameInterval() / 1000;
 
             // move display time to end of frame
             displayTime += frameInterval;
@@ -732,8 +651,8 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
             if (frameNumber < 0) {
                 frameNumber = 0;
-            } else if (frameNumber >= frameTimes.size()) {
-                frameNumber = frameTimes.size() - 1;
+            } else if (frameNumber >= gifDecoder.getFrameNum()) {
+                frameNumber = gifDecoder.getFrameNum() - 1;
             }
 
             long time = mapFrameToTime(frameNumber);
@@ -789,20 +708,20 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
             int frames_skipped = 0;
 
-            int oldFrame = frameCount - 1;
+            int oldFrame = gifDecoder.getFrameCount() - 1;
 
             if (oldFrame < 0) {
                 oldFrame = 0;
-            } else if (oldFrame >= frameTimes.size()) {
-                oldFrame = frameTimes.size() - 1;
+            } else if (oldFrame >= gifDecoder.getFrameNum()) {
+                oldFrame = gifDecoder.getFrameNum() - 1;
             } 
 
             long newFrame = (long)oldFrame + framesToSkip;
 
             if (newFrame < 0) {
                 newFrame = 0;
-            } else if (newFrame >= frameTimes.size()) {
-                newFrame = frameTimes.size() - 1;
+            } else if (newFrame >= gifDecoder.getFrameNum()) {
+                newFrame = gifDecoder.getFrameNum() - 1;
             } 
                         
             long time = mapFrameToTime((int)newFrame);
@@ -830,10 +749,10 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
          * given frame. If the conversion fails, -1 is returned.
          */
         public long mapFrameToTime(int frameNumber) {
-            if (frameNumber < 0 || frameNumber >= frameTimes.size()) {
+            if (frameNumber < 0 || frameNumber >= gifDecoder.getFrameNum()) {
                 return -1;
             }
-            return frameToTime(frameNumber);
+            return gifDecoder.frameToTime(frameNumber);
         }
 
         /**
@@ -853,11 +772,11 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
          * If the conversion fails, -1 is returned.
          */
         public int mapTimeToFrame(long mediaTime) {         
-            if (mediaTime < 0 || mediaTime > duration) {
+            if (mediaTime < 0 || mediaTime > gifDecoder.getDuration()) {
                 return -1;
             }
 
-            return timeToFrame(mediaTime);
+            return gifDecoder.timeToFrame(mediaTime);
         }
 
         public boolean isActive() {

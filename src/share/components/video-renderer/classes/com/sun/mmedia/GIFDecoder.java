@@ -259,7 +259,7 @@ public class GIFDecoder {
      * @return  true if the frame was read successfully,
      *          otherwise false.
      */
-    private boolean getFrame() {
+    boolean getFrame() {
         //System.out.println("getFrame at pos " + stream.tell());
 
         if (stream.tell() == 0)
@@ -595,7 +595,7 @@ public class GIFDecoder {
      * Scans the input stream for GIF frames and builds a table
      * of frame durations.
      */
-    private void scanFrames() throws MediaException {
+    void scanFrames() throws MediaException {
         //System.out.println("scanFrames at pos " + stream.tell());
         frameCount = 0;
         scanFrameTime = 0;
@@ -643,5 +643,87 @@ public class GIFDecoder {
     public long getDuration()
     {
         return duration;
+    }
+
+    int getFrameCount()
+    {
+        return frameCount;
+    }
+
+    int getFrameNum()
+    {
+        return frameTimes.size();
+    }
+
+    /**
+     * Returns the duration in microseconds.
+     */
+    long getDuration(int frameCount) {
+        long duration = 0;
+
+        for (int i = 0; i < frameCount; i++) {
+            duration += ((Long)frameTimes.elementAt(i)).longValue();
+        }
+
+        return duration;
+    }
+
+    long getFrameInterval() {
+        long interval = 0;
+
+        if (frameCount > 0 && frameCount <= frameTimes.size()) {
+            interval = ((Long)frameTimes.elementAt(frameCount - 1)).longValue();
+        }
+
+        return interval;
+    }
+
+    /**
+     * Maps media time to the corresponding frame.
+     *
+     * Returns the frame number.
+     */
+    int timeToFrame(long mediaTime) {
+        int frame = 0;
+
+        long elapsedTime = 0;
+
+        for (int i = 0; i < frameTimes.size(); i++) {
+            long interval = ((Long)frameTimes.elementAt(i)).longValue();
+
+            elapsedTime += interval;
+
+            if (elapsedTime <= mediaTime)
+                frame++;
+            else
+                break;
+        }
+
+        return frame;
+    }
+
+    /**
+     * Maps a frame to the corresponding media time.
+     *
+     * Returns the time in microseconds.
+     */
+    long frameToTime(int frameNumber) {
+        long elapsedTime = 0;
+
+        for (int i = 0; i < frameTimes.size(); i++) {
+            long interval = ((Long)frameTimes.elementAt(i)).longValue();
+
+            if (i < frameNumber)
+                elapsedTime += interval;
+            else
+                break;
+        }
+
+        return elapsedTime;
+    }
+
+    void setDuration( long duration )
+    {
+        this.duration = duration;
     }
 }
