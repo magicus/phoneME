@@ -205,7 +205,8 @@ abstract class AutoTesterHelperBaseMVM extends AutoTesterHelperBase
                 	for(;;){
                         testIsolate = getIsolateToWaitFor(isolatesBefore);
                         if( testIsolate == null &&
-                        		chmanager.getPendingRequestsCount() == 0 )
+                        		chmanager.getPendingRequestsCount(
+                        					MIDletSuite.UNUSED_SUITE_ID) == 0 )
                         	break;
                         // let the CHAPI to start a midlet
                         waitForOwnEvent();

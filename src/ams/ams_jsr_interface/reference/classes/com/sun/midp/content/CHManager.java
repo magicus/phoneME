@@ -189,7 +189,7 @@ public class CHManager {
     /**
      * returns the number of invocations in the invocation store
      */
-	public int getPendingRequestsCount() {
+	public int getPendingRequestsCount( int suiteId ) {
 		return 0;
 	}
 	
