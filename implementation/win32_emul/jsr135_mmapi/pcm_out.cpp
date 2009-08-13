@@ -31,6 +31,8 @@
 
 #ifdef PCM_VIA_DSOUND
 
+#include <dsound.h>
+
 typedef struct tag_pcm_channel
 {
     get_ch_data         gd_callback;

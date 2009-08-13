@@ -283,7 +283,7 @@ static javacall_result recorder_start_recording(javacall_handle handle)
             whl = create_wavhead( h, b, 256 );
             fwrite(b, whl, 1, h->recordData);
 
-            h->recInitDone = ( 0 != initDirectSoundCap(h) );
+            h->recInitDone = ( 0 != initAudioCapture(h) );
 
             if( h->recInitDone )
             {
@@ -403,7 +403,7 @@ static javacall_result recorder_close_recording(javacall_handle handle)
 
     if(h->recInitDone)
     {
-        closeDirectSoundCap();
+        closeAudioCapture();
         fclose(h->recordData);
         DeleteFile(h->fname);
         FREE(h->fname); 

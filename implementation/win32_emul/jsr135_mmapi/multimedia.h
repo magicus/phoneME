@@ -43,7 +43,6 @@ extern "C" {
 
 #include <assert.h>
 #include <windows.h>
-#include <dsound.h>
 #include <mmsystem.h>
 #include <vfw.h>
 #include <string.h>  /* memcpy, memset */

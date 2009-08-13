@@ -25,6 +25,10 @@
 #include <limits.h>
 #include "mmrecord.h"
 
+#ifdef RECORD_BY_DSOUND
+
+#include <dsound.h>
+
 DWORD WINAPI DirectSoundCaptureThread(void* parms);
 
 static HANDLE                      DSThread;
@@ -34,7 +38,7 @@ static LPDIRECTSOUNDCAPTUREBUFFER  captureBuffer = NULL;
 static DWORD                       captureSize;
 static DWORD                       captureOffset;
 
-int initDirectSoundCap(recorder *c)
+int initAudioCapture(recorder *c)
 {
     DSCBUFFERDESC cap_bdesc;
     WAVEFORMATEX  wfmt;
@@ -203,7 +207,7 @@ DWORD WINAPI DirectSoundCaptureThread(void *parms)
 }  
 
 
-int closeDirectSoundCap()
+int closeAudioCapture()
 {
     DWORD es = 0;
 
@@ -230,3 +234,6 @@ int closeDirectSoundCap()
 
     return 0;
 }
+
+#endif // RECORD_BY_DSOUND
+

@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #define     PCM_MAX_CHANNELS    128
-//#define     PCM_VIA_DSOUND // uncomment to use DirectSound-based
+#define     //PCM_VIA_DSOUND // uncomment to use DirectSound-based
                              // implementation instead of winapi-based
 
 typedef struct tag_pcm_channel * pcm_handle_t; /* channel handle */

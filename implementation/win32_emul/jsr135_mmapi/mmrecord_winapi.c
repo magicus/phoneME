@@ -22,45 +22,21 @@
  * information or have any questions.
  */ 
 
-#include <windows.h>
-#include <assert.h>
+#include <limits.h>
+#include "mmrecord.h"
 
-#include "multimedia.h"
+#ifndef RECORD_BY_DSOUND
 
-#define ENV_REC_SAMPLETIME 20
+int initAudioCapture(recorder *c)
+{
+}
 
-typedef struct {
-    int     isolateId;
-    int     playerId;
+BOOL toggleAudioCapture(BOOL on)
+{
+}
 
-    int     bits;
-    int     rate;
-    int     channels;
+int closeAudioCapture()
+{
+}
 
-    BOOL    recInitDone;
-
-    int     lengthLimit;
-    int     rsl;
-
-    FILE*   recordData;
-    char*   fname;
-    int     recordLen;
-} recorder;
-
-#define     //RECORD_BY_DSOUND // uncomment to use DirectSound-based
-                               // implementation instead of winapi-based
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int  initAudioCapture(recorder* cap);
-BOOL toggleAudioCapture(BOOL on);
-int  closeAudioCapture();
-
-void sendRSL(int appId, int playerId, long duration);
-int  create_wavhead(recorder* h, char *buffer, int buflen);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+#endif /* RECORD_BY_DSOUND */
