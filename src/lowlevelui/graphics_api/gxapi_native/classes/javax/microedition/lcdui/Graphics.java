@@ -1059,7 +1059,11 @@ public class Graphics {
      * @param x2 the x coordinate of the end of the line
      * @param y2 the y coordinate of the end of the line
      */
-    public native void drawLine(int x1, int y1, int x2, int y2);
+    public  void drawLine(int x1, int y1, int x2, int y2) {
+        isModified = true;
+        drawLine0(x1, y1, x2, y2);
+    }
+    private native void drawLine0(int x1, int y1, int x2, int y2);
 
     /**
      * Fills the specified rectangle with the current color.
@@ -1071,7 +1075,11 @@ public class Graphics {
      * @param height the height of the rectangle to be filled
      * @see #drawRect(int, int, int, int)
      */
-    public native void fillRect(int x, int y, int width, int height);
+    public  void fillRect(int x, int y, int width, int height) {
+        isModified = true;
+        fillRect0(x, y, width, height);
+    }
+    private native void fillRect0(int x, int y, int width, int height);
  
     /**
      * Draws the outline of the specified rectangle using the current
@@ -1086,7 +1094,11 @@ public class Graphics {
      * @param height the height of the rectangle to be drawn
      * @see #fillRect(int, int, int, int)
      */
-    public native void drawRect(int x, int y, int width, int height);
+    public  void drawRect(int x, int y, int width, int height) {
+        isModified = true;
+        drawRect0(x, y, width, height);
+    }
+    private native void drawRect0(int x, int y, int width, int height);
 
     /**
      * Draws the outline of the specified rounded corner rectangle
@@ -1104,7 +1116,12 @@ public class Graphics {
      * @param arcHeight the vertical diameter of the arc at the four corners
      * @see #fillRoundRect(int, int, int, int, int, int)
      */
-    public native void drawRoundRect(int x, int y, int width, int height,
+    public  void drawRoundRect(int x, int y, int width, int height,
+                                     int arcWidth, int arcHeight) {
+        isModified = true;
+        drawRoundRect0(x, y, width, height, arcWidth, arcHeight);
+    }
+    private native void drawRoundRect0(int x, int y, int width, int height,
                                      int arcWidth, int arcHeight);
  
     /**
@@ -1120,7 +1137,12 @@ public class Graphics {
      * @param arcHeight the vertical diameter of the arc at the four corners
      * @see #drawRoundRect(int, int, int, int, int, int)
      */
-    public native void fillRoundRect(int x, int y, int width, int height,
+    public  void fillRoundRect(int x, int y, int width, int height,
+                                     int arcWidth, int arcHeight){
+        isModified =true;
+        fillRoundRect0(x, y, width, height, arcWidth, arcHeight);
+    }
+    private native void fillRoundRect0(int x, int y, int width, int height,
                                      int arcWidth, int arcHeight);
                           
     /**
@@ -1169,7 +1191,12 @@ public class Graphics {
      * relative to the start angle.
      * @see #drawArc(int, int, int, int, int, int)
      */
-    public native void fillArc(int x, int y, int width, int height,
+    public void fillArc(int x, int y, int width, int height,
+                               int startAngle, int arcAngle) {
+        isModified = true;
+        fillArc0(x, y, width, height, startAngle, arcAngle);
+    }
+    private native void fillArc0(int x, int y, int width, int height,
                                int startAngle, int arcAngle);
 
     /**
@@ -1214,7 +1241,12 @@ public class Graphics {
      * the start angle
      * @see #fillArc(int, int, int, int, int, int)
      */
-    public native void drawArc(int x, int y, int width, int height,
+    public void drawArc(int x, int y, int width, int height,
+                               int startAngle, int arcAngle) {
+        isModified = true;
+        drawArc0(x, y, width, height, startAngle, arcAngle);
+    }
+    private native void drawArc0(int x, int y, int width, int height,
                                int startAngle, int arcAngle);
 
     /**
@@ -1229,7 +1261,12 @@ public class Graphics {
      * @throws IllegalArgumentException if anchor is not a legal value
      * @see #drawChars(char[], int, int, int, int, int)
      */
-    public native void drawString(java.lang.String str,
+    public  void drawString(java.lang.String str,
+                                  int x, int y, int anchor) {
+        isModified = true;
+        drawString0(str, x, y, anchor);
+    }
+    private native void drawString0(java.lang.String str,
                                   int x, int y, int anchor);
 
     /**
@@ -1260,7 +1297,12 @@ public class Graphics {
      * is not a legal value
      * @throws NullPointerException if <code>str</code> is <code>null</code>
      */
-    public native void drawSubstring(String str, int offset, int len,
+    public  void drawSubstring(String str, int offset, int len,
+                                     int x, int y, int anchor) {
+        isModified = true;
+        drawSubstring0(str, offset, len, x, y, anchor);
+    }
+    private native void drawSubstring0(String str, int offset, int len,
                                      int x, int y, int anchor);
 
     /**
@@ -1277,7 +1319,11 @@ public class Graphics {
      * @see #drawString(java.lang.String, int, int, int)
      * @see #drawChars(char[], int, int, int, int, int)
      */
-    public native void drawChar(char character, int x, int y, int anchor);
+    public  void drawChar(char character, int x, int y, int anchor) {
+        isModified = true;
+        drawChar0(character, x, y, anchor);
+    }
+    private native void drawChar0(char character, int x, int y, int anchor);
 
     /**
      * Draws the specified characters using the current font and color.
@@ -1307,7 +1353,12 @@ public class Graphics {
      *
      * @see #drawString(java.lang.String, int, int, int)
      */
-    public native void drawChars(char[] data, int offset, int length,
+    public  void drawChars(char[] data, int offset, int length,
+                                 int x, int y, int anchor) {
+        isModified = true;
+        drawChars0(data, offset, length, x, y, anchor);
+    }
+    private native void drawChars0(char[] data, int offset, int length,
                                  int x, int y, int anchor);
  
     /**
@@ -1340,7 +1391,7 @@ public class Graphics {
         if (image == null) {
             throw new NullPointerException();
         }
-
+        isModified = true;
         if (!render(image, x, y, anchor)) {
             throw new IllegalArgumentException("");
         }
@@ -1451,6 +1502,7 @@ public class Graphics {
         if (src == null) {
             throw new NullPointerException();
         }
+        isModified = true;
         if (!renderRegion(src, x_src, y_src, width, height,
                           transform, x_dest, y_dest, anchor)) {
             throw new IllegalArgumentException("");
@@ -1529,7 +1581,7 @@ public class Graphics {
     public synchronized void copyArea(int x_src, int y_src, 
                                       int width, int height,
                                       int x_dest, int y_dest, int anchor) {
-
+        isModified = true;
         if (isScreenGraphics()) {
             throw new IllegalStateException();
         } else {
@@ -1551,7 +1603,13 @@ public class Graphics {
      * @param y3 the y coordinate of the third vertex of the triangle
      *
      */
-    public native void fillTriangle(int x1, int y1, 
+    public  void fillTriangle(int x1, int y1,
+                                    int x2, int y2,
+                                    int x3, int y3) {
+        isModified = true;
+        fillTriangle0(x1, y1, x2, y2, x3, y3);
+    }
+    private native void fillTriangle0(int x1, int y1,
                                     int x2, int y2,
                                     int x3, int y3);
 
@@ -1668,7 +1726,13 @@ public class Graphics {
      * @throws NullPointerException if <code>rgbData</code> is <code>null</code>
      *
      */
-    public native void drawRGB(int[] rgbData, int offset, int scanlength,
+    public  void drawRGB(int[] rgbData, int offset, int scanlength,
+                               int x, int y, int width, int height,
+                               boolean processAlpha) {
+        isModified = true;
+        drawRGB0(rgbData, offset, scanlength, x, y, width, height, processAlpha);
+    }
+    private native void drawRGB0(int[] rgbData, int offset, int scanlength,
                                int x, int y, int width, int height,
                                boolean processAlpha);
 
@@ -1692,6 +1756,8 @@ public class Graphics {
 
 
     // private implementation //
+
+    public boolean isModified;
 
     /**
      * The clip values are in the translated

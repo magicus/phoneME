@@ -88,8 +88,12 @@ public class OpenGLEnvironmentProxy{
      * API - can be either JSR226 or JSR239
      *
      */
-    public void flushOpengGL(Object bindTarget) {
-        env.flushOpengGL(container, (Graphics)bindTarget);
+    public boolean flushOpengGL(Object bindTarget) {
+        return env.flushOpengGL(container, (Graphics)bindTarget);
+    }
+
+    public boolean needToFlushOpenGL(Object bindTarget) {
+        return env.needToFlushOpenGL((Graphics)bindTarget);
     }
     
     public void createPbufferSurface(Image img) {
@@ -134,10 +138,6 @@ public class OpenGLEnvironmentProxy{
 
     public void setSoftButtonHeight(int height) {
         env.setSoftButtonHeight(height);
-    }
-
-    public boolean isOpenGLEnabled() {
-        return env.isOpenGLEnabled();
     }
 
 }

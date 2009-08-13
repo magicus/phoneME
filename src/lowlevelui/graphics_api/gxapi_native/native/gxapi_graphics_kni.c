@@ -94,7 +94,7 @@ extern void fast_rect_8x8(void*first_pixel, int ypitch, int pixel);
  * @param y2 The y coordinate of the end of the line
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawLine) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawLine0) {
     int y2 = KNI_GetParameterAsInt(4);
     int x2 = KNI_GetParameterAsInt(3);
     int y1 = KNI_GetParameterAsInt(2);
@@ -141,7 +141,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawLine) {
  * @param height The height of the rectangle to be drawn
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawRect0) {
     int h = KNI_GetParameterAsInt(4);
     int w = KNI_GetParameterAsInt(3);
     int y = KNI_GetParameterAsInt(2);
@@ -194,12 +194,11 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
  * @param height The height of the rectangle to be drawn
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
+KNIDECL(javax_microedition_lcdui_Graphics_fillRect0) {
     int h = KNI_GetParameterAsInt(4);
     int w = KNI_GetParameterAsInt(3);
     int y = KNI_GetParameterAsInt(2);
     int x = KNI_GetParameterAsInt(1);
-
     /*
      * @note { Spec verify step: "If either width or height
      * is zero or less, nothing is drawn." }
@@ -249,7 +248,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
  * @param arcHeight The vertical diameter of the arc at the four corners
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawRoundRect) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawRoundRect0) {
     int arcHeight = KNI_GetParameterAsInt(6);
     int  arcWidth = KNI_GetParameterAsInt(5);
     int         h = KNI_GetParameterAsInt(4);
@@ -305,7 +304,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRoundRect) {
  * @param arcHeight The vertical diameter of the arc at the four corners
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_fillRoundRect) {
+KNIDECL(javax_microedition_lcdui_Graphics_fillRoundRect0) {
     int arcHeight = KNI_GetParameterAsInt(6);
     int  arcWidth = KNI_GetParameterAsInt(5);
     int         h = KNI_GetParameterAsInt(4);
@@ -365,7 +364,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRoundRect) {
  *                 <tt>startAngle</tt>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawArc) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawArc0) {
     int   arcAngle = KNI_GetParameterAsInt(6);
     int startAngle = KNI_GetParameterAsInt(5);
     int          h = KNI_GetParameterAsInt(4);
@@ -440,7 +439,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawArc) {
  *                 <tt>startAngle</tt>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_fillArc) {
+KNIDECL(javax_microedition_lcdui_Graphics_fillArc0) {
     int   arcAngle = KNI_GetParameterAsInt(6);
     int startAngle = KNI_GetParameterAsInt(5);
     int          h = KNI_GetParameterAsInt(4);
@@ -504,7 +503,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillArc) {
  * @param y3 The y coordinate of the third vertices
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_fillTriangle) {
+KNIDECL(javax_microedition_lcdui_Graphics_fillTriangle0) {
     int         y3 = KNI_GetParameterAsInt(6);
     int         x3 = KNI_GetParameterAsInt(5);
     int         y2 = KNI_GetParameterAsInt(4);
@@ -551,7 +550,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillTriangle) {
  * @param anchor The anchor point for positioning the text
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawString) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawString0) {
     int anchor = KNI_GetParameterAsInt(4);
     int      y = KNI_GetParameterAsInt(3);
     int      x = KNI_GetParameterAsInt(2);
@@ -618,7 +617,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawString) {
  * @param anchor The anchor point for positioning the text
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring0) {
     int anchor = KNI_GetParameterAsInt(6);
     int      y = KNI_GetParameterAsInt(5);
     int      x = KNI_GetParameterAsInt(4);
@@ -692,7 +691,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring) {
  * @param anchor The anchor point for positioning the text
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawChar) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawChar0) {
     int anchor = KNI_GetParameterAsInt(4);
     int      y = KNI_GetParameterAsInt(3);
     int      x = KNI_GetParameterAsInt(2);
@@ -747,7 +746,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChar) {
  * @param anchor The anchor point for positioning the text
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawChars0) {
     int anchor = KNI_GetParameterAsInt(6);
     int      y = KNI_GetParameterAsInt(5);
     int      x = KNI_GetParameterAsInt(4);
@@ -763,7 +762,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
 
     KNI_GetParameterAsObject(1, ch);
     KNI_GetThisPointer(thisObject);
-
+BREWprintf("graphics.drawChars\n");
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
         chLen = KNI_GetArrayLength(ch);
         if (chLen < 0) {
@@ -827,7 +826,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
  *                     be ignored
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
+KNIDECL(javax_microedition_lcdui_Graphics_drawRGB0) {
     jboolean processAlpha = KNI_GetParameterAsBoolean(8);
     jint height = KNI_GetParameterAsInt(7);
     jint width = KNI_GetParameterAsInt(6);
