@@ -855,8 +855,10 @@ public class Display {
         Displayable temp = foregroundController.registerDisplay(displayId,
                            owner.getClass().getName());
         if (temp == null) {
-            initialDisplayable = new Form(null).displayableLF;
-        } else {
+            Displayable a = new Form(null);
+            a.isInFullScreenMode = true;
+            initialDisplayable = a.displayableLF;
+         } else {
             initialDisplayable = temp.displayableLF;
         }
 
@@ -930,9 +932,6 @@ public class Display {
         current.lSetDisplay(Display.this);
         pendingCurrent = initialDisplayable;
                 
-        // #ifdef ENABLE_CHAMELEON
-//        lSetMode(MIDPWindow.NO_SOFT_BUTTON_MODE);
-        // #endif ENABLE_CHAMELEON
     }
 
     /**
@@ -1937,7 +1936,7 @@ public class Display {
     }
 
     private boolean isSIWL() {
-        return (window != null && window.getMode() == MIDPWindow. NO_SOFT_BUTTON_MODE);
+        return (window != null && window.getMode() == MIDPWindow.NO_SOFT_BUTTON_MODE);
     }
 
     private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
