@@ -26,8 +26,10 @@ package com.sun.mmedia;
 
 import java.io.IOException;
 import java.util.Vector;
+import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
+import javax.microedition.media.protocol.ContentDescriptor;
 import javax.microedition.media.protocol.SourceStream;
 
 public class GIFDecoder {
@@ -75,6 +77,13 @@ public class GIFDecoder {
         frameCount = 0;
         duration = Player.TIME_UNKNOWN;
 
+    }
+
+    public GIFDecoder( byte[] imageBytes,
+                            int imageOffset,
+                            int imageLength )
+    {
+        this( new StreamFromArray(imageBytes, imageOffset, imageLength) );
     }
 
     public int getWidth()
@@ -248,7 +257,7 @@ public class GIFDecoder {
         imageDecoder.clearImage();
     }
 
-    void decodeFrame( int [] output ) {
+    public void decodeFrame( int [] output ) {
         if (imageData != null && imageDecoder != null && output != null)
             imageDecoder.decodeImage(lzwCodeSize, imageDataLength, imageData, output);
     }
@@ -259,7 +268,7 @@ public class GIFDecoder {
      * @return  true if the frame was read successfully,
      *          otherwise false.
      */
-    boolean getFrame() {
+    public boolean getFrame() {
         //System.out.println("getFrame at pos " + stream.tell());
 
         if (stream.tell() == 0)
@@ -725,5 +734,76 @@ public class GIFDecoder {
     void setDuration( long duration )
     {
         this.duration = duration;
+    }
+
+}
+
+class StreamFromArray implements SourceStream {
+
+    byte[] imageBytes;
+    int imageOffset;
+    int imageLength;
+    int curOffset;
+
+    StreamFromArray(byte[] imageBytes,
+            int imageOffset,
+            int imageLength) {
+        this.imageBytes = imageBytes;
+        this.imageOffset = imageOffset;
+        this.imageLength = imageLength;
+
+        this.curOffset = imageOffset;
+    }
+
+    public ContentDescriptor getContentDescriptor() {
+        return null;
+    }
+
+    public long getContentLength() {
+        return imageLength;
+    }
+
+    public int read(byte[] b, int off, int len) throws IOException {
+        int available = imageOffset + imageLength - curOffset;
+        if (available <= 0) {
+            return -1;
+        }
+        int lenToRead = available < len ? available : len;
+
+        for (int i = 0; i < lenToRead; i++) {
+            b[off + i] = imageBytes[curOffset++];
+        }
+        return lenToRead;
+    }
+
+    public int getTransferSize() {
+        return imageLength;
+    }
+
+    public long seek(long where) throws IOException {
+        if (where < 0) {
+            where = 0;
+        }
+        if (where >= imageLength) {
+            where = imageLength - 1;
+        }
+        curOffset = imageOffset + (int) where;
+        return tell();
+    }
+
+    public long tell() {
+        return curOffset - imageOffset;
+    }
+
+    public int getSeekType() {
+        return RANDOM_ACCESSIBLE;
+    }
+
+    public Control[] getControls() {
+        return null;
+    }
+
+    public Control getControl(String controlType) {
+        return null;
     }
 }
