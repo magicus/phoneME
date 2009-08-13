@@ -302,9 +302,10 @@ class DisplayableLFImpl implements DisplayableLF {
 
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
-	    if (!owner.isInFullScreenMode) {
-		currentDisplay.lSetMode(owner.lastSetMode);
-	    }
+            if (!owner.isInFullScreenMode) {
+                //                currentDisplay.lSetMode(owner.lastSetMode);
+            }
+            
             copyDefferedSizeChange = defferedSizeChange;
             defferedSizeChange = false;
         }
