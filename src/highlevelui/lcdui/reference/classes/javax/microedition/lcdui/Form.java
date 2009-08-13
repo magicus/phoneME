@@ -460,8 +460,6 @@ public class Form extends Screen {
      */
     public Form(String title, Item[] items) {
         super(title);
-        Exception e = new Exception("New form is created title=" + title +" items = " + items);
-        e.printStackTrace();
 
         synchronized (Display.LCDUILock) {
             if (items == null) {

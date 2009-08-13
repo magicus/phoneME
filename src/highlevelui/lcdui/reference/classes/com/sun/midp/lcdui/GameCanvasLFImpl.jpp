@@ -254,7 +254,6 @@ public class GameCanvasLFImpl {
     */
     public void setMode(int m) {
         DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
-            System.out.println("setMode for GameCanvasLFImpl: mode = " + m + " displayAccess = " + displayAccess + " offscreenBuffer = " + offscreenBuffer);   
         if (displayAccess != null && offscreenBuffer != null) {
 	    displayAccess.setMode(m);
         }

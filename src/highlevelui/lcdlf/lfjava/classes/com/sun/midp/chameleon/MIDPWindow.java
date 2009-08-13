@@ -500,9 +500,6 @@ public class MIDPWindow extends CWindow {
      * @param mode the mode to be set
      */
     public void setMode(int mode) {
-        Exception e = new Exception("Set  window mode:: old mode =" + screenMode +" new mode = " + mode);
-        e.printStackTrace();
-
 	screenMode = mode ;
 
 	if (mode == NO_SOFT_BUTTON_MODE){
@@ -883,8 +880,6 @@ public class MIDPWindow extends CWindow {
 	if(softButtonMode == NO_SOFT_BUTTON_MODE){
 	    buttonLayer.visible = false;
 	}
-
-    System.out.println("resize: screenMode = " + screenMode + "buttonLayer.visible = " + buttonLayer.visible);
 
 
         for (int i = 0; i < LAST_LAYER; i++) {
