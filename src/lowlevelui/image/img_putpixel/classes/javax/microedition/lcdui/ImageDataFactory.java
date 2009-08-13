@@ -28,6 +28,7 @@ package javax.microedition.lcdui;
 
 import java.io.InputStream;
 import java.io.IOException;
+import com.sun.mmedia.GIFDecoder;
 
 /**
  * ImageFactory implementation based on putpixel graphics library and stores
@@ -59,6 +60,14 @@ class ImageDataFactory implements AbstractImageDataFactory {
      */
     private static final byte[] rawHeader = new byte[] {
          (byte)0x89, (byte)0x53, (byte)0x55, (byte)0x4E
+    };
+
+    private static final byte[] gif87aHeader = new byte[] {
+         'G', 'I', 'F', '8', '7', 'a'
+    };
+
+    private static final byte[] gif89aHeader = new byte[] {
+         'G', 'I', 'F', '8', '9', 'a'
     };
 
     /** Reference to a image cache. */
@@ -681,12 +690,56 @@ class ImageDataFactory implements AbstractImageDataFactory {
                                imageOffset, imageLength)) {
             // image type is RAW
             decodeRAW(imageData, imageBytes, imageOffset, imageLength);
+        } else if( headerMatch( gif87aHeader, imageBytes,
+                                imageOffset, imageLength ) ||
+                   headerMatch( gif89aHeader, imageBytes,
+                                imageOffset, imageLength ) ) {
+            //image type is GIF
+            decodeGIF(imageData, imageBytes, imageOffset, imageLength);
         } else {
             // does not match supported image type
             throw new IllegalArgumentException();
         }
     }
 
+    /**
+     * Function to decode an <code>ImageData</code> from GIF data.
+     *
+     * @param imageData the <code>ImageData</code> to be populated
+     * @param imageBytes the array of image data in a supported image format
+     * @param imageOffset the offset of the start of the data in the array
+     * @param imageLength the length of the data in the array
+     */
+    private void decodeGIF(ImageData imageData,
+                            byte[] imageBytes,
+                            int imageOffset,
+                            int imageLength)
+    {
+        GIFDecoder decoder = new GIFDecoder(imageBytes, imageOffset,
+                                            imageLength);
+        if( !decoder.parseHeader() ) {
+            throw new IllegalArgumentException();
+        }
+
+        final int width = decoder.getWidth();
+        final int height = decoder.getHeight();
+
+        if (width <= 0 || height <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        if( !decoder.getFrame() ) {
+            throw new IllegalArgumentException();
+        }
+
+        imageData.initImageData(width, height, false, false);
+
+        int [] argb = new int[ width * height ];
+
+        decoder.decodeFrame( argb );
+
+        loadRGB(imageData, argb);
+    }
     /**
      * Native function to load an <code>ImageData</code> from PNG data.
      *
