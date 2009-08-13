@@ -27,12 +27,64 @@
 
 #ifndef RECORD_BY_DSOUND
 
+static HWAVEIN g_hWI        = NULL;
+static BOOL    g_bCapturing = FALSE;
+
+static void CALLBACK callback_function( HWAVEIN hwi,
+                                        UINT uMsg,
+                                        DWORD dwInstance,
+                                        DWORD dwParam1,
+                                        DWORD dwParam2 )
+{
+}
+
 int initAudioCapture(recorder *c)
 {
+    MMRESULT      mmr;
+    WAVEFORMATEX  wfmt;
+    int rate, bits, channels;
+
+    if( NULL != g_hwi ) return 0;
+
+    rate     = c->rate;
+    channels = c->channels;
+    bits     = c->bits;
+
+    memset(&wfmt, 0, sizeof(wfmt));
+    wfmt.nSamplesPerSec  = rate;
+    wfmt.nChannels       = (WORD)channels;
+    wfmt.wBitsPerSample  = (WORD)bits;
+    wfmt.wFormatTag      = WAVE_FORMAT_PCM;
+    wfmt.cbSize          = 0;
+    wfmt.nBlockAlign     = (WORD)((wfmt.wBitsPerSample * wfmt.nChannels)/8);
+    wfmt.nAvgBytesPerSec = wfmt.nSamplesPerSec * wfmt.nBlockAlign;
+
+    mmr = waveInOpen( &g_hWI, WAVE_MAPPER, &wfmt, 
+                      (DWORD)callback_function, 0, CALLBACK_FUNCTION );
+
+    if( MMSYSERR_NOERROR != mmr )
+    {
+        return 0;
+    }
+
 }
 
 BOOL toggleAudioCapture(BOOL on)
 {
+    MMRESULT mmr;
+
+    if( !( on ^ g_bCapturing ) ) return on;
+
+    if( on )
+    {
+        mmr = waveInStart( g_hWI );
+    }
+    else
+    {
+        mmr = waveInStop( g_hWI );
+    }
+
+    return on;
 }
 
 int closeAudioCapture()
