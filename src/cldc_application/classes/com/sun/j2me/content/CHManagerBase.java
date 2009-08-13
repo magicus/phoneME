@@ -131,8 +131,8 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
 		AppProxyAgent.invokeNext();
     }
 
-	public int getPendingRequestsCount() {
-		return InvocationImpl.store.size();
+	public int getPendingRequestsCount( int suiteId ) {
+		return InvocationImpl.store.requestsCount( new CLDCAppID(suiteId, null) );
 	}
 	
     /**

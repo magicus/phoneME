@@ -1009,23 +1009,49 @@ KNIDECL(com_sun_j2me_content_InvocationStore_unblockWaitingThreads0) {
     KNI_ReturnVoid();
 }
 
-/**
- * Returns the size of the queue of pending invocations.
- * @return the size of the queue.
- */
+// int requestsCount0(int suiteId, String classname);
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_j2me_content_InvocationStore_size0) {
+KNIDECL(com_sun_j2me_content_InvocationStore_requestsCount0) {
+    /* Argument indices must match Java native method declaration */
+#define rqcSuiteIdArg 1
+#define rqcClassnameArg 2
+
     StoredLink* link;
-    int size = 0;
+    int count = 0;
+    int suiteId = KNI_GetParameterAsInt(rqcSuiteIdArg);
+    pcsl_string classname = PCSL_STRING_NULL_INITIALIZER;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(hclassname);
+    KNI_GetParameterAsObject(rqcClassnameArg, hclassname);
+    do { // fake loop
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(hclassname, &classname)) {
+            KNI_ThrowNew(jsropOutOfMemoryError, "InvocationStore_requestsCount0");
+            break;
+        }
+        /* Inspect the queue of Invocations and pick one that
+         * matches the suiteId and classname.
+         */
+        for (link = invocQueue; link != NULL; link = link->flink) {
+            if( suiteId == UNUSED_SUITE_ID ){
+                count += 2;
+            } else {
+                if( link->invoc->destinationApp.suiteID == suiteId ){
+                    if( pcsl_string_is_null(&classname) || pcsl_string_equals(&classname, &link->invoc->destinationApp.className) )
+                        count++;
+                }
+                if( link->invoc->invokingApp.suiteID == suiteId ){
+                    if( pcsl_string_is_null(&classname) || pcsl_string_equals(&classname, &link->invoc->invokingApp.className) )
+                        count++;
+                }
+            }
+        }
+        pcsl_string_free(&classname);
+    } while(0);
+    KNI_EndHandles();
 
-    /* Inspect the queue of Invocations and pick one that
-     * matches the suiteId and classname.
-     */
-    for (link = invocQueue; link != NULL; link = link->flink) {
-        size++;
-    }
-
-    KNI_ReturnInt(size);
+#undef rqcSuiteIdArg
+#undef rqcClassnameArg
+    KNI_ReturnInt(count);
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID

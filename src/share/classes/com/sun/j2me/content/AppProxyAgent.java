@@ -118,7 +118,8 @@ public abstract class AppProxyAgent implements AMSGate {
      */
     static public boolean invokeNext() {
     	if(Logger.LOGGER != null) {
-    		Logger.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + InvocationImpl.store.size());
+    		Logger.LOGGER.println( "InvocationStoreProxy.invokeNext() called. Invocations count = " + 
+    				InvocationImpl.store.requestsCount(AppProxy.createAppID()) / 2);
     		int tid = 0;
     		InvocationImpl invoc;
     		while( (invoc = InvocationImpl.store.getByTid(tid, true)) != null ){

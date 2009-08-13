@@ -331,8 +331,8 @@ public class InvocationStore implements StoreGate {
      * Return the number of invocations in the native queue.
      * @return the number of invocations in the native queue
      */
-    public int size() {
-        return size0();
+    public int requestsCount(ApplicationID appID) {
+        return requestsCount0(CLDCAppID.from(appID).suiteID, CLDCAppID.from(appID).className);
     }
 
     public void update(InvocationImpl invoc) {
@@ -450,10 +450,10 @@ public class InvocationStore implements StoreGate {
                                            boolean cleanup);
 
     /**
-     * Return the number of invocations in the native queue.
+     * Return the number of invocations in the native queue for the specified app.
      * @return the number of invocations in the native queue
      */
-    private static native int size0();
+    private static native int requestsCount0(int suiteId, String classname);
     
     private static native void update0(InvocationImpl invoc);
     private static native void resetFlags0(int tid);
