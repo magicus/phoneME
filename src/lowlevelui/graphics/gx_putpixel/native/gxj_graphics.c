@@ -624,12 +624,13 @@ gx_get_displaycolor(jint color) {
     if (pp_enable_32bit_mode) {
         newColor = color;
     } else {
-        newColor = GXJ_PIXELTOOPAQUEMIDP_16(GXJ_MIDPTOOPAQUEPIXEL_16(color));
+        newColor = 
+            GXJ_PIXELTOMIDP_16(GXJ_MIDPTOOPAQUEPIXEL_16(color), 0x00);
     }
 #elif ENABLE_32BITS_PIXEL_FORMAT
     int newColor = color;
 #else
-    int newColor = GXJ_PIXELTOOPAQUEMIDP(GXJ_MIDPTOOPAQUEPIXEL(color));
+    int newColor = GXJ_PIXELTOMIDP(GXJ_MIDPTOOPAQUEPIXEL(color), 0x00);
 #endif
 
     REPORT_CALL_TRACE1(LC_LOWUI, "gx_getDisplayColor(%d)\n", color);
