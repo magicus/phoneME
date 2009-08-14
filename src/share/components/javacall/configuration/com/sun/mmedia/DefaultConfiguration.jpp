@@ -299,6 +299,13 @@ public class DefaultConfiguration extends Configuration {
             nListProtocolsClose(hList);
         }
 
+        for (int i = protocols.size()-1; i>=0; i--) {
+            String str = (String)protocols.get(i);
+            if (str.length() > 5 && str.substring(0,5).equals("cdma-")) {
+                protocols.remove(i);
+            } 
+        }
+
         String[] ret = new String[protocols.size()];
         protocols.copyInto(ret);
         return ret;
