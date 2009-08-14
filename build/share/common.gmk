@@ -166,6 +166,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFPlayer.java \
+    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFDecoder.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/GIFImageDecoder.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java
 
