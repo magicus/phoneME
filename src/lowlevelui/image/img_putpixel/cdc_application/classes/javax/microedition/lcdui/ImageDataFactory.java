@@ -29,6 +29,9 @@ package javax.microedition.lcdui;
 import java.io.InputStream;
 import java.io.IOException;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import sun.misc.MIDPConfig;
 
 /**
@@ -61,6 +64,14 @@ class ImageDataFactory implements AbstractImageDataFactory {
      */
     private static final byte[] rawHeader = new byte[] {
          (byte)0x89, (byte)0x53, (byte)0x55, (byte)0x4E
+    };
+
+    private static final byte[] gif87aHeader = new byte[] {
+         'G', 'I', 'F', '8', '7', 'a'
+    };
+
+    private static final byte[] gif89aHeader = new byte[] {
+         'G', 'I', 'F', '8', '9', 'a'
     };
 
     /** Reference to a image cache. */
@@ -680,10 +691,95 @@ class ImageDataFactory implements AbstractImageDataFactory {
                                imageOffset, imageLength)) {
             // image type is RAW
             decodeRAW(imageData, imageBytes, imageOffset, imageLength);
+        } else if( headerMatch( gif87aHeader, imageBytes,
+                                imageOffset, imageLength ) ||
+                   headerMatch( gif89aHeader, imageBytes,
+                                imageOffset, imageLength ) ) {
+            //image type is GIF
+            decodeGIF(imageData, imageBytes, imageOffset, imageLength);
         } else {
             // does not match supported image type
             throw new IllegalArgumentException();
         }
+    }
+
+    /**
+     * Function to decode an <code>ImageData</code> from GIF data.
+     *
+     * @param imageData the <code>ImageData</code> to be populated
+     * @param imageBytes the array of image data in a supported image format
+     * @param imageOffset the offset of the start of the data in the array
+     * @param imageLength the length of the data in the array
+     */
+    private void decodeGIF(ImageData imageData,
+                            byte[] imageBytes,
+                            int imageOffset,
+                            int imageLength)
+    {
+        Integer iImageOffset = new Integer( imageOffset );
+        Integer iImageLength = new Integer( imageLength );
+
+        int width = 0;
+        int height = 0;
+        int[] argb = null;
+
+        try {
+            Class clazz = Class.forName("com.sun.mmedia.GIFDecoder");
+            Constructor constr = clazz.getConstructor(
+                    new Class[]{ byte [].class, int.class, int.class });
+            Object decoder = constr.newInstance( new Object [] { imageBytes,
+                                            iImageOffset, iImageLength } );
+            Boolean res = null;
+            Method mtParseHeader = clazz.getMethod("parseHeader", null );
+            res = ( Boolean )mtParseHeader.invoke(decoder, null);
+            if( !res.booleanValue() ) {
+                throw new IllegalArgumentException();
+            }
+
+            Method mtGetWidth = clazz.getMethod("getWidth", null );
+            Method mtGetHeight = clazz.getMethod("getHeight", null );
+
+            width = ( ( Integer )mtGetWidth.invoke(decoder, null) ).intValue();
+            height = ( ( Integer )mtGetHeight.invoke(decoder, null) ).intValue();
+
+            if (width <= 0 || height <= 0) {
+                throw new IllegalArgumentException();
+            }
+
+            Method mtGetFrame = clazz.getMethod( "getFrame", null );
+
+            res = ( Boolean )mtGetFrame.invoke( decoder, null );
+
+            if( !res.booleanValue() ) {
+                throw new IllegalArgumentException();
+            }
+
+            imageData.initImageData(width, height, false, false);
+
+            argb = new int[width * height];
+
+            Method mtDecodeFrame = clazz.getMethod("decodeFrame",
+                    new Class [] { int [].class });
+
+            mtDecodeFrame.invoke(decoder, new Object [] { argb } );
+
+        } catch (NoSuchMethodException ex) {
+            throw new IllegalArgumentException();
+        } catch (SecurityException ex) {
+            throw new IllegalArgumentException();
+        } catch (ClassNotFoundException ex) {
+            throw new IllegalArgumentException();
+        } catch (InstantiationException ex) {
+            throw new IllegalArgumentException();
+        } catch (IllegalAccessException ex) {
+            throw new IllegalArgumentException();
+        } catch (ClassCastException ex) {
+            throw new IllegalArgumentException();
+        } catch (InvocationTargetException ex) {
+            throw new IllegalArgumentException();
+        }
+        
+        loadRGB(imageData, argb);
     }
 
     /**
