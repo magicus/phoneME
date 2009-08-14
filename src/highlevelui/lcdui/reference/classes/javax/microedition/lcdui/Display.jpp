@@ -855,10 +855,8 @@ public class Display {
         Displayable temp = foregroundController.registerDisplay(displayId,
                            owner.getClass().getName());
         if (temp == null) {
-            Displayable a = new Form(null);
-            a.isInFullScreenMode = true;
-            initialDisplayable = a.displayableLF;
-         } else {
+            initialDisplayable = new Form(null).displayableLF;
+        } else {
             initialDisplayable = temp.displayableLF;
         }
 
