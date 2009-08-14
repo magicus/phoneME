@@ -1730,22 +1730,39 @@ iterateHeapCallBack(CVMObject* obj, CVMClassBlock* cb,
     };
     CVMGCOptions *gcOptsPtr = &gcOpts;
 
-    /* Here we might want to check if CVMcbClassLoader(cb) is the same
-     * as the class loader passed in data, and perform different actions
-     * for application objects, and objects of classes not loaded by the
-     * application's class loader.
-     * Nullifying all refernces in application classes, is not safe!
-     * Nullifying references in none application objects is more risky
-     * than nullifying references in application objects, but provides
-     * better protection against system memory leak bugs. For now, we
-     * nullify all heap references to application objects.
-     */
-    CVMobjectWalkRefsWithSpecialHandling(ee, gcOptsPtr, obj,
-                                         CVMobjectGetClassWord(obj), {
-        if (*refPtr != 0) {
-            (*nullifyRefCallBack)(refPtr, data);
-        }
-    }, nullifyRefCallBack, data);
+    CVMClassLoaderICell* currLoader = CVMcbClassLoader(cb);
+    CVMClassLoaderICell* deadLoader = (CVMClassLoaderICell*)data;
+    CVMObject* deadLoaderObj;
+    CVMObject* currLoaderObj;
+    if (deadLoader != NULL) {
+        deadLoaderObj = (CVMObject*)deadLoader->ref_DONT_ACCESS_DIRECTLY;
+    }
+    if (currLoader != NULL) {
+        currLoaderObj = (CVMObject*)currLoader->ref_DONT_ACCESS_DIRECTLY;
+    }
+    if (currLoader != NULL && currLoaderObj == deadLoaderObj) {
+        /* Nullifying all refernces in application classes, is not safe!
+	 * so we only nullify refernces to application object.
+	 */
+        CVMobjectWalkRefsWithSpecialHandling(ee, gcOptsPtr, obj,
+	        CVMobjectGetClassWord(obj), {
+            if (*refPtr != 0) {
+                (*nullifyRefCallBack)(refPtr, data);
+            }
+        }, nullifyRefCallBack, data);
+    } else {
+        /* Nullifying references in non-application objects is more risky
+	 * than nullifying references in application objects, but provides
+	 * better protection against system memory leak bugs. We nullify
+	 * heap references to application objects only, of course.
+        CVMobjectWalkRefsWithSpecialHandling(ee, gcOptsPtr, obj,
+	        CVMobjectGetClassWord(obj), {
+            if (*refPtr != 0) {
+                (*nullifyRefCallBack)(refPtr, data);
+            }
+        }, nullifyRefCallBack, data);
+	 */
+    }
     return CVM_TRUE;
 }
 
@@ -1779,6 +1796,161 @@ scanClassCallBack(CVMExecEnv* ee, CVMClassBlock* cb, void* data)
         */
         CVMscanClassIfNeeded(ee, cb, nullifyRefCallBack, data);
     }
+}
+
+typedef enum {
+  CVM_THREAD_TYPE_UNKNOWN = 0,
+  CVM_THREAD_TYPE_WAITING_SAFE = 1,
+  CVM_THREAD_TYPE_SLEEPING_SAFE = 2,
+  CVM_THREAD_TYPE_RUNNING_SAFE = 3,
+  CVM_THREAD_TYPE_WAITING_JNI = 4,
+  CVM_THREAD_TYPE_SLEEPING_JNI = 5,
+  CVM_THREAD_TYPE_WAITING_JAVA = 6,
+  CVM_THREAD_TYPE_SLEEPING_JAVA = 7,
+  CVM_THREAD_TYPE_RUNNING_JAVA = 8,
+  CVM_THREAD_TYPE_UNSAFE = 9
+} CVMThreadType;
+
+#define MethodIsSleep(mb) (mb == CVMglobals.java_lang_Thread_sleep0 || \
+                           mb == CVMglobals.java_lang_Thread_sleep)
+#define MethodIsWait(mb)  (mb == CVMglobals.java_lang_Object_wait0 || \
+                           mb == CVMglobals.java_lang_Object_wait)
+#define ThreadCheck(mb)  (mb == CVMglobals.java_lang_Thread_run || \
+                          mb == CVMglobals.java_lang_Thread_startup)
+
+CVMThreadType
+CVMinterruptibleFrameType(CVMExecEnv *ee, CVMFrame* frame, CVMStackChunk* startChunk,
+                          CVMClassLoaderICell* deadLoader, CVMThreadType status)
+{
+  //char           buf[256];
+  //CVMframe2string(frame, buf, buf + sizeof(buf));
+  //CVMconsolePrintf("    %s ... 0x%x\n", buf, frame->mb);
+
+    if (frame->type == CVM_FRAMETYPE_FREELIST && frame->mb != NULL) {
+        if (status == CVM_THREAD_TYPE_UNKNOWN) {
+	  if (MethodIsSleep(frame->mb)) {
+                return CVM_THREAD_TYPE_SLEEPING_JNI;
+	  } else if (MethodIsWait(frame->mb)) {
+                return CVM_THREAD_TYPE_WAITING_JNI;
+            }
+        } else {
+            return CVM_THREAD_TYPE_UNSAFE;
+        }
+    } else if (frame->type == CVM_FRAMETYPE_JAVA) {
+        CVMClassLoaderICell* currLoader;
+        CVMObject* deadLoaderObj;
+        CVMObject* currLoaderObj;
+
+        currLoader = CVMcbClassLoader(CVMmbClassBlock(frame->mb));
+
+	//CVMD_gcSafeCheckPoint(ee, {}, {});
+        deadLoaderObj = (CVMObject*) CVMID_icellDirect(ee, deadLoader);
+        currLoaderObj = (CVMObject*) (currLoader != NULL ? CVMID_icellDirect(ee, currLoader) : NULL);
+
+        if (currLoaderObj == deadLoaderObj) {
+
+            if (status == CVM_THREAD_TYPE_UNKNOWN) {
+                return CVM_THREAD_TYPE_RUNNING_JAVA;
+            } else {
+                return status;
+            }
+        } else if (status == CVM_THREAD_TYPE_WAITING_JNI && MethodIsWait(frame->mb)) {
+            return CVM_THREAD_TYPE_WAITING_JAVA;
+        } else if (status == CVM_THREAD_TYPE_SLEEPING_JNI && MethodIsSleep(frame->mb)) {
+            return CVM_THREAD_TYPE_SLEEPING_JAVA;
+        } else if (ThreadCheck(frame->mb)) {
+            if (status == CVM_THREAD_TYPE_WAITING_JAVA
+                || status == CVM_THREAD_TYPE_WAITING_JNI) {
+                return CVM_THREAD_TYPE_WAITING_SAFE;
+            } else if (status == CVM_THREAD_TYPE_SLEEPING_JAVA
+                || status == CVM_THREAD_TYPE_SLEEPING_JNI) {
+                return CVM_THREAD_TYPE_SLEEPING_SAFE;
+            } else {
+                return CVM_THREAD_TYPE_RUNNING_SAFE;
+            }
+        }
+    }
+    return CVM_THREAD_TYPE_UNSAFE;
+}
+
+static CVMBool
+CVMisInterruptibleFrames(CVMExecEnv *ee, CVMStack* s, CVMClassLoaderICell* deadLoader)
+{
+    CVMStackWalkContext c;
+    CVMFrame* frame;
+    CVMThreadType status = CVM_THREAD_TYPE_UNKNOWN;
+
+    CVMstackwalkInit(s, &c);
+    frame = c.frame;
+    do {
+      status = CVMinterruptibleFrameType(ee, frame, c.chunk, deadLoader, status);
+
+        // Break if it's a WAITING|SLEEPING|RUNNING APP THREAD
+        if (status == CVM_THREAD_TYPE_WAITING_SAFE
+            || status == CVM_THREAD_TYPE_SLEEPING_SAFE 
+            || status == CVM_THREAD_TYPE_RUNNING_SAFE) return CVM_TRUE;
+
+        // If we already know the thread can't be interrupted, abort the scan.
+        if (status == CVM_THREAD_TYPE_UNSAFE) return CVM_FALSE;
+
+        CVMstackwalkPrev(&c);
+        frame = c.frame;
+    } while (frame != 0);
+    return CVM_FALSE;
+}
+
+
+void
+CVMinterruptAllAppThreads(CVMClassLoaderICell* deadLoader)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    if(deadLoader == NULL) {
+        return;
+    }
+
+    if (!CVMsysMutexTryLock(ee, &CVMglobals.threadLock)) {
+#ifdef CVM_DEBUG
+        CVMconsolePrintf("Cannot acquire needed locks without blocking");
+#endif
+        return;
+    }
+
+#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
+    CVM_WALK_ALL_THREADS(ee, threadEE, {
+        if (CVMisInterruptibleFrames(ee, &threadEE->interpreterStack,deadLoader)) {
+            CVMconsolePrintf("Leaking Application Thread %d: ee 0x%x priority %d tick %d\n",
+                        threadEE->threadID, threadEE, threadEE->priority,
+                        threadEE->tickCount);
+	    if (threadEE != NULL) {
+	      threadEE->deadLoader = deadLoader;
+	      if (!threadEE->interruptsMasked) {
+		threadEE->threadState |= CVM_THREAD_INTERRUPTED;
+		CVMthreadInterruptWait(CVMexecEnv2threadID(threadEE));
+	      } else {
+		threadEE->maskedInterrupt = CVM_TRUE;
+	      }
+	    }
+        }
+    });
+#else
+    CVM_WALK_ALL_THREADS(ee, threadEE, {
+        if (CVMisInterruptibleFrames(ee, &threadEE->interpreterStack,deadLoader)) {
+            CVMconsolePrintf("Leaking Application Thread %d: ee 0x%x priority %d tick %d\n",
+                        threadEE->threadID, threadEE, threadEE->priority,
+                        threadEE->tickCount);
+	    if (threadEE != NULL) {
+	      threadEE->deadLoader = deadLoader;
+	      if (!threadEE->interruptsMasked) {
+		CVMthreadInterruptWait(CVMexecEnv2threadID(threadEE));
+	      } else {
+		threadEE->maskedInterrupt = CVM_TRUE;
+	      }
+	    }
+        }
+    });
+#endif
+
+    CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
 }
 
 int nullifyRefs = 0;
@@ -1824,7 +1996,7 @@ CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
     CVMClassLoaderICell* deadLoader = (CVMClassLoaderICell*)&arguments[0].j.r;
 
     if (nullifyRefs) {
-
+        CVMinterruptAllAppThreads(deadLoader);
 #ifdef CVM_JIT
         CVMD_gcSafeExec(ee, {
             CVMsysMutexLock(ee, &CVMglobals.jitLock);

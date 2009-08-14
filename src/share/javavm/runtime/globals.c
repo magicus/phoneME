@@ -483,6 +483,56 @@ static const CVMGlobalMethodBlockEntry globalMethodBlocks[] = {
         /* NOTE: java.lang.Thread has a static initializer.  The clinit
                  will be done explicitly in JNI_CreateJavaVM(). */
     },
+    /* java.lang.Thread.sleep() */
+    {
+	CVM_TRUE,  /* static */
+	CVMsystemClass(java_lang_Thread),
+        "sleep", "(J)V",
+        &CVMglobals.java_lang_Thread_sleep,
+        /* NOTE: java.lang.Thread has a static initializer.  The clinit
+                 will be done explicitly in JNI_CreateJavaVM(). */
+    },
+    /* java.lang.Thread.sleep0() */
+    {
+	CVM_TRUE,  /* static */
+	CVMsystemClass(java_lang_Thread),
+        "sleep0", "(J)V",
+        &CVMglobals.java_lang_Thread_sleep0,
+        /* NOTE: java.lang.Thread has a static initializer.  The clinit
+                 will be done explicitly in JNI_CreateJavaVM(). */
+    },
+    /* java.lang.Thread.run() */
+    {
+	CVM_FALSE,  /* nonstatic */
+	CVMsystemClass(java_lang_Thread),
+        "run", "()V",
+        &CVMglobals.java_lang_Thread_run,
+        /* NOTE: java.lang.Thread has a static initializer.  The clinit
+                 will be done explicitly in JNI_CreateJavaVM(). */
+    },
+    /* java.lang.Thread.startup() */
+    {
+	CVM_FALSE,  /* nonstatic */
+	CVMsystemClass(java_lang_Thread),
+        "startup", "(Z)V",
+        &CVMglobals.java_lang_Thread_startup,
+        /* NOTE: java.lang.Thread has a static initializer.  The clinit
+                 will be done explicitly in JNI_CreateJavaVM(). */
+    },
+    /* java.lang.Object.wait() */
+    {
+	CVM_FALSE,  /* nonstatic */
+	CVMsystemClass(java_lang_Object),
+        "wait", "(J)V",
+        &CVMglobals.java_lang_Object_wait0,
+    },
+    /* java.lang.Object.wait() */
+    {
+	CVM_FALSE,  /* nonstatic */
+	CVMsystemClass(java_lang_Object),
+        "wait", "()V",
+        &CVMglobals.java_lang_Object_wait,
+    },
 
 #ifdef CVM_AOT
     /* sun.misc.Warmup.runit() */

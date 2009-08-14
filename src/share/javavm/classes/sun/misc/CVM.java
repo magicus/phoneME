@@ -1006,7 +1006,6 @@ public final class CVM {
 
     public static void nullifyRefsToDeadApp() {
         if (!deadLoaders.isEmpty()) {
-            System.out.println("************** nullify refs to app ************");
 	    java.lang.ref.Reference clRef = (java.lang.ref.Reference) deadLoaders.remove(0);
 	    if (clRef != null) {
 		ClassLoader cl = (ClassLoader) clRef.get();

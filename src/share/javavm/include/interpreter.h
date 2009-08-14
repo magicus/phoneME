@@ -245,6 +245,12 @@ struct CVMExecEnv {
     CVMLVMExecEnv lvmEE;	/* Info on LVM to which this EE belongs */
 #endif /* %end lvm */
 
+#if 1
+  /* IGNORE EXCEPTION HANDLERS FOR DEAD CLASSES */
+    CVMClassLoaderICell* deadLoader;
+#endif
+
+
 #ifdef CVM_TRACE_ENABLED
 #ifdef CVM_PROFILE_METHOD
     CVMInt64 t0;

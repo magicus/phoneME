@@ -420,6 +420,13 @@ struct CVMGlobalState {
     CVMMethodBlock* java_lang_Thread_initAttachedThread;
     CVMMethodBlock* java_lang_Thread_nextThreadNum;
 
+    CVMMethodBlock* java_lang_Thread_sleep;
+    CVMMethodBlock* java_lang_Thread_sleep0;
+    CVMMethodBlock* java_lang_Thread_run;
+    CVMMethodBlock* java_lang_Thread_startup;
+    CVMMethodBlock* java_lang_Object_wait;
+    CVMMethodBlock* java_lang_Object_wait0;
+
     /*
      * Other stuff needed for class loading.
      */

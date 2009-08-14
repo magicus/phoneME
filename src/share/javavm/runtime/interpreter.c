@@ -1063,6 +1063,7 @@ CVMFrameGCScannerFunc * const CVMframeScanners[CVM_NUM_FRAMETYPES] =
 #endif
 };
 
+
 /*
  * Return the pc of the exception handler for the specified exception.
  */
@@ -1073,8 +1074,27 @@ CVMgcSafeFindPCForException(CVMExecEnv* ee, CVMFrameIterator* iter,
 {
     CVMMethodBlock* mb = CVMframeIterateGetMb(iter);
 
+#if 1
+    /* IGNORE EXCEPTION HANDLERS FOR DEAD CLASSES */
+    CVMBool onlyCatchFinal = CVM_FALSE;
+#endif
+
     CVMassert(CVMD_isgcSafe(ee));
     CVMassert(mb != NULL);
+
+#if 1
+    /* IGNORE EXCEPTION HANDLERS FOR DEAD CLASSES */
+    if (ee->deadLoader != NULL) {
+      // For now, if thread marked, then ignore exception in all mb,
+      // assuming only "safe" threads are marked.
+      // TBD: only ignore for appliation classes, so that we can
+      // interrupt all threads with an application starter class.
+      if (mb != CVMglobals.java_lang_Thread_startup) {
+  	  CVMconsolePrintf("Ignore exception handlers: mb: 0x%x\tcb: 0x%x\n", mb, CVMmbClassBlock(mb));
+	  onlyCatchFinal = CVM_TRUE;
+      }
+    }
+#endif
 
 #ifdef CVM_LVM /* %begin lvm */
     /* LVM prohibits user code to execute any exception handler in 
@@ -1123,7 +1143,10 @@ CVMgcSafeFindPCForException(CVMExecEnv* ee, CVMFrameIterator* iter,
 		/* Special note put in for finally.  Always succeed. */
 		if (catchtype == 0)
 		    goto found;
-
+#if 1
+    /* IGNORE EXCEPTION HANDLERS FOR DEAD CLASSES */
+		else if(onlyCatchFinal) continue;
+#endif
 		/* See if the class of the exception that the handler catches
 		 * is the object's class or one of its superclasses.
 		 */
