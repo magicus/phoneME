@@ -108,7 +108,7 @@ static javacall_result recorder_create(int appId, int playerId,
 
     newHandle->lengthLimit   = INT_MAX;
     newHandle->recordLen     = 0;
-    newHandle->rsl           = 0;
+    newHandle->rsl           = FALSE;
     newHandle->recInitDone   = FALSE;
     newHandle->recordData    = NULL;
     newHandle->fname         = NULL;
@@ -283,7 +283,7 @@ static javacall_result recorder_start_recording(javacall_handle handle)
             whl = create_wavhead( h, b, 256 );
             fwrite(b, whl, 1, h->recordData);
 
-            h->recInitDone = ( 0 != initAudioCapture(h) );
+            h->recInitDone = initAudioCapture(h);
 
             if( h->recInitDone )
             {

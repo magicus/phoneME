@@ -27,7 +27,11 @@
 
 #include "multimedia.h"
 
-#define ENV_REC_SAMPLETIME 20
+#define ENV_REC_SAMPLETIME 200
+
+//#define     RECORD_BY_DSOUND // uncomment to use DirectSound-based
+                               // implementation instead of winapi-based
+
 
 typedef struct {
     int     isolateId;
@@ -40,23 +44,20 @@ typedef struct {
     BOOL    recInitDone;
 
     int     lengthLimit;
-    int     rsl;
+    BOOL    rsl;
 
     FILE*   recordData;
     char*   fname;
     int     recordLen;
 } recorder;
 
-#define     //RECORD_BY_DSOUND // uncomment to use DirectSound-based
-                               // implementation instead of winapi-based
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int  initAudioCapture(recorder* cap);
+BOOL initAudioCapture(recorder* cap);
 BOOL toggleAudioCapture(BOOL on);
-int  closeAudioCapture();
+void closeAudioCapture();
 
 void sendRSL(int appId, int playerId, long duration);
 int  create_wavhead(recorder* h, char *buffer, int buflen);

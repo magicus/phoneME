@@ -27,28 +27,99 @@
 
 #ifndef RECORD_BY_DSOUND
 
-static HWAVEIN g_hWI        = NULL;
-static BOOL    g_bCapturing = FALSE;
+#define HDRS_COUNT      8
 
-static void CALLBACK callback_function( HWAVEIN hwi,
-                                        UINT uMsg,
-                                        DWORD dwInstance,
-                                        DWORD dwParam1,
-                                        DWORD dwParam2 )
+static HWAVEIN g_hWI         = NULL;
+static BOOL    g_bCapturing  = FALSE;
+static HANDLE  g_hReadyEvent = NULL;
+static HANDLE  g_hRecThread  = NULL;
+static BOOL    g_bTerminate  = FALSE;
+
+static WAVEHDR g_Hdrs[ HDRS_COUNT ];
+
+static DWORD WINAPI rec_thread( void* arg )
 {
+    recorder* h = (recorder*)arg;
+    DWORD     r;
+    WAVEHDR*  hdr;
+    int       len;
+    MMRESULT  mmr;
+    int       n;
+
+    do
+    {
+        r = WaitForSingleObject( g_hReadyEvent, 50 );
+
+        if( WAIT_OBJECT_0 == r )
+        {
+            for( n = 0; n < HDRS_COUNT; n++ )
+            {
+                if( 0 != ( g_Hdrs[ n ].dwFlags & WHDR_DONE ) ) break;
+            }
+
+            if( n < HDRS_COUNT )
+            {
+                hdr = &( g_Hdrs[ n ] );
+                mmr = waveInUnprepareHeader( g_hWI, hdr, sizeof( WAVEHDR ) );
+                len = hdr->dwBytesRecorded;
+
+                if( !h->rsl && !g_bTerminate )
+                {
+                    if( INT_MAX != h->lengthLimit && h->recordLen + len >= h->lengthLimit )
+                    {
+                        len = h->lengthLimit - h->recordLen;
+                    }
+
+                    len = fwrite(hdr->lpData, 1, len, h->recordData);
+                    h->recordLen += len;
+
+                    if( INT_MAX != h->lengthLimit && h->recordLen >= h->lengthLimit )
+                    {
+                        int bytesPerMilliSec = (h->rate * 
+                            h->channels * (h->bits >> 3)) / 1000;
+
+                        int ms = bytesPerMilliSec != 0 
+                            ? h->recordLen / bytesPerMilliSec 
+                            : 0;
+
+                        sendRSL(h->isolateId, h->playerId, ms);
+                        h->rsl = TRUE;
+                    }
+                    else
+                    {
+                        hdr->dwFlags         = 0;
+                        hdr->dwBytesRecorded = 0;
+
+                        mmr = waveInPrepareHeader( g_hWI, hdr, sizeof( WAVEHDR ) );
+                        mmr = waveInAddBuffer( g_hWI, hdr, sizeof( WAVEHDR ) );
+                    }
+                }
+            }
+        }
+
+    } while( !g_bTerminate && !h->rsl );
+
+    return 0;
 }
 
-int initAudioCapture(recorder *c)
+BOOL initAudioCapture(recorder *h)
 {
     MMRESULT      mmr;
     WAVEFORMATEX  wfmt;
-    int rate, bits, channels;
+    int           i;
+    int           rate, bits, channels;
+    int           block_size; // = 8192;
 
-    if( NULL != g_hwi ) return 0;
+    if( NULL != g_hWI ) return FALSE;
 
-    rate     = c->rate;
-    channels = c->channels;
-    bits     = c->bits;
+    if( NULL == g_hReadyEvent )
+        g_hReadyEvent = CreateEvent( NULL, FALSE, FALSE, NULL );
+
+    rate     = h->rate;
+    channels = h->channels;
+    bits     = h->bits;
+
+    block_size = ENV_REC_SAMPLETIME * (rate * channels * (bits >> 3)) / 1000;
 
     memset(&wfmt, 0, sizeof(wfmt));
     wfmt.nSamplesPerSec  = rate;
@@ -60,13 +131,27 @@ int initAudioCapture(recorder *c)
     wfmt.nAvgBytesPerSec = wfmt.nSamplesPerSec * wfmt.nBlockAlign;
 
     mmr = waveInOpen( &g_hWI, WAVE_MAPPER, &wfmt, 
-                      (DWORD)callback_function, 0, CALLBACK_FUNCTION );
+                      (DWORD_PTR)g_hReadyEvent, 0, CALLBACK_EVENT );
 
     if( MMSYSERR_NOERROR != mmr )
     {
-        return 0;
+        return FALSE;
     }
 
+    memset( g_Hdrs, 0, sizeof( g_Hdrs ) );
+
+    g_bTerminate = FALSE;
+    g_hRecThread = CreateThread( NULL, 0, rec_thread, h, 0, NULL);
+
+    for( i = 0; i < HDRS_COUNT; i++ )
+    {
+        g_Hdrs[ i ].lpData = MALLOC( block_size );
+        g_Hdrs[ i ].dwBufferLength = block_size;
+        mmr = waveInPrepareHeader( g_hWI, &( g_Hdrs[i] ), sizeof( WAVEHDR ) );
+        mmr = waveInAddBuffer( g_hWI, &( g_Hdrs[i] ), sizeof( WAVEHDR ) );
+    }
+
+    return TRUE;
 }
 
 BOOL toggleAudioCapture(BOOL on)
@@ -87,8 +172,28 @@ BOOL toggleAudioCapture(BOOL on)
     return on;
 }
 
-int closeAudioCapture()
+void closeAudioCapture()
 {
+    int      i;
+    MMRESULT mmr;
+
+    g_bTerminate = TRUE;
+
+    WaitForSingleObject( g_hRecThread, INFINITE );
+    g_hRecThread = NULL;
+
+    mmr = waveInReset( g_hWI );
+    mmr = waveInClose( g_hWI );
+    g_hWI = NULL;
+
+    for( i = 0; i < HDRS_COUNT; i++ )
+    {
+        FREE( g_Hdrs[ i ].lpData );
+        g_Hdrs[ i ].dwBufferLength = 0;
+    }
+
+    CloseHandle( g_hReadyEvent );
+    g_hReadyEvent = NULL;
 }
 
 #endif /* RECORD_BY_DSOUND */

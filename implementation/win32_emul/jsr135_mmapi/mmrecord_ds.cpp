@@ -38,7 +38,7 @@ static LPDIRECTSOUNDCAPTUREBUFFER  captureBuffer = NULL;
 static DWORD                       captureSize;
 static DWORD                       captureOffset;
 
-int initAudioCapture(recorder *c)
+BOOL initAudioCapture(recorder *c)
 {
     DSCBUFFERDESC cap_bdesc;
     WAVEFORMATEX  wfmt;
@@ -46,7 +46,7 @@ int initAudioCapture(recorder *c)
     int blockSize;
     int rate, bits, channels;
 
-    if(captureBuffer != NULL) return 0;
+    if(captureBuffer != NULL) return FALSE;
 
     rate     = c->rate;
     channels = c->channels;
@@ -66,8 +66,8 @@ int initAudioCapture(recorder *c)
     ZeroMemory(&cap_bdesc, sizeof(cap_bdesc));
     cap_bdesc.dwSize = sizeof(cap_bdesc);
     cap_bdesc.dwFlags = 0;
-    // 20msec * 10 = 200 milli Second buffer
-    captureSize = cap_bdesc.dwBufferBytes = blockSize * 10;
+    // 200 milli Second buffer
+    captureSize = cap_bdesc.dwBufferBytes = blockSize;
     cap_bdesc.lpwfxFormat = (WAVEFORMATEX *)&wfmt;
     captureOffset = 0;
 
@@ -75,7 +75,7 @@ int initAudioCapture(recorder *c)
     if(r != DS_OK)
     {
         printf("No audio capture device found.\n");
-        return 0;
+        return FALSE;
     }
 
     r = dsCap->CreateCaptureBuffer(&cap_bdesc, &captureBuffer, NULL);
@@ -84,7 +84,7 @@ int initAudioCapture(recorder *c)
     DSThread = CreateThread(NULL, 0, DirectSoundCaptureThread, c, 0, NULL);
     assert(SetThreadPriority(DSThread, THREAD_PRIORITY_HIGHEST));
 
-    return 1;
+    return TRUE;
 }
 
 BOOL toggleAudioCapture(BOOL on)
@@ -168,7 +168,7 @@ DWORD WINAPI DirectSoundCaptureThread(void *parms)
                     : 0;
 
                 sendRSL(h->isolateId, h->playerId, ms);
-                h->rsl = 1;
+                h->rsl = TRUE;
             }
             else if((INT_MAX != h->lengthLimit) && 
                 ((wlen + h->recordLen) > h->lengthLimit))
@@ -207,7 +207,7 @@ DWORD WINAPI DirectSoundCaptureThread(void *parms)
 }  
 
 
-int closeAudioCapture()
+void closeAudioCapture()
 {
     DWORD es = 0;
 
@@ -231,8 +231,6 @@ int closeAudioCapture()
     dsCap->Release();
     captureBuffer = NULL;
     dsCap = NULL;
-
-    return 0;
 }
 
 #endif // RECORD_BY_DSOUND
