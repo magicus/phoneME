@@ -116,6 +116,7 @@ public class DefaultConfiguration extends Configuration {
     };
 
     private static boolean isRtpContent(String mime) {
+        // #ifdef USE_RTSP
         String uMime = mime.toUpperCase();
         for (int i = 0; i < RTP_CONTENT_TYPES.length; i++) {
             String uRtpType = RTP_CONTENT_TYPES[i].toUpperCase();
@@ -123,6 +124,7 @@ public class DefaultConfiguration extends Configuration {
                 return true;
             }
         }
+        // #endif
         return false;
     }
 
