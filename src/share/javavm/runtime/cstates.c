@@ -72,6 +72,12 @@ CVMcsDestroy(CVMCState *cs)
     CVMsysMutexDestroy(&cs->mutex);
 }
 
+#ifdef CVM_DEBUG_INCONSISTENT_THREADS
+#define CVM_SAFE_TRANSITION_TIMEOUT CVMint2Long(5 * 1000)
+#else
+#define CVM_SAFE_TRANSITION_TIMEOUT CVMlongConstZero()
+#endif
+
 /*
  * Bring all other threads to a consistent state.
  */
@@ -171,6 +177,35 @@ CVMcsReachConsistentState(CVMExecEnv *ee, CVMCStateID csID)
 	    {
 		interrupted = CVM_TRUE;
 	    }
+
+#ifdef CVM_DEBUG_DUMPSTACK
+#define CVM_DUMP_STACK_EE(ee) \
+    CVMdumpStack(&(ee)->interpreterStack, 0, 0, 0)
+#else
+#define CVM_DUMP_STACK_EE(ee)
+#endif
+
+#ifdef CVM_DEBUG_INCONSISTENT_THREADS
+        CVM_WALK_ALL_THREADS(ee, targetEE, {
+	    if (targetEE != ee) {
+		CVMTCState *tcs = CVM_TCSTATE(targetEE, csID);
+		CVMUint32 suspended =
+		    targetEE->threadState & CVM_THREAD_SUSPENDED;
+	        tcs->wasConsistent = CVMcsIsConsistent(tcs);
+	        if (suspended) {
+	            CVMconsolePrintf("<%d> CS<%d>: suspended thread <%d>\n",
+		        ee->threadID, cs->count, targetEE->threadID);
+                }
+                if (!tcs->wasConsistent) {
+	            CVMconsolePrintf("<%d> CS<%d>: inconsistent thread <%d> in %C.%M\n",
+		        ee->threadID, cs->count, targetEE->threadID,
+			CVMeeGetCurrentFrameCb(ee), CVMeeGetCurrentFrameMb(ee));
+		    CVM_DUMP_STACK_EE(targetEE);
+                }
+            }
+	});
+#endif
+
 	}
 	if (interrupted) {
 	    CVMtraceCS(("<%d> CS<%d>: interrupted!\n",

@@ -2054,6 +2054,8 @@ CVMclassSetSystemClassLoader(CVMExecEnv* ee, jobject loader);
 /* Purpose: Checks to see if the specified pointer is a valid classblock. */
 CVMBool CVMclassIsValidClassBlock(CVMExecEnv *ee, CVMClassBlock *cb);
 
+CVMClassBlock * CVMcbContainingStaticRef(CVMExecEnv *ee, CVMClassBlock *cb);
+
 #endif
 
 #ifdef CVM_CLASSLIB_JCOV

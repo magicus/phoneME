@@ -1099,7 +1099,7 @@ CVMformatStringVaList(char* buf, size_t bufSize, const char* format,
     }
 
     if (result < 0) {
-	CVMassert(CVM_FALSE);
+	//CVMassert(CVM_FALSE);
 	return 0;
     } else {
 	return length;

@@ -472,6 +472,64 @@ CVMBool CVMclassIsValidClassBlock(CVMExecEnv *ee, CVMClassBlock *cb)
     return data.found;
 }
 
+
+static void
+CVMcbContainingStaticRefCallBack(CVMExecEnv *ee, CVMClassBlock *cb,
+                                      void *data)
+{
+    CVMClassIsValidClassData *ivcdata = (CVMClassIsValidClassData *) data;
+    if (ivcdata->cb == cb) {
+		// Given addr is that of a class block
+        ivcdata->found = CVM_TRUE;
+	} else {
+
+		// Scan classblock fields for static references, to see if
+		// there's a match for the given address.
+        CVMInt32 i;
+        for (i = CVMcbFieldCount(cb); --i >= 0; ) {
+            const CVMFieldBlock *fb = CVMcbFieldSlot(cb, i);
+            CVMUint32 fieldOffset; /* word offset for next field */
+            CVMClassTypeID fieldType;
+
+            if (!CVMfbIs(fb, STATIC)) {
+                continue;
+            }
+
+            fieldOffset = CVMfbOffset(fb);
+
+            fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
+            if (CVMtypeidFieldIsRef(fieldType)) {
+				CVMObject *value = *(CVMObject **)&CVMfbStaticField(ee, fb).r;
+				if ((void*) value == (void*) ivcdata->cb) {
+					ivcdata->found = CVM_TRUE;
+					ivcdata->cb = cb;
+					break;
+				}
+            }
+		}
+	}
+}
+
+CVMClassBlock * CVMcbContainingStaticRef(CVMExecEnv *ee, CVMClassBlock *cb)
+{
+    CVMClassIsValidClassData data;
+    data.cb = cb;
+    data.found = CVM_FALSE;
+
+    /* Iterate over all the romized classes first: */
+    CVMpreloaderIterateAllClasses(ee, CVMcbContainingStaticRefCallBack,
+                                  (void *) &data);
+
+    /* Iterate over all dynamically loaded classes if necessary: */
+    if (!data.found) {
+        CVMclassIterateDynamicallyLoadedClasses(ee,
+                    CVMcbContainingStaticRefCallBack, (void *) &data);
+    }
+	if (data.found) {
+		return data.cb;
+	}
+    return NULL;
+}
 /*===========================================================================*/
 
 #endif

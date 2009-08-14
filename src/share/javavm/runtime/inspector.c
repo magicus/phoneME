@@ -280,6 +280,60 @@ CVMgcDumpReferencesObjectCallback(CVMObject *obj, CVMClassBlock *cb,
     return CVM_TRUE;
 }
 
+typedef struct CVMReferenceCollection CVMReferenceCollection;
+struct CVMReferenceCollection {
+    void** references;
+    int next;
+    int current;
+    int size;
+};
+static CVMReferenceCollection* refCollection = NULL;
+
+static CVMBool
+CVMgcFullDumpReferencesObjectCallback(CVMObject *obj, CVMClassBlock *cb,
+                                  CVMUint32 size, void *data)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    CVMObject *targetObj = (CVMObject *) data;
+    CVMGCOptions gcOpts = {
+	/* isUpdatingObjectPointers */ CVM_FALSE,
+        /* discoverWeakReferences   */ CVM_FALSE,
+        /* isProfilingPass          */ CVM_TRUE
+    };
+    CVMGCOptions *gcOptsPtr = &gcOpts;
+
+    CVMobjectWalkRefsWithSpecialHandling(ee, gcOptsPtr, obj,
+                                         CVMobjectGetClassWord(obj), {
+        if (*refPtr == targetObj) {
+            int i = 0;
+	    char buf[50];
+	    char* tmp = buf;
+	    CVMclassname2String(CVMcbClassName(cb), tmp, 49);
+	    if (strcmp(tmp, "java.lang.ref.WeakReference") != 0
+		  && strcmp(tmp, "java.lang.ref.Finalizer") != 0
+		  && strcmp(tmp, "java.lang.Thread") != 0
+		  && strcmp(tmp, "java.util.WeakHashMap$Entry") != 0) {
+		while (i < refCollection->next) {
+		    if (i == refCollection->size || refCollection->references[i] == obj) break;
+		    i++;
+		}
+		if (i == refCollection->next && i < refCollection->size) {
+		    refCollection->references[refCollection->next++] = obj;
+		    CVMconsolePrintf("   +Ref 0x%x type: OBJECT_FIELD Addr: 0x%x Size:"
+				     " %d \tClass: %C\n", refPtr, obj, size, cb);
+		} else {
+		    CVMconsolePrintf("   -Ref 0x%x type: OBJECT_FIELD Addr: 0x%x Size:"
+				     " %d \tClass: %C\n", refPtr, obj, size, cb);
+		}
+	    } else {
+	        CVMconsolePrintf("   !Ref 0x%x type: OBJECT_FIELD Addr: 0x%x Size:"
+				     " %d \tClass: %C\n", refPtr, obj, size, cb);
+	    }
+        }
+    }, CVMgcDumpReferencesCallBack, data);
+    return CVM_TRUE;
+}
+
 /* Purpose: Scans all roots and the heap for references to the specified
             object. */
 /* NOTE: Should only be called from a GC safe state with the HeapLock already
@@ -306,6 +360,43 @@ static void CVMgcDumpReferences(CVMObject *obj)
     CVMgcScanRoots(ee, &gcOpts, CVMgcDumpReferencesCallBack, obj);
 
     CVMgcimplIterateHeap(ee, CVMgcDumpReferencesObjectCallback, obj);
+}
+
+static void CVMgcFullDump2References(CVMObject *obj)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    CVMGCOptions gcOpts = {
+	/* isUpdatingObjectPointers */ CVM_FALSE,
+        /* discoverWeakReferences   */ CVM_FALSE,
+        /* isProfilingPass          */ CVM_TRUE
+    };
+
+    CVMassert(CVMsysMutexOwner(&CVMglobals.heapLock) == ee);
+    CVMassert(CVMD_isgcSafe(ee));
+
+    CVMconsolePrintf("List of references to object 0x%x (%C):\n",
+                     obj, CVMobjectGetClass(obj));
+
+    CVMgcClearClassMarks(ee, NULL);
+
+    CVMgcScanRoots(ee, &gcOpts, CVMgcDumpReferencesCallBack, obj);
+
+    CVMgcimplIterateHeap(ee, CVMgcFullDumpReferencesObjectCallback, obj);
+}
+
+static void CVMgcFullDumpReferences(CVMObject *obj)
+{
+    if (refCollection == NULL) {
+        refCollection = (CVMReferenceCollection*) malloc(sizeof(CVMReferenceCollection));
+        refCollection->references = (void**) malloc(10000 * sizeof(void*));
+        refCollection->size = 10000;
+    }
+    refCollection->references[0] = (void*) obj;
+    refCollection->current = 0;
+    refCollection->next = 1;
+    while(refCollection->current < refCollection->next) {
+       CVMgcFullDump2References((CVMObject *) refCollection->references[refCollection->current++]);
+    }
 }
 
 #ifdef CVM_ROOT_FINDER
@@ -458,6 +549,18 @@ classReferenceDumpCallback(CVMObject* obj, CVMClassBlock* cb, CVMUint32 size,
     return CVM_TRUE;
 }
 
+static CVMBool
+classReferenceFullDumpCallback(CVMObject* obj, CVMClassBlock* cb, CVMUint32 size,
+                           void* data)
+{
+    CVMClassTypeID *clazznameID = (CVMClassTypeID *) data;
+    if (CVMcbClassName(cb) == *clazznameID) {
+        CVMconsolePrintf("Addr: 0x%x Size: %d  \tClass: %C\n", obj, size, cb);
+        CVMgcFullDumpReferences(obj);
+    }
+    return CVM_TRUE;
+}
+
 /* Purpose: Worker function called indirectly by CVMgcDumpClassReferences()
             to dump all references to instances of the specified class. */
 static CVMBool CVMgcClassReferencesDumpAction(CVMExecEnv *ee, void *data)
@@ -466,10 +569,17 @@ static CVMBool CVMgcClassReferencesDumpAction(CVMExecEnv *ee, void *data)
     return CVM_TRUE;
 }
 
+static CVMBool CVMgcClassReferencesFullDumpAction(CVMExecEnv *ee, void *data)
+{
+    CVMgcimplIterateHeap(ee, classReferenceFullDumpCallback, data);
+    return CVM_TRUE;
+}
+
 /* Purpose: Worker function called indirectly by CVMgcDumpClassReferences()
             to dump all references to instances of the specified class. */
 static void CVMgcClassReferencesDump(CVMExecEnv *ee, void *data)
 {
+    int fullDump = 0;
     const char *clazzname = (const char *)data;
     char *newClazzname;
     size_t length;
@@ -478,6 +588,11 @@ static void CVMgcClassReferencesDump(CVMExecEnv *ee, void *data)
 
     /* Replace all '.' with '/' because the typeid system uses '/'s: */
     length = strlen(clazzname) + 1;
+    if (length > 2 && clazzname[0] == 'X' &&  clazzname[1] == '-') {
+        length = length - 2;
+	clazzname = &clazzname[2];
+	fullDump = 1;
+    }
     newClazzname = malloc(length);
     strcpy(newClazzname, clazzname);
     p = newClazzname;
@@ -492,8 +607,13 @@ static void CVMgcClassReferencesDump(CVMExecEnv *ee, void *data)
         return;
     }
     /* Go do the dump: */
-    CVMgcStopTheWorldAndDoAction(ee, &clazznameID, NULL,
-        CVMgcClassReferencesDumpAction, NULL, NULL, NULL);
+    if (fullDump) {
+        CVMgcStopTheWorldAndDoAction(ee, &clazznameID, NULL,
+            CVMgcClassReferencesFullDumpAction, NULL, NULL, NULL);
+    } else {
+        CVMgcStopTheWorldAndDoAction(ee, &clazznameID, NULL,
+            CVMgcClassReferencesDumpAction, NULL, NULL, NULL);
+    }
 }
 
 /*===========================================================================*/
@@ -1551,6 +1671,12 @@ void CVMdumpObject(CVMObject *obj)
     }
 }
 
+static void
+CVMdumpAllCBCallBack(CVMExecEnv *ee, CVMClassBlock *cb, void *data)
+{
+    CVMdumpClassBlock(cb);
+}
+
 /* Purpose: Dump an instance of java.lang.Class. */
 void CVMdumpClassBlock(CVMClassBlock *cb)
 {
@@ -1565,8 +1691,16 @@ void CVMdumpClassBlock(CVMClassBlock *cb)
     }
 
     if (!CVMclassIsValidClassBlock(ee, cb)) {
+		CVMClassBlock * cb2 = CVMcbContainingStaticRef(ee, cb);
+		if (cb2 == NULL || cb2 == cb) {
         CVMconsolePrintf("Address 0x%x is not a valid Classblock\n", cb);
+        /* Iterate over all the romized classes first: */
+        CVMpreloaderIterateAllClasses(ee, CVMdumpAllCBCallBack, NULL);
+        CVMclassIterateDynamicallyLoadedClasses(ee, CVMdumpAllCBCallBack, NULL);
         return;
+		} else {
+			cb = cb2;
+		}
     }
 
     clazz = *(CVMObject **) CVMcbJavaInstance(cb);
