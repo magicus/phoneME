@@ -209,6 +209,7 @@ public:
 
   // sub class check
   bool is_subclass_of(JavaClass* other_class);
+  bool is_strict_subclass_of(JavaClass* other_class);
   bool is_subtype_of(JavaClass* other_class);
 
   bool compute_and_set_is_subtype_of(JavaClass* other_class);

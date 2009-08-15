@@ -1935,31 +1935,28 @@ void BytecodeCompileClosure::fast_invoke_virtual(int index JVM_TRAPS) {
 #endif
 
 #if ENABLE_INLINE
-  GUARANTEE(klass().is_instance_class(), "Sanity");
-  InstanceClass::Fast ic = klass.obj();
-  // Can devirtualize call only if 
-  //  - callee is not overridden and
-  //  - caller is not precompiled and
-  //  - caller cannot be shared between tasks
-  if (!ic().is_method_overridden(vtable_index) &&
-      !GenerateROMImage && !method()->is_shared()) {
-    if (TraceMethodInlining) {
-      tty->print("Method ");
-      callee().print_name_on_tty();
-      tty->print(" devirtualized in ");
-      method()->print_name_on_tty();
-      tty->cr();
+  if (!GenerateROMImage) {
+    InstanceClass::Raw holder = callee().holder();
+    // Can devirtualize call only if 
+    //  - callee is not overridden and
+    //  - caller is not precompiled and
+    //  - caller cannot be shared between tasks
+    if (!holder().is_method_overridden(vtable_index) && !method()->is_shared()){
+      if (TraceMethodInlining) {
+        tty->print("Method ");
+        callee().print_name_on_tty();
+        tty->print(" devirtualized in ");
+        method()->print_name_on_tty();
+        tty->cr();
+      }
+      do_direct_invoke(&callee, true/*need null check*/ JVM_CHECK);
+      callee().add_direct_caller(method() JVM_NO_CHECK_AT_BOTTOM);
+      return;
     }
-
-    do_direct_invoke(&callee, true/*need null check*/ JVM_CHECK);
-    callee().add_direct_caller(method() JVM_NO_CHECK_AT_BOTTOM);
-  } else
-#endif
-  {
-    // Call the method.
-    __ invoke_virtual(&callee, vtable_index, return_type 
-                      JVM_NO_CHECK_AT_BOTTOM);
   }
+#endif
+  // Call the method.
+  __ invoke_virtual(&callee, vtable_index, return_type JVM_NO_CHECK_AT_BOTTOM);
 }
 
 void BytecodeCompileClosure::fast_invoke_special(int index JVM_TRAPS) {
@@ -2315,14 +2312,13 @@ bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
       // If the bytecode does not consume stack items, we should start a new snippet
       // to guarantee that each calculates only one value
       VirtualStackFrame::abort_tracking_of_current_snippet();
-      if (is_following_codes_can_be_eliminated(bci_after_elimination)) {
-  
-	GUARANTEE(bci_after_elimination != not_found, "cse match error")
-	  //next bci to be compiled, cse will skip some byte code here.
-	  set_default_next_bytecode_index(bci_after_elimination);
-	compiler()->set_bci(next_bytecode_index());
-	//skip the compilation of current bci
-	return true;
+      if (is_following_codes_can_be_eliminated(bci_after_elimination)) {  
+        GUARANTEE(bci_after_elimination != not_found, "cse match error")
+        //next bci to be compiled, cse will skip some byte code here.
+        set_default_next_bytecode_index(bci_after_elimination);
+        compiler()->set_bci(next_bytecode_index());
+        //skip the compilation of current bci
+        return true;
       }
     }
     

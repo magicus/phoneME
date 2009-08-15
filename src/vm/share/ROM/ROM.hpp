@@ -86,7 +86,7 @@ private:
   static void relocate_pointer_to_heap(OopDesc** p);
   static void update_system_array_class(JVM_SINGLE_ARG_TRAPS);
 #if ENABLE_COMPILER && ENABLE_INLINE
-  void update_vtable_bitmaps(const int sys_class_count JVM_TRAPS) const;
+  void update_vtable_bitmaps(const int sys_class_count) const;
 #endif
 public:
   int int_at(const int index) const {

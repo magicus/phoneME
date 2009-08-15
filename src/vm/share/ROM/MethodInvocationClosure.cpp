@@ -62,7 +62,8 @@ public:
     ConstantPool::Raw cp = method()->constants();      
       if (cp().tag_at(index).is_resolved_static_method()) {
         Method::Raw m = cp().resolved_static_method_at(index);       
-        _owner->add_method(&m);
+        InstanceClass::Raw holder = m().holder();
+        _owner->add_method(&m, &holder);
       } else {
         // This could be an element we failed to resolve 
         // when ROMizing an application.
@@ -90,7 +91,7 @@ void BytecodeAnalyzeClosure::check_virtual(const int index) const {
     InstanceClass::Raw klass = Universe::class_from_id(class_id);
     ClassInfo::Raw info = klass().class_info();
     Method::Raw m = info().vtable_method_at(vtable_index);
-    _owner->add_method(&m);
+    _owner->add_method(&m, &klass);
   } else {
     // This could be an element we failed to resolve 
     // when ROMizing an application.
@@ -193,31 +194,8 @@ int MethodInvocationClosure::hashcode_for_method(Method *method) {
   return (hashcode_for_symbol(&name) ^ hashcode_for_symbol(&sig));
 }
 
-bool MethodInvocationClosure::contains(Method* method) const {
-  const juint len = juint(_methods.length());
-  const juint start = juint(hashcode_for_method(method)) % len;
-
-  for (juint i=start; ;) {
-    Method::Raw m = _methods.obj_at(i);
-    if (m.is_null()) {
-      break;
-    }
-    if (m.equals(method)) {
-      return true;
-    }
-
-    if (++i >= len) {
-       i = 0;
-    }
-    GUARANTEE(i != start, "Sanity");
-    // _old_methods's length is 3 times the number of methods,
-    // so we will always have space.
-  }
-
-  return false;
-}
-
-void MethodInvocationClosure::add_method(Method* method) {
+void MethodInvocationClosure::add_method(Method* method,
+                                         InstanceClass* receiver_klass) {
   {
     const juint len = juint(_methods.length());
     const juint start = juint(hashcode_for_method(method)) % len;
@@ -250,34 +228,19 @@ void MethodInvocationClosure::add_method(Method* method) {
     method->iterate(0, method->code_size(), &ba JVM_CHECK);
   }
 
-  InstanceClass::Raw holder = method->holder();
-
-  // find all super- and subclasses of the method class and
+  // find all subclasses of the method class and
   // add methods with the same index in vtable
   {
     const int vindex = method->vtable_index(); 
     if (vindex > -1) {
-      // IMPL_NOTE: Do we really need to add methods from superclasses?
-      {
-        InstanceClass::Raw super = holder.obj();
-        while (super = super().super(), super.not_null()) {
-          ClassInfo::Raw info = super().class_info();
-          if (info().vtable_length() <= vindex) {
-            break;
-          }
-          Method::Raw m = info().vtable_method_at(vindex);
-          add_method(&m);
-        }
-      }
-    
       for (SystemClassStream st; st.has_next();) {
         InstanceClass::Raw klass = st.next();
-        if (klass().is_subclass_of(&holder)) {
+        if (klass().is_strict_subclass_of(receiver_klass)) {
           ClassInfo::Raw info = klass().class_info();
           GUARANTEE(vindex < info().vtable_length(), "sanity");
 
           Method::Raw m = info().vtable_method_at(vindex);
-          add_method(&m);
+          add_method(&m, &klass);
         }
       }
     }
@@ -285,7 +248,7 @@ void MethodInvocationClosure::add_method(Method* method) {
 
   // If this method belongs to an interface,
   // consider all implementation methods reachable.
-  if (holder().is_interface()) {
+  if (receiver_klass->is_interface()) {
     add_interface_method(method);
   }
 }
@@ -304,8 +267,10 @@ void MethodInvocationClosure::add_interface_method(Method* method) {
     Method::Raw m =
       klass().lookup_method_in_all_interfaces(&method_name,&method_sig,
                                               dummy_id, dummy_index);
-    if (m.not_null()) {      
-      add_method(&m);
+    if (m.not_null()) {
+      // Cannot use klass here because of too liberal check above
+      InstanceClass::Raw holder = m().holder();
+      add_method(&m, &holder);
     }    
   }
 }

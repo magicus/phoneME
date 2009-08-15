@@ -1292,11 +1292,9 @@ ROMOptimizer::method_may_be_renamed(InstanceClass* ic, Method* method) {
 inline bool
 ROMOptimizer::is_invocation_closure_root(InstanceClass* ic, Method* method) {
   return is_special_method(method)
-         || method->is_native()
          || is_method_reachable_by_apps(ic, method)
          || method->match( Symbols::object_initializer_name(),
                            Symbols::void_signature() );
-
 }
 
 void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
@@ -1325,8 +1323,8 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
       const int len = methods().length();
       for (int i = 0; i < len; i++) {
         Method::Raw method = methods().obj_at(i);      
-        if (method.not_null() && is_invocation_closure_root(&klass, &method) ) {
-          mic.add_method(&method);
+        if (method.not_null() && is_invocation_closure_root(&klass, &method)) {
+          mic.add_method(&method, &klass);
         }
       }
     }

@@ -30,12 +30,34 @@ class MethodInvocationClosure {
 public:
   void initialize(JVM_SINGLE_ARG_TRAPS);
   
-  void add_method           (Method* method);
+  void add_method(Method* method, InstanceClass* receiver_klass);
   void add_interface_method (Method* method);
-  bool contains             (Method* method) const;
+
+  bool contains(Method* method) const {
+    const juint len = juint(_methods.length());
+    const juint start = juint(hashcode_for_method(method)) % len;
+
+    for (juint i=start; ;) {
+      Method::Raw m = _methods.obj_at(i);
+      if (m.is_null()) {
+        break;
+      }
+      if (m.equals(method)) {
+        return true;
+      }
+
+      if (++i >= len) {
+         i = 0;
+      }
+      GUARANTEE(i != start, "Sanity");
+      // _old_methods's length is 3 times the number of methods,
+      // so we will always have space.
+    }
+
+    return false;
+  }
 
 private:
-
   static int hashcode_for_method(Method* method);
   static int hashcode_for_symbol(Symbol* symbol);
   

@@ -601,17 +601,19 @@ bool Method::bytecode_inline_prepass(Attributes& attributes
 #endif
 
 #if ENABLE_COMPILER && ENABLE_INLINE
+#if ENABLE_ISOLATES
 // Returns if a method can be shared between tasks
-bool Method::is_shared() const {
-#if ENABLE_ISOLATES && USE_BINARY_IMAGE_LOADER
+bool Method::is_shared( void ) const {
+#if USE_BINARY_IMAGE_LOADER
   FOREACH_BINARY_IMAGE_IN_CURRENT_TASK(bundle)
     if (bundle->text_contains(obj())) {
       return bundle->is_sharable();
     }
   ENDEACH_BINARY_IMAGE_IN_CURRENT_TASK;
 #endif
-  return ENABLE_ISOLATES && ROM::is_rom_method(obj());
+  return ROM::is_rom_method(obj());
 }
+#endif // ENABLE_ISOLATES
 
 ReturnOop Method::find_callee_record() const {
   AllocationDisabler raw_pointers_used_in_this_function;
