@@ -626,26 +626,6 @@ javacall_result javacall_media_start(javacall_handle handle);
 javacall_result javacall_media_stop(javacall_handle handle);
 
 /**
- * Pause media playing
- * 
- * @param handle      Handle to the library
- * 
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail
- */
-javacall_result javacall_media_pause(javacall_handle handle);
-
-/**
- * Resume media playing
- * 
- * @param handle      Handle to the library
- * 
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail
- */
-javacall_result javacall_media_resume(javacall_handle handle);
-
-/**
  * Notify the native player about stream length. This function is called if
  * stream length is known.
  *
