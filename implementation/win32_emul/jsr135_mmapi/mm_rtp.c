@@ -305,8 +305,8 @@ static javacall_result rtp_prefetch(javacall_handle handle)
     RTP_DBG( "*** prefetch ***\n" );
     p->prefetched = TRUE;
 
-    p->hpcm = pcm_out_open_channel( p->bits, p->channels, p->rate, 
-                                    XFER_BUFFER_SIZE, rtp_pcm_callback, p );
+    pcm_out_open_channel( &(p->hpcm), p->bits, p->channels, p->rate, 
+                          XFER_BUFFER_SIZE, rtp_pcm_callback, p );
 
     p->acquired = TRUE;
 

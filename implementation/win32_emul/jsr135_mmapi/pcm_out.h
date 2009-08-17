@@ -41,15 +41,15 @@ typedef struct tag_pcm_channel * pcm_handle_t; /* channel handle */
 */
 typedef size_t (*get_ch_data)( void* buf, size_t size, void* param );
 
-pcm_handle_t pcm_out_open_channel( int          bits,
-                                   int          nch,
-                                   long         rate,
-                                   long         blk_size,
-                                   get_ch_data  gd_callback,
-                                   void*        cb_param );
+BOOL pcm_out_open_channel( pcm_handle_t* pHandle,
+                           int           bits,
+                           int           nch,
+                           long          rate,
+                           long          blk_size,
+                           get_ch_data   gd_callback,
+                           void*         cb_param );
 
-
-void         pcm_out_close_channel( pcm_handle_t hch );
+void pcm_out_close_channel( pcm_handle_t hch );
 
 #ifdef __cplusplus
 } /* extern "C" */

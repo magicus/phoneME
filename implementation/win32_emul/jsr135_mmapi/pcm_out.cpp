@@ -71,12 +71,13 @@ extern "C" {
 
 DWORD WINAPI mixing_thread( void* arg );
 
-pcm_handle_t pcm_out_open_channel( int          bits,
-                                   int          nch,
-                                   long         rate,
-                                   long         blk_size,
-                                   get_ch_data  gd_callback,
-                                   void*        cb_param )
+BOOL pcm_out_open_channel( pcm_handle_t* pHandle, 
+                           int           bits,
+                           int           nch,
+                           long          rate,
+                           long          blk_size,
+                           get_ch_data   gd_callback,
+                           void*         cb_param )
 {
     HRESULT         r;
     HWND            hwnd;
@@ -85,7 +86,7 @@ pcm_handle_t pcm_out_open_channel( int          bits,
 
     pcm_channel_t*  ch;
 
-    if( PCM_MAX_CHANNELS == g_ChNum ) return NULL;
+    if( PCM_MAX_CHANNELS == g_ChNum ) return FALSE;
 
     JC_MM_ASSERT( ( 16 == bits ) || ( 8 == bits ) );
     JC_MM_ASSERT( ( 1 == nch ) || ( 2 == nch ) );
@@ -98,14 +99,14 @@ pcm_handle_t pcm_out_open_channel( int          bits,
         r = CoInitializeEx(NULL, COINIT_MULTITHREADED);
         if( DS_OK != r && S_FALSE != r )
         {
-            return NULL;
+            return FALSE;
         }
         #endif //ENABLE_JSR_135_DSHOW
 
         r = DirectSoundCreate(NULL, &g_pDS, NULL);
         if( DS_OK != r )
         {
-            return NULL;
+            return FALSE;
         }
 
         if( NULL == ( hwnd = GetForegroundWindow() ) ) hwnd = GetDesktopWindow();
@@ -173,6 +174,8 @@ pcm_handle_t pcm_out_open_channel( int          bits,
     g_Ch[ g_ChNum ] = ch;
     g_ChNum++; 
 
+    *pHandle = ch;
+
     if( 1 == g_ChNum )
     {
         /* this was the first channel, start mixing thread*/
@@ -184,7 +187,7 @@ pcm_handle_t pcm_out_open_channel( int          bits,
         ResumeThread( g_hMixThread );
     }
 
-    return ch;
+    return TRUE;
 }
 
 void pcm_out_close_channel( pcm_handle_t hch )

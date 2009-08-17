@@ -73,19 +73,20 @@ HANDLE                  g_hChMutex = NULL;
 
 DWORD WINAPI mixing_thread( void* arg );
 
-pcm_handle_t pcm_out_open_channel( int          bits,
-                                   int          nch,
-                                   long         rate,
-                                   long         blk_size,
-                                   get_ch_data  gd_callback,
-                                   void*        cb_param )
+BOOL pcm_out_open_channel( pcm_handle_t* pHandle,
+                           int           bits,
+                           int           nch,
+                           long          rate,
+                           long          blk_size,
+                           get_ch_data   gd_callback,
+                           void*         cb_param )
 {
     pcm_channel_t*  ch;
     MMRESULT        mmr;
     WAVEFORMATEX    wfmt;
     int             i;
 
-    if( PCM_MAX_CHANNELS == g_ChNum ) return NULL;
+    if( PCM_MAX_CHANNELS == g_ChNum ) return FALSE;
 
     JC_MM_ASSERT( ( 16 == bits ) || ( 8 == bits ) );
     JC_MM_ASSERT( ( 1 == nch ) || ( 2 == nch ) );
@@ -146,7 +147,7 @@ pcm_handle_t pcm_out_open_channel( int          bits,
     if( MMSYSERR_NOERROR != mmr )
     {
         free( ch );
-        return NULL;
+        return FALSE;
     }
 
     /* Add new channel to channel list.
@@ -154,6 +155,8 @@ pcm_handle_t pcm_out_open_channel( int          bits,
        occurs atomically upon "g_ChNum++" execution */
     g_Ch[ g_ChNum ] = ch;
     g_ChNum++; 
+
+    *pHandle = ch;
 
     if( 1 == g_ChNum )
     {
@@ -166,7 +169,7 @@ pcm_handle_t pcm_out_open_channel( int          bits,
         ResumeThread( g_hMixThread );
     }
 
-    return ch;
+    return TRUE;
 }
 
 void pcm_out_close_channel( pcm_handle_t hch )

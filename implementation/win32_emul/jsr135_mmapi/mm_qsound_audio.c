@@ -181,10 +181,11 @@ static void MQ234_CALLBACK  mq_mutex_unlock( void* m )
 static javacall_result gmInit(int appId, int gmIdx)
 {
     MQ234_CreateOptions opts;
-    MQ234_SynthConfig synthConfig;
-    MQ234_HostBlock dlsData;
-    MQ234_ERROR err;
-    javacall_result res = JAVACALL_FAIL;
+    MQ234_SynthConfig   synthConfig;
+    MQ234_HostBlock     dlsData;
+    MQ234_ERROR         err;
+    BOOL                pcm_ok;
+    javacall_result     res = JAVACALL_FAIL;
     
     memset(&opts, '\0', sizeof(opts));
 
@@ -312,22 +313,22 @@ static javacall_result gmInit(int appId, int gmIdx)
      */
 
     g_QSoundGM[gmIdx].isolateId  = appId;
-    g_QSoundGM[gmIdx].pcm_handle = pcm_out_open_channel( ENV_BITS,
-                                                 ENV_CHANNELS,
-                                                 ENV_RATE,
-                                                 ENV_BLOCK_BYTES,
-                                                 mmaudio_get_isolate_mix,
-                                                 (void*)appId );
+    pcm_ok = pcm_out_open_channel( &(g_QSoundGM[gmIdx].pcm_handle),
+                                   ENV_BITS,
+                                   ENV_CHANNELS,
+                                   ENV_RATE,
+                                   ENV_BLOCK_BYTES,
+                                   mmaudio_get_isolate_mix,
+                                   &(g_QSoundGM[gmIdx]) );
 
     JC_MM_DEBUG_PRINT1( "# pcm_out_open_channel returned 0x%08X\n",
             (int)(g_QSoundGM[gmIdx].pcm_handle) );
 
-    /* This happens if no audio device is found. Should proceed with the
-       proper Java exceptions, not just debug assertion failure */
-    /* JC_MM_ASSERT(NULL != g_QSoundGM[gmIdx].pcm_handle); */
-    
-    if( NULL == g_QSoundGM[gmIdx].pcm_handle )
+    if( !pcm_ok )
     {
+        /* This happens if no audio device is found. Should proceed with the
+           proper Java exceptions, not just debug assertion failure */
+
         res = JAVACALL_NO_AUDIO_DEVICE;
     }
     else 
@@ -398,33 +399,18 @@ static int mmaudio_destory(int gmIdx)
 size_t mmaudio_get_isolate_mix( void *buffer, size_t length, void* param )
 {
     MQ234_ERROR err;
-    int appId = (int)param;
-    int gmIdx = -1;
-
-    javacall_result res = appIDtoGM(appId, &gmIdx);
+    globalMan* gm = (globalMan*)param;
     
-    JC_MM_ASSERT( JAVACALL_OK == res );
-    
-    //long i;
-    //long sampleBytes = ( length > ENV_BLOCK_BYTES ) ? ENV_BLOCK_BYTES : length;
-    //int  sampleCount = (((int)sampleBytes * 8) / ENV_BITS) / ENV_CHANNELS;   // sc * bitsbytes / bits / nchannels
     JC_MM_ASSERT(length == ENV_BLOCK_BYTES);
 
-    if( WAIT_OBJECT_0 == WaitForSingleObject( g_QSoundGM[gmIdx].hMutexREAD, 1000 ) )
+    if( WAIT_OBJECT_0 == WaitForSingleObject( gm->hMutexREAD, 1000 ) )
     {
-        err = mQ234_Read(g_QSoundGM[gmIdx].gm, buffer, ENV_BLOCK_SAMPLES);
+        err = mQ234_Read(gm->gm, buffer, ENV_BLOCK_SAMPLES);
         JC_MM_ASSERT(MQ234_ERROR_NO_ERROR==err);
-        g_QSoundGM[gmIdx].bDelayedMIDI = FALSE;
-        ReleaseMutex( g_QSoundGM[gmIdx].hMutexREAD );
+        gm->bDelayedMIDI = FALSE;
+        ReleaseMutex( gm->hMutexREAD );
     }
 
-    /*
-    for (i=0; i<sampleBytes; i++)
-        if (((char *)buffer)[i] != 0)
-            return sampleBytes;
-
-    return 0;
-    */
     return ENV_BLOCK_BYTES;
 }
 
