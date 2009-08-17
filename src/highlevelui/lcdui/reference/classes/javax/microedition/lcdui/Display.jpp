@@ -855,9 +855,7 @@ public class Display {
         Displayable temp = foregroundController.registerDisplay(displayId,
                            owner.getClass().getName());
         if (temp == null) {
-            Displayable a = new Form(null);
-            a.isInFullScreenMode = true;
-            initialDisplayable = a.displayableLF;
+            initialDisplayable = new Form(null).displayableLF;
         } else {
             initialDisplayable = temp.displayableLF;
         }
@@ -1935,15 +1933,11 @@ public class Display {
         return pt_popup;
     }
 
-    private boolean isSIWL() {
-        return (window != null && window.getMode() == MIDPWindow.NO_SOFT_BUTTON_MODE);
-    }
-
     private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
         boolean ret = true;
-        // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
-        // Sprint-Canvas-Keypad=no to disable it
-        if (isSIWL()) {
+        // IMPL_NOTE: by default vk is enabled for canvas-based screen.
+        // Use midlet property Sprint-Canvas-Keypad=no to disable it
+        if (window != null && window.isSoftButtonsHidden()) {
             ret = false;
         } else if (d instanceof CanvasLF) {
             ret = showVirtualKeyboard;

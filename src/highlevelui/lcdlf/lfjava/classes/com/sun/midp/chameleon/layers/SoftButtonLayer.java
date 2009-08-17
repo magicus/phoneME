@@ -93,6 +93,11 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
     protected Command[] soft2;
 
     /**
+     * Command assciated with the device "Back" key.
+     */
+    private Command backCommand;
+
+    /**
      * When a sub menu is currently active, this reference is non-null.
      */
     protected SubMenuCommand subMenu;
@@ -166,7 +171,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
 	* True if using native soft button layer
 	*/
 	private boolean isNativeLayer  = false;
-    
+
     /**
      * Construct a SoftButtonLayer. The layer's background image and color
      * information is obtained directly from the SoftButtonSkin class,
@@ -177,7 +182,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
     public SoftButtonLayer(ChamDisplayTunnel tunnel) {
         super(SoftButtonSkin.IMAGE_BG, SoftButtonSkin.COLOR_BG);
         super.setSupportsInput(true);
-        super.setVisible(true);
         this.tunnel = tunnel;
 
         isNativeLayer = isNativeSoftButtonLayerSupported0();
@@ -264,32 +268,47 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                                  ItemCommandListener itemListener,
                                  Command[] screenCmds, int numS,
                                  CommandListener scrListener) {
-        // Cache the values for later
-        this.itmCmds = new Command[numI];
-
-        if (numI > 0) {
-            System.arraycopy(itemCmds, 0, this.itmCmds, 0, numI);
-        }
-        this.itemListener = itemListener;
-
-        this.scrCmds = new Command[numS];
-        if (numS > 0) {
-            System.arraycopy(screenCmds, 0, this.scrCmds, 0, numS);
-        }
-        this.scrListener = scrListener;
+        boolean commandSetEmpty = true;
 
         // reset the commands
         soft1 = null;
         soft2 = null;
+        backCommand = null;
         backButtonHidden = false;
 
+        this.itemListener = itemListener;
+
+        // Cache the values for later
+        this.itmCmds = new Command[numI];
+        if (numI > 0) {
+            commandSetEmpty = false;
+            for (int i = 0; i < numI; i++) {
+                this.itmCmds[i] = itemCmds[i];
+                if (this.itmCmds[i].getCommandType() == Command.BACK) {
+                    backCommand = this.itmCmds[i];
+                }
+            }
+        }
+
+        this.scrListener = scrListener;
+
+        // Cache the values for later
+        this.scrCmds = new Command[numS];
         if (numS > 0) {
             int index = -1;
             int type = -1;
             // Priority value is initialized by minimal posible integer
             int priority = Integer.MIN_VALUE;
 
+            commandSetEmpty = false;
+
             for (int i = 0; i < numS; i++) {
+                this.scrCmds[i] = screenCmds[i];
+
+                if (this.scrCmds[i].getCommandType() == Command.BACK) {
+                    backCommand = this.scrCmds[i];
+                }
+
                 if (!(this.scrCmds[i] instanceof SubMenuCommand)) {
                     switch (this.scrCmds[i].getCommandType()) {
                         case Command.BACK:
@@ -338,13 +357,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 numS--;
                 soft1 = this.scrCmds[index];
                 System.arraycopy(screenCmds, index + 1,
-                        scrCmds, index, numS - index);
-            }
-
-            /* If only BACK is active, hide it. */
-            if ((type == Command.BACK) && (numS == 0)) {
-                soft1 = null;
-                backButtonHidden = true;
+                        this.scrCmds, index, numS - index);
             }
         }
 
@@ -370,10 +383,25 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 }
 
                 setCommands(numS, numI, this.scrCmds);
-
                 break;
         }
+
+
+        // If only BACK is active, hide it.
+        if (soft1 != null && numS == 0 && soft1 == backCommand) {
+            soft1 = null;
+            backButtonHidden = true;
+        }
+
         setButtonLabels();
+
+        if (!menuUP && soft1 == null) {
+            // Don't show empty command button bars, unless
+            // menu is up.
+            super.setVisible(false);
+        } else {
+            super.setVisible(true);
+        }
     }
 
     /**
@@ -455,8 +483,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
              * treat it as if the Command.BACK was selected from the soft
              * button menu layer.
              */
-            if ((keyCode == -8)
-                && (type == EventConstants.RELEASED)) {
+            if (keyCode == -8 && type == EventConstants.RELEASED) {
                 ret = processBackCommand();
             }
         }
@@ -464,26 +491,13 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
     }
     
     private boolean processBackCommand() {
-        int cmdCount = scrCmds.length;
-        for (int i = 0; i < cmdCount; i++) {
-            if (scrCmds[i].getCommandType() == Command.BACK) {
-                if (tunnel != null) {
-                    tunnel.callScreenListener(scrCmds[i], scrListener);
-                    return true;
-                }
-            }
+        if (backCommand == null) {
+            setInteractive(false);
+            return false;
         }
-        cmdCount = itmCmds.length;
-        for (int i = 0; i < cmdCount; i++) {
-            if (itmCmds[i].getCommandType() == Command.BACK) {
-                if (tunnel != null) {
-                    tunnel.callItemListener(itmCmds[i], itemListener);
-                    return true;
-                }
-            }
-        }
-        setInteractive(false);
-        return false;
+
+        processCommand(backCommand);
+        return true;
     }
 
     /**
@@ -561,10 +575,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
      * settings.
      */
     private void setBackground() {
-        if (menuUP) {
-            setBackground(SoftButtonSkin.IMAGE_MU_BG,
-                    SoftButtonSkin.COLOR_MU_BG);
-        } else if (alertUP) {
+        // The menu for this port will have the button background
+        if (alertUP) {
             setBackground(SoftButtonSkin.IMAGE_AU_BG,
                     SoftButtonSkin.COLOR_AU_BG);
         } else {
@@ -675,6 +687,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 menuLayer.setMenuCommands(soft2, this, 0);
                 
                 menuUP = true;
+                setInteractive(true);
                 toggleMenu(menuUP);
                 
                 // Show the menu

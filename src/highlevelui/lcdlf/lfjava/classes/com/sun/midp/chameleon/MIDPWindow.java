@@ -100,20 +100,22 @@ public class MIDPWindow extends CWindow {
     public static final int FULL_SCR_MODE       = 1;
 
     /**
-     * No soft button mode when the command bar will be
-     * managed by the subclass.
+     * Allows the setMode method to be used as back door
+     * to hide the soft buttons.
+     * Used by UI APIs that are based on Canvas and draw
+     * their own menus.
      */
     public static final int NO_SOFT_BUTTON_MODE  = 2;
 
     /**
      * Current screen mode
      */
-    int screenMode=NO_SOFT_BUTTON_MODE;
+    int screenMode; // NORMAL_MODE;
 
     /**
-     * Current soft button mode.
+     * If true, hide the soft buttons in normal mode.
      */
-    int softButtonMode=0;
+    boolean hideSoftButtons; // false
 
     /** Cache of screen commands */
     Command[] scrCmdCache;
@@ -500,22 +502,28 @@ public class MIDPWindow extends CWindow {
      * @param mode the mode to be set
      */
     public void setMode(int mode) {
-	screenMode = mode ;
+	if (mode == NO_SOFT_BUTTON_MODE) {
+            // back door to hide soft buttons
+            hideSoftButtons = true;
+	} else {
+            screenMode = mode;
+        }
 
-	if (mode == NO_SOFT_BUTTON_MODE){
-	    softButtonMode = mode;
-	}
         updateLayout();
     }
 
 
-        /**
+    /**
      * Changes layout mode.
      *
      * @param mode the mode to be set
      */
     public int getMode() {
-	    return softButtonMode;
+        return screenMode;
+    }
+
+    public boolean isSoftButtonsHidden () {
+        return hideSoftButtons;
     }
 
     /**
@@ -851,36 +859,30 @@ public class MIDPWindow extends CWindow {
 
         int oldHeight = bodyLayer.bounds[H];
         int oldWidth = bodyLayer.bounds[W];
+
         switch (screenMode) {
             case FULL_SCR_MODE:
                 // TODO: scroll arrows (bar? ) indicator has to be hidden?
                 titleLayer.visible = false;
                 tickerLayer.visible = false;
-                buttonLayer.visible =
-                    buttonLayer.isInteractive();
                 break;
-            case NO_SOFT_BUTTON_MODE:
-                // TODO: scroll arrows (bar? ) indicator has to be hidden?
-                titleLayer.visible = (titleLayer.getTitle() != null) ;
-                tickerLayer.visible = (tickerLayer.getText() != null);
-                buttonLayer.visible = false;
-                break;
+
             case NORMAL_MODE:
                 titleLayer.visible =
                     (titleLayer.getTitle() != null);
                 tickerLayer.visible =
                     (tickerLayer.getText() != null);
-		buttonLayer.visible = true;
                 break;
+
             default:
                 Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
                     "MIDPWindow: screenMode=" + screenMode);
                 return;
         }
-	if(softButtonMode == NO_SOFT_BUTTON_MODE){
-	    buttonLayer.visible = false;
-	}
 
+        if (hideSoftButtons) {
+            buttonLayer.visible = false;
+        }
 
         for (int i = 0; i < LAST_LAYER; i++) {
             CLayer l = mainLayers[i];
