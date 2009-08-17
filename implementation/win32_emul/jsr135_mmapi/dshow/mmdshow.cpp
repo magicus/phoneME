@@ -510,6 +510,11 @@ static javacall_result dshow_close(javacall_handle handle)
 
     lcd_output_video_frame( NULL );
 
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     JAVACALL_OK, NULL );
+
     return JAVACALL_OK;
 }
 
