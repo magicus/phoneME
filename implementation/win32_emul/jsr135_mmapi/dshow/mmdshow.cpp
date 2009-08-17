@@ -487,10 +487,11 @@ static javacall_result dshow_destroy(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_close(javacall_handle handle)
+static void closing_thread( void* param )
 {
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** close ***\n" );
+    dshow_player* p = (dshow_player*)param;
+
+    PRINTF( "*** closing dshow player... ***\n" );
 
     p->dwr_len = 0;
     SetEvent( p->dwr_event );
@@ -507,8 +508,22 @@ static javacall_result dshow_close(javacall_handle handle)
     }
 
     if( NULL != p->ppl ) p->ppl->close();
-
     lcd_output_video_frame( NULL );
+
+    PRINTF( "*** dshow player closed ***\n" );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     JAVACALL_OK, NULL );
+}
+
+static javacall_result dshow_close(javacall_handle handle)
+{
+    dshow_player* p = (dshow_player*)handle;
+    PRINTF( "*** close ***\n" );
+
+    _beginthread( closing_thread, 0, p );
 
     return JAVACALL_OK;
 }
