@@ -193,10 +193,9 @@ static javacall_result recorder_get_time(javacall_handle handle, long* ms)
 /**
  * NOTING TO DO.
  */
-static javacall_result recorder_set_time(javacall_handle handle, long* ms)
+static javacall_result recorder_set_time(javacall_handle handle, long ms)
 {
-    *ms = -1;
-    return JAVACALL_OK;
+    return JAVACALL_FAIL;
 }
  
 /**

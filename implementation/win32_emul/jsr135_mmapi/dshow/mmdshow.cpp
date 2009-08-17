@@ -134,6 +134,8 @@ public:
     int64                 dwr_offset;
     int32                 dwr_len;
     BYTE*                 dwr_pdata;
+
+    long                  target_mt;
 };
 
 dshow_player* dshow_player::players[ MAX_DSHOW_PLAYERS ];
@@ -893,20 +895,36 @@ static javacall_result dshow_get_time(javacall_handle handle, long* ms)
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_set_time(javacall_handle handle, long* ms)
+static void time_set_thread( void* param )
 {
-    dshow_player* p = (dshow_player*)handle;
+    dshow_player* p = (dshow_player*)param;
+
+    PRINTF( "*** setting media time ***\n" );
+
     player::result r;
 
-    int64 mt = int64( 1000 ) * int64( *ms );
+    int64 mt = int64( 1000 ) * int64( p->target_mt );
 
     p->media_time = long( p->ppl->set_media_time( mt, &r ) / 1000 );
 
-    PRINTF( "--- set_time(%ld): %ld", *ms, p->media_time );
+    PRINTF( "*** set_time(%ld) finished: %ld", p->target_mt, p->media_time );
 
-    *ms = p->media_time;
+    BOOL ok = (player::result_success == r);
 
-    return (player::result_success == r) ? JAVACALL_OK : JAVACALL_FAIL;
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     ok ? JAVACALL_OK : JAVACALL_FAIL, (void*)(p->media_time) );
+}
+
+static javacall_result dshow_set_time(javacall_handle handle, long ms)
+{
+    dshow_player* p = (dshow_player*)handle;
+    p->target_mt    = ms;
+
+    _beginthread( time_set_thread, 0, p );
+
+    return JAVACALL_OK;
 }
 
 static javacall_result dshow_get_duration(javacall_handle handle, long* ms)

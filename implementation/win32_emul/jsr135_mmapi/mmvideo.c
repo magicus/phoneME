@@ -53,7 +53,7 @@ extern javacall_result audio_do_buffering(javacall_handle handle,
                                const void* buffer, long *length,
                                javacall_bool *need_more_data, long *min_data_size);
 extern javacall_result audio_get_time(javacall_handle handle, long* ms);
-extern javacall_result audio_set_time(javacall_handle handle, long* ms);
+extern javacall_result audio_set_time(javacall_handle handle, long ms);
 extern javacall_result audio_get_duration(javacall_handle handle, long* ms);
 
 extern javacall_result audio_get_java_buffer_size(javacall_handle handle,
@@ -257,7 +257,7 @@ static javacall_result video_get_time(javacall_handle handle, long* ms)
     return audio_get_time(handle, ms);
 }
 
-static javacall_result video_set_time(javacall_handle handle, long* ms){
+static javacall_result video_set_time(javacall_handle handle, long ms){
     return audio_set_time(handle, ms);
 }
  

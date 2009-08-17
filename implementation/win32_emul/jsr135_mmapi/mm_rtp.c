@@ -469,7 +469,7 @@ static javacall_result rtp_get_time(javacall_handle handle,
 }
 
 static javacall_result rtp_set_time(javacall_handle handle, 
-                                    long* ms)
+                                    long ms)
 {
     rtp_player* p = (rtp_player*)handle;
     return JAVACALL_FAIL;
