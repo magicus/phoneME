@@ -116,6 +116,13 @@ public final class Permissions {
     /** Allow a permission to be granted only for one use. */
     public static final byte ONESHOT = 16;
 
+    /** User granted permission for this session. */
+    public static final byte SESSION_GRANTED = 32;
+    /** User denied permission for this session. */
+    public static final byte SESSION_DENIED = 33;
+    /** Session level interaction has not occured. */
+    public static final byte SESSION_UNKNOWN = 34;
+
     /**
      * Permission denied by the user until the user changes it in the
      * settings form.

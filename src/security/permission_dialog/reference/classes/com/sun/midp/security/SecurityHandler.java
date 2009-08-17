@@ -50,15 +50,6 @@ import com.sun.midp.log.LogChannels;
  * a MIDlet suite.
  */
 public final class SecurityHandler {
-    /** Session level interaction has not occured. */
-    private final static byte NOT_ASKED = 0;
-
-    /** User granted permission for this session. */
-    private final static byte GRANTED = 1;
-
-    /** User denied permission for this session. */
-    private final static byte DENIED = -1;
-
     /** The security token for this class. */
     private static SecurityToken classSecurityToken;
 
@@ -133,7 +124,9 @@ public final class SecurityHandler {
         permissions = apiPermissions;
 
         sessionValues = new byte[permissions.length];
-
+        for (int i = 0; i < sessionValues.length; i++) {
+            sessionValues[i] = Permissions.SESSION_UNKNOWN;
+        }
         trusted = Permissions.isTrusted(domain);
     }
 
@@ -165,12 +158,12 @@ public final class SecurityHandler {
                 return 1;
 
             case Permissions.SESSION:
-                if (sessionValues[i] == GRANTED) {
+                if (sessionValues[i] == Permissions.SESSION_GRANTED) {
                     // report allowed
                     return 1;
                 }
 
-                if (sessionValues[i] == DENIED) {
+                if (sessionValues[i] == Permissions.SESSION_DENIED) {
                     // report denied
                     return 0;
                 }
@@ -311,11 +304,11 @@ public final class SecurityHandler {
                     break;
 
                 case Permissions.SESSION:
-                    if (sessionValues[permission] == GRANTED) {
+                    if (sessionValues[permission] == Permissions.SESSION_GRANTED) {
                         return false;
                     }
 
-                    if (sessionValues[permission] == DENIED) {
+                    if (sessionValues[permission] == Permissions.SESSION_DENIED) {
                         break;
                     }
 
@@ -326,7 +319,7 @@ public final class SecurityHandler {
                          * been asked this session.
                          */
                         Permissions.setPermissionGroup(sessionValues,
-                            permission, GRANTED);
+                            permission, Permissions.SESSION_GRANTED);
 
                         return false;
                     }
@@ -336,7 +329,7 @@ public final class SecurityHandler {
                      * been asked this session.
                      */
                     Permissions.setPermissionGroup(sessionValues,
-                        permission, DENIED);
+                        permission, Permissions.SESSION_DENIED);
                     break;
 
                 case Permissions.ONESHOT:
