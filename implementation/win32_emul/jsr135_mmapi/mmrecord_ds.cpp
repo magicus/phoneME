@@ -25,6 +25,10 @@
 #include <limits.h>
 #include "mmrecord.h"
 
+#ifdef RECORD_BY_DSOUND
+
+#include <dsound.h>
+
 DWORD WINAPI DirectSoundCaptureThread(void* parms);
 
 static HANDLE                      DSThread;
@@ -34,7 +38,7 @@ static LPDIRECTSOUNDCAPTUREBUFFER  captureBuffer = NULL;
 static DWORD                       captureSize;
 static DWORD                       captureOffset;
 
-int initDirectSoundCap(recorder *c)
+BOOL initAudioCapture(recorder *c)
 {
     DSCBUFFERDESC cap_bdesc;
     WAVEFORMATEX  wfmt;
@@ -42,7 +46,7 @@ int initDirectSoundCap(recorder *c)
     int blockSize;
     int rate, bits, channels;
 
-    if(captureBuffer != NULL) return 0;
+    if(captureBuffer != NULL) return FALSE;
 
     rate     = c->rate;
     channels = c->channels;
@@ -62,8 +66,8 @@ int initDirectSoundCap(recorder *c)
     ZeroMemory(&cap_bdesc, sizeof(cap_bdesc));
     cap_bdesc.dwSize = sizeof(cap_bdesc);
     cap_bdesc.dwFlags = 0;
-    // 20msec * 10 = 200 milli Second buffer
-    captureSize = cap_bdesc.dwBufferBytes = blockSize * 10;
+    // 200 milli Second buffer
+    captureSize = cap_bdesc.dwBufferBytes = blockSize;
     cap_bdesc.lpwfxFormat = (WAVEFORMATEX *)&wfmt;
     captureOffset = 0;
 
@@ -71,7 +75,7 @@ int initDirectSoundCap(recorder *c)
     if(r != DS_OK)
     {
         printf("No audio capture device found.\n");
-        return 0;
+        return FALSE;
     }
 
     r = dsCap->CreateCaptureBuffer(&cap_bdesc, &captureBuffer, NULL);
@@ -80,7 +84,7 @@ int initDirectSoundCap(recorder *c)
     DSThread = CreateThread(NULL, 0, DirectSoundCaptureThread, c, 0, NULL);
     assert(SetThreadPriority(DSThread, THREAD_PRIORITY_HIGHEST));
 
-    return 1;
+    return TRUE;
 }
 
 BOOL toggleAudioCapture(BOOL on)
@@ -164,7 +168,7 @@ DWORD WINAPI DirectSoundCaptureThread(void *parms)
                     : 0;
 
                 sendRSL(h->isolateId, h->playerId, ms);
-                h->rsl = 1;
+                h->rsl = TRUE;
             }
             else if((INT_MAX != h->lengthLimit) && 
                 ((wlen + h->recordLen) > h->lengthLimit))
@@ -203,7 +207,7 @@ DWORD WINAPI DirectSoundCaptureThread(void *parms)
 }  
 
 
-int closeDirectSoundCap()
+void closeAudioCapture()
 {
     DWORD es = 0;
 
@@ -227,6 +231,7 @@ int closeDirectSoundCap()
     dsCap->Release();
     captureBuffer = NULL;
     dsCap = NULL;
-
-    return 0;
 }
+
+#endif // RECORD_BY_DSOUND
+
