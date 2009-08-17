@@ -53,10 +53,16 @@ class ImageDataFactory implements AbstractImageDataFactory {
     };
 
     /**
-     * JPEG Header Data
+     * JPEG JFIF Header Data
      */
-    private static final byte[] jpegHeader = new byte[] {
+    private static final byte[] jpegHeader1 = new byte[] {
          (byte)0xff, (byte)0xd8, (byte)0xff, (byte)0xe0
+    };
+    /**
+     * JPEG EXIF Header Data
+     */
+    private static final byte[] jpegHeader2 = new byte[] {
+         (byte)0xff, (byte)0xd8, (byte)0xff, (byte)0xe1
     };
 
     /**
@@ -560,7 +566,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
                             int imageOffset,
                             int imageLength) {
         // find the format of the image data
-        if (imageLength < jpegHeader.length + 8) {
+        if (imageLength < jpegHeader1.length + 8) {
             throw new IllegalArgumentException();
         }
 
@@ -683,9 +689,13 @@ class ImageDataFactory implements AbstractImageDataFactory {
         if (headerMatch(pngHeader, imageBytes, imageOffset, imageLength)) {
             // image type is PNG
             decodePNG(imageData, imageBytes, imageOffset, imageLength);
-        } else if (headerMatch(jpegHeader, imageBytes,
+        } else if (headerMatch(jpegHeader1, imageBytes,
                                imageOffset, imageLength)) {
-            // image type is JPEG
+            // image type is JPEG JFIF
+            decodeJPEG(imageData, imageBytes, imageOffset, imageLength);
+        } else if (headerMatch(jpegHeader2, imageBytes,
+                               imageOffset, imageLength)) {
+            // image type is JPEG EXIF
             decodeJPEG(imageData, imageBytes, imageOffset, imageLength);
         } else if (headerMatch(rawHeader, imageBytes,
                                imageOffset, imageLength)) {
