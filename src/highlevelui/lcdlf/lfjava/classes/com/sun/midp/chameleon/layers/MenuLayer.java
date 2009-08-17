@@ -291,7 +291,9 @@ public class MenuLayer extends ScrollablePopupLayer {
             }
         } else if (keyCode == Constants.KEYCODE_SELECT) {
             if (btnLayer != null && !showSubMenu(selI)) {
-                btnLayer.commandSelected(menuCmds[selI]);
+                if (selI >= 0 && selI < menuCmds.length) {
+                    btnLayer.commandSelected(menuCmds[selI]);
+                }
             }
         } else {
             int max = 0;
@@ -542,6 +544,9 @@ public class MenuLayer extends ScrollablePopupLayer {
      */
     private boolean showSubMenu(int index) {
         boolean ret = false;
+        if (0 > index || menuCmds.length <= index) {
+            return ret;
+        }
         if (menuCmds[index] instanceof SubMenuCommand) {
             SubMenuCommand subMenu = (SubMenuCommand)menuCmds[index];
 

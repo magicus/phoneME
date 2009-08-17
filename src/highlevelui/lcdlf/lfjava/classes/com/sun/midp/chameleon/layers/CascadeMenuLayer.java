@@ -229,7 +229,9 @@ public class CascadeMenuLayer extends ScrollablePopupLayer {
         } else if (keyCode == Constants.KEYCODE_RIGHT) {
             menuLayer.dismissCascadeMenu();
         } else if (keyCode == Constants.KEYCODE_SELECT) {
-            menuLayer.subCommandSelected(menuCmds[selI]);
+            if (selI >= 0 && selI < menuCmds.length) {
+                menuLayer.subCommandSelected(menuCmds[selI]);
+            }
         } else if (menuCmds.length < 10) {
             int max = 0;
             switch (keyCode) {
