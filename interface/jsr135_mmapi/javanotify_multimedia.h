@@ -74,56 +74,64 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_CLOSE_FINISHED = 6,
 
     /**
+     * Posted when the native player finished setting media time.
+     *
+     * Additional data:
+     *  intParam1 - actual media time set.
+     */
+    JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED = 7,
+
+    /**
      * Posted when the native player requests stream data.
      *
      * Additional data: none.
      */
-    JAVACALL_EVENT_MEDIA_DATA_REQUEST = 7,
+    JAVACALL_EVENT_MEDIA_DATA_REQUEST = 8,
 
     /**
      * Posted when the native player requests stream length.
      *
      * Additional data: none.
      */
-    JAVACALL_EVENT_MEDIA_LENGTH_REQUEST = 8,
+    JAVACALL_EVENT_MEDIA_LENGTH_REQUEST = 9,
 
     /** Posted when the system or another higher priority application has released 
         an exclusive device which is now available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE = 9,
+    JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE = 10,
 
     /** Posted when the system or another higher priority application has temporarily 
         taken control of an exclusive device which was previously available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE = 10,
+    JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE = 11,
 
     /** Posted when an error had occurred. */
-    JAVACALL_EVENT_MEDIA_ERROR = 11,
+    JAVACALL_EVENT_MEDIA_ERROR = 12,
 
     /** Posted when a Player has reached the end of the media. */
-    JAVACALL_EVENT_MEDIA_END_OF_MEDIA = 12,
+    JAVACALL_EVENT_MEDIA_END_OF_MEDIA = 13,
 
     /** Posted when the duration of a Player is updated. */    
-    JAVACALL_EVENT_MEDIA_DURATION_UPDATED = 13,
+    JAVACALL_EVENT_MEDIA_DURATION_UPDATED = 14,
 
     /** Posted when the Player enters into a buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STARTED = 14,
+    JAVACALL_EVENT_MEDIA_BUFFERING_STARTED = 15,
 
     /** Posted when the Player leaves the buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED = 15,
+    JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED = 16,
 
     /** Posted when an error occurs during the recording. */
-    JAVACALL_EVENT_MEDIA_RECORD_ERROR = 16,
+    JAVACALL_EVENT_MEDIA_RECORD_ERROR = 17,
 
     /** Record size limit is reached or no more space is available */
-    JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT = 17,
+    JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT = 18,
 
     /** Posted when the volume changed from external action. */
-    JAVACALL_EVENT_MEDIA_VOLUME_CHANGED = 18,
+    JAVACALL_EVENT_MEDIA_VOLUME_CHANGED = 19,
 
     /** Posted when the System Volume level has changed. */
-    JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED = 19,
+    JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED = 20,
 
     /** Posted when the blocked snapshot finished */
-    JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED = 20,
+    JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED = 21,
 
     /** 
      * All events that should be sent to Java listeners must be defined

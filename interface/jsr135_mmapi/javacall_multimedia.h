@@ -673,28 +673,28 @@ javacall_result javacall_media_data_written(
     /*OUT*/ javacall_bool *new_request);
 
 /**
- * Get current media time (position) in ms unit
+ * Get the current media time.
  * 
- * @param handle    Handle to the library
- * @param ms        current media time in ms
+ * @param handle    Player handle.
+ * @param ms        Out - media time in milliseconds.
  *
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_get_time(javacall_handle handle, /*OUT*/ long* ms );
+javacall_result javacall_media_get_media_time(javacall_handle handle, /*OUT*/ long *ms);
 
 /**
- * Seek to specified time.
- * This function can be called during play status or stop status
+ * Seek to the specified media time.
+ * This function is asynchronous. Actual media time set will be returned with event.
  * 
- * @param handle    Handle to the library
- * @param ms        Seek position as ms time, return actual time in ms
+ * @param handle    Player handle.
+ * @param ms        Media time in milliseconds.
  * 
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_set_time(javacall_handle handle, /*INOUT*/ long* ms);
- 
+javacall_result javacall_media_set_media_time(javacall_handle handle, long ms);
+
 /**
  * Get whole media time in ms.
  * This function can be called during play status or stop status.
