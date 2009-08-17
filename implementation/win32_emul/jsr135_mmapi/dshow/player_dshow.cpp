@@ -147,13 +147,6 @@ class player_dshow : public player
         // int64 tc = 40200000;
         // pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);
 
-        hr = pmc->Pause();
-        if(FAILED(hr))
-        {
-            error("IMediaControl::Pause", hr);
-            return result_media;
-        }
-
         hr = pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
         if(hr != S_OK)
         {
@@ -182,6 +175,13 @@ class player_dshow : public player
         else
         {
             return result_illegal_state;
+        }
+
+        HRESULT hr = pmc->Pause();
+        if(FAILED(hr))
+        {
+            error("IMediaControl::Pause", hr);
+            return result_media;
         }
 
         state = prefetched;
@@ -256,6 +256,9 @@ class player_dshow : public player
             return result_illegal_state;
         }
 
+        HRESULT hr = pmc->Stop();
+        if(FAILED(hr)) return result_media;
+
         state = realized;
 
         return result_success;
@@ -269,8 +272,6 @@ class player_dshow : public player
         }
         else if(state == realized || state == prefetched || state == started)
         {
-            pmc->Stop();
-            Sleep(100);
 #ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
                 pbf_flv_dec->Release();
 #endif

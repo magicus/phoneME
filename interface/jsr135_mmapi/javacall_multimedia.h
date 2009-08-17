@@ -582,7 +582,6 @@ javacall_result javacall_media_realize(javacall_handle handle,
                                       long mimeLength);
 
 /**
- * Prefetch native player. 
  * This function will be called by Java Layer to Prefetch native player.
  * 
  * @param handle    Handle to the library
@@ -593,38 +592,14 @@ javacall_result javacall_media_realize(javacall_handle handle,
 javacall_result javacall_media_prefetch(javacall_handle handle);
 
 /**
- * Request to acquire device resources used to play media data.
- * You could implement this function to control device resource usage.
- * If there is no valid device resource to play media data, return JAVACALL_FAIL.
- * 
- * @param handle    Handle to the library
- * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Java VM will raise the media exception
- */
-javacall_result javacall_media_acquire_device(javacall_handle handle);
-
-/**
- * Release device resource. 
- * Java MMAPI call this function to release limited device resources.
+ * This function will be called by Java Layer to Deallocate native player.
  * 
  * @param handle    Handle to the library
  * 
  * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
  * @retval JAVACALL_FAIL    Nothing happened now. Same as JAVACALL_OK.
  */
-javacall_result javacall_media_release_device(javacall_handle handle);
-
-/**
- * MMAPI call this function to clear(delete) buffered media data
- * You have to clear any resources created from previous buffering
- * 
- * @param handle    Handle to the library
- * 
- * @retval JAVACALL_OK      Can clear buffer
- * @retval JAVACALL_FAIL    Can't clear buffer. JVM can't erase resources.
- */
-javacall_result javacall_media_clear_buffer(javacall_handle handle);
+javacall_result javacall_media_deallocate(javacall_handle handle);
 
 /**
  * Try to start media playing.<br>
