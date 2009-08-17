@@ -631,6 +631,11 @@ static javacall_result audio_qs_close(javacall_handle handle){
     JC_MM_DEBUG_PRINT2("audio_close: h:%d  mt:%d\n", (int)handle, h->mediaType);
     h->state = PL135_CLOSED;
 
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, NULL );
+
     return r;
 }
 
