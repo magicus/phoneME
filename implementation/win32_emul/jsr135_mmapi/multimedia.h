@@ -222,9 +222,7 @@ typedef struct {
     javacall_result (*get_player_controls)(javacall_handle handle, int* controls);
     javacall_result (*close)(javacall_handle handle);
     javacall_result (*destroy)(javacall_handle handle);
-    javacall_result (*acquire_device)(javacall_handle handle);
-    javacall_result (*release_device)(javacall_handle handle);
-    javacall_result (*clear_buffer)(javacall_handle handle);
+    javacall_result (*deallocate)(javacall_handle handle);
     javacall_result (*realize)(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength);
     javacall_result (*prefetch)(javacall_handle handle);
     javacall_result (*start)(javacall_handle handle);

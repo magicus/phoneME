@@ -73,12 +73,7 @@ static javacall_result fake_radio_destroy(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result fake_radio_acquire_device(javacall_handle handle)
-{
-    return JAVACALL_OK;
-}
-
-static javacall_result fake_radio_release_device(javacall_handle handle)
+static javacall_result fake_radio_deallocate(javacall_handle handle)
 {
     return JAVACALL_OK;
 }
@@ -155,9 +150,7 @@ static media_basic_interface _fake_radio_basic_itf = {
     fake_radio_get_player_controls,
     fake_radio_close,
     fake_radio_destroy,
-    fake_radio_acquire_device,
-    fake_radio_release_device,
-    NULL,
+    fake_radio_deallocate,
     NULL,
     NULL,
     fake_radio_start,

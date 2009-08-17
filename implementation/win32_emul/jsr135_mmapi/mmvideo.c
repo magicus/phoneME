@@ -44,8 +44,7 @@
 /**********************************************************************************/
 extern javacall_result audio_close(javacall_handle handle);
 extern javacall_result audio_destroy(javacall_handle handle);
-extern javacall_result audio_acquire_device(javacall_handle handle);
-extern javacall_result audio_release_device(javacall_handle handle);
+extern javacall_result audio_deallocate(javacall_handle handle);
 extern javacall_result audio_stop(javacall_handle handle);
 extern javacall_result audio_pause(javacall_handle handle);
 extern javacall_result audio_resume(javacall_handle handle);
@@ -53,7 +52,6 @@ extern javacall_result audio_start(javacall_handle handle);
 extern javacall_result audio_do_buffering(javacall_handle handle,
                                const void* buffer, long *length,
                                javacall_bool *need_more_data, long *min_data_size);
-extern javacall_result audio_clear_buffer(javacall_handle handle);
 extern javacall_result audio_get_time(javacall_handle handle, long* ms);
 extern javacall_result audio_set_time(javacall_handle handle, long* ms);
 extern javacall_result audio_get_duration(javacall_handle handle, long* ms);
@@ -206,17 +204,9 @@ static javacall_result video_destroy(javacall_handle handle)
 /**
  * 
  */
-static javacall_result video_acquire_device(javacall_handle handle)
+static javacall_result video_deallocate(javacall_handle handle)
 {
-    return audio_acquire_device(handle);
-}
-
-/**
- * 
- */
-static javacall_result video_release_device(javacall_handle handle)
-{
-    return audio_release_device(handle);
+    return audio_deallocate(handle);
 }
 
 /**
@@ -260,10 +250,6 @@ video_do_buffering(javacall_handle handle,
                    javacall_bool *need_more_data, long *min_data_size) {
     return audio_do_buffering(handle, buffer, length,
                               need_more_data, min_data_size);
-}
-
-static javacall_result video_clear_buffer(javacall_handle handle) {
-    return audio_clear_buffer(handle);
 }
 
 static javacall_result video_get_time(javacall_handle handle, long* ms)
@@ -611,9 +597,7 @@ static media_basic_interface _video_basic_itf = {
     NULL, // get_player_controls
     video_close,
     video_destroy,
-    video_acquire_device,
-    video_release_device,
-    video_clear_buffer,
+    video_deallocate,
     NULL, // realize
     NULL, // prefetch
     video_start,
@@ -623,11 +607,6 @@ static media_basic_interface _video_basic_itf = {
     NULL,
     NULL,
     NULL,
-    //video_get_java_buffer_size,
-    //video_set_whole_content_size,
-    //video_get_buffer_address,
-    //video_do_buffering,
-    //video_clear_buffer,
     video_get_time,
     video_set_time,
     video_get_duration,

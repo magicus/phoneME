@@ -628,13 +628,15 @@ static javacall_result audio_qs_close(javacall_handle handle){
         h->synth = NULL;
     }
 
+    if (h->dataBuffer != NULL) {
+        FREE(h->dataBuffer);
+        h->dataBuffer    = NULL;
+        h->dataBufferLen = 0;
+        h->dataPos       = 0;
+    }
+
     JC_MM_DEBUG_PRINT2("audio_close: h:%d  mt:%d\n", (int)handle, h->mediaType);
     h->state = PL135_CLOSED;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, NULL );
 
     return r;
 }
@@ -676,16 +678,66 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
 /**
  *
  */
-static javacall_result audio_qs_acquire_device(javacall_handle handle)
-{
+static javacall_result audio_qs_deallocate(javacall_handle handle){
+    ah *h = (ah*)handle;
+    int gmIdx         = h->gmIdx;
+
+    PRINTF( "- release device" );
+    JC_MM_DEBUG_PRINT("audio_qs_deallocate\n");
+
+    if(h->doneCallback != NULL)
+    {
+        mQ234_EventTrigger_Destroy(h->doneCallback);
+        h->doneCallback = NULL;
+    }
+
+    if( h->midiStream != NULL && h->storage != NULL )
+    {
+        h->mtime = mQ234_PlayControl_GetPosition( h->synth );
+    }
+
+    if( h->midiStream != NULL )
+    {
+        FREE( h->midiStream );
+        h->midiStream = NULL;
+    }
+    if( h->storage != NULL )
+    {
+        mQ234_HostStorage_Destroy( h->storage );
+        h->storage = NULL;
+    }
+
+    return JAVACALL_OK;
+}
+
+/**
+ *
+ */
+static javacall_result audio_qs_realize(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength){
+    ah* h = (ah *)handle;
+
+    PRINTF("- realize(%S)", mime );
+
+    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
+                                      h->appId,
+                                      h->playerId, 
+                                      JAVACALL_OK,
+                                      NULL );
+
+    return JAVACALL_OK;
+}
+
+/**
+ *
+ */
+static javacall_result audio_qs_prefetch(javacall_handle handle){
+
     ah*         h     = (ah *)handle;
     int         gmIdx = h->gmIdx;
     long        r     = -1;
-
     MQ234_ERROR e;
-    int         sRate;
 
-    PRINTF( "- acquire device" );
+    PRINTF("- prefetch" );
 
     if(h->dataBuffer != NULL)
     {
@@ -752,94 +804,12 @@ static javacall_result audio_qs_acquire_device(javacall_handle handle)
         }
     }
 
-    return JAVACALL_OK;
-}
-
-/**
- *
- */
-static javacall_result audio_qs_release_device(javacall_handle handle){
-    ah *h = (ah*)handle;
-    int gmIdx         = h->gmIdx;
-
-    PRINTF( "- release device" );
-    JC_MM_DEBUG_PRINT("audio_qs_release_device\n");
-
-    if(h->doneCallback != NULL)
-    {
-        mQ234_EventTrigger_Destroy(h->doneCallback);
-        h->doneCallback = NULL;
-    }
-
-    if( h->midiStream != NULL && h->storage != NULL )
-    {
-        h->mtime = mQ234_PlayControl_GetPosition( h->synth );
-    }
-
-    if( h->midiStream != NULL )
-    {
-        FREE( h->midiStream );
-        h->midiStream = NULL;
-    }
-    if( h->storage != NULL )
-    {
-        mQ234_HostStorage_Destroy( h->storage );
-        h->storage = NULL;
-    }
-
-    return JAVACALL_OK;
-}
-
-/**
- *
- */
-static javacall_result audio_qs_realize(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength){
-    ah* h = (ah *)handle;
-
-    PRINTF("- realize(%S)", mime );
-
-    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
-                                      h->appId,
-                                      h->playerId, 
-                                      JAVACALL_OK,
-                                      NULL );
-
-    return JAVACALL_OK;
-}
-
-/**
- *
- */
-static javacall_result audio_qs_prefetch(javacall_handle handle){
-    ah* h = (ah *)handle;
-
-    PRINTF("- prefetch" );
-
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, NULL );
 
     h->state = PL135_PREFETCHED;
-    return JAVACALL_OK;
-}
-
-/**
- * Delete temp file
- */
-static javacall_result audio_qs_clear_buffer(javacall_handle handle){
-
-    ah *h = (ah*)handle;
-
-    JC_MM_DEBUG_PRINT("audio_qs_clear_buffer\n");
-
-    if (h->dataBuffer != NULL) {
-        FREE(h->dataBuffer);
-        h->dataBuffer    = NULL;
-        h->dataBufferLen = 0;
-        h->dataPos       = 0;
-    }
-
     return JAVACALL_OK;
 }
 
@@ -1661,9 +1631,7 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_get_player_controls,
     audio_qs_close,
     audio_qs_destroy,
-    audio_qs_acquire_device,
-    audio_qs_release_device,
-    audio_qs_clear_buffer,
+    audio_qs_deallocate,
     audio_qs_realize,
     audio_qs_prefetch,
     audio_qs_start,

@@ -523,43 +523,13 @@ static javacall_result dshow_get_player_controls(javacall_handle handle,
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_acquire_device(javacall_handle handle)
+static void dealloc_thread( void* param )
 {
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** acquire device ***\n" );
+    dshow_player* p = (dshow_player*)param;
 
-    if( NULL == p->pModule )
-    {
-        IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
+    PRINTF( "*** deallocating dshow player... ***\n" );
 
-        /*
-        IEffectModule* em = gm->createEffectModule();
-        em->addPlayer( p );
-        Sleep( 1500 );
-        em->removePlayer( p );
-        Sleep( 1500 );
-        em->destroy();
-        */
-
-        p->pModule = gm->createEffectModule();
-        p->our_module = true;
-
-        IPanControl* pan = (IPanControl*)( p->pModule->getControl( "PanControl" ) );
-        if( NULL != pan ) pan->setPan( p->pan );
-
-        IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl( "VolumeControl" ) );
-        if( NULL != vc ) vc->SetLevel( p->volume );
-    }
-
-    p->pModule->addPlayer( p );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result dshow_release_device(javacall_handle handle)
-{
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** release device ***\n" );
+    if( NULL != p->ppl ) p->ppl->deallocate();
 
     lcd_output_video_frame( NULL );
 
@@ -574,13 +544,21 @@ static javacall_result dshow_release_device(javacall_handle handle)
         p->pModule = NULL;
     }
 
-    return JAVACALL_OK;
+    PRINTF( "*** dshow player deallocated ***\n" );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     JAVACALL_OK, NULL );
 }
 
-static javacall_result dshow_clear_buffer(javacall_handle handle)
+static javacall_result dshow_deallocate(javacall_handle handle)
 {
-    //dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** clear buffer ***\n" );
+    dshow_player* p = (dshow_player*)handle;
+    PRINTF( "*** deallocate ***\n" );
+
+    _beginthread( dealloc_thread, 0, p );
+
     return JAVACALL_OK;
 }
 
@@ -734,6 +712,31 @@ static void prefetch_thread( void* param )
 
     PRINTF( "*** dshow player prefetch finished (%s)***\n",
             (ok ? "success" : "fail") );
+
+    if( NULL == p->pModule )
+    {
+        IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
+
+        /*
+        IEffectModule* em = gm->createEffectModule();
+        em->addPlayer( p );
+        Sleep( 1500 );
+        em->removePlayer( p );
+        Sleep( 1500 );
+        em->destroy();
+        */
+
+        p->pModule = gm->createEffectModule();
+        p->our_module = true;
+
+        IPanControl* pan = (IPanControl*)( p->pModule->getControl( "PanControl" ) );
+        if( NULL != pan ) pan->setPan( p->pan );
+
+        IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl( "VolumeControl" ) );
+        if( NULL != vc ) vc->SetLevel( p->volume );
+    }
+
+    p->pModule->addPlayer( p );
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
                                      p->appId,
@@ -1094,9 +1097,7 @@ static media_basic_interface _dshow_basic_itf =
     dshow_get_player_controls,
     dshow_close,
     dshow_destroy,
-    dshow_acquire_device,
-    dshow_release_device,
-    dshow_clear_buffer,
+    dshow_deallocate,
     dshow_realize,
     dshow_prefetch,
     dshow_start,

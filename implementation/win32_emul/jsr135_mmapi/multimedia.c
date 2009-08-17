@@ -908,47 +908,14 @@ javacall_result javacall_media_destroy(javacall_handle handle)
 /**
  *
  */
-javacall_result javacall_media_acquire_device(javacall_handle handle)
+javacall_result javacall_media_deallocate(javacall_handle handle)
 {
     javacall_result ret = JAVACALL_FAIL;
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
 
-    if (QUERY_BASIC_ITF(pItf, acquire_device)) {
-        ret = pItf->vptrBasic->acquire_device(pPlayer->mediaHandle);
-    } else {
-        ret = JAVACALL_OK;
-    }
-
-    return ret;
-}
-
-/**
- *
- */
-javacall_result javacall_media_release_device(javacall_handle handle)
-{
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, release_device)) {
-        ret = pItf->vptrBasic->release_device(pPlayer->mediaHandle);
-    }
-    return ret;
-}
-
-/**
- *
- */
-javacall_result javacall_media_clear_buffer(javacall_handle handle)
-{
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, clear_buffer)) {
-        ret = pItf->vptrBasic->clear_buffer(pPlayer->mediaHandle);
+    if (QUERY_BASIC_ITF(pItf, deallocate)) {
+        ret = pItf->vptrBasic->deallocate(pPlayer->mediaHandle);
     }
     return ret;
 }

@@ -144,15 +144,7 @@ static javacall_result recorder_destroy(javacall_handle handle)
 /**
  * NOTING TO DO
  */
-static javacall_result recorder_acquire_device(javacall_handle handle)
-{
-    return JAVACALL_OK;
-}
-
-/**
- * NOTING TO DO
- */
-static javacall_result recorder_release_device(javacall_handle handle)
+static javacall_result recorder_deallocate(javacall_handle handle)
 {
     return JAVACALL_OK;
 }
@@ -429,9 +421,7 @@ static media_basic_interface _recorder_basic_itf = {
     NULL,
     recorder_close,
     recorder_destroy,
-    recorder_acquire_device,
-    recorder_release_device,
-    NULL,
+    recorder_deallocate,
     NULL,
     NULL,
     recorder_start,

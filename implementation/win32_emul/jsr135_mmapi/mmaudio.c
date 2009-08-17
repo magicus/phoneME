@@ -408,8 +408,10 @@ javacall_result audio_close(javacall_handle handle){
         pHandle->hWnd = -1;
     }
 
+    pHandle->offset = 0;
     if (pHandle->buffer != NULL) {
         FREE(pHandle->buffer);
+        pHandle->buffer = NULL;
     }
 
     mmaudio_mutex_unlock(pHandle->mutex);
@@ -430,14 +432,7 @@ javacall_result audio_destroy(javacall_handle handle){
 /**
  * 
  */
-javacall_result audio_acquire_device(javacall_handle handle){
-    return JAVACALL_OK;
-}
-
-/**
- * 
- */
-javacall_result audio_release_device(javacall_handle handle){
+javacall_result audio_deallocate(javacall_handle handle){
     return JAVACALL_OK;
 }
 
@@ -533,25 +528,6 @@ javacall_result audio_do_buffering(javacall_handle handle,
     
     return JAVACALL_OK;
 }
-
-/**
- * Delete temp file
- */
-javacall_result audio_clear_buffer(javacall_handle hLIB){
-
-    audio_handle* pHandle = (audio_handle*)hLIB;
-
-    /* Reset offset */
-    pHandle->offset = 0;
-    if (pHandle->buffer != NULL) {
-        FREE(pHandle->buffer);
-        pHandle->buffer = NULL;
-    }
-    //DeleteFile(pHandle->fileName);
-    
-    return JAVACALL_OK;
-}
-
 
 /**
  * 
@@ -757,9 +733,7 @@ static media_basic_interface _audio_basic_itf = {
     NULL, // get_player_controls
     audio_close,
     audio_destroy,
-    audio_acquire_device,
-    audio_release_device,
-    NULL, // clear buffer
+    audio_deallocate,
     NULL, // realize
     NULL, // prefetch
     audio_start,
@@ -769,11 +743,6 @@ static media_basic_interface _audio_basic_itf = {
     NULL,
     NULL,
     NULL,
-    //audio_get_java_buffer_size,
-    //audio_set_whole_content_size,
-    //audio_get_buffer_address,
-    //audio_do_buffering,
-    //audio_clear_buffer,
     audio_get_time,
     audio_set_time,
     audio_get_duration,
