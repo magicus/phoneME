@@ -1171,7 +1171,7 @@ javacall_result javacall_media_data_written(
 /**
  * Get current position
  */
-javacall_result javacall_media_get_time(javacall_handle handle, long* ms)
+javacall_result javacall_media_get_media_time(javacall_handle handle, long* ms)
 {
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
@@ -1186,7 +1186,7 @@ javacall_result javacall_media_get_time(javacall_handle handle, long* ms)
 /**
  * Set current position
  */
-javacall_result javacall_media_set_time(javacall_handle handle, long ms)
+javacall_result javacall_media_set_media_time(javacall_handle handle, long ms)
 {
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
