@@ -33,7 +33,7 @@ import java.io.IOException;
 interface StoreGate {
 	static final int channelID = 1; 
 	
-	int size();
+	int requestsCount(ApplicationID appID);
 	int put(InvocationImpl invoc);
 	void resetListenNotifiedFlag(ApplicationID appID, boolean request);
 	void setCleanupFlag(ApplicationID appID, boolean cleanup);
@@ -74,10 +74,11 @@ class StoreRequestsConverter implements StoreGate {
 		this.out = out;
 	}
 	
-	public int size() {
+	public int requestsCount(ApplicationID appID) {
+		Bytes dataOut = new Bytes();
 		try {
-			byte[] data = out.sendMessage(StoreMessageProcessor.CODE_Size, 
-								MessageProcessor.ZERO_BYTES);
+			appID.serialize(dataOut);
+			byte[] data = out.sendMessage(StoreMessageProcessor.CODE_Size, dataOut.toByteArray());
 			return new DataInputStream(new ByteArrayInputStream(data)).readInt();
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage());
@@ -255,7 +256,7 @@ class StoreRequestsExecutor implements StoreMessageProcessor {
 	public byte[] sendMessage(int msgCode, byte[] data) throws IOException {
 		DataInputStream dataIn = new DataInputStream( new ByteArrayInputStream( data ) );
 		switch( msgCode ){
-			case CODE_Size: return size(dataIn); 
+			case CODE_Size: return requestsCount(dataIn); 
 			case CODE_Put: return put(dataIn);
 			case CODE_ResetListenNotifiedFlag: return resetListenNotifiedFlag(dataIn);
 			case CODE_SetCleanupFlag: return setCleanupFlag(dataIn);
@@ -274,9 +275,10 @@ class StoreRequestsExecutor implements StoreMessageProcessor {
 		}
 	}
 
-	private byte[] size(DataInputStream dataIn) throws IOException {
+	private byte[] requestsCount(DataInputStream dataIn) throws IOException {
+		ApplicationID appID = AppProxy.createAppID().read(dataIn);
 		Bytes out = new Bytes();
-		out.writeInt( gate.size() );
+		out.writeInt( gate.requestsCount(appID) );
 		return out.toByteArray();
 	}
 

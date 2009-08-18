@@ -131,6 +131,10 @@ public class CHManagerBase extends com.sun.midp.content.CHManager
 		AppProxyAgent.invokeNext();
     }
 
+	public int getPendingRequestsCount( int suiteId ) {
+		return InvocationImpl.store.requestsCount( new CLDCAppID(suiteId, null) );
+	}
+	
     /**
      * Preprocess an event that is being posted to the event queue.
      * This method will get called in the thread that posted the event.
