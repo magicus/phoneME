@@ -164,26 +164,14 @@ class MMEventListener implements EventListener {
             break;
 
         case EVENT_MEDIA_REALIZE_FINISHED:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
-                p.resumeRealize();
-            }
-            break;
-
         case EVENT_MEDIA_PREFETCH_FINISHED:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
-                p.resumePrefetch();
-            }
-            break;
-            
         case EVENT_MEDIA_START_FINISHED:
             p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
-                p.resumeStart();
+                p.unblockOnEvent();
             }
             break;
-
+         
         case EVENT_MEDIA_SNAPSHOT_FINISHED:
             p = HighLevelPlayer.get( nevt.intParam1 );
             if( null != p )

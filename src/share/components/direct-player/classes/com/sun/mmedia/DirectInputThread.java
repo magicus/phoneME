@@ -26,6 +26,8 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 import java.lang.ref.WeakReference;
@@ -36,21 +38,14 @@ class DirectInputThread extends Thread {
     private volatile long curPos = 0;
     private volatile long posToRead = 0;
     private volatile int lenToRead = 0;
-    private volatile int nativePtr = 0;
-
 
     private boolean requestPending = false;
-    private long    reqPos = 0;
-    private int     reqLen = 0;
-    private int     reqBufPtr = 0;
 
     private WeakReference wrPlayer;
 
     private byte[] tmpBuf = new byte [ 0x1000 ];  // 4 Kbytes
     private volatile boolean isDismissed = false;
-    private boolean isFrozen = false;
 
-    private final Object dataWriteLock = new Object();
     private final Object requestLock = new Object();
 
     DirectInputThread(HighLevelPlayer p) throws MediaException {
@@ -75,24 +70,25 @@ class DirectInputThread extends Thread {
 
 mainloop:
         for(;;) {
-            HighLevelPlayer owner = (HighLevelPlayer) wrPlayer.get();
-            if ( null == owner || isDismissed ) {
-                return;
-            }
+            HighLevelPlayer owner = null;
 
             synchronized( requestLock ) {
-                if( requestPending ) {
-                    requestPending = false;
-                }
-                else {
+                while ( !requestPending )
+                {
                     try {
-                        requestLock.wait( 1000 );
-                    } catch (InterruptedException ex) {
-                        //owner.abort("Stream reading thread was interrupted");
+                        requestLock.wait(1000);
+                    } catch (InterruptedException ex) {}
+                    if( isDismissed ) {
                         return;
                     }
-                    continue;
+
+                    owner = (HighLevelPlayer) wrPlayer.get();
+                    if (null == owner) {
+                        return;
+                    }
+
                 }
+                requestPending = false;
             }
 
             nGetRequestParams( owner.getNativeHandle() );
@@ -123,31 +119,16 @@ mainloop:
                     return;
                 }
 
-                synchronized( dataWriteLock ) {
-                    if( isDismissed ) {
-                        return;
-                    }
-
-                    if( isFrozen ) {
-                        do {
-                            try {
-                                dataWriteLock.wait( 1000 );
-                            } catch (InterruptedException ex) {}
-                            owner = (HighLevelPlayer) wrPlayer.get();
-                            if ( null == owner || isDismissed ) {
-                                return;
-                            }
-                        } while( isFrozen );
-                        continue mainloop;
-                    }
-                    else {
-                        if( -1 == read ) {
-                            nNotifyEndOfStream( owner.getNativeHandle() );
-                        }
-                        else {
-                            nWriteData( tmpBuf, read, owner.getNativeHandle() );
-                        }
-                    }
+                owner = (HighLevelPlayer) wrPlayer.get();
+                if ( null == owner || isDismissed ) {
+                    return;
+                }
+                
+                if( -1 == read ) {
+                    nNotifyEndOfStream( owner.getNativeHandle() );
+                }
+                else {
+                    nWriteData( tmpBuf, read, owner.getNativeHandle() );
                 }
             }
         }
@@ -180,26 +161,9 @@ mainloop:
         synchronized (requestLock) {
             requestLock.notify();
         }
-        synchronized( dataWriteLock ) {
-            dataWriteLock.notify();
-        }
         try {
             this.join();
         } catch (InterruptedException ex) {}
     }
 
-
-    // this method may take some time to execute
-    public void stopWritingAndFreeze() {
-        synchronized( dataWriteLock ) {
-            isFrozen = true;
-        }
-    }
-
-    public void unfreeze() {
-        synchronized( dataWriteLock ) {
-            isFrozen = false;
-            dataWriteLock.notify();
-        }
-    }
 }

@@ -32,6 +32,8 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     jint jHandle = KNI_GetParameterAsInt(3);
     javacall_handle handle = NULL;
     jint lenToWrite = 0;
+    jbyte *pDest = NULL;
+        
     
     if( 0 == jHandle )
     {
@@ -58,33 +60,22 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     KNI_GetThisPointer(instance);
     KNI_GetObjectClass(instance, clazz);
 
+    /* notify JavaCall that the data is ready,
+       AND get the destination buffer address */
+    javacall_media_data_ready( handle, lenToWrite, &pDest );
+    
     /* copy the data */
+    if( NULL != pDest )
     {
-        jint addrToWrite = 0;
-        jbyte *pDest = NULL;
-        
-        addrToWrite = KNI_GetIntField( instance, 
-                                  KNI_GetFieldID( clazz, "nativePtr", "I" ) );
         KNI_GetParameterAsObject(1, javaBuf);
-        pDest = ( jbyte* )addrToWrite;
         KNI_GetRawArrayRegion( javaBuf, 0, lenToWrite, pDest );
     }
     
-    /* Update of the current position */
-    {
-        jfieldID fieldCurPos;
-        jlong curPos = 0;
-        fieldCurPos = KNI_GetFieldID( clazz, "curPos", "J" ); /* Long! */
-        curPos = KNI_GetLongField( instance, fieldCurPos ); /* Long! */
-        curPos += lenToWrite;
-        KNI_SetLongField( instance, fieldCurPos, curPos ); /* Long! */
-    }
- 
     /* Notify JavaCall that the data is written */
     {
         javacall_bool new_request = JAVACALL_FALSE;
                 
-        javacall_media_data_written( handle, lenToWrite, &new_request );
+        javacall_media_data_written( handle, &new_request );
         
         if( JAVACALL_TRUE == new_request )
         {
@@ -95,7 +86,17 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
                 KNI_GetFieldID( clazz, "lenToRead", "I" ), 0 );
         }
     }
-    
+
+    /* Update of the current position */
+    {
+        jfieldID fieldCurPos;
+        jlong curPos = 0;
+        fieldCurPos = KNI_GetFieldID( clazz, "curPos", "J" ); /* Long! */
+        curPos = KNI_GetLongField( instance, fieldCurPos ); /* Long! */
+        curPos += lenToWrite;
+        KNI_SetLongField( instance, fieldCurPos, curPos ); /* Long! */
+    }
+ 
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
@@ -104,11 +105,10 @@ static void get_data_request_params( KNIDECLARGS javacall_handle handle )
 {
     javacall_int64 offset;
     javacall_int32 length;
-    void *data;
     javacall_result res = JAVACALL_FAIL;
     
     if( JAVACALL_OK != javacall_media_get_data_request( handle, &offset, 
-        &length, &data) )
+        &length ) )
     {
         length = 0;
     }
@@ -125,8 +125,6 @@ static void get_data_request_params( KNIDECLARGS javacall_handle handle )
                         ( jlong )offset );
     KNI_SetIntField( instance, KNI_GetFieldID( clazz, "lenToRead", "I" ),
                         ( jint )length );
-    KNI_SetIntField( instance, KNI_GetFieldID( clazz, "nativePtr", "I" ),
-                        ( jint )data );
 
     KNI_EndHandles();
 }

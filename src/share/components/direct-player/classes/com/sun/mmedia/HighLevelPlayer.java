@@ -25,6 +25,8 @@
 
 package com.sun.mmedia;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
@@ -572,10 +574,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     //protected MediaDownload mediaDownload = null;
     private DirectInputThread directInputThread;
 
-    DirectInputThread getDirectInputThread() {
-        return directInputThread;
-    }
-
     /**
      * Check to see if the Player is closed.  If the
      * unrealized boolean flag is true, check also to
@@ -592,18 +590,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
-    void resumeRealize()
-    {
-        final Object realizeLock = directInputThread;
-        if( null != realizeLock )
-        {
-            synchronized( realizeLock )
-            {
-                realizeLock.notify();
-            }
-        }
-    }
-    
     /**
      * Constructs portions of the <code>Player</code> without
      * acquiring the scarce and exclusive resources.
@@ -649,21 +635,14 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
                 directInputThread = new DirectInputThread( this );
                 directInputThread.start();
-                final Object realizeLock = directInputThread;
-                synchronized( realizeLock ) {
-                    /* try to realize native player */
-                    nRealize(hNative, type);
-                    try {
-                        realizeLock.wait();
-                    } catch (InterruptedException ex) {
-                        abort( "Realize() was interrupted" );
-                    }
+            }
+
+            final String t = type;
+            runAsync( new AsyncTask() {
+                public void run() throws MediaException {
+                    nRealize(hNative, t);
                 }
-            }
-            else {
-                /* try to realize native player */
-                nRealize(hNative, type);
-            }
+            } );
         }
 
         System.out.println( "HighLevelPlayer: realize() resumed" );
@@ -735,17 +714,51 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     }
 
-    void resumePrefetch()
+    private boolean isBlockedUntilEvent = false;
+
+    private interface AsyncTask {
+        public void run() throws MediaException;
+    }
+
+    private void runAsync( AsyncTask task ) throws MediaException
     {
-        final Object prefetchLock = directInputThread;
-        if( null != prefetchLock )
+        final Object lock = getAsyncExecLock();
+        if (null != lock) {
+            synchronized (lock) {
+                task.run();
+                isBlockedUntilEvent = true;
+                while (isBlockedUntilEvent) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException ex) {
+                    }
+                }
+                System.out.println(
+                        "HighLevelPlayer: runAndWaitIfAsync() unblocked");
+            }
+        } else {
+            task.run();
+        }
+    }
+
+    private Object getAsyncExecLock()
+    {
+        return directInputThread;
+    }
+
+    void unblockOnEvent()
+    {
+        final Object lock = getAsyncExecLock();
+        if( null != lock )
         {
-            synchronized( prefetchLock )
+            synchronized( lock )
             {
-                prefetchLock.notify();
+                isBlockedUntilEvent = false;
+                lock.notify();
             }
         }
     }
+    
     /**
      * Acquires the scarce and exclusive resources
      * and processes as much data as necessary
@@ -797,9 +810,16 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
-        //this method may pause inside and wait for resumePrefetch()
-        lowLevelPlayer.doPrefetch();
+        /* prefetch native player */
+        /* predownload media data to fill native buffers */
+        runAsync( new AsyncTask() {
+            public void run() throws MediaException {
+                lowLevelPlayer.doPrefetch();
+            }
+        });
 
+        System.out.println("HighLevelPlayer: Prefetch resumed");
+        
         VolumeControl vc = ( VolumeControl )getControl(
                 pkgName + vocName);
         if (vc != null && (vc.getLevel() == -1)) {
@@ -828,18 +848,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     private boolean hasZeroDuration()
     {
         return ( isDevicePlayer() && !hasToneSequenceSet ) ;
-    }
-
-    void resumeStart()
-    {
-        final Object startLock = directInputThread;
-        if( null != startLock )
-        {
-            synchronized( startLock )
-            {
-                startLock.notify();
-            }
-        }
     }
 
     /**
@@ -924,25 +932,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        final Object startLock = directInputThread;
-        if( null != startLock )
-        {
-            synchronized( startLock )
-            {
+        runAsync( new AsyncTask() {
+            public void run() throws MediaException {
                 if (!lowLevelPlayer.doStart()) {
                     throw new MediaException("start");
                 }
-
-                // Wait for native JavaNotify event, see MMEventListener
-                try {
-                    startLock.wait();
-                } catch (InterruptedException ex) {}
             }
-        }
-        else if (!lowLevelPlayer.doStart()) {
-            throw new MediaException("start");
-        }
-
+        });
 
         setState( STARTED );
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
@@ -997,7 +993,17 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
         lowLevelPlayer.doPreStop();
-        lowLevelPlayer.doStop();
+
+        final Object lock = getAsyncExecLock();
+        if( null != lock ) {
+            synchronized( lock ) {
+                lowLevelPlayer.doStop();
+                blockUntilEvent();
+                System.out.println("HighLevelPlayer: stop() unblocked");
+            }
+        } else {
+            lowLevelPlayer.doStop();
+        }
 
         // Update the time base to use the system time
         // before stopping.
@@ -1049,7 +1055,18 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        lowLevelPlayer.doDeallocate();
+        final Object lock = getAsyncExecLock();
+        if( null != lock )
+        {
+            synchronized( lock )
+            {
+                lowLevelPlayer.doDeallocate();
+                blockUntilEvent();
+                System.out.println("HighLevelPlayer: deallocate() unblocked" );
+            }
+        } else {
+            lowLevelPlayer.doDeallocate();
+        }
 
         if (stream != null) {
             // if stream is not seekable, just return
