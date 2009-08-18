@@ -860,27 +860,36 @@ javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 lengt
 
 javacall_result dshow_get_data_request(javacall_handle handle,
                                        javacall_int64* offset,
-                                       javacall_int32* length,
-                                       void**          data)
+                                       javacall_int32* length)
 {
     dshow_player* p = (dshow_player*)handle;
 
     *offset = p->dwr_offset;
     *length = p->dwr_len;
-    *data   = p->dwr_pdata;
 
     PRINTF( "--- get_data_request: @%I64d %d", *offset, *length );
 
     return JAVACALL_OK;
 }
 
+javacall_result dshow_data_ready(javacall_handle handle,
+                                 javacall_int32  length,
+                                 void**          data)
+{
+    dshow_player* p = (dshow_player*)handle;
+    PRINTF( "--- data_ready: %d", length );
+
+    p->dwr_len = length;
+    *data      = p->dwr_pdata;
+
+    return JAVACALL_OK;
+}
+
 javacall_result dshow_data_written(javacall_handle handle,
-                                   javacall_int32  length,
                                    javacall_bool*  new_request)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "--- data_written: %d", length );
-    p->dwr_len = length;
+    PRINTF( "--- data_written." );
     SetEvent( p->dwr_event );
     *new_request = JAVACALL_FALSE;
     return JAVACALL_OK;
@@ -1129,6 +1138,7 @@ static media_basic_interface _dshow_basic_itf =
     dshow_resume,
     dshow_stream_length,
     dshow_get_data_request,
+    dshow_data_ready,
     dshow_data_written,
     dshow_get_time,
     dshow_set_time,

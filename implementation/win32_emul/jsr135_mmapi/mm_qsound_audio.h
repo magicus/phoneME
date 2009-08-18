@@ -72,8 +72,7 @@ typedef struct {
     int                     dataBufferLen;
     int                     dataPos;
     int                     streamLen;
-    //javacall_bool           dataStopped; /* No more data now */
-    //javacall_bool           dataEnded; /* All data transferred */
+    int                     portionLen;
     
     IControl*               controls[CONT_MAX];
     javacall_bool           needProcessHeader;

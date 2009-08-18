@@ -814,7 +814,7 @@ static javacall_result audio_qs_prefetch(javacall_handle handle){
  */
 static javacall_result audio_qs_start(javacall_handle handle){
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     h->state = PL135_STARTED;
    
@@ -837,7 +837,7 @@ static javacall_result audio_qs_start(javacall_handle handle){
  */
 static javacall_result audio_qs_stop(javacall_handle handle){
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     JC_MM_DEBUG_PRINT1("audio_stop: h=0x%08X\n", (int)handle);
     PRINTF( "- stop" );
 
@@ -868,7 +868,7 @@ static javacall_result audio_qs_resume(javacall_handle handle){
 static javacall_result audio_qs_stream_length(javacall_handle handle, 
                                               javacall_int64 length)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     PRINTF( "- stream length(%i)", (int)length );
 
@@ -889,10 +889,9 @@ static javacall_result audio_qs_stream_length(javacall_handle handle,
 
 static javacall_result audio_qs_get_data_request(javacall_handle handle, 
                                                  javacall_int64 *offset, 
-                                                 javacall_int32 *length, 
-                                                 void **data)
+                                                 javacall_int32 *length)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     if( -1 == h->streamLen )
     {
@@ -905,7 +904,6 @@ static javacall_result audio_qs_get_data_request(javacall_handle handle,
         }
     }
 
-    *data   = h->dataBuffer + h->dataPos;
     *offset = h->dataPos;
     *length = h->dataBufferLen - h->dataPos;
 
@@ -914,15 +912,26 @@ static javacall_result audio_qs_get_data_request(javacall_handle handle,
     return JAVACALL_OK;
 }
 
+static javacall_result audio_qs_data_ready(javacall_handle handle, 
+                                           javacall_int32 length,
+                                           void **data)
+{
+    ah* h = (ah*)handle;
+
+    *data         = h->dataBuffer + h->dataPos;
+    h->portionLen = length; // store until data is actually written
+
+    return JAVACALL_OK;
+}
+
 static javacall_result audio_qs_data_written(javacall_handle handle, 
-                                             javacall_int32 length, 
                                              javacall_bool *new_request)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
-    PRINTF( "  - done(%i)", (int)length );
+    PRINTF( "  - done(%i)", (int)h->portionLen );
 
-    h->dataPos += length;
+    h->dataPos += h->portionLen;
 
     if( -1 != h->streamLen && h->dataPos == h->streamLen )
     {
@@ -955,7 +964,7 @@ static javacall_result audio_qs_data_written(javacall_handle handle,
  */
 static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     long pos;
     IRateControl *pRateControl = NULL;
 
@@ -983,7 +992,7 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
  */
 static javacall_result audio_qs_set_time(javacall_handle handle, long ms){
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     long currtime;
 
     PRINTF( "- set time (%ld)", ms );
@@ -1013,7 +1022,7 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long ms){
  */
 static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     long dur = mQ234_PlayControl_GetDuration(h->synth);
 
@@ -1053,7 +1062,7 @@ static javacall_result audio_qs_switch_to_background(javacall_handle handle,
 
 static javacall_result audio_qs_get_volume(javacall_handle handle, long* level) {
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     *level = (long) mQ135_Volume_GetLevel(
         (IVolumeControl*)h->controls[CON135_VOLUME]);
@@ -1066,7 +1075,7 @@ static javacall_result audio_qs_get_volume(javacall_handle handle, long* level) 
  */
 static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) {
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_FAIL;
 
     *level = (long) mQ135_Volume_SetLevel(
@@ -1080,7 +1089,7 @@ static javacall_result audio_qs_set_volume(javacall_handle handle, long* level) 
  */
 static javacall_result audio_qs_is_mute(javacall_handle handle, javacall_bool* mute ) {
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     int muted = (long) mQ135_Volume_IsMuted(
                       (IVolumeControl*)h->controls[CON135_VOLUME]);
@@ -1096,7 +1105,7 @@ static javacall_result audio_qs_is_mute(javacall_handle handle, javacall_bool* m
 static javacall_result audio_qs_set_mute(javacall_handle handle,
                                       javacall_bool mute){
 
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     mQ135_Volume_SetMute(
         (IVolumeControl*)h->controls[CON135_VOLUME],
@@ -1110,7 +1119,7 @@ static javacall_result audio_qs_set_mute(javacall_handle handle,
 static javacall_result audio_qs_get_channel_volume(javacall_handle handle,
                                                    long channel, long *volume)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     int gmIdx         = h->gmIdx;
     javacall_result r = JAVACALL_OK;
     int vol;
@@ -1128,7 +1137,7 @@ static javacall_result audio_qs_get_channel_volume(javacall_handle handle,
 static javacall_result audio_qs_set_channel_volume(javacall_handle handle,
                                                    long channel, long volume)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_FAIL;
 
     int tries;
@@ -1175,7 +1184,7 @@ static javacall_result audio_qs_set_channel_volume(javacall_handle handle,
 static javacall_result audio_qs_set_program(javacall_handle handle,
                                             long channel, long bank, long program)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     int             b, p, retry;
     JSR135ErrorCode e;
@@ -1208,7 +1217,7 @@ static javacall_result audio_qs_set_program(javacall_handle handle,
 static javacall_result audio_qs_short_midi_event(javacall_handle handle,
                                                  long type, long data1, long data2)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
     int gmIdx         = h->gmIdx;
 
@@ -1232,7 +1241,7 @@ static javacall_result audio_qs_long_midi_event(javacall_handle handle,
                                                 const char* data, long offset,
                                                 long* length)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
     int gmIdx         = h->gmIdx;
     int numused;
@@ -1259,7 +1268,7 @@ static javacall_result audio_qs_long_midi_event(javacall_handle handle,
 static javacall_result audio_qs_get_metadata_key_counts(javacall_handle handle,
                                                         long *keyCounts)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
 
     IMetaDataControl* mdc 
@@ -1278,7 +1287,7 @@ static javacall_result audio_qs_get_metadata_key(javacall_handle handle,
                                                  long index, long bufLength,
                                                  javacall_utf16* buf)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
     char *keys[MAX_METADATA_KEYS];
     int l, newl = 0;
@@ -1305,7 +1314,7 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
                                              javacall_const_utf16_string key, long bufLength,
                                              javacall_utf16* buf)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
     int keyLen8 = 0, newl = 0;
     char *key8 = NULL, *val8 = NULL;
@@ -1340,7 +1349,7 @@ static javacall_result audio_qs_get_metadata(javacall_handle handle,
 /* RateControl Functions ************************************************/
 static javacall_result audio_qs_get_max_rate(javacall_handle handle, long *maxRate)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     
     *maxRate = mQ135_Rate_GetMaxRate((
         IRateControl*)h->controls[CON135_RATE]);
@@ -1350,7 +1359,7 @@ static javacall_result audio_qs_get_max_rate(javacall_handle handle, long *maxRa
 
 static javacall_result audio_qs_get_min_rate(javacall_handle handle, long *minRate)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     *minRate = mQ135_Rate_GetMinRate(
         (IRateControl*)h->controls[CON135_RATE]);
@@ -1360,7 +1369,7 @@ static javacall_result audio_qs_get_min_rate(javacall_handle handle, long *minRa
 
 static javacall_result audio_qs_set_rate(javacall_handle handle, long rate)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     long setRate;
 
     setRate = mQ135_Rate_SetRate(
@@ -1371,7 +1380,7 @@ static javacall_result audio_qs_set_rate(javacall_handle handle, long rate)
 
 static javacall_result audio_qs_get_rate(javacall_handle handle, long* rate)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     *rate = mQ135_Rate_GetRate(
         (IRateControl*)h->controls[CON135_RATE]);
@@ -1382,7 +1391,7 @@ static javacall_result audio_qs_get_rate(javacall_handle handle, long* rate)
 /* TempoControl Functions ************************************************/
 static javacall_result audio_qs_get_tempo(javacall_handle handle, long *tempo)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     *tempo = mQ135_Tempo_GetTempo(
         (ITempoControl*)h->controls[CON135_TEMPO]);
@@ -1394,7 +1403,7 @@ static javacall_result audio_qs_get_tempo(javacall_handle handle, long *tempo)
 
 static javacall_result audio_qs_set_tempo(javacall_handle handle, long tempo)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     long setTempo;
 
     JC_MM_DEBUG_PRINT1("audio_set_tempo: rate:%ld\n", tempo);
@@ -1411,7 +1420,7 @@ static javacall_result audio_qs_set_tempo(javacall_handle handle, long tempo)
 static javacall_result audio_qs_get_max_pitch(javacall_handle handle,
                                               long *maxPitch)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     *maxPitch = mQ135_Pitch_GetMaxPitch(
         (IPitchControl*)h->controls[CON135_PITCH]);
@@ -1422,7 +1431,7 @@ static javacall_result audio_qs_get_max_pitch(javacall_handle handle,
 static javacall_result audio_qs_get_min_pitch(javacall_handle handle,
                                               long *minPitch)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     *minPitch = mQ135_Pitch_GetMinPitch(
         (IPitchControl*)h->controls[CON135_PITCH]);
@@ -1432,7 +1441,7 @@ static javacall_result audio_qs_get_min_pitch(javacall_handle handle,
 
 static javacall_result audio_qs_set_pitch(javacall_handle handle, long pitch)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     long setPitch;
 
     setPitch = mQ135_Pitch_SetPitch(
@@ -1443,7 +1452,7 @@ static javacall_result audio_qs_set_pitch(javacall_handle handle, long pitch)
 
 static javacall_result audio_qs_get_pitch(javacall_handle handle, long* pitch)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     *pitch = mQ135_Pitch_GetPitch(
         (IPitchControl*)h->controls[CON135_PITCH]);
@@ -1458,7 +1467,7 @@ static javacall_result audio_qs_get_pitch(javacall_handle handle, long* pitch)
 static javacall_result audio_qs_is_bank_query_supported(javacall_handle handle,
                                                         long* supported)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
 
     *supported = mQ135_MIDI_IsBankQuerySupported(
@@ -1471,7 +1480,7 @@ static javacall_result audio_qs_get_bank_list(javacall_handle handle,
                                               long custom, short* banklist,
                                               long* numlist)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     JSR135ErrorCode e = mQ135_MIDI_GetBankList(
         (IMIDIControl*)h->controls[CON135_MIDI],
@@ -1485,7 +1494,7 @@ static javacall_result audio_qs_get_key_name(javacall_handle handle,
                                              long key, char* keyname,
                                              long* keynameLen)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
 
     JSR135ErrorCode e;
@@ -1508,7 +1517,7 @@ static javacall_result audio_qs_get_program_name(javacall_handle handle,
                                                  long bank, long program,
                                                  char* progname, long* prognameLen)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     javacall_result r = JAVACALL_OK;
 
     JSR135ErrorCode e;
@@ -1529,7 +1538,7 @@ static javacall_result audio_qs_get_program_list(javacall_handle handle,
                                                  long bank, char* proglist,
                                                  long* proglistLen)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     JSR135ErrorCode e;
 
@@ -1544,7 +1553,7 @@ static javacall_result audio_qs_get_program_list(javacall_handle handle,
 static javacall_result audio_qs_get_program(javacall_handle handle,
                                             long channel, long* prog)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
     int gmIdx         = h->gmIdx;
     JSR135ErrorCode e;
 
@@ -1561,7 +1570,7 @@ static javacall_result audio_qs_get_program(javacall_handle handle,
 
 javacall_result audio_qs_tone_alloc_buffer(javacall_handle handle, int length, void** ptr)
 {
-    ah *h = (ah *)handle;
+    ah* h = (ah*)handle;
 
     PRINTF( "- alloc buffer (%i)", length );
 
@@ -1582,7 +1591,7 @@ javacall_result audio_qs_tone_alloc_buffer(javacall_handle handle, int length, v
 
 javacall_result audio_qs_tone_sequence_written(javacall_handle handle)
 {
-    //ah *h = (ah *)handle;
+    //ah* h = (ah*)handle;
     PRINTF( "- sequence written" );
 
     return JAVACALL_OK;
@@ -1639,6 +1648,7 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_resume,
     audio_qs_stream_length,
     audio_qs_get_data_request,
+    audio_qs_data_ready,
     audio_qs_data_written,
     audio_qs_get_time,
     audio_qs_set_time,

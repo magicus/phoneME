@@ -164,6 +164,7 @@ static media_basic_interface _fake_radio_basic_itf = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

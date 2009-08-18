@@ -553,6 +553,7 @@ static media_basic_interface _rtp_basic_itf =
     NULL,
     NULL,
     NULL,
+    NULL,
     rtp_get_time,
     rtp_set_time,
     rtp_get_duration,
