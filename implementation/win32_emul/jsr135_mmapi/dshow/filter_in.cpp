@@ -688,6 +688,7 @@ HRESULT __stdcall filter_in_pin::WaitForNext(DWORD dwTimeout, IMediaSample **ppS
 
     for(;;)
     {
+        // if(pfilter->state != State_Running || flushing) return VFW_E_WRONG_STATE;
         if(flushing) return VFW_E_WRONG_STATE;
 
         if(requests) break;
@@ -808,6 +809,8 @@ HRESULT __stdcall filter_in_pin::SyncRead(LONGLONG llPosition, LONG lLength, BYT
 
     if(llPosition < 0) return E_INVALIDARG;
     if(lLength < 0) return VFW_E_START_TIME_AFTER_END;
+
+    if(llPosition > stream_len) return S_FALSE;
 
     HRESULT r;
 

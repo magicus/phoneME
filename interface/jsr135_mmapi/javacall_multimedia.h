@@ -641,36 +641,47 @@ javacall_result javacall_media_stream_length(
 
 /**
  * Get the data for the JAVACALL_EVENT_MEDIA_DATA_REQUEST event.
- * 
- * @param handle Handle to the native player.
- * @param offset Stream offset to read from, in bytes.
- * @param length Buffer length. Maximum data length to write
- *               to buffer, in bytes.
- * @param data   Buffer addres to write data to.
- * 
+ *
+ * @param handle  Handle to the native player.
+ * @param offset  Stream offset to read from, in bytes.
+ * @param length  Buffer length. Maximum data length to write
+ *                to buffer, in bytes.
+ *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
  */
 javacall_result javacall_media_get_data_request(
     javacall_handle handle,
     /*OUT*/ javacall_int64 *offset,
-    /*OUT*/ javacall_int32 *length,
-    /*OUT*/ void **data);
+    /*OUT*/ javacall_int32 *length);
+
+/**
+ * Tell the native player that requested data is ready to be written.
+ *
+ * @param handle       Handle to the native player.
+ * @param length       Length of data, in bytes.
+ * @param data         Buffer addres to write data to.
+ * @param new_request  Additional data requested.
+ *
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL
+ */
+javacall_result javacall_media_data_ready(
+    javacall_handle handle,
+    javacall_int32 length,
+    /*OUT*/ void **data,
+    /*OUT*/ javacall_bool *new_request);
 
 /**
  * Tell the native player that requested data has been written.
- * 
- * @param handle      Handle to the native player.
- * @param length      Length of data actually written, in bytes.
- * @param new_request Additional data requested.
- * 
+ *
+ * @param handle       Handle to the native player.
+ *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
  */
 javacall_result javacall_media_data_written(
-    javacall_handle handle,
-    javacall_int32 length,
-    /*OUT*/ javacall_bool *new_request);
+    javacall_handle handle);
 
 /**
  * Get the current media time.
