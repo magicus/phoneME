@@ -555,3 +555,12 @@ ifeq ($(USE_XMLPARSER),true)
 include $(XMLPARSER_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
+#####################################################################
+# (Extra) CMS
+# Description: Content Management System
+#####################################################################
+ifeq ($(USE_CMS), true)
+JPP_DEFS += -DENABLE_CMS
+EXTRA_CFLAGS += -DENABLE_CMS=1
+include $(CMS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif

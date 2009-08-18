@@ -154,7 +154,7 @@ define verify_jsr_234_directory
 endef
 
 define verify_jsr_256_directory
-    if [ "$(USR_JSR_256)" = "true" ]; then \
+    if [ "$(USE_JSR_256)" = "true" ]; then \
         $(verify_directory); \
     fi
 endef
@@ -232,6 +232,12 @@ define verify_tools_directory
     if [ ! -f "$(TOOLS_DIR)/tools.gmk" ]; then \
         echo "ERROR: $@ ($($@)) does not contain tools.gmk"; \
         exit -1; \
+    fi
+endef
+
+define verify_cms_directory
+    if [ "$(USE_CMS)" = "true" ]; then \
+        $(verify_directory); \
     fi
 endef
 
@@ -387,6 +393,7 @@ BOOLEAN_OPTIONS = \
 	USE_JSR_257 \
 	USE_JSR_281 \
 	USE_JSR_290 \
+	USE_CMS \
 	USE_ABSTRACTIONS \
 	USE_VERBOSE_MAKE \
 	USE_CONTROL_ARGS_FROM_JAD \
@@ -611,6 +618,10 @@ JSR_239_DIR::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_239_directory) $(LOG)
 
+CMS_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_cms_directory) $(LOG)
+
 ABSTRACTIONS_DIR::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_abstractions_directory) $(LOG)
@@ -689,7 +700,7 @@ verify: MIDP_OUTPUT_DIR CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_
 	JSR_75_DIR JSR_82_DIR JSR_135_DIR JSR_172_DIR JSR_226_DIR PISCES_DIR JSR_179_DIR \
 	JSR_180_DIR JSR_184_DIR JSR_205_DIR JSR_211_DIR JSR_229_DIR \
 	JSR_230_DIR JSR_234_DIR JSR_238_DIR JSR_239_DIR JSR_256_DIR JSR_257_DIR \
-	JSR_280_DIR JSR_281_DIR JSR_290_DIR JSR_293_DIR ABSTRACTIONS_DIR JAVACALL_OUTPUT_DIR $(BOOLEAN_OPTIONS)
+	JSR_280_DIR JSR_281_DIR JSR_290_DIR JSR_293_DIR CMS_DIR ABSTRACTIONS_DIR JAVACALL_OUTPUT_DIR $(BOOLEAN_OPTIONS)
 
 ######################################################################
 #
@@ -764,6 +775,8 @@ display:
 	@echo	"JSR_290_DIR           = ""$(JSR_290_DIR)" $(LOG)
 	@echo   "JSR_293_DIR           = ""$(JSR_293_DIR)" $(LOG)
 	@echo	"PROJECT_JSR_290_DIR   = ""$(PROJECT_JSR_290_DIR)" $(LOG)
+	@echo	"CMS_DIR               = ""$(CMS_DIR)" $(LOG)
+	@echo	"PROJECT_CMS_DIR       = ""$(PROJECT_CMS_DIR)" $(LOG)
 	@echo   "JC_DIR                = ""$(JC_DIR)" $(LOG)
 	@echo   "RESTRICTED_CRYPTO_DIR = ""$(RESTRICTED_CRYPTO_DIR)" $(LOG)
 	@echo   "CRYPTO_OUTPUT_DIR     = ""$(CRYPTO_OUTPUT_DIR)" $(LOG)
