@@ -122,10 +122,10 @@ public class CHManager {
             AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
-		if (manager == null) {
-			manager = new CHManager();
-		}
-		return manager;
+        if (manager == null) {
+            manager = new CHManager();
+        }
+        return manager;
     }
 
     /**
@@ -152,10 +152,10 @@ public class CHManager {
      * more than five comma separated fields on the line.
      */
     public Object preInstall(Installer installer,
-			   InstallState state,
-			   MIDletSuite msuite,
-			   String authority) throws InvalidJadException {
-    	return null;
+               InstallState state,
+               MIDletSuite msuite,
+               String authority) throws InvalidJadException {
+        return null;
     }
 
     /**
@@ -187,6 +187,18 @@ public class CHManager {
     }
 
     /**
+     * returns the number of invocations in the invocation store
+     * 
+     * @param suiteId if suiteId equals to UNUSED_SUITE_ID the method returns 
+     * doubled number of invocations in the invocation store
+     * Otherwise, it returns the number of MIDlets
+     * referenced from invocations which belong to the suite. 
+     */
+    public int getPendingRequestsCount( int suiteId ) {
+        return 0;
+    }
+    
+    /**
      * Notification that a MIDlet is about to be created.
      * Stub implementation used when CHAPI is not present.
      *
@@ -198,10 +210,10 @@ public class CHManager {
     }
     
     public InvocationProxy getInvocation(MIDlet midlet){
-    	return new InvocationProxy(){
-			public Object getInvocationProperty(String propName) {return null;}
-			public void installDone(boolean success, String errorMsg) {}
-		};
+        return new InvocationProxy(){
+            public Object getInvocationProperty(String propName) {return null;}
+            public void installDone(boolean success, String errorMsg) {}
+        };
     }
     
     public static interface InvocationProxy {
