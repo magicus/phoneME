@@ -467,7 +467,7 @@ $(MIDP_CLASSES_ZIP):: $(XMLPARSER_JAVA_FILES)
 endif
 
 
-ifeq ($USE_CMS), true)
+ifeq ($(USE_CMS), true)
 # Sun Java Content Management System
 #
 $(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_CMS_JAVA_FILES)
