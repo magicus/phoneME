@@ -466,6 +466,17 @@ $(MIDP_CLASSES_ZIP):: $(XMLPARSER_JAVA_FILES)
 	$(appendsubsetjavafiles)
 endif
 
+
+ifeq ($USE_CMS), true)
+# Sun Java Content Management System
+#
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_CMS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_CMS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_CMS_NATIVE_FILES)
+endif
+
 #####################################################################
 # Include subsystem makefiles with "lazy" rules to be parsed after
 # other subsystem makefile have been included and global variables
