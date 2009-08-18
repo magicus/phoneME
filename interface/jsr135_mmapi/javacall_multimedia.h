@@ -629,9 +629,9 @@ javacall_result javacall_media_stop(javacall_handle handle);
  * Notify the native player about stream length. This function is called if
  * stream length is known.
  *
- * @param handle        Handle to the native player.
- * @param length        Stream length, in bytes.
- * 
+ * @param handle  Handle to the native player.
+ * @param length  Stream length, in bytes.
+ *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
  */
@@ -643,8 +643,8 @@ javacall_result javacall_media_stream_length(
  * Get the data for the JAVACALL_EVENT_MEDIA_DATA_REQUEST event.
  *
  * @param handle  Handle to the native player.
- * @param offset  Stream offset to read from, in bytes.
- * @param length  Buffer length. Maximum data length to write
+ * @param offset  Out - stream offset to read from, in bytes.
+ * @param length  Out - buffer length. Maximum data length to write
  *                to buffer, in bytes.
  *
  * @retval JAVACALL_OK
@@ -657,11 +657,15 @@ javacall_result javacall_media_get_data_request(
 
 /**
  * Tell the native player that requested data is ready to be written.
+ * This procedure must always be immediately followed by
+ * javacall_media_data_written call.
  *
- * @param handle       Handle to the native player.
- * @param length       Length of data, in bytes.
- * @param data         Buffer address to write data to, possibly null if data
- *                     must not be written.
+ * @param handle  Handle to the native player.
+ * @param length  Length of data, in bytes.
+ * @param data    In - pointer to the return value, possibly null if
+ *                length equals to 0.
+ *                Out - buffer address to write data to, possibly null if
+ *                data must not be written.
  *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
@@ -673,9 +677,11 @@ javacall_result javacall_media_data_ready(
 
 /**
  * Tell the native player that requested data has been written.
+ * This procedure must always be called immediately after
+ * javacall_media_data_ready call.
  *
  * @param handle       Handle to the native player.
- * @param new_request  Additional data requested.
+ * @param new_request  Out - additional data requested.
  *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
@@ -686,24 +692,24 @@ javacall_result javacall_media_data_written(
 
 /**
  * Get the current media time.
- * 
- * @param handle    Player handle.
- * @param ms        Out - media time in milliseconds.
  *
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail
+ * @param handle  Player handle.
+ * @param ms      Out - media time in milliseconds.
+ *
+ * @retval JAVACALL_OK    Success
+ * @retval JAVACALL_FAIL  Fail
  */
 javacall_result javacall_media_get_media_time(javacall_handle handle, /*OUT*/ long *ms);
 
 /**
  * Seek to the specified media time.
  * This function is asynchronous. Actual media time set will be returned with event.
- * 
- * @param handle    Player handle.
- * @param ms        Media time in milliseconds.
- * 
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail
+ *
+ * @param handle  Player handle.
+ * @param ms      Media time in milliseconds.
+ *
+ * @retval JAVACALL_OK    Success
+ * @retval JAVACALL_FAIL  Fail
  */
 javacall_result javacall_media_set_media_time(javacall_handle handle, long ms);
 
