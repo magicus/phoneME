@@ -375,6 +375,7 @@ typedef struct {
 #ifdef ENABLE_JSR_290
 typedef struct {
     javacall_handle             fluid_image;
+    javacall_handle             app_id;
     javacall_handle             spare;
     javacall_utf16_string       text;
     javacall_utf16_string       text1;
@@ -384,10 +385,11 @@ typedef struct {
 } jsr290_jc_event_fluid;
 
 typedef struct {
-    javacall_int32             invocation_id;
+    javacall_int32              invocation_id;
 } jsr290_jc_event_completion_notification;
 typedef struct {
-	javacall_handle	            request_handle;
+    javacall_handle             request_handle;
+    javacall_handle             app_id;
 } jsr290_jc_event_handle_event_request;
 
 #endif /* ENABLE_JSR_290 */

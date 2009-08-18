@@ -1028,25 +1028,29 @@ javacall_result javanotify_chapi_process_msg_result( int dataExchangeID, const u
 
 void
 javanotify_fluid_image_notify_dirty (
-    javacall_handle                       fluid_image
+    javacall_handle                       fluid_image,
+    javacall_handle                       app_id
     ) {
 
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_INVALIDATE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
 
     midp_jc_event_send(&e);
 }
 
 void
 javanotify_fluid_listener_completed (
-    javacall_handle                       fluid_image
+    javacall_handle                       fluid_image,
+    javacall_handle                       app_id
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_COMPLETED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
 
     midp_jc_event_send(&e);
 }
@@ -1054,6 +1058,7 @@ javanotify_fluid_listener_completed (
 void
 javanotify_fluid_listener_failed (
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     javacall_const_utf16_string           failure,
     const javacall_fluid_failure_types    failure_type
     ) {
@@ -1061,7 +1066,8 @@ javanotify_fluid_listener_failed (
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_FAILED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.text = javautil_wcsdup(failure);
+    e.data.jsr290FluidEvent.app_id      = app_id;
+    e.data.jsr290FluidEvent.text        = javautil_wcsdup(failure);
     e.data.jsr290FluidEvent.failure_type = failure_type;
 
     midp_jc_event_send(&e);
@@ -1070,25 +1076,29 @@ javanotify_fluid_listener_failed (
 void
 javanotify_fluid_listener_percentage (
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     float                                 percentage
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_PERCENTAGE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.percentage = percentage;
+    e.data.jsr290FluidEvent.app_id      = app_id;
+    e.data.jsr290FluidEvent.percentage  = percentage;
 
     midp_jc_event_send(&e);
 }
     
 void
 javanotify_fluid_listener_started (
-    javacall_handle                       fluid_image
+    javacall_handle                       fluid_image,
+    javacall_handle                       app_id
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_STARTED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
 
     midp_jc_event_send(&e);
 }
@@ -1096,12 +1106,14 @@ javanotify_fluid_listener_started (
 void
 javanotify_fluid_image_spawned (
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     javacall_handle                       spawn_request
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_IMAGE_SPAWNED;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
     e.data.jsr290FluidEvent.spare       = spawn_request;
 
     midp_jc_event_send(&e);
@@ -1110,25 +1122,29 @@ javanotify_fluid_image_spawned (
 void
 javanotify_fluid_listener_warning (
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     javacall_const_utf16_string           warning
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_WARNING;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
-    e.data.jsr290FluidEvent.text = javautil_wcsdup(warning);
+    e.data.jsr290FluidEvent.app_id      = app_id;
+    e.data.jsr290FluidEvent.text        = javautil_wcsdup(warning);
 
     midp_jc_event_send(&e);
 }
 
 void
 javanotify_fluid_listener_document_available (
-    javacall_handle                       fluid_image
+    javacall_handle                       fluid_image,
+    javacall_handle                       app_id
     ) {
 	midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_LISTENER_DOCUMENT_AVAILABLE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
 
     midp_jc_event_send(&e);
 }
@@ -1139,6 +1155,7 @@ javanotify_fluid_listener_document_available (
 void
 javanotify_fluid_request_resource (
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     javacall_handle                       request,
     javacall_const_utf16_string           url
     ) {
@@ -1146,6 +1163,7 @@ javanotify_fluid_request_resource (
 
     e.eventType = JSR290_JC_EVENT_FLUID_REQUEST_RESOURCE;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
     e.data.jsr290FluidEvent.spare       = request;
     e.data.jsr290FluidEvent.text        = javautil_wcsdup(url);
 
@@ -1155,12 +1173,14 @@ javanotify_fluid_request_resource (
 void
 javanotify_fluid_cancel_request (
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     javacall_handle                       request
     ) {
     midp_jc_event_union e;
 
     e.eventType = JSR290_JC_EVENT_FLUID_CANCEL_REQUEST;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
     e.data.jsr290FluidEvent.spare       = request;
 
     midp_jc_event_send(&e);
@@ -1168,8 +1188,9 @@ javanotify_fluid_cancel_request (
 
 void
 javanotify_fluid_filter_xml_http_request (
-    javacall_int32                        request,
+    javacall_handle                       request,
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     javacall_const_utf16_string           method,
     javacall_const_utf16_string           url
     ) {
@@ -1178,6 +1199,7 @@ javanotify_fluid_filter_xml_http_request (
     e.eventType = JSR290_JC_EVENT_FLUID_FILTER_XML_HTTP_REQUEST;
     e.data.jsr290FluidEvent.spare       = request;
     e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
     e.data.jsr290FluidEvent.text        = javautil_wcsdup(method);
     e.data.jsr290FluidEvent.text1       = javautil_wcsdup(url);
 
@@ -1196,18 +1218,21 @@ javanotify_method_completion_notification (
     midp_jc_event_send(&e);
 }
 
-void javanotify_fluid_handle_event_request (javacall_handle  request_handle) {
+void javanotify_fluid_handle_event_request (javacall_handle  request_handle,
+                                            javacall_handle  app_id) {
 	midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_fluid_event_request() >>\n");
     e.eventType = JSR290_JC_EVENT_HANDLE_EVENT;
     e.data.jsr290HandleEventRequest.request_handle = request_handle;
+    e.data.jsr290HandleEventRequest.app_id         = app_id;
     midp_jc_event_send(&e);
 }
 
 void
 javanotify_fluid_display_box (
     javacall_handle                       fluid_image,
+    javacall_handle                       app_id,
     javacall_handle                       request,
     javacall_const_utf16_string           message,
     javacall_const_utf16_string           defaultValue,
