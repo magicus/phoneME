@@ -660,8 +660,8 @@ javacall_result javacall_media_get_data_request(
  *
  * @param handle       Handle to the native player.
  * @param length       Length of data, in bytes.
- * @param data         Buffer addres to write data to.
- * @param new_request  Additional data requested.
+ * @param data         Buffer address to write data to, possibly null if data
+ *                     must not be written.
  *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
@@ -669,19 +669,20 @@ javacall_result javacall_media_get_data_request(
 javacall_result javacall_media_data_ready(
     javacall_handle handle,
     javacall_int32 length,
-    /*OUT*/ void **data,
-    /*OUT*/ javacall_bool *new_request);
+    /*OUT*/ void **data);
 
 /**
  * Tell the native player that requested data has been written.
  *
  * @param handle       Handle to the native player.
+ * @param new_request  Additional data requested.
  *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
  */
 javacall_result javacall_media_data_written(
-    javacall_handle handle);
+    javacall_handle handle,
+    /*OUT*/ javacall_bool *new_request);
 
 /**
  * Get the current media time.
