@@ -268,8 +268,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                                  ItemCommandListener itemListener,
                                  Command[] screenCmds, int numS,
                                  CommandListener scrListener) {
-        boolean commandSetEmpty = true;
-
         // reset the commands
         soft1 = null;
         soft2 = null;
@@ -281,7 +279,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         // Cache the values for later
         this.itmCmds = new Command[numI];
         if (numI > 0) {
-            commandSetEmpty = false;
             for (int i = 0; i < numI; i++) {
                 this.itmCmds[i] = itemCmds[i];
                 if (this.itmCmds[i].getCommandType() == Command.BACK) {
@@ -299,8 +296,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
             int type = -1;
             // Priority value is initialized by minimal posible integer
             int priority = Integer.MIN_VALUE;
-
-            commandSetEmpty = false;
 
             for (int i = 0; i < numS; i++) {
                 this.scrCmds[i] = screenCmds[i];
@@ -395,7 +390,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
 
         setButtonLabels();
 
-        if (!menuUP && soft1 == null) {
+        if (!menuUP && soft1 == null && soft2 == null) {
             // Don't show empty command button bars, unless
             // menu is up.
             super.setVisible(false);
