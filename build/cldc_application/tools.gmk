@@ -42,19 +42,15 @@ JSR_177_BINDIR=$(BINDIR)/..
 JCRMIC_TOOL = $(JSR_177_BINDIR)/$(JCRMIC_ARCHIVE)
 SIM_TEST    = $(JSR_177_BUILD_DIR)/.sim_test
 
-ifeq ($(JSR_177_USE_EMULATOR),true)
-    SIM_TOOL = $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
-endif
-
 # Tools and applets
 #
 JSR177_JAVAC ?= $(JDK_DIR)/bin/javac$(EXE)
 
-ifeq ($(JSR_177_USE_EMULATOR),true)
-all_tools :: $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
+all_tools :: $(JCRMIC_TOOL)
 
+ifeq ($(JSR_177_USE_EMULATOR),true)
+all_tools :: $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
 JSR177_JAVA ?= $(JAVA_CMD)
 else
-all_tools :: $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
-             $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 
+all_tools :: $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 
 endif

@@ -135,7 +135,7 @@ $(JSR_177_BINDIR):
 
 # jcrmic tool
 #
-$(JCRMIC_TOOL): $(JCRMIC_SOURCES)
+$(JCRMIC_TOOL): $(JCRMIC_SOURCES) $(JAVACARD_CLASSES) $(JSR_177_BINDIR)
 	@echo " ..." $@
 	$(AT)$(JSR177_JAVAC) -source 1.2 -target 1.2 -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
@@ -268,7 +268,7 @@ define applets
 	$(call simtoolkit,$@,$(AT)cp $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
 endef
 
-$(SIM_TEST):
+$(SIM_TEST): # depends on $(JSR_177_BUILD_DIR)
 	@echo " ... Checking Java Card Development Kit"
 	$(if $(shell ($(JC_DIR)/bin/cref -version 2>/dev/null | \
 	              grep "[Vv]ersion" | grep "2\.2\.1" > /dev/null); \
@@ -276,7 +276,7 @@ $(SIM_TEST):
 	    $(error JC_DIR points to wrong Java Card Development Kit directory: $(JC_DIR)))
 	$(AT)touch $@
 
-$(APPLETS): 
+$(APPLETS): $(JAVACARD_CLASSES)
 	$(call applets,$@,$^)
 
 $(JAVACARD_CLASSES)/%.scr:
