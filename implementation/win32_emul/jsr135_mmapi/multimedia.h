@@ -387,31 +387,10 @@ typedef struct {
     javacall_handle            mediaHandle;
     media_interface*           mediaItfPtr;
     javacall_bool              downloadByDevice;
-} javacall_impl_player;
-
-typedef struct {
-    long                hWnd;
-    int                 isolateId;
-    int                 playerId;
-    UINT                timerId;
-    long                duration;
-    long                curTime;
-    long                offset;
-    jc_fmt              mediaType;
-    javacall_bool       isForeground;
-    TCHAR               fileName[MAX_PATH * 2];
-    long                volume;
-    BOOL                mute;
-    long                wholeContentSize;
-    void *              buffer;
-    javacall_bool       isBuffered;
-
 #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
-    void *              pExtraCC;
+    void*                      pExtraCC;
 #endif //ENABLE_EXTRA_CAMERA_CONTROLS
-    void *              mutex;
-
-} audio_handle;
+} javacall_impl_player;
 
 #ifdef __cplusplus
 }

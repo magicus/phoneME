@@ -720,6 +720,11 @@ javacall_result javacall_media_create(javacall_int32 appId,
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
             //pPlayer->mediaItfPtr      = &g_video_itf;
             pPlayer->downloadByDevice = JAVACALL_TRUE;
+
+            #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+            pPlayer->pExtraCC         = NULL;
+            extra_camera_controls_init( pPlayer );
+            #endif //ENABLE_EXTRA_CAMERA_CONTROLS
         }
         else if( 0 == _wcsnicmp( uri, RADIO_CAPTURE_LOCATOR, 
                            min( (long)wcslen( RADIO_CAPTURE_LOCATOR ), uriLength ) ) )
@@ -840,6 +845,14 @@ javacall_result javacall_media_close(javacall_handle handle)
     if (QUERY_BASIC_ITF(pItf, close)) {
         ret = pItf->vptrBasic->close(pPlayer->mediaHandle);
     }
+
+    #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+    if( JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO == pPlayer->mediaType )
+    {
+        extra_camera_controls_cleanup( pPlayer );
+        pPlayer->pExtraCC = NULL;
+    }
+    #endif //ENABLE_EXTRA_CAMERA_CONTROLS
 
     return ret;
 }
