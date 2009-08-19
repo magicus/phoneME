@@ -114,7 +114,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // Get current media time as ms
     protected native int nGetMediaTime(int handle);
     // Set media time as ms
-    protected native int nSetMediaTime(int handle, long ms);
+    protected native boolean nSetMediaTime(int handle, long ms);
     // Get total duration of media data
     protected native int nGetDuration(int handle);
     // Pause
@@ -555,11 +555,11 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
         if (Player.TIME_UNKNOWN != dur && now > dur) now = dur;
         
-        int ret = nSetMediaTime(getOwner().getNativeHandle(), now/1000);
-        if (ret == -1) {
+        if ( !nSetMediaTime(getOwner().getNativeHandle(), now/1000) ) {
             throw new MediaException("media time cannot be set");
         }                
-        return ((long)ret * 1000);
+        return -1; // the actual result will be return asynchronously,
+                   // with event
     }
     
     /**

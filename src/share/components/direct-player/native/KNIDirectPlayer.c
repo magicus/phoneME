@@ -157,7 +157,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
     long ms = -1;
 LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        ret = javacall_media_get_time(pKniInfo->pNativeHandle, &ms);
+        ret = javacall_media_get_media_time(pKniInfo->pNativeHandle, &ms);
         if (ret != JAVACALL_OK) {
             ms = -1;
         }
@@ -169,8 +169,8 @@ UnlockAudioMutex();
     KNI_ReturnInt((jint)ms);
 }
 
-/*  protected native int nSetMediaTime ( int handle , long ms ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
+/*  protected native boolean nSetMediaTime ( int handle , long ms ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
     jint handle = KNI_GetParameterAsInt(1);
@@ -182,24 +182,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
-
-        JAVACALL_MM_ASYNC_EXEC(
-            ret,
-            javacall_media_set_time(pKniInfo->pNativeHandle, &ms),
-            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_TIME_SET,
-            returns_data(1, (&ms))
-        );
-
+        ret = javacall_media_set_media_time( pKniInfo->pNativeHandle, ms );
 UnlockAudioMutex();            
-    } else {
-        ms = -1;
-        REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
-    }
-    if (ret != JAVACALL_OK) {
-        ms = -1;
-    }
+    } 
 
-    KNI_ReturnInt((jint)ms);
+    KNI_ReturnBoolean( JAVACALL_OK == ret ? KNI_TRUE : KNI_FALSE );
 }
 
 /*  protected native int nGetDuration ( int handle ) ; */
