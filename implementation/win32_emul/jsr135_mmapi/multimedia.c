@@ -200,14 +200,14 @@ void mmSetStatusLine( const char* fmt, ... ) {
     char           str8[ 256 ];
     wchar_t        str16[ 256 ];
     int            str16_len;
-	va_list        args;
+    va_list        args;
     javacall_int64 res;
 
     static LimeFunction* f = NULL;
 
-	va_start(args, fmt);
+    va_start(args, fmt);
     vsprintf( str8, fmt, args );
-	va_end(args);
+    va_end(args);
     if (JAVACALL_OK == 
         javautil_unicode_utf8_to_utf16(str8, (javacall_int32)strlen(str8), 
                                         str16, 256, &str16_len)) {
