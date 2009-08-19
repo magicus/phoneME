@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -368,16 +368,32 @@ public interface ContentHandler {
      */
     public String getAuthority();
 
-    /** Action to <code>open</code> content. */
-    public static final String ACTION_OPEN = "open";
+    /** Action to delete the content and release resources it may have been consuming 
+     * if appropriate. The content handler should be careful not to delete content 
+     * that is indespensible to the user without confirmation.
+     */
+    public static final java.lang.String ACTION_DELETE = "delete";
     /** Action to <code>edit</code> the content. */
     public static final String ACTION_EDIT = "edit";
-    /** Action to <code>send</code> the content via email or messaging. */
-    public static final String ACTION_SEND = "send";
-    /** Action to <code>save</code> the content. */
-    public static final String ACTION_SAVE = "save";
     /** Action to <code>execute</code> the content. */
     public static final String ACTION_EXECUTE = "execute";
+    /** Action to <code>install</code> the content on the device. */
+    public static final String ACTION_INSTALL = "install";
+    /** Action <code>install only</code> the content on the device with user interaction limited to the minimum. */
+    public static final String ACTION_INSTALL_ONLY = "install_only";
+    /** Action to create <code>new</code> content. */
+    public static final String ACTION_NEW = "new";
+    /** Action to <code>open</code> content. */
+    public static final String ACTION_OPEN = "open";
+    /** Action to <code>print</code> the content. */
+    public static final String ACTION_PRINT = "print";
+    /** Action to remove the content from any list or directory maintained by 
+     * the content handler. The content may be deleted depending on the nature 
+     * of the content handler and the content. Compare with delete.
+     */
+    public static final java.lang.String ACTION_REMOVE = "remove";
+    /** Action to <code>save</code> the content. */
+    public static final String ACTION_SAVE = "save";
     /** 
      * Action to <code>select</code> a value from the content,
      * usually with user input, and return its value.
@@ -389,23 +405,16 @@ public interface ContentHandler {
      * of a URL.
      */
     public static final String ACTION_SELECT = "select";
-    /** Action to <code>install</code> the content on the device. */
-    public static final String ACTION_INSTALL = "install";
-    /** Action <code>install only</code> the content on the device with user interaction limited to the minimum. */
-    public static final String ACTION_INSTALL_ONLY = "install_only";
-    /** Action to <code>print</code> the content. */
-    public static final String ACTION_PRINT = "print";
-    /** Action to create <code>new</code> content. */
-    public static final String ACTION_NEW = "new";
-
+    /** Action to <code>send</code> the content via email or messaging. */
+    public static final String ACTION_SEND = "send";
     /**
      * Action to request a content handler to stop processing
      * the content identified by the URL, ID, and
      * arguments.  If stopping a previous request, these
      * values should match the corresponding values in that request.
      */
-    public final String ACTION_STOP = "stop";
-     
+    public static final String ACTION_STOP = "stop";
+    
     /**
      * The universal type; a handler supporting this type can handle
      * any type of content.
