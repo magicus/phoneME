@@ -627,7 +627,7 @@ static javacall_result audio_qs_close(javacall_handle handle){
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
                                      h->appId,
                                      h->playerId, 
-                                     JAVACALL_OK, NULL );
+                                     JAVACALL_OK, (void*)JAVACALL_OK );
 
     return r;
 }
@@ -701,7 +701,8 @@ static javacall_result audio_qs_deallocate(javacall_handle handle){
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
                                      h->appId,
                                      h->playerId, 
-                                     JAVACALL_OK, NULL );
+                                     JAVACALL_OK,
+                                     (void*)JAVACALL_OK );
 
     return JAVACALL_OK;
 }
@@ -803,7 +804,8 @@ static javacall_result audio_qs_prefetch(javacall_handle handle){
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
                                      h->appId,
                                      h->playerId, 
-                                     JAVACALL_OK, NULL );
+                                     JAVACALL_OK,
+                                     (void*)JAVACALL_OK );
 
     h->state = PL135_PREFETCHED;
     return JAVACALL_OK;
@@ -826,7 +828,8 @@ static javacall_result audio_qs_start(javacall_handle handle){
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
                                      h->appId,
                                      h->playerId, 
-                                     JAVACALL_OK, NULL );
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
 
     //printf( "...audio_start: h=0x%08X\n", (int)handle);
     return JAVACALL_OK;
@@ -846,7 +849,8 @@ static javacall_result audio_qs_stop(javacall_handle handle){
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
                                      h->appId,
                                      h->playerId, 
-                                     JAVACALL_OK, NULL );
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
 
     return JAVACALL_OK;
 }
@@ -947,7 +951,8 @@ static javacall_result audio_qs_data_written(javacall_handle handle,
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
                                          h->appId,
                                          h->playerId, 
-                                         JAVACALL_OK, NULL );
+                                         JAVACALL_OK, 
+                                         (void*)JAVACALL_OK );
 
         *new_request = JAVACALL_FALSE;
     }
