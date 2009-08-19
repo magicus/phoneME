@@ -489,6 +489,20 @@ static javacall_result dshow_destroy(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+static void close_thread( void* param )
+{
+    dshow_player* p = (dshow_player*)param;
+
+    if( NULL != p->ppl ) p->ppl->close();
+
+    lcd_output_video_frame( NULL );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     JAVACALL_OK, (void*)JAVACALL_OK );
+}
+
 static javacall_result dshow_close(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
@@ -508,14 +522,7 @@ static javacall_result dshow_close(javacall_handle handle)
         p->pModule = NULL;
     }
 
-    if( NULL != p->ppl ) p->ppl->close();
-
-    lcd_output_video_frame( NULL );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
-                                     JAVACALL_OK, (void*)JAVACALL_OK );
+    _beginthread( close_thread, 0, p );
 
     return JAVACALL_OK;
 }
