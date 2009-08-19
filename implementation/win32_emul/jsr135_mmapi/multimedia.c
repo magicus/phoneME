@@ -41,6 +41,10 @@
 #define DEVICE_MIDI_LOCATOR     L"device://midi"
 #define RTSP_PROTOCOL_PREFIX    L"rtsp://"
 
+#ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+void extra_camera_controls_init( javacall_impl_player * player );
+void extra_camera_controls_cleanup( javacall_impl_player * player );
+#endif //ENABLE_EXTRA_CAMERA_CONTROLS
 
 static javacall_media_caps g_caps[] = 
 {
@@ -488,6 +492,7 @@ extern media_interface g_dshow_itf;
 extern media_interface g_qsound_itf;
 extern media_interface g_record_itf;
 extern media_interface g_fake_radio_itf;
+extern media_interface g_fake_camera_itf;
 extern media_interface g_rtp_itf;
 
 media_interface* fmt_enum2itf( jc_fmt fmt )
@@ -718,7 +723,7 @@ javacall_result javacall_media_create(javacall_int32 appId,
                            min( (long)wcslen( VIDEO_CAPTURE_LOCATOR ), uriLength ) ) )
         {
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
-            //pPlayer->mediaItfPtr      = &g_video_itf;
+            pPlayer->mediaItfPtr      = &g_fake_camera_itf;
             pPlayer->downloadByDevice = JAVACALL_TRUE;
 
             #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
