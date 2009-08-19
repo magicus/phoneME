@@ -1151,7 +1151,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             if (null != directInputThread) {
                 directInputThread.close();
             }
-
+            setNativeHandleToNull();
         }
         else if(hNative != 0) {
             nTerm(hNative);

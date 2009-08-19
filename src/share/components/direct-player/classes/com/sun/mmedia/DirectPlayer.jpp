@@ -535,7 +535,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         if (hNative != 0) {
             nTerm(hNative);
             this.hNative = 0;
-            getOwner().setNativeHandleToNull();
         }
         state = Player.CLOSED;
     }

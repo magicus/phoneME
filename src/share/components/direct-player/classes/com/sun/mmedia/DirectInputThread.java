@@ -69,7 +69,7 @@ class DirectInputThread extends Thread {
 mainloop:
         for(;;) {
             HighLevelPlayer owner = (HighLevelPlayer) wrPlayer.get();
-            if (null == owner) {
+            if (null == owner || isDismissed ) {
                 return;
             }
 
