@@ -64,12 +64,19 @@ typedef enum {
     /**
      * Posted when the native player finished state control procedure.
      *
-     * Additional data: none.
+     * Additional data:
+     *  intParam1 - call result, exception code.
      */
     JAVACALL_EVENT_MEDIA_REALIZE_FINISHED = 1,
     JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED = 2,
     JAVACALL_EVENT_MEDIA_START_FINISHED = 3,
     JAVACALL_EVENT_MEDIA_STOP_FINISHED = 4,
+
+    /**
+     * Posted when the native player finished state control procedure.
+     *
+     * Additional data: none.
+     */
     JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED = 5,
     JAVACALL_EVENT_MEDIA_CLOSE_FINISHED = 6,
 
