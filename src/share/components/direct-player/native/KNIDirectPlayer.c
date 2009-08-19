@@ -113,15 +113,8 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseDevice) {
     MMP_DEBUG_STR("+nReleaseDevice\n");
 
 LockAudioMutex();            
-    if (pKniInfo) {
-        JAVACALL_MM_ASYNC_EXEC(
-            result,
-            javacall_media_release_device(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DEVICE_RELEASED,
-            returns_no_data
-        );
-        if (result == JAVACALL_OK) {
-        }
+    if (pKniInfo && pKniInfo->pNativeHandle ) {
+        result = javacall_media_deallocate( pKniInfo->pNativeHandle );
     }
 UnlockAudioMutex();            
 
