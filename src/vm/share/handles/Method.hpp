@@ -651,12 +651,7 @@ public:
   bool bytecode_inline_prepass(Attributes& attributes JVM_TRAPS) const;
 
   // Returns if a method can be shared between tasks
-  bool is_shared(void) const
-#if ENABLE_ISOLATES
-    ;
-#else
-  { return false; }
-#endif
+  bool is_shared() const;
 
   // Returns a this method's record in the global direct callers table
   ReturnOop find_callee_record() const;

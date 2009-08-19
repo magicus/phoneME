@@ -164,15 +164,11 @@ class InstanceClass: public JavaClass {
 
   void initialize_static_fields();
 void initialize_static_fields(Oop * o);
-
+#if ENABLE_COMPILER && ENABLE_INLINE
   // Track all the methods overridden by this class and update vtable bitmaps
   // in all super classes accordingly
-  void update_vtable_bitmaps(void) const
-#if USE_EMBEDDED_VTABLE_BITMAP
-    ;
-#else
-    {}
-#endif // USE_EMBEDDED_VTABLE_BITMAP
+  void update_vtable_bitmaps(JVM_SINGLE_ARG_TRAPS) const;
+#endif
 
   // perform class initialization
   void bootstrap_initialize(JVM_SINGLE_ARG_TRAPS);
@@ -289,7 +285,7 @@ void initialize_static_fields(Oop * o);
   void set_is_method_overridden(int vtable_index);
 
   // Returns if the specified vtable entry is overridden in any subclass
-  bool is_method_overridden(const int vtable_index) const;
+  bool is_method_overridden(int vtable_index) const;
 #endif
 
  private:
