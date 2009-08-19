@@ -68,7 +68,10 @@ class DirectInputThread extends Thread {
 
 mainloop:
         for(;;) {
-            HighLevelPlayer owner = null;
+            HighLevelPlayer owner = (HighLevelPlayer) wrPlayer.get();
+            if (null == owner) {
+                return;
+            }
 
             synchronized( requestLock ) {
                 while ( !requestPending )

@@ -163,9 +163,6 @@ class MMEventListener implements EventListener {
             }
             break;
 
-        case EVENT_MEDIA_CLOSE_FINISHED:
-                break; //ignore the event
-
         case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
             long time = ( long )nevt.intParam2;
             p = HighLevelPlayer.get(nevt.intParam1);
@@ -177,6 +174,7 @@ class MMEventListener implements EventListener {
         case EVENT_MEDIA_START_FINISHED:
         case EVENT_MEDIA_STOP_FINISHED:
         case EVENT_MEDIA_DEALLOCATE_FINISHED:
+        case EVENT_MEDIA_CLOSE_FINISHED:
             if( null == p ) {
                 p = HighLevelPlayer.get(nevt.intParam1);
             }

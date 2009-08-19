@@ -1075,6 +1075,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 }
             });
         } catch (MediaException ex) {}
+        System.out.println( "HighLevelPlayer: deallocate() resumed" );
         
         if (stream != null) {
             // if stream is not seekable, just return
@@ -1134,14 +1135,23 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        if( null != directInputThread )
-        {
-            directInputThread.close();
-        }
-        
         if( null != lowLevelPlayer )
         {
-            lowLevelPlayer.doClose();
+
+            try {
+                runAsync(new AsyncTask() {
+                    public void run() throws MediaException {
+                        lowLevelPlayer.doClose();
+                    }
+                });
+            } catch (MediaException ex) {}
+
+            System.out.println( "HighLevelPlayer: close() resumed" );
+            
+            if (null != directInputThread) {
+                directInputThread.close();
+            }
+
         }
         else if(hNative != 0) {
             nTerm(hNative);
