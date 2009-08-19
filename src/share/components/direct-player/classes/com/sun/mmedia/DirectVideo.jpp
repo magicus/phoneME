@@ -391,8 +391,13 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             repaint();
         }
 
-        if (visible == false) {
-            source.setVideoVisible( false);
+        boolean isCamera = false;
+        if (source instanceof DirectPlayer) {
+            DirectPlayer dp = (DirectPlayer)source;
+            isCamera = dp.getOwner().isCapturePlayer();
+        }
+        if (isCamera || visible == false) {
+            source.setVideoVisible(visible);
         }
     }
 

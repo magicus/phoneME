@@ -800,16 +800,96 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // -------------------------------------------------
     // The interface VideoSource method implementations
     // -------------------------------------------------
+    
+    private static Object videoSync = new Object();
+    private static boolean videoBusy = false;
+    private static final int VIDEO_SYNC_TIMEOUT = 10000;
+    
+    private abstract class SynchronousAction {
+        public abstract Object run() throws Throwable;
+        public Object onTimeout() throws Throwable {return null;}
+        public void onException(Exception e) {}
+    }
+    
+    private Object doSynchronously(SynchronousAction todo) {
+        Object result = null;
+        Throwable thr = null;
+        synchronized (videoSync) {
+            do {
+                if (videoBusy) {
+                    try {
+                        videoSync.wait(VIDEO_SYNC_TIMEOUT);
+                    } catch (InterruptedException ie) {}
+                    if (videoBusy) {
+                        try {
+                            result = todo.onTimeout();
+                        } catch (Throwable e) {
+                            thr = e;
+                        }
+                        break;
+                    }
+                }
+                videoBusy = true;
+                
+                try {
+                    result = todo.run();
+                } catch (Throwable e) {
+                    thr = e;
+                }
+                videoBusy = false;
+                videoSync.notify();
+            } while (false);
+            
+            if (thr != null) {
+                if (thr instanceof Error) {
+                    throw (Error)thr;
+                }
+                if (thr instanceof RuntimeException) {
+                    throw (RuntimeException)thr;
+                }
+                todo.onException((Exception)thr);
+            }
+        }
+        return result;
+    }
 
     // Set display location of video
-    public boolean setVideoLocation(int x, int y, int w, int h)
+    public boolean setVideoLocation(final int x, final int y, final int w, final int h)
     {
-        return nSetLocation( getOwner().getNativeHandle(), x, y, w, h );
+        return ((Boolean) doSynchronously(new SynchronousAction() {
+            public Object run() throws Throwable {
+                return new Boolean(nSetLocation( getOwner().getNativeHandle(), x, y, w, h ));
+            }
+            public Object onTimeout() throws Throwable {
+                return Boolean.FALSE;
+            }
+        })).booleanValue();
     }
 
     private boolean isWaitingForSnapshot;
     // Get snapshot
-    public synchronized byte[] getVideoSnapshot(String imageType) throws MediaException
+    public synchronized byte[] getVideoSnapshot(final String imageType) throws MediaException {
+        byte[] result = null;
+        final Exception[] exc = new Exception[1];
+        result =  (byte[]) doSynchronously(new SynchronousAction() {
+            public Object run() throws Throwable {
+                return getVideoSnapshot0(imageType);
+            }
+            public void onException(Exception e) {
+                exc[0] = e;
+            }
+            public Object onTimeout() throws Throwable {
+                throw new MediaException("Synchronization timeout");
+            }
+        });
+        
+        if (exc[0] != null && exc[0] instanceof MediaException) {
+            throw (MediaException) exc[0];
+        }
+        return result;
+    }
+    
+    private byte[] getVideoSnapshot0(String imageType) throws MediaException
     {
         byte [] ret = null;
         getOwner().checkSnapshotPermission();
@@ -819,7 +899,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             {
                 nStartSnapshot( hNative, imageType );
                 isWaitingForSnapshot = true;
-                snapshotLock.wait( 10000 );
+                snapshotLock.wait( 7000 );
                 if( isWaitingForSnapshot )
                 {
                     isWaitingForSnapshot = false;
@@ -851,15 +931,29 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     }
     
     // Set fullscreen
-    public boolean setVideoFullScreen( boolean fullscreen)
+    public boolean setVideoFullScreen(final boolean fullscreen)
     {
-        return nSetFullScreenMode( getOwner().getNativeHandle(), fullscreen );
+        return ((Boolean) doSynchronously(new SynchronousAction() {
+            public Object run() throws Throwable {
+                return new Boolean(nSetFullScreenMode( getOwner().getNativeHandle(), fullscreen ));
+            }
+            public Object onTimeout() throws Throwable {
+                return Boolean.FALSE;
+            }
+        })).booleanValue();
     }
     
     // Set visible
-    public boolean setVideoVisible( boolean visible)
+    public boolean setVideoVisible(final boolean visible)
     {
-        return nSetVisible( getOwner().getNativeHandle(), visible );
+        return ((Boolean) doSynchronously(new SynchronousAction() {
+            public Object run() throws Throwable {
+                return new Boolean(nSetVisible( getOwner().getNativeHandle(), visible ));
+            }
+            public Object onTimeout() throws Throwable {
+                return Boolean.FALSE;
+            }
+        })).booleanValue();
     }
     
     private boolean colorKeyOn = false;
