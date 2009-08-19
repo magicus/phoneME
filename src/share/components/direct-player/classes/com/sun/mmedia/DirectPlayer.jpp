@@ -109,8 +109,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     protected native void nReleaseDevice(int handle);
     // Access to Radio Tuner for a Java Player is exclusive. Release it
     private native void nReleaseRadioAccess();
-    // Clear buffered data
-    protected native boolean nFlushBuffer(int handle);
     // Start playing
     protected native boolean nStart(int handle);
     // Stop playing
@@ -537,9 +535,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         int hNative = getOwner().getNativeHandle();
 
         if (hNative != 0) {
-            if ( true == nIsNeedBuffering(hNative) ) {
-                nFlushBuffer(hNative);
-            }
             nTerm(hNative);
             this.hNative = 0;
             getOwner().setNativeHandleToNull();

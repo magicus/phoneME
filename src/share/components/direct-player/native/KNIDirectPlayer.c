@@ -122,31 +122,6 @@ UnlockAudioMutex();
     KNI_ReturnVoid();
 }
 
-/*  protected native boolean nFlushBuffer ( int handle ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nFlushBuffer) {
-
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
-
-LockAudioMutex();            
-    /* If it is not temp buffer just return true */
-    if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISTEMP)) {
-        if (JAVACALL_OK == javacall_media_clear_buffer(pKniInfo->pNativeHandle)) {
-            pKniInfo->offset = 0;   /* reset offset value */
-            returnValue = KNI_TRUE;
-        } else {
-            REPORT_ERROR(LC_MMAPI, "javacall_media_clear_buffer return fail");
-        }
-    } else {
-        REPORT_ERROR(LC_MMAPI, "nFlushBuffer fail cause we are not using temp buffer");
-    }
-UnlockAudioMutex();            
-
-    KNI_ReturnBoolean(returnValue);
-}
-
 /*  protected native boolean nStart ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
@@ -453,9 +428,8 @@ LockAudioMutex();
         if (STARTED == state) {
             MMP_DEBUG_STR("stopped by finalizer\n");
             javacall_media_stop(pKniInfo->pNativeHandle);
-            javacall_media_clear_buffer(pKniInfo->pNativeHandle);
         }
-        javacall_media_release_device(pKniInfo->pNativeHandle);
+        javacall_media_deallocate(pKniInfo->pNativeHandle);
         
         if( KNI_TRUE == KNI_GetBooleanField( instance, 
             KNI_GetFieldID( clazz, "hasTakenRadioAccess", "Z" ) ) )

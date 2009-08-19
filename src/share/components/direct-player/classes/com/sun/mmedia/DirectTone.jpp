@@ -163,7 +163,6 @@ final class DirectTone extends DirectPlayer {
             throw new IllegalStateException("cannot set seq after prefetched");
 
         int hNative = getOwner().getNativeHandle();
-        nFlushBuffer(hNative);
 
         long contentSize = sequence.length;
         if (contentSize > 0) {
