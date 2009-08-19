@@ -641,9 +641,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     nRealize(hNative, t);
                 }
             } );
+            System.out.println("HighLevelPlayer: realize() resumed");
+            if( !getAsyncExecResult() ) {
+                throw new MediaException("realize() failed");
+            }
         }
 
-        System.out.println( "HighLevelPlayer: realize() resumed" );
         if (!handledByDevice && !handledByJava) {
             mediaFormat = nGetMediaFormat(hNative);
             if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
@@ -744,7 +747,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         return directInputThread;
     }
 
-    void unblockOnEvent()
+    private boolean asyncExecResult = false;
+    private boolean getAsyncExecResult() {
+        return asyncExecResult;
+    }
+
+    void unblockOnEvent( boolean result )
     {
         final Object lock = getAsyncExecLock();
         if( null != lock )
@@ -752,6 +760,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             synchronized( lock )
             {
                 isBlockedUntilEvent = false;
+                asyncExecResult = result;
                 lock.notify();
             }
         }
@@ -815,8 +824,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 lowLevelPlayer.doPrefetch();
             }
         });
-
         System.out.println("HighLevelPlayer: Prefetch resumed");
+        if( !getAsyncExecResult() ) {
+            throw new MediaException("prefetch() failed");
+        }
         
         VolumeControl vc = ( VolumeControl )getControl(
                 pkgName + vocName);
@@ -937,6 +948,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 }
             }
         });
+        System.out.println( "HighLevelPlayer: start() resumed" );
+        if( !getAsyncExecResult() ) {
+            throw new MediaException( "start() failed" );
+        }
 
         setState( STARTED );
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
@@ -997,6 +1012,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 lowLevelPlayer.doStop();
             }
         });
+        System.out.println( "HighLevelPlayer: stop() resumed" );
+        if( !getAsyncExecResult() ) {
+            throw new MediaException( "stop() failed" );
+        }
 
         // Update the time base to use the system time
         // before stopping.
@@ -1248,10 +1267,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         } );
 
+        System.out.println( "HighLevelPlayer: setMediaTime resumed" );
+
         long rtn = getMediaTimeSet();
 
-        System.out.println( "HighLevelPlayer: setMediaTime resumed" );
-        
         EOM = false;
 
         // Time-base-time needs to be updated if player is started.

@@ -72,7 +72,6 @@ LockAudioMutex();
         /* prepare kni internal information */
         pKniInfo->appId = appId;
         pKniInfo->playerId = playerId;
-        pKniInfo->isAcquire = 0;
         pKniInfo->isDirectFile = JAVACALL_FALSE;
         pKniInfo->isForeground = -1;
         pKniInfo->recordState = RECORD_CLOSE;

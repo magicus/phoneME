@@ -109,9 +109,6 @@ final class DirectTone extends DirectPlayer {
         if (!nPrefetch(hNative)) {
             throw new MediaException("Can not prefetch");
         }
-        if(!nAcquireDevice(hNative)) {
-            throw new MediaException("Can not acquire device");
-        }
         state = Player.PREFETCHED;
     }
 

@@ -105,8 +105,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // Access to Radio Tuner for a Java Player is exclusive. 
     // Acquire it or return false if it is not available
     private native boolean nAcquireRadioAccess();
-    // Device is available?
-    protected native boolean nAcquireDevice(int handle);
     // Relase device reference
     protected native void nReleaseDevice(int handle);
     // Access to Radio Tuner for a Java Player is exclusive. Release it
@@ -338,11 +336,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
                         "by a Java Player" );
             }
             hasTakenRadioAccess = true;
-        }
-
-        if(!nAcquireDevice(getOwner().getNativeHandle())) {
-            releaseRadioAccess();
-            throw new MediaException("Can not acquire device");
         }
     }
     

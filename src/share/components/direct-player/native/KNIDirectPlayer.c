@@ -49,23 +49,15 @@ extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int
 static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
 {
 /* Check conditions flag */
-#define CHECK_ALL               (CHECK_CURRENT_PLAYER | CHECK_ACQUIRE_RESOURCE | CHECK_BUFFER)
-#define CHECK_ISPLAYING         (CHECK_CURRENT_PLAYER | CHECK_ACQUIRE_RESOURCE)       
+#define CHECK_ALL               (CHECK_CURRENT_PLAYER | CHECK_BUFFER)
+#define CHECK_ISPLAYING         (CHECK_CURRENT_PLAYER)       
 #define CHECK_CURRENT_PLAYER    (0x00000001)
-#define CHECK_ACQUIRE_RESOURCE  (0x00000002)
 #define CHECK_BUFFER            (0x00000004)
 #define CHECK_ISTEMP            (0x00000008)
 
     if ((conditions & CHECK_ISTEMP) == CHECK_ISTEMP) {
         if (JAVACALL_TRUE == pKniInfo->isDirectFile) {
             MMP_DEBUG_STR("[KNIDirectPlayer] CHECK_ISTEMP is fail\n");
-            return JAVACALL_FALSE;
-        }
-    }
-
-    if ((conditions & CHECK_ACQUIRE_RESOURCE) == CHECK_ACQUIRE_RESOURCE) {
-        if (!pKniInfo->isAcquire) {
-            MMP_DEBUG_STR("[KNIDirectPlayer] CHECK_ACQUIRE_RESOURCE fail: not acquire\n");
             return JAVACALL_FALSE;
         }
     }
@@ -110,35 +102,6 @@ UnlockAudioMutex();
     KNI_ReturnInt(returnValue);
 }
 
-/*  protected native boolean nAcquireDevice ( int handle ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireDevice) {
-
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
-    javacall_result result = JAVACALL_FAIL;
-
-    MMP_DEBUG_STR("+nAcquireDevice\n");
-
-LockAudioMutex();
-    if (pKniInfo && pKniInfo->pNativeHandle) {
-        JAVACALL_MM_ASYNC_EXEC(
-            result,
-            javacall_media_acquire_device(pKniInfo->pNativeHandle),
-            pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_DEVICE_ACQUIRED,
-            returns_no_data
-        );
-        if (result == JAVACALL_OK) {
-            pKniInfo->isAcquire = JAVACALL_TRUE;
-            returnValue = KNI_TRUE;
-        }
-    }
-    
-UnlockAudioMutex();
-    KNI_ReturnBoolean(returnValue);
-}
-
 /*  protected native void nReleaseDevice ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseDevice) {
@@ -158,7 +121,6 @@ LockAudioMutex();
             returns_no_data
         );
         if (result == JAVACALL_OK) {
-            pKniInfo->isAcquire = JAVACALL_FALSE;
         }
     }
 UnlockAudioMutex();            
@@ -561,10 +523,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
         if (JAVACALL_OK == javacall_media_prefetch(pKniInfo->pNativeHandle)) {
-            pKniInfo->isAcquire = JAVACALL_TRUE;
             returnValue = KNI_TRUE;
         }
-UnlockAudioMutex();            
+UnlockAudioMutex();
     }
     KNI_ReturnBoolean(returnValue);
 }
