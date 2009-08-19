@@ -26,8 +26,6 @@
 package com.sun.mmedia;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.protocol.SourceStream;
 import java.lang.ref.WeakReference;

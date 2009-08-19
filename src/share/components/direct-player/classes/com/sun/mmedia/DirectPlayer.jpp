@@ -125,8 +125,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     protected native int nGetDuration(int handle);
     // Pause
     protected native boolean nPause(int handle);
-    // Resume
-    protected native boolean nResume(int handle);
     // Need buffering from Java side?
     protected native boolean nIsNeedBuffering(int handle);
     // Switch to foreground
@@ -421,13 +419,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             videoControl.start();
         }
         int hNative = getOwner().getNativeHandle();
-        if (isFirstStart || (0 == getOwner().getMediaTime())) {
-            ret = nStart(hNative);
-            isFirstStart = false;
-        } else {
-            ret = nResume(hNative);    
-        }
 
+        ret = nStart( hNative );
+        
         state = Player.STARTED;
         return ret;
     }
