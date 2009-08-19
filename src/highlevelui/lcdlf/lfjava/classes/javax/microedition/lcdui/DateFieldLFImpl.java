@@ -391,13 +391,16 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         }
         
         synchronized (Display.LCDUILock) {
-            if (!editor.isPopupOpen()) {
+/**/        if (!editor.isPopupOpen()) {
                 setPopupLocation();
                 editor.show();
             } else {
                 editor.hideAllPopups();
                 getCurrentDisplay().hidePopup(editor);                
-            }	    
+            }
+/** /
+            showDateTimeScreen0();
+/**/
         } // synchronized
         uRequestPaint();
     }
@@ -655,4 +658,5 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
      */
     DateEditor editor = null;
 
+    private native void showDateTimeScreen0();
 }
