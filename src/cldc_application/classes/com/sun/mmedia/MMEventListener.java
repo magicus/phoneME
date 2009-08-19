@@ -77,10 +77,10 @@ class MMEventListener implements EventListener {
         NativeEvent nevt = (NativeEvent)event;
         HighLevelPlayer p = null;
 
-		if( EventTypes.MMAPI_EVENT != nevt.getType() ) {
+                if( EventTypes.MMAPI_EVENT != nevt.getType() ) {
                     return;
                 }
-		
+                
         switch ( nevt.intParam4 ) {
         case EVENT_MEDIA_END_OF_MEDIA:
             p = HighLevelPlayer.get(nevt.intParam1);
@@ -124,7 +124,7 @@ class MMEventListener implements EventListener {
             p = HighLevelPlayer.get(nevt.intParam1);
             if(p != null) {
                 p.receiveRSL();
-			}	
+                        }       
             break;
         
         case EVENT_MEDIA_RECORD_ERROR:
