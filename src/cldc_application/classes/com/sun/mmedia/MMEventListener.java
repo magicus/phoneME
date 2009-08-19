@@ -75,7 +75,7 @@ class MMEventListener implements EventListener {
      */
     public void process(Event event) {
         NativeEvent nevt = (NativeEvent)event;
-        HighLevelPlayer p;
+        HighLevelPlayer p = null;
 
 		if( EventTypes.MMAPI_EVENT != nevt.getType() ) {
                     return;
@@ -163,10 +163,23 @@ class MMEventListener implements EventListener {
             }
             break;
 
+        case EVENT_MEDIA_CLOSE_FINISHED:
+                break; //ignore the event
+
+        case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
+            long time = ( long )nevt.intParam2;
+            p = HighLevelPlayer.get(nevt.intParam1);
+            if (p != null) {
+                p.notifyMediaTimeSet(time);
+            }
         case EVENT_MEDIA_REALIZE_FINISHED:
         case EVENT_MEDIA_PREFETCH_FINISHED:
         case EVENT_MEDIA_START_FINISHED:
-            p = HighLevelPlayer.get(nevt.intParam1);
+        case EVENT_MEDIA_STOP_FINISHED:
+        case EVENT_MEDIA_DEALLOCATE_FINISHED:
+            if( null == p ) {
+                p = HighLevelPlayer.get(nevt.intParam1);
+            }
             if (p != null) {
                 p.unblockOnEvent();
             }

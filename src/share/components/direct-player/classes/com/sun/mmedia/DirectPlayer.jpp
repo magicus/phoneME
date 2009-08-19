@@ -322,28 +322,11 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private void prefetchData() throws MediaException
     {
         int hNative = getOwner().getNativeHandle();
-        final Object prefetchLock = getOwner().getDirectInputThread();
             
         /* prefetch native player */
-        if ( !getOwner().handledByDevice && null != prefetchLock ) {
-            /* predownload media data to fill native buffers */
-
-            synchronized( prefetchLock )
-            {
-                if (!nPrefetch(hNative)) {
-                    throw new MediaException("Can not prefetch");
-                }
-                try {
-                    prefetchLock.wait();
-                } catch (InterruptedException ex) {
-                }
-                System.out.println( "DirectPlayer: Prefetch resumed" );
-            }
-        }
-        else {
-            if (!nPrefetch(hNative)) {
-                throw new MediaException("Can not prefetch");
-            }
+        /* predownload media data to fill native buffers */
+        if (!nPrefetch(hNative)) {
+            throw new MediaException("Can not prefetch");
         }
     }
     
@@ -372,12 +355,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      */
     protected void doPrefetch() throws MediaException {
 
-        final DirectInputThread inputThread = getOwner().getDirectInputThread();
-        if( null != inputThread )
-        {
-            inputThread.unfreeze();
-        }
-        
         prefetchData();
         acquireDevice();
         
@@ -499,7 +476,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         {
             videoControl.stop();
         }
-        
+
         if (false == nPause(getOwner().getNativeHandle())) {
             throw new MediaException("Player cannot be stopped");
         }
@@ -526,11 +503,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         }
         
         releaseRadioAccess();
-
-        final DirectInputThread inputThread = getOwner().getDirectInputThread();
-        if ( null != inputThread ) {
-            inputThread.stopWritingAndFreeze();
-        }
 
         nReleaseDevice(getOwner().getNativeHandle());
 

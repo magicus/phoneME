@@ -994,16 +994,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
         lowLevelPlayer.doPreStop();
 
-        final Object lock = getAsyncExecLock();
-        if( null != lock ) {
-            synchronized( lock ) {
+        runAsync( new AsyncTask() {
+            public void run() throws MediaException {
                 lowLevelPlayer.doStop();
-                blockUntilEvent();
-                System.out.println("HighLevelPlayer: stop() unblocked");
             }
-        } else {
-            lowLevelPlayer.doStop();
-        }
+        });
 
         // Update the time base to use the system time
         // before stopping.
@@ -1055,19 +1050,15 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        final Object lock = getAsyncExecLock();
-        if( null != lock )
-        {
-            synchronized( lock )
-            {
-                lowLevelPlayer.doDeallocate();
-                blockUntilEvent();
-                System.out.println("HighLevelPlayer: deallocate() unblocked" );
-            }
-        } else {
-            lowLevelPlayer.doDeallocate();
-        }
+        try {
+            runAsync(new AsyncTask() {
 
+                public void run() throws MediaException {
+                    lowLevelPlayer.doDeallocate();
+                }
+            });
+        } catch (MediaException ex) {}
+        
         if (stream != null) {
             // if stream is not seekable, just return
             if (SourceStream.NOT_SEEKABLE != stream.getSeekType()) {
@@ -1133,7 +1124,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         
         if( null != lowLevelPlayer )
         {
-            lowLevelPlayer.doDeallocate();
             lowLevelPlayer.doClose();
         }
         else if(hNative != 0) {
@@ -1200,6 +1190,18 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         return this;
     };
 
+    private long mediaTimeSet = TIME_UNKNOWN;
+
+    void notifyMediaTimeSet( long mediaTimeSet )
+    {
+        this.mediaTimeSet = mediaTimeSet;
+    }
+
+    private long getMediaTimeSet()
+    {
+        return mediaTimeSet;
+    }
+
     /**
      * Sets the <code>Player</code>'s&nbsp;<i>media time</i>.
      * <p>
@@ -1241,7 +1243,17 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             now = theDur;
         }
 
-        long rtn = lowLevelPlayer.doSetMediaTime(now);
+        final long timeToSet = now;
+        runAsync( new AsyncTask() {
+            public void run() throws MediaException {
+                lowLevelPlayer.doSetMediaTime( timeToSet );
+            }
+        } );
+
+        long rtn = getMediaTimeSet();
+
+        System.out.println( "HighLevelPlayer: setMediaTime resumed" );
+        
         EOM = false;
 
         // Time-base-time needs to be updated if player is started.
