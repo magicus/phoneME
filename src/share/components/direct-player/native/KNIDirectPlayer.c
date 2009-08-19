@@ -147,38 +147,6 @@ UnlockAudioMutex();
     KNI_ReturnBoolean(KNI_TRUE);
 }
 
-/*  protected native boolean nStop ( int handle ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nStop) {
-
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    javacall_result result;
-    
-    MMP_DEBUG_STR("+nStop\n");
-
-    if (NULL == pKniInfo || NULL == pKniInfo->pNativeHandle || 
-            JAVACALL_TRUE != jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        REPORT_ERROR(LC_MMAPI, "nStop fail cause we are not in playing\n");
-        KNI_ReturnBoolean(KNI_FALSE);
-    }
-
-LockAudioMutex();            
-    JAVACALL_MM_ASYNC_EXEC(
-        result,
-        javacall_media_stop(pKniInfo->pNativeHandle),
-        pKniInfo->pNativeHandle, pKniInfo->appId, pKniInfo->playerId, JAVACALL_EVENT_MEDIA_STOPPED,
-        returns_no_data
-    );
-UnlockAudioMutex();            
-
-    if (JAVACALL_OK != result) {
-        KNI_ReturnBoolean(KNI_FALSE);
-    }
-    
-    KNI_ReturnBoolean(KNI_TRUE);
-}
-
 /*  protected native int nGetMediaTime ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {

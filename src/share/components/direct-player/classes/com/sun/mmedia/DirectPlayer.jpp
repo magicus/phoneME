@@ -111,8 +111,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private native void nReleaseRadioAccess();
     // Start playing
     protected native boolean nStart(int handle);
-    // Stop playing
-    protected native boolean nStop(int handle);
     // Get current media time as ms
     protected native int nGetMediaTime(int handle);
     // Set media time as ms
