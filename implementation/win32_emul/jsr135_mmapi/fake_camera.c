@@ -26,6 +26,7 @@
 #include <process.h>
 
 #include "multimedia.h"
+#include "javacall_lcd.h"
 
 //=============================================================================
 
@@ -60,9 +61,10 @@ typedef struct _fake_camera
     int                   out_height;
     javacall_pixel*       out_frame;
 
-    BOOL                  playing;
+    volatile BOOL         playing;
     BOOL                  visible;
 
+    HANDLE                hThread;
     CRITICAL_SECTION      cs;
 } fake_camera;
 
@@ -71,7 +73,7 @@ static void fake_camera_prepare_scaled_frame( fake_camera* c )
     int x, y, srcx, srcy;
 
     if( NULL == c->out_frame ) 
-        c->out_frame = (javacall_pixel*)MALLOC( sizeof(javacall_pixel) * c->out_width * c->out_height );;
+        c->out_frame = (javacall_pixel*)MALLOC( sizeof(javacall_pixel) * c->out_width * c->out_height );
 
     if( c->out_width == c->video_width && c->out_height == c->video_height )
     {
@@ -109,6 +111,30 @@ static void fake_camera_frame_ready( fake_camera* c )
     LeaveCriticalSection( &(c->cs) );
 }
 
+static void fake_camera_generator_thread( void* param )
+{
+    int x, y;
+    fake_camera* c = (fake_camera*)param;
+
+    while( c->playing )
+    {
+        for( x = 0; x < c->video_width; x++ )
+        {
+            for( y = 0; y < c->video_height; y++ )
+            {
+                *( c->video_frame + y * c->video_width + x )
+                    = RGB2PIXELTYPE( rand() & 0xFF, 
+                                     rand() & 0xFF, 
+                                     rand() & 0xFF );
+            }
+        }
+
+        fake_camera_frame_ready( c );
+
+        Sleep( 50 );
+    }
+}
+
 //=============================================================================
 
 static javacall_result fake_camera_create(int appId, 
@@ -125,11 +151,15 @@ static javacall_result fake_camera_create(int appId,
     c->out_width   = c->video_width  = 160;
     c->out_height  = c->video_height = 120;
 
-    c->video_frame = NULL;
+    c->video_frame = (javacall_pixel*)MALLOC( sizeof(javacall_pixel) 
+                                              * c->video_width 
+                                              * c->video_height );
     c->out_frame   = NULL;
 
     c->playing     = FALSE;
     c->visible     = FALSE;
+
+    c->hThread     = NULL;
 
     InitializeCriticalSection( &(c->cs) );
 
@@ -221,6 +251,9 @@ static javacall_result fake_camera_start(javacall_handle handle)
     fake_camera* c = (fake_camera*)handle;
     PRINTF( "*** start ***" );
 
+    c->playing = TRUE;
+    c->hThread = (HANDLE)_beginthread( fake_camera_generator_thread, 0, c );
+
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
                                      c->appId,
                                      c->playerId, 
@@ -233,6 +266,11 @@ static javacall_result fake_camera_stop(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
     PRINTF( "*** stop***\n" );
+
+    c->playing = FALSE;
+    WaitForSingleObject( c->hThread, INFINITE );
+    c->hThread = NULL;
+
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
                                      c->appId,
                                      c->playerId, 
