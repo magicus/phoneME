@@ -441,8 +441,10 @@ CVMdumpStats()
 	DECACHE_PC();							\
 	DECACHE_TOS();							\
 	if (isDoubleWord) {						\
+            CVMClassTypeID fieldTypeID =                                \
+                CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));         \
 	    CVMassert(CVMfbIsDoubleWord(fb));				\
-	    if (CVMtypeidGetType(CVMfbNameAndTypeID(fb)) == CVM_TYPEID_LONG) { \
+	    if (CVMtypeidGetToken(fieldTypeID) == CVM_TYPEID_LONG) {    \
 		val.j = CVMjvm2Long(&STACK_INFO(-2).raw);		\
 	    } else /* CVM_TYPEID_DOUBLE */ {				\
 		val.d = CVMjvm2Double(&STACK_INFO(-2).raw);		\

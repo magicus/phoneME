@@ -75,17 +75,17 @@ public abstract class CVMDataType implements CVMTypeCode, util.ClassFileConst {
      * These really belong in CVMTypeCode...
      */
     public static boolean
-    isArray( int t ){
-	return (((t)&CVMtypeArrayMask) != 0 );
+    isArray(int typeID) {
+        return ((typeID & CVMtypeArrayMask) != 0);
     }
 
-    public static boolean typeEquals( int t1, int t2 ){
-	return ((t1)==(t2));
+    public static boolean typeEquals(int typeID1, int typeID2) {
+        return (typeID1 == typeID2);
     }
 
     public static boolean
-    isBigArray( int t ){
-	return (((t)&CVMtypeArrayMask)==CVMtypeBigArray);
+    isBigArray(int typeID) {
+        return ((typeID & CVMtypeArrayMask) == CVMtypeBigArray);
     }
 
     /*
@@ -202,20 +202,22 @@ public abstract class CVMDataType implements CVMTypeCode, util.ClassFileConst {
     }
 
     public static int
-    CVMtypeArrayDepth( int t ){
-	if (!isBigArray(t)){
-	    return t>>CVMtypeArrayShift;
-	}
-	CVMArrayDataType d = (CVMArrayDataType)(dataTypes.elementAt( t&CVMtypeBasetypeMask));
-	return d.depth;
+    CVMtypeArrayDepth(int typeID) {
+        if (!isBigArray(typeID)) {
+            return (typeID >> CVMtypeArrayShift);
+        }
+        CVMArrayDataType d = (CVMArrayDataType)
+            dataTypes.elementAt(typeID & CVMtypeBasetypeMask);
+        return d.depth;
     }
 
-    public static int CVMtypeArrayBasetype( int t ){
-	if (!isBigArray(t) ){
-	    return t&CVMtypeBasetypeMask;
-	}
-	CVMArrayDataType d = (CVMArrayDataType)(dataTypes.elementAt( t&CVMtypeBasetypeMask));
-	return d.baseType;
+    public static int CVMtypeArrayBasetype(int typeID) {
+        if (!isBigArray(typeID)){
+            return typeID & CVMtypeBasetypeMask;
+        }
+        CVMArrayDataType d = (CVMArrayDataType)
+            dataTypes.elementAt(typeID & CVMtypeBasetypeMask);
+        return d.baseType;
     }
 
     public static int
@@ -268,8 +270,9 @@ public abstract class CVMDataType implements CVMTypeCode, util.ClassFileConst {
 	default:
 	    return CVM_T_ERROR;
 	}
-	if ( arrayDepth <= CVMtypeMaxSmallArray )
+	if (arrayDepth <= CVMtypeMaxSmallArray) {
 	    return (arrayDepth<<CVMtypeArrayShift)+baseType;
+        }
 	/*
 	 * Here for a deep array.
 	 */

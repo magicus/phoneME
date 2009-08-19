@@ -819,7 +819,7 @@ CVMjniGetXMethodID(JNIEnv *env,
      */
     tid = CVMtypeidNewMethodIDFromNameAndSig(ee, name, sig);
 
-    if (tid != CVM_TYPEID_ERROR) {
+    if (!CVMtypeidIsSameMethod(tid, CVM_METHOD_TYPEID_ERROR)) {
 	/* never search superclasses for constructors */
 	mb  = CVMclassGetMethodBlock(cb, tid, isStatic);
 	CVMtypeidDisposeMethodID(ee, tid);
@@ -871,7 +871,7 @@ CVMjniGetXFieldID(JNIEnv *env,
      */
     tid = CVMtypeidNewFieldIDFromNameAndSig(ee, name, sig);
 
-    if (tid != CVM_TYPEID_ERROR) {
+    if (!CVMtypeidIsSameField(tid, CVM_FIELD_TYPEID_ERROR)) {
 	fb  = CVMclassGetFieldBlock(cb, tid, isStatic);
 	CVMtypeidDisposeFieldID(ee, tid);
     } else {
@@ -2510,9 +2510,11 @@ CVMjniPushArgumentsVararg(JNIEnv *env,
     int safeCount = SAFE_COUNT;
     CVMVaList *v = (CVMVaList *)a;
     va_list *args = &v->args;
-    int typeSyllable;
+    CVMTypeIDToken typeSyllable;
 
-    while ((typeSyllable=CVM_TERSE_ITER_NEXT(*terse_signature))!=CVM_TYPEID_ENDFUNC) {
+    while ((typeSyllable = CVM_TERSE_ITER_NEXT(*terse_signature)) !=
+           CVM_TYPEID_ENDFUNC) {
+
 	/* Perform GC checkpoint every so often */
 	if (safeCount-- == 0) {
 	    CVMD_gcSafeCheckPoint(ee, {
@@ -2571,9 +2573,11 @@ CVMjniPushArgumentsArray(JNIEnv *env,
     CVMStackVal32 *topOfStack = current_frame->topOfStack;
     int safeCount = SAFE_COUNT;
     jvalue *args = (jvalue *)a;
-    int typeSyllable;
-    
-    while ((typeSyllable=CVM_TERSE_ITER_NEXT(*terse_signature))!=CVM_TYPEID_ENDFUNC) {
+    CVMTypeIDToken typeSyllable;
+
+    while ((typeSyllable = CVM_TERSE_ITER_NEXT(*terse_signature)) !=
+           CVM_TYPEID_ENDFUNC) {
+
 	/* Perform GC checkpoint every so often */
 	if (safeCount-- == 0) {
 	    CVMD_gcSafeCheckPoint(ee, {

@@ -109,7 +109,7 @@ CVMclassLookupByNameFromClass(CVMExecEnv* ee, const char* name,
     CVMClassTypeID       typeID = 
 	CVMtypeidNewClassID(ee, name, (int)strlen(name));
 
-    if (typeID == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(typeID, CVM_CLASS_TYPEID_ERROR)) {
 	return NULL; /* exception already thrown */
     }
 
@@ -154,7 +154,7 @@ CVMclassLookupByNameFromClassLoader(CVMExecEnv* ee, const char* name,
     CVMClassTypeID typeID = 
 	CVMtypeidNewClassID(ee, name, (int)strlen(name));
 
-    if (typeID == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(typeID, CVM_CLASS_TYPEID_ERROR)) {
 	return NULL; /* exception already thrown */
     }
 
@@ -200,7 +200,7 @@ CVMclassLookupFromClassLoader(CVMExecEnv* ee,
 
     CVMassert(!CVMlocalExceptionOccurred(ee));
 
-    if (typeID == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(typeID, CVM_CLASS_TYPEID_ERROR)) {
 	/*
 	 * This should only happen if the typeid system ran out of memory.
 	 * Note that passing CVM_TYPEID_ERROR is not allowed unless you also
@@ -210,9 +210,6 @@ CVMclassLookupFromClassLoader(CVMExecEnv* ee,
 	CVMthrowNoClassDefFoundError(ee, "%s", name);
 	return NULL;
     }
-
-    /* No CVMFieldTypeIDs allowed. Upper bits must never be set. */
-    CVMassert(CVMtypeidGetType(typeID) == typeID);
 
 #ifndef CVM_CLASSLOADING
     CVMassert(loader == NULL);
@@ -225,7 +222,7 @@ CVMclassLookupFromClassLoader(CVMExecEnv* ee,
      */
     if (loader == NULL || CVMtypeidIsPrimitive(typeID) || 
 	(CVMtypeidIsArray(typeID) &&
-	 CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(typeID))))
+	 CVMtypeidIsPrimitive(CVMtypeidGetArrayBaseType(typeID))))
     {
 	cb = CVMpreloaderLookupFromType(ee, typeID, NULL);
 	if (cb != NULL) {

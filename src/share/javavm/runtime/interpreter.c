@@ -607,7 +607,7 @@ CVMinterpreterIterateRefArguments(CVMMethodBlock* mb, CVMStackVal32* list,
 {
     CVMMethodTypeID  tid = CVMmbNameAndTypeID(mb);
     CVMterseSigIterator terseSig;
-    char       arg;
+    CVMTypeIDToken arg;
 
     /* 
      * The terse signature is all we need (and even less than that)
@@ -619,7 +619,7 @@ CVMinterpreterIterateRefArguments(CVMMethodBlock* mb, CVMStackVal32* list,
 	callback(refPtr, data);
 	list++;
     }	
-    while((arg = CVM_TERSE_ITER_NEXT(terseSig)) != CVM_TYPEID_ENDFUNC) {
+    while ((arg = CVM_TERSE_ITER_NEXT(terseSig)) != CVM_TYPEID_ENDFUNC) {
 	if (arg == CVM_TYPEID_OBJ) {
 	    CVMObject** refPtr = (CVMObject**)list;
 	    if (*refPtr != 0) {
@@ -3545,7 +3545,8 @@ CVMassertHook(const char *filename, int lineno, const char *expr) {
  *    The method's class is a superclass (and not equal) to the current class.
  */
 CVMBool
-CVMisSpecialSuperCall(CVMClassBlock* currClass, CVMMethodBlock* mb) {
+CVMisSpecialSuperCall(CVMClassBlock* currClass, CVMMethodBlock* mb)
+{
     if (CVMcbIs(currClass, SUPER)
           && (!CVMmbIs(mb, PRIVATE))
           && (!CVMtypeidIsConstructor(CVMmbNameAndTypeID(mb)))

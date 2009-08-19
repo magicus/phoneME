@@ -57,6 +57,10 @@ class CVMMethodType implements CVMTypeCode, util.ClassFileConst {
      * in typeid_impl.h 
      */
     public final static int NHASH = 13*37; // arbitrary number, contains no 2
+
+    /* For CVM_16BIT_TYPEID, NUMBER_OF_METHOD_INLINE_DETAILS should be 2: */
+    public final static int NUMBER_OF_METHOD_INLINE_DETAILS = 1;
+
     public static CVMMethodType hashTable[] = new CVMMethodType[ NHASH ];
 
 /* constructor */

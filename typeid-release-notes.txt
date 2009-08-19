@@ -1,0 +1,171 @@
+32-bit typeID System Release Notes
+==================================
+To understand how the new 32-bit typeID system works, read the comment block
+at the top of typeid.h for details on how the external world (i.e. other VM
+code) should interface the typeid system.
+
+Next, read the comment block at the top of typeid.c which describes the
+internal implementation of the typeid system.
+
+
+Outstanding Issues:
+
+1. Semantic Changes
+   ================
+   At VM boot time, the typeID system looks up 4 methodIDs for quick
+   comparisons later (see CVMtypeidInit()).  These methodIDs are:
+   1. CVMglobals.initTid
+   2. CVMglobals.clinitTid
+   3. CVMglobals.finalizeTid
+   4. CVMglobals.cloneTid
+
+   In most cases, these methodIDs are used in comparison macros.  Some of
+   the behavior of these macros have now changed.  This may or may not
+   cause TCK failures.  If a TCK failure is encountered, check to see if
+   it has to do with these changes.  The change may have fixed a bug that
+   the TCK was testing for previously.
+
+   1. CVMtypeidIsFinalizer() has been changed to compare the specified
+      methodID with the finalizeTid.  Previously, it was only comparing
+      the method nameID.
+
+      Strictly speaking, this change should not be a problem since a
+      method is only a finalizer method if and only if it has the same
+      name and sig of the finalizeTid.  If a problem arises due to this,
+      find out why there is a problem.
+
+      This semantic change takes effect in:
+      1. CVMclassPrepareMethods() in classlink.c
+
+   2. CVMtypeidIsConstructor(): NO change.  This is proper because any
+      method with name <init> is a constructor by definition independent
+      of the methodSig.  No semantic change.
+
+   3. CVMtypeidIsStaticInitializer() has been renamed to CVMtypeidIsClinit()
+      for a shorter name.  No semantic change.
+
+   4. CVMtypeidIsClinit() has been renamed to CVMtypeidHasClinitName().
+      This is because it used to only compare the method name.  Hence,
+      the new name is more appropriate.
+
+      The semantic was simply NOT changed because this macro is used in
+      verifier code.  The verifier may (or may not) be using this macro
+      to filter out any methods with the special name <clinit>.  Without
+      understanding the semantics of the verifier, it is not safe to
+      change the semantics of this macro.
+
+      No semantic change.
+
+   5. CVMglobals.cloneTid used to be initialized with the methodID
+      "clone()V".  However, the proper methodID for the clone() method
+      in java.lang.Object is "clone()Ljava/lang/Object;".  Hence,
+      CVMglobals.cloneTid has now be changed to the proper methodID.
+
+      NOTE: CVMglobals.cloneTid is actually used in verifier code that
+      compares method names against it.  However, strictly speaking,
+      the only clone() methodID that is supported for Java object cloning
+      is "clone()Ljava/lang/Object;".  Hence, we changed the verifier to
+      do a methodID comparison instead of a method nameID comparison
+      for the clone() method.
+
+      This semantic change takes effect in:
+      1. CVMcpResolveMethodref() in constantpool.c
+      2. pop_stack() in verifycode.c
+
+2. TCK failures
+   ============
+   When running the CDC TCK, I saw assertion failures running both with
+   -Xjit:compile=none and -Xjit:compile=all.  The assertion failures are
+   at different places.  These will need to be debugged and resolved
+   carefully.
+
+   I also saw some TCK test failures.  This is for a linux-x86-suse build.
+   I am unsure if the TCK failures are due to the new typeID system or some
+   pre-existing condition.
+
+3. Split Verifier
+   ==============
+   The split verifier (CVM_SPLIT_VERIFY=true) will not currently build with
+   the new 32-bit typeID system.
+
+   In split_verify.c, I see calls to Vfy_getSystemVfyType() which takes a
+   classID and attempts to shift it make a verifier fullinfo_type which is
+   a 32-bit int.  This shift operation seems to assume that the classID will
+   fit within 16bits.  This needs to be re-thought.
+
+   Since CVMClassTypeIDs are now 32 bits in size, we'll need to do something
+   about this.  The quick fix for the moment is to increase the cookie size
+   to 64 bit.
+
+   The downside of this quick fix: those cookies are manipulated with ALU
+   operations like shifts and masking.
+
+   The alternative is to introduce an internal hash table that hashes the 32
+   bit CVMClassTypeIDs to 16 bit hash cookies.  This is what the conventional
+   verifier already does.  This alternate approach will be probably slow and
+   just as memory intensive (if not more) compared to simply expanding the
+   split verifier cookies to 64 bits.
+
+   NOTE: Incidentally, the 16 bit limit on verifier cookies means that a
+   class being verified is not allowed to reference more than 64K classes at
+   the same time.  If you ever want to research this, the keyword to look for
+   in verifycode.c is a macro named MAKE_FULLINFO() whose 3rd argument is
+   expected to be a 16 bit number.  verifycode.c itself pretty much enforces
+   this size because the field comes from hash buckets that it uses and that
+   field is sized short.
+
+
+4. JVMTI/PI/DI
+   ===========
+   CVM_JVMTI and CVM_JVMPI builds should build successfully.  This has been
+   verified.  However, these builds have not been tested for their
+   functionality.
+
+   The jvmdi.c module has also been built successfully, but has not been
+   tested.
+
+5. Memory Leakage
+   ==============
+   The is currently no deleteNameAndTypeEntry().  This means that
+   nameAndTypeEntry records are created but are never freed.  However, the
+   leakage is bounded at the upper end.  The problem is that this upper
+   end may be a significantly large number.
+
+   To implement deleteNameAndTypeEntry(), take a look at deleteNameEntry()
+   as your reference.  Chances are, wherever deleteNameEntry() needs to be
+   called, deleteNameAndTypeEntry() will need to be called too.
+
+   Note also that there is a CVMtypeidDisposeMemberName() that is called
+   by external code.  The external code needs to be checked to see if
+   they need to call an equivalent e.g. CVMtypeidDisposeMemberID(), which
+   will delete the nameAndTypeEntry if necessary.
+
+
+6. CVM_TYPEID_IS_STRONGLY_TYPED
+   ============================
+   Disabling CVM_TYPEID_IS_STRONGLY_TYPED i.e. "#define
+   CVM_TYPEID_IS_STRONGLY_TYPED CVM_FALSE", is not currently tested nor
+   supported.  Consider fixing this to improve typeid performance a
+   little bit.
+
+7. CVM_16BIT_TYPEID
+   ================
+   Enabling CVM_16BIT_TYPEID i.e. "#define CVM_16BIT_TYPEID" is not
+   currently tested and supported.  Consider fixing this if you want to
+   support the old 16-bit style typeIDs to get space savings.  Currently,
+   the 32-bit typeID system increases romized footprint of an FP
+   PRELOAD_LIB=true by about 68K.
+
+   NOTE: Supporting CVM_16BIT_TYPEID will require romizer changes to
+   use different constants and emit different data structures in some
+   places.  This romizer support is not currently present.
+
+8. Footprint Increase
+   ==================
+   The current 32-bit typeID system increases romized footprint of an FP
+   PRELOAD_LIB=true by about 68K.  Of that increase, about 53K is from
+   the .text segment of romjavaAux.c.
+
+   Investigate to see if there are ways to reduce this size penalty in
+   the romized footprint.
+

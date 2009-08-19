@@ -673,7 +673,7 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 	 * abstract or a static intializer.
 	 */
 	CVMassert(!CVMcbIs(cb, INTERFACE) || CVMmbIs(mb, ABSTRACT) ||
-		  CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb)));
+                  CVMtypeidIsClinit(CVMmbNameAndTypeID(mb)));
 
 	/* 
 	 * If it's a java method then fixup maxLocals and disambiguate it.
@@ -724,7 +724,7 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 	     * reclaim clinit memory that would otherwise be lost if
 	     * rewriting was done here!  */
 	    if (CVMjmdFlags(CVMmbJmd(mb)) & CVM_JMD_DID_REWRITE) {
-		if (CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb))) {
+                if (CVMtypeidIsClinit(CVMmbNameAndTypeID(mb))) {
 		    free(jmd);
 		}
 	    }
@@ -1156,6 +1156,7 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 	/* Look at each interface method */
 	for (j = 0; j < numIntfMethods; j++) { 
 	    CVMMethodBlock* imb = CVMcbMethodSlot(icb, j);
+            CVMNameTypeID imbNameID;
 
 	    /*
 	     * Verify that the signature does not break any existing
@@ -1170,16 +1171,22 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 
 	    /* If the method is static then it must be <clinit>. */
 	    if (CVMmbIs(imb, STATIC)) { 
-		CVMassert(
-                    CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(imb)));
+                CVMassert(CVMtypeidIsClinit(CVMmbNameAndTypeID(imb)));
 		continue;
 	    } 
 
 	    /* Find the virtual method that implements the interface method. */
+            imbNameID = CVMtypeidGetMemberName(CVMmbNameAndTypeID(imb));
 	    for (k = CVMcbMethodTableCount(cb) - 1; k >= 0; k--) { 
 		CVMMethodBlock* mb = CVMcbMethodTableSlot(cb, k);
-		if (mb != NULL && CVMtypeidIsSame(CVMmbNameAndTypeID(mb),
-						  CVMmbNameAndTypeID(imb))) {
+                CVMNameTypeID mbNameID;
+
+		if (mb == NULL) {
+                    continue;
+                }
+
+                mbNameID = CVMtypeidGetMemberName(CVMmbNameAndTypeID(mb));
+                if (CVMtypeidIsSameName(mbNameID, imbNameID)) {
 		    if (CVMmbIs(mb, PUBLIC)) {
 			methodTableIndices[j] = CVMmbMethodTableIndex(mb);
 			break;
@@ -1200,8 +1207,9 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 		for (k = 0; k < CVMcbMethodCount(cb); k++) {
 		    CVMMethodBlock* mb = CVMcbMethodSlot(cb, k);
 		    if (!CVMmbIs(mb, STATIC)) {
-			if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb),
-					    CVMmbNameAndTypeID(imb))) {
+                        CVMNameTypeID mbNameID =
+                            CVMtypeidGetMemberName(CVMmbNameAndTypeID(mb));
+			if (CVMtypeidIsSameName(mbNameID, imbNameID)) {
 			    methodTableIndices[j] = ILLEGAL_ACCESS;
 			    break;
 			}
@@ -1411,7 +1419,8 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 			mname[0] = '+';
 			CVMmbNameAndTypeID(mb) =
 			    CVMtypeidNewMethodIDFromNameAndSig(ee, mname, sig);
-			if (CVMmbNameAndTypeID(mb) == CVM_TYPEID_ERROR) {
+			if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb),
+                                                  CVM_METHOD_TYPEID_ERROR)) {
 			    success = CVM_FALSE; /* exception already thrown */
 			} else {
 			    success = CVM_TRUE;
@@ -1471,7 +1480,9 @@ static void
 CVMinitializeStaticField(CVMExecEnv* ee, CVMFieldBlock* fb,
 			 CVMConstantPool* cp, CVMUint16 cpIdx)
 {    
-    switch (CVMtypeidGetType(CVMfbNameAndTypeID(fb))) { 
+    CVMClassTypeID classID = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+    CVMUint32 typeIDToken = CVMtypeidGetToken(classID);
+    switch (typeIDToken) {
     case CVM_TYPEID_DOUBLE: 
 	CVMassert(CVMcpTypeIs(cp, cpIdx, Double));
 	goto get64bitConstant;
@@ -1504,7 +1515,8 @@ CVMinitializeStaticField(CVMExecEnv* ee, CVMFieldBlock* fb,
 	
     default: 
 	/* Must be a java/lang/String. */
-	CVMassert(!CVMtypeidIsPrimitive(CVMfbNameAndTypeID(fb)));
+	CVMassert(!CVMtypeidIsPrimitive(CVMtypeidGetMemberType(
+                                        CVMfbNameAndTypeID(fb))));
 	CVMassert(CVMcpTypeIs(cp, cpIdx, StringICell));
 	CVMD_gcUnsafeExec(ee, {
 	    CVMObject* stringObj = 

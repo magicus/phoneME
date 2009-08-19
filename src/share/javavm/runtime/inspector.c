@@ -451,7 +451,7 @@ classReferenceDumpCallback(CVMObject* obj, CVMClassBlock* cb, CVMUint32 size,
                            void* data)
 {
     CVMClassTypeID *clazznameID = (CVMClassTypeID *) data;
-    if (CVMcbClassName(cb) == *clazznameID) {
+    if (CVMtypeidIsSameClass(CVMcbClassName(cb), *clazznameID)) {
         CVMconsolePrintf("Addr: 0x%x Size: %d  \tClass: %C\n", obj, size, cb);
         CVMgcDumpReferences(obj);
     }
@@ -487,7 +487,7 @@ static void CVMgcClassReferencesDump(CVMExecEnv *ee, void *data)
     clazznameID = CVMtypeidLookupClassID(ee, newClazzname, (int)length - 1);
     free (newClazzname);
 
-    if (clazznameID == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(clazznameID, CVM_CLASS_TYPEID_ERROR)) {
         CVMconsolePrintf("Class %s is NOT loaded\n", clazzname);
         return;
     }
@@ -502,7 +502,7 @@ static void
 classBlocksDumpCallback(CVMExecEnv *ee, CVMClassBlock *cb, void *data)
 {
     CVMClassTypeID *clazznameID = (CVMClassTypeID *) data;
-    if (*clazznameID == CVMcbClassName(cb)) {
+    if (CVMtypeidIsSameClass(*clazznameID, CVMcbClassName(cb))) {
         CVMconsolePrintf("cb %p %C\n", cb, cb);
     }
 }
@@ -532,7 +532,7 @@ static void CVMgcClassBlocksDump(CVMExecEnv *ee, void *data)
     clazznameID = CVMtypeidLookupClassID(ee, newClazzname, (int)length - 1);
     free (newClazzname);
 
-    if (clazznameID == CVM_TYPEID_ERROR) {
+    if (CVMtypeidIsSameClass(clazznameID, CVM_CLASS_TYPEID_ERROR)) {
         CVMconsolePrintf("Class %s is NOT loaded\n", clazzname);
         return;
     }
@@ -601,8 +601,8 @@ static CVMBool
 findMaxTypeIDCallback(CVMObject* obj, CVMClassBlock* cb, CVMUint32 size,
                       void* data)
 {
-    CVMUint32* currMaxID = (CVMUint32*)data;
-    if (CVMcbClassName(cb) > *currMaxID) {
+    CVMClassTypeID* currMaxID = (CVMClassTypeID*)data;
+    if (CVMtypeidGetToken(CVMcbClassName(cb)) > CVMtypeidGetToken(*currMaxID)) {
 	*currMaxID = CVMcbClassName(cb);
     }
     return CVM_TRUE;
@@ -633,7 +633,7 @@ statsCollectCallback(CVMObject* obj, CVMClassBlock* cb, CVMUint32 size,
 {
     CVMClassTypeID typeID = CVMcbClassName(cb);
     Stats*         stats  = (Stats*)data;
-    TableEntry*    entry  = &stats->entries[typeID];
+    TableEntry*    entry  = &stats->entries[CVMtypeidGetToken(typeID)];
 
     entry->typeID        = typeID;
     entry->totalSize    += size;
@@ -659,17 +659,19 @@ tableEntrySizeCompare(const void *p1, const void *p2)
 void
 CVMgcStatsHeapDump(CVMExecEnv* ee, void *data)
 {
-    CVMUint32 maxTypeID = 0;
+    CVMClassTypeID maxTypeID = CVM_INIT_CLASSID(0);
     int i;
     Stats stats;
 
     /* First look at all objects in the heap, and figure out the max TypeID
        value. We will use this to allocate stats tables */
     CVMgcimplIterateHeap(ee, findMaxTypeIDCallback, &maxTypeID);
-    stats.tableSize = maxTypeID + 1;
+    stats.tableSize = CVMtypeidGetToken(maxTypeID) + 1;
     /*
      * OK, now allocate the stats table
      */
+    /* FIXME - this is broken due to 32-bit typeid changes. tableSize is
+       set to max typeID,  which is always huge. */
     stats.entries = (TableEntry *)calloc(sizeof(TableEntry), stats.tableSize);
     if (stats.entries == NULL) {
 	CVMconsolePrintf("Out of memory allocating totalSize array\n");
@@ -1321,15 +1323,15 @@ static void CVMdumpInstanceInternal(CVMObject *obj)
                 /* Get the field offset: */
                 fieldOffset = CVMfbOffset(fb);
 
-                fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-                if (CVMtypeidFieldIsRef(fieldType)) {
+                fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+                if (CVMtypeidClassIsRef(fieldType)) {
                     CVMObject *value;
                     CVMD_fieldReadRef(obj, CVMfbOffset(fb), value);
                     CVMconsolePrintf("      [%04x] 0x%x : %F\n",
                                      fieldOffset, value, fb);
 
                 } else {
-                    switch (fieldType) {
+                    switch (CVMtypeidGetToken(fieldType)) {
                         case CVM_TYPEID_LONG: {
                             CVMJavaLong value, highLong;
                             CVMUint32 high, low;
@@ -1663,14 +1665,14 @@ void CVMdumpClassBlock(CVMClassBlock *cb)
 
             fieldOffset = CVMfbOffset(fb);
 
-            fieldType = CVMtypeidGetType(CVMfbNameAndTypeID(fb));
-            if (CVMtypeidFieldIsRef(fieldType)) {
+            fieldType = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
+            if (CVMtypeidClassIsRef(fieldType)) {
                 CVMObject *value = *(CVMObject **)&CVMfbStaticField(ee, fb).r;
                 CVMconsolePrintf("      [0x%04x] 0x%x : %F\n",
                                  CVMfbOffset(fb), value, fb);
 
             } else {
-                switch (fieldType) {
+                switch (CVMtypeidGetToken(fieldType)) {
                     case CVM_TYPEID_LONG: {
                         CVMJavaLong value, highLong;
                         CVMUint32 high, low;

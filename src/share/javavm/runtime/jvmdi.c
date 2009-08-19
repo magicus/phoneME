@@ -804,11 +804,11 @@ CVMjvmdiNotifyDebuggerOfFieldModification(CVMExecEnv* ee, CVMObjectICell* obj,
         CVMMethodBlock* mb;
         jlocation location;
         JNIEnv* env = CVMexecEnv2JniEnv(ee);
-	CVMFieldTypeID tid = CVMfbNameAndTypeID(fb);
+	CVMClassTypeID tid = CVMtypeidGetMemberType(CVMfbNameAndTypeID(fb));
 	char sig_type;
 
 	if (CVMtypeidIsPrimitive(tid)) {
-	    sig_type = CVMterseTypePrimitiveSignatures[CVMtypeidGetType(tid)];
+	    sig_type = CVMterseTypePrimitiveSignatures[CVMtypeidGetToken(tid)];
 	} else if (CVMtypeidIsArray(tid)) {
 	    sig_type = CVM_SIGNATURE_ARRAY;
 	} else {
@@ -4134,7 +4134,7 @@ jvmdi_GetLocalVariableTable(jclass clazz, jmethodID method,
         tbl[i].length = (jint)(vmtbl[i].length);
 
 	nameAndTypeTmp =
-	    CVMtypeidFieldNameToAllocatedCString(CVMtypeidCreateTypeIDFromParts(vmtbl[i].nameID, vmtbl[i].typeID));
+	    CVMtypeidFieldNameToAllocatedCString(vmtbl[i].fieldID);
 	sz = CVMint2Long(strlen(nameAndTypeTmp)+1);
         ALLOC(sz, &buf);
         strcpy(buf, nameAndTypeTmp);
@@ -4142,7 +4142,7 @@ jvmdi_GetLocalVariableTable(jclass clazz, jmethodID method,
 	tbl[i].name = buf;
 
 	nameAndTypeTmp =
-	    CVMtypeidFieldTypeToAllocatedCString(CVMtypeidCreateTypeIDFromParts(vmtbl[i].nameID, vmtbl[i].typeID));
+	    CVMtypeidFieldTypeToAllocatedCString(vmtbl[i].fieldID);
 	sz = CVMint2Long(strlen(nameAndTypeTmp)+1);
         ALLOC(sz, &buf);
         strcpy(buf, nameAndTypeTmp);

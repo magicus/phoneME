@@ -289,7 +289,7 @@ Java_java_lang_Class_getClassTypeID(JNIEnv *env, jclass cls)
 {
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     CVMClassBlock* cb = gcSafeRef2Class(ee, cls);
-    return CVMcbClassName(cb);
+    return CVMtypeidGetToken(CVMcbClassName(cb));
 }
 
 JNIEXPORT jint JNICALL
@@ -297,7 +297,7 @@ Java_java_lang_Class_getSuperClassTypeID(JNIEnv *env, jclass cls)
 {
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     CVMClassBlock* cb = gcSafeRef2Class(ee, cls);
-    return CVMcbSuperclassTypeID(cb);
+    return CVMtypeidGetToken(CVMcbSuperclassTypeID(cb));
 }
 
 JNIEXPORT jstring JNICALL
@@ -345,7 +345,7 @@ Java_java_lang_Class_getInterfaceTypeID(JNIEnv *env, jclass cls, jint index)
 {
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     CVMClassBlock* cb = gcSafeRef2Class(ee, cls);
-    return CVMcbInterfaceTypeID(cb, index);
+    return CVMtypeidGetToken(CVMcbInterfaceTypeID(cb, index));
 }
 
 JNIEXPORT jstring JNICALL

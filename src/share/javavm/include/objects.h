@@ -724,22 +724,21 @@ struct CVMArrayInfo {
 #define CVMisArrayObject(obj)  (CVMisArrayClass(CVMobjectGetClass((obj))))
 #define CVMisArrayClass(cb)    CVMtypeidIsArray(CVMcbClassName(cb))
 
-#define CVMisArrayClassOfBasicType(cb, basicTypeSig)			     \
-     (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb))==1) \
-      && (CVMtypeidGetArrayBasetype(CVMcbClassName(cb)) == basicTypeSig))
+#define CVMisArrayClassOfBasicType(cb, basicTypeSig) \
+    (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb))==1) \
+     && CVMtypeidIsSameClass(CVMtypeidGetArrayBaseType(CVMcbClassName(cb)), \
+                             basicTypeSig))
 
-#define CVMisArrayOfArrayClass(cb)  				\
-     (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb))>1) )
+#define CVMisArrayOfArrayClass(cb) \
+    (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb)) > 1))
 
-#define CVMisArrayOfClass(cb)  					             \
-     (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb))==1) \
-      && (CVMtypeidFieldIsRef(CVMtypeidGetArrayBasetype(CVMcbClassName(cb)))))
+#define CVMisArrayOfClass(cb) \
+    (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb)) == 1) \
+      && (CVMtypeidClassIsRef(CVMtypeidGetArrayBaseType(CVMcbClassName(cb)))))
 
-/*
- */
-#define CVMisArrayOfAnyBasicType(cb)			            	     \
-     (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb))==1) \
-      && (!CVMtypeidFieldIsRef(CVMtypeidGetArrayBasetype(CVMcbClassName(cb)))))
+#define CVMisArrayOfAnyBasicType(cb) \
+    (CVMisArrayClass(cb) && (CVMtypeidGetArrayDepth(CVMcbClassName(cb)) == 1) \
+     && (!CVMtypeidClassIsRef(CVMtypeidGetArrayBaseType(CVMcbClassName(cb)))))
 
 /*
  * The following type to make array declarations for double and long

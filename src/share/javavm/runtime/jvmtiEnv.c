@@ -2991,9 +2991,10 @@ forceEarlyReturn(jvmtiEnv* jvmtienv, jthread thread, jvalue val,
 
 	if (retType >= CVM_TYPEID_OBJ) {
 	    nameAndTypeID =  CVMmbNameAndTypeID(mb);
-	    CVMtypeidGetSignatureIterator( nameAndTypeID, &parameters );
+	    CVMtypeidGetSignatureIterator(nameAndTypeID, &parameters);
 	    returnType = CVMclassLookupClassWithoutLoading(ee,
-		           CVM_SIGNATURE_ITER_RETURNTYPE(parameters),
+                           CVMtypeidToken2ClassID(
+                               CVM_SIGNATURE_ITER_RETURNTYPE(parameters)),
 		           CVMcbClassLoader(cb));
 
 	    CVMD_gcUnsafeExec(ee, {
@@ -5898,7 +5899,7 @@ findDeclaredMethod(const CVMClassBlock* cb, CVMMethodTypeID tid,
     if (lookInTable) {
 	for (i = 0; i < CVMcbMethodTableCount(cb); i++) {
 	    mb = CVMcbMethodTableSlot(cb, i);
-	    if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb), tid)) {
+	    if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb), tid)) {
 		return mb;
 	    }
 	}
@@ -5906,7 +5907,7 @@ findDeclaredMethod(const CVMClassBlock* cb, CVMMethodTypeID tid,
     if (lookInClass) {
 	for (i = 0; i < CVMcbMethodCount(cb); i++) {
 	    mb = CVMcbMethodSlot(cb, i);
-	    if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb), tid)) {
+	    if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb), tid)) {
 		return mb;
 	    }
 	}
@@ -5916,7 +5917,7 @@ findDeclaredMethod(const CVMClassBlock* cb, CVMMethodTypeID tid,
 	    CVMClassBlock *icb = CVMcbInterfacecb(cb, i);
 	    for (j = 0; j < CVMcbMethodCount(icb); j++) {
 		mb = CVMcbMethodSlot(icb, j);
-		if (CVMtypeidIsSame(CVMmbNameAndTypeID(mb), tid)) {
+		if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb), tid)) {
 		    return mb;
 		}
 	    }
@@ -5969,7 +5970,7 @@ jvmti_GetMethodDeclaringClass(jvmtiEnv* jvmtienv,
 	    }
 
 	    /* <clinit> from current class only, not superclasses */
-	    if (CVMtypeidIsStaticInitializer(tid)) {
+            if (CVMtypeidIsClinit(tid)) {
 		break;
 	    }
 
@@ -6265,9 +6266,7 @@ jvmti_GetLocalVariableTable(jvmtiEnv* jvmtienv,
 	tbl[i].length = (jint)(vmtbl[i].length);
 
 	nameAndTypeTmp =
-	    CVMtypeidFieldNameToAllocatedCString(
-                CVMtypeidCreateTypeIDFromParts(vmtbl[i].nameID,
-					       vmtbl[i].typeID));
+	    CVMtypeidFieldNameToAllocatedCString(vmtbl[i].fieldID);
 	sz = CVMint2Long(strlen(nameAndTypeTmp)+1);
 	ALLOC(jvmtienv, sz, &buf);
 	strcpy(buf, nameAndTypeTmp);
@@ -6275,9 +6274,7 @@ jvmti_GetLocalVariableTable(jvmtiEnv* jvmtienv,
 	tbl[i].name = buf;
 
 	nameAndTypeTmp =
-	    CVMtypeidFieldTypeToAllocatedCString(
-		CVMtypeidCreateTypeIDFromParts(vmtbl[i].nameID,
-					       vmtbl[i].typeID));
+	    CVMtypeidFieldTypeToAllocatedCString(vmtbl[i].fieldID);
 	sz = CVMint2Long(strlen(nameAndTypeTmp)+1);
 	ALLOC(jvmtienv, sz, &buf);
 	strcpy(buf, nameAndTypeTmp);

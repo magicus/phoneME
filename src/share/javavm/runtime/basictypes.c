@@ -85,24 +85,24 @@ const char CVMbasicTypeSignatures[] = {
  * A mapping from basic type to class type ID
  */
 const CVMClassTypeID CVMbasicTypeID[] = {
-    0, /* unused */
-    0, /* unused */
-    CVM_TYPEID_OBJ,   /* CVM_T_CLASS */
-    0, /* unused */
-    CVM_TYPEID_BOOLEAN, /* CVM_T_BOOLEAN */
-    CVM_TYPEID_CHAR,    /* CVM_T_CHAR */
-    CVM_TYPEID_FLOAT,   /* CVM_T_FLOAT */
-    CVM_TYPEID_DOUBLE,  /* CVM_T_DOUBLE */
-    CVM_TYPEID_BYTE,    /* CVM_T_BYTE */
-    CVM_TYPEID_SHORT,   /* CVM_T_SHORT */
-    CVM_TYPEID_INT,     /* CVM_T_INT */
-    CVM_TYPEID_LONG,    /* CVM_T_LONG */
-    0, /* unused */
-    0, /* unused */
-    0, /* unused */
-    0, /* unused */
-    0, /* unused */
-    CVM_TYPEID_VOID 	   /* CVM_T_VOID */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(CVM_TYPEID_OBJ),     /* CVM_T_CLASS */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(CVM_TYPEID_BOOLEAN), /* CVM_T_BOOLEAN */
+    CVM_INIT_CLASSID(CVM_TYPEID_CHAR),    /* CVM_T_CHAR */
+    CVM_INIT_CLASSID(CVM_TYPEID_FLOAT),   /* CVM_T_FLOAT */
+    CVM_INIT_CLASSID(CVM_TYPEID_DOUBLE),  /* CVM_T_DOUBLE */
+    CVM_INIT_CLASSID(CVM_TYPEID_BYTE),    /* CVM_T_BYTE */
+    CVM_INIT_CLASSID(CVM_TYPEID_SHORT),   /* CVM_T_SHORT */
+    CVM_INIT_CLASSID(CVM_TYPEID_INT),     /* CVM_T_INT */
+    CVM_INIT_CLASSID(CVM_TYPEID_LONG),    /* CVM_T_LONG */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(0),                  /* unused */
+    CVM_INIT_CLASSID(CVM_TYPEID_VOID)     /* CVM_T_VOID */
 };
 
 /*

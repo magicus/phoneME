@@ -679,7 +679,7 @@ CVMclassCreateMultiArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
 
 	    /* The element of the current type is also an array.  Look it up: */
 	    if (loader == NULL ||
-		CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(elemTypeID))) {
+		CVMtypeidIsPrimitive(CVMtypeidGetArrayBaseType(elemTypeID))) {
     		elemCb = CVMpreloaderLookupFromType(ee, elemTypeID, NULL);
 	    }
 	    if (elemCb == NULL) {
@@ -732,7 +732,7 @@ CVMclassCreateMultiArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
 	}
 	/* If we've just loaded the requested array type, then we're done.
 	   Skip the typeid work below: */
-	if (currentTypeID == arrayTypeId) {
+	if (CVMtypeidIsSameClass(currentTypeID, arrayTypeId)) {
 	    CVMassert(i == outerDepth - 1);
 	    break;
 	}
@@ -1273,7 +1273,8 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	    fieldsig  = CVMcpGetUtf8(utf8Cp, cpIdx);
 	    CVMfbNameAndTypeID(fb) = 
 		CVMtypeidNewFieldIDFromNameAndSig(ee, fieldname, fieldsig);
-	    if (CVMfbNameAndTypeID(fb) == CVM_TYPEID_ERROR) {
+	    if (CVMtypeidIsSameField(CVMfbNameAndTypeID(fb),
+                                     CVM_FIELD_TYPEID_ERROR)) {
 		CVMexceptionHandler(ee, context);
 	    }
 
@@ -1424,11 +1425,12 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	    methodSig  = CVMcpGetUtf8(utf8Cp, cpIdx);
 	    CVMmbNameAndTypeID(mb) = 
 		CVMtypeidNewMethodIDFromNameAndSig(ee, methodName, methodSig);
-	    if (CVMmbNameAndTypeID(mb) == CVM_TYPEID_ERROR) {
+            if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb),
+                                      CVM_METHOD_TYPEID_ERROR)) {
 		CVMexceptionHandler(ee, context);
 	    }
 	    
-	    if (CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb))) {
+            if (CVMtypeidIsClinit(CVMmbNameAndTypeID(mb))) {
 		/* The VM ignores the access flags of <clinit>. We reset the
 		 * access flags to avoid future errors in the VM */
 		CVMmbSetAccessFlags(mb, CVM_METHOD_ACC_STATIC);
@@ -2065,7 +2067,7 @@ CVMreadConstantPool(CVMExecEnv* ee, CICcontext *context)
 	    CVMUtf8*       classUtf8 = CVMcpGetUtf8(utf8Cp, classUtf8Idx);
 	    CVMClassTypeID classTypeID =  
 		CVMtypeidNewClassID(ee, classUtf8, (int)strlen(classUtf8) );
-	    if (classTypeID == CVM_TYPEID_ERROR) {
+	    if (CVMtypeidIsSameClass(classTypeID, CVM_CLASS_TYPEID_ERROR)) {
 		CVMexceptionHandler(ee, context);
 	    }
 
@@ -2106,14 +2108,16 @@ CVMreadConstantPool(CVMExecEnv* ee, CICcontext *context)
 	    if (entryType == CVM_CONSTANT_Fieldref) {
 		CVMFieldTypeID fieldTypeID = 
 		    CVMtypeidNewFieldIDFromNameAndSig(ee, nameUtf8, typeUtf8);
-		if (fieldTypeID == CVM_TYPEID_ERROR) {
+		if (CVMtypeidIsSameField(fieldTypeID,
+                                         CVM_FIELD_TYPEID_ERROR)) {
 		    CVMexceptionHandler(ee, context);
 		}
 		CVMcpSetFieldTypeID(cp, nameAndTypeIdx, fieldTypeID);
 	    } else {
 		CVMMethodTypeID methodTypeID = 
 		    CVMtypeidNewMethodIDFromNameAndSig(ee, nameUtf8, typeUtf8);
-		if (methodTypeID == CVM_TYPEID_ERROR) {
+		if (CVMtypeidIsSameMethod(methodTypeID,
+                                          CVM_METHOD_TYPEID_ERROR)) {
 		    CVMexceptionHandler(ee, context);
 		}
 		CVMcpSetMethodTypeID(cp, nameAndTypeIdx, methodTypeID);
@@ -2298,14 +2302,14 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 			varTypeID = CVMtypeidNewFieldIDFromNameAndSig(
                             ee, CVMcpGetUtf8(utf8Cp, nameIdx),
 			    CVMcpGetUtf8(utf8Cp, typeIdx));
-			if (varTypeID == CVM_TYPEID_ERROR) {
+                        if (CVMtypeidIsSameField(varTypeID,
+                                                 CVM_FIELD_TYPEID_ERROR)) {
 			    CVMexceptionHandler(ee, context);
 			}
 			/* 
 			 * Split typeid into name and type part.
 			 */
-			lv->nameID = CVMtypeidGetNamePart(varTypeID);
-			lv->typeID = CVMtypeidGetTypePart(varTypeID);
+			lv->fieldID = varTypeID;
 		    }
 		}
 		continue;
@@ -2420,7 +2424,7 @@ CVMclassFreeLocalVariableTableFieldIDs(CVMExecEnv* ee, CVMMethodBlock* mb)
 		 * Reconstruct the typeid of the local variable from
 		 * its name and type parts.  
 		 */
-		CVMtypeidDisposeFieldID(ee, CVMtypeidCreateTypeIDFromParts(lv->nameID, lv->typeID));
+		CVMtypeidDisposeFieldID(ee, lv->fieldID);
 		lv++;
 	    }
 	}
@@ -2490,8 +2494,9 @@ CVMfreeCommon(CVMExecEnv*ee, CVMClassBlock* cb)
      */
     for (i = 0; i < CVMcbFieldCount(cb); i++) {
 	CVMFieldBlock* fb = CVMcbFieldSlot(cb, i);
-	if (CVMfbNameAndTypeID(fb) != 0 
-	    && CVMfbNameAndTypeID(fb) != CVM_TYPEID_ERROR) {
+	if ((CVMfbNameAndTypeID(fb) != 0) &&
+	    !CVMtypeidIsSameField(CVMfbNameAndTypeID(fb),
+                                  CVM_FIELD_TYPEID_ERROR)) {
 	    CVMtypeidDisposeFieldID(ee, CVMfbNameAndTypeID(fb));
 	}
     }
@@ -2504,8 +2509,9 @@ CVMfreeCommon(CVMExecEnv*ee, CVMClassBlock* cb)
 	CVMMethodBlock* mb = CVMcbMethodSlot(cb, i);
 	
 	/* Release the methods CVMMethodTypeID. */
-	if (CVMmbNameAndTypeID(mb) != 0 
-	    && CVMmbNameAndTypeID(mb) != CVM_TYPEID_ERROR) {
+	if ((CVMmbNameAndTypeID(mb) != 0) &&
+	    !CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb),
+                                   CVM_METHOD_TYPEID_ERROR)) {
 	    CVMtypeidDisposeMethodID(ee, CVMmbNameAndTypeID(mb));
 	}
 
@@ -3308,7 +3314,7 @@ CVMclassFreeJavaMethods(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isPreloaded)
                 CVMstackmapDestroy(ee, smaps);
                 CVMassert(CVMstackmapFind(ee, mb) == NULL);
 	    }
-	    if (CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb))) {
+            if (CVMtypeidIsClinit(CVMmbNameAndTypeID(mb))) {
 		/* This is an un-free'd clinit.
 		 * It is either unexecuted or is preloaded.
 		 * And even if it was preloaded, it might have been

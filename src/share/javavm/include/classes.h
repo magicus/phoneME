@@ -1203,8 +1203,7 @@ struct CVMLocalVariableEntry {
      * typeid separately to relax the alignment restrictions of this structure.
      * This saves 2 bytes per structure for 32 bit typeid's.
      */
-    CVMTypeIDNamePart  nameID;
-    CVMTypeIDTypePart  typeID;
+    CVMFieldTypeID     fieldID;
 };
 
 #endif
