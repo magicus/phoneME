@@ -417,43 +417,6 @@ javacall_result javacall_media_get_configuration(
  */
 
 /**
- * This function is called to get all the necessary return values from 
- * the JavaCall Media functions that can run in asynchronous mode.
- * This function is called every time the following situation occurs.
- * A JSR-135 JavaCall API function returned JAVACALL_WOULD_BLOCK and continued
- * its 
- * execution in asynchronous mode. Then it finished the execution and send the
- * corresponding event to inform Java layer about it. Such events are described
- * in the description of the enum javacall_media_notification_type after the
- * event 
- * JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER. After the event Java
- * layer calls javacall_media_get_event_data() to get the return values.
- *
- * @param handle        handle to the native player that the function having
- *                      returned JAVACALL_WOULD_BLOCK was called for.
- * @param eventType     the type of the event, one of 
- *                      javacall_media_notification_type (but greater than 
- *                      JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER)
- * @param pResult       The event data passed as the param \a data to the
- *                      function javanotify_on_media_notification() while
- *                      sending the event
- * @param numArgs       the number of return values to get
- * @param args          the pointer to the array to copy the return values to
- *
- * @retval JAVACALL_INVALID_ARGUMENT    bad arguments or the function should
- *                                      not be called now for this native
- *                                      player and eventType (no event has been
- *                                      sent, see the function description)
- * @retval JAVACALL_OK                  Success
- * @retval JAVACALL_FAIL                General failure
- * @see JAVACALL_WOULD_BLOCK
- * @see javacall_media_notification_type
- * @see JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER
- */
-javacall_result javacall_media_get_event_data(javacall_handle handle, 
-                    int eventType, void *pResult, int numArgs, void *args[]);
-
-/**
  * Java MMAPI call this function to create native player from locator.
  * This function is called at the first time to initialize native library.
  * You can do your own initialization job from this function.
@@ -492,44 +455,6 @@ javacall_result javacall_media_create(
     /*OUT*/ javacall_handle *handle);
 
 /**
- * Get the format type of media content
- *
- * @param handle    Handle to the library 
- * @param format    Format type
- * 
- * @retval JAVACALL_OK          Success
- * @retval JAVACALL_FAIL        Fail
- */
-javacall_result javacall_media_get_format(javacall_handle handle,
-                              /*OUT*/ javacall_media_format_type* format);
-
-/**
- * Return bitmask of Media Controls supported by native player
- * 
- * Only Media Controls supported by native layer should be indicated
- *
- * @param handle    Handle to the library 
- * @param controls  bitmasks for Media Control implemented in native layer
- * 
- * @retval JAVACALL_OK          Success
- * @retval JAVACALL_FAIL        Fail
- */
-javacall_result javacall_media_get_player_controls(javacall_handle handle,
-                              /*OUT*/ int* controls);
-
-/**
- * Close native media player that created by creat or creat2 API call
- * After this call, you can't use any other function in this library
- * except for javacall_media_destroy
- * 
- * @param handle  Handle to the library.
- * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Java VM will raise the media exception
- */
-javacall_result javacall_media_close(javacall_handle handle);
-
-/**
  * finally destroy native media player previously closed by
  * javacall_media_close. intended to be used by finalizer
  * 
@@ -539,6 +464,43 @@ javacall_result javacall_media_close(javacall_handle handle);
  * @retval JAVACALL_FAIL    Java VM will raise the media exception
  */
 javacall_result javacall_media_destroy(javacall_handle handle);
+
+/**
+ * This function is called to get all the necessary return values from 
+ * the JavaCall Media functions that can run in asynchronous mode.
+ * This function is called every time the following situation occurs.
+ * A JSR-135 JavaCall API function returned JAVACALL_WOULD_BLOCK and continued
+ * its 
+ * execution in asynchronous mode. Then it finished the execution and send the
+ * corresponding event to inform Java layer about it. Such events are described
+ * in the description of the enum javacall_media_notification_type after the
+ * event 
+ * JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER. After the event Java
+ * layer calls javacall_media_get_event_data() to get the return values.
+ *
+ * @param handle        handle to the native player that the function having
+ *                      returned JAVACALL_WOULD_BLOCK was called for.
+ * @param eventType     the type of the event, one of 
+ *                      javacall_media_notification_type (but greater than 
+ *                      JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER)
+ * @param pResult       The event data passed as the param \a data to the
+ *                      function javanotify_on_media_notification() while
+ *                      sending the event
+ * @param numArgs       the number of return values to get
+ * @param args          the pointer to the array to copy the return values to
+ *
+ * @retval JAVACALL_INVALID_ARGUMENT    bad arguments or the function should
+ *                                      not be called now for this native
+ *                                      player and eventType (no event has been
+ *                                      sent, see the function description)
+ * @retval JAVACALL_OK                  Success
+ * @retval JAVACALL_FAIL                General failure
+ * @see JAVACALL_WOULD_BLOCK
+ * @see javacall_media_notification_type
+ * @see JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER
+ */
+javacall_result javacall_media_get_event_data(javacall_handle handle, 
+                    int eventType, void *pResult, int numArgs, void *args[]);
 
 /**
  * Ask to the native layer if it will handle media download from specific URL.
@@ -556,6 +518,18 @@ javacall_result javacall_media_destroy(javacall_handle handle);
  */
 javacall_result javacall_media_download_handled_by_device(javacall_handle handle,
                                                   /*OUT*/ javacall_bool* isHandled);
+
+/**
+ * Get the format type of media content
+ *
+ * @param handle    Handle to the library 
+ * @param format    Format type
+ * 
+ * @retval JAVACALL_OK          Success
+ * @retval JAVACALL_FAIL        Fail
+ */
+javacall_result javacall_media_get_format(javacall_handle handle,
+                              /*OUT*/ javacall_media_format_type* format);
 
 /**
  * Realize native player.
@@ -580,6 +554,32 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
 javacall_result javacall_media_realize(javacall_handle handle,
                                       javacall_const_utf16_string mime,
                                       long mimeLength);
+
+/**
+ * Close native media player that created by creat or creat2 API call
+ * After this call, you can't use any other function in this library
+ * except for javacall_media_destroy
+ * 
+ * @param handle  Handle to the library.
+ * 
+ * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
+ * @retval JAVACALL_FAIL    Java VM will raise the media exception
+ */
+javacall_result javacall_media_close(javacall_handle handle);
+
+/**
+ * Return bitmask of Media Controls supported by native player
+ * 
+ * Only Media Controls supported by native layer should be indicated
+ *
+ * @param handle    Handle to the library 
+ * @param controls  bitmasks for Media Control implemented in native layer
+ * 
+ * @retval JAVACALL_OK          Success
+ * @retval JAVACALL_FAIL        Fail
+ */
+javacall_result javacall_media_get_player_controls(javacall_handle handle,
+                              /*OUT*/ int* controls);
 
 /**
  * This function will be called by Java Layer to Prefetch native player.
@@ -629,6 +629,8 @@ javacall_result javacall_media_stop(javacall_handle handle);
  * Notify the native player about stream length. This function is called if
  * stream length is known.
  *
+ * Must not be called for players with native data flow management.
+ *
  * @param handle  Handle to the native player.
  * @param length  Stream length, in bytes.
  *
@@ -641,6 +643,8 @@ javacall_result javacall_media_stream_length(
 
 /**
  * Get the data for the JAVACALL_EVENT_MEDIA_DATA_REQUEST event.
+ *
+ * Must not be called for players with native data flow management.
  *
  * @param handle  Handle to the native player.
  * @param offset  Out - stream offset to read from, in bytes.
@@ -660,12 +664,14 @@ javacall_result javacall_media_get_data_request(
  * This procedure must always be immediately followed by
  * javacall_media_data_written call.
  *
+ * Must not be called for players with native data flow management.
+ *
  * @param handle  Handle to the native player.
  * @param length  Length of data, in bytes.
- * @param data    In - pointer to the return value, possibly null if
- *                length equals to 0.
- *                Out - buffer address to write data to, possibly null if
- *                data must not be written.
+ * @param data    In - pointer to the return value, ignored if length
+ *                equals to 0.
+ *                Out - buffer address to write data to, unchanged if
+ *                procedure call failed and data must not be written.
  *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL
@@ -679,6 +685,8 @@ javacall_result javacall_media_data_ready(
  * Tell the native player that requested data has been written.
  * This procedure must always be called immediately after
  * javacall_media_data_ready call.
+ *
+ * Must not be called for players with native data flow management.
  *
  * @param handle       Handle to the native player.
  * @param new_request  Out - additional data requested.
