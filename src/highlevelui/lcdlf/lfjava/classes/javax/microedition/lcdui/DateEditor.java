@@ -624,8 +624,8 @@ class DateEditor extends PopupLayer implements CommandListener {
             w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
         int screenHeight =
             ((ScreenLFImpl)lf.df.owner.getLF()).getDisplayableHeight();
-        if (y + h > screenHeight) {
-            y = screenHeight - h;
+        if (y + h + DateEditorSkin.HEIGHT_POPUPS > screenHeight) {
+            y = screenHeight - DateEditorSkin.HEIGHT_POPUPS - h;
         }
         popup.setBounds(x, y + h, w, DateEditorSkin.HEIGHT_POPUPS);
         popup.updateScrollIndicator();
