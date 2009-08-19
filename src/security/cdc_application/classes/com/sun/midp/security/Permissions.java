@@ -222,9 +222,9 @@ public final class Permissions {
     /** User granted permission for this session. */
     public static final byte SESSION_GRANTED = 32;
     /** User denied permission for this session. */
-    public static final byte SESSION_DENIED = 33;
+    public static final byte SESSION_DENIED = 64;
     /** Session level interaction has not occured. */
-    public static final byte SESSION_UNKNOWN = 34;
+    public static final byte SESSION_UNKNOWN = -64;
 
     /**
      * Permission denied by the user until the user changes it in the
