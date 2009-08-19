@@ -81,17 +81,6 @@ static void sendEOM(int appId, int playerId, long duration)
         appId, playerId, JAVACALL_OK, (void*)duration);
 }
 
-static void sendBuffering(int appId, int playerId)
-{
-    JC_MM_DEBUG_PRINT2("sendBuffering app=%d player=%d\n", appId, playerId);
-
-    /*
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
-        appId, playerId, JAVACALL_OK, NULL);
-    */
-}
-
-
 /******************************************************************************/
 
 static void MQ234_CALLBACK eom_event_trigger(void *userData)
@@ -853,20 +842,6 @@ static javacall_result audio_qs_stop(javacall_handle handle){
                                      (void*)JAVACALL_OK );
 
     return JAVACALL_OK;
-}
-
-/**
- *
- */
-static javacall_result audio_qs_pause(javacall_handle handle){
-    return audio_qs_stop(handle);
-}
-
-/**
- *
- */
-static javacall_result audio_qs_resume(javacall_handle handle){
-    return audio_qs_start(handle);
 }
 
 static javacall_result audio_qs_stream_length(javacall_handle handle, 
@@ -1649,8 +1624,6 @@ static media_basic_interface _audio_qs_basic_itf = {
     audio_qs_prefetch,
     audio_qs_start,
     audio_qs_stop,
-    audio_qs_pause,
-    audio_qs_resume,
     audio_qs_stream_length,
     audio_qs_get_data_request,
     audio_qs_data_ready,

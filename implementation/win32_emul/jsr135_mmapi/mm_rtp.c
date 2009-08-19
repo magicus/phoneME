@@ -440,22 +440,6 @@ static javacall_result rtp_stop(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result rtp_pause(javacall_handle handle)
-{
-    rtp_player* p = (rtp_player*)handle;
-    RTP_DBG( "*** pause ***\n" );
-    p->playing = FALSE;
-    return JAVACALL_OK;
-}
-
-static javacall_result rtp_resume(javacall_handle handle)
-{
-    rtp_player* p = (rtp_player*)handle;
-    RTP_DBG( "*** resume ***\n" );
-    p->playing = TRUE;
-    return JAVACALL_OK;
-}
-
 static javacall_result rtp_get_time(javacall_handle handle, 
                                     long* ms)
 {
@@ -548,8 +532,6 @@ static media_basic_interface _rtp_basic_itf =
     rtp_prefetch,
     rtp_start,
     rtp_stop,
-    rtp_pause,
-    rtp_resume,
     NULL,
     NULL,
     NULL,

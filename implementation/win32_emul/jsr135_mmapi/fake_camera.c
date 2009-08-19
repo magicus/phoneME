@@ -197,6 +197,11 @@ static javacall_result fake_camera_close(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
     PRINTF( "*** close ***\n" );
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
+                                     c->appId,
+                                     c->playerId, 
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
     return JAVACALL_OK;
 }
 
@@ -281,16 +286,6 @@ static javacall_result fake_camera_stop(javacall_handle handle)
                                      JAVACALL_OK, 
                                      (void*)JAVACALL_OK );
     return JAVACALL_OK;
-}
-
-static javacall_result fake_camera_pause(javacall_handle handle)
-{
-    return fake_camera_stop(handle);
-}
-
-static javacall_result fake_camera_resume(javacall_handle handle)
-{
-    return fake_camera_start(handle);
 }
 
 static javacall_result fake_camera_get_time(javacall_handle handle, long* ms)
@@ -415,8 +410,6 @@ static media_basic_interface _fake_camera_basic_itf =
     fake_camera_prefetch,
     fake_camera_start,
     fake_camera_stop,
-    fake_camera_pause,
-    fake_camera_resume,
     NULL,
     NULL,
     NULL,

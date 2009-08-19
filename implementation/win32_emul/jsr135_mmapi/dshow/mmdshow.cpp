@@ -833,16 +833,6 @@ static javacall_result dshow_stop(javacall_handle handle)
 
 //=============================================================================
 
-static javacall_result dshow_pause(javacall_handle handle)
-{
-    return dshow_stop(handle);
-}
-
-static javacall_result dshow_resume(javacall_handle handle)
-{
-    return dshow_start(handle);
-}
-
 javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 length)
 {
     dshow_player* p = (dshow_player*)handle;
@@ -1138,8 +1128,6 @@ static media_basic_interface _dshow_basic_itf =
     dshow_prefetch,
     dshow_start,
     dshow_stop,
-    dshow_pause,
-    dshow_resume,
     dshow_stream_length,
     dshow_get_data_request,
     dshow_data_ready,

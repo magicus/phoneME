@@ -227,8 +227,6 @@ typedef struct {
     javacall_result (*prefetch)(javacall_handle handle);
     javacall_result (*start)(javacall_handle handle);
     javacall_result (*stop)(javacall_handle handle);
-    javacall_result (*pause)(javacall_handle handle);
-    javacall_result (*resume)(javacall_handle handle);
     javacall_result (*stream_length)(javacall_handle handle, javacall_int64 length);
     javacall_result (*get_data_request)(javacall_handle handle, javacall_int64 *offset, javacall_int32 *length);
     javacall_result (*data_ready)(javacall_handle handle, javacall_int32 length, void **data);

@@ -25,6 +25,8 @@
 #include "multimedia.h"
 
 typedef struct {
+    int           appId;
+    int           playerId;
     unsigned char volume;
     javacall_bool is_mute;
 } fake_radio_instance_t;
@@ -41,8 +43,11 @@ static javacall_result fake_radio_create(int appId, int playerId,
         *pHandle = NULL;
         return JAVACALL_OUT_OF_MEMORY;
     }
-    newHandle->volume = 50;
-    newHandle->is_mute = JAVACALL_FALSE;
+    newHandle->volume   = 50;
+    newHandle->is_mute  = JAVACALL_FALSE;
+    newHandle->appId    = appId;
+    newHandle->playerId = playerId;
+
     *pHandle = ( javacall_handle )newHandle;
     return JAVACALL_OK;
 }
@@ -61,6 +66,15 @@ static javacall_result fake_radio_get_player_controls(javacall_handle handle,
 }
 
 static javacall_result fake_radio_close(javacall_handle handle){
+
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
+
     return JAVACALL_OK;
 }
 
@@ -73,24 +87,70 @@ static javacall_result fake_radio_destroy(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+static javacall_result fake_radio_realize(javacall_handle handle, 
+                                          javacall_const_utf16_string mime, 
+                                          long mimeLength)
+{
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
+
+    return JAVACALL_OK;
+}
+
+static javacall_result fake_radio_prefetch(javacall_handle handle)
+{
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
+
+    return JAVACALL_OK;
+}
+
 static javacall_result fake_radio_deallocate(javacall_handle handle)
 {
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
+
     return JAVACALL_OK;
 }
 
 static javacall_result fake_radio_start(javacall_handle handle){
+
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
+
     return JAVACALL_OK;
 }
 
 static javacall_result fake_radio_stop(javacall_handle handle){
-    return JAVACALL_OK;
-}
 
-static javacall_result fake_radio_pause(javacall_handle handle){
-    return JAVACALL_OK;
-}
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
 
-static javacall_result fake_radio_resume(javacall_handle handle){
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     (void*)JAVACALL_OK );
+
     return JAVACALL_OK;
 }
 
@@ -151,12 +211,10 @@ static media_basic_interface _fake_radio_basic_itf = {
     fake_radio_close,
     fake_radio_destroy,
     fake_radio_deallocate,
-    NULL,
-    NULL,
+    fake_radio_realize,
+    fake_radio_prefetch,
     fake_radio_start,
     fake_radio_stop,
-    fake_radio_pause,
-    fake_radio_resume,
     NULL,
     NULL,
     NULL,

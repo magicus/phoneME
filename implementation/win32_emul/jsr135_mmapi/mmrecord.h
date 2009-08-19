@@ -34,7 +34,7 @@
 
 
 typedef struct {
-    int     isolateId;
+    int     appId;
     int     playerId;
 
     int     bits;

@@ -1040,38 +1040,6 @@ javacall_result javacall_media_stop(javacall_handle handle)
 }
 
 /**
- * Pause playing
- */
-javacall_result javacall_media_pause(javacall_handle handle)
-{
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, pause)) {
-        ret = pItf->vptrBasic->pause(pPlayer->mediaHandle);
-    }
-
-    return ret;
-}
-
-/**
- * Resume playing
- */
-javacall_result javacall_media_resume(javacall_handle handle)
-{
-    javacall_result ret = JAVACALL_FAIL;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
-    media_interface* pItf = pPlayer->mediaItfPtr;
-
-    if (QUERY_BASIC_ITF(pItf, resume)) {
-        ret = pItf->vptrBasic->resume(pPlayer->mediaHandle);
-    }
-
-    return ret;
-}
-
-/**
  * Notify the native player about stream length. This function is called if
  * stream length is known.
  *

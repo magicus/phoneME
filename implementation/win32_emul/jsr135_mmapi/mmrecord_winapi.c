@@ -82,7 +82,7 @@ static DWORD WINAPI rec_thread( void* arg )
                             ? h->recordLen / bytesPerMilliSec 
                             : 0;
 
-                        sendRSL(h->isolateId, h->playerId, ms);
+                        sendRSL(h->appId, h->playerId, ms);
                         h->rsl = TRUE;
                     }
                     else
