@@ -181,7 +181,7 @@ class MMEventListener implements EventListener {
                 p = HighLevelPlayer.get(nevt.intParam1);
             }
             if (p != null) {
-                p.unblockOnEvent( 0 == nevt.intParam2 ? false : true );
+                p.unblockOnEvent( 0 == nevt.intParam2 ); // JAVACALL_OK is 0 !
             }
             break;
          
