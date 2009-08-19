@@ -380,12 +380,6 @@ UnlockAudioMutex();
 #endif
         /* Stop playing, delete cache, release device and terminate library */ 
 LockAudioMutex();            
-        if (STARTED == state) {
-            MMP_DEBUG_STR("stopped by finalizer\n");
-            javacall_media_stop(pKniInfo->pNativeHandle);
-        }
-        javacall_media_deallocate(pKniInfo->pNativeHandle);
-        
         if( KNI_TRUE == KNI_GetBooleanField( instance, 
             KNI_GetFieldID( clazz, "hasTakenRadioAccess", "Z" ) ) )
         {
