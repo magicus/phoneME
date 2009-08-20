@@ -364,65 +364,24 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     private boolean deviceNotAvailable = false;
     private Object deviceNotAvailableSync = new Object();
     private String deviceName = null;
-    void notifyDeviceAvailable(final boolean available, final String deviceName) {
+    void notifyDeviceAvailable(final boolean available, final String event, final String deviceName) {
         int state = getState();
         
         if (null == lowLevelPlayer || state == UNREALIZED || state == CLOSED) {
+            deviceNotAvailable = !available;
+            return;
+        }
+        if (available && state == STARTED) {
+            deviceNotAvailable = !available;
             return;
         }
         this.deviceName = deviceName;
-        if (true || state == REALIZED) {
-            synchronized (deviceNotAvailableSync) {
-                //if (available != !deviceNotAvailable) {
-                    if (available) {
-                        //deviceNotAvailable = false;
-                        sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
-                    } else {
-                        //deviceNotAvailable = true;
-                        sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
-                    }
-                //}
+        synchronized (deviceNotAvailableSync) {
+            if (available != !deviceNotAvailable) {
+                deviceNotAvailable = !available;
+                sendEvent(event, deviceName);
             }
-            return;
         }
-        //if (available && state > REALIZED) {
-        //    return;
-        //}
-        
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    
-                    if (getState() > PREFETCHED) {
-                        // wait for all events achieve player
-                        try {Thread.sleep(300);} catch (InterruptedException ie) {}
-                    }
-                    if (getState() >= PREFETCHED) {
-                        deallocate();
-                    }
-                    if (getState() == REALIZED) {
-                        synchronized (deviceNotAvailableSync) {
-                            //if (available != !deviceNotAvailable) {
-                                if (available) {
-                                    //deviceNotAvailable = false;
-                                    sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
-                                } else {
-                                    //deviceNotAvailable = true;
-                                    sendEvent(PlayerListener.DEVICE_UNAVAILABLE, deviceName);
-                                }
-                            //}
-                        }
-                    }
-                } catch (IllegalStateException ise) {
-                    // ignore
-                } catch (RuntimeException re) {
-                    throw re;
-                } catch (Exception e) {
-                    sendEvent(PlayerListener.ERROR, "Error "+deviceName+" "+e);
-                }
-            }
-        }).start();
-        
     }
 
     void notifySnapshotFinished()
@@ -817,12 +776,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
-        synchronized (deviceNotAvailableSync) {
+        /*synchronized (deviceNotAvailableSync) {
             if (deviceNotAvailable) {
                 deviceNotAvailable = false;
                 sendEvent(PlayerListener.DEVICE_AVAILABLE, deviceName);
             }
-        }
+        }*/
         lowLevelPlayer.doPrefetch();
 
         VolumeControl vc = ( VolumeControl )getControl(
@@ -1644,7 +1603,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     /**
      * Send DEVICE_AVAILABLE event to all players in this VM
      */
-    public static void sendDeviceAvailable() {
+    public static void sendDeviceAvailable(final String deviceName) {
         if (mplayers == null) {
             return;
         }
@@ -1654,8 +1613,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             
             PlayerWrapper pw = (PlayerWrapper)mp.nextElement();
             HighLevelPlayer p = pw.getPlayer();
-            if (p != null && p.getState() != STARTED) {
-                p.notifyDeviceAvailable(true, "Native player is now available");
+            if (p != null) {
+                p.notifyDeviceAvailable(true, PlayerListener.DEVICE_AVAILABLE, deviceName);
             }
         }
     }
