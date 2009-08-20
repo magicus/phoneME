@@ -1,0 +1,65 @@
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+ifeq ($(ABSTRACTIONS_DIR),)
+$(error ABSTRACTIONS_DIR is not set.)
+endif
+
+# dirs containing native header files (.h)
+ABSTRACTIONS_INCLUDE_DIRS += \
+    $(ABSTRACTIONS_DIR)/src/share/include
+
+ifeq ($(TARGET_VM), cldc_vm)
+include $(ABSTRACTIONS_DIR)/build/cldc_application/module.gmk
+else 
+ifeq ($(USE_JUMP), true)
+include $(ABSTRACTIONS_DIR)/build/jump_application/module.gmk
+endif
+
+include $(ABSTRACTIONS_DIR)/build/cdc_share/module.gmk
+
+ifneq ($(USE_CDC_EMULATION), true)
+include $(ABSTRACTIONS_DIR)/build/cdc_realmode/module.gmk
+endif
+
+endif
+
+printconfig::
+	@echo "ABSTRACTIONS_DIR          = $(ABSTRACTIONS_DIR)"
+	@echo "ABSTRACTIONS_INCLUDES     = $(ABSTRACTIONS_INCLUDES)"
+
+# Append abstractions source bundle creation to target
+source_bundle:: abstractions_source_bundle
+
+# Create abstractions source in subdir
+ABSTRACTIONS_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/abstractions
+
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	@echo " ... abstractions source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/share)
+	$(AT)cp -f $(ABSTRACTIONS_DIR)/build/subsystem.gmk $(ABSTRACTIONS_SOURCE_OUTPUT_DIR)/build/subsystem.gmk
+

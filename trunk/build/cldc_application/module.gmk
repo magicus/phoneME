@@ -1,0 +1,140 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+# abstractions main directory
+JSROP_ABSTRACTS_DIR=$(ABSTRACTIONS_DIR)
+
+# dirs containing native source files
+vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/share
+vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
+
+# names of native source files (like 'file.c')
+ABSTRACTIONS_NATIVES += \
+	kni_utils.c \
+	jsrop_suitestore.c
+
+# extra libraries needed (like '-lpthread' or '-lm')
+JSROP_ABSTRACTS_LINKLIBS = 
+
+# dirs containing hative header files (.h)
+JSROP_ABSTRACTS_INCLUDES = \
+    -I$(JSROP_ABSTRACTS_DIR)/src/share/include \
+    -I$(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/include \
+    -I$(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
+
+# start dirs for java source trees
+JSROP_ABSTRACTS_JAVASRCDIRS = \
+        $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes
+
+# classes
+ABSTRACTIONS_CLASSES += \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/log/LogChannels.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/log/Logging.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/main/Configuration.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/PIMPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/BluetoothPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/OBEXPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SIPPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/ConnectorPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/MMAPIPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/AMMSPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/l10n/LocalizedStrings.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Token.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SecurityTokenInitializer.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStore.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordFilter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordComparator.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordEnumeration.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/InvalidRecordIDException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotOpenException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreFullException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotFoundException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/rms/RecordEnumerationImpl.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/ContactlessPermission.java \
+
+ifeq ($(filter true_full,$(USE_JSR_290)_full $(USE_JSR_177)_$(JSR_177_PACKAGE)), true_full)
+ABSTRACTIONS_CLASSES += \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java
+endif
+
+ifeq ($(USE_JSR_177), true)
+ABSTRACTIONS_CLASSES += \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/FileAccess.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPublicKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IllegalBlockSizeException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/BadPaddingException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidKeyException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/CryptoParameter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/SecretKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IvParameter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java
+endif
+
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JSROP_ABSTRACTS_DIR)/src/share/config/i18n_constants_abstractions.xml \
+    $(JSROP_ABSTRACTS_DIR)/src/share/config/l10n/en-US_abstractions.xml
+
+# Specify romizer configuration file for the jsr
+# and path where the file is located
+#
+ROMGEN_INCLUDE_PATHS += $(JSROP_ABSTRACTS_DIR)/src/cldc_application/config
+ROMGEN_CFG_FILES     += abstractions_rom.cfg
+
+#####################################################
+JTWI_NATIVE_FILES  += $(JSROP_ABSTRACTS_NATIVES)
+EXTRA_INCLUDES	   += $(JSROP_ABSTRACTS_INCLUDES)
+
+$(MIDP_CLASSES_ZIP):: $(ABSTRACTIONS_CLASSES)
+	$(appendjavafiles)
+
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/cldc_application build/cldc_application )
+
+
