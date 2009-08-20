@@ -309,10 +309,20 @@ extern "C" {
 #define MIDP_OUT_OF_MEMORY_HANDLED 80
 
 /**
-* Notification sent by platform. this event is not handled by MIDP.
-* dispatched by com_sun_midp_events_NativeEventMonitor_waitForNativeEvent
-*/
+ * Notification sent by platform. this event is not handled by MIDP.
+ * dispatched by com_sun_midp_events_NativeEventMonitor_waitForNativeEvent
+ */
 #define PLATFORM_EVENT 81
+
+/**
+ * This event is used by NativeVirtualKeyboard class internally only
+ */
+#define NATIVE_VIRTUAL_KEYBOARD_EVENT 82
+
+/**
+ * This event is used to check if the queue is not blocked.
+ */
+#define KEEP_ALIVE 83
 
 /** @} */
 

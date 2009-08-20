@@ -492,7 +492,18 @@ public final class EventTypes {
     public static final int MIDP_OUT_OF_MEMORY_HANDLED = 80;
     
     /**
+     * Notification sent by platform. this event is not handled by MIDP.
+     * dispatched by com_sun_midp_events_NativeEventMonitor_waitForNativeEvent
+     */
+    public static final int PLATFORM_EVENT = 81;
+
+    /**
      * This event is used by NativeVirtualKeyboard class internally only
      */
-    public static final int NATIVE_VIRTUAL_KEYBOARD_EVENT = 81;
+    public static final int NATIVE_VIRTUAL_KEYBOARD_EVENT = 82;
+
+    /**
+     * This event is used to check if the queue is not blocked.
+     */
+    public static final int KEEP_ALIVE = 83;
 }
