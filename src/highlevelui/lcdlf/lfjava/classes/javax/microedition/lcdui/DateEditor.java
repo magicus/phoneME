@@ -88,7 +88,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
             case DateField.DATE_TIME:
                 focusOn = MONTH_POPUP;
-                timeComponentsOffset = 0; // 98
+                timeComponentsOffset = 0;
                 populateDateComponents();
                 populateTimeComponents();
                 break;
@@ -281,7 +281,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             itemIndexWhenPressed = itemIndexAtPointerPosition(x,y);
             switch (itemIndexWhenPressed) {
             case AM_PM:
-                amHilighted = ( x - ampm_bounds[X] < 30 + 24); //35
+                amHilighted = ( x - ampm_bounds[X] < 30 + 24);
                 break;
             case CALENDAR:
                 pressedDate = getDateAtPointerPosition(x, y);
@@ -364,7 +364,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         int transX = x - calendar_bounds[X];
         int transY = y - calendar_bounds[Y];
         int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
-        int rowH = 22; //11
+        int rowH = 22;
         //variable o, rowH, h is same as in paintCaalendar()
         int h = DateEditorSkin.IMAGE_DATES.getHeight() / 31;
 
@@ -698,7 +698,6 @@ class DateEditor extends PopupLayer implements CommandListener {
                 g.drawRect(-2, -2, w + 3, h + 3);
             }
         }
-        //g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
         g.setColor(0);
 
@@ -739,7 +738,6 @@ class DateEditor extends PopupLayer implements CommandListener {
         if (ScreenSkin.RL_DIRECTION) {
              textOffset = w - textOffset;
         }
-        //g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
         g.setColor(0);
         g.drawString(Integer.toString(editDate.get(Calendar.YEAR)),
@@ -770,7 +768,6 @@ class DateEditor extends PopupLayer implements CommandListener {
             }
         }
 
-        //g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
         g.setColor(0);
 
@@ -820,7 +817,6 @@ class DateEditor extends PopupLayer implements CommandListener {
         if (ScreenSkin.RL_DIRECTION) {
             textOffset = w - textOffset;
         }
-        //g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
         g.setColor(0);
         g.drawString(DateFieldLFImpl.twoDigits(editDate.get(Calendar.MINUTE)),
@@ -879,7 +875,7 @@ class DateEditor extends PopupLayer implements CommandListener {
 	int wBg = DateEditorSkin.IMAGE_DAYS.getWidth();
         int hBg = DateEditorSkin.IMAGE_DAYS.getHeight();
         int w = wBg / 7;
-        int wx = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7; // wBg / 7;
+        int wx = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
 
 	int o = Resource.getFirstDayOfWeek();
 
@@ -924,7 +920,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         g.translate(2, 0);
 
         int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
-        int rowH = 22; // 11
+        int rowH = 22;
         int h = DateEditorSkin.IMAGE_DATES.getHeight() / 31;
         int w = DateEditorSkin.IMAGE_DATES.getWidth();
 
@@ -1039,12 +1035,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                                  Graphics.VCENTER | Graphics.LEFT);
                 }
             }
-            g.translate(-30 -24, 0);//-35 -10, 0);
-            clockStartY = 30; //ampm_bounds[Y] + 24;//22;
+            g.translate(-30 -24, 0);
+            clockStartY = 30;
         }
 
-        //clockStartX = (mode == DateField.TIME) ? 10 : 6;
-        clockStartX = 0; //ampm_bounds[X];
+        clockStartX = 0;
         
         g.translate(clockStartX, clockStartY);
         if (DateEditorSkin.IMAGE_CLOCK_BG != null) {
