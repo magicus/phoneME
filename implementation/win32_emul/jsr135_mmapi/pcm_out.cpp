@@ -29,6 +29,10 @@
 
 //=============================================================================
 
+#ifdef PCM_VIA_DSOUND
+
+#include <dsound.h>
+
 typedef struct tag_pcm_channel
 {
     get_ch_data         gd_callback;
@@ -363,3 +367,5 @@ DWORD WINAPI mixing_thread( void* arg )
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#endif // PCM_VIA_DSOUND

@@ -76,7 +76,8 @@ extern "C" {
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  */
 javacall_result
-javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle handle,
+javacall_dom_eventsdispatcher_add_event_listener_start(javacall_handle app_id,
+                                           javacall_handle handle,
                                            javacall_int32 invocation_id,
                                            void **context,
                                            javacall_const_utf16_string namespaceURI,
@@ -200,7 +201,8 @@ javacall_dom_eventsdispatcher_handle_completed(javacall_handle request);
  */
 void 
 javanotify_fluid_handle_event_request (
-    javacall_handle request_handle
+    javacall_handle request_handle,
+    javacall_handle appId
     );
 
 /** @} */
