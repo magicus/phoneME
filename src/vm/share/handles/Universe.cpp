@@ -969,18 +969,24 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   error_class           ()->bootstrap_initialize(JVM_SINGLE_ARG_CHECK_0);
 #endif
 
-  Symbol thrower = SymbolTable::symbol_for("throwNullPointerException"
-                                           JVM_MUST_SUCCEED);
-  *throw_null_pointer_exception_method() = 
-    system_class()->find_local_method(&thrower, Symbols::void_signature());
-  thrower = SymbolTable::symbol_for("throwArrayIndexOutOfBoundsException"
-                                           JVM_MUST_SUCCEED);
-  *throw_array_index_exception_method() = 
-    system_class()->find_local_method(&thrower, Symbols::void_signature());
-  thrower = SymbolTable::symbol_for("quickNativeThrow" JVM_MUST_SUCCEED);
-  
-  *quick_native_throw_method() =
-    system_class()->find_local_method(&thrower, Symbols::void_signature());
+  {
+    Symbol::Raw thrower =
+      SymbolTable::symbol_for("throwNullPointerException" JVM_MUST_SUCCEED);
+    *throw_null_pointer_exception_method() = 
+      system_class()->find_local_void_method(&thrower);
+  }
+  {
+    Symbol::Raw thrower =
+      SymbolTable::symbol_for("throwArrayIndexOutOfBoundsException" JVM_MUST_SUCCEED);
+    *throw_array_index_exception_method() = 
+      system_class()->find_local_void_method(&thrower);
+  }
+  {
+    Symbol::Raw thrower =
+      SymbolTable::symbol_for("quickNativeThrow" JVM_MUST_SUCCEED);
+    *quick_native_throw_method() =
+      system_class()->find_local_void_method(&thrower);
+  }
 
   // Allocate and set java.lang.Thread mirror for current thread
   create_main_thread_mirror(JVM_SINGLE_ARG_CHECK_0);
@@ -1041,17 +1047,15 @@ void Universe::create_main_thread_mirror(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   InstanceClass::Fast instance_class = thread_class();
   ThreadObj::Fast thread_obj =
-      instance_class().new_instance(ExceptionOnFailure JVM_CHECK);
+    instance_class().new_instance(ExceptionOnFailure JVM_CHECK);
 
 #if ENABLE_CLDC_11
-  Method::Fast init =
-      instance_class().find_local_method(Symbols::object_initializer_name(),
-                                         Symbols::void_signature());
+  Method::Fast init = instance_class().find_local_default_constructor();
   GUARANTEE(!init.is_null(), "Unable to initialize");
 
   // Delay invocation of instance initialization:
-  EntryActivation::Fast entry = Universe::new_entry_activation(&init, 1 
-                                                               JVM_CHECK);
+  EntryActivation::Raw entry =
+    Universe::new_entry_activation(&init, 1 JVM_ZCHECK(entry));
   entry().obj_at_put(0, &thread_obj);
   Thread::current()->append_pending_entry(&entry);
 #else
@@ -1316,10 +1320,8 @@ ReturnOop Universe::new_instance(InstanceClass* klass JVM_TRAPS) {
     Oop::Fast obj(result);  // create handle, call below can gc
     if (flags.has_unresolved_finalizer()) {
       UsingFastOops fast_oops2;
-      ObjArray::Fast methods = klass->methods();
       Method::Fast finalize_method = 
-        InstanceClass::find_method(&methods, Symbols::finalize_name(),
-                                   Symbols::void_signature());
+        klass->find_local_void_method(Symbols::finalize_name());
 #if ENABLE_DYNAMIC_NATIVE_METHODS
       address finalizer = 
         Natives::load_dynamic_native_code(&finalize_method JVM_CHECK_0);

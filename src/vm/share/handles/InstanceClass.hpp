@@ -135,7 +135,10 @@ class InstanceClass: public JavaClass {
 #endif
 
   ReturnOop find_local_method(Symbol* name, Symbol* signature,
-                              const bool non_static_only = false);
+                              const bool non_static_only = false) const;
+  ReturnOop find_local_void_method(Symbol* name) const;
+  ReturnOop find_local_default_constructor(void) const;
+  ReturnOop find_local_class_initializer(void) const;
 
   static ReturnOop find_method(ObjArray* class_methods, Symbol* name,
                      Symbol* signature, const bool non_static_only = false);
@@ -152,23 +155,27 @@ class InstanceClass: public JavaClass {
 
   void check_and_initialize_itable(JVM_SINGLE_ARG_TRAPS);
 
-  void set_verified();
-  bool is_verified();
-  void set_initialized();
+  void set_verified(void) const;
+  bool is_verified (void) const;
 
-  bool is_initialized();
+  void set_initialized(void);
+  bool is_initialized(void) const;
 
   void clinit(JVM_SINGLE_ARG_TRAPS);
 
   bool itable_contains(InstanceClass* instance_class);
 
-  void initialize_static_fields();
-void initialize_static_fields(Oop * o);
-#if ENABLE_COMPILER && ENABLE_INLINE
+  void initialize_static_fields(void);
+  void initialize_static_fields(Oop * o);
+
   // Track all the methods overridden by this class and update vtable bitmaps
   // in all super classes accordingly
-  void update_vtable_bitmaps(JVM_SINGLE_ARG_TRAPS) const;
-#endif
+  void update_vtable_bitmaps(void) const
+#if USE_EMBEDDED_VTABLE_BITMAP
+    ;
+#else
+    {}
+#endif // USE_EMBEDDED_VTABLE_BITMAP
 
   // perform class initialization
   void bootstrap_initialize(JVM_SINGLE_ARG_TRAPS);
@@ -216,7 +223,9 @@ void initialize_static_fields(Oop * o);
   ReturnOop original_fields() {return fields();}
 #endif
 
-  bool is_renamed();
+  bool is_renamed(void) const {
+    return Symbols::unknown()->equals(name());
+  }
 
 #if USE_EMBEDDED_VTABLE_BITMAP
  private:
@@ -285,7 +294,7 @@ void initialize_static_fields(Oop * o);
   void set_is_method_overridden(int vtable_index);
 
   // Returns if the specified vtable entry is overridden in any subclass
-  bool is_method_overridden(int vtable_index) const;
+  bool is_method_overridden(const int vtable_index) const;
 #endif
 
  private:

@@ -182,6 +182,7 @@ void  MethodInvocationClosure::initialize(JVM_SINGLE_ARG_TRAPS) {
   _methods = Universe::new_obj_array(method_count * 3 JVM_NO_CHECK_AT_BOTTOM);
 }
 
+
 inline int MethodInvocationClosure::hashcode_for_symbol(Symbol *symbol) {
   return SymbolTable::hash(symbol);
 }
@@ -191,30 +192,6 @@ int MethodInvocationClosure::hashcode_for_method(Method *method) {
   Symbol::Raw sig = method->signature();
 
   return (hashcode_for_symbol(&name) ^ hashcode_for_symbol(&sig));
-}
-
-bool MethodInvocationClosure::contains(Method* method) const {
-  const juint len = juint(_methods.length());
-  const juint start = juint(hashcode_for_method(method)) % len;
-
-  for (juint i=start; ;) {
-    Method::Raw m = _methods.obj_at(i);
-    if (m.is_null()) {
-      break;
-    }
-    if (m.equals(method)) {
-      return true;
-    }
-
-    if (++i >= len) {
-       i = 0;
-    }
-    GUARANTEE(i != start, "Sanity");
-    // _old_methods's length is 3 times the number of methods,
-    // so we will always have space.
-  }
-
-  return false;
 }
 
 void MethodInvocationClosure::add_method(Method* method) {
@@ -252,32 +229,22 @@ void MethodInvocationClosure::add_method(Method* method) {
 
   InstanceClass::Raw holder = method->holder();
 
-  // find all super- and subclasses of the method class and
-  // add methods with the same index in vtable
   {
     const int vindex = method->vtable_index(); 
     if (vindex > -1) {
-      // IMPL_NOTE: Do we really need to add methods from superclasses?
-      {
-        InstanceClass::Raw super = holder.obj();
-        while (super = super().super(), super.not_null()) {
-          ClassInfo::Raw info = super().class_info();
-          if (info().vtable_length() <= vindex) {
-            break;
-          }
-          Method::Raw m = info().vtable_method_at(vindex);
-          add_method(&m);
-        }
-      }
-    
+      // Find all subclasses of the method class and
+      // add methods with the same index in vtable
       for (SystemClassStream st; st.has_next();) {
         InstanceClass::Raw klass = st.next();
-        if (klass().is_subclass_of(&holder)) {
+        if (klass().is_strict_subclass_of(&holder)) {
           ClassInfo::Raw info = klass().class_info();
           GUARANTEE(vindex < info().vtable_length(), "sanity");
 
           Method::Raw m = info().vtable_method_at(vindex);
-          add_method(&m);
+          // Filter out the frequent case of method inheritance
+          if (!m.equals(method)) {
+            add_method(&m);
+          }
         }
       }
     }
@@ -290,7 +257,6 @@ void MethodInvocationClosure::add_method(Method* method) {
   }
 }
 
-// find all classes implementing 
 void MethodInvocationClosure::add_interface_method(Method* method) {
   Symbol::Raw method_name = method->name();
   Symbol::Raw method_sig = method->signature();
@@ -304,7 +270,7 @@ void MethodInvocationClosure::add_interface_method(Method* method) {
     Method::Raw m =
       klass().lookup_method_in_all_interfaces(&method_name,&method_sig,
                                               dummy_id, dummy_index);
-    if (m.not_null()) {      
+    if (m.not_null()) {
       add_method(&m);
     }    
   }

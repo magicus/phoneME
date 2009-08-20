@@ -779,9 +779,7 @@ void ROMOptimizer::print_class_initialization_log(JVM_SINGLE_ARG_TRAPS) {
       _log_stream->cr();
 
       {
-        Method::Raw init =
-          klass().find_local_method(Symbols::class_initializer_name(),
-                                    Symbols::void_signature());
+        Method::Raw init = klass().find_local_class_initializer();
         if( !init.is_null() ) {
           _log_stream->print_cr("\t-> <clinit> not executed (%d bytes)",
                                init().code_size());
@@ -833,8 +831,7 @@ bool ROMOptimizer::may_be_initialized(InstanceClass *klass) {
   if( !is_init_at_build(klass) )
 #endif
   {
-    if( klass->find_local_method( Symbols::class_initializer_name(),
-                                  Symbols::void_signature()) ) {
+    if( klass->find_local_class_initializer() ) {
       return false;
     }
   }
@@ -1170,7 +1167,8 @@ bool ROMOptimizer::is_in_public_itable(InstanceClass* ic, Method* method) {
       }
 
       ObjArray::Raw methods = intf().methods();
-      for (int i = 0; i < methods().length(); i ++) {
+      const int length = methods().length();
+      for (int i = 0; i < length; i ++) {
         Method::Raw m = ci().obj_field(offset + i * sizeof(jobject));
         if (m.equals(method)) {
           return true;
@@ -1294,9 +1292,7 @@ ROMOptimizer::is_invocation_closure_root(InstanceClass* ic, Method* method) {
   return is_special_method(method)
          || method->is_native()
          || is_method_reachable_by_apps(ic, method)
-         || method->match( Symbols::object_initializer_name(),
-                           Symbols::void_signature() );
-
+         || method->is_default_constructor();
 }
 
 void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
@@ -1325,7 +1321,7 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
       const int len = methods().length();
       for (int i = 0; i < len; i++) {
         Method::Raw method = methods().obj_at(i);      
-        if (method.not_null() && is_invocation_closure_root(&klass, &method) ) {
+        if (method.not_null() && is_invocation_closure_root(&klass, &method)) {
           mic.add_method(&method);
         }
       }
@@ -1444,34 +1440,31 @@ bool ROMOptimizer::is_inlineable_exception_constructor(Method *method) {
   //     fast_invokevirtual_final inlineable exception_constructor.
   //     return
 
-  if (!method->match(Symbols::object_initializer_name(),
-                     Symbols::void_signature())) {
+  if (!method->is_default_constructor()) {
     return false;
   }
   InstanceClass::Raw ic = method->holder();
   if (ic.equals(Universe::object_class())) {
     return false;
   }
-  else if (ic.equals(Universe::throwable_class())) {
+  if (ic.equals(Universe::throwable_class())) {
     return true;
   }
-  else {
-    if (method->code_size() != 5) {
-      return false;
-    }
-    if ((method->bytecode_at(0) != Bytecodes::_aload_0) ||
-        (method->bytecode_at(1) != Bytecodes::_fast_invokevirtual_final) ||
-        (method->bytecode_at(4) != Bytecodes::_return)) {
-      return false;
-    }
-    ConstantPool::Raw cp = ic().constants();
-    jint cp_index = method->get_java_ushort(2);
-    if (!cp().tag_at(cp_index).is_resolved_static_method()) {
-      return false;
-    }
-    Method::Raw callee = cp().resolved_static_method_at(cp_index);
-    return is_inlineable_exception_constructor(&callee);
+  if (method->code_size() != 5) {
+    return false;
   }
+  if ((method->bytecode_at(0) != Bytecodes::_aload_0) ||
+      (method->bytecode_at(1) != Bytecodes::_fast_invokevirtual_final) ||
+      (method->bytecode_at(4) != Bytecodes::_return)) {
+    return false;
+  }
+  ConstantPool::Raw cp = ic().constants();
+  jint cp_index = method->get_java_ushort(2);
+  if (!cp().tag_at(cp_index).is_resolved_static_method()) {
+    return false;
+  }
+  Method::Raw callee = cp().resolved_static_method_at(cp_index);
+  return is_inlineable_exception_constructor(&callee);
 }
 
 void ROMOptimizer::inline_short_methods(JVM_SINGLE_ARG_TRAPS) {
@@ -3042,11 +3035,10 @@ bool JavaClassPatternMatcher::match(Symbol* pattern, Symbol* symbol) {
 }
 
 bool ROMOptimizer::is_special_method(Method* method) {
-  UsingFastOops level1;
-  Symbol::Fast name = method->name();
-  Symbol::Fast sig = method->signature();
-  InstanceClass::Fast klass = method->holder();
-  Symbol::Fast class_name = klass().name();
+  Symbol::Raw name = method->name();
+  Symbol::Raw sig = method->signature();
+  InstanceClass::Raw klass = method->holder();
+  Symbol::Raw class_name = klass().name();
 
   if (name.equals(Symbols::finalize_name())) {
     return true;
@@ -3501,10 +3493,7 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
     // In SVM mode, <clinit> is removed after the class is initialized.
     if (method().is_static()) {
       if (holder().is_initialized()) {
-        Symbol *name = Symbols::class_initializer_name();
-        Symbol *signature = Symbols::void_signature();
-
-        if (method().match(name, signature)) {
+        if (method().is_class_initializer()) {
           GUARANTEE(holder().lookup_method(name, signature) == NULL,
                     "Must be removed");
 #if USE_ROM_LOGGING

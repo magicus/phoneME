@@ -502,8 +502,11 @@ void ROMOptimizer::abort(void) {
 
 void
 ROMOptimizer::config_message( const char category[], const char msg[] ) const {
-  tty->print_cr( "\n%s %s(%d):      %s", category,
-                 config_parsing_file(), config_parsing_line_number(), msg );
+  tty->cr();
+  tty->print_raw( category );
+  tty->sp();
+  tty->print_raw( config_parsing_file() );
+  tty->print_cr( "(%d):\n      %s", config_parsing_line_number(), msg );
 }
 
 inline void ROMOptimizer::config_warning( const char msg[] ) const {

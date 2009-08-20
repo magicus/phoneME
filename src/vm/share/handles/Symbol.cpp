@@ -185,9 +185,7 @@ bool Symbol::is_valid_field_type() {
 bool Symbol::is_valid_method_signature(Symbol* name) {
   OopDesc * obj = this->obj();
   if (ROM::is_rom_symbol(obj)) {
-    if (ROM::is_valid_method_signature(obj)) {
-      // continue below
-    } else {
+    if (!ROM::is_valid_method_signature(obj)) {
       return false;
     }
   } else { 
@@ -199,10 +197,9 @@ bool Symbol::is_valid_method_signature(Symbol* name) {
   if (name != NULL && name->byte_at(0) == '<') {
     // All internal methods must return void:
     Signature::Raw sig = this->obj();
-    return (sig().return_type() == T_VOID);
-  } else {
-    return true;
+    return sig().return_type() == T_VOID;
   }
+  return true;
 }
 
 bool Symbol::is_valid_field_name() {
@@ -236,13 +233,9 @@ bool Symbol::is_valid_class_name() {
 
 bool Symbol::is_valid_method_name() {
   // is_valid_field_name() is the most common case, so do it first
-  if (is_valid_field_name() ||
-      equals(Symbols::object_initializer_name()) ||
-      equals(Symbols::class_initializer_name())) {
-    return true;
-  } else {
-    return false;
-  }
+  return is_valid_field_name() ||
+         equals(Symbols::object_initializer_name()) ||
+         equals(Symbols::class_initializer_name());
 }
 
 #ifndef PRODUCT

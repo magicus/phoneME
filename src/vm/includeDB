@@ -2030,6 +2030,7 @@ InstanceClass.hpp                ClassInfo.hpp
 InstanceClass.hpp                InstanceClassDesc.hpp
 InstanceClass.hpp                AccessFlags.hpp
 InstanceClass.hpp                Universe.hpp
+InstanceClass.hpp                Symbols.hpp
 #if ENABLE_ISOLATES
 InstanceClass.hpp                TaskMirror.hpp
 #endif

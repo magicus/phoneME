@@ -1997,9 +1997,7 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
     bool status = super_class().check_access_by(&this_class, ErrorOnFailure 
                                                 JVM_ZCHECK_0(status));
     if (super_class().has_vanilla_constructor()) {
-      Method::Raw constructor = 
-          this_class().find_local_method(Symbols::object_initializer_name(),
-                                         Symbols::void_signature());
+      Method::Raw constructor = this_class().find_local_default_constructor();
       if (constructor.not_null() && constructor().is_vanilla_constructor()) {
         klass_info().set_has_vanilla_constructor();
       }

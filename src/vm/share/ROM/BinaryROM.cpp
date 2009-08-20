@@ -72,11 +72,8 @@ inline void ROMBundle::update_system_array_class(JVM_SINGLE_ARG_TRAPS) {
 // during Monet conversion. For the classes being converted the updated
 // bitmaps will be stored in the Monet image. For all other classes (system or
 // previously loaded) bitmap changes aren't saved. So we restore them here
-inline void ROMBundle::update_vtable_bitmaps(const int sys_class_count 
-                                             JVM_TRAPS) const {
-  UsingFastOops fast_oops;
-  ObjArray::Fast class_list = Universe::class_list()->obj();
-
+inline void ROMBundle::update_vtable_bitmaps(const int sys_class_count) const {
+  ObjArray::Raw class_list = Universe::class_list()->obj();
   const int total_class_count = class_list().length();
   for( int i = total_class_count; --i >= sys_class_count; ) {
     JavaClass::Raw jc = class_list().obj_at(i);
@@ -89,7 +86,7 @@ inline void ROMBundle::update_vtable_bitmaps(const int sys_class_count
     if (jc.is_instance_class()) {
       InstanceClass::Raw ic = jc.obj();
       if (ic().is_initialized()) {
-        ic().update_vtable_bitmaps(JVM_SINGLE_ARG_CHECK);
+        ic().update_vtable_bitmaps();
       }
     }
   }
@@ -262,7 +259,7 @@ inline void ROMBundle::restore_vm_structures(
   update_system_array_class(JVM_SINGLE_ARG_CHECK);
 #if ENABLE_COMPILER && ENABLE_INLINE
   // Update vtable bitmaps of super classes.
-  update_vtable_bitmaps(sys_class_count JVM_NO_CHECK_AT_BOTTOM);
+  update_vtable_bitmaps(sys_class_count);
 #endif
 }
 

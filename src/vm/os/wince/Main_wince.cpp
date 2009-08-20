@@ -164,7 +164,7 @@ static void log_console(const char* s, int length) {
 }
 
 extern "C"
-void JVMSPI_PrintRaw(const char* s) {
+void JVMSPI_PrintRaw(const char* s, int length) {
   if (WriteConsole) {
     write_console(s, length);
   }

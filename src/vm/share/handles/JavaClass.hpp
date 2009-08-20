@@ -161,7 +161,7 @@ public:
                               int vtable_length,
                               bool set_init_barrier JVM_TRAPS);
 
-  ReturnOop java_mirror();
+  ReturnOop java_mirror(void) const;
 
   ReturnOop get_or_allocate_java_mirror(JVM_SINGLE_ARG_TRAPS);
 
@@ -170,10 +170,9 @@ public:
 
   void set_array_class(ObjArrayClass* value JVM_TRAPS);
 
-#else
-//!ENABLE_ISOLATES
+#else //!ENABLE_ISOLATES
 
-  ReturnOop java_mirror();
+  ReturnOop java_mirror(void) const;
 
   ReturnOop get_or_allocate_java_mirror(JVM_SINGLE_ARG_TRAPS) {
     return java_mirror();
@@ -209,6 +208,7 @@ public:
 
   // sub class check
   bool is_subclass_of(JavaClass* other_class);
+  bool is_strict_subclass_of(JavaClass* other_class);
   bool is_subtype_of(JavaClass* other_class);
 
   bool compute_and_set_is_subtype_of(JavaClass* other_class);
