@@ -457,6 +457,9 @@ static javacall_result dshow_destroy(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** destroy ***\n" );
 
+    p->dwr_len = 0;
+    SetEvent( p->dwr_event );
+
     lcd_output_video_frame( NULL );
 
     if( NULL != p->pModule )
@@ -507,9 +510,6 @@ static javacall_result dshow_close(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** close ***\n" );
-
-    p->dwr_len = 0;
-    SetEvent( p->dwr_event );
 
     if( NULL != p->pModule )
     {
