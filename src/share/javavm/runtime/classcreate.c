@@ -739,7 +739,7 @@ CVMclassCreateMultiArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
 
 	/* Prepare to load the next outer level of array type: */
 	newTypeID = CVMtypeidIncrementArrayDepth(ee, currentTypeID, 1);
-	if (newTypeID == CVM_TYPEID_ERROR) {
+	if (CVMtypeidIsSameClass(newTypeID, CVM_CLASS_TYPEID_ERROR)) {
 	    /* InternalError should have been thrown */
 	    CVMassert(CVMlocalExceptionOccurred(ee));
 	    arrayCb = NULL;

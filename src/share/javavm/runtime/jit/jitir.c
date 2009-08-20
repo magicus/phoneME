@@ -2778,7 +2778,7 @@ doStaticFieldRef(CVMJITCompilationContext* con,
     CVMJITIRNode*   staticRefNode;
     CVMJITIRNode*   fieldAddressNode;
     CVMUint8        typeTag;
-    CVMTypeID       typeID = CVM_TYPEID_ERROR;
+    CVMTypeID       typeID;
     CVMJITIRNode*   valueNode = NULL;
     CVMBool         isVolatile;
 
@@ -6151,7 +6151,7 @@ translateRange(CVMJITCompilationContext* con,
 	   is resolved or not */
 	case opc_invokestatic: {
             CVMUint16 cpIndex = CVMgetUint16(absPc+1);
-            CVMTypeID typeID = CVM_TYPEID_ERROR;
+            CVMTypeID typeID;
 	    CVMJITIRNode* plist;
 	    CVMJITIRNode* targetNode;
 	    CVMUint16     argSize;
@@ -6213,7 +6213,7 @@ translateRange(CVMJITCompilationContext* con,
 
         case opc_invokespecial: {
             CVMUint16 cpIndex;
-	    CVMTypeID typeID = CVM_TYPEID_ERROR;
+	    CVMTypeID typeID;
 	    
 	    FETCH_CPINDEX_ATOMIC(cpIndex);
 
@@ -6402,7 +6402,7 @@ translateRange(CVMJITCompilationContext* con,
         doInvokeVirtualOrInterfaceIR:
 	{
             CVMUint16 cpIndex;
-            CVMTypeID typeID = CVM_TYPEID_ERROR;
+            CVMTypeID typeID;
 	    CVMUint16 argSize;
 	    CVMUint8 rtnType;
 	    CVMJITIRNode* targetNode;
@@ -6947,7 +6947,7 @@ translateRange(CVMJITCompilationContext* con,
 	    CVMJITIRNode*  constNode;
 	    CVMUint16      fieldOffset;
 	    CVMUint16      cpIndex;
-            CVMTypeID      typeID = CVM_TYPEID_ERROR;
+            CVMTypeID      typeID;
 	    CVMBool        isVolatile;
             CVMUint8       typeTag;
 

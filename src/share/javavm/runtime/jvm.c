@@ -3598,7 +3598,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
 	    arrayClassID = 
 		CVMtypeidIncrementArrayDepth(ee, CVMcbClassName(cb),
 					     nDimensions - 1);
-	    if (arrayClassID == CVM_TYPEID_ERROR) {
+	    if (CVMtypeidIsSameClass(arrayClassID, CVM_CLASS_TYPEID_ERROR)) {
 		/* Exception must have been thrown. Let it stand */
 		CVMassert(CVMlocalExceptionOccurred(ee));
 		return NULL;
@@ -3610,7 +3610,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
     } else {
         arrayClassID = CVMtypeidIncrementArrayDepth(ee, CVMcbClassName(cb),
                                                     nDimensions);
-	if (arrayClassID == CVM_TYPEID_ERROR) {
+	if (CVMtypeidIsSameClass(arrayClassID, CVM_CLASS_TYPEID_ERROR)) {
 	    /* Exception must have been thrown. Let it stand */
 	    CVMassert(CVMlocalExceptionOccurred(ee));
 	    return NULL;
