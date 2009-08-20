@@ -67,15 +67,15 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
 
 /* KNI Implementation **********************************************************************/
 
-/*  protected native int nTerm ( int handle ) ; */
+/*  protected native int nClose ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectPlayer_nTerm) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nClose) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jint returnValue = 1;
     
-    MMP_DEBUG_STR("+DirectPlayer.nTerm\n");
+    MMP_DEBUG_STR("+DirectPlayer.nClose\n");
     KNI_StartHandles(2);
     KNI_DeclareHandle(instance);
     KNI_DeclareHandle(clazz);
@@ -89,16 +89,14 @@ LockAudioMutex();
         if (JAVACALL_FAIL == javacall_media_close(pKniInfo->pNativeHandle)) {
             returnValue = 0;
         }
+        pKniInfo->isClosed = KNI_TRUE;
+        /* DON'T FREE ANY HANDLES HERE !!! 
+          THEY MIGHT BE STILL NEEDED TO FINISH PENDING DATA REQUESTS ! */
     }
 UnlockAudioMutex();            
 
-    if (pKniInfo) {
-        MMP_FREE(pKniInfo);
-        KNI_SetIntField(instance, KNI_GetFieldID(clazz, "hNative", "I"), 0);
-    }
-
     KNI_EndHandles();
-    MMP_DEBUG_STR("-DirectPlayer.nTerm\n");
+    MMP_DEBUG_STR("-DirectPlayer.nClose\n");
     KNI_ReturnInt(returnValue);
 }
 

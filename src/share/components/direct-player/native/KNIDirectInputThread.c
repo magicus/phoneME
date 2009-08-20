@@ -22,6 +22,7 @@
  * information or have any questions.
  */
 
+#include <windows.h>
 #include "KNICommon.h"
 #include "sni.h"
 
@@ -63,6 +64,11 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nWriteData) {
     /* notify JavaCall that the data is ready,
        AND get the destination buffer address */
     javacall_media_data_ready( handle, lenToWrite, &pDest );
+    {
+        char msg[256];
+        sprintf( msg, "KNIDirectInputThread: data ready, handle %8X", handle );
+        OutputDebugString( msg );
+    }
     
     /* copy the data */
     if( NULL != pDest )

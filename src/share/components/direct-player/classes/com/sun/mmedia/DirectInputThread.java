@@ -112,11 +112,11 @@ mainloop:
                                     tmpBuf.length : lenToRead;
                     read = owner.stream.read(tmpBuf, 0, len);
                 } catch ( MediaException ex) {
-                    owner.abort( ex.getMessage() );
+                    //owner.abort( ex.getMessage() );
                     return;
                 } catch ( IOException e ) {
-                    owner.abort("Stream reading IOException: "
-                            + e.getMessage() );
+//                    owner.abort("Stream reading IOException: "
+//                            + e.getMessage() );
                     return;
                 }
 

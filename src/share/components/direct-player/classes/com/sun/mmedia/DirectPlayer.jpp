@@ -99,7 +99,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 // Native functions /////////////////////////////////////////////////
     
     // Terminate native library
-    protected native int nTerm(int handle);
+    protected native int nClose(int handle);
     // Get Content Type
     protected native String nGetContentType(int handle);
     // Access to Radio Tuner for a Java Player is exclusive. 
@@ -533,7 +533,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         int hNative = getOwner().getNativeHandle();
 
         if (hNative != 0) {
-            nTerm(hNative);
+            nClose(hNative);
             this.hNative = 0;
         }
         state = Player.CLOSED;

@@ -384,11 +384,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         return hNative;
     }
 
-    void setNativeHandleToNull()
-    {
-        hNative = 0;
-    }
-
     /**
      * TimeBase related functions.
      */
@@ -1138,10 +1133,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         if( null != lowLevelPlayer )
         {
 
+            System.out.println( "HighLevelPlayer: close() entered" );
             try {
                 runAsync(new AsyncTask() {
                     public void run() throws MediaException {
                         lowLevelPlayer.doClose();
+                        System.out.println( "HighLevelPlayer: doClose() returned" );
                     }
                 });
             } catch (MediaException ex) {}
@@ -1151,9 +1148,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             if (null != directInputThread) {
                 directInputThread.close();
             }
-            setNativeHandleToNull();
         }
-        else if(hNative != 0) {
+
+        if(hNative != 0) {
             nTerm(hNative);
             hNative = 0;
         }

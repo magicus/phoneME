@@ -75,6 +75,7 @@ LockAudioMutex();
         pKniInfo->isDirectFile = JAVACALL_FALSE;
         pKniInfo->isForeground = -1;
         pKniInfo->recordState = RECORD_CLOSE;
+        pKniInfo->isClosed = KNI_FALSE;
         res = javacall_media_create(appId, playerId, pszURI, URILength, &pKniInfo->pNativeHandle); 
         if (res == JAVACALL_OK) {
             returnValue = (int)pKniInfo;
@@ -127,10 +128,11 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nTerm) {
     KNI_GetObjectClass(instance, clazz);
 LockAudioMutex();            
  
-    if (pKniInfo && pKniInfo->pNativeHandle) {
+    if (pKniInfo && pKniInfo->pNativeHandle && KNI_FALSE == pKniInfo->isClosed ) {
         if (JAVACALL_FAIL == javacall_media_close(pKniInfo->pNativeHandle)) {
             returnValue = 0;
         }
+        pKniInfo->isClosed = KNI_TRUE;
     }
 UnlockAudioMutex();            
 
