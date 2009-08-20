@@ -1,0 +1,269 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+ifeq ($(TOOLS_DIR),)
+$(error TOOLS_DIR is not set.)
+endif
+
+TARGET_VM ?= cldc
+
+ifeq ($(TARGET_VM), cldc)
+#Adding stubs for standalone CLDC executable
+VPATH+=$(JAVACALL_DIR)/implementation/share/cldc
+JAVACALL_SOURCE_OUTPUT_LIST+=implementation/share/cldc
+endif
+
+ifeq ($(USE_WTK), true)
+CFLAGS += -DENABLE_WTK=1
+endif
+
+include $(TOOLS_DIR)/tools.gmk
+
+include $(JAVACALL_DIR)/build/list.gmk
+
+.PHONY: javacall_common create_output_dirs copy_include_files \
+    output_properties_files clean doxygen
+
+javacall_common: create_output_dirs copy_include_files output_properties_files
+
+PREFIX_true:=1
+
+# JSR_LIST - list of components that have interface/implementation/(notifiers)
+#            (default policy)
+# JC_API_LIST  - list of interfaces w/o implementation here
+# JC_IMPL_LIST - list of implemetations w/o interfaces here
+# JC_NOTIFIERS_LIST - list of notifiers located in javacall
+
+ALL_IMPL_JSR_LIST += $(JSR_LIST) $(JC_IMPL_LIST)
+#Form list of objects
+VPATH+=$(foreach jsr,$(ALL_IMPL_JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
+PORTING_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
+PORTING_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.cpp))))
+NOTIFIER_SOURCE+=$(foreach jsr,$(ALL_IMPL_JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
+
+SPECIFIC_DEFINITIONS += $(filter -DENABLE_JSR%, $(foreach jsr,$(ALL_IMPL_JSR_LIST), \
+    $(if $(PREFIX_$(USE_$(jsr))), -DENABLE_$(jsr)=1)))
+
+ALL_JC_IMPL_LIST = $(JC_IMPL_LIST)
+#Form list of javacall header files
+ALL_JC_API_LIST = $(JSR_LIST) $(JC_API_LIST)
+JC_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(ALL_JC_API_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_DIR)))
+JC_INCLUDE_DIR_SET=$(addprefix $(JAVACALL_DIR)/interface/,$(JC_INCLUDE_DIR_SET_LOCAL))
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JC_INCLUDE_DIR_SET),$(wildcard $(dir)/*.h))
+
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
+
+ifeq ($(USE_NETMON), true)
+PORTING_SOURCE+=$(notdir $(wildcard $(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/netmon/*.c))
+VPATH+=$(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/netmon
+endif
+
+UTILITIES+= javautil_stdio
+# In case using of the javacall functions wrappers, set the USE_JAVACALL_WRAPPERS variable
+ifeq ($(USE_JAVACALL_WRAPPERS),true)
+UTILITIES+= wrappers
+CFLAGS += -DUSE_JAVACALL_WRAPPERS
+endif
+
+ifneq ($(UTILITIES)x, x)
+VPATH+=$(JAVACALL_DIR)/implementation/share/utils
+PORTING_SOURCE += $(addsuffix .c,$(UTILITIES))
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/share/utils/inc/$(util).h)
+JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/utils
+endif
+
+ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
+FILTER_OBJECTS+=events.obj
+VPATH+=$(JAVACALL_DIR)/implementation/share/events
+JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/events
+PORTING_SOURCE+=events_slave_mode.c
+endif
+
+# All the property stuff
+vpath %.c $(JAVACALL_DIR)/implementation/share/properties
+VPATH+=$(JAVACALL_DIR)/implementation/share/properties
+PROPERTY_FILES = javacall_properties \
+		 javacall_config_db \
+		 javacall_db
+
+JAVACALL_PROPERTIES_TARGET_FILE = $(JAVACALL_OUTPUT_DIR)/properties.xml
+
+ifeq ($(USE_STATIC_PROPERTIES), true)
+STATIC_PROPERTIES_C = $(JAVACALL_OUTPUT_DIR)/javacall_static_properties.c
+PROPERTY_FILES += javacall_static_properties
+
+output_properties_files:
+
+$(STATIC_PROPERTIES_C): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE),\
+		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesNative.xsl \
+		-params arrayNamePrefix javacall \
+		-out $@)
+
+else
+DYNAMIC_PROPERTIES_INI = $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini
+
+output_properties_files: $(DYNAMIC_PROPERTIES_INI)
+
+$(DYNAMIC_PROPERTIES_INI): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE),\
+		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
+		-out $@)
+
+endif
+
+PORTING_SOURCE += $(addsuffix .c,$(PROPERTY_FILES))
+
+# Netmon flag
+ifeq ($(USE_NETMON), true)
+CFLAGS += -DUSE_NETMON
+endif
+
+# Memmon flag
+ifeq ($(USE_MEMMON), true)
+CFLAGS += -DUSE_MEMMON
+endif
+
+# definitions and rules for PNG component
+ifeq ($(USE_JC_PNG_ENCODER), true)
+        USE_JC_PNG = true
+endif
+
+
+# definitions and rules for JPEG component
+ifeq ($(USE_JC_JPEG_ENCODER), true)
+        USE_JC_JPEG = true
+endif
+
+ifeq ($(USE_JC_JPEG_DECODER), true)
+        USE_JC_JPEG = true
+endif
+
+ifeq ($(USE_JC_JPEG), true)
+JPEG_JC_DIR = $(JAVACALL_DIR)/implementation/share/jpeg
+include $(JPEG_JC_DIR)/module.gmk
+endif
+
+ifeq ($(USE_JC_PNG), true)
+PNG_JC_DIR = $(JAVACALL_DIR)/implementation/share/png
+include $(PNG_JC_DIR)/module.gmk
+endif
+
+
+# general build rules
+ifeq ($(USE_DEBUG),true)
+BUILD=debug
+CFLAGS += -DENABLE_JAVACALL_DEBUG
+else
+BUILD=nodebug
+endif
+
+BUILD_EXT_debug=_g
+BUILD_EXT_nodebug=
+BUILD_EXT=$(BUILD_EXT_$(BUILD))
+
+ifeq ($(JAVACALL_OUTPUT_DIR),)
+JAVACALL_OUTPUT_DIR:=output
+endif
+
+# The JAVACALL_OUTPUT_DIR has a fixed structure, it should contain:
+#   - inc directory, which contains all the headers copied
+#   - lib directory, which contains javacall(_g) library and other files
+#     required for final linking
+#   - obj(_g) directory (optional), which contains all intermediate obj files
+#   - ext_lib directory (optional), which contains external libraries
+JAVACALL_OUTPUT_INCLUDE_DIR:=$(JAVACALL_OUTPUT_DIR)/inc
+JAVACALL_OUTPUT_OBJ_DIR:=$(JAVACALL_OUTPUT_DIR)/obj$(BUILD_EXT)
+JAVACALL_OUTPUT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/lib
+JAVACALL_OUTPUT_EXT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/ext_lib
+
+$(JAVACALL_PROPERTIES_TARGET_FILE): $(CONFIGURATION_PROPERTIES_FILE) \
+    $(JAVACALL_DIR)/build/configuration.dtd $(JAVACALL_OUTPUT_DIR)
+	@echo Copying property definitions...
+	@cp $(CONFIGURATION_PROPERTIES_FILE) \
+	    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@cp $(JAVACALL_DIR)/build/configuration.dtd $(JAVACALL_OUTPUT_DIR)
+
+copy_include_files: $(JAVACALL_OUTPUT_INCLUDE_DIR)
+	@echo Copying include files...
+	$(AT)cp -f $(JAVACALL_INCLUDE_SOURCE_FILES_SET) $(JAVACALL_OUTPUT_INCLUDE_DIR)
+
+$(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVACALL_OUTPUT_OBJ_DIR) $(JAVACALL_OUTPUT_LIB_DIR) $(JAVACALL_OUTPUT_EXT_LIB_DIR):
+	@echo Creating $@...
+	@mkdir -p $@
+
+create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVACALL_OUTPUT_LIB_DIR) $(JAVACALL_OUTPUT_OBJ_DIR) $(JAVACALL_OUTPUT_EXT_LIB_DIR)
+
+clean::
+	@rm -rf $(JAVACALL_OUTPUT_DIR)
+
+include $(JAVACALL_DIR)/build/docs.gmk
+doxygen: copy_include_files docs_doxy
+
+# Verify source output directory is set
+SOURCE_OUTPUT_DIR:
+	@if [ -z "$($@)" ]; then \
+	    echo "ERROR: $@ must be set"; \
+	    exit -1; \
+	fi; \
+	mkdir -p "$($@)"
+
+define make_source_bundle
+		for path in $(1) ; do \
+			if [ "$$FROM" != "" ]; then mkdir -p $(SOURCE_OUTPUT_DIR)/$$path ; \
+				if [ -d "$$FROM/.svn" ]; then \
+					svn export --force -q $$FROM $(SOURCE_OUTPUT_DIR)/$$path/`basename $$FROM` ; \
+				else \
+					cp -rf $$FROM $(SOURCE_OUTPUT_DIR)/$$path ; \
+				fi ; \
+				FROM=; \
+			else FROM=$$path ; \
+			fi ;\
+		done ; \
+		for path in $(2) ; do \
+			rm -rf $(SOURCE_OUTPUT_DIR)/$$path ; \
+		done
+endef
+
+JAVACALL_SOURCE_OUTPUT_LIST += build
+JAVACALL_SOURCE_OUTPUT_LIST += $(foreach jsr,$(ALL_JC_API_LIST),  $(if $(PREFIX_$(USE_$(jsr))), interface/$($(jsr)_JC_DIR)))
+JAVACALL_SOURCE_OUTPUT_LIST += $(foreach jsr,$(ALL_JC_IMPL_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(subst $(JAVACALL_DIR)/, ,$($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR))))
+JC_NOTIFIER_DIRS=$(foreach jsr,$(JSR_LIST) $(JC_NOTIFIERS_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
+JAVACALL_SOURCE_OUTPUT_LIST += $(foreach jsr,$(JC_NOTIFIER_DIRS), $(if $(PREFIX_$(USE_$(jsr))), $(subst $(JAVACALL_DIR)/, ,$(jsr))))
+
+source_bundle:: SOURCE_OUTPUT_DIR
+	@echo " ... javacall source bundle"
+	$(AT)$(call source_bundle_filter,$(JAVACALL_DIR),$(SOURCE_OUTPUT_DIR)/javacall,$(JAVACALL_SOURCE_OUTPUT_LIST))
+	$(AT)cp $(JAVACALL_DIR)/interface/javacall_defs.h $(SOURCE_OUTPUT_DIR)/javacall/interface/javacall_defs.h
+	$(AT)$(call make_source_bundle, $(SOURCE_OUTPUT_LIST), $(SOURCE_CLEANUP_LIST))

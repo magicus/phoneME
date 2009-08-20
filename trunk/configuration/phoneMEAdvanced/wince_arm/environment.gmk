@@ -1,0 +1,77 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+include $(JAVACALL_DIR)/build/list.gmk
+
+TARGET_VM=cvm
+TARGET_CPU=arm
+USE_MIDP=false
+
+JSR_LIST    +=COMMON JSR_120 JSR_135 JSR_177
+
+USE_COMMON = true
+COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
+
+JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/wince
+
+JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/wince
+
+JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEAdvanced/wince_arm javacall/configuration/phoneMEAdvanced
+
+ifeq ($(USE_JSR_120),true)
+SOURCE_OUTPUT_LIST += $(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR) javacall/implementation/wince
+CFLAGS += -DENABLE_JSR_120=1
+endif
+
+UTILITIES += javautil_unicode
+UTILITIES += javautil_string
+
+#For each project location for basic definitions shall be specified
+#(location of the used javacall_platform_defs.h)
+JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/wince
+
+SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/wince
+
+ifeq ($(USE_JSR_177),true)
+SOURCE_OUTPUT_LIST += $(JSR_177_JC_IMPL_PATH)/$(JSR_177_JC_DIR) javacall/implementation/win32
+endif
+
+ifeq ($(USE_COMMON),true)
+SOURCE_OUTPUT_LIST += $(COMMON_JC_IMPL_PATH)/$(COMMON_JC_DIR) javacall/implementation/win32
+endif
+
+#Compile options that are not common for all configurations can be specified in
+#SPECIFIC_DEFINITIONS variable
+SPECIFIC_DEFINITIONS+=-I$(COMMON_JC_IMPL_PATH)/$(COMMON_JC_DIR)/
+
+SPECIFIC_DEFINITIONS += -DARM -D_ARM_ -D_M_ARM -DCPU=StrongARM1 /Zc:wchar_t-
+
+CFLAGS += /DARM /D_ARM_ /D_M_ARM /DCPU=StrongARM1
+CE_VERSION ?= 0x501
