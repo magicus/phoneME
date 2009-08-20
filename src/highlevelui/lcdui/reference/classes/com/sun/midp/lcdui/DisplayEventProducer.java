@@ -28,7 +28,6 @@ package com.sun.midp.lcdui;
 
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.NativeEvent;
 
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
@@ -208,12 +207,8 @@ public class DisplayEventProducer {
      *      be set portrait orientation
      */
     public void sendScreenRotateEvent(DisplayAccess d, boolean landscape) {
-        NativeEvent event = new NativeEvent(EventTypes.ROTATION_EVENT);
-        event.intParam4 = d.getDisplayId();
-        if (landscape) {
-            event.intParam1 = 1;
-        }
-        eventQueue.post(event);
+        eventQueue.post(
+            LCDUIEvent.createScreenRotationEvent(
+                d.getDisplayEventConsumer(), landscape));
     }
 }
-

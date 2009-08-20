@@ -111,6 +111,14 @@ public class DisplayEventListener implements EventListener {
      * @param event event to process
      */
     public void process(Event event) {
+        if (event.getType() == EventTypes.ROTATION_EVENT 
+                && event instanceof LCDUIEvent) {
+            LCDUIEvent lcduiEvent = (LCDUIEvent)event;
+                    
+            lcduiEvent.display.handleRotationEvent(lcduiEvent.minorCode == 0);
+            return;
+        }
+        
         NativeEvent nativeEvent = (NativeEvent) event;
 
         if (event.getType() == EventTypes.CHANGE_LOCALE_EVENT) {
@@ -139,7 +147,7 @@ public class DisplayEventListener implements EventListener {
 
         DisplayEventConsumer dc =
                 displayContainer.findDisplayEventConsumer(nativeEvent.intParam4);
-
+        
         if (dc != null) {
             switch (event.getType()) {
                 case EventTypes.KEY_EVENT:
