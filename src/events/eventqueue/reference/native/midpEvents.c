@@ -590,6 +590,27 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
 }
 
 /**
+ * Reports how many events can be enqueued before queue overflows.
+ *
+ * @param isolateId  ID of an Isolate, 0 for SVM mode
+ *
+ * @return available queue space
+ *         negative value on error
+ */
+int GetEventQueueFreeCount(int isolateId) {
+    jint queueId = -1;
+    EventQueue* pEventQueue;
+
+    queueId = ISOLATE_ID_TO_QUEUE_ID(isolateId);
+    if (queueId < 0 || queueId >= gsTotalQueues) {
+        return -1;
+    }
+    GET_EVENT_QUEUE_BY_ID(pEventQueue, queueId);
+
+    return MAX_EVENTS - pEventQueue->numEvents;
+}
+
+/**
  * Reports a fatal error that cannot be handled in Java. 
  *
  * handleFatalError(Ljava/lang/Throwable;)V
