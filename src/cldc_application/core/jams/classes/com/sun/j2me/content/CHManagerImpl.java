@@ -110,35 +110,35 @@ public class CHManagerImpl extends CHManagerBase {
      *   or if there are more than five comma separated fields on the line.
      */
     public Object preInstall(Installer installer, InstallState state,
-					MIDletSuite msuite, String authority) throws InvalidJadException
+                    MIDletSuite msuite, String authority) throws InvalidJadException
     {
-    	RegistryInstaller regInstaller = null;
-    	if( Logger.LOGGER != null ) 
-        	Logger.LOGGER.println( "CHManagerImpl.preInstall(): installer = " + 
-        			installer + ", state = " + state + ", msuite = " + msuite + 
-        			"\n\tauthority = '" + authority + "'" );
-		try {
-		    AppBundleProxy bundle =
-		    	new AppBundleProxy(installer, state, msuite, authority);
+        RegistryInstaller regInstaller = null;
+        if( Logger.LOGGER != null ) 
+            Logger.LOGGER.println( "CHManagerImpl.preInstall(): installer = " + 
+                    installer + ", state = " + state + ", msuite = " + msuite + 
+                    "\n\tauthority = '" + authority + "'" );
+        try {
+            AppBundleProxy bundle =
+                new AppBundleProxy(installer, state, msuite, authority);
             regInstaller = new RegistryInstaller(bundle);
             regInstaller.preInstall();
-		} catch (IllegalArgumentException ill) {
-		    throw new InvalidJadException(
-				  InvalidJadException.INVALID_CONTENT_HANDLER, ill.getMessage());
-		} catch (ContentHandlerException che) {
-		    if (che.getErrorCode() == ContentHandlerException.AMBIGUOUS) {
-				throw new InvalidJadException(
-					      InvalidJadException.CONTENT_HANDLER_CONFLICT,
-					      che.getMessage());
-		    } else {
-				throw new InvalidJadException(
-					      InvalidJadException.INVALID_CONTENT_HANDLER,
-					      che.getMessage());
-		    }
-		} catch (ClassNotFoundException cnfe) {
-		    throw new InvalidJadException(InvalidJadException.CORRUPT_JAR,
-						  cnfe.getMessage());
-		}
+        } catch (IllegalArgumentException ill) {
+            throw new InvalidJadException(
+                  InvalidJadException.INVALID_CONTENT_HANDLER, ill.getMessage());
+        } catch (ContentHandlerException che) {
+            if (che.getErrorCode() == ContentHandlerException.AMBIGUOUS) {
+                throw new InvalidJadException(
+                          InvalidJadException.CONTENT_HANDLER_CONFLICT,
+                          che.getMessage());
+            } else {
+                throw new InvalidJadException(
+                          InvalidJadException.INVALID_CONTENT_HANDLER,
+                          che.getMessage());
+            }
+        } catch (ClassNotFoundException cnfe) {
+            throw new InvalidJadException(InvalidJadException.CORRUPT_JAR,
+                          cnfe.getMessage());
+        }
         if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.preInstall() exit" );
         return regInstaller;
     }
@@ -166,7 +166,7 @@ public class CHManagerImpl extends CHManagerBase {
     }
     
     public InvocationProxy getInvocation(MIDlet midlet){
-    	return new InvocationProxyImpl( midlet );
+        return new InvocationProxyImpl( midlet );
     }
 
     private static class InvocationProxyImpl implements CHManager.InvocationProxy {
@@ -175,42 +175,44 @@ public class CHManagerImpl extends CHManagerBase {
         /** The Invocation in progress for an install. */
         private Invocation installInvoc = null;
 
-    	InvocationProxyImpl( MIDlet midlet ){
-    		try {
-    		    handler = Registry.getServer(midlet.getClass().getName());
+        InvocationProxyImpl( MIDlet midlet ){
+            try {
+                handler = Registry.getServer(midlet.getClass().getName());
                 installInvoc = handler.getRequest(false);
-    		} catch (ContentHandlerException che) {
-    	    }
-    	}
-    	
-	    public Object getInvocationProperty(String propName) {
-	    	if( installInvoc != null ){
-	    		if( PROP_URL.equals(propName) ){
-	    			return installInvoc.getURL();
-	    		} else if( PROP_ACTION.equals(propName) ){
-	    			return installInvoc.getAction();
-	    		}
-	    	}
-	    	return null;
-	    }
-	
-	    /**
-	     * Complete the installation of the URL provided by
-	     * {@link #getInstallURL} with the success/failure status
-	     * provided.
-	     * @param success <code>true</code> if the install was a success
-	     * @see com.sun.midp.content.CHManagerImpl
-	     */
-	    public void installDone(boolean success, String errorMsg) {
-	        if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.installDone()" );
-	        if (installInvoc != null) {
-	        	if( !success && errorMsg != null )
-	        		installInvoc.setArgs(new String[] {errorMsg} );
-			    handler.finish(installInvoc,
-					   success ? Invocation.OK : (errorMsg == null ? Invocation.CANCELLED : Invocation.ERROR));
-	            installInvoc = null;
-	        }
-	    }
+            } catch (ContentHandlerException che) {
+            }
+        }
+        
+        public Object getInvocationProperty(String propName) {
+            if( installInvoc != null ){
+                if( PROP_URL.equals(propName) ){
+                    return installInvoc.getURL();
+                } else if( PROP_ACTION.equals(propName) ){
+                    return installInvoc.getAction();
+                }
+            }
+            return null;
+        }
+    
+        /**
+         * Complete the installation of the URL provided by
+         * {@link #getInstallURL} with the success/failure status
+         * provided.
+         * @param success <code>true</code> if the install was a success
+         * @see com.sun.midp.content.CHManagerImpl
+         */
+        public void installDone(boolean success, String errorMsg) {
+            if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.installDone()" );
+            if (installInvoc != null) {
+                if( errorMsg != null ){
+                    if( !success )
+                        installInvoc.setArgs(new String[] {errorMsg} );
+                    handler.finish(installInvoc,
+                           success ? Invocation.OK : Invocation.CANCELLED);
+                }
+                installInvoc = null;
+            }
+        }
     }
 
 }
