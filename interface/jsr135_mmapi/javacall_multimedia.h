@@ -417,51 +417,115 @@ javacall_result javacall_media_get_configuration(
  */
 
 /**
- * Java MMAPI call this function to create native player from locator.
- * This function is called at the first time to initialize native library.
- * You can do your own initialization job from this function.
+ * Create the native player with the native data flow management.
  * 
- * @param app_id        Unique application ID.
- * @param player_id     Unique player object ID.
- * @param locator       Locator unicode string.
- * @param locator_len   Locator string length.
- * @param handle        Native player handle.
+ * This procedure is asynchronous, an event
+ * JAVACALL_EVENT_MEDIA_CREATE_FINISHED will be posted on completion.
  *
- * @retval JAVACALL_OK                      Success
- * @retval JAVACALL_CONNECTION_NOT_FOUND    Could not connect to the URL
- * @retval JAVACALL_IO_ERROR                IO error occurred while connecting
- *                                          the URL or getting data 
- * @retval JAVACALL_INVALID_ARGUMENT        Invalid URL or other parameter
- * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
- *                                      playback is impossible. JVM will throw
- *                                      a MediaException. Please return this
- *                                      code only in case you want to
- *                                      reject playback, i.e. when the content
- *                                      is audio only. If some kind of playback
- *                                      is still possible (e.g. mute video),
- *                                      please return JAVACALL_OK instead
- * @retval JAVACALL_FAIL                    General failure or the following
- *                                          situation. Porting Layer may
- *                                          decide to reject the creation for
- *                                          some reason. For example, if you
- *                                          do not want media from some
- *                                          pre-defined "bad" Internet site.
+ * @param app_id       Unique application ID.
+ * @param player_id    Unique player object ID.
+ * @param locator_len  Locator string length.
+ * @param locator      Locator unicode string.
+ *
+ * @retval JAVACALL_OK                    Success.
+ * @retval JAVACALL_CONNECTION_NOT_FOUND  Could not connect to the URL.
+ * @retval JAVACALL_IO_ERROR              IO error occurred while connecting
+ *                                        the URL or getting data.
+ * @retval JAVACALL_INVALID_ARGUMENT      Invalid URL or other parameter.
+ * @retval JAVACALL_NO_AUDIO_DEVICE       No audio device found and therefore
+ *                                        playback is impossible. JVM will
+ *                                        throw a MediaException. Please
+ *                                        return this code only in case you
+ *                                        want to reject playback, i.e. when
+ *                                        the content is audio only. If some
+ *                                        kind of playback is still possible
+ *                                        (e.g. mute video), please return
+ *                                        JAVACALL_OK instead.
+ * @retval JAVACALL_FAIL                  General failure or the following
+ *                                        situation. Porting Layer may decide
+ *                                        to reject the creation for some
+ *                                        reason. For example, if you do not
+ *                                        want media from some pre-defined
+ *                                        "bad" Internet site.
  */
-javacall_result javacall_media_create(
+javacall_result javacall_media_create_managed_player(
     javacall_int32 app_id,
     javacall_int32 player_id,
-    javacall_const_utf16_string locator,
     javacall_int32 locator_len,
-    /*OUT*/ javacall_handle *handle);
+    javacall_const_utf16_string locator);
 
 /**
- * finally destroy native media player previously closed by
- * javacall_media_close. intended to be used by finalizer
+ * Create the native player which data flow is managed by Java.
  * 
- * @param handle  Handle to the library.
+ * This procedure is asynchronous, an event
+ * JAVACALL_EVENT_MEDIA_CREATE_FINISHED will be posted on completion.
+ *
+ * @param app_id            Unique application ID.
+ * @param player_id         Unique player object ID.
+ * @param locator_len       Locator string length.
+ * @param locator           Locator unicode string.
+ * @param mime_len          String length of media MIME type, 0 if unknown.
+ * @param mime              MIME type unicode string, ignored if mime_len is
+                            0.
+ * @param stream_len_known  JAVACALL_TRUE if stream length is known and
+ *                          specified in stream_len, JAVACALL_FALSE otherwise.
+ * @param stream_len        Stream length, in bytes, ignored if
+ *                          strean_len_known is JAVACALL_FALSE.
+ *
+ * @retval JAVACALL_OK                    Success.
+ * @retval JAVACALL_CONNECTION_NOT_FOUND  Could not connect to the URL.
+ * @retval JAVACALL_IO_ERROR              IO error occurred while connecting
+ *                                        the URL or getting data.
+ * @retval JAVACALL_INVALID_ARGUMENT      Invalid URL or other parameter.
+ * @retval JAVACALL_NO_AUDIO_DEVICE       No audio device found and therefore
+ *                                        playback is impossible. JVM will
+ *                                        throw a MediaException. Please
+ *                                        return this code only in case you
+ *                                        want to reject playback, i.e. when
+ *                                        the content is audio only. If some
+ *                                        kind of playback is still possible
+ *                                        (e.g. mute video), please return
+ *                                        JAVACALL_OK instead.
+ * @retval JAVACALL_FAIL                  General failure or the following
+ *                                        situation. Porting Layer may decide
+ *                                        to reject the creation for some
+ *                                        reason. For example, if you do not
+ *                                        want media from some pre-defined
+ *                                        "bad" Internet site.
+ */
+javacall_result javacall_media_create_unmanaged_player(
+    javacall_int32 app_id,
+    javacall_int32 player_id,
+    javacall_int32 locator_len,
+    javacall_const_utf16_string locator,
+    javacall_int32 mime_len,
+    javacall_const_utf16_string mime,
+    javacall_bool stream_len_known,
+    javacall_int64 stream_len);
+
+/**
+ * Destroy the native player object and release all its resources.
  * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Java VM will raise the media exception
+ * Immediately following procedure return, handle to the native player becomes
+ * invalid and must not be further used with the exception of responding to
+ * data request events.
+ *
+ * This procedure is asynchronous, an event
+ * JAVACALL_EVENT_MEDIA_DESTROY_FINISHED will be posted on completion.
+ *
+ * After an event JAVACALL_EVENT_MEDIA_DESTROY_FINISHED has been posted, the
+ * native player will not post any other events, including data requests, thus
+ * allowing Java to discard the handle to the native player.
+ *
+ * The native player may process some stream data, but is responsible to
+ * complete the destroy procedure in rational time even if data flow is not
+ * working (Java does not respond to data request events).
+ *
+ * @param handle  Handle to the native player.
+ * 
+ * @retval JAVACALL_OK  Always succeeds, procedure will continue in
+ *                      background, completion will be flagged with an event
+ *                      JAVACALL_EVENT_MEDIA_DESTROY_FINISHED.
  */
 javacall_result javacall_media_destroy(javacall_handle handle);
 
@@ -503,23 +567,6 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
                     int eventType, void *pResult, int numArgs, void *args[]);
 
 /**
- * Ask to the native layer if it will handle media download from specific URL.
- * Is media download for specific URL (provided in javacall_media_create)
- * will be handled by native layer or Java layer?
- * If isHandled is JAVACALL_TRUE, Java do not call
- * javacall_media_do_buffering function
- * In this case, native layer should handle all of data gathering by itself
- * 
- * @param handle    Handle to the library
- * @param isHandled JAVACALL_TRUE if native player will handle media download
- * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL
- */
-javacall_result javacall_media_download_handled_by_device(javacall_handle handle,
-                                                  /*OUT*/ javacall_bool* isHandled);
-
-/**
  * Get the format type of media content
  *
  * @param handle    Handle to the library 
@@ -530,42 +577,6 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
  */
 javacall_result javacall_media_get_format(javacall_handle handle,
                               /*OUT*/ javacall_media_format_type* format);
-
-/**
- * Realize native player.
- * This function will be called by Java Layer to start Realize native player.
- * 
- * @param handle        Handle to the library
- * @param mime          Mime type unicode string.
- *                      NULL if unknown
- * @param mimeLength    String length of media MIME type.
- * 
- * @retval JAVACALL_OK                  Success
- * @retval JAVACALL_NO_AUDIO_DEVICE     No audio device found and therefore
- *                                      playback is impossible. JVM will throw
- *                                      a MediaException. Please return this
- *                                      code only in case you want to
- *                                      reject playback, i.e. when the content
- *                                      is audio only. If some kind of playback
- *                                      is still possible (e.g. mute video),
- *                                      please return JAVACALL_OK instead
- * @retval JAVACALL_FAIL                General failure
- */
-javacall_result javacall_media_realize(javacall_handle handle,
-                                      javacall_const_utf16_string mime,
-                                      long mimeLength);
-
-/**
- * Close native media player that created by creat or creat2 API call
- * After this call, you can't use any other function in this library
- * except for javacall_media_destroy
- * 
- * @param handle  Handle to the library.
- * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Java VM will raise the media exception
- */
-javacall_result javacall_media_close(javacall_handle handle);
 
 /**
  * Return bitmask of Media Controls supported by native player
@@ -582,48 +593,66 @@ javacall_result javacall_media_get_player_controls(javacall_handle handle,
                               /*OUT*/ int* controls);
 
 /**
- * This function will be called by Java Layer to Prefetch native player.
+ * Move the native player to the stopped state.
+ *
+ * In the stopped state, the native player does not hold any scarce or
+ * exclusive resources.
+ *
+ * This procedure is asynchronous, an event JAVACALL_EVENT_MEDIA_STOP_FINISHED
+ * will be posted on completion.
+ *
+ * The player may need to process stream data before it completes the
+ * procedure.
  * 
- * @param handle    Handle to the library
+ * @param handle  Handle to the native player.
  * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL
- */
-javacall_result javacall_media_prefetch(javacall_handle handle);
-
-/**
- * This function will be called by Java Layer to Deallocate native player.
- * 
- * @param handle    Handle to the library
- * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Nothing happened now. Same as JAVACALL_OK.
- */
-javacall_result javacall_media_deallocate(javacall_handle handle);
-
-/**
- * Try to start media playing.<br>
- * If this API return JAVACALL_FAIL, MMAPI will raise the media exception.<br>
- * If this API return JAVACALL_OK, MMAPI will return from start method.
- * 
- * @param handle    Handle to the library
- * 
- * @retval JAVACALL_OK      JVM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    JVM will raise the media exception
- */
-javacall_result javacall_media_start(javacall_handle handle);
-
-/**
- * Stop media playing.
- * If this API return JAVACALL_FAIL, MMAPI will raise the media exception.<br>
- * If this API return JAVACALL_OK, MMAPI will return from stop method.
- * 
- * @param handle      Handle to the library
- * 
- * @retval JAVACALL_OK      JVM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    JVM will raise the media exception
+ * @retval JAVACALL_OK  Always succeeds, procedure will continue in
+ *                      background, completion will be flagged with an event
+ *                      JAVACALL_EVENT_MEDIA_STOP_FINISHED.
  */
 javacall_result javacall_media_stop(javacall_handle handle);
+
+/**
+ * Move the native player to the paused state.
+ *
+ * In the paused state, the native player is ready to move to the running
+ * state as soon as possible, holding scarce or exclusive resources if
+ * necessary.
+ *
+ * This procedure is asynchronous, an event
+ * JAVACALL_EVENT_MEDIA_PAUSE_FINISHED will be posted on completion.
+ *
+ * The player may need to process stream data before it completes the
+ * procedure.
+ * 
+ * @param handle  Handle to the native player.
+ * 
+ * @retval JAVACALL_OK    Procedure will continue in background, completion
+ *                        will be flagged with an event
+ *                        JAVACALL_EVENT_MEDIA_PAUSE_FINISHED.
+ * @retval JAVACALL_FAIL  Procedure failed, player cannot be paused, Java will
+ *                        throw MediaException.
+ */
+javacall_result javacall_media_pause(javacall_handle handle);
+
+/**
+ * Move the native player to the running state.
+ *
+ * This procedure is asynchronous, an event JAVACALL_EVENT_MEDIA_RUN_FINISHED
+ * will be posted on completion.
+ *
+ * The player may need to process stream data before it completes the
+ * procedure.
+ * 
+ * @param handle  Handle to the native player.
+ * 
+ * @retval JAVACALL_OK    Procedure will continue in background, completion
+ *                        will be flagged with an event
+ *                        JAVACALL_EVENT_MEDIA_RUN_FINISHED.
+ * @retval JAVACALL_FAIL  Procedure failed, player cannot be started, Java
+ *                        will throw MediaException.
+ */
+javacall_result javacall_media_run(javacall_handle handle);
 
 /**
  * Notify the native player about stream length. This function is called if
