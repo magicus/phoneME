@@ -104,7 +104,8 @@ typedef enum {
      * Posted when the native player finished setting media time.
      *
      * Additional data:
-     *  intParam2(data) - actual media time set.
+     *  intParam2(data)   - actual media time set.
+     *  intParam5(status) - call result, exception code.
      */
     JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED = 6,
 
