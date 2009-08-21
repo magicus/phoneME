@@ -1,7 +1,7 @@
 /*
  *  
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,9 @@ package javax.microedition.content;
 import java.io.IOException;
 
 /**
- * A <tt>ContentHandlerException</tt> is thrown to report errors
- * specific to registration and invocation of content handlers. 
- * Instances are immutable and thread safe.
+ * A <tt>ContentHandlerException</tt> is thrown to report errors specific to
+ * registration and invocation of content handlers. Instances are immutable and
+ * thread safe.
  */
 public class ContentHandlerException extends IOException {
     /** The error code. */
@@ -39,65 +39,66 @@ public class ContentHandlerException extends IOException {
 
     /**
      * The reason is <CODE>NO_REGISTERED_HANDLER</CODE> in a
-     * ContentHandlerException when there is no content handler
-     * registered of the requested combination of
-     * ID, type, suffix, and action.
+     * ContentHandlerException when there is no content handler registered of
+     * the requested combination of ID, type, suffix, and action.
      */
     public final static int NO_REGISTERED_HANDLER = 1;
 
     /**
-     * The reason is <code>TYPE_UNKNOWN</code> in a
-     * ContentHandlerException when the type is not available.
+     * The reason is <code>TYPE_UNKNOWN</code> in a ContentHandlerException when
+     * the type is not available.
      */
     public final static int TYPE_UNKNOWN = 2;
 
     /**
-     * The reason is <CODE>AMBIGUOUS</CODE> in a
-     * ContentHandlerException when an ID does not
-     * uniquely identify a single content handler application.
+     * The reason is <CODE>AMBIGUOUS</CODE> in a ContentHandlerException when an
+     * ID does not uniquely identify a single content handler application.
      */
     public final static int AMBIGUOUS = 3;
 
     /**
-     * The reason is <code>CAPACITY_EXCEEDED</code> in a ContentHandlerException when 
-     * the implementation does not support longer IDs, or more actions, 
-     * more types, or more suffixes than the minimums and the application 
+     * The reason is <code>CAPACITY_EXCEEDED</code> in a ContentHandlerException
+     * when the implementation does not support longer IDs, or more actions,
+     * more types, or more suffixes than the minimums and the application
      * exceeds the minimums.
      */
     public final static int CAPACITY_EXCEEDED = 4;
-    
+
     /**
-     * Constructs a <code>ContentHandlerException</code> with a reason
-     * and error code.
-     * The error message string <code>reason</code> can later be
-     * retrieved by the
-     * {@link java.lang.Throwable#getMessage java.lang.Throwable.getMessage}
-     * method.
-     * @param reason the reason for the exception
-     * @param errcode the error code; one of 
-     *  {@link #NO_REGISTERED_HANDLER}, {@link #AMBIGUOUS},
-     *  or {@link #TYPE_UNKNOWN}
-     * @exception IllegalArgumentException if <code>errcode</code> is not
-     *  one of 
-     *  {@link #NO_REGISTERED_HANDLER}, {@link #AMBIGUOUS},
-     *  or {@link #TYPE_UNKNOWN}
+     * Constructs a <code>ContentHandlerException</code> with a reason and error
+     * code. The error message string <code>reason</code> can later be retrieved
+     * by the {@link java.lang.Throwable#getMessage java.lang.Throwable.getMessage} method.
+     * 
+     * @param reason
+     *            the reason for the exception
+     * @param errcode
+     *            the error code; one of {@link #NO_REGISTERED_HANDLER},
+     *            {@link #AMBIGUOUS}, {@link #TYPE_UNKNOWN} or {@link #CAPACITY_EXCEEDED}
+     * @exception IllegalArgumentException
+     *                if <code>errcode</code> is not one of
+     *                {@link #NO_REGISTERED_HANDLER}, {@link #AMBIGUOUS},
+     *                {@link #TYPE_UNKNOWN} or {@link #CAPACITY_EXCEEDED}
      */
     public ContentHandlerException(String reason, int errcode) {
-	super(reason);
-	if (errcode < NO_REGISTERED_HANDLER ||
-	    errcode > AMBIGUOUS) {
-	    throw new IllegalArgumentException();
-	}
-	this.errcode = errcode;
+        super(reason);
+        switch( errcode ){
+            case NO_REGISTERED_HANDLER:
+            case TYPE_UNKNOWN:
+            case AMBIGUOUS:
+            case CAPACITY_EXCEEDED:
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+        this.errcode = errcode;
     }
 
     /**
      * Returns the error code for the exception.
-     * @return the error code;  one of 
-     *  {@link #NO_REGISTERED_HANDLER}, {@link #AMBIGUOUS},
-     *  or {@link #TYPE_UNKNOWN}
+     * 
+     * @return the error code;
      */
     public int getErrorCode() {
-	return errcode;
+        return errcode;
     }
 }
