@@ -81,7 +81,7 @@ public class CGraphicsQ {
                 // We also test to see if the dirty region is wholely
                 // contained within another region
                 if (x >= region[0] && y >= region[1] &&                
-                    (x + w) <= (region[0] + region[1]) && 
+                    (x + w) <= (region[0] + region[2]) && 
                     (y + h) <= (region[1] + region[3])) 
                 {
                     return;                    
@@ -101,6 +101,19 @@ public class CGraphicsQ {
                             region[1] = y;
                         }
                         region[3] += h;
+                        return;
+                    } 
+                }
+
+                // Coalesce regions horizontally, for instance, body and scroll layers
+                if (y == region[1] && h == region[3]) {
+                    if ((region[0] + region[2]) == x ||
+                        (x + w) == region[0]) 
+                    {
+                        if (region[0] > x) {
+                            region[0] = x;
+                        }
+                        region[2] += w;
                         return;
                     } 
                 }

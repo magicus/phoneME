@@ -26,6 +26,8 @@
 
 package javax.microedition.lcdui;
 
+import java.util.Vector;
+
 /**
  * Provides simple 2D geometric rendering capability.
  *
@@ -614,6 +616,7 @@ public class Graphics {
      * @see #setColor(int, int, int)
      */
     public synchronized int getGreenComponent() {
+//        getDirtyRegions();
         return (rgbColor >> 8) & 0xff;
     }
 
@@ -641,6 +644,7 @@ public class Graphics {
      * @see #setGrayScale
      */
     public synchronized int getGrayScale() {
+//        enableDirtyRegions();
         return gray;
     }
 
@@ -1062,6 +1066,15 @@ public class Graphics {
     public  void drawLine(int x1, int y1, int x2, int y2) {
         isModified = true;
         drawLine0(x1, y1, x2, y2);
+
+/*
+        int x = (x1 <= x2) ? x1 : x2;
+        int y = (y1 <= y2) ? y1 : y2;
+        int width = (unsigned int)(x2 - x1) + 1;
+        int height = (unsigned int)(y2 - y1) + 1;
+        addDirtyRegion(x, y, width, height);
+*/
+        addDirtyLine(x1, y1, x2, y2);
     }
     private native void drawLine0(int x1, int y1, int x2, int y2);
 
@@ -1078,6 +1091,7 @@ public class Graphics {
     public  void fillRect(int x, int y, int width, int height) {
         isModified = true;
         fillRect0(x, y, width, height);
+        addDirtyRegion(x, y, width, height);
     }
     private native void fillRect0(int x, int y, int width, int height);
  
@@ -1097,6 +1111,7 @@ public class Graphics {
     public  void drawRect(int x, int y, int width, int height) {
         isModified = true;
         drawRect0(x, y, width, height);
+        addDirtyRegion(x, y, width, height);
     }
     private native void drawRect0(int x, int y, int width, int height);
 
@@ -1120,6 +1135,7 @@ public class Graphics {
                                      int arcWidth, int arcHeight) {
         isModified = true;
         drawRoundRect0(x, y, width, height, arcWidth, arcHeight);
+        addDirtyRegion(x, y, width, height);
     }
     private native void drawRoundRect0(int x, int y, int width, int height,
                                      int arcWidth, int arcHeight);
@@ -1139,8 +1155,9 @@ public class Graphics {
      */
     public  void fillRoundRect(int x, int y, int width, int height,
                                      int arcWidth, int arcHeight){
-        isModified =true;
+        isModified = true;
         fillRoundRect0(x, y, width, height, arcWidth, arcHeight);
+        addDirtyRegion(x, y, width, height);
     }
     private native void fillRoundRect0(int x, int y, int width, int height,
                                      int arcWidth, int arcHeight);
@@ -1195,6 +1212,9 @@ public class Graphics {
                                int startAngle, int arcAngle) {
         isModified = true;
         fillArc0(x, y, width, height, startAngle, arcAngle);
+        // The resulting arc covers an area width + 1 pixels wide by
+        // height + 1 pixels tall???
+        addDirtyRegion(x, y, width, height);
     }
     private native void fillArc0(int x, int y, int width, int height,
                                int startAngle, int arcAngle);
@@ -1245,6 +1265,9 @@ public class Graphics {
                                int startAngle, int arcAngle) {
         isModified = true;
         drawArc0(x, y, width, height, startAngle, arcAngle);
+        // The resulting arc covers an area width + 1 pixels wide by
+        // height + 1 pixels tall???
+        addDirtyRegion(x, y, width, height);
     }
     private native void drawArc0(int x, int y, int width, int height,
                                int startAngle, int arcAngle);
@@ -1265,6 +1288,12 @@ public class Graphics {
                                   int x, int y, int anchor) {
         isModified = true;
         drawString0(str, x, y, anchor);
+
+        int width = currentFont.stringWidth(str);
+        int height = currentFont.getHeight();
+        int[] xy = new int[] {x, y};
+        normalizeAnchor(xy, width, height, anchor);
+        addDirtyRegion(xy[0], xy[1], width, height);
     }
     private native void drawString0(java.lang.String str,
                                   int x, int y, int anchor);
@@ -1301,6 +1330,12 @@ public class Graphics {
                                      int x, int y, int anchor) {
         isModified = true;
         drawSubstring0(str, offset, len, x, y, anchor);
+
+        int width = currentFont.substringWidth(str, offset, len);
+        int height = currentFont.getHeight();
+        int[] xy = new int[] {x, y};
+        normalizeAnchor(xy, width, height, anchor);
+        addDirtyRegion(xy[0], xy[1], width, height);
     }
     private native void drawSubstring0(String str, int offset, int len,
                                      int x, int y, int anchor);
@@ -1322,6 +1357,12 @@ public class Graphics {
     public  void drawChar(char character, int x, int y, int anchor) {
         isModified = true;
         drawChar0(character, x, y, anchor);
+
+        int width = currentFont.charWidth(character);
+        int height = currentFont.getHeight();
+        int[] xy = new int[] {x, y};
+        normalizeAnchor(xy, width, height, anchor);
+        addDirtyRegion(xy[0], xy[1], width, height);
     }
     private native void drawChar0(char character, int x, int y, int anchor);
 
@@ -1357,6 +1398,12 @@ public class Graphics {
                                  int x, int y, int anchor) {
         isModified = true;
         drawChars0(data, offset, length, x, y, anchor);
+
+        int width = currentFont.charsWidth(data, offset, length);
+        int height = currentFont.getHeight();
+        int[] xy = new int[] {x, y};
+        normalizeAnchor(xy, width, height, anchor);
+        addDirtyRegion(xy[0], xy[1], width, height);
     }
     private native void drawChars0(char[] data, int offset, int length,
                                  int x, int y, int anchor);
@@ -1395,6 +1442,13 @@ public class Graphics {
         if (!render(image, x, y, anchor)) {
             throw new IllegalArgumentException("");
         }
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int[] xy = new int[] {x, y};
+        normalizeAnchor(xy, width, height, anchor);
+        addDirtyRegion(xy[0], xy[1], width, height);
+
     }
 
     /**
@@ -1507,6 +1561,10 @@ public class Graphics {
                           transform, x_dest, y_dest, anchor)) {
             throw new IllegalArgumentException("");
         }
+
+        int[] xy = new int[] {x_dest, y_dest};
+        normalizeAnchor(xy, width, height, anchor);
+        addDirtyRegion(xy[0], xy[1], width, height);
     }
 
     /**
@@ -1588,6 +1646,10 @@ public class Graphics {
             doCopyArea(x_src, y_src, width, height, 
                        x_dest, y_dest, anchor);
         }
+
+        int[] xy = new int[] {x_dest, y_dest};
+        normalizeAnchor(xy, width, height, anchor);
+        addDirtyRegion(xy[0], xy[1], width, height);
     }
 
     /**
@@ -1608,6 +1670,7 @@ public class Graphics {
                                     int x3, int y3) {
         isModified = true;
         fillTriangle0(x1, y1, x2, y2, x3, y3);
+        addDirtyTriangle(x1, y1, x2, y2, x3, y3);
     }
     private native void fillTriangle0(int x1, int y1,
                                     int x2, int y2,
@@ -1731,6 +1794,7 @@ public class Graphics {
                                boolean processAlpha) {
         isModified = true;
         drawRGB0(rgbData, offset, scanlength, x, y, width, height, processAlpha);
+        addDirtyRegion(x, y, width, height);
     }
     private native void drawRGB0(int[] rgbData, int offset, int scanlength,
                                int x, int y, int width, int height,
@@ -1755,9 +1819,415 @@ public class Graphics {
     public native int getDisplayColor(int color);
 
 
+    public void enableDirtyRegions() {
+        enableRegionTracking = true;
+        enableDebugTrace = true;
+
+        if (enableDebugTrace)
+           System.out.println("Dirty region tracking is enabled");
+    }
+
+    public boolean isDirty() {
+        return /*dirtyPoints ||*/ !dirtyRegions.isEmpty();
+    }
+
+    /**
+     * Get the queue of all areas of the screen to be refreshed
+     * (blitted to the screen). This method will empty the queue
+     * and return its contents. Each element in the array will be
+     * a 4 element int[] holding the x, y, w, and h of each refresh
+     * region
+     *
+     * @return the queue of all areas of the screen to be refreshed,
+     *         as an array of arrays
+     */
+    public Object[] getDirtyRegions() {
+        synchronized (dirtyRegions) {
+            // add the dirty line/triangle region if exists
+/*
+            if (dirtyPoints) {
+                addDirtyRegion(dirtyMinX, dirtyMinY,
+                    dirtyMaxX - dirtyMinX + 1, dirtyMaxY - dirtyMinY + 1);
+                dirtyPoints = false;
+            }
+*/
+            if (enableDebugTrace) {
+                System.out.println("Getting regions (" + dirtyRegions.size() + ")");
+                for (int i = 0; i < dirtyRegions.size(); i++) {
+                    int[] r = (int[])dirtyRegions.elementAt(i);
+                    System.out.println("reg x=" + r[0] + ", y=" + r[1] + ", w=" + r[2] + ", h=" + r[3]);
+                }
+            }
+
+            Object[] regs = new Object[dirtyRegions.size()];
+            dirtyRegions.copyInto(regs);
+            dirtyRegions.removeAllElements();
+
+            return regs;
+        }
+    }
+
+     /**
+     * Add the specified region to the queue of areas to be
+     * refreshed. That is, the region specified by the given
+     * coordinates represents a region that has been repainted
+     * and needs to be blitted to the display. The coordinates
+     * of the region should be in raw screen coordinates, that
+     * is, 0,0 would represent the topleft pixel on the screen.
+     *
+     * @param x the 'x' anchor coordinate of the region
+     * @param y the 'y' anchor coordinate of the region
+     * @param w the width of the region
+     * @param h the height of the region
+     */
+    private void addDirtyRegion(int x, int y, int w, int h) {
+        if (!enableRegionTracking) {
+            return;
+        }
+
+        if (enableDebugTrace)
+            System.out.print("!!!addDirtyRegion x=" + x + ", y=" + y + ", w=" + w + ", h=" + h + ": ");
+
+        // Check weither the region is empty
+        if (w == 0 || h == 0) {
+            return;
+        }
+
+        // Translate coordiantes
+        x += transX;
+        y += transY;
+ 
+        // Apply the clip region
+        if (clipped) {
+            // The clip region is empty
+            if ((clipX1 == clipX2) || (clipY1 == clipY2)) {
+                return;
+            }
+
+            int x2 = x + w;
+            int y2 = y + h;
+
+            if (clipX1 > x) {
+                x = clipX1;
+            }
+            if (clipX2 < x2) {
+                x2 = clipX2;
+            }
+            if (clipY1 > y) {
+                y = clipY1;
+            }
+            if (clipY2 < y2) {
+                y2 = clipY2;
+            }
+
+            // Check weither the intersection is empty
+            if ((x2 <= x) || (y2 <= y)) {
+                return;
+            }
+
+            w = x2 - x;
+            h = y2 - y;
+        }
+
+        synchronized (dirtyRegions) {
+            int[] region;
+            for (int i = 0; i < dirtyRegions.size(); i++) {
+                region = (int[])dirtyRegions.elementAt(i);
+                
+                // We test to see if we already have the dirty region
+                if (region[0] == x && region[1] == y &&
+                    region[2] == w && region[3] == h)
+                {
+                    if (enableDebugTrace)
+                        System.out.println("The region already exists");
+                    return;
+                }
+
+                // We also test to see if the dirty region is wholely
+                // contained within another region
+                if (x >= region[0] && y >= region[1] &&                
+                    (x + w) <= (region[0] + region[2]) && 
+                    (y + h) <= (region[1] + region[3])) 
+                {
+                    if (enableDebugTrace)
+                        System.out.println("The region contained within another region");
+                    return;                    
+                }
+
+                // Lastly, we do a special case whereby the region
+                // is congruent with a previous region. For instance,
+                // when changing screens, the title area will repaint,
+                // the body area will repaint, and the soft button
+                // area will repaint. All 3 areas are congruent and
+                // can be coalesced.
+                if (x == region[0] && w == region[2]) {
+                    if ((region[1] + region[3]) == y ||
+                        (y + h) == region[1]) 
+                    {
+                        if (region[1] > y) {
+                            region[1] = y;
+                        }
+                        region[3] += h;
+                        if (enableDebugTrace)
+                            System.out.println("The region was merged (top-bottom)");
+                        return;
+                    } 
+                }
+
+                // Coalesce regions horizontally, for instance, body and scroll layers
+                if (y == region[1] && h == region[3]) {
+                    if ((region[0] + region[2]) == x ||
+                        (x + w) == region[0]) 
+                    {
+                        if (region[0] > x) {
+                            region[0] = x;
+                        }
+                        region[2] += w;
+                        if (enableDebugTrace)
+                            System.out.println("The region was merged (left-right)");
+                        return;
+                    } 
+                }
+
+            }
+            dirtyRegions.addElement(new int[] {x, y, w, h});
+            if (enableDebugTrace)
+                System.out.println("New region was added: x=" + x + ", y=" + y + ", w=" + w + ", h=" + h);
+        }
+    }
+
+    private void addDirtyLine(int x1, int y1, int x2, int y2) {
+        if (enableDebugTrace)
+            System.out.println("!!!addDirtyLine x1=" + x1 + ", y1=" + y1 + ", x2=" + x2 + ", y2=" + y2);
+
+        int x, y, w, h;
+
+        if (x1 < x2) {
+          x = x1;
+          w = x2 - x1 + 1;
+        } else {
+          x = x2;
+          w = x1 - x2 + 1;
+        }
+
+        if (y1 < y2) {
+          y = y1;
+          h = y2 - y1 + 1;
+        } else {
+          y = y2;
+          h = y1 - y2 + 1;
+        }
+
+        addDirtyRegion(x, y, w, h);
+
+/*        
+        synchronized (dirtyRegions) {
+            if (!dirtyPoints) {
+                if (enableDebugTrace)
+                    System.out.println("dirty points are empty");
+                dirtyMinX = dirtyMaxX = x1;
+                dirtyMinY = dirtyMaxY = y1;
+                dirtyPoints = true;
+            }
+
+            if (x1 < dirtyMinX) {
+                dirtyMinX = x1;
+            } else if (x1 > dirtyMaxX){
+                dirtyMaxX = x1;
+            }
+            if (y1 < dirtyMinY) {
+                dirtyMinY = y1;
+            } else if (y1 > dirtyMaxY){
+                dirtyMaxY = y1;
+            }
+            if (x2 < dirtyMinX) {
+                dirtyMinX = x2;
+            } else if (x2 > dirtyMaxX){
+                dirtyMaxX = x2;
+            }
+            if (y2 < dirtyMinY) {
+                dirtyMinY = y2;
+            } else if (y2 > dirtyMaxY){
+                dirtyMaxY = y2;
+            }
+        }
+
+        if (enableDebugTrace)
+            System.out.println("!!!new  dirtyMinX=" + dirtyMinX + ", dirtyMinY=" + dirtyMinY + ", dirtyMaxX=" + dirtyMaxX + ", dirtyMaxY=" + dirtyMaxY);
+*/
+    }
+
+    private void addDirtyTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {
+        if (enableDebugTrace)
+            System.out.println("!!!addDirtyTriangle x1=" + x1 + ", y1=" + y1 + ", x2=" + x2 + ", y2=" + y2 + ", x3=" + x3 + ", y3=" + y3);
+
+        int x, y, w, h;
+
+        if (x1 < x2) {
+          if (x3 > x2) {
+            x = x1;
+            w = x3 - x1 + 1;
+          } else if (x3 < x1) {
+            x = x3;
+            w = x2 - x3 + 1;
+          } else {
+            x = x1;
+            w = x2 - x1 + 1;
+          }
+        } else {
+          if (x3 > x1) {
+            x = x2;
+            w = x3 - x2 + 1;
+          } else if (x3 < x2) {
+            x = x3;
+            w = x1 - x3 + 1;
+          } else {
+            x = x2;
+            w = x1 - x2 + 1;
+          }
+        }
+
+        if (y1 < y2) {
+          if (y3 > y2) {
+            y = y1;
+            h = y3 - y1 + 1;
+          } else if (y3 < y1) {
+            y = y3;
+            h = y2 - y3 + 1;
+          } else {
+            y = y1;
+            h = y2 - y1 + 1;
+          }
+        } else {
+          if (y3 > y1) {
+            y = y2;
+            h = y3 - y2 + 1;
+          } else if (y3 < y2) {
+            y = y3;
+            h = y1 - y3 + 1;
+          } else {
+            y = y2;
+            h = y1 - y2 + 1;
+          }
+        }
+
+        addDirtyRegion(x, y, w, h);
+
+
+/*
+        synchronized (dirtyRegions) {
+            if (!dirtyPoints) {
+                if (enableDebugTrace)
+                    System.out.println("dirty points are empty");
+                dirtyMinX = dirtyMaxX = x1;
+                dirtyMinY = dirtyMaxY = y1;
+                dirtyPoints = true;
+            }
+
+            if (x1 < dirtyMinX) {
+                dirtyMinX = x1;
+            } else if (x1 > dirtyMaxX){
+                dirtyMaxX = x1;
+            }
+            if (y1 < dirtyMinY) {
+                dirtyMinY = y1;
+            } else if (y1 > dirtyMaxY){
+                dirtyMaxY = y1;
+            }
+            if (x2 < dirtyMinX) {
+                dirtyMinX = x2;
+            } else if (x2 > dirtyMaxX){
+                dirtyMaxX = x2;
+            }
+            if (y2 < dirtyMinY) {
+                dirtyMinY = y2;
+            } else if (y2 > dirtyMaxY){
+                dirtyMaxY = y2;
+            }
+            if (x3 < dirtyMinX) {
+                dirtyMinX = x3;
+            } else if (x3 > dirtyMaxX){
+                dirtyMaxX = x3;
+            }
+            if (y3 < dirtyMinY) {
+                dirtyMinY = y3;
+            } else if (y3 > dirtyMaxY){
+                dirtyMaxY = y3;
+            }
+        }
+
+        if (enableDebugTrace)
+            System.out.println("!!!new  dirtyMinX=" + dirtyMinX + ", dirtyMinY=" + dirtyMinY + ", dirtyMaxX=" + dirtyMaxX + ", dirtyMaxY=" + dirtyMaxY);
+*/
+    }
+
+    /**
+     * Normalizes anchor coordinates to top-left coordinates.
+     *
+     * @return true if anchor is valid, otherwise false.
+     */
+    private boolean normalizeAnchor(int[] xy, int width, int height,
+                                    int anchor) {
+        /* optimize for most frequent case */
+        if (anchor == (TOP | LEFT) || anchor == 0) {
+            return true;
+        }
+
+        if ((anchor & 0x7F) != anchor) {
+            return false;
+        }
+
+        switch (anchor & (LEFT | RIGHT | HCENTER)) {
+        case LEFT:
+          break;
+      
+        case RIGHT:
+          xy[0] -= width;
+          break;
+      
+        case HCENTER:
+          xy[0] -= (width >> 1);
+          break;
+    
+        default:
+          return false;
+        }
+    
+        switch (anchor & (TOP | BOTTOM | VCENTER | BASELINE)) {
+        case TOP:
+          break;
+      
+        case BOTTOM:
+          xy[1] -= height;
+          break;
+      
+        case VCENTER:
+          xy[1] -= (height >> 1);
+          break;
+
+        case BASELINE:
+          xy[1] -= currentFont.getBaselinePosition();
+          break;
+    
+        default:
+          return false;
+        }
+
+        return true;
+    }
+
     // private implementation //
 
     public boolean isModified;
+
+    private Vector dirtyRegions = new Vector();
+
+//    private int dirtyMinX, dirtyMinY, dirtyMaxX, dirtyMaxY;
+//    private boolean dirtyPoints;
+
+    private boolean enableDebugTrace = false;
+    private boolean enableRegionTracking = false;
+
 
     /**
      * The clip values are in the translated

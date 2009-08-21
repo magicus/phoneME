@@ -46,9 +46,9 @@ public class OpenGLEnvironment{
      *
      */
     public boolean flushOpengGL(DisplayContainer container, Graphics bindTarget) {
-        boolean retval = false;
+        // Workaround to turn on dirty region tracking for GL-enabled Canvas only 
+        bindTarget.enableDirtyRegions();
 
-        int regionArray[];
         if (!hasBackingSurface(bindTarget, bindTarget.getClipWidth(),
                                bindTarget.getClipHeight())) {
            int displayId = NativeForegroundState.getState();
@@ -61,10 +61,11 @@ public class OpenGLEnvironment{
                      * So, we'll have to force a flush of the whole screen to be
                      * safe
                      */
+/*
                      if (bindTarget.isModified) {
                          bindTarget.isModified = false;
                          regionArray = new int[4];
-                         regionArray[0] = 0; 
+                         regionArray[0] = 0;
                          regionArray[1] = 0;
                          regionArray[2] = bindTarget.getClipWidth();
                          regionArray[3] = bindTarget.getClipHeight();
@@ -74,8 +75,27 @@ public class OpenGLEnvironment{
                      } else {
                          return false;
                      }
+*/
+
+                    if (bindTarget.isDirty()) {
+                        Object[] dirtyRects = bindTarget.getDirtyRegions();
+                        int[] rectArray = new int[dirtyRects.length*4];
+                        int[] curRect;
+                        for (int i=0; i < dirtyRects.length; i++) {
+                            curRect = (int[])dirtyRects[i];
+                            rectArray[i]=curRect[0];
+                            rectArray[i+1]=curRect[1];
+                            rectArray[i+2]=curRect[2];
+                            rectArray[i+3]=curRect[3];
+                        }
+                        System.out.println("flushOpenGL: flushing Canvas's dirty regions (" + dirtyRects.length + ")");
+                        flushOpenGL0(rectArray, dirtyRects.length, displayId);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
-                regionArray = new int[dirtyRegions.length*4];
+                int[] regionArray = new int[dirtyRegions.length*4];
                 int[] curRegion;
                 for (int i=0; i < dirtyRegions.length; i++) {
                     curRegion = (int[])dirtyRegions[i];
@@ -92,7 +112,8 @@ public class OpenGLEnvironment{
     }
 
     public boolean needToFlushOpenGL(Graphics bindTarget) {
-        return bindTarget.isModified;
+//        return bindTarget.isModified;
+        return bindTarget.isDirty(); 
     }
     
     public void createPbufferSurface(Image img) {
