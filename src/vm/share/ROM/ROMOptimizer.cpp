@@ -1317,16 +1317,15 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
     for (SystemClassStream st; st.has_next_optimizable();) {
       InstanceClass::Raw klass = st.next();
       ObjArray::Raw methods = klass().methods();
-
       const int len = methods().length();
       for (int i = 0; i < len; i++) {
         Method::Raw method = methods().obj_at(i);      
         if (method.not_null() && is_invocation_closure_root(&klass, &method)) {
           if (klass().is_interface()) {
             mic.add_interface_method(&method);
-            continue;
+          } else {
+            mic.add_virtual_method(&method);
           }
-          mic.add_virtual_method(&method);
         }
       }
     }
