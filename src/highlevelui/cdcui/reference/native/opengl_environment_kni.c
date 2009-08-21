@@ -56,6 +56,7 @@ extern int midpGL_createPbufferSurface();
 extern void midpGL_flushPbufferSurface(int surfaceId, javacall_pixel *buffer,
                                        int x, int y, int width, int height);
 extern void midpGL_setSoftButtonHeight(int nSoftButtonHeight);                                
+extern void midpGL_setSoftButtonBarVisible(boolean visible);                                
 /**
  *
  * Calls openGL function to prepare for switching from lcdui rendering
@@ -311,5 +312,12 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_setSoftButtonHeight0) {
     jint softButtonHeight = KNI_GetParameterAsInt(1);
     midpGL_setSoftButtonHeight(softButtonHeight);
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_OpenGLEnvironment_setSoftButtonBarVisible0) {
+    jboolean softButtonBarVisible = KNI_GetParameterAsBoolean(1);
+    midpGL_setSoftButtonBarVisible(softButtonBarVisible);
     KNI_ReturnVoid();
 }

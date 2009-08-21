@@ -156,6 +156,10 @@ public class OpenGLEnvironment{
     public boolean isOpenGLEnabled() {
         return useOpenGL;
     }
+    
+    public void setSoftButtonBarVisible(boolean visible) {
+        setSoftButtonBarVisible0(visible);
+    }
 
     
     private native void flushOpenGL0(int[] regionArray,
@@ -173,4 +177,5 @@ public class OpenGLEnvironment{
     private native void raiseOpenGL0();
     private native void lowerOpenGL0();
     private native void switchColorDepth0(int param);
+    private native void setSoftButtonBarVisible0(boolean visible);
 }

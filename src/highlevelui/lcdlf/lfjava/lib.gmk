@@ -65,6 +65,11 @@ $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImp
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.jpp
 	@$(call runjpp,$^,$@)
 
+$(GENERATED_DIR)/classes/com/sun/midp/chameleon/MIDPWindow.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/MIDPWindow.jpp
+	@$(call runjpp,$^,$@)
+
+$(GENERATED_DIR)/classes/com/sun/midp/chameleon/layers/SoftButtonLayer.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/SoftButtonLayer.jpp
+	@$(call runjpp,$^,$@)
 
 # Java files for the library
 #
@@ -101,7 +106,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CGraphicsUtil.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/ChamDisplayTunnel.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/SubMenuCommand.java \
-    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/MIDPWindow.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/MIDPWindow.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/MidpNullWindow.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/InputMode.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/BasicInputMode.java \
@@ -175,7 +180,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/ScrollArrowLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/ScrollBarLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/ScrollListener.java \
-    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/SoftButtonLayer.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/layers/SoftButtonLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PopupLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/ScrollablePopupLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/MenuLayer.java \

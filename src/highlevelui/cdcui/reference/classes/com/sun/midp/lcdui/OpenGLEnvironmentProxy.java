@@ -135,6 +135,10 @@ public class OpenGLEnvironmentProxy{
     public void setSoftButtonHeight(int height) {
         env.setSoftButtonHeight(height);
     }
+    
+    public void setSoftButtonBarVisible(boolean visible) {
+        env.setSoftButtonBarVisible(visible);
+    }
 
     public boolean isOpenGLEnabled() {
         return env.isOpenGLEnabled();

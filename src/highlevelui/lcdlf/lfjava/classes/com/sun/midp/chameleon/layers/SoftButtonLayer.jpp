@@ -397,6 +397,13 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         } else {
             super.setVisible(true);
         }
+
+        // #ifdef ENABLE_OPENGL  
+        com.sun.midp.lcdui.OpenGLEnvironmentProxy env = com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+        if (env.isOpenGLEnabled()) {
+            env.setSoftButtonBarVisible(this.visible);
+        }
+        // #endif
     }
 
     /**

@@ -884,6 +884,13 @@ public class MIDPWindow extends CWindow {
             buttonLayer.visible = false;
         }
 
+        // #ifdef ENABLE_OPENGL  
+        com.sun.midp.lcdui.OpenGLEnvironmentProxy env = com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+        if (env.isOpenGLEnabled()) {
+            env.setSoftButtonBarVisible(buttonLayer.visible);
+        }
+        // #endif
+
         for (int i = 0; i < LAST_LAYER; i++) {
             CLayer l = mainLayers[i];
             if (l != null && l.visible) {
