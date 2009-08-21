@@ -503,7 +503,7 @@ static void close_thread( void* param )
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
                                      p->appId,
                                      p->playerId, 
-                                     JAVACALL_OK, (void*)JAVACALL_OK );
+                                     JAVACALL_OK, NULL );
 }
 
 static javacall_result dshow_close(javacall_handle handle)
@@ -563,7 +563,7 @@ static void dealloc_thread( void* param )
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
                                      p->appId,
                                      p->playerId, 
-                                     JAVACALL_OK, (void*)JAVACALL_OK );
+                                     JAVACALL_OK, NULL );
 }
 
 static javacall_result dshow_deallocate(javacall_handle handle)
@@ -613,8 +613,8 @@ static void realize_thread( void* param )
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
                                      p->appId,
                                      p->playerId, 
-                                     JAVACALL_OK, 
-                                     (void*)(ok ? JAVACALL_OK : JAVACALL_FAIL) );
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL), 
+                                     NULL );
 }
 
 static javacall_result dshow_realize(javacall_handle handle, 
@@ -756,8 +756,8 @@ static void prefetch_thread( void* param )
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
                                      p->appId,
                                      p->playerId,
-                                     JAVACALL_OK,
-                                     (void*)(ok ? JAVACALL_OK : JAVACALL_FAIL) );
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
+                                     NULL );
 }
 
 static javacall_result dshow_prefetch(javacall_handle handle)
@@ -788,8 +788,8 @@ static void starter_thread( void* param )
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
                                      p->appId,
                                      p->playerId, 
-                                     JAVACALL_OK, 
-                                     (void*)(ok ? JAVACALL_OK : JAVACALL_FAIL) );
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL), 
+                                     NULL );
 }
 
 static javacall_result dshow_start(javacall_handle handle)
@@ -823,8 +823,8 @@ static void stopper_thread( void* param )
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
                                      p->appId,
                                      p->playerId,
-                                     JAVACALL_OK,
-                                     (void*)(ok ? JAVACALL_OK : JAVACALL_FAIL) );
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
+                                     NULL );
 }
 
 static javacall_result dshow_stop(javacall_handle handle)

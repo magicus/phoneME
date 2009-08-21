@@ -616,7 +616,7 @@ static javacall_result audio_qs_close(javacall_handle handle){
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
                                      h->appId,
                                      h->playerId, 
-                                     JAVACALL_OK, (void*)JAVACALL_OK );
+                                     JAVACALL_OK, NULL );
 
     return r;
 }
@@ -691,7 +691,7 @@ static javacall_result audio_qs_deallocate(javacall_handle handle){
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK,
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -794,7 +794,7 @@ static javacall_result audio_qs_prefetch(javacall_handle handle){
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK,
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     h->state = PL135_PREFETCHED;
     return JAVACALL_OK;
@@ -818,7 +818,7 @@ static javacall_result audio_qs_start(javacall_handle handle){
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     //printf( "...audio_start: h=0x%08X\n", (int)handle);
     return JAVACALL_OK;
@@ -839,7 +839,7 @@ static javacall_result audio_qs_stop(javacall_handle handle){
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -927,7 +927,7 @@ static javacall_result audio_qs_data_written(javacall_handle handle,
                                          h->appId,
                                          h->playerId, 
                                          JAVACALL_OK, 
-                                         (void*)JAVACALL_OK );
+                                         NULL );
 
         *new_request = JAVACALL_FALSE;
     }

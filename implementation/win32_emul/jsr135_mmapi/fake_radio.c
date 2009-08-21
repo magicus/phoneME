@@ -73,7 +73,7 @@ static javacall_result fake_radio_close(javacall_handle handle){
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -97,7 +97,7 @@ static javacall_result fake_radio_realize(javacall_handle handle,
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -110,7 +110,7 @@ static javacall_result fake_radio_prefetch(javacall_handle handle)
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -123,7 +123,7 @@ static javacall_result fake_radio_deallocate(javacall_handle handle)
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -136,7 +136,7 @@ static javacall_result fake_radio_start(javacall_handle handle){
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -149,7 +149,7 @@ static javacall_result fake_radio_stop(javacall_handle handle){
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }

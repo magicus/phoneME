@@ -201,7 +201,7 @@ static javacall_result fake_camera_close(javacall_handle handle)
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
     return JAVACALL_OK;
 }
 
@@ -222,7 +222,7 @@ static javacall_result fake_camera_deallocate(javacall_handle handle)
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
     return JAVACALL_OK;
 }
 
@@ -236,7 +236,7 @@ static javacall_result fake_camera_realize(javacall_handle handle,
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
     return JAVACALL_OK;
 }
 
@@ -249,7 +249,7 @@ static javacall_result fake_camera_prefetch(javacall_handle handle)
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -266,7 +266,7 @@ static javacall_result fake_camera_start(javacall_handle handle)
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
 
     return JAVACALL_OK;
 }
@@ -284,7 +284,7 @@ static javacall_result fake_camera_stop(javacall_handle handle)
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
+                                     NULL );
     return JAVACALL_OK;
 }
 
