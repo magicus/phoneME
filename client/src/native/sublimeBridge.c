@@ -63,6 +63,7 @@ typedef struct _BUFFER_POOL {
     jmethodID midFreeBuffer;
 } BUFFER_POOL;
 
+static MUTEX_HANDLE stopProcessMutex; 
 static int stopProcess = 0;
 static BUFFER_POOL * bufferPool;
 
@@ -193,6 +194,7 @@ static void process(JNIEnv *env, jclass classSublime) {
 
 JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(JNIEnv *e, jclass clz, jbyteArray jarr) {
     int size = (*e)->GetArrayLength(e, jarr);
+    int cancel;
     int sharedBufferSize;
     uint32_t res_thread_id, resultSize; 
 
@@ -213,23 +215,33 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(JNIEnv *e, jclass 
     }
 
     returnSharedBuffer->lock(returnSharedBuffer); 
-    sharedBufferSize = returnSharedBuffer->getBufferSize(returnSharedBuffer); 
-    /* Result buffer format: 
-     * 4 bytes  - C thread ID
-     * 4 bytes  - size of message(not including the first 8 bytes) 
-     * the rest - the result data
-     */
-    (*e)->GetByteArrayRegion(e, jarr,0,size,buf); 
-    resultSize = ntohl(*((uint32_t *)buf + 1));
-    res_thread_id = ntohl(*((uint32_t *) buf));
-    returnSharedBuffer->write(returnSharedBuffer, (char*)buf+FIELDS_LENGTH, 
-                              resultSize);
-    returnSharedBuffer->setID(returnSharedBuffer, res_thread_id); 
-    BufferPool_freeBuffer(e, bufferPool, jarr);
-    /* notify the CVM process that a result has been sent, and wait for ack */ 
-    LimeSetEvent(event2);
-    WaitForEvent(event3); 
-    returnSharedBuffer->reset(returnSharedBuffer); 
+
+    WaitForMutex(stopProcessMutex);
+    cancel = stopProcess;
+    LimeReleaseMutex(stopProcessMutex); 
+
+    if (!cancel) {
+        sharedBufferSize = 
+                returnSharedBuffer->getBufferSize(returnSharedBuffer); 
+        /* Result buffer format: 
+         * 4 bytes  - C thread ID
+         * 4 bytes  - size of message(not including the first 8 bytes) 
+         * the rest - the result data
+         */
+        (*e)->GetByteArrayRegion(e, jarr,0,size,buf); 
+        resultSize = ntohl(*((uint32_t *)buf + 1));
+        res_thread_id = ntohl(*((uint32_t *) buf));
+        returnSharedBuffer->write(returnSharedBuffer, (char*)buf+FIELDS_LENGTH, 
+                                  resultSize);
+        returnSharedBuffer->setID(returnSharedBuffer, res_thread_id); 
+        BufferPool_freeBuffer(e, bufferPool, jarr);
+        /* 
+         * notify the CVM process that a result has been sent, and wait for ack 
+         */ 
+        LimeSetEvent(event2);
+        WaitForEvent(event3); 
+        returnSharedBuffer->reset(returnSharedBuffer); 
+    }
 
     returnSharedBuffer->unlock(returnSharedBuffer);  
     /* for better performance: release CPU to allow other threads to lock returnSharedBuffer */ 
@@ -292,6 +304,11 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_process(JNIEnv *env, jclass clz
     free(names[0]);
     free(names[1]);
 
+    stopProcessMutex = LimeCreateMutex(NULL, FALSE, NULL);
+    if (stopProcessMutex == NULL) {
+        sublimeBridgeFatal("Could not create mutex\n");  
+    }
+
     if (initEvents() == -1) {
         sublimeBridgeFatal("Could not initialize events\n");  
     }
@@ -306,16 +323,26 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_process(JNIEnv *env, jclass clz
 
     /* enter the process requests loop */  
     process(env, clz); 
-
-    BufferPool_destroy(env, bufferPool);
-
-    DeleteSharedBuffer(callSharedBuffer);
-    DeleteSharedBuffer(returnSharedBuffer);
 }
 
 JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_stopProcess(JNIEnv *env, 
                                                              jclass clz) {
+    WaitForMutex(stopProcessMutex);
     stopProcess = 1;
+    LimeReleaseMutex(stopProcessMutex); 
+    
     LimeSetEvent(event0);
+    LimeSetEvent(event3); 
 }
 
+JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_cleanup(JNIEnv *env, 
+                                                         jclass clz) {
+    BufferPool_destroy(env, bufferPool);
+    
+    /* destroy events *
+    
+    /* destroy stopProcessMutex */
+
+    DeleteSharedBuffer(callSharedBuffer);
+    DeleteSharedBuffer(returnSharedBuffer);
+}

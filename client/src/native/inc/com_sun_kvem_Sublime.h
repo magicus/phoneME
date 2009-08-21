@@ -50,6 +50,22 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_process
 
 /*
  * Class:     com_sun_kvem_Sublime
+ * Method:    stopProcess
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_stopProcess
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_sun_kvem_Sublime
+ * Method:    cleanup
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_cleanup
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_sun_kvem_Sublime
  * Method:    getSublimeProcessId
  * Signature: ()I
  */
