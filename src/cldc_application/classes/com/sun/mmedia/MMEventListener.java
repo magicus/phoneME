@@ -164,7 +164,7 @@ class MMEventListener implements EventListener {
             break;
 
         case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
-            long time = ( long )nevt.intParam2;
+            long time = ( long )nevt.intParam2 * 1000;
             p = HighLevelPlayer.get(nevt.intParam1);
             if (p != null) {
                 p.notifyMediaTimeSet(time);
