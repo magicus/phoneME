@@ -507,6 +507,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         final Exception[] exc = new Exception[1];
         doSynchronously(new SynchronousAction() {
             public Object run() throws Throwable {
+                videoThread = null;
                 doStop0();
                 return null;
             }
@@ -575,6 +576,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     protected void doClose() {
         doSynchronously(new SynchronousAction() {
             public Object run() throws Throwable {
+                videoThread = null;
                 doClose0();
                 return null;
             }
@@ -844,9 +846,10 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // The interface VideoSource method implementations
     // -------------------------------------------------
     
-    private static Object videoSync = new Object();
-    private static boolean videoBusy = false;
+    private Object videoSync = new Object();
+    private boolean videoBusy = false;
     private static final int VIDEO_SYNC_TIMEOUT = 15000;
+    private Thread videoThread = null;
     
     private abstract class SynchronousAction {
         public abstract Object run() throws Throwable;
@@ -855,6 +858,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     }
     
     private Object doSynchronously(SynchronousAction todo) {
+        return doSynchronously(todo, false);
+    }
+    private Object doSynchronously(SynchronousAction todo, boolean threadCheck) {
         Object result = null;
         Throwable thr = null;
         if (videoControl == null || !getOwner().isCapturePlayer()) {
@@ -876,6 +882,16 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         }
         synchronized (videoSync) {
             do {
+                if (threadCheck && videoThread != null) {
+                    if (videoThread != Thread.currentThread()) {
+                        try {
+                            result = todo.onTimeout();
+                        } catch (Throwable e) {
+                            thr = e;
+                        }
+                        break;
+                    }
+                }
                 if (videoBusy) {
                     try {
                         videoSync.wait(VIDEO_SYNC_TIMEOUT);
@@ -934,6 +950,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         final Exception[] exc = new Exception[1];
         result =  (byte[]) doSynchronously(new SynchronousAction() {
             public Object run() throws Throwable {
+                videoThread = Thread.currentThread();
                 return getVideoSnapshot0(imageType);
             }
             public void onException(Exception e) {
@@ -941,9 +958,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             }
             public Object onTimeout() throws Throwable {
                 System.out.println("getVideoSnapshot: sync timeout");
-                throw new MediaException("Synchronization timeout");
+                return null;
             }
-        });
+        }, true);
         
         if (exc[0] != null && exc[0] instanceof MediaException) {
             throw (MediaException) exc[0];
@@ -955,6 +972,10 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     {
         byte [] ret = null;
         getOwner().checkSnapshotPermission();
+        if (getOwner().getState() != Player.STARTED || !videoControl.getVisible()) {
+            System.out.println("Player is not started or invisible");
+            return null;
+        }
         int hNative = getOwner().getNativeHandle();
         try {
             synchronized ( snapshotLock )
@@ -1011,6 +1032,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     {
         return ((Boolean) doSynchronously(new SynchronousAction() {
             public Object run() throws Throwable {
+                if (!visible) {
+                    videoThread = null;
+                }
                 return new Boolean(nSetVisible( getOwner().getNativeHandle(), visible ));
             }
             public Object onTimeout() throws Throwable {

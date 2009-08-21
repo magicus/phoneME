@@ -400,6 +400,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             source.setVideoVisible(visible);
         }
     }
+    
+    boolean getVisible() {
+        return visible;
+    }
 
     /** 
      * Sets video display mode to full screen or normal. 
