@@ -64,6 +64,12 @@ class ImageDataFactory implements AbstractImageDataFactory {
     private static final byte[] jpegHeader2 = new byte[] {
          (byte)0xff, (byte)0xd8, (byte)0xff, (byte)0xe1
     };
+    /**
+     * Thumbnail JPEG Header Data
+     */
+    private static final byte[] jpegHeader3 = new byte[] {
+         (byte)0xff, (byte)0xd8, (byte)0xff, (byte)0xdb
+    };
 
     /**
      * RAW Header Data
@@ -696,6 +702,10 @@ class ImageDataFactory implements AbstractImageDataFactory {
         } else if (headerMatch(jpegHeader2, imageBytes,
                                imageOffset, imageLength)) {
             // image type is JPEG EXIF
+            decodeJPEG(imageData, imageBytes, imageOffset, imageLength);
+        } else if (headerMatch(jpegHeader3, imageBytes,
+                               imageOffset, imageLength)) {
+            // image type is thumbnail JPEG
             decodeJPEG(imageData, imageBytes, imageOffset, imageLength);
         } else if (headerMatch(rawHeader, imageBytes,
                                imageOffset, imageLength)) {
