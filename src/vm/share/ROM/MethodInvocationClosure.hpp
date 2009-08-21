@@ -30,8 +30,9 @@ class MethodInvocationClosure {
 public:
   void initialize(JVM_SINGLE_ARG_TRAPS);
   
-  void add_method(Method* method);
-  void add_interface_method(Method* method);
+  bool add_method           (Method* method);
+  void add_interface_method (Method* method);
+  void add_virtual_method   (Method* method);
 
   bool contains(Method* method) const {
     const juint len = juint(_methods.length());

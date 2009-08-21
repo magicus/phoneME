@@ -47,7 +47,8 @@ public:
   virtual void fast_invoke_virtual(int index JVM_TRAPS);
   virtual void fast_invoke_virtual_final(int index JVM_TRAPS);
 
-  //interpreteur put fast_invoke_virtual_final not only for 
+private:
+  //interpreter put fast_invoke_virtual_final not only for 
   //static methods but also for final methods of Object class!
   void check_uncommon_or_static_method(const int index) const {
     ConstantPool::Raw cp = method()->constants();
@@ -56,31 +57,29 @@ public:
     }
   }
   
-  void check_virtual(const int index) const;
-
-  void check_static(const int index) const {
-    ConstantPool::Raw cp = method()->constants();      
-      if (cp().tag_at(index).is_resolved_static_method()) {
-        Method::Raw m = cp().resolved_static_method_at(index);       
-        _owner->add_method(&m);
-      } else {
-        // This could be an element we failed to resolve 
-        // when ROMizing an application.
-        if (!PostponeErrorsUntilRuntime) {
-          SHOULD_NOT_REACH_HERE();
-        } else {
-          GUARANTEE(cp().tag_at(index).is_method(), "Sanity");
-          // The class must be marked as unverified or non-optimizable, 
-          // since it contains an unresolved entry at this point.
-#ifdef AZZERT
-          InstanceClass::Raw klass = method()->holder();
-          GUARANTEE(!klass().is_verified() || !klass().is_optimizable(), 
-                    "Sanity");
-#endif
-        }
-      }
-  }
+  void check_virtual    (const int index) const;
+  void check_unresolved (const int index) const;
+  void check_static     (const int index) const;
 };
+
+void BytecodeAnalyzeClosure::check_unresolved(const int index) const {
+  // This could be an element we failed to resolve 
+  // when ROMizing an application.
+  if (!PostponeErrorsUntilRuntime) {
+    SHOULD_NOT_REACH_HERE();
+  } else {
+    //The following GUARANTEE could trigger if the class is a bogus
+    // TCK class and we want to postpone the error until runtime so
+    // we have commented it out.
+    // GUARANTEE(cp.tag_at(index).is_method(), "Sanity");
+    // The class must be marked as unverified or non-optimizable, 
+    // since it contains an unresolved entry at this point.
+#ifdef AZZERT
+    InstanceClass::Raw klass = method()->holder();
+    GUARANTEE(!klass().is_verified() || !klass().is_optimizable(), "Sanity");
+#endif
+  }
+}
 
 void BytecodeAnalyzeClosure::check_virtual(const int index) const {
   ConstantPool::Raw cp = method()->constants();
@@ -90,24 +89,25 @@ void BytecodeAnalyzeClosure::check_virtual(const int index) const {
     InstanceClass::Raw klass = Universe::class_from_id(class_id);
     ClassInfo::Raw info = klass().class_info();
     Method::Raw m = info().vtable_method_at(vtable_index);
-    _owner->add_method(&m);
+    _owner->add_virtual_method(&m);
   } else {
-    // This could be an element we failed to resolve 
-    // when ROMizing an application.
-    if (!PostponeErrorsUntilRuntime) {
-      SHOULD_NOT_REACH_HERE();
-    } else {
-      //The following GUARANTEE could trigger if the class is a bogus
-      // TCK class and we want to postpone the error until runtime so
-      // we have commented it out.
-      // GUARANTEE(cp.tag_at(index).is_method(), "Sanity");
-      // The class must be marked as unverified or non-optimizable, 
-      // since it contains an unresolved entry at this point.
-#ifdef AZZERT
-      InstanceClass::Raw klass = method()->holder();
-      GUARANTEE(!klass().is_verified() || !klass().is_optimizable(), "Sanity");
-#endif
-    }
+    check_unresolved(index);
+  }
+}
+
+void BytecodeAnalyzeClosure::check_static(const int index) const {
+  ConstantPool::Raw cp = method()->constants();      
+  if (cp().tag_at(index).is_resolved_static_method()) {
+    Method::Raw m = cp().resolved_static_method_at(index);
+    // Some invocations of a virtual method can be optimized by interpreter
+    // to use a faster bytecode. If not all invocations of the methid are
+    // optimized && such a bytecode is visited before a virtual invocation
+    // of the method, the method would not be processed as virtual. So here
+    // we always process virtual methods as virtual regardless of
+    // the invocation bytecode.
+    _owner->add_virtual_method(&m);
+  } else {
+    check_unresolved(index);
   }
 }
 
@@ -194,7 +194,7 @@ int MethodInvocationClosure::hashcode_for_method(Method *method) {
   return (hashcode_for_symbol(&name) ^ hashcode_for_symbol(&sig));
 }
 
-void MethodInvocationClosure::add_method(Method* method) {
+bool MethodInvocationClosure::add_method(Method* method) {
   {
     const juint len = juint(_methods.length());
     const juint start = juint(hashcode_for_method(method)) % len;
@@ -202,7 +202,7 @@ void MethodInvocationClosure::add_method(Method* method) {
     for (juint i=start; ;) {
       Method::Raw m = _methods.obj_at(i);
       if (m.equals(method)) {
-        return;
+        return false;
       }
       if (m.is_null()) {
         // add this method
@@ -224,40 +224,57 @@ void MethodInvocationClosure::add_method(Method* method) {
     ba.initialize(method);
 
     SETUP_ERROR_CHECKER_ARG;
-    method->iterate(0, method->code_size(), &ba JVM_CHECK);
+    method->iterate(0, method->code_size(), &ba JVM_CHECK_0);
   }
 
-  InstanceClass::Raw holder = method->holder();
+  return true;
+}
 
-  {
-    const int vindex = method->vtable_index(); 
-    if (vindex > -1) {
-      // Find all subclasses of the method class and
-      // add methods with the same index in vtable
-      for (SystemClassStream st; st.has_next();) {
-        InstanceClass::Raw klass = st.next();
-        if (klass().is_strict_subclass_of(&holder)) {
-          ClassInfo::Raw info = klass().class_info();
-          GUARANTEE(vindex < info().vtable_length(), "sanity");
+void MethodInvocationClosure::add_virtual_method(Method* method) {
+  if (!add_method(method)) {
+    return;
+  }
 
-          Method::Raw m = info().vtable_method_at(vindex);
-          // Filter out the frequent case of method inheritance
-          if (!m.equals(method)) {
-            add_method(&m);
-          }
-        }
-      }
-    }
+  const int vindex = method->vtable_index();
+  if (vindex < 0) {
+    // Not a virtual method
+    return;
   }
 
   // If this method belongs to an interface,
   // consider all implementation methods reachable.
-  if (holder().is_interface()) {
-    add_interface_method(method);
+  InstanceClass::Raw holder = method->holder();
+  GUARANTEE(!holder().is_interface(), "Sanity");
+
+  // Find all subclasses of the method class and
+  // add methods with the same index in vtable
+  for (SystemClassStream st; st.has_next();) {
+    InstanceClass::Raw klass = st.next();
+    if (klass().is_strict_subclass_of(&holder)) {
+      ClassInfo::Raw info = klass().class_info();
+      GUARANTEE(vindex < info().vtable_length(), "sanity");
+
+      Method::Raw m = info().vtable_method_at(vindex);
+      // Filter out the frequent case of method inheritance
+      if (!m.equals(method)) {
+        add_method(&m);
+      }
+    }
   }
 }
 
 void MethodInvocationClosure::add_interface_method(Method* method) {
+#ifdef AZZERT
+  {
+    InstanceClass::Raw holder = method->holder();
+    GUARANTEE(holder().is_interface(), "Sanity");
+  }
+#endif
+
+  if (!add_method(method)) {
+    return;
+  }
+
   Symbol::Raw method_name = method->name();
   Symbol::Raw method_sig = method->signature();
 

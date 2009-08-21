@@ -632,11 +632,10 @@ ReturnOop InstanceClass::find_method(ObjArray* class_methods, Symbol* name,
     if (m != NULL && m->match(name_obj, sig_obj)) {
       if (!non_static_only) {
         return m;
-      } else {
-        Method::Raw method = m;
-        if (!method().is_static()) {
-          return m;
-        }
+      }
+      Method::Raw method = m;
+      if (!method().is_static()) {
+        return m;
       }
     }
   }

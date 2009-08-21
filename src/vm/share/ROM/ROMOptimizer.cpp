@@ -1322,7 +1322,11 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
       for (int i = 0; i < len; i++) {
         Method::Raw method = methods().obj_at(i);      
         if (method.not_null() && is_invocation_closure_root(&klass, &method)) {
-          mic.add_method(&method);
+          if (klass().is_interface()) {
+            mic.add_interface_method(&method);
+            continue;
+          }
+          mic.add_virtual_method(&method);
         }
       }
     }
