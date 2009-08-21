@@ -670,121 +670,178 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
     return JAVACALL_INVALID_ARGUMENT;
 }
 
-/**
- * Testing purpose API
- */
-javacall_handle javacall_media_create2(int playerId, javacall_media_format_type mediaType,
-                                       const javacall_utf16* fileName,
-                                       int fileNameLength)
+static void create_managed_player_thread( void* param )
 {
-    return NULL;
+    javacall_result       res;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)param;
+
+    pPlayer->mediaHandle = NULL;
+    res = pPlayer->mediaItfPtr->vptrBasic->create( pPlayer );
+
+    if( JAVACALL_OK != res )
+    {
+        if( NULL != pPlayer->uri  ) FREE( pPlayer->uri  );
+        if( NULL != pPlayer->mime ) FREE( pPlayer->mime );
+        FREE( pPlayer );
+        pPlayer = NULL;
+    }
+
+    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_CREATE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     res, pPlayer );
+)
+
+javacall_result javacall_media_create_managed_player(
+    javacall_int32              app_id,
+    javacall_int32              player_id,
+    javacall_int32              locator_len,
+    javacall_const_utf16_string locator)
+{
+    javacall_impl_player* pPlayer 
+        = (javacall_impl_player*)MALLOC(sizeof(javacall_impl_player));
+
+    pPlayer->appId            = app_id;
+    pPlayer->playerId         = player_id;
+    pPlayer->downloadByDevice = JAVACALL_TRUE;
+    pPlayer->mime             = NULL;
+
+    if( 0 == _wcsnicmp( locator, AUDIO_CAPTURE_LOCATOR, 
+                       min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), locator_len ) ) )
+    {
+        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
+        pPlayer->mediaItfPtr      = &g_record_itf;
+    }
+    else if( 0 == _wcsnicmp( locator, VIDEO_CAPTURE_LOCATOR, 
+                       min( (long)wcslen( VIDEO_CAPTURE_LOCATOR ), locator_len ) ) )
+    {
+        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
+        pPlayer->mediaItfPtr      = &g_fake_camera_itf;
+
+        #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+        pPlayer->pExtraCC         = NULL;
+        extra_camera_controls_init( pPlayer );
+        #endif //ENABLE_EXTRA_CAMERA_CONTROLS
+    }
+    else if( 0 == _wcsnicmp( locator, RADIO_CAPTURE_LOCATOR, 
+                       min( (long)wcslen( RADIO_CAPTURE_LOCATOR ), locator_len ) ) )
+    {
+        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO;
+        pPlayer->mediaItfPtr      = &g_fake_radio_itf;
+    }
+    else if( 0 == _wcsnicmp( locator, DEVICE_TONE_LOCATOR, 
+                       min( (long)wcslen( DEVICE_TONE_LOCATOR ), locator_len ) ) )
+    {
+        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_TONE;
+        pPlayer->mediaItfPtr      = &g_qsound_itf;
+    }
+    else if( 0 == _wcsnicmp( locator, DEVICE_MIDI_LOCATOR, 
+                       min( (long)wcslen( DEVICE_MIDI_LOCATOR ), locator_len ) ) )
+    {
+        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
+        pPlayer->mediaItfPtr      = &g_qsound_itf;
+    }
+
+    if( NULL != pPlayer->mediaItfPtr )
+    {
+        pPlayer->uri = MALLOC( (locator_len + 1) * sizeof(javacall_utf16) );
+        memcpy( pPlayer->uri, locator, locator_len * sizeof(javacall_utf16) );
+        pPlayer->uri[ locator_len ] = (javacall_utf16)0;
+
+        JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
+
+        _beginthread( create_player_thread, 0, pPlayer );
+
+        return JAVACALL_OK;
+    }
+    else
+    {
+        FREE( pPlayer );
+        return JAVACALL_FAIL;
+    }
 }
 
-/**
- * Native player create.
- * This function create internal information structure that will be used from other native API.
- */
-javacall_result javacall_media_create(javacall_int32 appId,
-                                      javacall_int32 playerId,
-                                      javacall_const_utf16_string uri, 
-                                      javacall_int32 uriLength,
-                                      javacall_handle *handle)
+
+javacall_result javacall_media_create_unmanaged_player(
+    javacall_int32              app_id,
+    javacall_int32              player_id,
+    javacall_int32              locator_len,
+    javacall_const_utf16_string locator,
+    javacall_int32              mime_len,
+    javacall_const_utf16_string mime,
+    javacall_bool               stream_len_known,
+    javacall_int64              stream_len )
 {
-    javacall_impl_player* pPlayer = NULL;
-    javacall_result res = JAVACALL_FAIL;
+    char* cmime;
 
-    JC_MM_DEBUG_PRINT("javacall_media_create \n");
+    javacall_impl_player* pPlayer 
+        = (javacall_impl_player*)MALLOC(sizeof(javacall_impl_player));
 
-    pPlayer = MALLOC(sizeof(javacall_impl_player));
-
-    if( NULL == pPlayer ) return JAVACALL_OUT_OF_MEMORY;
-    pPlayer->appId            = appId;
-    pPlayer->playerId         = playerId;
-    pPlayer->uri              = NULL;
-    pPlayer->mediaHandle      = NULL;
-    pPlayer->mediaItfPtr      = NULL;
+    pPlayer->appId            = app_id;
+    pPlayer->playerId         = player_id;
+    pPlayer->downloadByDevice = JAVACALL_FALSE;
     pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_UNKNOWN;
-    pPlayer->downloadByDevice = JAVACALL_FALSE;    
+    pPlayer->mediaItfPtr      = NULL;
+    pPlayer->uri              = NULL;
 
-    if( NULL != uri )
+    if( NULL != locator )
     {
-        pPlayer->uri = MALLOC( (uriLength + 1) * sizeof(javacall_utf16) );
-        memcpy( pPlayer->uri, uri, uriLength * sizeof(javacall_utf16) );
-        pPlayer->uri[ uriLength ] = (javacall_utf16)0;
+        pPlayer->uri = MALLOC( (locator_len + 1) * sizeof(javacall_utf16) );
+        memcpy( pPlayer->uri, locator, locator_len * sizeof(javacall_utf16) );
+        pPlayer->uri[ locator_len ] = (javacall_utf16)0;
+    }
 
-        if( 0 == _wcsnicmp( uri, AUDIO_CAPTURE_LOCATOR, 
-                           min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), uriLength ) ) )
-        {
-            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
-            pPlayer->mediaItfPtr      = &g_record_itf;
-            pPlayer->downloadByDevice = JAVACALL_TRUE;
-        }
-        else if( 0 == _wcsnicmp( uri, VIDEO_CAPTURE_LOCATOR, 
-                           min( (long)wcslen( VIDEO_CAPTURE_LOCATOR ), uriLength ) ) )
-        {
-            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
-            pPlayer->mediaItfPtr      = &g_fake_camera_itf;
-            pPlayer->downloadByDevice = JAVACALL_TRUE;
+    if( NULL != mime )
+    {
+        pPlayer->mime = MALLOC( (mime_len + 1) * sizeof(javacall_utf16) );
+        memcpy( pPlayer->mime, mime, mime_len * sizeof(javacall_utf16) );
+        pPlayer->mime[ mime_len ] = (javacall_utf16)0;
+    }
 
-            #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
-            pPlayer->pExtraCC         = NULL;
-            extra_camera_controls_init( pPlayer );
-            #endif //ENABLE_EXTRA_CAMERA_CONTROLS
-        }
-        else if( 0 == _wcsnicmp( uri, RADIO_CAPTURE_LOCATOR, 
-                           min( (long)wcslen( RADIO_CAPTURE_LOCATOR ), uriLength ) ) )
+    if( NULL != pPlayer->uri )
+        pPlayer->mediaType   = fmt_guess_from_url( uri, uriLength );
+        pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
+    }
+
+    if( NULL == pPlayer->mediaItfPtr && NULL != pPlayer->mime )
+    {
+        JC_MM_ASSERT( mime_len > 0 );
+
+        cmime = MALLOC( mime_len + 1 );
+
+        if( NULL != cmime )
         {
-            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO;
-            pPlayer->mediaItfPtr      = &g_fake_radio_itf;
-            pPlayer->downloadByDevice = JAVACALL_TRUE;
-        }
-        else if( 0 == _wcsnicmp( uri, DEVICE_TONE_LOCATOR, 
-                           min( (long)wcslen( DEVICE_TONE_LOCATOR ), uriLength ) ) )
-        {
-            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_TONE;
-            pPlayer->mediaItfPtr      = &g_qsound_itf;
-            pPlayer->downloadByDevice = JAVACALL_TRUE;
-        }
-        else if( 0 == _wcsnicmp( uri, DEVICE_MIDI_LOCATOR, 
-                           min( (long)wcslen( DEVICE_MIDI_LOCATOR ), uriLength ) ) )
-        {
-            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
-            pPlayer->mediaItfPtr      = &g_qsound_itf;
-            pPlayer->downloadByDevice = JAVACALL_TRUE;
-        }
-        else
-        {
-            pPlayer->mediaType   = fmt_guess_from_url( uri, uriLength );
-            pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
+            /* Implementation Note: 
+             * unsafe, mime must contain only ASCII chars. 
+             * NEED REVISIT
+             */
+            int wres = WideCharToMultiByte( CP_ACP, 0, mime, mime_len,
+                                            cmime, mime_len + 1, NULL, NULL );
+            if( wres )
+            {
+                cmime[ mime_len ] = '\0';
+
+                pPlayer->mediaType   = fmt_mime2str( cmime );
+                pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
+            }
+
+            FREE( cmime );
         }
     }
 
     if( NULL != pPlayer->mediaItfPtr )
     {
         JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
+        _beginthread( create_player_thread, 0, pPlayer );
 
-        res =
-            pPlayer->mediaItfPtr->vptrBasic->create( 
-                appId, playerId, 
-                fmt_str2enum(pPlayer->mediaType), 
-                pPlayer->uri, &pPlayer->mediaHandle );
-
-        if( NULL != pPlayer->mediaHandle )
-        {
-            *handle = pPlayer;
-        }
-        else
-        {
-            FREE( pPlayer );
-            *handle = NULL;
-        }
-        return res;
+        return JAVACALL_OK;
     }
     else
     {
-        // format still unknown, leave it to realize()
-        *handle = pPlayer;
-        return JAVACALL_OK;
+        if( NULL != pPlayer->uri  ) FREE( pPlayer->uri  );
+        if( NULL != pPlayer->mime ) FREE( pPlayer->mime );
+        FREE( pPlayer );
+        return JAVACALL_FAIL;
     }
 }
 
@@ -910,87 +967,6 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
     *isHandled = pPlayer->downloadByDevice;
 
     return JAVACALL_OK;
-}
-
-javacall_result javacall_media_realize(javacall_handle handle,
-                                       javacall_const_utf16_string mime,
-                                       long mimeLength)
-{
-    javacall_result ret     = JAVACALL_FAIL;
-    javacall_result ret_from_create = JAVACALL_OK;
-    javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
-    char* cmime;
-
-    if( 0 == strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
-    {
-        if( NULL != mime )
-        {
-            JC_MM_ASSERT( mimeLength > 0 );
-
-            cmime = MALLOC( mimeLength + 1 );
-
-            if( NULL != cmime )
-            {
-                /* Implementation Note: 
-                 * unsafe, mime must contain only ASCII chars. 
-                 * NEED REVISIT
-                 */
-                int wres = WideCharToMultiByte( CP_ACP, 0, mime, mimeLength,
-                                                cmime, mimeLength + 1, NULL, NULL );
-                if( wres )
-                {
-                    cmime[ mimeLength ] = '\0';
-                    pPlayer->mediaType = fmt_mime2str( cmime );
-                }
-
-                FREE( cmime );
-            }
-        }
-
-        if( NULL == pPlayer->mediaItfPtr && 
-            0 != strcmp( JAVACALL_MEDIA_FORMAT_UNKNOWN, pPlayer->mediaType ) )
-        {
-            pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
-
-            if( NULL != pPlayer->mediaItfPtr )
-            {
-                JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
-
-                ret_from_create =
-                    pPlayer->mediaItfPtr->vptrBasic->create( 
-                    pPlayer->appId, pPlayer->playerId, 
-                    fmt_str2enum(pPlayer->mediaType),
-                    pPlayer->uri, &pPlayer->mediaHandle );
-
-                if( NULL == pPlayer->mediaHandle )
-                {
-                    return ret_from_create;
-                }
-            }
-            else
-            {
-                return JAVACALL_FAIL;
-            }
-        }
-    }
-    if (NULL == pPlayer->mediaItfPtr) {
-        pPlayer->mediaType = JAVACALL_MEDIA_FORMAT_UNSUPPORTED;
-    }
-
-    if( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, realize) )
-    {
-        ret = pPlayer->mediaItfPtr->vptrBasic->realize(
-            pPlayer->mediaHandle, mime, mimeLength );
-    } else {
-        ret = JAVACALL_OK;
-    }
-
-    if( JAVACALL_OK == ret && JAVACALL_NO_AUDIO_DEVICE == ret_from_create )
-    {
-        ret = JAVACALL_NO_AUDIO_DEVICE;
-    }
-        
-    return ret;
 }
 
 javacall_result javacall_media_prefetch(javacall_handle handle){

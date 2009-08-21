@@ -85,7 +85,6 @@ public:
     int                   playerId;
     int                   gmIdx;
     jc_fmt                mediaType;
-    javacall_utf16_string uri;
 
     javacall_const_utf16_string mime;
     long                        mimeLength;
@@ -376,34 +375,120 @@ extern "C" {
 
 //=============================================================================
 
-static javacall_result dshow_create(int appId, 
-    int playerId,
-    jc_fmt mediaType,
-    const javacall_utf16_string URI, 
-    javacall_handle* pHandle)
+static javacall_result dshow_create(javacall_impl_player* outer_player)
 {
     dshow_player* p = new dshow_player;
 
-    PRINTF( "\n\n*** create('%S') ***\n", URI );
+    PRINTF( "\n\n*** create('%S','%S') ***\n", outer_player->uri, outer_player->mime );
 
     if( dshow_player::num_players >= MAX_DSHOW_PLAYERS )
         return JAVACALL_OUT_OF_MEMORY;
 
     p->gmIdx = -1;
-    javacall_result res = appIDtoGM( appId, &(p->gmIdx) );
+    javacall_result res = appIDtoGM( outer_player->appId, &(p->gmIdx) );
     
     if( JAVACALL_OK != res )
     {
         gmDetach( p->gmIdx );
-        *pHandle = ( javacall_handle )NULL;
-        return JAVACALL_FAIL;
+        return JAVACALL_NO_AUDIO_DEVICE;
     }
 
-    p->appId            = appId;
-    p->playerId         = playerId;
-    p->mediaType        = mediaType;
-    p->uri              = NULL;
-    p->is_video         = ( JC_FMT_FLV == mediaType || JC_FMT_VIDEO_3GPP == mediaType || JC_FMT_MPEG_4_SVP == mediaType || JC_FMT_MPEG_1 == mediaType );
+    //==================
+
+    p->duration = -1;
+
+    javacall_const_utf16_string mime     = outer_player->mime;
+    int                         mime_len = (long)wcslen( (const wchar_t*)mime );;
+
+    if( NULL == mime || mime_equal( mime, mime_len, L"text/plain" ) )
+    {
+        switch( p->mediaType )
+        {
+        case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
+        case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
+        case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
+        case JC_FMT_MPEG_4_SVP:   mime = (javacall_const_utf16_string)L"video/mp4";  break;
+        case JC_FMT_MPEG_1:       mime = (javacall_const_utf16_string)L"video/mpeg";  break;
+        case JC_FMT_AMR:          
+        case JC_FMT_AMR_WB:          
+        case JC_FMT_AMR_WB_PLUS:          
+                                  mime = (javacall_const_utf16_string)L"audio/amr";  break;
+        default:
+            return JAVACALL_FAIL;
+        }
+    }
+
+    mime_len = (long)wcslen( (const wchar_t*)mime );
+
+    if( mime_equal( mime, mime_len, L"audio/mp3"  ) ||
+        mime_equal( mime, mime_len, L"audio/mpeg" ) ||
+        mime_equal( mime, mime_len, L"audio/MPA"  ) ||
+        mime_equal( mime, mime_len, L"audio/X-MP3-draft-00" ) )
+    {
+        //get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
+        //get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
+        get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
+
+        p->mediaType = JC_FMT_MPEG1_LAYER3;
+        mime = (javacall_const_utf16_string)L"audio/mpeg";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/x-vp6" ) ||
+             mime_equal( mime, mime_len, L"video/x-flv" ) ||
+             mime_equal( mime, mime_len, L"video/x-javafx" ) )
+    {
+        p->mediaType = JC_FMT_FLV;
+        mime = (javacall_const_utf16_string)L"video/x-flv";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/3gpp" ) )
+    {
+        p->mediaType = JC_FMT_VIDEO_3GPP;
+        mime = (javacall_const_utf16_string)L"video/3gpp";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/mp4" ) )
+    {
+        p->mediaType = JC_FMT_MPEG_4_SVP;
+        mime = (javacall_const_utf16_string)L"video/mp4";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/mpeg" ) )
+    {
+        p->mediaType = JC_FMT_MPEG_1;
+        mime = (javacall_const_utf16_string)L"video/mpeg";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"audio/amr" ) )
+    {
+        p->mediaType = JC_FMT_AMR;
+        mime = (javacall_const_utf16_string)L"audio/amr";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"audio/wav" ) ||
+             mime_equal( mime, mime_len, L"audio/x-wav" ))
+    {
+        p->mediaType = JC_FMT_MS_PCM;
+        mime = (javacall_const_utf16_string)L"audio/wav";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else
+    {
+        p->mediaType = JC_FMT_UNSUPPORTED;
+    }
+
+    p->mime       = mime;
+    p->mimeLength = mime_len;
+
+    //==================
+
+    p->appId            = outer_player->appId;
+    p->playerId         = outer_player->playerId;
+    p->mediaType        = fmt_str2enum( outer_player->mediaType );
+    p->is_video         = ( JC_FMT_FLV        == p->mediaType || 
+                            JC_FMT_VIDEO_3GPP == p->mediaType || 
+                            JC_FMT_MPEG_4_SVP == p->mediaType || 
+                            JC_FMT_MPEG_1     == p->mediaType );
 
     p->playing          = false;
 
@@ -435,14 +520,74 @@ static javacall_result dshow_create(int appId,
 
     p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
 
-    *pHandle =(javacall_handle)p;
+    outer_player->mediaHandle = (javacall_handle)p;
 
     lcd_set_color_key( JAVACALL_FALSE, 0 );
 
     dshow_player::players[ dshow_player::num_players++ ] = p;
 
+    //========================================
+
+
     return JAVACALL_OK;
 }
+
+
+//=============================================================================
+
+static void realize_thread( void* param )
+{
+    dshow_player* p = (dshow_player*)param;
+
+    PRINTF( "*** creating dshow player... ***\n" );
+
+    bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
+
+    PRINTF( "*** dshow player creation finished (%s) ***\n",
+            (ok ? "success" : "fail") );
+
+    if( ok && 
+        NULL != p->ppl && 
+        -1 != p->whole_content_size )
+    {
+        p->ppl->set_stream_length(p->whole_content_size);
+    }
+
+    if( ok )
+    {
+        PRINTF( "*** realizing dshow player... ***\n" );
+        ok = ( player::result_success == p->ppl->realize() );
+    }
+
+    PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
+            (ok ? "success" : "fail") );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
+                                     p->appId,
+                                     p->playerId, 
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL), 
+                                     NULL );
+}
+
+static javacall_result dshow_realize(javacall_handle handle, 
+    javacall_const_utf16_string mime, 
+    long mimeLength)
+{
+    dshow_player* p = (dshow_player*)handle;
+
+    PRINTF( "*** realize('%S') ***\n", mime );
+
+
+    if( JC_FMT_UNSUPPORTED != p->mediaType )
+    {
+        _beginthread( realize_thread, 0, p );
+        return JAVACALL_OK;
+    }
+
+    return JAVACALL_FAIL;
+}
+
+
 
 static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)
 {
@@ -579,140 +724,6 @@ static javacall_result dshow_deallocate(javacall_handle handle)
 static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
 {
     return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
-}
-
-//=============================================================================
-
-static void realize_thread( void* param )
-{
-    dshow_player* p = (dshow_player*)param;
-
-    PRINTF( "*** creating dshow player... ***\n" );
-
-    bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
-
-    PRINTF( "*** dshow player creation finished (%s) ***\n",
-            (ok ? "success" : "fail") );
-
-    if( ok && 
-        NULL != p->ppl && 
-        -1 != p->whole_content_size )
-    {
-        p->ppl->set_stream_length(p->whole_content_size);
-    }
-
-    if( ok )
-    {
-        PRINTF( "*** realizing dshow player... ***\n" );
-        ok = ( player::result_success == p->ppl->realize() );
-    }
-
-    PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
-            (ok ? "success" : "fail") );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
-                                     (ok ? JAVACALL_OK : JAVACALL_FAIL), 
-                                     NULL );
-}
-
-static javacall_result dshow_realize(javacall_handle handle, 
-    javacall_const_utf16_string mime, 
-    long mimeLength)
-{
-    dshow_player* p = (dshow_player*)handle;
-
-    PRINTF( "*** realize('%S') ***\n", mime );
-
-    p->duration = -1;
-
-    if( NULL == mime || mime_equal( mime, mimeLength, L"text/plain" ) )
-    {
-        switch( p->mediaType )
-        {
-        case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
-        case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
-        case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
-        case JC_FMT_MPEG_4_SVP:   mime = (javacall_const_utf16_string)L"video/mp4";  break;
-        case JC_FMT_MPEG_1:   mime = (javacall_const_utf16_string)L"video/mpeg";  break;
-        case JC_FMT_AMR:          
-        case JC_FMT_AMR_WB:          
-        case JC_FMT_AMR_WB_PLUS:          
-                                  mime = (javacall_const_utf16_string)L"audio/amr";  break;
-        default:
-            return JAVACALL_FAIL;
-        }
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-
-    if( mime_equal( mime, mimeLength, L"audio/mp3"  ) ||
-        mime_equal( mime, mimeLength, L"audio/mpeg" ) ||
-        mime_equal( mime, mimeLength, L"audio/MPA"  ) ||
-        mime_equal( mime, mimeLength, L"audio/X-MP3-draft-00" ) )
-    {
-        //get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
-        //get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
-        get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
-
-        p->mediaType = JC_FMT_MPEG1_LAYER3;
-        mime = (javacall_const_utf16_string)L"audio/mpeg";
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"video/x-vp6" ) ||
-             mime_equal( mime, mimeLength, L"video/x-flv" ) ||
-             mime_equal( mime, mimeLength, L"video/x-javafx" ) )
-    {
-        p->mediaType = JC_FMT_FLV;
-        mime = (javacall_const_utf16_string)L"video/x-flv";
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"video/3gpp" ) )
-    {
-        p->mediaType = JC_FMT_VIDEO_3GPP;
-        mime = (javacall_const_utf16_string)L"video/3gpp";
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"video/mp4" ) )
-    {
-        p->mediaType = JC_FMT_MPEG_4_SVP;
-        mime = (javacall_const_utf16_string)L"video/mp4";
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"video/mpeg" ) )
-    {
-        p->mediaType = JC_FMT_MPEG_1;
-        mime = (javacall_const_utf16_string)L"video/mpeg";
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"audio/amr" ) )
-    {
-        p->mediaType = JC_FMT_AMR;
-        mime = (javacall_const_utf16_string)L"audio/amr";
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mimeLength, L"audio/wav" ) ||
-             mime_equal( mime, mimeLength, L"audio/x-wav" ))
-    {
-        p->mediaType = JC_FMT_MS_PCM;
-        mime = (javacall_const_utf16_string)L"audio/wav";
-        mimeLength = (long)wcslen( (const wchar_t*)mime );
-    }
-    else
-    {
-        p->mediaType = JC_FMT_UNSUPPORTED;
-    }
-
-    p->mime       = mime;
-    p->mimeLength = mimeLength;
-
-    if( JC_FMT_UNSUPPORTED != p->mediaType )
-    {
-        _beginthread( realize_thread, 0, p );
-        return JAVACALL_OK;
-    }
-
-    return JAVACALL_FAIL;
 }
 
 //=============================================================================
