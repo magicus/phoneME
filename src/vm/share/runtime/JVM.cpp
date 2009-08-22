@@ -200,10 +200,8 @@ ReturnOop JVM::get_main_args(JVM_SINGLE_ARG_TRAPS) {
 }
 
 
-// Load the main class into the EntryActivation list of the main
-// thread.
+// Load the main class into the EntryActivation list of the main thread.
 inline bool JVM::load_main_class(JVM_SINGLE_ARG_TRAPS) {
-
   UsingFastOops fast_oops;
   InstanceClass::Fast klass = JVM::resolve_class(_main_class JVM_CHECK_0);
 
@@ -217,9 +215,7 @@ inline bool JVM::load_main_class(JVM_SINGLE_ARG_TRAPS) {
   ObjArray::Fast arguments = get_main_args(JVM_SINGLE_ARG_CHECK_0);
 
   // Find the method to invoke
-  Method::Fast main_method =
-      klass().lookup_method(Symbols::main_name(),
-                          Symbols::string_array_void_signature());
+  Method::Fast main_method = klass().lookup_main_method();
   if (main_method.is_null() || !main_method().is_static()) {
     Throw::error(main_method_not_found JVM_THROW_0);
   }
@@ -245,10 +241,10 @@ inline bool JVM::load_main_class(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
   // Create a delayed activation for the main method
-  EntryActivation::Fast entry =
+  EntryActivation::Raw entry =
       Universe::new_entry_activation(&main_method, 1 JVM_CHECK_0);
   entry().obj_at_put(0, &arguments);
-  Thread::Fast thread = Thread::current();
+  Thread::Raw thread = Thread::current();
   thread().append_pending_entry(&entry);
 
   return true;
@@ -267,7 +263,7 @@ void JVM::run() {
   // We put this in solely for the purpose
   // so that one can look at the executable binary
   // with a text browser and look at the copyright notice:
-const char *JVM::copyright =
+const char JVM::copyright[] =
    " Portions Copyright  2000-2007 Sun Microsystems, Inc. All Rights"
    " Reserved.  Use is subject to license terms."
    " DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER"
@@ -707,12 +703,11 @@ bool JVM::start_standalone_rom_generator(JVM_SINGLE_ARG_TRAPS) {
     // Run the Java method JVM.createSysImage();
     Symbol* method_name = Symbols::create_sys_image_name();
 
-    Method::Fast method =
-        klass().lookup_method(method_name, Symbols::void_signature());
+    Method::Fast method = klass().lookup_void_method(method_name);
     GUARANTEE(method.not_null() && method().is_static(), "sanity");
 
     EntryActivation::Fast entry =
-        Universe::new_entry_activation(&method, 0 JVM_CHECK_0);
+      Universe::new_entry_activation(&method, 0 JVM_OZCHECK(entry));
     Thread::current()->append_pending_entry(&entry);
 #else
     Symbol* method_name = Symbols::create_app_image_name();

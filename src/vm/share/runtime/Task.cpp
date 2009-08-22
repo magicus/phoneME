@@ -601,12 +601,9 @@ bool Task::load_main_class(Thread *new_thread JVM_TRAPS) {
   klass().initialize(JVM_SINGLE_ARG_CHECK_0);
 
   // Find the method to invoke
-  Method::Fast main_method =
-    klass().lookup_method(Symbols::main_name(),
-                          Symbols::string_array_void_signature());
+  Method::Fast main_method = klass().lookup_main_method();
   if (main_method.is_null() || !main_method().is_static()) {
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0); // See CR 6270554.
-
   }
 
   JVM::development_prologue();

@@ -1411,9 +1411,8 @@ void ROMOptimizer::inline_exception_constructors() {
   //
   // This optimization eliminates resolved_static_method entries from
   // the merged constant pool.
-  Method::Raw throwable_init = Universe::throwable_class()->lookup_method(
-      Symbols::object_initializer_name(),
-      Symbols::void_signature());
+  Method::Raw throwable_init = Universe::throwable_class()
+    ->lookup_void_method(Symbols::object_initializer_name());
 
   GUARANTEE(throwable_init.not_null(), "Sanity!");
 
@@ -3497,7 +3496,7 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
     if (method().is_static()) {
       if (holder().is_initialized()) {
         if (method().is_class_initializer()) {
-          GUARANTEE(holder().lookup_method(name, signature) == NULL,
+          GUARANTEE(holder().lookup_void_method(Symbols::class_initializer_name()) == NULL,
                     "Must be removed");
 #if USE_ROM_LOGGING
           _log_stream->print_cr(" removed.");

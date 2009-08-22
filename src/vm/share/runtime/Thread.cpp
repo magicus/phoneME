@@ -423,8 +423,8 @@ void Thread::start(JVM_SINGLE_ARG_TRAPS) {
   InstanceClass::Fast thread_class = receiver.blueprint();
 
   // Find the 'run' method to invoke
-  Method::Fast run_method = thread_class().lookup_method(Symbols::run_name(),
-                                                 Symbols::void_signature());
+  Method::Fast run_method =
+    thread_class().lookup_void_method(Symbols::run_name());
   if (run_method.is_null()) {
 #ifndef PRODUCT
     tty->print_cr("Error: run method not found in ");
@@ -436,7 +436,7 @@ void Thread::start(JVM_SINGLE_ARG_TRAPS) {
 
   // Setup execution entry
   EntryActivation::Fast run_entry =
-      Universe::new_entry_activation(&run_method, 1 JVM_CHECK);
+      Universe::new_entry_activation(&run_method, 1 JVM_ZCHECK(run_entry));
   run_entry().obj_at_put(0, &receiver);
   append_pending_entry(&run_entry);
 

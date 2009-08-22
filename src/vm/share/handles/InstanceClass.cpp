@@ -314,7 +314,8 @@ bool InstanceClass::is_method_overridden(const int vtable_index) const {
 /// Find a method with matching name and signature (regardless of access
 /// flags). We start by searching the current class, and recursively walk
 /// up the class hierarchy.
-ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature, bool non_static_only) {
+ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature,
+                                       bool non_static_only) const {
   Method::Raw m;          // If non-null, a method with matching name+sig
   InstanceClass::Raw m_holder; // Holder of <m>
 
@@ -385,6 +386,16 @@ ReturnOop InstanceClass::find_local_default_constructor(void) const {
 ReturnOop InstanceClass::find_local_class_initializer(void) const {
   return find_local_void_method(Symbols::class_initializer_name());
 }
+
+ReturnOop InstanceClass::lookup_void_method(Symbol* name) const {
+  return lookup_method(name, Symbols::void_signature());
+}
+
+ReturnOop InstanceClass::lookup_main_method(void) const {
+  return lookup_method(Symbols::main_name(),
+                       Symbols::string_array_void_signature());
+}
+
 
 /// Adds miranda methods to a class's methods array. For an interface I and
 /// a class C that declares to implement I, a miranda method I.m is a method
@@ -862,7 +873,8 @@ void InstanceClass::itable_copy_down(InstanceClass* ic, int& index,
   Method::Fast interface_method;
   Method::Fast method;
 
-  for (int i = 0; i < methods().length(); i++) {
+  const int length = methods().length();
+  for (int i = 0; i < length; i++) {
     interface_method = methods().obj_at(i);
     if (interface_method.is_null()) {
       // This class implements this interface but during ROMization

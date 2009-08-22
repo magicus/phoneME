@@ -33,7 +33,7 @@ class InstanceClass: public JavaClass {
  public:
   HANDLE_DEFINITION_CHECK(InstanceClass, JavaClass);
 
-  static int next_offset() {
+  static int next_offset(void) {
     return FIELD_OFFSET(JavaClassDesc, instance._next);
   }
 
@@ -42,11 +42,11 @@ class InstanceClass: public JavaClass {
   // routines are all public.
 
    // Unimplemented stuff...
-  void set_is_synthetic() {
+  void set_is_synthetic(void) {
   }
 
   // Next InstanceClass with the same hash value
-  ReturnOop next() const {
+  ReturnOop next(void) const {
     return obj_field(next_offset());
   }
 
@@ -55,28 +55,30 @@ class InstanceClass: public JavaClass {
   }
 
 
-  static int header_size() { return sizeof(InstanceClassDesc); }
+  static int header_size(void) { return sizeof(InstanceClassDesc); }
 
   // oop maps
-  size_t first_nonstatic_map_offset() const {
+  size_t first_nonstatic_map_offset(void) const {
     return embedded_oop_map_start();
   }
-  size_t first_static_map_offset() const;
-  jubyte oop_map_at(size_t offset) const {
+  size_t first_static_map_offset(void) const;
+  jubyte oop_map_at(const size_t offset) const {
     return ubyte_field(offset);
   }
-  size_t nonstatic_map_size() const;
-  size_t last_nonstatic_oop_offset() const;
-  size_t static_map_size() const;
+  size_t nonstatic_map_size(void) const;
+  size_t last_nonstatic_oop_offset(void) const;
+  size_t static_map_size(void) const;
 
   // Does this InstanceClass object embed a static field that's an oop?
   // (always false in MVM).
-  bool has_embedded_static_oops() const {
+  bool has_embedded_static_oops(void) const {
     return (oop_map_at(first_static_map_offset()) != OopMapSentinel);
   }
 
   ReturnOop lookup_method(Symbol* name, Symbol* signature,
-                          const bool non_static_only = false);
+                          const bool non_static_only = false) const;
+  ReturnOop lookup_void_method(Symbol* name) const;
+  ReturnOop lookup_main_method(void) const;
 
   // Returns the Method.
   // interface_class_id = class_id of interface that declares the method
