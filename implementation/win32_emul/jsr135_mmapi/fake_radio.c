@@ -31,24 +31,19 @@ typedef struct {
     javacall_bool is_mute;
 } fake_radio_instance_t;
 
-static javacall_result fake_radio_create(int appId, int playerId,
-                                       jc_fmt mediaType,
-                                       const javacall_utf16_string URI,
-                                       javacall_handle *pHandle )
+static javacall_result fake_radio_create(javacall_impl_player* outer_player)
 {
     fake_radio_instance_t *newHandle = NULL;
     newHandle = MALLOC( sizeof( fake_radio_instance_t ) );
-    if( NULL == newHandle )
-    {
-        *pHandle = NULL;
-        return JAVACALL_OUT_OF_MEMORY;
-    }
+
+    if( NULL == newHandle ) return JAVACALL_OUT_OF_MEMORY;
+
     newHandle->volume   = 50;
     newHandle->is_mute  = JAVACALL_FALSE;
-    newHandle->appId    = appId;
-    newHandle->playerId = playerId;
+    newHandle->appId    = outer_player->appId;
+    newHandle->playerId = outer_player->playerId;
 
-    *pHandle = ( javacall_handle )newHandle;
+    outer_player->mediaHandle = ( javacall_handle )newHandle;
     return JAVACALL_OK;
 }
 

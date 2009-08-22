@@ -22,6 +22,8 @@
 * information or have any questions. 
 */ 
 
+#if( 0 )
+
 #include "multimedia.h"
 #include "pcm_out.h"
 
@@ -565,3 +567,5 @@ media_interface g_rtp_itf =
     NULL,
     NULL
 };
+
+#endif // ( 0 )

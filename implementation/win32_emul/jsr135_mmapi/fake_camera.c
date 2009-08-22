@@ -137,16 +137,12 @@ static void fake_camera_generator_thread( void* param )
 
 //=============================================================================
 
-static javacall_result fake_camera_create(int appId, 
-    int playerId,
-    jc_fmt mediaType,
-    const javacall_utf16_string URI, 
-    javacall_handle* pHandle)
+static javacall_result fake_camera_create(javacall_impl_player* outer_player)
 {
     fake_camera* c = (fake_camera*)MALLOC( sizeof(fake_camera) );
 
-    c->appId       = appId;
-    c->playerId    = playerId;
+    c->appId       = outer_player->appId;
+    c->playerId    = outer_player->playerId;
 
     c->out_width   = c->video_width  = 160;
     c->out_height  = c->video_height = 120;
@@ -163,7 +159,7 @@ static javacall_result fake_camera_create(int appId,
 
     InitializeCriticalSection( &(c->cs) );
 
-    *pHandle = (javacall_handle)c;
+    outer_player->mediaHandle = (javacall_handle)c;
 
     return JAVACALL_OK;
 }

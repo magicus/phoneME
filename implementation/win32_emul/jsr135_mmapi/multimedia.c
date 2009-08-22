@@ -28,6 +28,7 @@
 #include "javautil_unicode.h"
 #include "javacall_memory.h"
 #include <stdio.h>
+#include <process.h>
 #include "jpegencoder.h"
 #include "pngencoder.h"
 
@@ -641,24 +642,28 @@ javacall_result javacall_media_get_event_data(javacall_handle handle,
 static void create_player_thread( void* param )
 {
     javacall_result       res;
-    javacall_impl_player* pPlayer = (javacall_impl_player*)param;
+    javacall_impl_player* p = (javacall_impl_player*)param;
 
-    pPlayer->mediaHandle = NULL;
-    res = pPlayer->mediaItfPtr->vptrBasic->create( pPlayer );
+    int appId    = p->appId;
+    int playerId = p->playerId;
+
+    p->mediaHandle = NULL;
+    res = p->mediaItfPtr->vptrBasic->create( p );
+
 
     if( JAVACALL_OK != res )
     {
-        if( NULL != pPlayer->uri  ) FREE( pPlayer->uri  );
-        if( NULL != pPlayer->mime ) FREE( pPlayer->mime );
-        FREE( pPlayer );
-        pPlayer = NULL;
+        if( NULL != p->uri  ) FREE( p->uri  );
+        if( NULL != p->mime ) FREE( p->mime );
+        FREE( p );
+        p = NULL;
     }
 
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_CREATE_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
-                                     res, pPlayer );
-)
+                                     appId,
+                                     playerId, 
+                                     res, p );
+}
 
 javacall_result javacall_media_create_managed_player(
     javacall_int32              app_id,
@@ -769,7 +774,8 @@ javacall_result javacall_media_create_unmanaged_player(
     }
 
     if( NULL != pPlayer->uri )
-        pPlayer->mediaType   = fmt_guess_from_url( uri, uriLength );
+    {
+        pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
         pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
     }
 
@@ -1005,7 +1011,7 @@ javacall_result javacall_media_data_written(
 
 /* Media time and duration **********************************************************/
 
-javacall_result javacall_media_get_media_time(javacall_handle handle, long* ms)
+javacall_result javacall_media_get_media_time(javacall_handle handle, javacall_int32* ms)
 {
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
@@ -1017,7 +1023,7 @@ javacall_result javacall_media_get_media_time(javacall_handle handle, long* ms)
     return JAVACALL_FAIL;
 }
 
-javacall_result javacall_media_set_media_time(javacall_handle handle, long ms)
+javacall_result javacall_media_set_media_time(javacall_handle handle, javacall_int32 ms)
 {
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
@@ -1029,7 +1035,7 @@ javacall_result javacall_media_set_media_time(javacall_handle handle, long ms)
     return JAVACALL_FAIL;
 }
 
-javacall_result javacall_media_get_duration(javacall_handle handle, long* ms)
+javacall_result javacall_media_get_duration(javacall_handle handle, javacall_int32* ms)
 {
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;

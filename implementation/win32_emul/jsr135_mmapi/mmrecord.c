@@ -78,23 +78,18 @@ void sendRSL(int appId, int playerId, long duration)
 /**
  * Create native recorder
  */
-static javacall_result recorder_create(int appId, int playerId,
-                                       jc_fmt mediaType,
-                                       const javacall_utf16_string URI,
-                                       javacall_handle *pJCHandle )
+static javacall_result recorder_create(javacall_impl_player* outer_player)
 {
     javacall_result result = JAVACALL_FAIL;
     
     recorder* newHandle = NULL;
 
-    JC_MM_ASSERT( JC_FMT_CAPTURE_AUDIO == mediaType );
-
     newHandle = MALLOC(sizeof(recorder));
     JC_MM_ASSERT( NULL != newHandle );
     memset( newHandle, 0, sizeof(recorder) );
 
-    newHandle->appId         = appId;
-    newHandle->playerId      = playerId;
+    newHandle->appId         = outer_player->appId;
+    newHandle->playerId      = outer_player->playerId;
 
     // defaults
     newHandle->bits          = 16;
@@ -102,9 +97,9 @@ static javacall_result recorder_create(int appId, int playerId,
     newHandle->rate          = 22050;
 
     // overrides
-    get_int_param(URI, L"bits",     &(newHandle->bits)    );
-    get_int_param(URI, L"channels", &(newHandle->channels));
-    get_int_param(URI, L"rate",     &(newHandle->rate)    );
+    get_int_param(outer_player->uri, L"bits",     &(newHandle->bits)    );
+    get_int_param(outer_player->uri, L"channels", &(newHandle->channels));
+    get_int_param(outer_player->uri, L"rate",     &(newHandle->rate)    );
 
     newHandle->lengthLimit   = INT_MAX;
     newHandle->recordLen     = 0;
@@ -115,81 +110,22 @@ static javacall_result recorder_create(int appId, int playerId,
 
     result = JAVACALL_OK;
 
-    *pJCHandle = (javacall_handle)newHandle;
+    outer_player->mediaHandle = (javacall_handle)newHandle;
     return result;
 }
 
-/**
- * Close native recorder
- */
-static javacall_result recorder_close(javacall_handle handle)
+static javacall_result recorder_destroy(javacall_handle handle)
 {
-    javacall_result r = JAVACALL_FAIL;
     recorder* h = (recorder*)handle;
+
+    int appId    = h->appId;
+    int playerId = h->playerId;
 
     FREE(h);
 
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-/**
- * NOTING TO DO
- */
-static javacall_result recorder_destroy(javacall_handle handle)
-{
-    return JAVACALL_OK;
-}
-
-static javacall_result recorder_realize(javacall_handle handle, 
-                                        javacall_const_utf16_string mime, 
-                                        long mimeLength)
-{
-    recorder* h = (recorder*)handle;
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     (void*)JAVACALL_OK );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result recorder_prefetch(javacall_handle handle)
-{
-    recorder* h = (recorder*)handle;
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result recorder_deallocate(javacall_handle handle)
-{
-    recorder* h = (recorder*)handle;
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result recorder_start(javacall_handle handle)
-{
-    recorder* h = (recorder*)handle;
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
+                                     appId,
+                                     playerId, 
                                      JAVACALL_OK, 
                                      NULL );
 
@@ -208,26 +144,41 @@ static javacall_result recorder_stop(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-/**
- * NOTING TO DO.
- */
+static javacall_result recorder_pause(javacall_handle handle)
+{
+    recorder* h = (recorder*)handle;
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
+    return JAVACALL_OK;
+}
+
+static javacall_result recorder_run(javacall_handle handle)
+{
+    recorder* h = (recorder*)handle;
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
+    return JAVACALL_OK;
+}
+
 static javacall_result recorder_get_time(javacall_handle handle, long* ms)
 {
     *ms = -1;
     return JAVACALL_OK;
 }
 
-/**
- * NOTING TO DO.
- */
 static javacall_result recorder_set_time(javacall_handle handle, long ms)
 {
     return JAVACALL_FAIL;
 }
  
-/**
- * NOTING TO DO.
- */
 static javacall_result recorder_get_duration(javacall_handle handle, long* ms)
 {
     *ms = -1;
@@ -236,9 +187,6 @@ static javacall_result recorder_get_duration(javacall_handle handle, long* ms)
 
 /******************************************************************************/
 
-/**
- *
- */
 static javacall_result recorder_set_recordsize_limit(javacall_handle handle, 
                                                      /*INOUT*/ long* size)
 {
@@ -443,15 +391,12 @@ static javacall_result recorder_close_recording(javacall_handle handle)
  */
 static media_basic_interface _recorder_basic_itf = {
     recorder_create,
-    NULL,
-    NULL,
-    recorder_close,
     recorder_destroy,
-    recorder_deallocate,
-    recorder_realize,
-    recorder_prefetch,
-    recorder_start,
+    NULL,
+    NULL,
     recorder_stop,
+    recorder_pause,
+    recorder_run,
     NULL,
     NULL,
     NULL,

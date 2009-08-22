@@ -71,7 +71,7 @@ typedef struct {
     unsigned char           *dataBuffer;
     int                     dataBufferLen;
     int                     dataPos;
-    int                     streamLen;
+    javacall_int64          streamLen;
     int                     portionLen;
     
     IControl*               controls[CONT_MAX];
