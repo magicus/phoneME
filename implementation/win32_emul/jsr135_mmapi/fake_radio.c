@@ -54,16 +54,18 @@ static javacall_result fake_radio_create(int appId, int playerId,
 
 static javacall_result fake_radio_destroy(javacall_handle handle)
 {
-    if( NULL != handle )
-    {
-        FREE( handle );
-    }
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
                                      NULL );
+
+    if( NULL != handle )
+    {
+        FREE( handle );
+    }
 
     return JAVACALL_OK;
 }
