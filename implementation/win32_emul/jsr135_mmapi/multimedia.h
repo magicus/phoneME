@@ -216,22 +216,24 @@ typedef struct {
  */
 typedef struct {
     javacall_result (*create)(struct _javacall_impl_player* outer_player);
+    javacall_result (*destroy)(javacall_handle handle);
+
     javacall_result (*get_format)(javacall_handle handle, jc_fmt* fmt);
     javacall_result (*get_player_controls)(javacall_handle handle, int* controls);
-    javacall_result (*close)(javacall_handle handle);
-    javacall_result (*destroy)(javacall_handle handle);
-    javacall_result (*deallocate)(javacall_handle handle);
-    javacall_result (*realize)(javacall_handle handle, javacall_const_utf16_string mime, long mimeLength);
-    javacall_result (*prefetch)(javacall_handle handle);
-    javacall_result (*start)(javacall_handle handle);
+
     javacall_result (*stop)(javacall_handle handle);
+    javacall_result (*pause)(javacall_handle handle);
+    javacall_result (*run)(javacall_handle handle);
+
     javacall_result (*stream_length)(javacall_handle handle, javacall_int64 length);
     javacall_result (*get_data_request)(javacall_handle handle, javacall_int64 *offset, javacall_int32 *length);
     javacall_result (*data_ready)(javacall_handle handle, javacall_int32 length, void **data);
     javacall_result (*data_written)(javacall_handle handle, javacall_bool *new_request);
+
     javacall_result (*get_time)(javacall_handle handle, long* ms);
     javacall_result (*set_time)(javacall_handle handle, long ms);
     javacall_result (*get_duration)(javacall_handle handle, long* ms);
+
     javacall_result (*switch_to_foreground)(javacall_handle handle, int options);
     javacall_result (*switch_to_background)(javacall_handle handle, int options);
 } media_basic_interface;
@@ -384,6 +386,7 @@ typedef struct _javacall_impl_player {
     javacall_handle            mediaHandle;
     media_interface*           mediaItfPtr;
     javacall_bool              downloadByDevice;
+    javacall_int64             streamLen;
 #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
     void*                      pExtraCC;
 #endif //ENABLE_EXTRA_CAMERA_CONTROLS

@@ -52,6 +52,22 @@ static javacall_result fake_radio_create(int appId, int playerId,
     return JAVACALL_OK;
 }
 
+static javacall_result fake_radio_destroy(javacall_handle handle)
+{
+    if( NULL != handle )
+    {
+        FREE( handle );
+    }
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
+    return JAVACALL_OK;
+}
+
 static javacall_result fake_radio_get_format(javacall_handle handle, jc_fmt* fmt)
 {
     *fmt = JC_FMT_CAPTURE_RADIO;
@@ -65,28 +81,7 @@ static javacall_result fake_radio_get_player_controls(javacall_handle handle,
     return JAVACALL_OK;
 }
 
-static javacall_result fake_radio_close(javacall_handle handle){
-
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result fake_radio_destroy(javacall_handle handle)
-{
-    if( NULL != handle )
-    {
-        FREE( handle );
-    }
-    return JAVACALL_OK;
-}
-
+/*
 static javacall_result fake_radio_realize(javacall_handle handle, 
                                           javacall_const_utf16_string mime, 
                                           long mimeLength)
@@ -153,6 +148,50 @@ static javacall_result fake_radio_stop(javacall_handle handle){
 
     return JAVACALL_OK;
 }
+*/
+
+//=============================================================================
+
+static javacall_result fake_radio_stop(javacall_handle handle){
+
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
+    return JAVACALL_OK;
+}
+
+static javacall_result fake_radio_pause(javacall_handle handle){
+
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
+    return JAVACALL_OK;
+}
+
+static javacall_result fake_radio_run(javacall_handle handle){
+
+    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
+    return JAVACALL_OK;
+}
+
+//=============================================================================
 
 static javacall_result fake_radio_get_volume(javacall_handle handle, long* level)
 {
@@ -206,15 +245,15 @@ static javacall_result fake_radio_set_mute(javacall_handle handle,
 
 static media_basic_interface _fake_radio_basic_itf = {
     fake_radio_create,
+    fake_radio_destroy,
+
     fake_radio_get_format,
     fake_radio_get_player_controls,
-    fake_radio_close,
-    fake_radio_destroy,
-    fake_radio_deallocate,
-    fake_radio_realize,
-    fake_radio_prefetch,
-    fake_radio_start,
+
     fake_radio_stop,
+    fake_radio_pause,
+    fake_radio_run,
+
     NULL,
     NULL,
     NULL,

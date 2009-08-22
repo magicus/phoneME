@@ -375,6 +375,11 @@ extern "C" {
 
 //=============================================================================
 
+static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
+{
+    return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
+}
+
 static javacall_result dshow_create(javacall_impl_player* outer_player)
 {
     dshow_player* p = new dshow_player;
@@ -493,7 +498,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     p->playing          = false;
 
     p->all_data_arrived = false;
-    p->whole_content_size = -1;
+    p->whole_content_size = outer_player->streamLen;
     p->bytes_buffered   = 0;
 
     p->media_time       = 0;
@@ -528,17 +533,6 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     //========================================
 
-
-    return JAVACALL_OK;
-}
-
-
-//=============================================================================
-
-static void realize_thread( void* param )
-{
-    dshow_player* p = (dshow_player*)param;
-
     PRINTF( "*** creating dshow player... ***\n" );
 
     bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
@@ -562,38 +556,7 @@ static void realize_thread( void* param )
     PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
             (ok ? "success" : "fail") );
 
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
-                                     (ok ? JAVACALL_OK : JAVACALL_FAIL), 
-                                     NULL );
-}
 
-static javacall_result dshow_realize(javacall_handle handle, 
-    javacall_const_utf16_string mime, 
-    long mimeLength)
-{
-    dshow_player* p = (dshow_player*)handle;
-
-    PRINTF( "*** realize('%S') ***\n", mime );
-
-
-    if( JC_FMT_UNSUPPORTED != p->mediaType )
-    {
-        _beginthread( realize_thread, 0, p );
-        return JAVACALL_OK;
-    }
-
-    return JAVACALL_FAIL;
-}
-
-
-
-static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)
-{
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** get format ***\n" );
-    *fmt = p->mediaType;
     return JAVACALL_OK;
 }
 
@@ -606,6 +569,8 @@ static javacall_result dshow_destroy(javacall_handle handle)
     SetEvent( p->dwr_event );
 
     lcd_output_video_frame( NULL );
+
+    if( NULL != p->ppl ) p->ppl->close();
 
     if( NULL != p->pModule )
     {
@@ -634,41 +599,21 @@ static javacall_result dshow_destroy(javacall_handle handle)
     }
     dshow_player::num_players--;
 
-    return JAVACALL_OK;
-}
-
-static void close_thread( void* param )
-{
-    dshow_player* p = (dshow_player*)param;
-
-    if( NULL != p->ppl ) p->ppl->close();
-
-    lcd_output_video_frame( NULL );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CLOSE_FINISHED,
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
                                      p->appId,
                                      p->playerId, 
                                      JAVACALL_OK, NULL );
+
+    return JAVACALL_OK;
 }
 
-static javacall_result dshow_close(javacall_handle handle)
+//=============================================================================
+
+static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** close ***\n" );
-
-    if( NULL != p->pModule )
-    {
-        p->pModule->removePlayer( p );
-        if( p->our_module )
-        {
-            //Sleep( 500 );
-            //p->pModule->destroy();
-        }
-        p->pModule = NULL;
-    }
-
-    _beginthread( close_thread, 0, p );
-
+    PRINTF( "*** get format ***\n" );
+    *fmt = p->mediaType;
     return JAVACALL_OK;
 }
 
@@ -682,6 +627,8 @@ static javacall_result dshow_get_player_controls(javacall_handle handle,
     return JAVACALL_OK;
 }
 
+//=============================================================================
+/*
 static void dealloc_thread( void* param )
 {
     dshow_player* p = (dshow_player*)param;
@@ -721,11 +668,6 @@ static javacall_result dshow_deallocate(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
-{
-    return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
-}
-
 //=============================================================================
 
 static void prefetch_thread( void* param )
@@ -742,15 +684,6 @@ static void prefetch_thread( void* param )
     if( NULL == p->pModule )
     {
         IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
-
-        /*
-        IEffectModule* em = gm->createEffectModule();
-        em->addPlayer( p );
-        Sleep( 1500 );
-        em->removePlayer( p );
-        Sleep( 1500 );
-        em->destroy();
-        */
 
         p->pModule = gm->createEffectModule();
         p->our_module = true;
@@ -837,6 +770,8 @@ static void stopper_thread( void* param )
                                      (ok ? JAVACALL_OK : JAVACALL_FAIL),
                                      NULL );
 }
+*/
+//=============================================================================
 
 static javacall_result dshow_stop(javacall_handle handle)
 {
@@ -844,7 +779,29 @@ static javacall_result dshow_stop(javacall_handle handle)
     player::result r;
     PRINTF( "*** stop, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
 
-    _beginthread( stopper_thread, 0, p );
+    //_beginthread( stopper_thread, 0, p );
+
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_pause(javacall_handle handle)
+{
+    dshow_player* p = (dshow_player*)handle;
+    player::result r;
+    PRINTF( "*** pause, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
+
+    //_beginthread( stopper_thread, 0, p );
+
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_run(javacall_handle handle)
+{
+    dshow_player* p = (dshow_player*)handle;
+    player::result r;
+    PRINTF( "*** run, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
+
+    //_beginthread( stopper_thread, 0, p );
 
     return JAVACALL_OK;
 }
@@ -1137,19 +1094,20 @@ static javacall_result dshow_set_video_fullscreenmode(javacall_handle /*handle*/
 static media_basic_interface _dshow_basic_itf =
 {
     dshow_create,
+    dshow_destroy,
+
     dshow_get_format,
     dshow_get_player_controls,
-    dshow_close,
-    dshow_destroy,
-    dshow_deallocate,
-    dshow_realize,
-    dshow_prefetch,
-    dshow_start,
+
     dshow_stop,
+    dshow_pause,
+    dshow_run,
+
     dshow_stream_length,
     dshow_get_data_request,
     dshow_data_ready,
     dshow_data_written,
+
     dshow_get_time,
     dshow_set_time,
     dshow_get_duration,
