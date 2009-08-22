@@ -6948,6 +6948,7 @@ translateRange(CVMJITCompilationContext* con,
 	    CVMUint16      fieldOffset;
 	    CVMUint16      cpIndex;
             CVMTypeID      typeID;
+            CVMClassTypeID classID;
 	    CVMBool        isVolatile;
             CVMUint8       typeTag;
 
@@ -6958,13 +6959,12 @@ translateRange(CVMJITCompilationContext* con,
 	       is not, then we have to generate the fb resolution code. */
             if (CVMcpCheckResolvedAndGetTID(ee, cb, cp, cpIndex, &typeID)) {
 		CVMFieldBlock* fb = CVMcpGetFb(cp, cpIndex);
-
 		typeID.fieldID = CVMfbNameAndTypeID(fb);
 		fieldOffset = CVMfbOffset(fb);
 		constNode = NULL;
 		isVolatile = CVMfbIs(fb, VOLATILE);
-                typeID.classID = CVMtypeidGetMemberType(typeID.fieldID);
-                typeTag = CVMtypeidGetPredefinedTypeToken(typeID.classID);
+                classID = CVMtypeidGetMemberType(typeID.fieldID);
+                typeTag = CVMtypeidGetPredefinedTypeToken(classID);
 
 #ifndef CVM_TRUSTED_CLASSLOADERS
                 /* Make sure that both the opcode and the fb agree on whether
@@ -6981,8 +6981,8 @@ translateRange(CVMJITCompilationContext* con,
 #ifndef CVM_TRUSTED_CLASSLOADERS
             createResolveFBNode:
 #endif
-                typeID.classID = CVMtypeidGetMemberType(typeID.fieldID);
-                typeTag = CVMtypeidGetPredefinedTypeToken(typeID.classID);
+                classID = CVMtypeidGetMemberType(typeID.fieldID);
+                typeTag = CVMtypeidGetPredefinedTypeToken(classID);
 
 		/* Since the field is unresolved.  We assume it is volatile
 		   just to be safe. */
