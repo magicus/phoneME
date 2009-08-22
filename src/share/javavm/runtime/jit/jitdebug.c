@@ -181,7 +181,7 @@ CVMJITdebugInitMethodList(CVMExecEnv *ee, CVMJITMethodList *list)
         /* Find the signame which starts with a '(': */
         p = strchr(clazzname, '(');
         if (p == NULL) {
-            methodID = CVM_TYPEID_ERROR;
+            methodID = CVM_METHOD_TYPEID_ERROR;
         } else {
             signame = malloc(strlen(p) + 1);
             strcpy(signame, p);
@@ -193,7 +193,7 @@ CVMJITdebugInitMethodList(CVMExecEnv *ee, CVMJITMethodList *list)
             methodname = p;
             methodID =
                 CVMtypeidNewMethodIDFromNameAndSig(ee, methodname, signame);
-	    if (methodID == CVM_TYPEID_ERROR) {
+	    if (CVMtypeidIsSameMethod(methodID, CVM_METHOD_TYPEID_ERROR)) {
 		CVMconsolePrintf("WARNING: CVMJITdebugInitMethodList failed "
 				 "to lookup methodID for %s\n",
 				 entries[i].fullMethodName);
@@ -203,10 +203,10 @@ CVMJITdebugInitMethodList(CVMExecEnv *ee, CVMJITMethodList *list)
             free(signame);
         }
 
-	clazzID = CVM_TYPEID_ERROR;
+	clazzID = CVM_CLASS_TYPEID_ERROR;
 	if (clazzname != NULL) {
 	    clazzID = CVMtypeidNewClassID(ee, clazzname, strlen(clazzname));
-	    if (clazzID == CVM_TYPEID_ERROR) {
+	    if (CVMtypeidIsSameClass(clazzID, CVM_CLASS_TYPEID_ERROR)) {
 		CVMconsolePrintf("WARNING: CVMJITdebugInitMethodList failed "
 				 "to lookup classID for %s\n",
 				 entries[i].fullMethodName);
@@ -216,10 +216,10 @@ CVMJITdebugInitMethodList(CVMExecEnv *ee, CVMJITMethodList *list)
 	entries[i].clazzID = clazzID;
 	entries[i].methodID = methodID;
 #if 0
-	if (clazzID != CVM_TYPEID_ERROR) {
+	if (!CVMtypeidIsSameClass(clazzID, CVM_CLASS_TYPEID_ERROR)) {
 	    CVMconsolePrintf("Added(%d): %s\n", i, entries[i].fullMethodName);
 	    CVMconsolePrintf("\tclass:  %!C\n", clazzID);
-	    if (methodID != CVM_TYPEID_ERROR) {
+	    if (CVMtypeidIsSameMethod(methodID, CVM_METHOD_TYPEID_ERROR)) {
 		CVMconsolePrintf("\tmethod: %!M\n", methodID);
 	    }
 	}
@@ -249,9 +249,10 @@ CVMJITdebugMethodIsInMethodList(CVMExecEnv *ee, CVMMethodBlock *mb,
         entries = list->entries;
         /* Search for the method in the filter's method list: */
         for (i = 0; i < list->size; i++) {
-            if ((clazzID == entries[i].clazzID) &&
-                (CVM_TYPEID_ERROR == entries[i].methodID ||
-                 methodID == entries[i].methodID)) {
+            if (CVMtypeidIsSameClass(clazzID, entries[i].clazzID) &&
+                (CVMtypeidIsSameMethod(CVM_METHOD_TYPEID_ERROR,
+                                       entries[i].methodID) ||
+                 CVMtypeidIsSameMethod(methodID, entries[i].methodID))) {
                 return CVM_TRUE;
             }
         }
