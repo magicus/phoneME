@@ -1179,14 +1179,12 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
             imbNameID = CVMtypeidGetMemberName(CVMmbNameAndTypeID(imb));
 	    for (k = CVMcbMethodTableCount(cb) - 1; k >= 0; k--) { 
 		CVMMethodBlock* mb = CVMcbMethodTableSlot(cb, k);
-                CVMNameTypeID mbNameID;
-
 		if (mb == NULL) {
                     continue;
                 }
 
-                mbNameID = CVMtypeidGetMemberName(CVMmbNameAndTypeID(mb));
-                if (CVMtypeidIsSameName(mbNameID, imbNameID)) {
+                if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb),
+                                          CVMmbNameAndTypeID(imb))) {
 		    if (CVMmbIs(mb, PUBLIC)) {
 			methodTableIndices[j] = CVMmbMethodTableIndex(mb);
 			break;
@@ -1207,9 +1205,8 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 		for (k = 0; k < CVMcbMethodCount(cb); k++) {
 		    CVMMethodBlock* mb = CVMcbMethodSlot(cb, k);
 		    if (!CVMmbIs(mb, STATIC)) {
-                        CVMNameTypeID mbNameID =
-                            CVMtypeidGetMemberName(CVMmbNameAndTypeID(mb));
-			if (CVMtypeidIsSameName(mbNameID, imbNameID)) {
+			if (CVMtypeidIsSameMethod(CVMmbNameAndTypeID(mb),
+                            			  CVMmbNameAndTypeID(imb))) {
 			    methodTableIndices[j] = ILLEGAL_ACCESS;
 			    break;
 			}
