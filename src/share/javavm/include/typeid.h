@@ -276,7 +276,7 @@
    CVM_FALSE or 0.  This can be done at the compiler command line or here.
  */
 #ifndef CVM_TYPEID_IS_STRONGLY_TYPED
-/* FIXME - eventually disable this foroptimized builds. */
+/* FIXME - eventually disable this for optimized builds. */
 #define CVM_TYPEID_IS_STRONGLY_TYPED    CVM_TRUE
 #endif
 
