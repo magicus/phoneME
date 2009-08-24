@@ -91,7 +91,7 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
 {
     xfer_buffer* xbuf = NULL;
     rtp_player* p = (rtp_player*)param;
-    long mt;
+    javacall_int32 mt;
 
     EnterCriticalSection( &(p->cs) );
     {
@@ -123,7 +123,7 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
                 p->samplesPlayed += size / p->channels;
             }
 
-            mt = p->samplesPlayed * 1000 / p->rate;
+            mt = (javacall_int32)( p->samplesPlayed * 1000 / p->rate );
         }
     }
     LeaveCriticalSection( &(p->cs) );
@@ -445,26 +445,26 @@ static javacall_result rtp_stop(javacall_handle handle)
 #endif // ( 0 )
 
 static javacall_result rtp_get_time(javacall_handle handle, 
-                                    long* ms)
+                                    javacall_int32* ms)
 {
     rtp_player* p = (rtp_player*)handle;
 
     EnterCriticalSection( &(p->cs) );
-    *ms = p->samplesPlayed * 1000 / p->rate;
+    *ms = (javacall_int32)( p->samplesPlayed * 1000 / p->rate );
     LeaveCriticalSection( &(p->cs) );
 
     return JAVACALL_OK;
 }
 
 static javacall_result rtp_set_time(javacall_handle handle, 
-                                    long ms)
+                                    javacall_int32 ms)
 {
     rtp_player* p = (rtp_player*)handle;
     return JAVACALL_FAIL;
 }
 
 static javacall_result rtp_get_duration(javacall_handle handle, 
-                                        long* ms)
+                                        javacall_int32* ms)
 {
     rtp_player* p = (rtp_player*)handle;
     return JAVACALL_NO_DATA_AVAILABLE;

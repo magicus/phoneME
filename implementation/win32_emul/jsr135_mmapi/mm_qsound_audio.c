@@ -59,7 +59,7 @@ static int   g_iExternalBankSize = 0;
 #endif /*INTERNAL_SOUNDBANK*/
 
 static void doProcessHeader(ah* h, const void* buf, long buf_length);
-static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms);
+static javacall_result audio_qs_get_duration(javacall_handle handle, javacall_int32* ms);
 
 /* 1 second of playback */
 #define PCM_PACKET_SIZE(wav) ((wav).rate * (wav).channels * ((wav).bits >> 3))
@@ -906,7 +906,7 @@ static javacall_result audio_qs_data_written(javacall_handle handle,
     return JAVACALL_OK;
 }
 
-static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
+static javacall_result audio_qs_get_time(javacall_handle handle, javacall_int32* ms){
 
     ah* h = (ah*)handle;
     long pos;
@@ -931,7 +931,7 @@ static javacall_result audio_qs_get_time(javacall_handle handle, long* ms){
     return JAVACALL_OK;
 }
 
-static javacall_result audio_qs_set_time(javacall_handle handle, long ms){
+static javacall_result audio_qs_set_time(javacall_handle handle, javacall_int32 ms){
 
     ah* h = (ah*)handle;
     long currtime;
@@ -958,7 +958,7 @@ static javacall_result audio_qs_set_time(javacall_handle handle, long ms){
     return JAVACALL_OK;
 }
 
-static javacall_result audio_qs_get_duration(javacall_handle handle, long* ms) {
+static javacall_result audio_qs_get_duration(javacall_handle handle, javacall_int32* ms) {
 
     ah* h = (ah*)handle;
 

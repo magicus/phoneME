@@ -839,7 +839,7 @@ javacall_result dshow_data_written(javacall_handle handle,
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_get_time(javacall_handle handle, long* ms)
+static javacall_result dshow_get_time(javacall_handle handle, javacall_int32* ms)
 {
     dshow_player* p = (dshow_player*)handle;
     *ms = p->get_media_time();
@@ -870,7 +870,7 @@ static void time_set_thread( void* param )
                                      JAVACALL_OK, (void*)(p->media_time) );
 }
 
-static javacall_result dshow_set_time(javacall_handle handle, long ms)
+static javacall_result dshow_set_time(javacall_handle handle, javacall_int32 ms)
 {
     dshow_player* p = (dshow_player*)handle;
     p->target_mt    = ms;
@@ -880,7 +880,7 @@ static javacall_result dshow_set_time(javacall_handle handle, long ms)
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_get_duration(javacall_handle handle, long* ms)
+static javacall_result dshow_get_duration(javacall_handle handle, javacall_int32* ms)
 {
     dshow_player* p = (dshow_player*)handle;
 

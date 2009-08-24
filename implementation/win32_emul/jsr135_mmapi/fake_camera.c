@@ -326,7 +326,7 @@ static javacall_result fake_camera_run(javacall_handle handle)
 
 //=============================================================================
 
-static javacall_result fake_camera_get_time(javacall_handle handle, long* ms)
+static javacall_result fake_camera_get_time(javacall_handle handle, javacall_int32* ms)
 {
     fake_camera* ñ = (fake_camera*)handle;
     *ms = -1;
@@ -334,12 +334,12 @@ static javacall_result fake_camera_get_time(javacall_handle handle, long* ms)
     return JAVACALL_OK;
 }
 
-static javacall_result fake_camera_set_time(javacall_handle handle, long ms)
+static javacall_result fake_camera_set_time(javacall_handle handle, javacall_int32 ms)
 {
     return JAVACALL_FAIL;
 }
 
-static javacall_result fake_camera_get_duration(javacall_handle handle, long* ms)
+static javacall_result fake_camera_get_duration(javacall_handle handle, javacall_int32* ms)
 {
     return JAVACALL_FAIL;
 }

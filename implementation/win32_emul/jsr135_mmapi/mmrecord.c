@@ -168,18 +168,18 @@ static javacall_result recorder_run(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result recorder_get_time(javacall_handle handle, long* ms)
+static javacall_result recorder_get_time(javacall_handle handle, javacall_int32* ms)
 {
     *ms = -1;
     return JAVACALL_OK;
 }
 
-static javacall_result recorder_set_time(javacall_handle handle, long ms)
+static javacall_result recorder_set_time(javacall_handle handle, javacall_int32 ms)
 {
     return JAVACALL_FAIL;
 }
  
-static javacall_result recorder_get_duration(javacall_handle handle, long* ms)
+static javacall_result recorder_get_duration(javacall_handle handle, javacall_int32* ms)
 {
     *ms = -1;
     return JAVACALL_OK;
