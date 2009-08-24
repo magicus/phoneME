@@ -386,6 +386,16 @@ void StoreMIDPEventInVmThread(MidpEvent event, int isolateId);
 }
 
 /**
+ * Reports how many events can be enqueued before queue overflows.
+ *
+ * @param isolateId  ID of an Isolate, 0 for SVM mode
+ *
+ * @return available queue space
+ *         negative value on error
+ */
+int GetEventQueueFreeCount(int isolateId);
+
+/**
  * Initialize event sub-system, not for general use.
  *
  * @return 0 for success, or non-zero if the MIDP implementation is
