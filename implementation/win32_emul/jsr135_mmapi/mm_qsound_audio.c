@@ -546,10 +546,12 @@ static javacall_result audio_qs_create(javacall_impl_player* outer_player)
 static javacall_result audio_qs_destroy(javacall_handle handle)
 {
     ah *h             = (ah*)handle;
+    int appId         = h->appId;
+    int playerId      = h->playerId;
     javacall_result r = JAVACALL_FAIL;
     int gmIdx         = h->gmIdx;
-    JC_MM_DEBUG_PRINT1("audio_destroy %s\n",__FILE__);
 
+    JC_MM_DEBUG_PRINT1("audio_destroy %s\n",__FILE__);
     PRINTF( "- destroy" );
 
     if( h->synth != NULL )
@@ -601,8 +603,8 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
     gmDetach(gmIdx);
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
+                                     appId,
+                                     playerId, 
                                      JAVACALL_OK, NULL );
 
     return JAVACALL_OK;
