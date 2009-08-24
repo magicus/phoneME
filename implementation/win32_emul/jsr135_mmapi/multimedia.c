@@ -662,14 +662,15 @@ static void create_player_thread( void* param )
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_CREATE_FINISHED,
                                      appId,
                                      playerId, 
-                                     res, p );
+                                     res, NULL );
 }
 
 javacall_result javacall_media_create_managed_player(
     javacall_int32              app_id,
     javacall_int32              player_id,
     javacall_int32              locator_len,
-    javacall_const_utf16_string locator)
+    javacall_const_utf16_string locator,
+    /*OUT*/ javacall_handle*    handle)
 {
     javacall_impl_player* pPlayer 
         = (javacall_impl_player*)MALLOC(sizeof(javacall_impl_player));
@@ -722,10 +723,9 @@ javacall_result javacall_media_create_managed_player(
         memcpy( pPlayer->uri, locator, locator_len * sizeof(javacall_utf16) );
         pPlayer->uri[ locator_len ] = (javacall_utf16)0;
 
+        *handle = (javacall_handle)pPlayer;
         JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
-
         _beginthread( create_player_thread, 0, pPlayer );
-
         return JAVACALL_OK;
     }
     else
@@ -744,7 +744,8 @@ javacall_result javacall_media_create_unmanaged_player(
     javacall_int32              mime_len,
     javacall_const_utf16_string mime,
     javacall_bool               stream_len_known,
-    javacall_int64              stream_len )
+    javacall_int64              stream_len,
+    /*OUT*/ javacall_handle*    handle )
 {
     char* cmime;
 
@@ -807,9 +808,9 @@ javacall_result javacall_media_create_unmanaged_player(
 
     if( NULL != pPlayer->mediaItfPtr )
     {
+        *handle = (javacall_handle)pPlayer;
         JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
         _beginthread( create_player_thread, 0, pPlayer );
-
         return JAVACALL_OK;
     }
     else
