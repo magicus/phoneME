@@ -163,23 +163,18 @@ class MMEventListener implements EventListener {
             break;
 
         case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
-            long time = ( long )nevt.intParam2 * 1000;
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
-                p.notifyMediaTimeSet(time);
-            }
-
-        case EVENT_MEDIA_REALIZE_FINISHED:
-        case EVENT_MEDIA_PREFETCH_FINISHED:
-        case EVENT_MEDIA_START_FINISHED:
+        case EVENT_MEDIA_CREATE_FINISHED:
+        case EVENT_MEDIA_PAUSE_FINISHED:
+        case EVENT_MEDIA_RUN_FINISHED:
         case EVENT_MEDIA_STOP_FINISHED:
-        case EVENT_MEDIA_DEALLOCATE_FINISHED:
-        case EVENT_MEDIA_CLOSE_FINISHED:
-            if( null == p ) {
-                p = HighLevelPlayer.get(nevt.intParam1);
-            }
-            if (p != null) {
-                p.unblockOnEvent( 0 == nevt.intParam2 ); // JAVACALL_OK is 0 !
+        case EVENT_MEDIA_DESTROY_FINISHED:
+            p = HighLevelPlayer.get(nevt.intParam1);
+            AsyncExecutor ae = null;
+            if ( null != p ) {
+                ae = p.getAsyncExecutor();
+                if (null != ae) {
+                    ae.unblockOnEvent(nevt.intParam5, nevt.intParam2);
+                }
             }
             break;
 
