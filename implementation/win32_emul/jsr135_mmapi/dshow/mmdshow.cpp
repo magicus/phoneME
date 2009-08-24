@@ -325,7 +325,7 @@ long dshow_player::read(short* buffer, int samples)
     if( nbytes > out_queue_n ) {
         zero_padding_size = nbytes - out_queue_n;
         nbytes = out_queue_n;
-        PRINTF( "### underflow ###\n" );
+        //PRINTF( "### underflow ###\n" );
     }
 
     BYTE*  out = (BYTE*)buffer;
@@ -626,6 +626,9 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     CloseHandle( p->dwr_event );
 
+    int appId    = p->appId;
+    int playerId = p->playerId;
+
     delete p;
 
     bool found = false;
@@ -637,8 +640,8 @@ static javacall_result dshow_destroy(javacall_handle handle)
     dshow_player::num_players--;
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
+                                     appId,
+                                     playerId, 
                                      JAVACALL_OK, NULL );
 
     return JAVACALL_OK;
@@ -811,7 +814,7 @@ javacall_result dshow_get_data_request(javacall_handle handle,
     *offset = p->dwr_offset;
     *length = p->dwr_len;
 
-    PRINTF( "--- get_data_request: @%I64d %d", *offset, *length );
+    PRINTF( "   --- get_data_request: @%I64d %d\n", *offset, *length );
 
     return JAVACALL_OK;
 }
@@ -821,7 +824,7 @@ javacall_result dshow_data_ready(javacall_handle handle,
                                  void**          data)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "--- data_ready: %d", length );
+    PRINTF( "       --- data_ready: %d\n", length );
 
     p->dwr_len = length;
     *data      = p->dwr_pdata;
@@ -833,7 +836,7 @@ javacall_result dshow_data_written(javacall_handle handle,
                                    javacall_bool*  new_request)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "--- data_written." );
+    PRINTF( "       --- data_written.\n" );
     SetEvent( p->dwr_event );
     *new_request = JAVACALL_FALSE;
     return JAVACALL_OK;
