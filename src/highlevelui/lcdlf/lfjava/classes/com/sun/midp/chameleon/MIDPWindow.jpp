@@ -470,6 +470,10 @@ public class MIDPWindow extends CWindow {
                                   scrCommands, scrCmdCount,
                                   scrCmdListener);
 	resize();
+
+        if (sizeChangedOccured) {
+            requestRepaint();
+        }
     }
 
     /**
