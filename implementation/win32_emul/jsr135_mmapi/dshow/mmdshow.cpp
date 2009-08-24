@@ -870,7 +870,8 @@ static void time_set_thread( void* param )
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED,
                                      p->appId,
                                      p->playerId, 
-                                     JAVACALL_OK, (void*)(p->media_time) );
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
+                                     (void*)(p->media_time) );
 }
 
 static javacall_result dshow_set_time(javacall_handle handle, javacall_int32 ms)
