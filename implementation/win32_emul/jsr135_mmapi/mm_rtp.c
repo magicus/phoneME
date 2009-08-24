@@ -25,8 +25,6 @@
 #include "multimedia.h"
 #include "pcm_out.h"
 
-#if( 0 )
-
 //=============================================================================
 
 /*
@@ -169,6 +167,8 @@ size_t rtp_pcm_callback( void* buf, size_t size, void* param )
 
     return size;
 }
+
+#if( 0 )
 
 static javacall_result rtp_create(int appId, 
                                   int playerId,
@@ -442,6 +442,8 @@ static javacall_result rtp_stop(javacall_handle handle)
     return JAVACALL_OK;
 }
 
+#endif // ( 0 )
+
 static javacall_result rtp_get_time(javacall_handle handle, 
                                     long* ms)
 {
@@ -521,8 +523,6 @@ static javacall_result rtp_set_mute(javacall_handle handle,
 /*****************************************************************************\
                         I N T E R F A C E   T A B L E S
 \*****************************************************************************/
-
-#endif // ( 0 )
 
 static media_basic_interface _rtp_basic_itf =
 {
