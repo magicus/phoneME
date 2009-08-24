@@ -133,6 +133,7 @@ public:
     int64                 dwr_offset;
     int32                 dwr_len;
     BYTE*                 dwr_pdata;
+    bool                  dwr_cancel;
 
     long                  target_mt;
 };
@@ -239,9 +240,15 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
 
     WaitForSingleObject( dwr_event, INFINITE );
 
-    *plen = dwr_len;
-
-    return player_callback::result_success;
+    if( dwr_cancel )
+    {
+        return player_callback::result_io;
+    }
+    else
+    {
+        *plen = dwr_len;
+        return player_callback::result_success;
+    }
 }
 
 player_callback::result dshow_player::get_stream_length(int64 * /*plength*/)
@@ -561,6 +568,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     p->out_queue_n      = 0;
 
     p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
+    p->dwr_cancel       = false;
 
     outer_player->mediaHandle = (javacall_handle)p;
 
@@ -601,7 +609,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** destroy ***\n" );
 
-    p->dwr_len = 0;
+    p->dwr_cancel = true;
     SetEvent( p->dwr_event );
 
     lcd_output_video_frame( NULL );
