@@ -375,6 +375,43 @@ extern "C" {
 
 //=============================================================================
 
+static void add_to_qsound( dshow_player* p )
+{
+    if( NULL == p->pModule )
+    {
+        IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
+
+        p->pModule = gm->createEffectModule();
+        p->our_module = true;
+
+        IPanControl* pan = (IPanControl*)( p->pModule->getControl( "PanControl" ) );
+        if( NULL != pan ) pan->setPan( p->pan );
+
+        IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl( "VolumeControl" ) );
+        if( NULL != vc ) vc->SetLevel( p->volume );
+    }
+
+    p->pModule->addPlayer( p );
+}
+
+static void remove_from_qsound( dshow_player* p )
+{
+    if( NULL != p->pModule )
+    {
+        p->pModule->removePlayer( p );
+        if( p->our_module ) 
+        {
+            //Sleep( 500 );
+            //p->pModule->destroy();
+        }
+        p->pModule = NULL;
+    }
+
+    gmDetach( p->gmIdx );
+}
+
+//=============================================================================
+
 static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
 {
     return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
@@ -540,9 +577,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     PRINTF( "*** dshow player creation finished (%s) ***\n",
             (ok ? "success" : "fail") );
 
-    if( ok && 
-        NULL != p->ppl && 
-        -1 != p->whole_content_size )
+    if( ok && -1 != p->whole_content_size )
     {
         p->ppl->set_stream_length(p->whole_content_size);
     }
@@ -556,6 +591,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
             (ok ? "success" : "fail") );
 
+    add_to_qsound( p );
 
     return JAVACALL_OK;
 }
@@ -572,14 +608,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     if( NULL != p->ppl ) p->ppl->close();
 
-    if( NULL != p->pModule )
-    {
-        p->pModule->removePlayer( p );
-        //if( p->our_module ) p->pModule->destroy();
-        p->pModule = NULL;
-    }
-
-    gmDetach( p->gmIdx );
+    remove_from_qsound( p );
 
     if( NULL != p->video_frame ) delete p->video_frame;
     if( NULL != p->out_frame ) delete p->out_frame;
@@ -628,141 +657,27 @@ static javacall_result dshow_get_player_controls(javacall_handle handle,
 }
 
 //=============================================================================
-/*
-static void dealloc_thread( void* param )
+
+static void stop_thread( void* param )
 {
-    dshow_player* p = (dshow_player*)param;
+    dshow_player*  p = (dshow_player*)param;
+    bool           ok = true;
+    player::result r;
 
-    PRINTF( "*** deallocating dshow player... ***\n" );
+    if( player::started == p->ppl->get_state() )
+    {
+        ok = ( player::result_success == ( r = p->ppl->stop() ) );
+        if( ok ) p->playing = false;
+    }
 
-    if( NULL != p->ppl ) p->ppl->deallocate();
+    if( ok && player::prefetched == p->ppl->get_state() )
+    {
+        ok = ( player::result_success == ( r = p->ppl->deallocate() ) );
+    }
+
+    assert( player::realized == p->ppl->get_state() );
 
     lcd_output_video_frame( NULL );
-
-    if( NULL != p->pModule )
-    {
-        p->pModule->removePlayer( p );
-        if( p->our_module ) 
-        {
-            //Sleep( 500 );
-            //p->pModule->destroy();
-        }
-        p->pModule = NULL;
-    }
-
-    PRINTF( "*** dshow player deallocated ***\n" );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
-                                     JAVACALL_OK, NULL );
-}
-
-static javacall_result dshow_deallocate(javacall_handle handle)
-{
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** deallocate ***\n" );
-
-    _beginthread( dealloc_thread, 0, p );
-
-    return JAVACALL_OK;
-}
-
-//=============================================================================
-
-static void prefetch_thread( void* param )
-{
-    dshow_player* p = (dshow_player*)param;
-
-    PRINTF( "*** prefetching dshow player... ***\n" );
-
-    bool ok = ( player::result_success == p->ppl->prefetch() );
-
-    PRINTF( "*** dshow player prefetch finished (%s)***\n",
-            (ok ? "success" : "fail") );
-
-    if( NULL == p->pModule )
-    {
-        IGlobalManager* gm = QSOUND_GET_GM(p->gmIdx).gm;
-
-        p->pModule = gm->createEffectModule();
-        p->our_module = true;
-
-        IPanControl* pan = (IPanControl*)( p->pModule->getControl( "PanControl" ) );
-        if( NULL != pan ) pan->setPan( p->pan );
-
-        IVolumeControl* vc = (IVolumeControl*)( p->pModule->getControl( "VolumeControl" ) );
-        if( NULL != vc ) vc->SetLevel( p->volume );
-    }
-
-    p->pModule->addPlayer( p );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     p->appId,
-                                     p->playerId,
-                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
-                                     NULL );
-}
-
-static javacall_result dshow_prefetch(javacall_handle handle)
-{
-    dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** prefetch ***\n" );
-
-    _beginthread( prefetch_thread, 0, p );
-
-    return JAVACALL_OK;
-}
-
-//=============================================================================
-
-static void starter_thread( void* param )
-{
-    dshow_player* p = (dshow_player*)param;
-
-    PRINTF( "*** starting dshow player ***\n" );
-
-    bool ok = ( player::result_success == p->ppl->start() );
-
-    PRINTF( "*** dshow player startup finished (%s), start complete ***\n",
-            (ok ? "success" : "fail") );
-
-    p->playing = ok;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
-                                     p->appId,
-                                     p->playerId, 
-                                     (ok ? JAVACALL_OK : JAVACALL_FAIL), 
-                                     NULL );
-}
-
-static javacall_result dshow_start(javacall_handle handle)
-{
-    dshow_player* p = (dshow_player*)handle;
-    player::result r;
-    PRINTF( "*** start, mt = %ld/%ld***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
-    p->eom_sent = false;
-
-    _beginthread( starter_thread, 0, p );
-
-    return JAVACALL_OK;
-}
-
-//=============================================================================
-
-static void stopper_thread( void* param )
-{
-    dshow_player* p = (dshow_player*)param;
-
-    PRINTF( "*** stopping dshow player ***\n" );
-
-    p->get_media_time();
-    bool ok = ( player::result_success == p->ppl->stop() );
-
-    PRINTF( "*** dshow player stop finished (%s) ***\n",
-            (ok ? "success" : "fail") );
-
-    p->playing = ok;
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
                                      p->appId,
@@ -770,8 +685,6 @@ static void stopper_thread( void* param )
                                      (ok ? JAVACALL_OK : JAVACALL_FAIL),
                                      NULL );
 }
-*/
-//=============================================================================
 
 static javacall_result dshow_stop(javacall_handle handle)
 {
@@ -779,9 +692,35 @@ static javacall_result dshow_stop(javacall_handle handle)
     player::result r;
     PRINTF( "*** stop, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
 
-    //_beginthread( stopper_thread, 0, p );
+    _beginthread( stop_thread, 0, p );
 
     return JAVACALL_OK;
+}
+
+static void pause_thread( void* param )
+{
+    dshow_player*  p = (dshow_player*)param;
+    bool           ok = true;
+    player::result r;
+
+    if( player::started == p->ppl->get_state() )
+    {
+        p->get_media_time();
+        ok = ( player::result_success == ( r = p->ppl->stop() ) );
+        if( ok ) p->playing = false;
+    } 
+    else if( player::realized == p->ppl->get_state() )
+    {
+        ok = ( player::result_success == ( r = p->ppl->prefetch() ) );
+    }
+
+    assert( player::prefetched == p->ppl->get_state() );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
+                                     p->appId,
+                                     p->playerId,
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
+                                     NULL );
 }
 
 static javacall_result dshow_pause(javacall_handle handle)
@@ -790,9 +729,37 @@ static javacall_result dshow_pause(javacall_handle handle)
     player::result r;
     PRINTF( "*** pause, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
 
-    //_beginthread( stopper_thread, 0, p );
+    _beginthread( pause_thread, 0, p );
 
     return JAVACALL_OK;
+}
+
+static void run_thread( void* param )
+{
+    dshow_player*  p = (dshow_player*)param;
+    bool           ok = true;
+    player::result r;
+
+    if( player::realized == p->ppl->get_state() )
+    {
+        ok = ( player::result_success == ( r = p->ppl->prefetch() ) );
+    }
+
+    if( ok && player::prefetched == p->ppl->get_state() )
+    {
+        p->eom_sent = false;
+
+        ok = ( player::result_success == ( r = p->ppl->start() ) );
+        if( ok ) p->playing = true;
+    }
+
+    assert( player::started == p->ppl->get_state() );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+                                     p->appId,
+                                     p->playerId,
+                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
+                                     NULL );
 }
 
 static javacall_result dshow_run(javacall_handle handle)
@@ -801,7 +768,7 @@ static javacall_result dshow_run(javacall_handle handle)
     player::result r;
     PRINTF( "*** run, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
 
-    //_beginthread( stopper_thread, 0, p );
+    _beginthread( run_thread, 0, p );
 
     return JAVACALL_OK;
 }
