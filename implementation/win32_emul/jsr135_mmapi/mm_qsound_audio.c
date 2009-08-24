@@ -90,6 +90,7 @@ static void MQ234_CALLBACK eom_event_trigger(void *userData)
     long ms = mQ234_PlayControl_GetPosition(h->synth) / 10;
     sendEOM(h->appId, h->playerId, ms);
     mQ234_PlayControl_Play(h->synth, FALSE);
+    h->state = PL135_PREFETCHED;
 }
 
 static void MQ234_CALLBACK fill_midi(void* userData,
