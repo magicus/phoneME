@@ -186,7 +186,11 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP(props, "microedition.platform", "j2me");
     PUTPROP(props, "microedition.encoding", "ISO-8859-1");
     PUTPROP(props, "microedition.profiles", "");
-    PUTPROP(props, "microedition.locale", "en_US");
+    /*
+     * Using MIDP-compliant format for microedition.locale value
+     * in order to pass JSR-238 TCK.
+     */
+    PUTPROP(props, "microedition.locale", "en-US");
 #ifdef CVM_PROP_MIDP_IMPL
     PUTPROP(props, "com.sun.midp.implementation", CVM_PROP_MIDP_IMPL);
 #endif
