@@ -460,7 +460,7 @@ javacall_result mmaudio_tone_note(long appId, long note, long dur, long vol)
  */
 static javacall_result audio_qs_create(javacall_impl_player* outer_player)
 {
-    ah *newHandle = NULL;
+    ah *h = NULL;
     int gmIdx = -1;
     MQ234_ERROR e;
     IPlayControl* synth;
@@ -478,8 +478,8 @@ static javacall_result audio_qs_create(javacall_impl_player* outer_player)
     JC_MM_DEBUG_PRINT1("audio create %s\n", __FILE__);
     JC_MM_ASSERT(gmIdx>=0);
 
-    newHandle = MALLOC(sizeof(ah));
-    memset(newHandle, '\0', sizeof(ah));
+    h = MALLOC(sizeof(ah));
+    memset(h, '\0', sizeof(ah));
 
     e = mQ234_CreateSynthPlayer(g_QSoundGM[gmIdx].gm, &(synth), NULL);
     JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
@@ -487,48 +487,60 @@ static javacall_result audio_qs_create(javacall_impl_player* outer_player)
     e = mQ234_AttachSynthPlayer(g_QSoundGM[gmIdx].gm, synth, 0);
     JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
 
-    newHandle->mediaType        = fmt_str2enum( outer_player->mediaType );
-    newHandle->appId            = outer_player->appId;
-    newHandle->playerId         = outer_player->playerId;
-    newHandle->streamLen        = outer_player->streamLen;
-    newHandle->gmIdx            = gmIdx;
+    h->mediaType        = fmt_str2enum( outer_player->mediaType );
+    h->appId            = outer_player->appId;
+    h->playerId         = outer_player->playerId;
+    h->streamLen        = outer_player->streamLen;
+    h->gmIdx            = gmIdx;
 
-    // need some data to recognize sp-midi
-    if( JC_FMT_MIDI == newHandle->mediaType ) {
-        newHandle->needProcessHeader = JAVACALL_TRUE;
-    } else {
-        newHandle->needProcessHeader = JAVACALL_FALSE;
+    if( -1 != h->streamLen )
+    {
+        h->dataBufferLen = (int)( h->streamLen );
+        h->dataBuffer    = malloc( h->dataBufferLen );
+
+        if( NULL == h->dataBuffer ) return JAVACALL_OUT_OF_MEMORY;
     }
 
-    newHandle->controls[CON135_METADATA] =
+    // need some data to recognize sp-midi
+    if( JC_FMT_MIDI == h->mediaType ) {
+        h->needProcessHeader = JAVACALL_TRUE;
+    } else {
+        h->needProcessHeader = JAVACALL_FALSE;
+    }
+
+    h->controls[CON135_METADATA] =
         (IControl*)mQ234_PlayControl_getMetaDataControl(synth);
-    newHandle->controls[CON135_MIDI] =
+    h->controls[CON135_MIDI] =
         (IControl*)mQ234_PlayControl_getMIDIControl(synth);
-    newHandle->controls[CON135_PITCH] =
+    h->controls[CON135_PITCH] =
         (IControl*)mQ234_PlayControl_getPitchControl(synth);
-    newHandle->controls[CON135_RATE] =
+    h->controls[CON135_RATE] =
         (IControl*)mQ234_PlayControl_getRateControl(synth);
-    newHandle->controls[CON135_TEMPO] =
+    h->controls[CON135_TEMPO] =
         (IControl*)mQ234_PlayControl_getTempoControl(synth);
 
-    newHandle->controls[CON135_VOLUME] =
+    h->controls[CON135_VOLUME] =
         (IControl*)mQ234_PlayControl_getVolumeControl(synth);
 
-    newHandle->synth    = synth;
-    newHandle->mtime    = -1;
+    h->synth    = synth;
+    h->mtime    = -1;
 
-    newHandle->state = PL135_UNREALIZED;
-    outer_player->mediaHandle = (javacall_handle)newHandle;
+    h->state = PL135_UNREALIZED;
+    outer_player->mediaHandle = (javacall_handle)h;
+
+    h->hRealizedEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
-                                      newHandle->appId,
-                                      newHandle->playerId, 
+                                      h->appId,
+                                      h->playerId, 
                                       JAVACALL_OK,
                                       NULL );
 
-    // wait for some 'realized' event here
+    WaitForSingleObject( h->hRealizedEvent, INFINITE );
+    CloseHandle( h->hRealizedEvent );
+    h->hRealizedEvent = NULL;
 
-    return res;
+    return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_destroy(javacall_handle handle)
@@ -638,13 +650,12 @@ static javacall_result audio_qs_get_player_controls(javacall_handle handle,
     return JAVACALL_OK;
 }
 
-/*
-static javacall_result audio_qs_deallocate(javacall_handle handle){
+//=============================================================================
+
+static javacall_result audio_qs_do_deallocate(javacall_handle handle)
+{
     ah *h = (ah*)handle;
     int gmIdx         = h->gmIdx;
-
-    PRINTF( "- release device" );
-    JC_MM_DEBUG_PRINT("audio_qs_deallocate\n");
 
     if(h->doneCallback != NULL)
     {
@@ -668,23 +679,16 @@ static javacall_result audio_qs_deallocate(javacall_handle handle){
         h->storage = NULL;
     }
 
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK,
-                                     NULL );
-
+    h->state = PL135_REALIZED;
     return JAVACALL_OK;
 }
 
-static javacall_result audio_qs_prefetch(javacall_handle handle){
-
+static javacall_result audio_qs_do_prefetch(javacall_handle handle)
+{
     ah*         h     = (ah *)handle;
     int         gmIdx = h->gmIdx;
     long        r     = -1;
     MQ234_ERROR e;
-
-    PRINTF("- prefetch" );
 
     if(h->dataBuffer != NULL)
     {
@@ -750,45 +754,44 @@ static javacall_result audio_qs_prefetch(javacall_handle handle){
             JC_MM_DEBUG_PRINT("Synth data set.\n");
         }
     }
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK,
-                                     NULL );
-
     h->state = PL135_PREFETCHED;
     return JAVACALL_OK;
 }
 
-static javacall_result audio_qs_start(javacall_handle handle){
-
+static javacall_result audio_qs_do_start(javacall_handle handle)
+{
     ah* h = (ah*)handle;
-
     h->state = PL135_STARTED;
-   
-    PRINTF( "- start" );
-
-    //printf("audio_start...\n");
     mQ234_PlayControl_Play(h->synth, TRUE);
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    //printf( "...audio_start: h=0x%08X\n", (int)handle);
     return JAVACALL_OK;
 }
 
-static javacall_result audio_qs_stop(javacall_handle handle){
-
+static javacall_result audio_qs_do_stop(javacall_handle handle)
+{
     ah* h = (ah*)handle;
-    JC_MM_DEBUG_PRINT1("audio_stop: h=0x%08X\n", (int)handle);
-    PRINTF( "- stop" );
-
     mQ234_PlayControl_Play(h->synth, FALSE);
+    h->state = PL135_PREFETCHED;
+    return JAVACALL_OK;
+}
+
+//=============================================================================
+
+static javacall_result audio_qs_stop(javacall_handle handle){
+    ah *h = (ah*)handle;
+
+    if( PL135_STARTED == h->state )
+    {
+        PRINTF( "qs: stop -- stop...\n" );
+        audio_qs_do_stop( handle );
+        PRINTF( "qs: stop -- stop done.\n" );
+    }
+
+    if( PL135_PREFETCHED == h->state )
+    {
+        PRINTF( "qs: stop -- deallocate...\n" );
+        audio_qs_do_deallocate( handle );
+        PRINTF( "qs: stop -- deallocate done.\n" );
+    }
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
                                      h->appId,
@@ -798,22 +801,59 @@ static javacall_result audio_qs_stop(javacall_handle handle){
 
     return JAVACALL_OK;
 }
-*/
-
-static javacall_result audio_qs_stop(javacall_handle handle){
-    ah *h = (ah*)handle;
-    return JAVACALL_OK;
-}
 
 static javacall_result audio_qs_pause(javacall_handle handle){
     ah *h = (ah*)handle;
+
+    if( PL135_STARTED == h->state )
+    {
+        PRINTF( "qs: pause -- stop...\n" );
+        audio_qs_do_stop( handle );
+        PRINTF( "qs: pause -- stop done.\n" );
+    }
+    else if( PL135_REALIZED == h->state )
+    {
+        PRINTF( "qs: pause -- prefetch...\n" );
+        audio_qs_do_prefetch( handle );
+        PRINTF( "qs: pause -- prefetch done.\n" );
+    }
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
     return JAVACALL_OK;
 }
 
 static javacall_result audio_qs_run(javacall_handle handle){
     ah *h = (ah*)handle;
+
+    if( PL135_REALIZED == h->state )
+    {
+        PRINTF( "qs: run -- prefetch...\n" );
+        audio_qs_do_prefetch( handle );
+        PRINTF( "qs: run -- prefetch done.\n" );
+    }
+
+    if( PL135_PREFETCHED == h->state )
+    {
+        PRINTF( "qs: run -- start...\n" );
+        audio_qs_do_start( handle );
+        PRINTF( "qs: run -- start done.\n" );
+    }
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
     return JAVACALL_OK;
 }
+
+//=============================================================================
 
 static javacall_result audio_qs_stream_length(javacall_handle handle, 
                                               javacall_int64 length)
@@ -894,7 +934,7 @@ static javacall_result audio_qs_data_written(javacall_handle handle,
             doProcessHeader(h, h->dataBuffer, h->dataBufferLen);
         }
 
-        // set some 'realized' event here
+        SetEvent( h->hRealizedEvent );
 
         *new_request = JAVACALL_FALSE;
     }

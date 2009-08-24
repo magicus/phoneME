@@ -83,6 +83,8 @@ typedef struct {
     MQ234_HostBlock         *midiStream;
     IHostStorage            *storage;
     long                    mtime; /* stores media time when state < PREFETCHED */
+
+    HANDLE                  hRealizedEvent;
 } ah;
 
 typedef struct
