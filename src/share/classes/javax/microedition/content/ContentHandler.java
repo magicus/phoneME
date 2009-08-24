@@ -372,7 +372,7 @@ public interface ContentHandler {
      * if appropriate. The content handler should be careful not to delete content 
      * that is indespensible to the user without confirmation.
      */
-    public static final java.lang.String ACTION_DELETE = "delete";
+    public static final String ACTION_DELETE = "delete";
     /** Action to <code>edit</code> the content. */
     public static final String ACTION_EDIT = "edit";
     /** Action to <code>execute</code> the content. */
@@ -391,7 +391,7 @@ public interface ContentHandler {
      * the content handler. The content may be deleted depending on the nature 
      * of the content handler and the content. Compare with delete.
      */
-    public static final java.lang.String ACTION_REMOVE = "remove";
+    public static final String ACTION_REMOVE = "remove";
     /** Action to <code>save</code> the content. */
     public static final String ACTION_SAVE = "save";
     /** 

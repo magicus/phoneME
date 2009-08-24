@@ -46,9 +46,9 @@ import com.sun.j2me.security.Token;
  * registrations that is initialized on first use.
  */
 public final class RegistryImpl {
-	
-	static public final RegistryGate gate = Config.getRegistryGate();
-	
+    
+    static public final RegistryGate gate = Config.getRegistryGate();
+    
     /** The set of active Invocations. */
     private /*static*/ final Hashtable activeInvocations = new Hashtable();
 
@@ -106,18 +106,18 @@ public final class RegistryImpl {
      *       <code>null</code>
      */
     public static RegistryImpl getRegistryImpl(String classname,
-    					Token token) throws ContentHandlerException
+                        Token token) throws ContentHandlerException
     {
-    	AppProxy.checkAPIPermission(token);
-    	try {
-	        return getRegistryImpl(AppProxy.getCurrent().forClass(classname));
+        AppProxy.checkAPIPermission(token);
+        try {
+            return getRegistryImpl(AppProxy.getCurrent().forClass(classname));
         } catch (IllegalArgumentException iae) {
             throw new ContentHandlerException("not an application",
                          ContentHandlerException.NO_REGISTERED_HANDLER);
-	    } catch (ClassNotFoundException cnfe) {
-	        throw new ContentHandlerException("not an application",
-	                     ContentHandlerException.NO_REGISTERED_HANDLER);
-	    }
+        } catch (ClassNotFoundException cnfe) {
+            throw new ContentHandlerException("not an application",
+                         ContentHandlerException.NO_REGISTERED_HANDLER);
+        }
     }
 
     /**
@@ -153,9 +153,9 @@ public final class RegistryImpl {
         // Synchronize between competing operations
         RegistryImpl curr = null;
         synchronized (mutex) {
-        	if( Logger.LOGGER != null )
-        		Logger.LOGGER.println( 
-        				"RegistryImpl.getRegistryImpl( '" + appl + "' )");
+            if( Logger.LOGGER != null )
+                Logger.LOGGER.println( 
+                        "RegistryImpl.getRegistryImpl( '" + appl + "' )");
             // Check if class already has a RegistryImpl
             curr = (RegistryImpl)registries.get(appl);
             if (curr != null) {
@@ -164,7 +164,7 @@ public final class RegistryImpl {
                     // Classname is not a registered MIDlet or ContentHandler
                     throw new
                         ContentHandlerException("not a registered MIDlet",
-                        			ContentHandlerException.NO_REGISTERED_HANDLER);
+                                    ContentHandlerException.NO_REGISTERED_HANDLER);
                 }
                 return curr;
             }
@@ -173,12 +173,12 @@ public final class RegistryImpl {
             curr = new RegistryImpl(appl);
             registries.put(appl, curr);
             if( Logger.LOGGER != null ){
-            	Logger.LOGGER.println( "registries:" );
-            	java.util.Enumeration e = registries.keys();
-            	while( e.hasMoreElements() ){
-            		Object key = e.nextElement();
-            		Logger.LOGGER.println( "\t" + key + " " + registries.get(key) );
-            	}
+                Logger.LOGGER.println( "registries:" );
+                java.util.Enumeration e = registries.keys();
+                while( e.hasMoreElements() ){
+                    Object key = e.nextElement();
+                    Logger.LOGGER.println( "\t" + key + " " + registries.get(key) );
+                }
             }
         }
 
@@ -208,12 +208,12 @@ public final class RegistryImpl {
     private RegistryImpl(AppProxy app) throws ContentHandlerException
     {
         application = app;
-    	currentBlockID = InvocationImpl.store.allocateBlockID();
+        currentBlockID = InvocationImpl.store.allocateBlockID();
 
         /* Remember the ContentHandlerImpl, if there is one. */
         handlerImpl = getServer(application);
         if( Logger.LOGGER != null )
-        	Logger.LOGGER.println("RegistryImpl(): handlerImpl = " + handlerImpl);
+            Logger.LOGGER.println("RegistryImpl(): handlerImpl = " + handlerImpl);
 
         if (handlerImpl == null && !application.isRegistered()) {
             // Classname is not a registered MIDlet or ContentHandler; fail
@@ -366,8 +366,12 @@ public final class RegistryImpl {
      *  {@link ContentHandlerException#AMBIGUOUS} if <code>id</code>
      *  is a prefix of any registered handler or if any registered
      *  handler ID is a prefix of this ID
-     * @exception SecurityException if registration
-     *   is not permitted
+     *  @exception ContentHandlerException with an error code of 
+     *  {@link ContentHandlerException#CAPACITY_EXCEEDED} if the minimum length 
+     *  of the ID, the minimum number of types, the minimum number of 
+     *  actions per handler, or the minimum number of suffixes per handler 
+     *  is exceeded and the implementation does not support larger values.
+     * @exception SecurityException if registration is not permitted
      */
     public ContentHandlerImpl register(String classname,
                                        String[] types,
@@ -380,7 +384,7 @@ public final class RegistryImpl {
                ClassNotFoundException, ContentHandlerException
     {
         if(Logger.LOGGER != null){
-			Logger.LOGGER.println( getClass().getName() + ".register '" + classname + "'" );
+            Logger.LOGGER.println( getClass().getName() + ".register '" + classname + "'" );
         }
         
         application.checkRegisterPermission("register");
@@ -396,24 +400,23 @@ public final class RegistryImpl {
             }
 
             int registrationMethod = // non-native, dynamically registered 
-            	~ContentHandlerImpl.REGISTERED_STATIC_FLAG & ContentHandlerImpl.REGISTERED_STATIC_FLAG;
+                ~ContentHandlerImpl.REGISTERED_STATIC_FLAG & ContentHandlerImpl.REGISTERED_STATIC_FLAG;
 
-        	ContentHandlerRegData handlerData = 
-        		new ContentHandlerRegData(registrationMethod, 
-        				types, suffixes, actions, actionnames,
+            ContentHandlerRegData handlerData = 
+                new ContentHandlerRegData(registrationMethod, 
+                        types, suffixes, actions, actionnames,
                         id, accessRestricted);
             
-            ContentHandlerImpl conflict = checkConflicts(handlerData.getID(), appl);
-            if (conflict != null) {
-                unregister(classname);
-            }
+            if (areThereConflicts(handlerData.getID(), appl))
+                unregister(appl);
+            
             ContentHandlerImpl.Data data = gate.register(appl, handlerData);
             // data must not be null
             ContentHandlerImpl result = new ContentHandlerHandle( data ).get();
             setServer(result);
 
             if (Logger.LOGGER != null) {
-            	Logger.LOGGER.println("Register: " + classname + ", id: " + id);
+                Logger.LOGGER.println("Register: " + classname + ", id: " + id);
             }
 
             return result;
@@ -434,7 +437,7 @@ public final class RegistryImpl {
             if (impl != null) {
                 impl.handlerImpl = server;
                 if( Logger.LOGGER != null )
-                	Logger.LOGGER.println(impl + ".setServer: handlerImpl = " + impl.handlerImpl);
+                    Logger.LOGGER.println(impl + ".setServer: handlerImpl = " + impl.handlerImpl);
             }
         }
     }
@@ -448,9 +451,9 @@ public final class RegistryImpl {
      * @return found handler or <code>null</code> if none found.
      */
     static ContentHandlerImpl getHandler(ApplicationID appl) {
-    	ContentHandlerImpl.Data data = gate.getHandler(appl);
-    	if( data == null )
-    		return null;
+        ContentHandlerImpl.Data data = gate.getHandler(appl);
+        if( data == null )
+            return null;
         return new ContentHandlerHandle( data ).get();
     }
     
@@ -464,33 +467,20 @@ public final class RegistryImpl {
      * @return a ContentHandlerImpl within the suite that
      *  need to be removed to register the new ContentHandler
      */
-    static ContentHandlerImpl checkConflicts(String handlerID, ApplicationID appl)
+    static boolean areThereConflicts(String handlerID, ApplicationID appl)
                 throws ContentHandlerException
     {
         ContentHandlerImpl[] handlers = gate.findConflicted(handlerID);
-        ContentHandlerImpl existing = null;
 
-        if (handlers != null) {
-            switch (handlers.length) {
-                case 0:
-                    break;
-                case 1:
-                    if (appl.equals(handlers[0].applicationID)) {
-                        existing = handlers[0];
-                        break;
-                    }
-                default:
-                    throw new ContentHandlerException(
-                        "ID would be ambiguous: " + handlerID,
-                        ContentHandlerException.AMBIGUOUS);
-            }
+        if( handlers == null || handlers.length == 0 ) {
+            return (getHandler(appl) != null);
         }
-
-        if (existing == null) {
-            existing = getHandler(appl);
+        if( handlers.length == 1 && appl.equals(handlers[0].applicationID) ) {
+            return true;
         }
-
-        return existing;
+        throw new ContentHandlerException(
+            "ID would be ambiguous: '" + handlerID + "'",
+            ContentHandlerException.AMBIGUOUS);
     }
 
     /**
@@ -561,47 +551,54 @@ public final class RegistryImpl {
      * <code>null</code>
      */
     public boolean unregister(String classname) {
-    	classname.length(); // NullPointer check
+        classname.length(); // NullPointer check
 
-    	if(Logger.LOGGER != null){
-    		Logger.LOGGER.println( this + ".unregister '" + classname + "'" );
-    		//new Exception("call stack").printStackTrace();
-    	}
-    	try {
-    		AppProxy appl = application.forClass(classname);
-	        synchronized (mutex) {
-	            RegistryImpl reg = (RegistryImpl)registries.get(appl);
-	            ContentHandlerImpl curr = (reg != null)? reg.getServer() : getHandler(appl);
-	            if (curr != null) {
-	            	gate.unregister(curr.getID());
-	                if (reg != null && appl.equals(curr.applicationID)) {
-	                    reg.handlerImpl = null;
-	                }
-	                return true;
-	            }
-	        }
+        if(Logger.LOGGER != null){
+            Logger.LOGGER.println( this + ".unregister '" + classname + "'" );
+            //new Exception("call stack").printStackTrace();
+        }
+        try {
+            return unregister( application.forClass(classname) );
         } catch (IllegalArgumentException iae) {
-	    } catch (ClassNotFoundException e) {
-	    }
+        } catch (ClassNotFoundException e) {
+        }
 
-    	if(Logger.LOGGER != null)
-    		Logger.LOGGER.println( "unregister() failed." );
+        if(Logger.LOGGER != null)
+            Logger.LOGGER.println( "unregister() failed." );
         return false;
     }
 
-	private ContentHandlerImpl selectSingleHandler(InvocationImpl invocation)
-									throws IOException, ContentHandlerException {
-		ContentHandler[] list = findHandler(invocation);
-		if( list.length == 1 )
-			return (ContentHandlerImpl)list[0];
+    public boolean unregister(AppProxy appl) {
+        synchronized (mutex) {
+            RegistryImpl reg = (RegistryImpl)registries.get(appl);
+            ContentHandlerImpl curr = (reg != null)? reg.getServer() : getHandler(appl);
+            if (curr != null) {
+                gate.unregister(curr.getID());
+                if (reg != null && appl.equals(curr.applicationID)) {
+                    reg.handlerImpl = null;
+                }
+                return true;
+            }
+        }
+        
+        if(Logger.LOGGER != null)
+            Logger.LOGGER.println( "unregister() failed." );
+        return false;
+    }
 
-		int idx = gate.selectSingleHandler( (ContentHandlerRegData[])list, 
-												invocation.getAction() );
-		if( idx == -1 )
+    private ContentHandlerImpl selectSingleHandler(InvocationImpl invocation)
+                                    throws IOException, ContentHandlerException {
+        ContentHandler[] list = findHandler(invocation);
+        if( list.length == 1 )
+            return (ContentHandlerImpl)list[0];
+
+        int idx = gate.selectSingleHandler( (ContentHandlerRegData[])list, 
+                                                invocation.getAction() );
+        if( idx == -1 )
             throw new ContentHandlerException("canceled",
                     ContentHandlerException.NO_REGISTERED_HANDLER);
-		return (ContentHandlerImpl)list[ idx ];
-	}
+        return (ContentHandlerImpl)list[ idx ];
+    }
 
     /**
      * Checks the Invocation and uses the ID, type, URL, and action,
@@ -669,8 +666,7 @@ public final class RegistryImpl {
      * @exception SecurityException if an invoke operation is not permitted
      */
     public boolean invoke(InvocationImpl invocation, InvocationImpl previous)
-        throws IllegalArgumentException, IOException,
-               ContentHandlerException
+                        throws IllegalArgumentException, IOException, ContentHandlerException
     {
         synchronized (mutex) {
             // Locate the content handler for this Invocation.
@@ -782,8 +778,7 @@ public final class RegistryImpl {
      * <code>OK</code>, <code>CANCELLED</code>, or <code>ERROR</code>.
      * <p>
      * If the Invocation  was invoked with
-     * {@link #invoke(InvocationImpl invocation, InvocationImpl
-     * previous)},
+     * {@link #invoke(InvocationImpl invocation, InvocationImpl previous)},
      * the <code>getPrevious</code> method MUST return the
      * previous Invocation.
      * If the status of the previous Invocation is <code>HOLD</code>
@@ -813,17 +808,17 @@ public final class RegistryImpl {
     {
         // Application has tried to get a response; reset cleanup flags on all
         if (responseCalls == 0) {
-        	InvocationImpl.store.setCleanupFlag(application, false);
+            InvocationImpl.store.setCleanupFlag(application, false);
         }
         responseCalls++;
 
         // Find a response for this application and context
         InvocationImpl invoc =
-        	InvocationImpl.store.getResponse(application, wait? currentBlockID : 0);
+            InvocationImpl.store.getResponse(application, wait? currentBlockID : 0);
         if (invoc != null) {
             // Keep track of how many responses have been received;
-        	final ApplicationID fromApp = invoc.invokingApp; 
-        	ApplicationID toApp = invoc.destinationApp;  
+            final ApplicationID fromApp = invoc.invokingApp; 
+            ApplicationID toApp = invoc.destinationApp;  
 
             /*
              * If there was a previous Request/Tid
@@ -857,7 +852,7 @@ public final class RegistryImpl {
             if (invoc.previous != null && invoc.previous.getStatus() == Invocation.HOLD) {
                 // Restore ACTIVE status to a previously HELD Invocation
                 invoc.previous.setStatus(Invocation.ACTIVE);
-            	toApp = invoc.previous.destinationApp; 
+                toApp = invoc.previous.destinationApp; 
             }
 
             // Make an attempt to gain the foreground
@@ -877,8 +872,8 @@ public final class RegistryImpl {
      * If no Thread is blocked; this call has no effect.
      */
     public void cancelGetResponse() {
-		InvocationImpl.store.unblockWaitingThreads(currentBlockID);
-    	currentBlockID = InvocationImpl.store.allocateBlockID();
+        InvocationImpl.store.unblockWaitingThreads(currentBlockID);
+        currentBlockID = InvocationImpl.store.allocateBlockID();
     }
 
     /**
@@ -994,11 +989,11 @@ public final class RegistryImpl {
                 handlers[0] = handler;
             }
         } else {
-        	HandlersCollection collection = new HandlersCollection();
-        	ContentHandlerImpl.Handle.Receiver output = collection;
-        	if( invoc.getAction() != null ){
-        		output = new HandlerActionFilter( invoc.getAction(), output );
-        	}
+            HandlersCollection collection = new HandlersCollection();
+            ContentHandlerImpl.Handle.Receiver output = collection;
+            if( invoc.getAction() != null ){
+                output = new HandlerActionFilter( invoc.getAction(), output );
+            }
 
             // ID is null
             synchronized (mutex) {
@@ -1012,21 +1007,21 @@ public final class RegistryImpl {
                 }
                 if (invoc.getType() != null) {
                     // The type is known; lookup the handlers
-                	gate.enumHandlers( getID(), 
-                			RegistryGate.FIELD_TYPES, invoc.getType(), 
-                			output );
+                    gate.enumHandlers( getID(), 
+                            RegistryGate.FIELD_TYPES, invoc.getType(), 
+                            output );
                 } else if (invoc.getURL() != null) {
-                	int lpIdx = invoc.getURL().lastIndexOf('.');
-                	if( lpIdx != -1 ){
-	                	String suffix = invoc.getURL().substring(lpIdx);
-	                	gate.enumHandlers( getID(), 
-	                			RegistryGate.FIELD_SUFFIXES, suffix, 
-	                			output );
-                	}
+                    int lpIdx = invoc.getURL().lastIndexOf('.');
+                    if( lpIdx != -1 ){
+                        String suffix = invoc.getURL().substring(lpIdx);
+                        gate.enumHandlers( getID(), 
+                                RegistryGate.FIELD_SUFFIXES, suffix, 
+                                output );
+                    }
                 } else if (invoc.getAction() != null) {
-                	gate.enumHandlers( getID(), 
-                			RegistryGate.FIELD_ACTIONS, invoc.getAction(), 
-                			collection /* skip action filter here */ );
+                    gate.enumHandlers( getID(), 
+                            RegistryGate.FIELD_ACTIONS, invoc.getAction(), 
+                            collection /* skip action filter here */ );
                 } else {
                     throw new IllegalArgumentException(
                                 "not ID, type, URL, or action");
@@ -1119,12 +1114,12 @@ public final class RegistryImpl {
      *       <code>null</code>
      */
     public ContentHandler forID(String ID, boolean exact) {
-    	ContentHandlerImpl.Data data = 
-    		gate.findHandler(getID(), ID, 
-    				exact? RegistryGate.SEARCH_EXACT: RegistryGate.SEARCH_PREFIX);
-    	if( data != null )
-    		return new ContentHandlerHandle( data ).get();
-    	return null;
+        ContentHandlerImpl.Data data = 
+            gate.findHandler(getID(), ID, 
+                    exact? RegistryGate.SEARCH_EXACT: RegistryGate.SEARCH_PREFIX);
+        if( data != null )
+            return new ContentHandlerHandle( data ).get();
+        return null;
     }
 
     /**
@@ -1188,7 +1183,7 @@ public final class RegistryImpl {
     private void insertActive(InvocationImpl invoc) {
         Integer tid = new Integer(invoc.tid);
         if( Logger.LOGGER != null )
-        	Logger.LOGGER.println(getClass().getName() + ".insertActive(" + tid + ")");
+            Logger.LOGGER.println(getClass().getName() + ".insertActive(" + tid + ")");
         activeInvocations.put(tid, invoc);
     }
 
@@ -1201,7 +1196,7 @@ public final class RegistryImpl {
         Integer tid = new Integer(invoc.tid);
         InvocationImpl result = (InvocationImpl)activeInvocations.remove(tid); 
         if( Logger.LOGGER != null )
-        	Logger.LOGGER.println(getClass().getName() + ".removeActive(" + tid + ") = " + result );
+            Logger.LOGGER.println(getClass().getName() + ".removeActive(" + tid + ") = " + result );
         return result;
     }
 }
