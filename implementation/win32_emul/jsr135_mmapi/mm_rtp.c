@@ -522,25 +522,28 @@ static javacall_result rtp_set_mute(javacall_handle handle,
                         I N T E R F A C E   T A B L E S
 \*****************************************************************************/
 
+#endif // ( 0 )
+
 static media_basic_interface _rtp_basic_itf =
 {
-    rtp_create,
-    rtp_get_format,
-    rtp_get_player_controls,
-    rtp_close,
-    rtp_destroy,
-    rtp_deallocate,
-    rtp_realize,
-    rtp_prefetch,
-    rtp_start,
-    rtp_stop,
+    NULL, //rtp_create,
+    NULL, //rtp_destroy,
+    NULL, //rtp_get_format,
+    NULL, //rtp_get_player_controls,
+
+    NULL, //rtp_stop,
+    NULL, //rtp_pause,
+    NULL, //rtp_run,
+
     NULL,
     NULL,
     NULL,
     NULL,
+
     rtp_get_time,
     rtp_set_time,
     rtp_get_duration,
+
     rtp_switch_to_foreground,
     rtp_switch_to_background
 };
@@ -567,5 +570,3 @@ media_interface g_rtp_itf =
     NULL,
     NULL
 };
-
-#endif // ( 0 )
