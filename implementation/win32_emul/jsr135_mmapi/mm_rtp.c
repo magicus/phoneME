@@ -22,10 +22,10 @@
 * information or have any questions. 
 */ 
 
-#if( 0 )
-
 #include "multimedia.h"
 #include "pcm_out.h"
+
+#if( 0 )
 
 //=============================================================================
 
