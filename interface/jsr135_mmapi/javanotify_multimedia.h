@@ -65,7 +65,6 @@ typedef enum {
      * Posted when the native player finished creation procedure.
      *
      * Additional data:
-     *  intParam2(data)   - handle to the native player.
      *  intParam5(status) - call result, exception code.
      */
     JAVACALL_EVENT_MEDIA_CREATE_FINISHED = 1,

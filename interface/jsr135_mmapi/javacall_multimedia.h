@@ -426,6 +426,7 @@ javacall_result javacall_media_get_configuration(
  * @param player_id    Unique player object ID.
  * @param locator_len  Locator string length.
  * @param locator      Locator unicode string.
+ * @param handle       Out - handle to the native player.
  *
  * @retval JAVACALL_OK                    Success.
  * @retval JAVACALL_CONNECTION_NOT_FOUND  Could not connect to the URL.
@@ -452,7 +453,8 @@ javacall_result javacall_media_create_managed_player(
     javacall_int32 app_id,
     javacall_int32 player_id,
     javacall_int32 locator_len,
-    javacall_const_utf16_string locator);
+    javacall_const_utf16_string locator,
+    /*OUT*/ javacall_handle *handle);
 
 /**
  * Create the native player which data flow is managed by Java.
@@ -471,6 +473,7 @@ javacall_result javacall_media_create_managed_player(
  *                          specified in stream_len, JAVACALL_FALSE otherwise.
  * @param stream_len        Stream length, in bytes, ignored if
  *                          strean_len_known is JAVACALL_FALSE.
+ * @param handle            Out - handle to the native player.
  *
  * @retval JAVACALL_OK                    Success.
  * @retval JAVACALL_CONNECTION_NOT_FOUND  Could not connect to the URL.
@@ -501,7 +504,8 @@ javacall_result javacall_media_create_unmanaged_player(
     javacall_int32 mime_len,
     javacall_const_utf16_string mime,
     javacall_bool stream_len_known,
-    javacall_int64 stream_len);
+    javacall_int64 stream_len,
+    /*OUT*/ javacall_handle *handle);
 
 /**
  * Destroy the native player object and release all its resources.
@@ -522,7 +526,7 @@ javacall_result javacall_media_create_unmanaged_player(
  * working (Java does not respond to data request events).
  *
  * @param handle  Handle to the native player.
- * 
+ *
  * @retval JAVACALL_OK  Always succeeds, procedure will continue in
  *                      background, completion will be flagged with an event
  *                      JAVACALL_EVENT_MEDIA_DESTROY_FINISHED.
@@ -533,8 +537,8 @@ javacall_result javacall_media_destroy(javacall_handle handle);
  * Get the native player's format type of the media content.
  *
  * @param handle  Handle to the native player.
- * @param format  Format type.
- * 
+ * @param format  Out - format type.
+ *
  * @retval JAVACALL_OK    Success.
  * @retval JAVACALL_FAIL  Failure.
  */
@@ -544,12 +548,13 @@ javacall_result javacall_media_get_format(
 
 /**
  * Return bitmask of Media Controls supported by the native player.
- * 
+ *
  * Only Media Controls supported by the native layer should be indicated.
  *
  * @param handle    Handle to the native player.
- * @param controls  Bitmasks for Media Control implemented in native layer.
- * 
+ * @param controls  Out - bitmasks for Media Control implemented in native
+ *                  layer.
+ *
  * @retval JAVACALL_OK    Success.
  * @retval JAVACALL_FAIL  Failure.
  */
