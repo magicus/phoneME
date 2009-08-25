@@ -238,11 +238,6 @@ extern "C" {
 #define JAVACALL_MEDIA_FORMAT_RTP_BMPEG         "RTP_BMPEG"
 #define JAVACALL_MEDIA_FORMAT_RTP_NV            "RTP_NV"
 
-/** Unknown format */
-#define JAVACALL_MEDIA_FORMAT_UNKNOWN           "UNKNOWN"
-/** Unsupported format */
-#define JAVACALL_MEDIA_FORMAT_UNSUPPORTED       "UNSUPPORTED"
-
 /**
  * 
  * Media format type definition.
