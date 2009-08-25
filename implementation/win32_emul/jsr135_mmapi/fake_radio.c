@@ -119,6 +119,12 @@ static javacall_result fake_radio_run(javacall_handle handle){
     return JAVACALL_OK;
 }
 
+static javacall_result fake_radio_get_time(javacall_handle handle, javacall_int32* ms)
+{
+    *ms = -1;
+    return JAVACALL_OK;
+}
+
 //=============================================================================
 
 static javacall_result fake_radio_get_volume(javacall_handle handle, long* level)
@@ -186,9 +192,11 @@ static media_basic_interface _fake_radio_basic_itf = {
     NULL,
     NULL,
     NULL,
+
+    fake_radio_get_time,
     NULL,
     NULL,
-    NULL,
+
     NULL,
     NULL
 };
