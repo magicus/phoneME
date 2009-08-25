@@ -135,7 +135,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
     }
 
 LockAudioMutex();            
-    result = javacall_media_start( pKniInfo->pNativeHandle );
+    result = javacall_media_run( pKniInfo->pNativeHandle );
 UnlockAudioMutex();            
 
     if (JAVACALL_OK != result) {
@@ -235,7 +235,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
     } else {
 
 LockAudioMutex();            
-        result = javacall_media_stop( pKniInfo->pNativeHandle );
+        result = javacall_media_pause( pKniInfo->pNativeHandle );
 UnlockAudioMutex();
     }
 
@@ -434,7 +434,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
-        if (JAVACALL_OK == javacall_media_prefetch(pKniInfo->pNativeHandle)) {
+        if (JAVACALL_OK == javacall_media_pause(pKniInfo->pNativeHandle)) {
             returnValue = KNI_TRUE;
         }
 UnlockAudioMutex();

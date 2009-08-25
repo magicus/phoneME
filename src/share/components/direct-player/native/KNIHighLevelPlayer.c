@@ -35,9 +35,90 @@
 
 extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int blen);
 
-static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **ppKniInfo, javacall_result result, jboolean willRetry );
+static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **ppKniInfo, javacall_result result );
+
+jchar* getUTF16StringFromParameter(KNIDECLARGS int par_num, /* OUT */ int *len)
+{
+
+    jchar *str = NULL;
+    int strLen = 0;
+    
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(hStrParam);
+    KNI_GetParameterAsObject(par_num, hStrParam);
+    strLen = KNI_GetStringLength(hStrParam);
+    
+    if( 0 < strLen ) {
+        str = MMP_MALLOC((strLen+1) * sizeof(jchar));
+        if (str) {
+            KNI_GetStringRegion(hStrParam, 0, strLen, str);
+            str[ strLen ] = 0;
+        }
+    } else {
+        str = NULL;
+        strLen = -1;
+    }
+
+    KNI_EndHandles();
+    
+    *len = strLen;
+    return str;
+}
+
 
 /* KNI Implementation **********************************************************************/
+
+/* private native int nCreateAndRealizeJavaFedPlayerAsync( int appId, int pID,
+String URI, String contentType, long streamLen ) throws MediaException; */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nCreateAndRealizeJavaFedPlayerAsync) {
+    jint  appId = KNI_GetParameterAsInt(1);
+    jint  playerId = KNI_GetParameterAsInt(2);
+    jint  returnValue = 0;
+    jint   URILength;
+    jchar* pszURI = NULL;
+    jint   cTypeLength;
+    jchar* pszCType = NULL;
+    KNIPlayerInfo* pKniInfo;
+    javacall_result res;
+    javacall_int64 streamLen = 0;
+    
+    MMP_DEBUG_STR2("+nCreateAndRealizeJavaFedPlayerAsync application=%d, player=%d\n", appId, playerId);
+
+    pszURI = getUTF16StringFromParameter( KNIPASSARGS 3, &URILength );
+    pszCType = getUTF16StringFromParameter( KNIPASSARGS 4, &cTypeLength );
+    
+    streamLen = ( javacall_int64 )KNI_GetParameterAsLong( 5 );
+    
+    pKniInfo = (KNIPlayerInfo*)MMP_MALLOC(sizeof(KNIPlayerInfo));
+    
+LockAudioMutex();
+    if (pKniInfo) {
+        /* prepare kni internal information */
+        pKniInfo->appId = appId;
+        pKniInfo->playerId = playerId;
+        pKniInfo->isDirectFile = JAVACALL_FALSE;
+        pKniInfo->isForeground = -1;
+        pKniInfo->recordState = RECORD_CLOSE;
+        pKniInfo->isClosed = KNI_FALSE;
+        res = javacall_media_create_unmanaged_player(appId, playerId, 
+            URILength, pszURI, cTypeLength, pszCType,
+            streamLen > 0 ? JAVACALL_TRUE : JAVACALL_FALSE, streamLen,
+            &pKniInfo->pNativeHandle); 
+        doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, res );
+    }
+UnlockAudioMutex();
+
+    if (pszURI)      { MMP_FREE(pszURI); }
+    if (pszCType)    { MMP_FREE(pszCType); }
+
+    returnValue = ( jint )pKniInfo;
+    
+    MMP_DEBUG_STR1("-nCreateAndRealizeJavaFedPlayerAsync return=%d\n", returnValue);
+
+    KNI_ReturnInt(returnValue);
+}
+
 
 /* private native int nCreateAndRealizeURLBasedPlayerAsync( int appId, int pID,
  String URI) throws MediaException; */
@@ -52,22 +133,7 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nCreateAndRealizeURLBasedPlayerAsync) {
     javacall_result res;
     MMP_DEBUG_STR2("+nCreateAndRealizeURLBasedPlayerAsync application=%d, player=%d\n", appId, playerId);
 
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(URI);
-    
-    /* Get URI object parameter */
-    KNI_GetParameterAsObject(3, URI);
-
-    /* Get URI java string */
-    if (-1 == (URILength = KNI_GetStringLength(URI))) {
-        pszURI = NULL;
-    } else {
-        pszURI = MMP_MALLOC((URILength+1) * sizeof(jchar));
-        if (pszURI) {
-            KNI_GetStringRegion(URI, 0, URILength, pszURI);
-            pszURI[URILength] = 0;
-        }
-    }
+    pszURI = getUTF16StringFromParameter( KNIPASSARGS 3, &URILength );
 
     pKniInfo = (KNIPlayerInfo*)MMP_MALLOC(sizeof(KNIPlayerInfo));
 LockAudioMutex();
@@ -80,7 +146,7 @@ LockAudioMutex();
         pKniInfo->recordState = RECORD_CLOSE;
         pKniInfo->isClosed = KNI_FALSE;
         res = javacall_media_create_managed_player(appId, playerId, URILength, pszURI, &pKniInfo->pNativeHandle); 
-        doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, res, KNI_TRUE );
+        doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, res );
     }
 UnlockAudioMutex();
 
@@ -90,17 +156,15 @@ UnlockAudioMutex();
     
     MMP_DEBUG_STR1("-nCreateAndRealizeURLBasedPlayerAsync return=%d\n", returnValue);
 
-    KNI_EndHandles();
     KNI_ReturnInt(returnValue);
 }
-/* private native void nDoOnRealizeResult( int result, boolean willRetry ) throws MediaException; */
+/* private native void nDoOnRealizeResult( int result ) throws MediaException; */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_HighLevelPlayer_nDoOnRealizeResult) {
     KNIPlayerInfo* pKniInfo;
     jint jHandle = 0;
     jfieldID fldHandle;
     int result = ( int )KNI_GetParameterAsInt( 1 );
-    jboolean willRetry = KNI_GetParameterAsBoolean( 2 );
     
     KNI_StartHandles(2);
     KNI_DeclareHandle(instance);
@@ -115,7 +179,7 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nDoOnRealizeResult) {
     pKniInfo = ( *KNIPlayerInfo )KNI_GetIntField( instance, fldHandle );
     
     if( NULL != pKniInfo ) {
-        doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, result, willRetry );
+        doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, result );
         if( NULL == pKniInfo ) {
             KNI_SetIntField( instance, fldHandle, 0 );
         }
@@ -125,9 +189,9 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nDoOnRealizeResult) {
     KNI_ReturnVoid();
 }
 
-static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **ppKniInfo, int result, jboolean willRetry ) {
+static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **ppKniInfo, int result ) {
     const char strMediaEx[] = "javax/microedition/media/MediaException";
-    if( JAVACALL_OK != result && ( KNI_FALSE == willRetry || JAVACALL_FAIL != result ) )
+    if( JAVACALL_OK != result )
     {
         MMP_FREE( *ppKniInfo );
         *ppKniInfo = NULL;
@@ -151,12 +215,7 @@ static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **
             KNI_ThrowNew( strMediaEx,
 "\nUnable to create native player, invalid URI or other parameter\n" );
             break;
-        case JAVACALL_FAIL:
-            if( KNI_FALSE == willRetry ) {
-                KNI_ThrowNew( strMediaEx, 
-                "\nUnable to create native player, general failure\n" );
-            }
-            break;
+        case JAVACALL_FAIL: /* Should not throw an exception */
         default:
             break;
     }

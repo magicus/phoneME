@@ -43,11 +43,6 @@ import java.io.IOException;
 
 public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl {
 
-    /** Unknown media format */
-    static final String MEDIA_FORMAT_UNKNOWN = "UNKNOWN";
-    /** Unsupported media format */
-    static final String MEDIA_FORMAT_UNSUPPORTED = "UNSUPPORTED";
-    /** Device Tone format */
     static final String MEDIA_FORMAT_DEVICE_TONE = "DEVICE_TONE";
     /** Device MIDI format */
     static final String MEDIA_FORMAT_DEVICE_MIDI = "DEVICE_MIDI";
@@ -244,10 +239,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     private native void nFreeNativeHandle( int handle );
     
-    private native void nDoOnRealizeResult( int result, boolean willRetry ) throws MediaException;
+    private native void nDoOnRealizeResult( int result ) throws MediaException;
 
     private native int nCreateAndRealizeJavaFedPlayerAsync( int appId,
-            int pID, String URI, String contentType, long strLen )
+            int pID, String URI, String contentType, long streamLen )
             throws MediaException;
 
     // Terminate native library
@@ -279,11 +274,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         {
             nTerm( hNative );
             hNative = 0;
-        }
-        if( null != directInputThread )
-        {
-            directInputThread.close();
-            directInputThread = null;
         }
     }
 
@@ -538,33 +528,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
-    private void doOnRealizeResult( int result, boolean willRetry ) throws MediaException {
-        if( !JavacallResults.isOK(result) ) {
-            nFreeNativeHandle(hNative);
-            hNative = 0;
-        }
-
-        switch( result )
-        {
-            case JavacallResults.JAVACALL_NO_AUDIO_DEVICE:
-                throw new MediaException( "No audio device found. Please check your audio driver settings" );
-            case JavacallResults.JAVACALL_CONNECTION_NOT_FOUND:
-                throw new MediaException("Couldn't realize: connection not found" );
-            case JavacallResults.JAVACALL_INVALID_ARGUMENT:
-                throw new MediaException( "Couldn't realize: wrong argument passed to native" );
-            case JavacallResults.JAVACALL_IO_ERROR:
-                throw new MediaException( "Couldn't realize: IO error" );
-            case JavacallResults.JAVACALL_FAIL:
-                if( !willRetry ) {
-                    throw new MediaException("Couldn't realize: general failure");
-                }
-            case JavacallResults.JAVACALL_OK:
-                break;
-            default:
-                throw new MediaException( "Couldn't realize due to a native error" );
-        }
-    }
-
     /**
      * Constructs portions of the <code>Player</code> without
      * acquiring the scarce and exclusive resources.
@@ -589,6 +552,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      */
     public synchronized void realize() throws MediaException {
         chkClosed(false);
+        String type = null;
 
         if (getState() >= REALIZED) {
             return;
@@ -608,7 +572,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
 
         int result = asyncExecutor.getResult();
-        nDoOnRealizeResult( result, true );
+        nDoOnRealizeResult( result );
 
         handledByDevice = ( 0 == result );
 
@@ -642,7 +606,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             directInputThread = new DirectInputThread( this );
             directInputThread.start();
 
-            String type = source.getContentType();
+            type = source.getContentType();
             if (type == null && stream != null && stream.getContentDescriptor() != null) {
                 type = stream.getContentDescriptor().getContentType();
             }
@@ -656,130 +620,30 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 }
             });
 
-            nDoOnRealizeResult( asyncExecutor.getResult(), false );
+            result = asyncExecutor.getResult();
+            nDoOnRealizeResult( result );
             System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
-            handledByDevice = false;
         }
 
-        hNative = nInit(appId, pID, locator);
+        if( 0 != hNative ) {
+            mediaFormat = nGetMediaFormat(hNative);
+        } else {
+            if (null != directInputThread) {
+                directInputThread.close();
+                directInputThread = null;
+            }
 
-        mediaFormat     = nGetMediaFormat(hNative);
-
-        if( mediaFormat.equals( MEDIA_FORMAT_UNSUPPORTED ) ) {
+            asyncExecutor = null; // Isn't used for Java handled players
+            
             /* verify if handled by Java */
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
-            if( mediaFormat == null || mediaFormat.equals( MEDIA_FORMAT_UNSUPPORTED ) ) {
-                nTerm(hNative);
-                hNative = 0;
-                throw new MediaException("Unsupported Media Format:" + mediaFormat + " for " + source.getLocator());
-            } else {
-                setHandledByJava();
+            if( null == mediaFormat ) {
+                mediaFormat = Configuration.getConfiguration().mime2Format( type );
             }
-        }
-
-        if (locator != null && mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
-            if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
-                mediaFormat = MEDIA_FORMAT_DEVICE_TONE;
-                handledByDevice = true;
-            } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
-                mediaFormat = MEDIA_FORMAT_DEVICE_MIDI;
-                handledByDevice = true;
+            if( null == mediaFormat ) {
+                throw new MediaException( "Unsupported Media Format" );
             }
-        } else if (locator != null && locator.startsWith(Configuration.CAPTURE_LOCATOR)) {
-            if (locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)) {
-                mediaFormat = MEDIA_FORMAT_CAPTURE_AUDIO;
-            } else if (locator.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR)) {
-                mediaFormat = MEDIA_FORMAT_CAPTURE_VIDEO;
-            } else if (locator.startsWith(Configuration.RADIO_CAPTURE_LOCATOR)) {
-                mediaFormat = MEDIA_FORMAT_CAPTURE_RADIO;
-            }
-            handledByDevice = true;
-        }
-
-        if (!handledByJava && !handledByDevice) {
-            handledByDevice = nIsHandledByDevice(hNative);
-        }
-
-
-        if (!handledByDevice) {
-            source.connect();
-            SourceStream[] streams = source.getStreams();
-            if (null == streams) {
-                throw new MediaException("DataSource.getStreams() returned null");
-            } else if (0 == streams.length) {
-                throw new MediaException("DataSource.getStreams() returned an empty array");
-            } else if (null == streams[0]) {
-                throw new MediaException("DataSource.getStreams()[0] is null");
-            } else {
-                if (streams.length > 1 && Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                        "*** DataSource.getStreams() returned " + streams.length + 
-                        " streams, only first one will be used!");
-                }
-
-                stream = streams[0];
-                if( 0 == stream.getContentLength() )
-                {
-                    throw new MediaException("Media size is zero");
-                }
-            }
-        }
-
-        String type = source.getContentType();
-        if (type == null && stream != null && stream.getContentDescriptor() != null) {
-            type = stream.getContentDescriptor().getContentType();
-        }
-
-        directInputThread = null;
-
-        if( !handledByJava )
-        {
-            if( !handledByDevice && !mediaFormat.equals(MEDIA_FORMAT_TONE) )
-            {
-            /* predownload media data to recognize media format and/or
-               specific media parameters (e.g. duration) */
-
-            }
-
-            final String t = type;
-            runLowLevel( new LowLevelTask() {
-                public void run() throws MediaException {
-                    nRealize(hNative, t);
-                }
-            } );
-            System.out.println("HighLevelPlayer: realize() resumed");
-            if( isAsyncExec() && !getAsyncExecResult() ) {
-                throw new MediaException("realize() failed");
-            }
-        }
-
-        if (!handledByDevice && !handledByJava) {
-            mediaFormat = nGetMediaFormat(hNative);
-            if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
-                String format;
-                /* verify if handled by Java */
-                if (type != null &&
-                        (format = Configuration.getConfiguration().mime2Format(type)) != null && 
-                        !format.equals(MEDIA_FORMAT_UNKNOWN) && 
-                        !format.equals(MEDIA_FORMAT_UNSUPPORTED)) {
-                    mediaFormat = format;
-                    setHandledByJava();
-                } else {
-                    throw new MediaException("Unsupported media format ('" + type + "','" + mediaFormat + "')");
-                }
-            }
-        }
-
-        if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {        
-            /* ask media format if unknown */
-            mediaFormat = nGetMediaFormat(hNative);
-
-            if (mediaFormat.equals(MEDIA_FORMAT_UNKNOWN)) {
-                throw new MediaException("Unknown Media Format");
-            }
-            if (mediaFormat.equals(MEDIA_FORMAT_UNSUPPORTED)) {
-                throw new MediaException("Unsupported Media Format");
-            }
+            setHandledByJava();
         }
 
         /* create Implementation Player */
@@ -874,16 +738,21 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         /* prefetch native player */
         /* predownload media data to fill native buffers */
-        runLowLevel( new LowLevelTask() {
-            public void run() throws MediaException {
-                lowLevelPlayer.doPrefetch();
+        if( null != asyncExecutor ) {
+            asyncExecutor.runAsync( new AsyncTask() {
+                public void run() throws MediaException {
+                    lowLevelPlayer.doPrefetch();
+                }
+            });
+            System.out.println("HighLevelPlayer: Prefetch resumed");
+            if( 0 != asyncExecutor.getResult() )
+            {
+                throw new MediaException("prefetch() failed");
             }
-        });
-        System.out.println("HighLevelPlayer: Prefetch resumed");
-        if( isAsyncExec() && !getAsyncExecResult() ) {
-            throw new MediaException("prefetch() failed");
+        } else {
+            lowLevelPlayer.doPrefetch();
         }
-        
+
         VolumeControl vc = ( VolumeControl )getControl(
                 pkgName + vocName);
         if (vc != null && (vc.getLevel() == -1)) {
@@ -996,16 +865,22 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        runLowLevel( new LowLevelTask() {
-            public void run() throws MediaException {
-                if (!lowLevelPlayer.doStart()) {
-                    throw new MediaException("start");
+        if( null != asyncExecutor ) {
+            asyncExecutor.runAsync(new AsyncTask() {
+                public void run() throws MediaException {
+                    if (!lowLevelPlayer.doStart()) {
+                        throw new MediaException("start");
+                    }
                 }
+            });
+            System.out.println("HighLevelPlayer: start() resumed");
+            if( 0 != asyncExecutor.getResult() ) {
+                throw new MediaException("start");
             }
-        });
-        System.out.println( "HighLevelPlayer: start() resumed" );
-        if( isAsyncExec() && !getAsyncExecResult() ) {
-            throw new MediaException( "start() failed" );
+        } else {
+            if (!lowLevelPlayer.doStart()) {
+                throw new MediaException("start");
+            }
         }
 
         setState( STARTED );
@@ -1062,14 +937,20 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
         lowLevelPlayer.doPreStop();
 
-        runLowLevel( new LowLevelTask() {
-            public void run() throws MediaException {
-                lowLevelPlayer.doStop();
+        if( null != asyncExecutor )
+        {
+            asyncExecutor.runAsync( new AsyncTask() {
+                public void run() throws MediaException {
+                    lowLevelPlayer.doStop();
+                }
+            });
+            System.out.println("HighLevelPlayer: stop() resumed");
+            if( 0 != asyncExecutor.getResult() )
+            {
+                throw new MediaException("stop() failed");
             }
-        });
-        System.out.println( "HighLevelPlayer: stop() resumed" );
-        if( isAsyncExec() && !getAsyncExecResult() ) {
-            throw new MediaException( "stop() failed" );
+        } else {
+            lowLevelPlayer.doStop();
         }
 
         // Update the time base to use the system time
@@ -1122,15 +1003,18 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        try {
-            runLowLevel(new LowLevelTask() {
-
-                public void run() throws MediaException {
-                    lowLevelPlayer.doDeallocate();
-                }
-            });
-        } catch (MediaException ex) {}
-        System.out.println( "HighLevelPlayer: deallocate() resumed" );
+        if( null != asyncExecutor ) {
+            try {
+                asyncExecutor.runAsync(new AsyncTask() {
+                    public void run() throws MediaException {
+                        lowLevelPlayer.doDeallocate();
+                    }
+                });
+            } catch (MediaException ex) {}
+            System.out.println("HighLevelPlayer: deallocate() resumed");
+        } else {
+            lowLevelPlayer.doDeallocate();
+        }
         
         if (stream != null) {
             // if stream is not seekable, just return
@@ -1274,18 +1158,6 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         return this;
     };
 
-    private long mediaTimeSet = TIME_UNKNOWN;
-
-    void notifyMediaTimeSet( long mediaTimeSet )
-    {
-        this.mediaTimeSet = mediaTimeSet;
-    }
-
-    private long getMediaTimeSet()
-    {
-        return mediaTimeSet;
-    }
-
     /**
      * Sets the <code>Player</code>'s&nbsp;<i>media time</i>.
      * <p>
@@ -1327,16 +1199,22 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             now = theDur;
         }
 
-        final long timeToSet = now;
-        runLowLevel( new LowLevelTask() {
-            public void run() throws MediaException {
-                lowLevelPlayer.doSetMediaTime( timeToSet );
+        long rtn = TIME_UNKNOWN;
+        if( null != asyncExecutor ) {
+            final long timeToSet = now;
+            asyncExecutor.runAsync( new AsyncTask() {
+                public void run() throws MediaException {
+                    lowLevelPlayer.doSetMediaTime(timeToSet);
+                }
+            });
+            System.out.println("HighLevelPlayer: setMediaTime resumed");
+            if( 0 != asyncExecutor.getResult() ) {
+                throw new MediaException( "Media time cannot be set" );
             }
-        } );
-
-        System.out.println( "HighLevelPlayer: setMediaTime resumed" );
-
-        long rtn = getMediaTimeSet();
+            rtn = ( long )asyncExecutor.getOutputParam();
+        } else {
+            rtn = lowLevelPlayer.doSetMediaTime( now );
+        }
 
         EOM = false;
 
@@ -2102,34 +1980,4 @@ class AsyncExecutor {
         notify();
     }
 
-}
-
-class JavacallResults {
-    /* These values should be synchronized with javacall_defs.h */
-    public static final int JAVACALL_OK = 0;
-    public static final int JAVACALL_FAIL = -1;
-    public static final int JAVACALL_INVALID_ARGUMENT = -4;
-    public static final int JAVACALL_CONNECTION_NOT_FOUND = -6;
-    public static final int JAVACALL_IO_ERROR = -12;
-    public static final int JAVACALL_NO_AUDIO_DEVICE = -17;
-
-    private JavacallResults() {}
-
-    public static boolean isOK( int result )
-    {
-        return ( JAVACALL_OK == result );
-    }
-
-    public static MediaException createMediaException( int result )
-    {
-        switch( result )
-        {
-            case JAVACALL_OK:
-                return null;
-            case JAVACALL_FAIL:
-                return new MediaException( "Operation failed" );
-            default:
-                return null;
-        }
-    }
 }
