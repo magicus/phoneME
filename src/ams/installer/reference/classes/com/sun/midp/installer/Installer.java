@@ -178,7 +178,7 @@ public abstract class Installer {
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
         Permissions.getUnsignedDomain();
-
+    
     /**
      * Include this permissions into the list of permissions
      * given in MIDlet-Permissions jad attribute for unsigned
@@ -1292,7 +1292,7 @@ public abstract class Installer {
                         info.id, info.verifyHash);
                 }
             } catch (Throwable t) {
-                // Notify installation listener of verifcation error
+                // Notify installation listener of verification error
                 state.exception = new InvalidJadException(
                     InvalidJadException.JAR_CLASSES_VERIFICATION_FAILED);
                 if (state.listener != null) {
@@ -1636,11 +1636,12 @@ public abstract class Installer {
      *
      * @param message status message to post
      */
-    protected void postInstallMsgBackToProvider(String message) {       
+    protected void postInstallMsgBackToProvider(String message) {
+        state.otaInstallMessage = message;
         OtaNotifier.postInstallMsgBackToProvider(message, state,
             state.proxyUsername, state.proxyPassword);
     }
-
+    
     /**
      * Function that actually does the work of transferring file data.
      * <p>
@@ -2854,6 +2855,9 @@ class InstallStateImpl implements InstallState, MIDletSuite {
 
     /** The ContentHandler installer state. */
     protected CHManager chmanager;
+
+    /** a message sent to OtaNotifier */
+    protected String otaInstallMessage = null;
 
     /** Constructor. */
     public InstallStateImpl() {

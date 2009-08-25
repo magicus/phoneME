@@ -630,20 +630,23 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         }
     }
     
-	void notifySuccess(int lastInstalledMIDletId) {
-		InstallerResultHandler.notifyRequestSucceeded(lastInstalledMIDletId);
+    void notifySuccess(int lastInstalledMIDletId) {
+        InstallerResultHandler.notifyRequestSucceeded(lastInstalledMIDletId);
         iproxy.installDone(true, null);
-	}
+    }
 
-	void notifyFailed(Exception e, String msg) {
-		InstallerResultHandler.notifyRequestFailed(e);
+    void notifyFailed(Exception e) {
+        InstallerResultHandler.notifyRequestFailed(e);
+        String msg = installer.state.otaInstallMessage;
+        if( msg == null ) 
+            msg = OtaNotifier.INVALID_CONTENT_HANDLER;
         iproxy.installDone(false, msg);
-	}
+    }
 
-	void notifyCanceled() {
-		InstallerResultHandler.notifyRequestCanceled();
+    void notifyCanceled() {
+        InstallerResultHandler.notifyRequestCanceled();
         iproxy.installDone(false, null);
-	}
+    }
 
      /**
      * Initialize the settings database if it doesn't exist. This may create
@@ -1799,6 +1802,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                     continue;
                                 }
 
+                                parent.notifyCanceled();
                                 displayListAfterCancelMessage();
                                 break;
                             }
@@ -1808,12 +1812,13 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                              reason == InvalidJadException.NEW_VERSION) {
                             // user has canceled the update operation,
                             // don't display an error message 
+                            parent.notifyCanceled();
                             break;
                         }
 
                         msg = GraphicalInstaller.translateJadException(
                             ije, name, null, null, url);
-                        parent.notifyFailed(ije, msg);
+                        parent.notifyFailed(ije);
                     } catch (MIDletSuiteLockedException msle) {
                         if (!parent.killRunningMIDletIfUpdate) {
                             String[] values = new String[1];
@@ -1828,7 +1833,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                     ResourceConstants.AMS_GRA_INTLR_LOCKED,
                                         values);
                             }
-                            parent.notifyFailed(msle, msg);
+                            parent.notifyFailed(msle);
                         } else {
                              /*
                               * Kill running midlets from the suite being
@@ -1901,6 +1906,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     } catch (IOException ioe) {
                         if (parent.installer != null &&
                                 parent.installer.wasStopped()) {
+                            parent.notifyCanceled();
                             displayListAfterCancelMessage();
                             break;
                         } else {
@@ -1915,8 +1921,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 parent.installer,
                                 InstallerResource.IO_EXCEPTION_MESSAGE)
                                     + ":" + urlToShow;
-                             }
-                        parent.notifyFailed(ioe, msg);
+                        }
+                        parent.notifyFailed(ioe);
                     } catch (Exception ex) {
                         if (Logging.TRACE_ENABLED) {
                             Logging.trace(ex, "Exception caught " +
@@ -1924,7 +1930,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         }
 
                         msg = ex.getClass().getName() + ": " + ex.getMessage();
-                        parent.notifyFailed(ex, msg);
+                        parent.notifyFailed(ex);
                     }
 
                 } while (tryAgain);
