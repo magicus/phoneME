@@ -178,6 +178,9 @@ public abstract class Installer {
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
         Permissions.getUnsignedDomain();
+    
+    /** a message sent to OtaNotifier */
+    private String otaInstallMessage = null;
 
     /**
      * Include this permissions into the list of permissions
@@ -1636,9 +1639,17 @@ public abstract class Installer {
      *
      * @param message status message to post
      */
-    protected void postInstallMsgBackToProvider(String message) {       
+    protected void postInstallMsgBackToProvider(String message) {
+        otaInstallMessage = message;
         OtaNotifier.postInstallMsgBackToProvider(message, state,
             state.proxyUsername, state.proxyPassword);
+    }
+    
+    /**
+     * @return a message sent to OtaNotifier
+     */
+    public String getOtaInstallMessage() {
+        return otaInstallMessage;
     }
 
     /**
