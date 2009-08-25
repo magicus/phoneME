@@ -240,6 +240,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     private native int nCreateAndRealizeURLBasedPlayerAsync( int appId,
             int pID, String URI) throws MediaException;
 
+    private native void nFreeNativeHandle( int handle );
+
     private native int nCreateAndRealizeJavaFedPlayerAsync( int appId,
             int pID, String URI) throws MediaException;
 
@@ -571,27 +573,69 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
             }
         } );
-        System.out.println( "HighLevelPlayer: createAndRealize() resumed" );
+        System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
 
         int result = asyncExecutor.getResult();
         handledByDevice = JavacallResults.isOK( result );
+        if( !handledByDevice ) {
+            nFreeNativeHandle(hNative);
+            hNative = 0;
+        }
+        
         switch( result )
         {
+            case JavacallResults.JAVACALL_NO_AUDIO_DEVICE:
+                throw new MediaException( "No audio device found. Please check your audio driver settings" );
+            case JavacallResults.JAVACALL_CONNECTION_NOT_FOUND:
+                throw new MediaException("Couldn't realize: connection not found" );
+            case JavacallResults.JAVACALL_INVALID_ARGUMENT:
+                throw new MediaException( "Couldn't realize: wrong argument passed to native" );
+            case JavacallResults.JAVACALL_IO_ERROR:
+                throw new MediaException( "Couldn't realize: IO error" );
+            case JavacallResults.JAVACALL_FAIL:
+            case JavacallResults.JAVACALL_OK:
+                break;
             default:
+                throw new MediaException( "Couldn't realize due to a native error" );
         }
 
         if( !handledByDevice ) {
             try {
                 source.connect();
             } catch (IOException ex) {
-                throw new MediaException( "Problem connecting to the source" );
+                throw new MediaException( "Cannot realize, problem connecting to the source" );
             }
+            SourceStream[] streams = source.getStreams();
+            if (null == streams) {
+                throw new MediaException("DataSource.getStreams() returned null");
+            } else if (0 == streams.length) {
+                throw new MediaException("DataSource.getStreams() returned an empty array");
+            } else if (null == streams[0]) {
+                throw new MediaException("DataSource.getStreams()[0] is null");
+            }
+            if (streams.length > 1 && Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                    "*** DataSource.getStreams() returned " + streams.length +
+                    " streams, only first one will be used!");
+            }
+
+            stream = streams[0];
+            final long len = stream.getContentLength();
+            if( 0 == len )
+            {
+                throw new MediaException("Media size is zero");
+            }
+            if( -1 == len ) {
+                throw new MediaException(
+                        "Cannot playback stream with unknown length");
+            }
+
             directInputThread = new DirectInputThread( this );
             directInputThread.start();
 
             asyncExecutor.runAsync( new AsyncTask() {
                 public void run() throws MediaException {
-                    nCreateAndRealizeJavaFedPlayerAsync(appId, pID, pkgName);
+                    nCreateAndRealizeJavaFedPlayerAsync(appId, pID, locator);
                 }
             });
         }

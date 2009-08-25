@@ -37,6 +37,106 @@ extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int
 
 /* KNI Implementation **********************************************************************/
 
+/* private native int nCreateAndRealizeURLBasedPlayerAsync( int appId, int pID,
+ String URI) throws MediaException; */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nCreateAndRealizeURLBasedPlayerAsync) {
+    jint  appId = KNI_GetParameterAsInt(1);
+    jint  playerId = KNI_GetParameterAsInt(2);
+    jint  returnValue = 0;
+    jint   URILength;
+    jchar* pszURI = NULL;
+    KNIPlayerInfo* pKniInfo;
+    javacall_result res;
+    MMP_DEBUG_STR2("+nCreateAndRealizeURLBasedPlayerAsync application=%d, player=%d\n", appId, playerId);
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(URI);
+    
+    /* Get URI object parameter */
+    KNI_GetParameterAsObject(3, URI);
+
+    /* Get URI java string */
+    if (-1 == (URILength = KNI_GetStringLength(URI))) {
+        pszURI = NULL;
+    } else {
+        pszURI = MMP_MALLOC((URILength+1) * sizeof(jchar));
+        if (pszURI) {
+            KNI_GetStringRegion(URI, 0, URILength, pszURI);
+            pszURI[URILength] = 0;
+        }
+    }
+
+    pKniInfo = (KNIPlayerInfo*)MMP_MALLOC(sizeof(KNIPlayerInfo));
+LockAudioMutex();
+    if (pKniInfo) {
+        /* prepare kni internal information */
+        pKniInfo->appId = appId;
+        pKniInfo->playerId = playerId;
+        pKniInfo->isDirectFile = JAVACALL_FALSE;
+        pKniInfo->isForeground = -1;
+        pKniInfo->recordState = RECORD_CLOSE;
+        pKniInfo->isClosed = KNI_FALSE;
+        res = javacall_media_create_managed_player(appId, playerId, URILength, pszURI, &pKniInfo->pNativeHandle); 
+        if (res == JAVACALL_OK) {
+            returnValue = (int)pKniInfo;
+        } else if (res == JAVACALL_IO_ERROR) {
+            MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+                "\nUnable to create native player, IO error\n" );
+            returnValue = -1; /* Can not create player - IO error */
+        } 
+        else if ( JAVACALL_NO_AUDIO_DEVICE == res )
+        {
+            MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+"\nNo audio device found. Please check your audio driver settings\n" );
+            returnValue = 0; /* Can not create player */
+        }
+        else if ( JAVACALL_CONNECTION_NOT_FOUND == res )
+        {
+            MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+"\nUnable to create native player, failed to connect to the URI\n" );
+            returnValue = 0; /* Can not create player */
+        }
+        else if ( JAVACALL_INVALID_ARGUMENT == res )
+        {
+            MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+"\nUnable to create native player, invalid URI or other parameter\n" );
+            returnValue = 0; /* Can not create player */
+        }
+        else {
+            MMP_FREE(pKniInfo);
+            KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nUnable to create native player\n" );
+            returnValue = 0; /* Can not create player */
+        }
+    }
+UnlockAudioMutex();
+
+    if (pszURI)      { MMP_FREE(pszURI); }
+    
+    MMP_DEBUG_STR1("-nCreateAndRealizeURLBasedPlayerAsync return=%d\n", returnValue);
+
+    KNI_EndHandles();
+    KNI_ReturnInt(returnValue);
+}
+
+/* private native void nFreeNativeHandle( int handle ); */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nFreeNativeHandle) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    if( NULL != pKniInfo )
+    {
+        MMP_FREE( pKniInfo );
+        pKniInfo = NULL;
+    }
+    KNI_ReturnVoid();
+}
+ 
 /*  protected native int nInit (int appId, int playerId, String URI) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_HighLevelPlayer_nInit) {

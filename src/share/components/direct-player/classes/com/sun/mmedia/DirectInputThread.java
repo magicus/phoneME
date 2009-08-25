@@ -47,14 +47,6 @@ class DirectInputThread extends Thread {
     private final Object requestLock = new Object();
 
     DirectInputThread(HighLevelPlayer p) throws MediaException {
-        long len = p.stream.getContentLength();
-        if( -1 != len ) {
-            nNotifyStreamLen( p.getNativeHandle(), len );
-        }
-        else {
-            throw new MediaException(
-                    "Cannot playback stream with unknown length" );
-        }
         wrPlayer = new WeakReference( p );
     }
     
@@ -62,7 +54,6 @@ class DirectInputThread extends Thread {
     private native void nWriteData( byte [] buf, int len, int handle );
     private native void nGetRequestParams( int handle );
     private native void nNotifyEndOfStream( int handle );
-    private native void nNotifyStreamLen( int handle, long len );
 
     public void run(){
 
