@@ -358,7 +358,7 @@ dumper(CVMExecEnv* ee, void (*dumpFunc)(CVMExecEnv* ee, void *data), void *data)
      */
     if (!CVMsysMutexTryLock(ee, jitLock)) {
         CVMconsolePrintf("Cannot acquire needed locks without blocking -- "
-                         "another thread already owns the heap lock!\n");
+                         "another thread already owns the JIT lock!\n");
         return;
     }
 #endif
@@ -602,42 +602,106 @@ findMaxTypeIDCallback(CVMObject* obj, CVMClassBlock* cb, CVMUint32 size,
                       void* data)
 {
     CVMClassTypeID* currMaxID = (CVMClassTypeID*)data;
-    if (CVMtypeidGetToken(CVMcbClassName(cb)) > CVMtypeidGetToken(*currMaxID)) {
-	*currMaxID = CVMcbClassName(cb);
+    CVMClassTypeID baseID;
+
+    baseID = CVMcbClassName(cb);
+    if (CVMtypeidIsArray(baseID)) {
+        /* we only care about the base type, not the array type, when
+           trying to find the max typeID. */
+	baseID = CVMtypeidGetArrayBaseType(baseID);
+    }
+    
+    if (CVMtypeidGetToken(baseID) > CVMtypeidGetToken(*currMaxID)) {
+	*currMaxID = baseID;
     }
     return CVM_TRUE;
 }
 
 /* 
- * The following table is used to hold instance stats. Currently it is
- * one large array, indexed by typeID: [0 .. maxTypeID). A first pass
- * optimization would remove the huge hole in the middle that is the
- * non-array -> array skip. Another pass would turn this into a
- * hashtable keyed by typeID. Left as an exercise to the reader, since
- * this is debugging-only code.  
+ * The following table is used to hold instance stats. Non-array types are
+ * in one large array, indexed by typeID: [0 .. maxTypeID]. Array types
+ * are initially linked lists hanging off of the entries for the non-array
+ * type. After gathering stats, this table and the array linked lists are 
+ * converted to a flat table sorted by the "totalSize" field.
  */
-typedef struct {
+typedef struct TableEntry TableEntry;
+struct TableEntry {
     CVMUint32 totalSize; /* Total size consumed for this class */
     CVMUint32 numInstances; /* Total number of instances of this class */
     CVMClassTypeID typeID; /* We will sort this array, so record typeID here */
-} TableEntry;
+    TableEntry* arrayTypeList; /* a list of arrays types of this type */
+};
 
 typedef struct {
     int  tableSize; /* Number of elements in the tables below */
     TableEntry* entries;
+    int numArrayTypes; /* number of different array types */
 } Stats;
+
+/* 
+ * Update status for the array type givein in typeID.
+ * Returns false if failed due to allocation failure.
+ */
+static CVMBool
+updateArrayTypeList(Stats* stats,
+                    CVMClassTypeID typeID, CVMUint32 size) 
+{
+    CVMClassTypeID baseTypeID = CVMtypeidGetArrayBaseType(typeID);
+    TableEntry* baseTypeEntry = 
+        baseTypeEntry = &stats->entries[CVMtypeidGetToken(baseTypeID)];
+
+    /* If we already have an entry for this array type, then update it. */
+    {
+        TableEntry* arrayEntry = baseTypeEntry->arrayTypeList;
+        while (arrayEntry != NULL) {
+            if (CVMtypeidIsSameClass(arrayEntry->typeID, typeID)) {
+                arrayEntry->totalSize += size;
+                arrayEntry->numInstances += 1;
+                return CVM_TRUE;
+            }
+            arrayEntry = arrayEntry->arrayTypeList;
+        }
+    }
+
+    /* First time we've seen this array type. Need to allocatea new entry. */
+    {
+        TableEntry* newArrayEntry =
+            (TableEntry *)calloc(sizeof(TableEntry), 1);
+        if (newArrayEntry == NULL) {
+            CVMconsolePrintf("Out of memory allocating newArrayEntry\n");
+            return CVM_FALSE;
+        }
+
+        newArrayEntry->typeID = typeID;
+        newArrayEntry->totalSize = size;
+        newArrayEntry->numInstances = 1;
+        newArrayEntry->arrayTypeList = baseTypeEntry->arrayTypeList;
+        baseTypeEntry->arrayTypeList = newArrayEntry;
+
+        /* Keep track of how many different array types we see. */
+        stats->numArrayTypes++;
+    }
+    return CVM_TRUE;
+}
 
 static CVMBool
 statsCollectCallback(CVMObject* obj, CVMClassBlock* cb, CVMUint32 size,
-		   void* data)
+                     void* data)
 {
     CVMClassTypeID typeID = CVMcbClassName(cb);
     Stats*         stats  = (Stats*)data;
-    TableEntry*    entry  = &stats->entries[CVMtypeidGetToken(typeID)];
 
-    entry->typeID        = typeID;
-    entry->totalSize    += size;
-    entry->numInstances += 1;
+    if (!CVMtypeidIsArray(typeID)) {
+        TableEntry* entry = &stats->entries[CVMtypeidGetToken(typeID)];
+        entry->typeID        = typeID;
+    	entry->totalSize    += size;
+    	entry->numInstances += 1;
+    } else {
+        if (!updateArrayTypeList(stats, typeID, size)) {
+            /* returning false will abort the gc heap scan */
+            return CVM_FALSE;
+        }
+    }
     return CVM_TRUE;
 }
 
@@ -662,39 +726,103 @@ CVMgcStatsHeapDump(CVMExecEnv* ee, void *data)
     CVMClassTypeID maxTypeID = CVM_INIT_CLASSID(0);
     int i;
     Stats stats;
+    CVMBool aborted;
+    int nextArrayIndex;
 
     /* First look at all objects in the heap, and figure out the max TypeID
        value. We will use this to allocate stats tables */
+    stats.numArrayTypes = 0;
     CVMgcimplIterateHeap(ee, findMaxTypeIDCallback, &maxTypeID);
     stats.tableSize = CVMtypeidGetToken(maxTypeID) + 1;
+
     /*
      * OK, now allocate the stats table
      */
-    /* FIXME - this is broken due to 32-bit typeid changes. tableSize is
-       set to max typeID,  which is always huge. */
     stats.entries = (TableEntry *)calloc(sizeof(TableEntry), stats.tableSize);
     if (stats.entries == NULL) {
 	CVMconsolePrintf("Out of memory allocating totalSize array\n");
 	return;
     }
-    CVMgcimplIterateHeap(ee, statsCollectCallback, &stats);
+
+    aborted = !CVMgcimplIterateHeap(ee, statsCollectCallback, &stats);
+
+    /*
+     * Allocate a bigger table that we can conslidate the main table and the
+     * arrayType linked lists into. We do this so we an sort by memory
+     * consumption of each class type.
+     */
+    if (!aborted) {
+        TableEntry* newEntries = (TableEntry*)realloc(
+            stats.entries,
+            (stats.tableSize + stats.numArrayTypes) * (sizeof(TableEntry)));
+        if (newEntries == NULL) {
+            CVMconsolePrintf("Out of memory allocating newTable array\n");
+            aborted = CVM_TRUE;
+        } else {
+            stats.entries = newEntries;
+        }
+    }
+
+    /* If we aborted, free up all allocated memory and exit */
+    if (aborted) {
+        for (i = 0; i < stats.tableSize; i++) {
+            TableEntry* arrayEntry = stats.entries[i].arrayTypeList;
+            while (arrayEntry != NULL) {
+                TableEntry* oldArrayEntry = arrayEntry;
+                arrayEntry = oldArrayEntry->arrayTypeList;
+                free(oldArrayEntry);
+            }
+        }
+        free(stats.entries);
+        return;
+    }
+    
+
+    /*
+     * Consolidate the main table and the array linked lists into one big
+     * table for sorting. 
+     */
+    nextArrayIndex = stats.tableSize;
+    for (i = 0; i < stats.tableSize; i++) {
+        TableEntry* arrayEntry = stats.entries[i].arrayTypeList;
+        while (arrayEntry != NULL) {
+            TableEntry* newArrayEntry = &stats.entries[nextArrayIndex++];
+            CVMassert(nextArrayIndex <= stats.tableSize + stats.numArrayTypes);
+            newArrayEntry->totalSize = arrayEntry->totalSize;
+            newArrayEntry->numInstances = arrayEntry->numInstances;
+            newArrayEntry->typeID = arrayEntry->typeID;
+            {
+                TableEntry* oldArrayEntry = arrayEntry;
+                arrayEntry = oldArrayEntry->arrayTypeList;
+                free(oldArrayEntry); /* free this array entry */
+            }
+        }
+    }
+    CVMassert(nextArrayIndex == stats.tableSize + stats.numArrayTypes);
+    stats.tableSize = nextArrayIndex;
+
     /*
      * OK, now sort the table in decreasing order of memory consumption
      */
     qsort(stats.entries, stats.tableSize, sizeof(TableEntry), 
 	  tableEntrySizeCompare);
+
     /*
      * And dump
      */
     for (i = 0; i < stats.tableSize; i++) {
 	TableEntry* e = &stats.entries[i];
 	char buf[256]; /* 256 chars max for the class name */
+
+        /* print out instance information for this class */
 	if (e->numInstances == 0) {
 	    continue;
 	}
 	CVMclassname2String(e->typeID, buf, 256);
-	printf("TS=%-8d NI=%-8d CL=%s\n",
+	printf("TS=%-8d NI=%-8d  CL=%s",
 	       e->totalSize, e->numInstances, buf);
+	/* do newline separate since some deep arrays are truncated */
+	printf("\n");
     }
     free(stats.entries);
 }
