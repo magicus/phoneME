@@ -526,8 +526,8 @@ void ObjectHeap::set_task_memory_quota( const int task_id,
     {      
       OopDesc** const allocation_end = disable_allocation_trap();
       collect( reserve JVM_NO_CHECK );
-      clear_inline_allocation_area();
       set_collection_area_boundary( 0, false );
+      clear_inline_allocation_area();
       enable_allocation_trap( allocation_end );
     }
 
