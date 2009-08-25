@@ -51,16 +51,16 @@ static javacall_result fake_radio_destroy(javacall_handle handle)
 {
     fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
 
+    int appId    = h->appId;
+    int playerId = h->playerId;
+
+    FREE( h );
+
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
+                                     appId,
+                                     playerId, 
                                      JAVACALL_OK, 
                                      NULL );
-
-    if( NULL != handle )
-    {
-        FREE( handle );
-    }
 
     return JAVACALL_OK;
 }
@@ -77,75 +77,6 @@ static javacall_result fake_radio_get_player_controls(javacall_handle handle,
     *controls = JAVACALL_MEDIA_CTRL_VOLUME;
     return JAVACALL_OK;
 }
-
-/*
-static javacall_result fake_radio_realize(javacall_handle handle, 
-                                          javacall_const_utf16_string mime, 
-                                          long mimeLength)
-{
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_REALIZE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result fake_radio_prefetch(javacall_handle handle)
-{
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result fake_radio_deallocate(javacall_handle handle)
-{
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result fake_radio_start(javacall_handle handle){
-
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_START_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-
-static javacall_result fake_radio_stop(javacall_handle handle){
-
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
-    return JAVACALL_OK;
-}
-*/
 
 //=============================================================================
 
