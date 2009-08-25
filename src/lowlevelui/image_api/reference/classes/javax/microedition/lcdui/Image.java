@@ -911,4 +911,11 @@ public class Image {
         }
     }
 
+    /**
+     * Checks and converts (if required) pixelData's content to current pixel
+     * format.
+     */
+    void checkPixelFormat() {
+        imageData.checkPixelFormat();
+    }
 }
