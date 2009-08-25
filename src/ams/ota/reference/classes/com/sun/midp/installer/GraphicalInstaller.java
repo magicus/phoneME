@@ -635,9 +635,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         iproxy.installDone(true, null);
     }
 
-    void notifyFailed(Exception e, String msg) {
+    void notifyFailed(Exception e) {
         InstallerResultHandler.notifyRequestFailed(e);
-        msg = installer.getOtaInstallMessage();
+        String msg = installer.state.otaInstallMessage;
         if( msg == null ) 
             msg = OtaNotifier.INVALID_CONTENT_HANDLER;
         iproxy.installDone(false, msg);
@@ -1818,7 +1818,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
                         msg = GraphicalInstaller.translateJadException(
                             ije, name, null, null, url);
-                        parent.notifyFailed(ije, msg);
+                        parent.notifyFailed(ije);
                     } catch (MIDletSuiteLockedException msle) {
                         if (!parent.killRunningMIDletIfUpdate) {
                             String[] values = new String[1];
@@ -1833,7 +1833,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                     ResourceConstants.AMS_GRA_INTLR_LOCKED,
                                         values);
                             }
-                            parent.notifyFailed(msle, msg);
+                            parent.notifyFailed(msle);
                         } else {
                              /*
                               * Kill running midlets from the suite being
@@ -1922,7 +1922,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 InstallerResource.IO_EXCEPTION_MESSAGE)
                                     + ":" + urlToShow;
                         }
-                        parent.notifyFailed(ioe, msg);
+                        parent.notifyFailed(ioe);
                     } catch (Exception ex) {
                         if (Logging.TRACE_ENABLED) {
                             Logging.trace(ex, "Exception caught " +
@@ -1930,7 +1930,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         }
 
                         msg = ex.getClass().getName() + ": " + ex.getMessage();
-                        parent.notifyFailed(ex, msg);
+                        parent.notifyFailed(ex);
                     }
 
                 } while (tryAgain);
