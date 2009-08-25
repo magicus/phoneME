@@ -35,6 +35,8 @@
 
 extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int blen);
 
+static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **ppKniInfo, javacall_result result, jboolean willRetry );
+
 /* KNI Implementation **********************************************************************/
 
 /* private native int nCreateAndRealizeURLBasedPlayerAsync( int appId, int pID,
@@ -78,50 +80,86 @@ LockAudioMutex();
         pKniInfo->recordState = RECORD_CLOSE;
         pKniInfo->isClosed = KNI_FALSE;
         res = javacall_media_create_managed_player(appId, playerId, URILength, pszURI, &pKniInfo->pNativeHandle); 
-        if (res == JAVACALL_OK) {
-            returnValue = (int)pKniInfo;
-        } else if (res == JAVACALL_IO_ERROR) {
-            MMP_FREE(pKniInfo);
-            KNI_ThrowNew( "javax/microedition/media/MediaException",
-                "\nUnable to create native player, IO error\n" );
-            returnValue = -1; /* Can not create player - IO error */
-        } 
-        else if ( JAVACALL_NO_AUDIO_DEVICE == res )
-        {
-            MMP_FREE(pKniInfo);
-            KNI_ThrowNew( "javax/microedition/media/MediaException",
-"\nNo audio device found. Please check your audio driver settings\n" );
-            returnValue = 0; /* Can not create player */
-        }
-        else if ( JAVACALL_CONNECTION_NOT_FOUND == res )
-        {
-            MMP_FREE(pKniInfo);
-            KNI_ThrowNew( "javax/microedition/media/MediaException",
-"\nUnable to create native player, failed to connect to the URI\n" );
-            returnValue = 0; /* Can not create player */
-        }
-        else if ( JAVACALL_INVALID_ARGUMENT == res )
-        {
-            MMP_FREE(pKniInfo);
-            KNI_ThrowNew( "javax/microedition/media/MediaException",
-"\nUnable to create native player, invalid URI or other parameter\n" );
-            returnValue = 0; /* Can not create player */
-        }
-        else {
-            MMP_FREE(pKniInfo);
-            KNI_ThrowNew( "javax/microedition/media/MediaException",
-            "\nUnable to create native player\n" );
-            returnValue = 0; /* Can not create player */
-        }
+        doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, res, KNI_TRUE );
     }
 UnlockAudioMutex();
 
     if (pszURI)      { MMP_FREE(pszURI); }
+
+    returnValue = ( jint )pKniInfo;
     
     MMP_DEBUG_STR1("-nCreateAndRealizeURLBasedPlayerAsync return=%d\n", returnValue);
 
     KNI_EndHandles();
     KNI_ReturnInt(returnValue);
+}
+/* private native void nDoOnRealizeResult( int result, boolean willRetry ) throws MediaException; */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nDoOnRealizeResult) {
+    KNIPlayerInfo* pKniInfo;
+    jint jHandle = 0;
+    jfieldID fldHandle;
+    int result = ( int )KNI_GetParameterAsInt( 1 );
+    jboolean willRetry = KNI_GetParameterAsBoolean( 2 );
+    
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(instance);
+    KNI_DeclareHandle(clazz);
+    
+    /* Get this object instance and clazz */
+    KNI_GetThisPointer(instance);
+    KNI_GetObjectClass(instance, clazz);
+    
+    fldHandle = KNI_GetFieldID( clazz, "hNative", "I" );
+    
+    pKniInfo = ( *KNIPlayerInfo )KNI_GetIntField( instance, fldHandle );
+    
+    if( NULL != pKniInfo ) {
+        doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, result, willRetry );
+        if( NULL == pKniInfo ) {
+            KNI_SetIntField( instance, fldHandle, 0 );
+        }
+    }
+        
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **ppKniInfo, int result, jboolean willRetry ) {
+    const char strMediaEx[] = "javax/microedition/media/MediaException";
+    if( JAVACALL_OK != result && ( KNI_FALSE == willRetry || JAVACALL_FAIL != result ) )
+    {
+        MMP_FREE( *ppKniInfo );
+        *ppKniInfo = NULL;
+    }
+    
+    switch( result )
+    {
+        case JAVACALL_IO_ERROR:
+            KNI_ThrowNew( strMediaEx,
+                "\nUnable to create native player, IO error\n" );
+            break;
+        case JAVACALL_NO_AUDIO_DEVICE:
+            KNI_ThrowNew( strMediaEx,
+"\nNo audio device found. Please check your audio driver settings\n" );
+            break;
+        case JAVACALL_CONNECTION_NOT_FOUND:
+            KNI_ThrowNew( strMediaEx,
+"\nUnable to create native player, failed to connect to the URI\n" );
+            break;
+        case JAVACALL_INVALID_ARGUMENT:
+            KNI_ThrowNew( strMediaEx,
+"\nUnable to create native player, invalid URI or other parameter\n" );
+            break;
+        case JAVACALL_FAIL:
+            if( KNI_FALSE == willRetry ) {
+                KNI_ThrowNew( strMediaEx, 
+                "\nUnable to create native player, general failure\n" );
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 /* private native void nFreeNativeHandle( int handle ); */

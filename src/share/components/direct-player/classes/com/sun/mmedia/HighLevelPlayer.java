@@ -182,7 +182,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     private String  mediaFormat = null;
     boolean handledByDevice = false;
     private boolean handledByJava = false;
-    private int hNative = 0;      // handle of native API library
+
+    /* Caution! This field can be nulled by native code */
+    volatile private int hNative = 0;      // handle of native API library
 
 
     /**
@@ -241,9 +243,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             int pID, String URI) throws MediaException;
 
     private native void nFreeNativeHandle( int handle );
+    
+    private native void nDoOnRealizeResult( int result, boolean willRetry ) throws MediaException;
 
     private native int nCreateAndRealizeJavaFedPlayerAsync( int appId,
-            int pID, String URI) throws MediaException;
+            int pID, String URI, String contentType, long strLen )
+            throws MediaException;
 
     // Terminate native library
     private native int nTerm(int handle);
@@ -533,6 +538,33 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
+    private void doOnRealizeResult( int result, boolean willRetry ) throws MediaException {
+        if( !JavacallResults.isOK(result) ) {
+            nFreeNativeHandle(hNative);
+            hNative = 0;
+        }
+
+        switch( result )
+        {
+            case JavacallResults.JAVACALL_NO_AUDIO_DEVICE:
+                throw new MediaException( "No audio device found. Please check your audio driver settings" );
+            case JavacallResults.JAVACALL_CONNECTION_NOT_FOUND:
+                throw new MediaException("Couldn't realize: connection not found" );
+            case JavacallResults.JAVACALL_INVALID_ARGUMENT:
+                throw new MediaException( "Couldn't realize: wrong argument passed to native" );
+            case JavacallResults.JAVACALL_IO_ERROR:
+                throw new MediaException( "Couldn't realize: IO error" );
+            case JavacallResults.JAVACALL_FAIL:
+                if( !willRetry ) {
+                    throw new MediaException("Couldn't realize: general failure");
+                }
+            case JavacallResults.JAVACALL_OK:
+                break;
+            default:
+                throw new MediaException( "Couldn't realize due to a native error" );
+        }
+    }
+
     /**
      * Constructs portions of the <code>Player</code> without
      * acquiring the scarce and exclusive resources.
@@ -576,28 +608,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
 
         int result = asyncExecutor.getResult();
-        handledByDevice = JavacallResults.isOK( result );
-        if( !handledByDevice ) {
-            nFreeNativeHandle(hNative);
-            hNative = 0;
-        }
-        
-        switch( result )
-        {
-            case JavacallResults.JAVACALL_NO_AUDIO_DEVICE:
-                throw new MediaException( "No audio device found. Please check your audio driver settings" );
-            case JavacallResults.JAVACALL_CONNECTION_NOT_FOUND:
-                throw new MediaException("Couldn't realize: connection not found" );
-            case JavacallResults.JAVACALL_INVALID_ARGUMENT:
-                throw new MediaException( "Couldn't realize: wrong argument passed to native" );
-            case JavacallResults.JAVACALL_IO_ERROR:
-                throw new MediaException( "Couldn't realize: IO error" );
-            case JavacallResults.JAVACALL_FAIL:
-            case JavacallResults.JAVACALL_OK:
-                break;
-            default:
-                throw new MediaException( "Couldn't realize due to a native error" );
-        }
+        nDoOnRealizeResult( result, true );
+
+        handledByDevice = ( 0 == result );
 
         if( !handledByDevice ) {
             try {
@@ -625,19 +638,27 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             {
                 throw new MediaException("Media size is zero");
             }
-            if( -1 == len ) {
-                throw new MediaException(
-                        "Cannot playback stream with unknown length");
-            }
 
             directInputThread = new DirectInputThread( this );
             directInputThread.start();
 
+            String type = source.getContentType();
+            if (type == null && stream != null && stream.getContentDescriptor() != null) {
+                type = stream.getContentDescriptor().getContentType();
+            }
+
+            final String contentType = type;
+
             asyncExecutor.runAsync( new AsyncTask() {
                 public void run() throws MediaException {
-                    nCreateAndRealizeJavaFedPlayerAsync(appId, pID, locator);
+                    hNative = nCreateAndRealizeJavaFedPlayerAsync(appId, pID,
+                            locator, contentType, len );
                 }
             });
+
+            nDoOnRealizeResult( asyncExecutor.getResult(), false );
+            System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
+            handledByDevice = false;
         }
 
         hNative = nInit(appId, pID, locator);
