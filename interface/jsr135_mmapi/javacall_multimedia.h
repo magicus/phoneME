@@ -1108,7 +1108,7 @@ typedef enum {
  *          respose to JAVACALL_EVENT_MEDIA_ENCODE_COMPLETE
  *          event.
  */
-javacall_result javacall_media_encode_start(javacall_uint8* rgb888, javacall_uint8 width, javacall_uint8 height,
+javacall_result javacall_media_encode_start(javacall_uint8* rgb888, javacall_uint16 width, javacall_uint16 height,
                                       javacall_encoder_type encode, javacall_uint8 quality,
                                             javacall_uint8** result_buffer, javacall_uint32* result_buffer_len,
                                             javacall_handle* context);

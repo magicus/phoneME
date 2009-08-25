@@ -1864,8 +1864,8 @@ javacall_result javacall_media_skip_frames(javacall_handle handle, /*INOUT*/ lon
 
 #define JFIF_HEADER_MAXIMUM_LENGTH 1024
 javacall_result javacall_media_encode_start(javacall_uint8* rgb888, 
-                                      javacall_uint8 width, 
-                                      javacall_uint8 height,
+                                      javacall_uint16 width, 
+                                      javacall_uint16 height,
                                       javacall_encoder_type encode,
                                       javacall_uint8 quality,
                                       javacall_uint8** result_buffer,

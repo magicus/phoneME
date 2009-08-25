@@ -104,6 +104,9 @@ public:
     int                   out_height;
     javacall_pixel*       out_frame;
 
+    javacall_uint8*       snapshot;
+    javacall_uint32       snapshot_len;
+
     bool                  playing;
 
     long                  bytes_buffered;
@@ -558,6 +561,9 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     p->out_height       = -1;
     p->out_frame        = NULL;
 
+    p->snapshot         = NULL;
+    p->snapshot_len     = NULL;
+
     p->ppl              = NULL;
     p->pModule          = NULL;
     p->our_module       = true;
@@ -621,6 +627,9 @@ static javacall_result dshow_destroy(javacall_handle handle)
     if( NULL != p->video_frame ) delete p->video_frame;
     if( NULL != p->out_frame ) delete p->out_frame;
     if( NULL != p->ppl ) delete p->ppl;
+
+    if( NULL != p->snapshot )
+        javacall_media_release_data( p->snapshot, p->snapshot_len );
 
     DeleteCriticalSection( &(p->cs) );
 
@@ -1067,6 +1076,73 @@ static javacall_result dshow_set_video_fullscreenmode(javacall_handle /*handle*/
 }
 
 /*****************************************************************************\
+                      S N A P S H O T   S U P P O R T
+\*****************************************************************************/
+
+static javacall_result dshow_start_video_snapshot( javacall_handle handle, 
+                                                   const javacall_utf16* imageType, 
+                                                   long length )
+{
+    javacall_result res;
+    dshow_player* p = (dshow_player*)handle;
+
+    javacall_uint8* rgb888 = (javacall_uint8*)MALLOC( 3 * p->video_width * p->video_height );
+
+    EnterCriticalSection( &(p->cs) );
+
+    for( int y = 0; y < p->video_height; y++ )
+    {
+        for( int x = 0; x < p->video_width; x++ )
+        {
+            javacall_pixel pixel = *( p->video_frame + y * p->video_width + x );
+            javacall_uint8* ptr = rgb888 + 3 * ( y * p->video_width + x );
+            *ptr++ = pixel >> 11;             // R
+            *ptr++ = ( pixel >> 5 ) & 0x3F;   // G
+            *ptr++ = pixel & 0x1F;            // B
+        }
+    }
+
+    res = javacall_media_encode_start( rgb888,
+                                       (javacall_uint16)p->video_width,
+                                       (javacall_uint16)p->video_height,
+                                       JAVACALL_JPEG_ENCODER,
+                                       100, // javacall_uint8 quality,
+                                       &( p->snapshot ),
+                                       &( p->snapshot_len ),
+                                       NULL );
+
+    FREE( rgb888 );
+
+    LeaveCriticalSection( &(p->cs) );
+
+    return res;
+}
+
+static javacall_result dshow_get_video_snapshot_data_size( javacall_handle handle, 
+                                                           long* size )
+{
+    dshow_player* p = (dshow_player*)handle;
+
+    if( NULL == p->snapshot ) return JAVACALL_FAIL;
+    *size = p->snapshot_len;
+
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_get_video_snapshot_data( javacall_handle handle, 
+                                                      char* buffer,
+                                                      long size )
+{
+    dshow_player* p = (dshow_player*)handle;
+
+    if( NULL == p->snapshot ) return JAVACALL_FAIL;
+    if( NULL == buffer || size < (long)p->snapshot_len ) return JAVACALL_INVALID_ARGUMENT;
+    memcpy( buffer, p->snapshot, p->snapshot_len );
+
+    return JAVACALL_OK;
+}
+
+/*****************************************************************************\
                       I N T E R F A C E   T A B L E S
 \*****************************************************************************/
 
@@ -1116,12 +1192,18 @@ static media_video_interface _dshow_video_itf = {
     dshow_set_video_fullscreenmode
 };
 
+static media_snapshot_interface _dshow_snapshot_itf = {
+    dshow_start_video_snapshot,
+    dshow_get_video_snapshot_data_size,
+    dshow_get_video_snapshot_data
+};
+
 media_interface g_dshow_itf =
 {
     &_dshow_basic_itf,
     &_dshow_volume_itf,
     &_dshow_video_itf,
-    NULL,
+    &_dshow_snapshot_itf,
     NULL,
     NULL,
     NULL,

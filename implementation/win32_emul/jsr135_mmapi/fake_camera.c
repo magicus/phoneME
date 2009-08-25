@@ -407,8 +407,8 @@ static javacall_result fake_camera_start_video_snapshot( javacall_handle handle,
     EnterCriticalSection( &(c->cs) );
 
     res = javacall_media_encode_start( c->video_frame,
-                                       (javacall_uint8)c->video_width,
-                                       (javacall_uint8)c->video_height,
+                                       (javacall_uint16)c->video_width,
+                                       (javacall_uint16)c->video_height,
                                        JAVACALL_JPEG_ENCODER,
                                        100, // javacall_uint8 quality,
                                        &( c->snapshot ),
@@ -438,7 +438,7 @@ static javacall_result fake_camera_get_video_snapshot_data( javacall_handle hand
     fake_camera* c = (fake_camera*)handle;
 
     if( NULL == c->snapshot ) return JAVACALL_FAIL;
-    if( NULL == buffer || size < c->snapshot_len ) return JAVACALL_INVALID_ARGUMENT;
+    if( NULL == buffer || size < (long)c->snapshot_len ) return JAVACALL_INVALID_ARGUMENT;
     memcpy( buffer, c->snapshot, c->snapshot_len );
     return JAVACALL_OK;
 }
