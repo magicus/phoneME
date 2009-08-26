@@ -202,11 +202,11 @@ public class CHManagerImpl extends CHManagerBase {
          * @see com.sun.midp.content.CHManagerImpl
          */
         public void installDone(boolean success, String errorMsg) {
-            if( Logger.LOGGER != null ) Logger.LOGGER.println( "CHManagerImpl.installDone()" );
+            if( Logger.LOGGER != null ) 
+                Logger.LOGGER.println( "CHManagerImpl.installDone( " + success + ", '" + errorMsg + "' ), installInvoc = " + installInvoc );
             if (installInvoc != null) {
-                if( errorMsg != null ){
-                    if( !success )
-                        installInvoc.setArgs(new String[] {errorMsg} );
+                if( errorMsg != null ) installInvoc.setArgs(new String[] {errorMsg} );
+                if( success || errorMsg == null ){
                     handler.finish(installInvoc,
                            success ? Invocation.OK : Invocation.CANCELLED);
                 }
