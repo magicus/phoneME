@@ -159,6 +159,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectInputThread_nNotifyEndOfStream) {
     jint jHandle = KNI_GetParameterAsInt(1);
     javacall_handle handle = NULL;
+    jlong pos = -1;
     
     if( 0 == jHandle )
     {
@@ -170,8 +171,21 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nNotifyEndOfStream) {
         KNI_ReturnVoid();
     }
     
-    //notify End Of Stream
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(instance);
+    KNI_DeclareHandle(clazz);
+
+    /* Get this object instance and clazz */
+    KNI_GetThisPointer(instance);
+    KNI_GetObjectClass(instance, clazz);
     
+    pos = KNI_GetLongField( instance, KNI_GetFieldID( clazz, "posToRead", "J" ));
+    
+    //notify End Of Stream
+    javacall_media_stream_length( handle, ( javacall_int64 )pos );
+    
+    
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
