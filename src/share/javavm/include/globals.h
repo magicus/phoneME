@@ -391,6 +391,7 @@ struct CVMGlobalState {
 #endif /* CVM_REFLECT */
 #ifdef CVM_DEBUG_STACKTRACES
     CVMMethodTypeID printlnTid;
+    CVMMethodTypeID getCauseTid;
     CVMMethodBlock* java_lang_Throwable_fillInStackTrace;
 #ifdef CVM_DEBUG
     CVMFieldBlock*  java_lang_System_out;
