@@ -25,8 +25,6 @@
 
 package com.sun.mmedia;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
