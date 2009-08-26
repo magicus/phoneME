@@ -86,12 +86,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nClose) {
 LockAudioMutex();            
  
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        if (JAVACALL_FAIL == javacall_media_close(pKniInfo->pNativeHandle)) {
+        if (JAVACALL_FAIL == javacall_media_destroy(pKniInfo->pNativeHandle)) {
             returnValue = 0;
         }
-        pKniInfo->isClosed = KNI_TRUE;
-        /* DON'T FREE ANY HANDLES HERE !!! 
-          THEY MIGHT BE STILL NEEDED TO FINISH PENDING DATA REQUESTS ! */
+        pKniInfo->pNativeHandle = NULL;
+    }
+    if( pKniInfo ) {
+        MMP_FREE(pKniInfo);
+        pKniInfo = NULL;
     }
 UnlockAudioMutex();            
 

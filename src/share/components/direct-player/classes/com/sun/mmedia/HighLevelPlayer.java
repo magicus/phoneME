@@ -231,50 +231,38 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     private static int systemVolume = 100;
 
     // Init native library
-    private native int nInit(int appId, int pID, String URI)
-                                            throws MediaException, IOException;
-
     private native int nCreateAndRealizeURLBasedPlayerAsync( int appId,
             int pID, String URI) throws MediaException;
 
-    private native void nFreeNativeHandle( int handle );
-    
     private native void nDoOnRealizeResult( int result ) throws MediaException;
 
     private native int nCreateAndRealizeJavaFedPlayerAsync( int appId,
             int pID, String URI, String contentType, long streamLen )
             throws MediaException;
 
-    // Terminate native library
-    private native int nTerm(int handle);
     // Get Media Format
     private native String nGetMediaFormat(int handle);
-    // Need media Download in Java side?
-    private native boolean nIsHandledByDevice(int handle);
-
-    // Realize native player
-    private native void nRealize(int handle, String mime) throws
-            MediaException;
 
     private static String PL_ERR_SH = "Cannot create a Player: ";
     
-    synchronized void abort( String msg )
+    synchronized void doOnDirectInputError( final String msg )
     {
         if( CLOSED != getState() )
         {
-            close();
-            sendEvent(PlayerListener.ERROR, msg );
+            directInputThread = null;
+            new Thread( new Runnable() {
+                public void run() {
+                    close();
+                    sendEvent(PlayerListener.ERROR, msg);
+                }
+            }).start();
         }
     }
 
     private void setHandledByJava()
     {
         handledByJava = true;
-        if( 0 != hNative )
-        {
-            nTerm( hNative );
-            hNative = 0;
-        }
+        hNative = 0;
     }
 
     /**
@@ -1066,39 +1054,40 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
-        if (getState() == STARTED) {
-            try {
-                stop();
-            } catch (MediaException e) {
-                // Not much we can do here.
+
+        System.out.println( "HighLevelPlayer: close() entered" );
+
+        if (null != directInputThread) {
+            directInputThread.close();
+
+            // This will cause IOException in case of pending read() or seek()
+            if( null != source ) {
+                source.disconnect();
+                source = null;
             }
+            try {
+                directInputThread.join();
+            } catch (InterruptedException ex) {}
+
+            directInputThread = null;
         }
 
-        if( null != lowLevelPlayer )
-        {
-
-            System.out.println( "HighLevelPlayer: close() entered" );
+        if( null != asyncExecutor ) {
             try {
-                runLowLevel(new LowLevelTask() {
+                asyncExecutor.runAsync(new AsyncTask() {
+
                     public void run() throws MediaException {
                         lowLevelPlayer.doClose();
-                        System.out.println( "HighLevelPlayer: doClose() returned" );
+                        System.out.println("HighLevelPlayer: doClose() returned");
                     }
                 });
             } catch (MediaException ex) {}
-
-            System.out.println( "HighLevelPlayer: close() resumed" );
-            
-            if (null != directInputThread) {
-                directInputThread.close();
-            }
+            System.out.println("HighLevelPlayer: close() resumed");
+        } else {
+            lowLevelPlayer.doClose();
         }
 
-        if(hNative != 0) {
-            nTerm(hNative);
-            hNative = 0;
-        }
-
+        hNative = 0;
 
         setState( CLOSED );
 

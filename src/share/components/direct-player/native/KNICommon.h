@@ -98,7 +98,6 @@ typedef struct _KNIPlayerInfo {
     int recordState;            /* State of recording */
     void* hBuffer;          /* Handle of buffer */
     void* pNativeHandle;    /* OEM can use this field to extend handle */
-    jboolean isClosed;     /* whether javacall_media_close() has been called */
 } KNIPlayerInfo;
 
 #endif

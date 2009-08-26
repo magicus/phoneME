@@ -103,11 +103,12 @@ mainloop:
                                     tmpBuf.length : lenToRead;
                     read = owner.stream.read(tmpBuf, 0, len);
                 } catch ( MediaException ex) {
-                    //owner.abort( ex.getMessage() );
+                    owner.doOnDirectInputError( ex.getMessage() );
                     return;
                 } catch ( IOException e ) {
-//                    owner.abort("Stream reading IOException: "
-//                            + e.getMessage() );
+                    if( !isDismissed ) {
+                        owner.doOnDirectInputError("Stream reading IOException: " + e.getMessage());
+                    }
                     return;
                 }
 
@@ -150,12 +151,10 @@ mainloop:
 
     public void close() {
         isDismissed = true;
+
         synchronized (requestLock) {
             requestLock.notify();
         }
-        try {
-            this.join();
-        } catch (InterruptedException ex) {}
     }
 
 }
