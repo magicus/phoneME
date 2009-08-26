@@ -119,8 +119,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     protected native int nGetDuration(int handle);
     // Pause
     protected native boolean nPause(int handle);
-    // Need buffering from Java side?
-    protected native boolean nIsNeedBuffering(int handle);
     // Switch to foreground
     private native boolean nSwitchToForeground(int hNative, int options);
     // Switch to background

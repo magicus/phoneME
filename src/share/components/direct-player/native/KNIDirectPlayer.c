@@ -244,26 +244,6 @@ UnlockAudioMutex();
     KNI_ReturnBoolean(JAVACALL_OK == result? KNI_TRUE: KNI_FALSE);
 }
 
-/*  protected native boolean nIsNeedBuffering ( int handle ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectPlayer_nIsNeedBuffering) {
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_TRUE;
-    javacall_bool isHandled = JAVACALL_FALSE;
-
-LockAudioMutex();            
-    /* Is buffering handled by device side? */
-    if (pKniInfo && pKniInfo->pNativeHandle &&
-        JAVACALL_OK == javacall_media_download_handled_by_device(pKniInfo->pNativeHandle,
-                                                                            &isHandled)) {
-        returnValue = (isHandled == JAVACALL_TRUE) ? KNI_FALSE : KNI_TRUE;
-    }
-UnlockAudioMutex();            
-
-    KNI_ReturnBoolean(returnValue);
-}
-
 /*************************************************************************/
 
 /*  protected native boolean nSwitchToForeground ( int hNative, int options ) ; */

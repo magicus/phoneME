@@ -174,7 +174,7 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nDoOnRealizeResult) {
     
     fldHandle = KNI_GetFieldID( clazz, "hNative", "I" );
     
-    pKniInfo = ( *KNIPlayerInfo )KNI_GetIntField( instance, fldHandle );
+    pKniInfo = ( KNIPlayerInfo* )KNI_GetIntField( instance, fldHandle );
     
     if( NULL != pKniInfo ) {
         doOnCreateAndRealizeResult( KNIPASSARGS &pKniInfo, result );
