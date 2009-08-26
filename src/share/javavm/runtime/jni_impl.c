@@ -3915,16 +3915,16 @@ initializeSystemClasses(JNIEnv* env,
      *     CVMglobals.clinitTid, CVM_TRUE) == NULL);
      */
     CVMcbSetROMClassInitializationFlag(ee, CVMsystemClass(sun_misc_CVM));
-
-    /* First do the initialization that doesn't require thread support */
-    if (!initializeClassList(ee, errorStrBuf, sizeofErrorStrBuf,
-			     classInitList, classInitListLen)) {
-	errorStr = errorStrBuf;
-	return errorStr;
-    }
     
     /* Prepare for thread creation */
     if ((errorStr = initializeThreadObjects(env)) != NULL) {
+	return errorStr;
+    }
+
+    /* Initilize some core classes first. */
+    if (!initializeClassList(ee, errorStrBuf, sizeofErrorStrBuf,
+			     classInitList, classInitListLen)) {
+	errorStr = errorStrBuf;
 	return errorStr;
     }
     
