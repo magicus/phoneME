@@ -1678,13 +1678,13 @@ CNIsun_misc_CVM_setNoVerification(CVMExecEnv* ee,
  * the corresponding classloader using CVM.setDeadLoader().
  ******************************************************/
 
-static CVMBool 
+static void 
 nullifyRefCallBack(CVMObject** refPtr, void* data) {
     CVMObject* ref = *refPtr;
     CVMClassBlock *cb;
 
     if (ref == NULL || CVMobjectIsInROM(ref)) {
-        return CVM_TRUE;
+        return;
     }
 
     cb = CVMobjectGetClass(ref);
@@ -1712,7 +1712,7 @@ nullifyRefCallBack(CVMObject** refPtr, void* data) {
             }
         }
     }
-    return CVM_TRUE;
+    return;
 }
 
 
