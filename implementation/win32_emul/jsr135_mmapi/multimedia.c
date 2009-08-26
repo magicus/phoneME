@@ -680,6 +680,7 @@ javacall_result javacall_media_create_managed_player(
     pPlayer->downloadByDevice = JAVACALL_TRUE;
     pPlayer->mime             = NULL;
     pPlayer->streamLen        = -1;
+	pPlayer->mediaItfPtr	  = NULL;
 
     if( 0 == _wcsnicmp( locator, AUDIO_CAPTURE_LOCATOR, 
                        min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), locator_len ) ) )
