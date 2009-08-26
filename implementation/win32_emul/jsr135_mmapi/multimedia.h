@@ -154,14 +154,10 @@ typedef enum _jc_fmt {
     JC_FMT_RTP_MP1S          ,
     JC_FMT_RTP_MP2P          ,
     JC_FMT_RTP_BMPEG         ,
-    JC_FMT_RTP_NV            ,
-    /* JC_FMT_UNKNOWN excluded, it will be mapped to -1 */
-    JC_FMT_UNSUPPORTED       ,
-
-    JC_FMT_UNKNOWN = -1
+    JC_FMT_RTP_NV
 } jc_fmt;
 
-jc_fmt                     fmt_str2enum( javacall_media_format_type fmt );
+javacall_result fmt_str2enum( javacall_media_format_type str, /*OUT*/ jc_fmt *fmd_id )
 javacall_media_format_type fmt_enum2str( jc_fmt                     fmt );
 javacall_result            fmt_str2mime(
         javacall_media_format_type fmt, char *buf, int buf_len);

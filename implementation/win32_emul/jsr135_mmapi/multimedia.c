@@ -362,42 +362,39 @@ static javacall_media_format_type g_fmt[] =
     JAVACALL_MEDIA_FORMAT_RTP_MP1S          ,
     JAVACALL_MEDIA_FORMAT_RTP_MP2P          ,
     JAVACALL_MEDIA_FORMAT_RTP_BMPEG         ,
-    JAVACALL_MEDIA_FORMAT_RTP_NV            ,
-    //JAVACALL_MEDIA_FORMAT_UNKNOWN excluded, it will be mapped to -1
-    JAVACALL_MEDIA_FORMAT_UNSUPPORTED
+    JAVACALL_MEDIA_FORMAT_RTP_NV
 };
 
 static const int g_fmt_count = sizeof( g_fmt ) / sizeof( g_fmt[ 0 ] );
 
-jc_fmt fmt_str2enum( javacall_media_format_type fmt )
+javacall_result fmt_str2enum( javacall_media_format_type str, /*OUT*/ jc_fmt *fmd_id )
 {
     int n;
 
-    JC_MM_ASSERT( JC_FMT_UNSUPPORTED == g_fmt_count - 1 );
-
     for( n = 0; n < g_fmt_count; n++ )
     {
-        if( 0 == strcmp( fmt, g_fmt[ n ] ) )
+        if( 0 == strcmp( str, g_fmt[ n ] ) )
         { 
-            return (jc_fmt)n;
+            *fmt_id = (jc_fmt)n;
+            return JAVACALL_OK;
         }
     }
 
-    return JC_FMT_UNKNOWN;
+    return JAVACALL_FAIL;
 }
 
-javacall_media_format_type fmt_enum2str( jc_fmt fmt )
+javacall_result fmt_enum2str( jc_fmt fmt_id, /*OUT*/ javacall_media_format_type *fmt_str )
 {
-    JC_MM_ASSERT( JC_FMT_UNSUPPORTED == g_fmt_count - 1 );
 
-    if( JC_FMT_UNKNOWN == fmt ) return JAVACALL_MEDIA_FORMAT_UNKNOWN;
+    if( fmt_id < 0 || fmt_id >= g_fmt_count ) {
+        return JAVACALL_FAIL;
+    }
 
-    JC_MM_ASSERT( fmt > 0 && fmt < g_fmt_count );
-
-    return g_fmt[ fmt ];
+    *fmt_str = g_fmt[ fmt ];
+    return JAVACALL_OK;
 }
 
-javacall_media_format_type fmt_mime2str( const char* mime )
+javacall_result fmt_mime2str( const char* mime, /*OUT*/ javacall_media_format_type *fmt_str )
 {
     int          idx;
     unsigned int mimelen = (unsigned int)strlen( mime );
@@ -414,15 +411,17 @@ javacall_media_format_type fmt_mime2str( const char* mime )
         {
             if( '\0' == ct[ mimelen ] || ' ' == ct[ mimelen ] )
             {
-                if( 0 == _strnicmp( ct, mime, mimelen ) )
-                    return get_capabilities()[ idx ].mediaFormat;
+                if( 0 == _strnicmp( ct, mime, mimelen ) ) {
+                    *fmt_str = get_capabilities()[ idx ].mediaFormat;
+                    return JAVACALL_OK;
+                }
             }
             ct = strchr( ct, ' ' );
             if( NULL != ct ) ct++;
         }
     }
 
-    return JAVACALL_MEDIA_FORMAT_UNKNOWN;
+    return JAVACALL_FAIL;
 }
 
 javacall_result fmt_str2mime(
@@ -572,8 +571,8 @@ media_interface* fmt_enum2itf( jc_fmt fmt )
 
 /*****************************************************************************/
 
-javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri, 
-                                                  long uriLength)
+javacall_result fmt_guess_from_url(javacall_const_utf16_string uri, 
+                  long uriLength, /*OUT*/ javacall_media_format_type *fmt_str)
 {
     static const struct
     {
@@ -583,9 +582,10 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
     {
         { L".mid",  JAVACALL_MEDIA_FORMAT_MIDI   },
         { L".midi", JAVACALL_MEDIA_FORMAT_MIDI   },
-        { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   },
+        { L".jts",  JAVACALL_MEDIA_FORMAT_TONE   }
 
 #if defined(ENABLE_JSR_135_DSHOW)
+        ,
         { L".amr",  JAVACALL_MEDIA_FORMAT_AMR    },
         { L".wav",  JAVACALL_MEDIA_FORMAT_MS_PCM },
         { L".mp3",  JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3 },
@@ -596,11 +596,9 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
         { L".mp4",  JAVACALL_MEDIA_FORMAT_MPEG_4_SVP   },
         { L".mpeg", JAVACALL_MEDIA_FORMAT_MPEG_1       },
         { L".mpg",  JAVACALL_MEDIA_FORMAT_MPEG_1       },
-        { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          },
+        { L".mov",  JAVACALL_MEDIA_FORMAT_MOV          }
 #endif
 
-        { L".gif",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   },
-        { L".wmv",  JAVACALL_MEDIA_FORMAT_UNSUPPORTED   }
     };
 
     int i, extlen;
@@ -610,7 +608,7 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
     if( 0 == _wcsnicmp( uri, RTSP_PROTOCOL_PREFIX, 
                         min( (long)wcslen( RTSP_PROTOCOL_PREFIX ), uriLength ) ) )
     {
-        return JAVACALL_MEDIA_FORMAT_UNKNOWN;
+        return JAVACALL_FAIL;
     }
 
     for( i = 0; i < sizeof( map ) / sizeof( map[ 0 ] ); i++ )
@@ -623,12 +621,13 @@ javacall_media_format_type fmt_guess_from_url(javacall_const_utf16_string uri,
 
             if( 0 == _wcsnicmp( tail, map[ i ].ext, extlen ) )
             {
-                return map[ i ].fmt;
+                *fmt_str = map[ i ].fmt;
+                return JAVACALL_OK;
             }
         }
     }
 
-    return JAVACALL_MEDIA_FORMAT_UNKNOWN;
+    return JAVACALL_FAIL;
 }
 
 javacall_result javacall_media_get_event_data(javacall_handle handle, 
@@ -776,7 +775,11 @@ javacall_result javacall_media_create_unmanaged_player(
 
     if( NULL != pPlayer->uri )
     {
+        jc_fmt fmt_id = -1;
+        javacall_result res = JAVACALL_FAIL;
+        
         pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
+        
         pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
     }
 

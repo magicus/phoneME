@@ -536,7 +536,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     p->appId            = outer_player->appId;
     p->playerId         = outer_player->playerId;
-    p->mediaType        = fmt_str2enum( outer_player->mediaType );
+    fmt_str2enum( outer_player->mediaType, &p->mediaType );
     p->is_video         = ( JC_FMT_FLV        == p->mediaType || 
                             JC_FMT_VIDEO_3GPP == p->mediaType || 
                             JC_FMT_MPEG_4_SVP == p->mediaType || 

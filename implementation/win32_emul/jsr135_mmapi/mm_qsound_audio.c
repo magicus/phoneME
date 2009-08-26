@@ -488,7 +488,7 @@ static javacall_result audio_qs_create(javacall_impl_player* outer_player)
     e = mQ234_AttachSynthPlayer(g_QSoundGM[gmIdx].gm, synth, 0);
     JC_MM_ASSERT(e == MQ234_ERROR_NO_ERROR);
 
-    h->mediaType        = fmt_str2enum( outer_player->mediaType );
+    fmt_str2enum( outer_player->mediaType, &h->mediaType );
     h->appId            = outer_player->appId;
     h->playerId         = outer_player->playerId;
     h->streamLen        = outer_player->streamLen;
