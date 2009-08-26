@@ -51,6 +51,7 @@ public class ContentHandlerPermission extends Permission {
 
     public ContentHandlerPermission(String actions) {
         super(null);
+        actions.length(); // null pointer check 
         actionFlags = parseActions(actions + ',');
     }
     
@@ -59,7 +60,7 @@ public class ContentHandlerPermission extends Permission {
         int flags = 0;
         
         int idx = 0, cidx;
-        while( (cidx = actions.indexOf(idx, ',')) != -1 ){
+        while( (cidx = actions.indexOf(',', idx)) != -1 ){
             String action = actions.substring(idx, cidx).trim();
             
             Integer flag = (Integer)map.get(action);
@@ -83,7 +84,7 @@ public class ContentHandlerPermission extends Permission {
     }
 
     public int hashCode() {
-        return actionFlags;
+        return getActions().hashCode();
     }
 
     public boolean implies(Permission p) {
