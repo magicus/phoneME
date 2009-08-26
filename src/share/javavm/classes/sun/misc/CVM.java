@@ -28,7 +28,7 @@
 package sun.misc;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import sun.misc.Version;
+import sun.misc.VersionHelper;
 import java.io.FileInputStream;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -104,11 +104,11 @@ public final class CVM {
 		    return parseStatus;
 		}
 	    } else if (args[i].startsWith("-version")) {
-		Version.print(true); // Long version
+		VersionHelper.print(true); // Long version
 		parseStatus = ARG_PARSE_EXITVM; // Don't parse any more
 		return parseStatus;
 	    } else if (args[i].startsWith("-showversion")) {
-		Version.print(true); // Long version
+		VersionHelper.print(true); // Long version
 		// continue with VM execution
             } else if (args[i].startsWith("-Xnoagent")) {
 		// eat this old jdb launching option
@@ -202,7 +202,7 @@ public final class CVM {
 		}
 		// continue with VM execution
 	    } else if (args[i].startsWith("-fullversion")) {
-		Version.print(false); // Short version
+		VersionHelper.print(false); // Short version
 		parseStatus = ARG_PARSE_EXITVM; // Don't parse any more
 		return parseStatus;
 	    } else if (args[i].startsWith("-ea") ||
