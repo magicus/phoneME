@@ -46,6 +46,12 @@ public class ContentHandlerPermission extends Permission {
         ACTION_REGISTER_DYNAMIC,
         ACTION_REGISTER_STATIC + "," + ACTION_REGISTER_DYNAMIC
     };
+    private static final int hashCodes[];
+    static {
+        hashCodes = new int[ actionStrings.length ];
+        for( int i = 0; i < hashCodes.length; i++)
+            hashCodes[ i ] = actionStrings[i].hashCode();
+    };
     
     private final int actionFlags;
 
@@ -84,7 +90,7 @@ public class ContentHandlerPermission extends Permission {
     }
 
     public int hashCode() {
-        return getActions().hashCode();
+        return hashCodes[ actionFlags ];
     }
 
     public boolean implies(Permission p) {
