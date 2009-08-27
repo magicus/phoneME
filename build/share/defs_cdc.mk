@@ -76,128 +76,131 @@ CVM_BUILDTIME_CLASSES_min += \
     java.util.Random \
 
 CVM_BUILDTIME_CLASSES_min += \
-    java.lang.Object \
-    java.io.Serializable \
-    java.lang.Throwable \
-    java.lang.Exception \
-    java.lang.RuntimeException \
-    java.lang.NullPointerException \
-    java.lang.IndexOutOfBoundsException \
-    java.lang.ArrayIndexOutOfBoundsException \
-    java.lang.ArithmeticException \
-    sun.io.UnknownCharacterException \
-    sun.io.ConversionBufferFullException \
-    sun.io.MalformedInputException \
     java.io.CharConversionException \
+    java.io.File \
+    java.io.FilterInputStream \
     java.io.IOException \
-    java.lang.Comparable \
+    java.io.InputStream \
+    java.io.InvalidClassException \
+    java.io.ObjectStreamException \
+    java.io.Serializable \
+    java.lang.AbstractMethodError \
+    java.lang.ArithmeticException \
+    java.lang.ArrayIndexOutOfBoundsException \
+    java.lang.ArrayStoreException \
+    java.lang.AssertionStatusDirectives \
+    java.lang.Boolean \
+    java.lang.Byte \
     java.lang.CharSequence \
-    java.util.Comparator \
-    java.lang.String \
-    java.security.PrivilegedAction \
+    java.lang.Character \
     java.lang.Class \
     java.lang.Class$$LoadingList \
-    java.lang.AssertionStatusDirectives \
-    java.net.FileNameMap \
-    java.net.ContentHandler \
-    java.net.URLConnection \
-    java.lang.ref.Reference \
-    java.lang.ref.PhantomReference \
-    java.lang.ref.FinalReference \
-    java.lang.ref.WeakReference \
-    java.lang.ref.SoftReference \
-    java.lang.Long \
-    java.lang.Integer \
-    java.lang.Boolean \
-    java.lang.Character \
-    java.lang.Float \
-    java.lang.Short \
-    java.lang.Byte \
-    java.lang.Double \
-    java.lang.Cloneable \
-    java.lang.ThreadLocal \
-    java.lang.Number \
-    java.lang.Runnable \
-    java.lang.Thread \
-    java.lang.StackTraceElement \
-    java.util.Enumeration \
-    java.security.PrivilegedActionException \
-    java.security.PrivilegedExceptionAction \
+    java.lang.ClassCastException \
+    java.lang.ClassCircularityError \
+    java.lang.ClassFormatError \
     java.lang.ClassLoader \
     java.lang.ClassLoader$$NativeLibrary \
-    java.lang.Shutdown \
-    sun.misc.ThreadRegistry \
-    sun.misc.CVM \
-    java.lang.System \
-    java.security.SecureClassLoader \
-    java.security.CodeSource \
-    java.io.File \
-    sun.misc.Launcher \
-    sun.misc.Launcher$$AppClassLoader \
-    sun.misc.Launcher$$ClassContainer \
-    java.lang.ref.Finalizer \
-    java.security.AccessController \
-    java.lang.StackOverflowError \
-    java.lang.OutOfMemoryError \
-    java.io.InvalidClassException \
-    java.lang.UnsupportedOperationException \
-    java.lang.StringIndexOutOfBoundsException \
-    java.lang.NoSuchFieldError \
-    java.lang.NoSuchMethodError \
-    java.lang.NoClassDefFoundError \
-    java.lang.InterruptedException \
-    java.lang.InternalError \
-    java.lang.InstantiationError \
-    java.lang.IllegalMonitorStateException \
-    java.lang.IllegalStateException \
-    java.lang.IllegalAccessException \
-    java.lang.IllegalArgumentException \
     java.lang.ClassNotFoundException \
     java.lang.CloneNotSupportedException \
-    java.lang.ArrayStoreException \
-    java.lang.ClassCastException \
-    java.lang.AbstractMethodError \
-    java.lang.IncompatibleClassChangeError \
-    java.lang.LinkageError \
-    java.lang.VirtualMachineError \
-    java.net.URLStreamHandlerFactory \
-    java.security.PermissionCollection \
-    java.io.ObjectStreamException \
-    java.net.URLClassLoader \
+    java.lang.Cloneable \
+    java.lang.Comparable \
+    java.lang.Double \
     java.lang.Error \
-    java.lang.InstantiationException \
-    java.lang.NegativeArraySizeException \
-    java.lang.UnsatisfiedLinkError \
-    java.lang.VerifyError \
-    java.lang.UnsupportedClassVersionError \
+    java.lang.Exception \
+    java.lang.Float \
     java.lang.IllegalAccessError \
-    java.lang.ClassFormatError \
-    sun.io.Markable \
-    java.io.InputStream \
-    java.io.FilterInputStream \
+    java.lang.IllegalAccessException \
+    java.lang.IllegalArgumentException \
+    java.lang.IllegalMonitorStateException \
+    java.lang.IllegalStateException \
+    java.lang.IncompatibleClassChangeError \
+    java.lang.IndexOutOfBoundsException \
+    java.lang.InstantiationError \
+    java.lang.InstantiationException \
+    java.lang.Integer \
+    java.lang.InternalError \
+    java.lang.InterruptedException \
+    java.lang.LinkageError \
+    java.lang.Long \
+    java.lang.NegativeArraySizeException \
+    java.lang.NoClassDefFoundError \
+    java.lang.NoSuchFieldError \
+    java.lang.NoSuchMethodError \
+    java.lang.NullPointerException \
+    java.lang.Number \
+    java.lang.Object \
+    java.lang.OutOfMemoryError \
+    java.lang.Runnable \
+    java.lang.RuntimeException \
+    java.lang.Short \
+    java.lang.Shutdown \
+    java.lang.StackOverflowError \
+    java.lang.StackTraceElement \
+    java.lang.String \
+    java.lang.StringBuffer \
+    java.lang.StringIndexOutOfBoundsException \
+    java.lang.System \
+    java.lang.Thread \
+    java.lang.ThreadGroup \
+    java.lang.ThreadLocal \
+    java.lang.Throwable \
+    java.lang.UnsatisfiedLinkError \
+    java.lang.UnsupportedClassVersionError \
+    java.lang.UnsupportedOperationException \
+    java.lang.VerifyError \
+    java.lang.VirtualMachineError \
+    java.lang.ref.FinalReference \
+    java.lang.ref.Finalizer \
+    java.lang.ref.PhantomReference \
+    java.lang.ref.Reference \
+    java.lang.ref.SoftReference \
+    java.lang.ref.WeakReference \
+    java.net.ContentHandler \
+    java.net.FileNameMap \
+    java.net.URLClassLoader \
+    java.net.URLConnection \
+    java.net.URLStreamHandlerFactory \
+    java.security.AccessController \
+    java.security.CodeSource \
+    java.security.PermissionCollection \
+    java.security.PrivilegedAction \
+    java.security.PrivilegedActionException \
+    java.security.PrivilegedExceptionAction \
+    java.security.SecureClassLoader \
+    java.util.Comparator \
+    java.util.Enumeration \
+    java.util.jar.JarEntry \
+    java.util.jar.JarFile \
     java.util.zip.InflaterInputStream \
     java.util.zip.ZipConstants \
     java.util.zip.ZipEntry \
-    java.util.jar.JarEntry \
     java.util.zip.ZipFile \
-    java.util.jar.JarFile \
-    java.lang.ClassCircularityError \
+    sun.io.ByteToCharConverter \
+    sun.io.CharToByteConverter \
+    sun.io.CharToByteISO8859_1 \
+    sun.io.ConversionBufferFullException \
+    sun.io.MalformedInputException \
+    sun.io.Markable \
+    sun.io.UnknownCharacterException \
+    sun.misc.CVM \
+    sun.misc.Launcher \
+    sun.misc.Launcher$$AppClassLoader \
+    sun.misc.Launcher$$ClassContainer \
+    sun.misc.ThreadRegistry \
 
 ifeq ($(CVM_REFLECT), true)
-
 CVM_BUILDTIME_CLASSES_min += \
-    java.lang.reflect.Member \
     java.lang.reflect.AccessibleObject \
     java.lang.reflect.Constructor \
     java.lang.reflect.Constructor$$ArgumentException \
     java.lang.reflect.Constructor$$AccessException \
+    java.lang.reflect.Field \
+    java.lang.reflect.Member \
     java.lang.reflect.Method \
     java.lang.reflect.Method$$ArgumentException \
     java.lang.reflect.Method$$AccessException \
-    java.lang.reflect.Field \
     java.lang.NoSuchFieldException \
-    java.lang.NoSuchMethodException \
-
+    java.lang.NoSuchMethodException
 endif
 
 # We need JNI headers generated for these
@@ -210,100 +213,104 @@ CVM_EXTRA_JNI_CLASSES += \
     java.net.InetAddressImplFactory \
 
 CVM_BUILDTIME_CLASSES_nullapp += \
-    java.util.Stack \
-    java.io.ObjectStreamClass \
-    java.io.ObjectStreamField \
-    sun.misc.SoftCache \
-    java.util.AbstractMap \
-    java.lang.ref.ReferenceQueue \
-    java.lang.ref.ReferenceQueue$$Null \
-    java.lang.ref.ReferenceQueue$$Lock \
-    java.util.HashMap \
-    java.util.HashMap$$Entry \
-    java.util.Map$$Entry \
-    java.lang.String$$CaseInsensitiveComparator \
-    java.lang.Shutdown$$Lock \
-    java.security.AccessControlContext \
-    java.util.Properties \
-    java.util.Hashtable$$EmptyEnumerator \
-    java.util.Hashtable$$EmptyIterator \
-    java.util.Iterator \
-    java.util.Hashtable$$Entry \
-    java.lang.StringCoding \
-    sun.io.Converters \
-    sun.security.action.GetPropertyAction \
-    java.lang.ThreadLocal$$ThreadLocalMap \
-    java.lang.ThreadLocal$$ThreadLocalMap$$Entry \
-    java.lang.ref.Reference$$ReferenceHandler \
-    java.lang.StringCoding$$StringDecoder \
-    java.lang.StringCoding$$ConverterSD \
-    sun.io.ByteToCharASCII \
-    java.lang.reflect.ReflectPermission \
-    java.security.BasicPermission \
-    java.security.Permission \
-    java.security.Guard \
-    sun.misc.Version \
-    java.io.FileInputStream \
-    java.lang.ref.Finalizer$$FinalizerThread \
-    java.io.FileDescriptor \
-    java.io.FileOutputStream \
-    java.io.OutputStream \
     java.io.BufferedInputStream \
-    java.io.PrintStream \
-    java.io.FilterOutputStream \
     java.io.BufferedOutputStream \
-    java.io.OutputStreamWriter \
-    java.io.Writer \
-    sun.io.CharToByteASCII \
     java.io.BufferedWriter \
-    java.lang.Terminator \
-    sun.misc.Launcher$$Factory \
-    sun.misc.Launcher$$1 \
-    sun.security.util.Debug \
-    java.io.FileSystem \
     java.io.ExpiringCache \
-    sun.misc.Launcher$$3 \
-    java.net.URL \
     java.io.ExpiringCache$$Entry \
-    java.lang.StringCoding$$StringEncoder \
-    java.lang.StringCoding$$ConverterSE \
-    sun.net.www.protocol.file.Handler \
-    java.net.URLStreamHandler \
-    java.util.Locale \
-    java.lang.CharacterDataLatin1 \
-    java.net.Parts \
-    java.util.HashSet \
-    java.util.AbstractSet \
-    java.util.Set \
-    sun.misc.URLClassPath \
-    java.util.ArrayList \
-    sun.net.www.protocol.jar.Handler \
-    java.lang.SystemClassLoaderAction \
-    java.lang.Integer$$1 \
-    sun.misc.Launcher$$4 \
-    java.security.ProtectionDomain \
-    java.security.Permissions \
-    sun.net.www.ParseUtil \
-    java.util.BitSet \
-    sun.net.www.protocol.file.FileURLConnection \
-    sun.net.www.URLConnection \
-    java.net.UnknownContentHandler \
-    sun.net.www.MessageHeader \
+    java.io.FileDescriptor \
+    java.io.FileInputStream \
+    java.io.FileOutputStream \
     java.io.FilePermission \
     java.io.FilePermission$$1 \
     java.io.FilePermissionCollection \
-    java.security.AllPermission \
-    java.security.UnresolvedPermission \
-    java.lang.RuntimePermission \
-    java.security.BasicPermissionCollection \
+    java.io.FileSystem \
+    java.io.FilterOutputStream \
+    java.io.ObjectStreamClass \
+    java.io.ObjectStreamField \
+    java.io.OutputStream \
+    java.io.OutputStreamWriter \
+    java.io.PrintStream \
+    java.io.Writer \
+    java.lang.CharacterDataLatin1 \
+    java.lang.Integer$$1 \
     java.lang.Long$$1 \
-    java.security.Principal \
-    java.security.cert.Certificate \
-    java.lang.reflect.Modifier \
-    java.lang.Void \
+    java.lang.RuntimePermission \
+    java.lang.Shutdown$$Lock \
+    java.lang.String$$CaseInsensitiveComparator \
     java.lang.StringCoding \
+    java.lang.StringCoding$$ConverterSD \
+    java.lang.StringCoding$$ConverterSE \
+    java.lang.StringCoding$$StringDecoder \
+    java.lang.StringCoding$$StringEncoder \
+    java.lang.SystemClassLoaderAction \
+    java.lang.Terminator \
+    java.lang.ThreadLocal$$ThreadLocalMap \
+    java.lang.ThreadLocal$$ThreadLocalMap$$Entry \
+    java.lang.Void \
+    java.lang.ref.Finalizer$$FinalizerThread \
+    java.lang.ref.Reference$$ReferenceHandler \
+    java.lang.ref.ReferenceQueue \
+    java.lang.ref.ReferenceQueue$$Lock \
+    java.lang.ref.ReferenceQueue$$Null \
+    java.lang.reflect.Modifier \
+    java.lang.reflect.ReflectPermission \
+    java.net.Parts \
+    java.net.URL \
+    java.net.URLStreamHandler \
+    java.net.UnknownContentHandler \
+    java.security.AccessControlContext \
+    java.security.AllPermission \
+    java.security.BasicPermission \
+    java.security.BasicPermissionCollection \
+    java.security.Guard \
+    java.security.Permission \
+    java.security.Permissions \
+    java.security.Principal \
+    java.security.ProtectionDomain \
+    java.security.UnresolvedPermission \
+    java.security.cert.Certificate \
+    java.util.AbstractMap \
+    java.util.AbstractSet \
+    java.util.ArrayList \
+    java.util.BitSet \
+    java.util.HashMap \
+    java.util.HashMap$$Entry \
+    java.util.HashSet \
+    java.util.Hashtable$$EmptyEnumerator \
+    java.util.Hashtable$$EmptyIterator \
+    java.util.Hashtable$$Entry \
+    java.util.Iterator \
+    java.util.Locale \
+    java.util.Map$$Entry \
+    java.util.Properties \
+    java.util.Set \
+    java.util.Stack \
+    sun.io.ByteToCharASCII \
+    sun.io.CharToByteASCII \
+    sun.io.Converters \
+    sun.misc.Launcher$$1 \
+    sun.misc.Launcher$$3 \
+    sun.misc.Launcher$$4 \
+    sun.misc.Launcher$$Factory \
+    sun.misc.SoftCache \
+    sun.misc.URLClassPath \
+    sun.misc.Version \
+    sun.misc.VersionHelper \
+    sun.net.www.MessageHeader \
+    sun.net.www.ParseUtil \
+    sun.net.www.URLConnection \
+    sun.net.www.protocol.file.FileURLConnection \
+    sun.net.www.protocol.file.Handler \
+    sun.net.www.protocol.jar.Handler \
+    sun.security.action.GetPropertyAction \
+    sun.security.util.Debug \
 
 CVM_BUILDTIME_CLASSES += \
+    com.sun.cdc.config.DynamicProperties \
+    com.sun.cdc.config.PackageManager \
+    com.sun.cdc.config.PropertyProvider \
+    com.sun.cdc.config.PropertyProviderAdapter \
     java.io.BufferedReader \
     java.io.ByteArrayInputStream \
     java.io.ByteArrayOutputStream \
@@ -362,19 +369,17 @@ CVM_BUILDTIME_CLASSES += \
     java.math.MutableBigInteger \
     java.math.SignedMutableBigInteger \
     java.net.ContentHandlerFactory \
-    java.net.InetAddress \
     java.net.Inet4Address \
-    java.net.Inet6Address \
     java.net.Inet4AddressImpl \
+    java.net.Inet6Address \
     java.net.Inet6AddressImpl \
+    java.net.InetAddress \
     java.net.InetAddressImpl \
-    sun.net.spi.nameservice.NameService \
     java.net.JarURLConnection \
     java.net.MalformedURLException \
     java.net.NetPermission \
     java.net.ProtocolException \
     java.net.SocketPermission \
-    sun.net.www.MimeTable \
     java.net.UnknownHostException \
     java.net.UnknownServiceException \
     java.security.AccessControlException \
@@ -402,7 +407,6 @@ CVM_BUILDTIME_CLASSES += \
     java.security.UnresolvedPermissionCollection \
     java.security.cert.CertificateEncodingException \
     java.security.cert.CertificateException \
-    sun.security.provider.Sun \
     java.text.Annotation \
     java.text.AttributedCharacterIterator \
     java.text.AttributedString \
@@ -420,7 +424,6 @@ CVM_BUILDTIME_CLASSES += \
     java.text.ParseException \
     java.text.ParsePosition \
     java.text.SimpleDateFormat \
-    sun.text.resources.LocaleData \
     java.util.AbstractSequentialList \
     java.util.Arrays \
     java.util.Calendar \
@@ -461,71 +464,73 @@ CVM_BUILDTIME_CLASSES += \
     java.util.zip.Inflater \
     java.util.zip.ZipException \
     java.util.zip.ZipInputStream \
-    sun.misc.Resource \
-    sun.misc.ClassFileTransformer \
-    sun.security.provider.PolicyFile \
-    sun.misc.Service \
-    \
     sun.io.ByteToCharISO8859_1 \
-    sun.io.CharToByteUTF8 \
-    sun.io.CharToByteUTF16 \
     sun.io.ByteToCharUTF16 \
     sun.io.ByteToCharUnicode \
     sun.io.ByteToCharUnicodeBig \
     sun.io.ByteToCharUnicodeBigUnmarked \
     sun.io.ByteToCharUnicodeLittle \
     sun.io.ByteToCharUnicodeLittleUnmarked \
+    sun.io.CharToByteUTF16 \
+    sun.io.CharToByteUTF8 \
     sun.io.CharToByteUnicode \
     sun.io.CharToByteUnicodeBig \
     sun.io.CharToByteUnicodeBigUnmarked \
     sun.io.CharToByteUnicodeLittle \
     sun.io.CharToByteUnicodeLittleUnmarked \
-    \
+    sun.io.MarkableReader \
+    sun.misc.ClassFileTransformer \
+    sun.misc.BuildFlags \
+    sun.misc.DefaultLocaleList \
+    sun.misc.Resource \
+    sun.misc.Service \
+    sun.net.spi.nameservice.NameService \
+    sun.net.www.MimeTable \
+    sun.security.provider.PolicyFile \
+    sun.security.provider.Sun \
     sun.text.Utility \
     sun.text.resources.BreakIteratorRules \
-    \
+    sun.text.resources.LocaleData \
+    sun.util.BuddhistCalendar \
     sun.util.calendar.CalendarDate \
     sun.util.calendar.CalendarSystem \
     sun.util.calendar.Gregorian \
     sun.util.calendar.ZoneInfo \
     sun.util.calendar.ZoneInfoFile \
-    sun.util.BuddhistCalendar \
-    sun.io.MarkableReader \
-    \
-    com.sun.cdc.config.PropertyProvider \
-    com.sun.cdc.config.PropertyProviderAdapter \
-    com.sun.cdc.config.DynamicProperties \
-    com.sun.cdc.config.PackageManager \
 
 ifeq ($(CVM_REFLECT), true)
 CVM_BUILDTIME_CLASSES += \
-   java.lang.reflect.Array \
-   java.lang.reflect.InvocationHandler \
-   java.lang.reflect.InvocationTargetException \
-   java.lang.reflect.Proxy \
-   sun.misc.ProxyGenerator \
-   java.lang.reflect.UndeclaredThrowableException
+    java.lang.reflect.Array \
+    java.lang.reflect.InvocationHandler \
+    java.lang.reflect.InvocationTargetException \
+    java.lang.reflect.Proxy \
+    sun.misc.ProxyGenerator \
+    java.lang.reflect.UndeclaredThrowableException
 endif
 
 # %begin lvm
 ifeq ($(CVM_LVM), true)
 CVM_BUILDTIME_CLASSES += \
-   sun.misc.LogicalVM
+    sun.misc.LogicalVM
 endif
 # %end lvm
 
 # These need to be romized to keep PMVM happy
 ifeq ($(USE_JUMP), true)
 CVM_BUILDTIME_CLASSES += \
-   sun.io.ByteToCharUTF8 \
-   sun.net.www.protocol.jar.JarURLConnection \
-   sun.net.www.protocol.jar.JarFileFactory \
-   sun.net.www.protocol.jar.URLJarFile
+    sun.io.ByteToCharUTF8 \
+    sun.net.www.protocol.jar.JarFileFactory \
+    sun.net.www.protocol.jar.URLJarFile
+else
+CLASSLIB_CLASSES += \
+    sun.io.ByteToCharUTF8 \
+    sun.net.www.protocol.jar.JarFileFactory \
+    sun.net.www.protocol.jar.URLJarFile
 endif
 
 ifeq ($(CVM_AOT), true)
 CLASSLIB_CLASSES += \
-   sun.misc.Warmup
+    sun.misc.Warmup
 endif
 
 CVM_POLICY_SRC  ?= $(CVM_TOP)/src/share/lib/security/java.policy
@@ -535,75 +540,65 @@ CVM_POLICY_SRC  ?= $(CVM_TOP)/src/share/lib/security/java.policy
 # (native support does nothing if JIT unsupported)
 #
 CVM_BUILDTIME_CLASSES += \
-   sun.misc.JIT
+    sun.misc.JIT
 
 #
 # Classes to be loaded at runtime.
 #
 CLASSLIB_CLASSES += \
-   java.net.BindException \
-   java.net.DatagramPacket \
-   java.net.DatagramSocket \
-   java.net.DatagramSocketImpl \
-   java.net.DatagramSocketImplFactory \
-   java.net.PlainDatagramSocketImpl \
-   java.net.PortUnreachableException \
-   java.net.SocketException \
-   java.net.SocketOptions \
-   java.net.SocketTimeoutException \
-   java.net.NetworkInterface \
-   \
-   java.util.CurrencyData \
-   \
-   sun.text.resources.DateFormatZoneData \
-   sun.text.resources.DateFormatZoneData_en \
-   sun.text.resources.LocaleElements \
-   sun.text.resources.LocaleElements_en \
-   sun.text.resources.LocaleElements_en_US \
-   \
-   sun.misc.Compare \
-   sun.misc.GC \
-   sun.misc.Sort \
-   sun.security.provider.SHA \
-   \
-   javax.microedition.io.CommConnection \
-   javax.microedition.io.Connection \
-   javax.microedition.io.ConnectionNotFoundException \
-   javax.microedition.io.Connector \
-   javax.microedition.io.ContentConnection \
-   javax.microedition.io.Datagram \
-   javax.microedition.io.DatagramConnection \
-   javax.microedition.io.InputConnection \
-   javax.microedition.io.OutputConnection \
-   javax.microedition.io.StreamConnection \
-   javax.microedition.io.StreamConnectionNotifier \
-   \
-   com.sun.cdc.io.BufferedConnectionAdapter \
-   com.sun.cdc.io.ConnectionBaseAdapter \
-   com.sun.cdc.io.ConnectionBase \
-   com.sun.cdc.io.DateParser \
-   com.sun.cdc.io.GeneralBase \
-   com.sun.cdc.io.j2me.datagram.DatagramObject \
-   com.sun.cdc.io.j2me.datagram.Protocol \
-   javax.microedition.io.UDPDatagramConnection \
-   com.sun.cdc.io.j2me.UniversalOutputStream \
-   com.sun.cdc.io.ConnectionBaseInterface \
-   com.sun.cdc.i18n.Helper \
-   com.sun.cdc.i18n.StreamReader \
-   com.sun.cdc.i18n.StreamWriter
+    java.net.BindException \
+    java.net.DatagramPacket \
+    java.net.DatagramSocket \
+    java.net.DatagramSocketImpl \
+    java.net.DatagramSocketImplFactory \
+    java.net.NetworkInterface \
+    java.net.PlainDatagramSocketImpl \
+    java.net.PortUnreachableException \
+    java.net.SocketException \
+    java.net.SocketOptions \
+    java.net.SocketTimeoutException \
+    java.util.CurrencyData \
+    sun.misc.Compare \
+    sun.misc.GC \
+    sun.misc.Sort \
+    sun.security.provider.SHA \
+    sun.text.resources.DateFormatZoneData \
+    sun.text.resources.DateFormatZoneData_en \
+    sun.text.resources.LocaleElements \
+    sun.text.resources.LocaleElements_en \
+    sun.text.resources.LocaleElements_en_US \
+
+CLASSLIB_CLASSES += \
+    com.sun.cdc.i18n.Helper \
+    com.sun.cdc.i18n.StreamReader \
+    com.sun.cdc.i18n.StreamWriter \
+    com.sun.cdc.io.BufferedConnectionAdapter \
+    com.sun.cdc.io.ConnectionBase \
+    com.sun.cdc.io.ConnectionBaseAdapter \
+    com.sun.cdc.io.ConnectionBaseInterface \
+    com.sun.cdc.io.DateParser \
+    com.sun.cdc.io.GeneralBase \
+    com.sun.cdc.io.j2me.UniversalOutputStream \
+    com.sun.cdc.io.j2me.datagram.DatagramObject \
+    com.sun.cdc.io.j2me.datagram.Protocol \
+    javax.microedition.io.CommConnection \
+    javax.microedition.io.Connection \
+    javax.microedition.io.ConnectionNotFoundException \
+    javax.microedition.io.Connector \
+    javax.microedition.io.ContentConnection \
+    javax.microedition.io.Datagram \
+    javax.microedition.io.DatagramConnection \
+    javax.microedition.io.InputConnection \
+    javax.microedition.io.OutputConnection \
+    javax.microedition.io.StreamConnection \
+    javax.microedition.io.StreamConnectionNotifier \
+    javax.microedition.io.UDPDatagramConnection \
 
 ifeq ($(USE_CDC_FILE_PROTOCOL), true)
 CLASSLIB_CLASSES += \
    com.sun.cdc.io.j2me.file.Protocol \
    com.sun.cdc.io.j2me.file.ProtocolBase \
    com.sun.cdc.io.j2me.file.ProtocolNative
-endif
-
-ifneq ($(USE_JUMP), true)
-CLASSLIB_CLASSES += \
-   sun.io.ByteToCharUTF8 \
-   sun.net.www.protocol.jar.JarURLConnection \
-   sun.net.www.protocol.jar.JarFileFactory
 endif
 
 #
