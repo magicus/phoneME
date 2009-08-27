@@ -42,12 +42,16 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
     /**
      * Return a romized image resource based on the identifier.
      *
-     * @param romIndex romized image id
+     * @param imageDataArrayPtr native pointer to image data as Java int
+     * @param imageDataArrayLength length of image data array
      * @return the romized Image, null if the identifier was invalid
      *         or the Image did not exist.
      */
-    public Image getRomizedImage(int romIndex) {
-        return Image.getRomizedImage(romIndex);
+    public Image getRomizedImage(int imageDataArrayPtr,
+            int imageDataArrayLength) {
+        
+        return Image.getRomizedImage(
+            imageDataArrayPtr, imageDataArrayLength);
     }
     // #endif
 
@@ -150,7 +154,7 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
      * @return screen width in pixels
      */
     public int getScreenWidth() {
-        return Display.getPrimaryDisplayWidth();
+        return Display.WIDTH;
     }
 
     /**
@@ -158,7 +162,7 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
      * @return screen height in pixels
      */
     public int getScreenHeight() {
-        return Display.getPrimaryDisplayHeight();
+        return Display.HEIGHT;
     }
 
     /**

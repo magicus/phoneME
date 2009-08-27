@@ -42,16 +42,9 @@ extern "C" {
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-#if ENABLE_OPENGL
-void lcdlf_refresh(int hardwareId, int x, int y, int w, int h,
-                   boolean useOpenGL) {
-  lfjport_refresh(hardwareId, x, y, w, h, useOpenGL);
-}
-#else
 void lcdlf_refresh(int hardwareId, int x, int y, int w, int h) {
-  lfjport_refresh(hardwareId, x, y, w, h );
+  lfjport_refresh(hardwareId, x, y, w, h);
 }
-#endif
 
 /**
  * Change screen orientation flag
@@ -93,8 +86,8 @@ int lcdlf_get_screen_height(int hardwareId) {
  *
  * @param mode The screen mode
  */
-javacall_result lcdlf_set_fullscreen_mode(int hardwareId, jboolean mode) {
-  return lfjport_set_fullscreen_mode(hardwareId, mode);
+void lcdlf_set_fullscreen_mode(int hardwareId, jboolean mode) {
+  lfjport_set_fullscreen_mode(hardwareId, mode);
 }
 
 /**

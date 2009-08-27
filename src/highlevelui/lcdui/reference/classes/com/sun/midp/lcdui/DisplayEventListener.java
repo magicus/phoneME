@@ -1,24 +1,24 @@
 /*
- *
+ *  
  *
  * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -50,10 +50,10 @@ public class DisplayEventListener implements EventListener {
 
     /** Active displays. */
     private DisplayContainer displayContainer;
-
+    
      /** Display devices. */
     private DisplayDeviceContainer displayDeviceContainer;
-
+ 
    /** Cached reference to the MIDP event queue. */
     private EventQueue eventQueue;
 
@@ -64,7 +64,7 @@ public class DisplayEventListener implements EventListener {
      * @param theDisplayContainer container for display objects
      */
     public DisplayEventListener(
-        EventQueue theEventQueue,
+        EventQueue theEventQueue, 
         DisplayContainer theDisplayContainer,
         DisplayDeviceContainer theDisplayDeviceContainer) {
 
@@ -76,7 +76,7 @@ public class DisplayEventListener implements EventListener {
          * All events handled by this object are of NativeEventClass
          * and are instance specific events assosiated with some display Id.
          * So this listener is able to find an appropriate DisplayEventConsumer
-         * associated with the displayId field of NativeEvent and
+         * associated with the displayId field of NativeEvent and 
          * to call methods of found consumer.
          */
         eventQueue.registerEventListener(EventTypes.KEY_EVENT, this);
@@ -85,19 +85,19 @@ public class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
         eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
         eventQueue.registerEventListener(EventTypes.DISPLAY_DEVICE_STATE_CHANGED_EVENT,this);
-        eventQueue.registerEventListener(EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT,this);
+        eventQueue.registerEventListener(EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT,this);    
         eventQueue.registerEventListener(EventTypes.VIRTUAL_KEYBOARD_EVENT,this);
         eventQueue.registerEventListener(EventTypes.CHANGE_LOCALE_EVENT,this);
     }
 
     /**
      * Preprocess an event that is being posted to the event queue.
-     *
+     * 
      * @param event event being posted
      *
      * @param waitingEvent previous event of this type waiting in the
      *     queue to be processed
-     *
+     * 
      * @return true to allow the post to continue, false to not post the
      *     event to the queue
      */
@@ -111,14 +111,6 @@ public class DisplayEventListener implements EventListener {
      * @param event event to process
      */
     public void process(Event event) {
-        if (event.getType() == EventTypes.ROTATION_EVENT 
-                && event instanceof LCDUIEvent) {
-            LCDUIEvent lcduiEvent = (LCDUIEvent)event;
-                    
-            lcduiEvent.display.handleRotationEvent(lcduiEvent.minorCode == 0);
-            return;
-        }
-        
         NativeEvent nativeEvent = (NativeEvent) event;
 
         if (event.getType() == EventTypes.CHANGE_LOCALE_EVENT) {
@@ -147,7 +139,7 @@ public class DisplayEventListener implements EventListener {
 
         DisplayEventConsumer dc =
                 displayContainer.findDisplayEventConsumer(nativeEvent.intParam4);
-        
+
         if (dc != null) {
             switch (event.getType()) {
                 case EventTypes.KEY_EVENT:
@@ -190,13 +182,13 @@ public class DisplayEventListener implements EventListener {
                     return;
 
                 case EventTypes.ROTATION_EVENT:
-                    dc.handleRotationEvent(nativeEvent.intParam1 == 0);
+                    dc.handleRotationEvent(-1);
                     return;
 
                 case EventTypes.DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT:
                     dc.handleClamshellEvent();
                     return;
-
+            
 
                 case EventTypes.VIRTUAL_KEYBOARD_EVENT:
                     dc.handleVirtualKeyboardEvent();

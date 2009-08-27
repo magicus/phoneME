@@ -28,6 +28,7 @@ package com.sun.midp.chameleon.layers;
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.*;
+import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.log.Logging;
@@ -248,13 +249,8 @@ public class MenuLayer extends ScrollablePopupLayer {
         // return 'true' indicating it has handled the key
         // event except for the soft button keys for which it
         // returns 'false'
-        //
-        // If the SYSTEM_KEY_CLEAR is pressed (aka backspace or clear)
-        // treat it as if the Command.BACK was selected from the soft
-        // button menu layer.
     	if (keyCode == EventConstants.SOFT_BUTTON1 || 
-            keyCode == EventConstants.SOFT_BUTTON2 ||
-            keyCode == -8) {
+            keyCode == EventConstants.SOFT_BUTTON2) {
             return false;
         }
         

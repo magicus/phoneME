@@ -88,7 +88,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
             case DateField.DATE_TIME:
                 focusOn = MONTH_POPUP;
-                timeComponentsOffset = 0;
+                timeComponentsOffset = 98;
                 populateDateComponents();
                 populateTimeComponents();
                 break;
@@ -98,56 +98,35 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
         }
 
-
         // init the bounds(used for pointer input) with invariant
         // relative coordinate of the uppper left corner and with invalid
         // width, height values dependent on skin images
-        int pad = 5;
-        switch (mode) {
-        case DateField.TIME:
-            hours_bounds = new int[] {pad, pad, 0, 0};
-            minutes_bounds = new int[] {hours_bounds[X] + 138 + pad,
-                hours_bounds[Y],
-                0, 0};
-            ampm_bounds = new int[] {hours_bounds[X],
-                hours_bounds[Y] + 46 + pad, 0, 0};
-            calendar_bounds = new int[] {0, 0, 0, 0};
-            month_bounds = new int[] {0, 0, 0, 0};
-            year_bounds = new int[] {0, 0, 0, 0};
-            break;
-        case DateField.DATE:
-            month_bounds = new int[] {pad, pad, 0, 0};
-            year_bounds = new int[] {month_bounds[X] + 138 + pad,
-                month_bounds[Y],
-                0, 0};
-            calendar_bounds = new int[] {month_bounds[X],
-                month_bounds[Y] + 46 + pad, 0, 0};
-            
-            hours_bounds = new int[] {0, 0, 0, 0};
-            minutes_bounds = new int[] {0, 0, 0, 0};
-            ampm_bounds = new int[] {0, 0, 0, 0};
-
-            break;
-        case DateField.DATE_TIME:
-            hours_bounds = new int[] {pad, pad, 0, 0};
-            minutes_bounds = new int[] {hours_bounds[X] + 138 + pad,
-                hours_bounds[Y],
-                0, 0};
-            calendar_bounds = new int[] {hours_bounds[X],
-                hours_bounds[Y] + 46 + pad, 0, 0};
-            month_bounds = new int[] {calendar_bounds[X],
-                calendar_bounds[Y] + 156 + pad, 0, 0};
-            year_bounds = new int[] {month_bounds[X] + 138 + pad,
-                month_bounds[Y],
-                0, 0};
-            ampm_bounds = new int[] {calendar_bounds[X] + 186 + pad,
-                hours_bounds[Y] + 46 + pad, 0, 0};
-            break;
-        default:
-                Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
-                               "DateEditor constructor, mode=" +mode);
-                break;
-        }
+        month_bounds = new int[] {
+            (mode == DateField.DATE)? 10: 4,
+            5, 0, 0
+        };
+        year_bounds = new int[] {
+            month_bounds[X] + 45,
+            month_bounds[Y],
+            0, 0
+        };
+        hours_bounds = new int[] {
+            timeComponentsOffset + ((mode == DateField.TIME)? 17: 0),
+            ((mode == DateField.TIME)? 10: 5),
+            0, 0
+        };
+        minutes_bounds = new int[] {
+            hours_bounds[X] + 34,
+            hours_bounds[Y],
+            0, 0
+        };
+        calendar_bounds = new int[] {
+            (mode == DateField.DATE)? 10: 4,
+            29, 0, 0
+        };
+        ampm_bounds = new int[] {
+            timeComponentsOffset + ((mode == DateField.TIME)? 15: 0),
+            29, 0, 0 };
         
         setCommands(commands);
         setCommandListener(this);
@@ -281,7 +260,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             itemIndexWhenPressed = itemIndexAtPointerPosition(x,y);
             switch (itemIndexWhenPressed) {
             case AM_PM:
-                amHilighted = ( x - ampm_bounds[X] < 30 + 24);
+                amHilighted = ( x - ampm_bounds[X] < 35);
                 break;
             case CALENDAR:
                 pressedDate = getDateAtPointerPosition(x, y);
@@ -325,7 +304,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             if (itemIndexWhenPressed == itemIndexWhenReleased) {
                 if (itemIndexWhenPressed > 0) {
                     if ( (itemIndexWhenPressed == AM_PM &&
-                          amHilighted == (x - ampm_bounds[X] < 30 + 24)) ||
+                          amHilighted == (x - ampm_bounds[X] < 35)) ||
                          (itemIndexWhenPressed == CALENDAR &&
                           pressedDate == getDateAtPointerPosition(x, y) &&
                           pressedDate > 0) ||
@@ -364,7 +343,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         int transX = x - calendar_bounds[X];
         int transY = y - calendar_bounds[Y];
         int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
-        int rowH = 22;
+        int rowH = 11;
         //variable o, rowH, h is same as in paintCaalendar()
         int h = DateEditorSkin.IMAGE_DATES.getHeight() / 31;
 
@@ -622,11 +601,6 @@ class DateEditor extends PopupLayer implements CommandListener {
         int h = image.getHeight();
         popup.setElementSize(
             w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
-        int screenHeight =
-            ((ScreenLFImpl)lf.df.owner.getLF()).getDisplayableHeight();
-        if (y + h + DateEditorSkin.HEIGHT_POPUPS > screenHeight) {
-            y = screenHeight - DateEditorSkin.HEIGHT_POPUPS - h;
-        }
         popup.setBounds(x, y + h, w, DateEditorSkin.HEIGHT_POPUPS);
         popup.updateScrollIndicator();
         bounds[W]= w;
@@ -698,16 +672,16 @@ class DateEditor extends PopupLayer implements CommandListener {
                 g.drawRect(-2, -2, w + 3, h + 3);
             }
         }
-        g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
+        g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setColor(0);
 
-        int textOffset = 10;
+        int textOffset = 3;
         w = DateEditorSkin.IMAGE_MONTH_BG.getWidth();
         if (ScreenSkin.RL_DIRECTION) {
              textOffset = w - textOffset;
         }
         g.drawString(MONTHS[editDate.get(Calendar.MONTH)],
-                     textOffset, 14, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+                     textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
     }
 
     /**
@@ -734,14 +708,14 @@ class DateEditor extends PopupLayer implements CommandListener {
             }
         }
 
-        int textOffset = 10;
+        int textOffset = 3;
         if (ScreenSkin.RL_DIRECTION) {
              textOffset = w - textOffset;
         }
-        g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
+        g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setColor(0);
         g.drawString(Integer.toString(editDate.get(Calendar.YEAR)),
-                     textOffset, 14, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+                     textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
     }
 
     /**
@@ -768,7 +742,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             }
         }
 
-        g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
+        g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setColor(0);
 
         int hour;
@@ -779,13 +753,13 @@ class DateEditor extends PopupLayer implements CommandListener {
             hour = editDate.get(Calendar.HOUR_OF_DAY);
         }
 
-        int textOffset = 10;
+        int textOffset = 3;
         int w = bgImg.getWidth();
          if (ScreenSkin.RL_DIRECTION) {
              textOffset = w - textOffset;
          }
         g.drawString(DateFieldLFImpl.twoDigits(hour),
-                     textOffset, 14, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+                     textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
     }
 
     /**
@@ -812,15 +786,15 @@ class DateEditor extends PopupLayer implements CommandListener {
             }
         }
 
-        int textOffset = 10;
+        int textOffset = 3;
         int w = bgImg.getWidth();
         if (ScreenSkin.RL_DIRECTION) {
             textOffset = w - textOffset;
         }
-        g.setFont(OEMFont.getOEMFont(Font.STYLE_PLAIN, 20));
+        g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setColor(0);
         g.drawString(DateFieldLFImpl.twoDigits(editDate.get(Calendar.MINUTE)),
-                     textOffset, 14, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
+                     textOffset, 0, ScreenSkin.TEXT_ORIENT | Graphics.TOP);
    }
 
     /**
@@ -868,15 +842,15 @@ class DateEditor extends PopupLayer implements CommandListener {
 	    DateEditorSkin.IMAGE_DAYS == null) {
 	    return;
 	}
-        g.drawImage(DateEditorSkin.IMAGE_CAL_BG, 0, 18,
+        g.drawImage(DateEditorSkin.IMAGE_CAL_BG, 0, 0,
                     Graphics.LEFT | Graphics.TOP);
 
 	// paint days of week
 	int wBg = DateEditorSkin.IMAGE_DAYS.getWidth();
         int hBg = DateEditorSkin.IMAGE_DAYS.getHeight();
         int w = wBg / 7;
-        int wx = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
 
+	
 	int o = Resource.getFirstDayOfWeek();
 
 	int xBg = 5;
@@ -887,9 +861,9 @@ class DateEditor extends PopupLayer implements CommandListener {
 			 x, 0,
 			 w, hBg,
 			 Sprite.TRANS_NONE,
-			 xBg + 5, 5,
+			 xBg, 0,
 			 Graphics.TOP | Graphics.HCENTER);
-	    xBg += wx;
+	    xBg += w;
 
 	    x += w;
 	    if ( x >= wBg ) {
@@ -912,7 +886,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             return;
         }
 
-        paintCalBg(g);
+	paintCalBg(g);
 
         if (DateEditorSkin.IMAGE_DATES == null) {
             return;
@@ -920,7 +894,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         g.translate(2, 0);
 
         int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
-        int rowH = 22;
+        int rowH = 11;
         int h = DateEditorSkin.IMAGE_DATES.getHeight() / 31;
         int w = DateEditorSkin.IMAGE_DATES.getWidth();
 
@@ -943,14 +917,14 @@ class DateEditor extends PopupLayer implements CommandListener {
                     (focusOn == CALENDAR) ?
                         DateEditorSkin.COLOR_TRAVERSE_IND:
                         0);
-                g.drawRect(x - 6, y + 3, w + 3, h + 6);
+                g.drawRect(x - 6, y - 1, w, h + 1);
             }
 
             g.drawRegion(DateEditorSkin.IMAGE_DATES,
                          0, ((i - 1) * h),
                          w, h,
                          Sprite.TRANS_NONE,
-                         x + 7, y + 5,
+                         x, y,
                          Graphics.TOP | Graphics.HCENTER);
 
             x += o;
@@ -1004,11 +978,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                                  (DateEditorSkin.IMAGE_RADIO[0].getHeight()/2),
                                  Graphics.VCENTER | Graphics.LEFT);
                 }
-                ampm_bounds[W] = (30 + 24) *2;
+                ampm_bounds[W] = 35 *2;
                 ampm_bounds[H] = DateEditorSkin.IMAGE_RADIO[0].getHeight();
             }
 
-            g.translate(30 + 24, 0);
+            g.translate(35, 0);
             // paint PM
             if (DateEditorSkin.IMAGE_RADIO != null) {
                 g.drawImage((amSelected) ?
@@ -1035,12 +1009,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                                  Graphics.VCENTER | Graphics.LEFT);
                 }
             }
-            g.translate(-30 -24, 0);
-            clockStartY = 30;
+            g.translate(-35, 0);
+            clockStartY = 22;
         }
 
-        clockStartX = 0;
-        
+        clockStartX = (mode == DateField.TIME) ? 10 : 6;
         g.translate(clockStartX, clockStartY);
         if (DateEditorSkin.IMAGE_CLOCK_BG != null) {
             g.drawImage(DateEditorSkin.IMAGE_CLOCK_BG, 0, 0,

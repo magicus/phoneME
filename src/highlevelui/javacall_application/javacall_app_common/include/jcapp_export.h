@@ -28,7 +28,6 @@
 #define _JCAPP_EXPORT_H_
 
 #include <kni.h>
-#include "javacall_defs.h"
 /**
  * @defgroup highui_jcapp Javacall Application External Interface
  * @ingroup highui
@@ -61,19 +60,14 @@ extern void jcapp_finalize();
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-#if ENABLE_OPENGL
-extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h,
-                          boolean useOpenGL);
-#else
 extern void jcapp_refresh(int hardwareId, int x, int y, int w, int h);
-#endif
 
 /**
  * set the screen mode either to fullscreen or normal.
  *
  * @param mode The screen mode
  */
-extern javacall_result jcapp_set_fullscreen_mode(int hardwareId, jboolean mode);
+extern void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Change screen orientation flag
@@ -157,8 +151,6 @@ extern int jcapp_get_display_capabilities(int hardwareId);
 extern jint* jcapp_get_display_device_ids(jint* n);
 
 extern void jcapp_display_device_state_changed(int hardwareId, int state);
-
-extern void jcapp_switch_color_depth(int mode_32bit);
 
 
 /**

@@ -1093,9 +1093,11 @@ final class RomizedImageFactory {
 
         int width = image.getWidth(null);
         int height = image.getHeight(null);
+        boolean hasAlpha = image.getColorModel().hasAlpha();
         int[] imageData = getBufferedImageData(image);
         
-        byte[] rawData = converter.convertToRaw(imageData, width, height);
+        byte[] rawData = converter.convertToRaw(imageData, width, height, 
+                hasAlpha);
 
         return new RomizedImage(rawData, romizedImageCounter++);
     }
@@ -1245,17 +1247,11 @@ class SkinRomizer extends RomUtil {
     /** All composite image skin properties */
     Vector compImageProps = null;
 
-    /** All romized images in RGB565 */
-    Vector romizedImagesRGB565 = null;
-
-    /** All romized images in RGB888 */
-    Vector romizedImagesRGB888 = null;
+    /** All romized images */
+    Vector romizedImages = null;
 
     /** Romized image factory */
-    RomizedImageFactory romizedImageFactoryRGB565;
-
-    /** Romized image factory */
-    RomizedImageFactory romizedImageFactoryRGB888;
+    RomizedImageFactory romizedImageFactory;
 
     /** Binary output file stream */
     BinaryOutputStreamExt outputStream = null;
@@ -1274,8 +1270,6 @@ class SkinRomizer extends RomUtil {
         // raw file formats 
         "Putpixel",
         "ARGB",
-        "RGBA",
-        "ABGR",
         // endianess
         "Little",
         "Big",
@@ -1289,8 +1283,6 @@ class SkinRomizer extends RomUtil {
         // raw file formats 
         ImageToRawConverter.RAW_FORMAT_PP,
         ImageToRawConverter.RAW_FORMAT_ARGB,
-        ImageToRawConverter.RAW_FORMAT_RGBA,
-        ImageToRawConverter.RAW_FORMAT_ABGR,
         // endianess
         ImageToRawConverter.INT_FORMAT_LITTLE_ENDIAN,
         ImageToRawConverter.INT_FORMAT_BIG_ENDIAN,
@@ -1346,11 +1338,8 @@ class SkinRomizer extends RomUtil {
 
         // now, when we know format of romized images,
         // we can create romized images factory
-        romizedImageFactoryRGB565 = RomizedImageFactory.getFactory(
-                rawFormat, ImageToRawConverter.COLOR_FORMAT_565, endianFormat);
-
-        romizedImageFactoryRGB888 = RomizedImageFactory.getFactory(
-                ImageToRawConverter.RAW_FORMAT_ABGR, ImageToRawConverter.COLOR_FORMAT_888, endianFormat);
+        romizedImageFactory = RomizedImageFactory.getFactory(
+                rawFormat, colorFormat, endianFormat);
         
         // assign offsets
         assignPropertiesValuesOffsets(intSeqProps, 0);
@@ -1371,12 +1360,8 @@ class SkinRomizer extends RomUtil {
             CompositeImageSkinProperty.totalImages;
 
         // if image isn't romized, then corresponding value will be null
-        romizedImagesRGB565 = new Vector(totalImages);
-        romizedImagesRGB565.setSize(totalImages);
-
-        // if image isn't romized, then corresponding value will be null
-        romizedImagesRGB888 = new Vector(totalImages);
-        romizedImagesRGB888.setSize(totalImages);
+        romizedImages = new Vector(totalImages);
+        romizedImages.setSize(totalImages);
 
         romizeImages();
 
@@ -1403,8 +1388,7 @@ class SkinRomizer extends RomUtil {
         writer = new PrintWriter(new OutputStreamWriter(outForCFile));
 
         writeCHeader();
-        writeRomizedImagesData(romizedImagesRGB565, "_rgb565");
-        writeRomizedImagesData(romizedImagesRGB888, "_rgb888");
+        writeRomizedImagesData();
         writeGetMethod();
 
         if (romizationJob.romizeAll) {
@@ -1669,15 +1653,10 @@ class SkinRomizer extends RomUtil {
                 new File(imageFileName));
 
         // and romize it
-        RomizedImage ri = romizedImageFactoryRGB565.createFromBufferedImage(image,
+        RomizedImage ri = romizedImageFactory.createFromBufferedImage(image,
                 imageIndex);
 
-        romizedImagesRGB565.set(imageIndex, ri);
-
-        ri = romizedImageFactoryRGB888.createFromBufferedImage(image,
-                imageIndex);
-
-        romizedImagesRGB888.set(imageIndex, ri);
+        romizedImages.set(imageIndex, ri);
     }
 
     /**
@@ -1790,9 +1769,9 @@ class SkinRomizer extends RomUtil {
     private void writeRomizedImagesIndexes() 
         throws java.io.IOException {
 
-        outputStream.writeInt(romizedImagesRGB565.size());
-        for (int i = 0; i < romizedImagesRGB565.size(); ++i) {
-            Object o = romizedImagesRGB565.elementAt(i);
+        outputStream.writeInt(romizedImages.size());
+        for (int i = 0; i < romizedImages.size(); ++i) {
+            Object o = romizedImages.elementAt(i);
             // image with index = i isn't romized
             if (o == null) {
                 outputStream.writeInt(-1);
@@ -1806,7 +1785,7 @@ class SkinRomizer extends RomUtil {
     /**
      *  Writes romized images data
      */
-    private void writeRomizedImagesData(Vector romizedImages, String suffix) {
+    private void writeRomizedImagesData() {
         int totalRomizedImages = 0;
         for (int i = 0; i < romizedImages.size(); ++i) {
             if (romizedImages.elementAt(i) != null) {
@@ -1815,13 +1794,13 @@ class SkinRomizer extends RomUtil {
         }
         
         pl("");
-        pl("#define NUM_ROM_IMAGES"+ suffix + " " + totalRomizedImages);
+        pl("static const int NUM_ROM_IMAGES = " + totalRomizedImages + ";");
         
         if (totalRomizedImages != 0) {
             // output a structure declaration used for storing 
             // romized images data in it
             pl("");
-            pl("struct romized_images_data" + suffix + " {");
+            pl("struct romized_images_data {");
             for (int i = 0; i < romizedImages.size(); ++i) {
                 Object o = romizedImages.elementAt(i);
                 if (o != null) {
@@ -1831,7 +1810,7 @@ class SkinRomizer extends RomUtil {
                     // subsequent data array
                     pl("    " + "const int align_" + ri.imageIndex + ";");
 
-                    String dataArrayName = "romized_image" + suffix + "_" + ri.imageIndex;
+                    String dataArrayName = "romized_image" + ri.imageIndex;
                     int dataArrayLength = ri.size();
                     pl("    " + "const unsigned char " + dataArrayName + 
                             "[" + dataArrayLength + "];");
@@ -1840,8 +1819,8 @@ class SkinRomizer extends RomUtil {
             pl("};");
 
             pl("");
-            pl("static const struct romized_images_data" + suffix + " " +
-                    "romized_images_data" + suffix + " = {");
+            pl("static const struct romized_images_data " + 
+                    "romized_images_data = {");
             for (int i = 0; i < romizedImages.size(); ++i) {
                 Object o = romizedImages.elementAt(i);
                 if (o != null) {
@@ -1849,7 +1828,7 @@ class SkinRomizer extends RomUtil {
                     pl("    " + "0,");
 
                     RomizedImage ri = (RomizedImage)o;
-                    String dataArrayName = "romized_image" + suffix + "_" + ri.imageIndex;
+                    String dataArrayName = "romized_image" + ri.imageIndex;
 
                     // romized image data field
                     pl("    " + "/* " + dataArrayName + " */");
@@ -1862,7 +1841,7 @@ class SkinRomizer extends RomUtil {
         }
 
         pl("");
-        pl("static const unsigned char* image_cache" + suffix + "[] = {");
+        pl("static const unsigned char* image_cache[] = {");
         // if there are no romized images, print dummy value
         // to make array non empty and keep compilers happy
         if (totalRomizedImages == 0) {
@@ -1873,7 +1852,7 @@ class SkinRomizer extends RomUtil {
                 if (o != null) {
                     RomizedImage ri = (RomizedImage)o;
                     String dataArrayName = 
-                        "romized_images_data" + suffix + ".romized_image" + suffix + "_" + ri.imageIndex;
+                        "romized_images_data.romized_image" + ri.imageIndex;
                     pl("    " + dataArrayName + ",");
                 }
             }
@@ -1881,7 +1860,7 @@ class SkinRomizer extends RomUtil {
         pl("};");
 
         pl("");
-        pl("static const int image_size" + suffix + "[] = {");
+        pl("static const int image_size[] = {"); 
         // if there are no romized images, print dummy value
         // to make array non empty and keep compilers happy
         if (totalRomizedImages == 0) {
@@ -1892,7 +1871,7 @@ class SkinRomizer extends RomUtil {
                 if (o != null) {
                     RomizedImage ri = (RomizedImage)o;
                     String dataArrayName = 
-                        "romized_images_data" + suffix + ".romized_image" + suffix + "_" + ri.imageIndex;
+                        "romized_images_data.romized_image" + ri.imageIndex;
                     pl("    sizeof(" + dataArrayName + "),");
                 }
             }
@@ -1904,26 +1883,6 @@ class SkinRomizer extends RomUtil {
      * Writes get method for obtaining romized image data
      */
     void writeGetMethod() {
-        pl("static const unsigned char** image_cache = image_cache_rgb565;");
-        pl("static const int* image_size = image_size_rgb565;");
-        pl("static int NUM_ROM_IMAGES = NUM_ROM_IMAGES_rgb565;");
-
-        pl("");
-        pl("/* Selects RGB565 romized images */");
-        pl("void lfj_select_rgb565_image_rom() {");
-        pl("    image_cache = image_cache_rgb565;");
-        pl("    image_size = image_size_rgb565;");
-        pl("    NUM_ROM_IMAGES = NUM_ROM_IMAGES_rgb565;");
-        pl("}");
-
-        pl("");
-        pl("/* Selects RGB888 romized images */");
-        pl("void lfj_select_rgb888_image_rom() {");
-        pl("    image_cache = image_cache_rgb888;");
-        pl("    image_size = image_size_rgb888;");
-        pl("    NUM_ROM_IMAGES = NUM_ROM_IMAGES_rgb888;");
-        pl("}");
-
         pl("");
         pl("/**");
         pl(" * Loads a native image from rom, if present."); 

@@ -28,6 +28,7 @@ package com.sun.midp.lcdui;
 
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.NativeEvent;
 
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
@@ -197,18 +198,5 @@ public class DisplayEventProducer {
         eventQueue.post(
             LCDUIEvent.createScreenRepaintEvent(d));
     }
-
-    /**
-     * Schedules a call to change display orientation.
-     *
-     * @param d The Display
-     * @param landscape <code>true</code> if the display should be set 
-     *      landscape orientation, <code>false</code> if the display should
-     *      be set portrait orientation
-     */
-    public void sendScreenRotateEvent(DisplayAccess d, boolean landscape) {
-        eventQueue.post(
-            LCDUIEvent.createScreenRotationEvent(
-                d.getDisplayEventConsumer(), landscape));
-    }
 }
+

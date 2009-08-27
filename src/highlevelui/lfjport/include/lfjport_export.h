@@ -46,17 +46,11 @@ extern "C" {
 
 #include <gxapi_graphics.h>
 #include <imgapi_image.h>
-#include "javacall_defs.h"
 
 /**
  * Refresh the given area.  For double buffering purposes.
  */
-#if ENABLE_OPENGL
-void lfjport_refresh(int hardwareId, int x, int y, int w, int h, 
-                     boolean useOpenGL);
-#else
-void lfjport_refresh(int hardwareId, int x, int y, int w, int h); 
-#endif
+void lfjport_refresh(int hardwareId, int x, int y, int w, int h);
 
 
 /**
@@ -90,7 +84,7 @@ int lfjport_get_screen_height(int hardwareId);
  *
  * @param mode The screen mode
  */
-javacall_result lfjport_set_fullscreen_mode(int hardwareId, jboolean mode);
+void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode);
 
 /**
  * Resets native resources when foreground is gained by a new display.

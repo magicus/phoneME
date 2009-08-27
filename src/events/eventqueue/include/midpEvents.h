@@ -315,17 +315,28 @@ extern "C" {
 #define PLATFORM_EVENT 81
 
 /**
+ * Notification sent by application to inform Display about the desired
+ * orientation mode for this application. 
+ */  
+#define MIDP_DISPLAY_FIX_ORIENTATION 82
+
+/**
  * This event is used by NativeVirtualKeyboard class internally only
  */
-#define NATIVE_VIRTUAL_KEYBOARD_EVENT 82
+#define NATIVE_VIRTUAL_KEYBOARD_EVENT 83
 
 /**
  * This event is used to check if the queue is not blocked.
  */
-#define KEEP_ALIVE 83
+#define KEEP_ALIVE 84
 
 /** @} */
 
+/**
+ * 
+ */ 
+#define MIDP_DISPLAY_ORIENTATION_PORTRAIT 1
+#define MIDP_DISPLAY_ORIENTATION_LANDSCAPE 2
 
 /**
  * @name Minor event type IDs of PLATFORM_NOTIFICATION_EVENT.

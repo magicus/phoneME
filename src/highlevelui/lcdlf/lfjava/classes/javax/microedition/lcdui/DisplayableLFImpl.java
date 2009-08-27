@@ -302,10 +302,9 @@ class DisplayableLFImpl implements DisplayableLF {
 
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
-            if (!owner.isInFullScreenMode) {
-                currentDisplay.lSetMode(owner.lastSetMode);
-            }
-            
+	    if (!owner.isInFullScreenMode) {
+		currentDisplay.lSetMode(owner.lastSetMode);
+	    }
             copyDefferedSizeChange = defferedSizeChange;
             defferedSizeChange = false;
         }
@@ -359,7 +358,6 @@ class DisplayableLFImpl implements DisplayableLF {
             GameMap.registerDisplayAccess(owner, currentDisplay.accessor);
             stickyKeyMask = currentKeyMask = 0;
         } else {
-            GameMap.registerDisplayAccess(null, null);
             // set the keymask to -1 when
             // the displayable is not a GameCanvas.
             stickyKeyMask = currentKeyMask = -1;

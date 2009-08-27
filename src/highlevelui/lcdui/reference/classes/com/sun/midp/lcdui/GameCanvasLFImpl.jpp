@@ -172,8 +172,7 @@ public class GameCanvasLFImpl {
             if (!backingSurfaceCreated) {
                 backingSurfaceCreated=true;
                 OpenGLEnvironmentProxy ogl = OpenGLEnvironmentProxy.getInstance();
-                if (ogl.isOpenGLEnabled())
-                    ogl.createPbufferSurface(offscreenBuffer);
+                ogl.createPbufferSurface(offscreenBuffer);
             }
             // #endif
             return g;

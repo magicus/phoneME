@@ -122,16 +122,6 @@ public class EventQueue implements Runnable {
     }
 
     /**
-     * Returns true if the current thread is the event queue dispatch
-     * thread.
-     *
-     * @return true if the current thread is the event queue dispatch thread
-     */
-    public static void interruptDispatchThread() {
-        eventQueue.eventQueueThread.interrupt();
-    }
-
-    /**
      * Get a reference to the event queue in a secure way.
      *
      * @param token security token with the com.sun.midp permission "allowed"
@@ -542,9 +532,6 @@ public class EventQueue implements Runnable {
 
                 event = null;
 
-            } catch (InterruptedException ie) {
-                // Clear the interrupted status
-                Thread.currentThread().interrupted();
             } catch (Throwable t) {
                 if (!(t instanceof OutOfMemoryError)) {
                     t.printStackTrace();

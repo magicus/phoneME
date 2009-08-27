@@ -37,7 +37,8 @@ vpath % $(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/stubs/native
 #
 SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/include \
-    -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/stubs/native
+    -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/stubs/native \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/stubs/include
 
 # Native files for the sub-system
 #

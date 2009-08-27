@@ -37,8 +37,6 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
-import com.sun.midp.log.*;
-
 /**
  * Look &amp; Feel implementation of <code>Alert</code> based on
  * platform widget.
@@ -480,13 +478,6 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
         if (imageData != null) {
             return Image.createImage(imageData, 0, imageData.length);
         } else {
-            new java.io.FileNotFoundException(imageName +
-                " not found for AlertLF.").printStackTrace();
-            if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
-                Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
-                    imageName + " not found for AlertLF.");
-            }
-
             // Use a empty immutable image as placeholder
             return Image.createImage(Image.createImage(16, 16));
         }

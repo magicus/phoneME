@@ -76,12 +76,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
      * null if there is no command associated with button #1.
      */
     protected Command soft1;
-    
-    /**
-     * True if the BACK button is the only command on the screen, which needs to
-     * be hidden.     
-     */         
-    private boolean backButtonHidden;
 
     /**
      * The set of commands associated with soft button #2.
@@ -91,11 +85,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
      * button #1 and invoke the listener directly upon button press.
      */
     protected Command[] soft2;
-
-    /**
-     * Command assciated with the device "Back" key.
-     */
-    private Command backCommand;
 
     /**
      * When a sub menu is currently active, this reference is non-null.
@@ -171,7 +160,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
 	* True if using native soft button layer
 	*/
 	private boolean isNativeLayer  = false;
-
+    
     /**
      * Construct a SoftButtonLayer. The layer's background image and color
      * information is obtained directly from the SoftButtonSkin class,
@@ -182,6 +171,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
     public SoftButtonLayer(ChamDisplayTunnel tunnel) {
         super(SoftButtonSkin.IMAGE_BG, SoftButtonSkin.COLOR_BG);
         super.setSupportsInput(true);
+        super.setVisible(true);
         this.tunnel = tunnel;
 
         isNativeLayer = isNativeSoftButtonLayerSupported0();
@@ -268,29 +258,24 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                                  ItemCommandListener itemListener,
                                  Command[] screenCmds, int numS,
                                  CommandListener scrListener) {
+        // Cache the values for later
+        this.itmCmds = new Command[numI];
+
+        if (numI > 0) {
+            System.arraycopy(itemCmds, 0, this.itmCmds, 0, numI);
+        }
+        this.itemListener = itemListener;
+
+        this.scrCmds = new Command[numS];
+        if (numS > 0) {
+            System.arraycopy(screenCmds, 0, this.scrCmds, 0, numS);
+        }
+        this.scrListener = scrListener;
+
         // reset the commands
         soft1 = null;
         soft2 = null;
-        backCommand = null;
-        backButtonHidden = false;
 
-        this.itemListener = itemListener;
-
-        // Cache the values for later
-        this.itmCmds = new Command[numI];
-        if (numI > 0) {
-            for (int i = 0; i < numI; i++) {
-                this.itmCmds[i] = itemCmds[i];
-                if (this.itmCmds[i].getCommandType() == Command.BACK) {
-                    backCommand = this.itmCmds[i];
-                }
-            }
-        }
-
-        this.scrListener = scrListener;
-
-        // Cache the values for later
-        this.scrCmds = new Command[numS];
         if (numS > 0) {
             int index = -1;
             int type = -1;
@@ -298,12 +283,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
             int priority = Integer.MIN_VALUE;
 
             for (int i = 0; i < numS; i++) {
-                this.scrCmds[i] = screenCmds[i];
-
-                if (this.scrCmds[i].getCommandType() == Command.BACK) {
-                    backCommand = this.scrCmds[i];
-                }
-
                 if (!(this.scrCmds[i] instanceof SubMenuCommand)) {
                     switch (this.scrCmds[i].getCommandType()) {
                         case Command.BACK:
@@ -352,8 +331,13 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 numS--;
                 soft1 = this.scrCmds[index];
                 System.arraycopy(screenCmds, index + 1,
-                        this.scrCmds, index, numS - index);
+                        scrCmds, index, numS - index);
             }
+
+	    /* If only BACK is active, hide it. */
+	    if ((type == Command.BACK) && (numS == 0)) {
+		soft1 = null ;
+	    }
         }
 
         // Now fill in the 'right' soft button, possibly with a menu
@@ -378,32 +362,10 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 }
 
                 setCommands(numS, numI, this.scrCmds);
+
                 break;
         }
-
-
-        // If only BACK is active, hide it.
-        if (soft1 != null && numS == 0 && soft1 == backCommand) {
-            soft1 = null;
-            backButtonHidden = true;
-        }
-
         setButtonLabels();
-
-        if (!menuUP && soft1 == null && soft2 == null) {
-            // Don't show empty command button bars, unless
-            // menu is up.
-            super.setVisible(false);
-        } else {
-            super.setVisible(true);
-        }
-
-        // #ifdef ENABLE_OPENGL  
-        com.sun.midp.lcdui.OpenGLEnvironmentProxy env = com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-        if (env.isOpenGLEnabled()) {
-            env.setSoftButtonBarVisible(this.visible);
-        }
-        // #endif
     }
 
     /**
@@ -461,12 +423,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                     setInteractive(true);
                     ret = true;
                 } else if (type == EventConstants.RELEASED) {
-                    if (backButtonHidden) {
-                        ret = processBackCommand();
-                    } else {
-                        soft1();
-                        ret = true;
-                    }
+                    soft1();
+                    ret = true;
                 }
             }
         } else if (keyCode == EventConstants.SOFT_BUTTON2) {
@@ -480,26 +438,34 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 }
             }
         } else {
-            /*
-             * If the SYSTEM_KEY_CLEAR is pressed (aka backspace or clear)
-             * treat it as if the Command.BACK was selected from the soft
-             * button menu layer.
-             */
-            if (keyCode == -8 && type == EventConstants.RELEASED) {
-                ret = processBackCommand();
-            }
-        }
+	    /*
+	     * If the SYSTEM_KEY_CLEAR is pressed (aka backspace or clear)
+	     * treat it as if the Command.BACK was selected from the soft
+	     * button menu layer.
+	     */
+	    if ((keyCode == -8)
+		&& (type == EventConstants.RELEASED)) {
+		int cmdCount = scrCmds.length;
+		for (int i = 0; i < cmdCount; i++) {
+		    if (scrCmds[i].getCommandType() == Command.BACK) {
+			if (tunnel != null) {
+			    tunnel.callScreenListener(scrCmds[i], scrListener);
+			    return true;
+			}
+		    }
+		}
+		cmdCount = itmCmds.length;
+		for (int i = 0; i < cmdCount; i++) {
+		    if (itmCmds[i].getCommandType() == Command.BACK) {
+			if (tunnel != null) {
+			    tunnel.callItemListener(itmCmds[i], itemListener);
+			    return true;
+			}
+		    }
+		}
+	    }
+	}
         return ret;
-    }
-    
-    private boolean processBackCommand() {
-        if (backCommand == null) {
-            setInteractive(false);
-            return false;
-        }
-
-        processCommand(backCommand);
-        return true;
     }
 
     /**
@@ -577,8 +543,10 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
      * settings.
      */
     private void setBackground() {
-        // The menu for this port will have the button background
-        if (alertUP) {
+        if (menuUP) {
+            setBackground(SoftButtonSkin.IMAGE_MU_BG,
+                    SoftButtonSkin.COLOR_MU_BG);
+        } else if (alertUP) {
             setBackground(SoftButtonSkin.IMAGE_AU_BG,
                     SoftButtonSkin.COLOR_AU_BG);
         } else {
@@ -689,7 +657,6 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
                 menuLayer.setMenuCommands(soft2, this, 0);
                 
                 menuUP = true;
-                setInteractive(true);
                 toggleMenu(menuUP);
                 
                 // Show the menu
@@ -759,8 +726,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener, VirtualK
         }
 
         // for full screen mode we should check if soft key is useful
-        // back button is active even if hidden
-        if (menuUP || backButtonHidden) {
+        if (menuUP) {
             return true;
         } else {
             return isCommandActive(soft1);

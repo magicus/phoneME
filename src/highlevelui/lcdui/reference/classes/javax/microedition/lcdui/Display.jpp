@@ -3,22 +3,22 @@
  *
  * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -34,13 +34,6 @@ import com.sun.midp.lcdui.DisplayFactory;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
-
-import com.sun.midp.events.EventQueue;
-
-import com.sun.midp.lcdui.NativeWindowStateListener;
-import com.sun.midp.lcdui.DisplayOrientationAccess;
-
-import java.util.Hashtable;
 
 
 // #ifndef ENABLE_CDC
@@ -92,6 +85,7 @@ import com.sun.me.gci.windowsystem.GCIScreenWidget;
 // #endif
 
 import com.sun.midp.orientation.OrientationListener;
+import com.sun.midp.events.*;
 
 /**
  * <code>Display</code> represents the manager of the display and
@@ -416,16 +410,12 @@ public class Display {
     /** Static lock object for making calls into application code. */
     static final Object calloutLock = new Object();
 
-    private final static int PORTRAIT_DIMENSION_ID = 0;
-    private final static int LANDSCAPE_DIMENSION_ID = 1;
-    private final static int PORTRAIT_FULLSCREEN_DIMENSION_ID = 2;
-    private final static int LANDSCAPE_FULLSCREEN_DIMENSION_ID = 3;
 
-    private final static Dimension screenDimensions[] = new Dimension[4];
+    /** Primary display width. */
+    static int WIDTH;
 
-    private final static MIDletScreens midletScreens = new MIDletScreens();
-
-    private static boolean hasForegroundDisplay;
+    /** Primary display height. */
+    static int HEIGHT;
 
     /** Current display width. */
     int width;
@@ -449,22 +439,12 @@ public class Display {
     /** True, if this Display has been closed. */
     boolean displayClosed;
 
-    /** If the current display mode is known.
+    /** If the current display mode is known. 
      * We don't know it before the lSetFullScreen is
-     * called for the first time and after we being
+     * called for the first time and after we being 
      * in the background.
      */
     boolean screenModeKnown = false;
-
-    /** If the current display mode is known.
-     * Set to false after display changing
-     */
-    boolean isRotatedKnown = false;
-
-    /**
-     * Current display orientation
-     */
-    boolean wantRotation;
 
     /** The last mode value passed to lSetFullScreen method. */
     boolean lastFullScnMode;
@@ -516,7 +496,6 @@ public class Display {
      */
     boolean disabledForeground; //  = false;
 
-
 /*
  * ************* private member variables
  */
@@ -565,15 +544,6 @@ public class Display {
      * to display an alert.
      */
     private static final int WANTS_FOREGROUND_FOR_ALERT = 2;
-
-    /** Automatic orientation. */
-    private static final int ORIENTATION_AUTO = 0;
-
-    /** Portrait orientation. */
-    private static final int ORIENTATION_PORTRAIT = 1;
-
-    /** Landscape orientation. */
-    private static final int ORIENTATION_LANDSCAPE = 2;
 
     /**
      * Since the current Displayable can't be set to null we use a
@@ -640,22 +610,24 @@ public class Display {
     /** Current active queue for serially repainted operations. */
     private static java.util.Vector currentQueue = queue1;
 
-    /** Indicates if special openGL rendering path should be used instead of
-      * default
-     */
-    private boolean useOpenGL = false;
-    private static boolean lastUsed32Bit = false;
-    private boolean use32Bit = false;
-    private boolean useVirtualKeyboard = true;
-
     // #ifdef ENABLE_GCI
     /** GCIDisplay that incapsulates information about the display device */
     private GCIDisplay gciDisplay;
-
+  
     /** GCIScreenWidget that represents a device screen */
     private static GCIScreenWidget gciScreenWidget;
 
     // #endif ENABLE_GCI
+
+    /**
+     * 
+     */
+    private final static int ORIENTATION_AUTO = 0;
+    private final static int ORIENTATION_PORTRAIT = 1;
+    private final static int ORIENTATION_LANDSCAPE = 2;
+    
+    private int orientationMode = ORIENTATION_AUTO;
+    
 /*
  * ************* Static initializer, constructor
  */
@@ -667,8 +639,8 @@ public class Display {
 
         GCIDisplay gciDisplay =
                 GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
-//        WIDTH  = gciDisplay.getWidth();
-//        HEIGHT = gciDisplay.getHeight();
+        WIDTH               = gciDisplay.getWidth();
+        HEIGHT              = gciDisplay.getHeight();
         // #endif ENABLE_GCI
 
         graphicsAccessor = new GraphicsAccessImpl();
@@ -700,7 +672,7 @@ public class Display {
                                    displayEventHandlerImpl);
         deviceAccess = new DisplayDeviceAccess();
 
-        DisplayStaticAccess displayStaticAccess =
+        DisplayStaticAccess displayStaticAccess = 
             new DisplayStaticAccess () {
                 public Display getDisplay(Object owner) {
                     return Display.getDisplay(owner);
@@ -710,71 +682,14 @@ public class Display {
                 }
             };
 
-        DisplayFactory.setStaticDisplayAccess(classSecurityToken,
+        DisplayFactory.setStaticDisplayAccess(classSecurityToken, 
                                               displayStaticAccess);
 
-        class NativeWindowStateListenerListener implements
-                NativeWindowStateListener.Listener {
-            public void nativeWindowLostFocus() {
-                hasForegroundDisplay = false;
-            }
-        }
-        NativeWindowStateListener.setListener(
-            new NativeWindowStateListenerListener());
-
-        class DisplayOrientationAccessImpl implements
-                DisplayOrientationAccess.Access {
-            public void setPrimaryDisplayLandscape(
-                    Object midlet, boolean landscape) {
-                DisplayAccess da =
-                        displayContainer.findPrimaryDisplayByOwner(midlet);
-                if (da != null) {
-                    displayEventProducer.sendScreenRotateEvent(da, landscape);
-                } else {
-                    synchronized (midletScreens) {
-                        MIDletScreen midletScreen =
-                            midletScreens.getMIDletScreen(midlet);
-                        if (landscape) {
-                            switch (midletScreen.dimensionId) {
-                            case PORTRAIT_DIMENSION_ID:
-                                midletScreen.dimensionId =
-                                        LANDSCAPE_DIMENSION_ID;
-                                break;
-                            case PORTRAIT_FULLSCREEN_DIMENSION_ID:
-                                midletScreen.dimensionId =
-                                        LANDSCAPE_FULLSCREEN_DIMENSION_ID;
-                                break;
-                            }
-                        } else {
-                            switch (midletScreen.dimensionId) {
-                            case LANDSCAPE_DIMENSION_ID:
-                                midletScreen.dimensionId =
-                                        PORTRAIT_DIMENSION_ID;
-                                break;
-                            case LANDSCAPE_FULLSCREEN_DIMENSION_ID:
-                                midletScreen.dimensionId =
-                                        PORTRAIT_FULLSCREEN_DIMENSION_ID;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            public boolean isPrimaryDisplayLandscape(Object midlet) {
-                MIDletScreen midletScreen =
-                    midletScreens.getMIDletScreen(midlet);
-                switch (midletScreen.dimensionId) {
-                case LANDSCAPE_DIMENSION_ID:
-                case LANDSCAPE_FULLSCREEN_DIMENSION_ID:
-                    return true;
-                default:
-                    return false;
-                }
-            }
-        }
-        DisplayOrientationAccess.setAccess(
-            new DisplayOrientationAccessImpl());
+        EventQueue eventQueue =
+            EventQueue.getEventQueue(
+                SecurityInitializer.requestToken(new SecurityTrusted()));
+        eventQueue.registerEventListener(
+            EventTypes.MIDP_DISPLAY_FIX_ORIENTATION, new FixOrientationEventListener());
     }
 
 
@@ -786,9 +701,7 @@ public class Display {
     Display(Object theOwner) {
         this(theOwner, displayDeviceContainer.getPrimaryDisplayDevice());
     }
-
-    private int orientation;
-
+    
     /**
      * Release any resources, such as threads, which migth refer
      * back to the application-level, which in turn may have
@@ -796,13 +709,6 @@ public class Display {
      */
     private void close() {
         displayClosed = true;
-        // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
-        if (useOpenGL) {
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl =
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                ogl.disableOpenGL();
-        }
-        // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
 
         // #ifdef ENABLE_CHAMELEON
         /*
@@ -822,12 +728,6 @@ public class Display {
     Display(Object theOwner, DisplayDevice dd) {
         owner = theOwner;
         displayDevice = dd;
-
-        if (owner instanceof MIDlet) {
-            orientation = ORIENTATION_PORTRAIT;
-        } else {
-            orientation = ORIENTATION_AUTO;
-        }
 
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
@@ -860,45 +760,26 @@ public class Display {
             initialDisplayable = temp.displayableLF;
         }
 
-        updateDisplayDimensions();
-
         // #ifdef ENABLE_GCI
         if (gciScreenWidget == null) {
             GCIDisplay gciDisplay =
                 GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
             gciScreenWidget = gciDisplay.createScreenWidget(0, 0,
-                                                            width, height,
+                                                            WIDTH, HEIGHT,
                                                             null, null);
         }
 
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    width, height,
+                                                    WIDTH, HEIGHT,
                              gciScreenWidget.getDrawingSurface());
+
         // #else
+        width = displayDevice.getWidth();
+        height = displayDevice.getHeight();
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     width,
                                                     height);
         // #endif ENABLE_GCI
-
-        // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
-        com.sun.midp.midlet.MIDletStateHandler handler =
-            com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler();
-        if (handler != null) {
-            String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
-            if (String.valueOf("YES").equalsIgnoreCase(propval)) {
-                accessor.enableOpenGL();
-            } else {
-                lastUsed32Bit = false;
-            }
-        }
-        else {
-            if (lastUsed32Bit) {
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
-            }
-        }
-        // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
-
         /**
          * Sets this Display as creator of screen Graphics instance to
          * provide internal Graphics users with extended information
@@ -913,15 +794,15 @@ public class Display {
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
 
-        if (owner instanceof MIDlet) {
-            String vk = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
-            if ("no".equals(vk)) {
-                showVirtualKeyboard = false;
-            }
-        } else {
-            showVirtualKeyboard = false;
-        }
-
+	if (owner instanceof MIDlet) {
+	    String vk = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
+	    if ("no".equals(vk)) {
+		showVirtualKeyboard = false;
+	    }
+	} else {
+	    showVirtualKeyboard = false;
+	}
+	
         // #endif ENABLE_CHAMELEON
 
         drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
@@ -929,7 +810,6 @@ public class Display {
         current = initialDisplayable;
         current.lSetDisplay(Display.this);
         pendingCurrent = initialDisplayable;
-                
     }
 
     /**
@@ -957,31 +837,8 @@ public class Display {
         displayContainer = theDisplayContainer;
         displayDeviceContainer = theDisplayDeviceContainer;
         // #ifndef ENABLE_GCI
-        DisplayDevice dd = displayDeviceContainer.getPrimaryDisplayDevice();
-        for (int i = 0; i != 2; ++i) {
-            if (dd.getReverseOrientation()) {
-                screenDimensions[LANDSCAPE_DIMENSION_ID] =
-                        new Dimension(dd.getWidth(), dd.getHeight());
-
-                dd.setFullScreen(0, true);
-
-                screenDimensions[LANDSCAPE_FULLSCREEN_DIMENSION_ID] =
-                        new Dimension(dd.getWidth(), dd.getHeight());
-            } else {
-                screenDimensions[PORTRAIT_DIMENSION_ID] =
-                        new Dimension(dd.getWidth(), dd.getHeight());
-
-                dd.setFullScreen(0, true);
-
-                screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID] =
-                        new Dimension(dd.getWidth(), dd.getHeight());
-            }
-            dd.setFullScreen(0, false);
-            dd.reverseOrientation();
-        }
-        if (dd.getReverseOrientation()) {
-            dd.reverseOrientation();
-        }
+        WIDTH               = displayDeviceContainer.getPrimaryDisplayDevice().getWidth();
+        HEIGHT              = displayDeviceContainer.getPrimaryDisplayDevice().getHeight();
         // #endif
     }
 
@@ -1037,11 +894,11 @@ public class Display {
             DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TEXTBOXES |
             DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TABBEDPANES |
             DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FILESELECTORS;
-
+        
         if ((full_capabilities | capabilities) != full_capabilities) {
             throw new IllegalArgumentException("Display capabilities is not valid = " + capabilities);
         }
-
+        
         return getDisplays((Object)m, capabilities);
     }
     // #endif ENABLE_MULTIPLE_DISPLAYS
@@ -1313,16 +1170,16 @@ public class Display {
      */
     public void setCurrent(Displayable nextDisplayable) {
         synchronized (LCDUILock) {
-
+            
                 // Handle null right away, to avoid risk of NullPointerException below.
                 if (nextDisplayable == null) {
                         setCurrentImpl(null, null);
                         return;
                 }
-
-            /** Check display capabilities. IllegalArgumentException is thrown
+                        
+            /** Check display capabilities. IllegalArgumentException is thrown 
                 if at least one displayable capability is not supported by the display */
-
+            
             int displayCapabilities = displayDevice.getCapabilities();
 
             if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TITLE) == 0 &&
@@ -1330,7 +1187,7 @@ public class Display {
                 throw new IllegalArgumentException("This display does not support title");
             }
 
-            if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TICKER) == 0 &&
+            if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TICKER) == 0 && 
                 (nextDisplayable.getTicker() != null)) {
                 throw new IllegalArgumentException("This display does not support ticker");
             }
@@ -1339,11 +1196,11 @@ public class Display {
                 (nextDisplayable.numCommands > 0)) {
                 throw new IllegalArgumentException("This display does not support commands");
             }
-
+            
             if (nextDisplayable instanceof Alert) {
                 if ((displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_ALERTS) == 0) {
                     throw new IllegalArgumentException("This display does not support alerts");
-                }
+                } 
                 /*
                  * This implicitly goes back to the current screen, or to a
                  * pending screen, if there is one. We disallow stacking of
@@ -1368,23 +1225,23 @@ public class Display {
                     ((Alert)nextDisplayable).setReturnScreen(returnScreen);
                 }
             }
-
-            if ((nextDisplayable instanceof Form) &&
+            
+            if ((nextDisplayable instanceof Form) && 
                 (displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_FORMS) == 0) {
                 throw new IllegalArgumentException("This display does not support forms");
-            }
+            } 
 
-            if ((nextDisplayable instanceof List) &&
+            if ((nextDisplayable instanceof List) && 
                 (displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_LISTS) == 0) {
                 throw new IllegalArgumentException("This display does not support lists");
-            }
+            } 
 
-            if ((nextDisplayable instanceof TextBox) &&
+            if ((nextDisplayable instanceof TextBox) && 
                 (displayCapabilities & DisplayDevice.DISPLAY_DEVICE_SUPPORTS_TEXTBOXES) == 0) {
                 throw new IllegalArgumentException("This display does not support textboxes");
-            }
-
-            /** IMPL_NOTE: Check for TABBEDPANES and FILESELECTORS should be added as
+            } 
+            
+            /** IMPL_NOTE: Check for TABBEDPANES and FILESELECTORS should be added as 
                 as soon as these types of screen are implemented */
 
             setCurrentImpl(nextDisplayable, null);
@@ -1692,7 +1549,7 @@ public class Display {
         if (!hasForeground) {
             return false;
         }
-
+        
         return deviceAccess.vibrate(displayId, duration);
     }
 
@@ -1753,7 +1610,7 @@ public class Display {
             // #endif ENABLE_CHAMELEON
         case ALERT:
             // #ifdef ENABLE_CHAMELEON
-            return getPrimaryDisplayHeight(); // IMPL NOTE: this is wrong!
+            return HEIGHT; // IMPL NOTE: this is wrong!
             // #else
             // return max height ignoring title and ticker and
             // allow for 2 lines of Text to be visible without scrolling
@@ -1771,7 +1628,7 @@ public class Display {
      * Gets the <code>Display</code> object by owner.
      *
      * @param owner the owner of the display, the owner can be any class
-     *
+     * 
      * @return the display object that application can use for its user
      * interface
      *
@@ -1786,7 +1643,7 @@ public class Display {
         }
         if (da != null) {
             ret =  da.getDisplay();
-        }
+        }               
         return ret;
     }
 
@@ -1796,9 +1653,9 @@ public class Display {
      *
      * @param owner name of the owner of the display, the owner can be
      * @param capabilities capabilities of the display device
-     *
+     * 
      * @return the display objects that application can use for its user
-     * interface. First element in the list is the primary display.
+     * interface. First element in the list is the primary display. 
      *
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
@@ -1825,7 +1682,7 @@ public class Display {
      * Create and registaer the <code>Display</code> objects for the given owner.
      *
      * @param owner name of the owner of the display, the owner can be
-     *
+     * 
      * @return the display access objects that application can use for its user
      * interface
      *
@@ -1846,15 +1703,15 @@ public class Display {
      * Free a <code>Display</code> no longer in use.
      *
      * @param owner the owner of the display, the owner can be any class
-     *
-     * @return true if display has been succcessfully removed,
+     * 
+     * @return true if display has been succcessfully removed, 
      *         false, if display object has not been found.
      *
      * @throws NullPointerException if <code>owner</code> is <code>null</code>
      */
     static boolean freeDisplays(Object owner) {
         DisplayAccess[] das = displayContainer.findDisplaysByOwner(owner, 0);
-        boolean ret = false;
+        boolean ret = false; 
         if (das != null) {
             for (int i = das.length; --i >= 0;) {
                 // Give up the foreground
@@ -1865,7 +1722,7 @@ public class Display {
                  */
                 das[i].close();
                 ret = displayContainer.removeDisplay(das[i]);
-            }
+            }   
         }
 
         return ret;
@@ -1922,7 +1779,7 @@ public class Display {
     /**
      * Create popup layer that represents predicitve text input popup
      *   associated with this Display
-     * @return PTI layer instance connected to the current input session
+     * @return PTI layer instance connected to the current input session 
      *   associated with this Display
      **/
     PTILayer getPTIPopup() {
@@ -1933,18 +1790,22 @@ public class Display {
         return pt_popup;
     }
 
+    private boolean isSIWL() {
+        return (window != null && window.getMode() == MIDPWindow. NO_SOFT_BUTTON_MODE);
+    }
+
     private boolean isVirtualKeyboardAllowed(DisplayableLF d) {
-        boolean ret = true;
-        // IMPL_NOTE: by default vk is enabled for canvas-based screen.
-        // Use midlet property Sprint-Canvas-Keypad=no to disable it
-        if (window != null && window.isSoftButtonsHidden()) {
+    	boolean ret = true;
+	    // IMPL_NOTE: by default vk is enabled for canvas-based screen. Use  midlet property
+        // Sprint-Canvas-Keypad=no to disable it
+        if (isSIWL()) {
             ret = false;
         } else if (d instanceof CanvasLF) {
             ret = showVirtualKeyboard;
         }
         return ret;
     }
-
+      
     /**
      * Create popup layer that represents java virtual keyboard popup
      *   associated with this Display
@@ -1961,58 +1822,11 @@ public class Display {
                 }
             }
             ret = keyboardLayer;
-        }
+        } 
         return ret;
     }
 
     // #endif ENABLE_CHAMELEON
-
-    private void updateDisplayDimensions() {
-        Dimension screenDims =
-            screenDimensions[
-                midletScreens.getMIDletScreen(owner).dimensionId];
-
-        width = screenDims.width;
-        height = screenDims.height;
-    }
-
-    private boolean updateScreenDimensions() {
-        if (!EventQueue.isDispatchThread()) {
-            throw new IllegalStateException();
-        }
-
-        boolean screenDimensionsChanged = false;
-
-        if (displayDevice.isPrimaryDisplay()) {
-            MIDletScreen midletScreen =
-                    midletScreens.getMIDletScreen(owner);
-
-            int dimensionId = midletScreen.dimensionId;
-
-            if (displayDevice.getReverseOrientation()) {
-                if (lastFullScnMode) {
-                    midletScreen.dimensionId =
-                            LANDSCAPE_FULLSCREEN_DIMENSION_ID;
-                } else {
-                    midletScreen.dimensionId = LANDSCAPE_DIMENSION_ID;
-                }
-            } else {
-                if (lastFullScnMode) {
-                    midletScreen.dimensionId =
-                            PORTRAIT_FULLSCREEN_DIMENSION_ID;
-                } else {
-                    midletScreen.dimensionId = PORTRAIT_DIMENSION_ID;
-                }
-            }
-
-            screenDimensionsChanged =
-                    (dimensionId != midletScreen.dimensionId);
-        }
-
-        updateDisplayDimensions();
-
-        return screenDimensionsChanged;
-    }
 
     /**
      * Schedule to change to a new <code>Displayable</code> and notify the
@@ -2063,7 +1877,7 @@ public class Display {
             if (wantsForeground != WANTS_FOREGROUND_FOR_ALERT) {
                 // A non-alert or null was replaced by an alert
                 wantsForeground = WANTS_FOREGROUND_FOR_ALERT;
-
+                
                 foregroundController.requestForeground(displayId, true);
             }
         } else {
@@ -2071,7 +1885,7 @@ public class Display {
 
                 // An alert or null was replaced by non-alert
                 wantsForeground = WANTS_FOREGROUND;
-
+                
                 foregroundController.requestForeground(displayId, false);
             }
         }
@@ -2232,7 +2046,12 @@ public class Display {
             if (current == newCurrent) {
                 return;
             }
-
+            // Postponed notification of screen rotation
+            if (newCurrent.uSetRotatedStatus(
+                    displayDevice.getReverseOrientation())) {
+                newCurrent.uCallSizeChanged(width, height);
+            }
+            
             hasForegroundCopy = hasForeground;
 
             // Before calling hideNotify() and showNotify(),
@@ -2271,15 +2090,6 @@ public class Display {
         }
 
         if (newCurrent != null) {
-            if (!isRotatedKnown) {
-                wantRotation = displayDevice.getReverseOrientation();
-                isRotatedKnown = true;
-            }
-
-            // Postponed notification of screen rotation
-            if (newCurrent.uSetRotatedStatus(wantRotation)) {
-                newCurrent.uCallSizeChanged(width, height);
-            }
 
             if (hasForegroundCopy) {
                 // #ifdef ENABLE_CHAMELEON
@@ -2366,7 +2176,7 @@ public class Display {
      * @return <code>true</code>, if sound was played.
      */
     boolean playAlertSound(AlertType t) {
-
+        
         if (!paintSuspended && hasForeground) {
             int note = 9 + 3 * t.getType();
             int duration = 1000;
@@ -2393,7 +2203,7 @@ public class Display {
                 toneControlClass = Class.forName("javax.microedition.media.control.ToneControl");
                 Field f = toneControlClass.getField("C4");
                 note += f.getInt(null);
-                playToneMethod.invoke(null, new Object[] { new Integer(note), new Integer(duration), new Integer(volume) });
+                playToneMethod.invoke(null, new Object[] { new Integer(note), new Integer(duration), new Integer(volume) });       
                 return true;
             } catch (InvocationTargetException ite){
             } catch (ClassNotFoundException cnfe) {
@@ -2401,7 +2211,7 @@ public class Display {
             } catch (NoSuchMethodException nsme) {
             } catch (IllegalArgumentException iare) {
             } catch (IllegalAccessException iace) {
-            }
+            } 
 
 // #endif ENABLE_CDC
         }
@@ -2545,7 +2355,6 @@ public class Display {
                 // #ifdef ENABLE_GCI
                 gciScreenWidget.getDrawingSurface().renderingBegin();
                 // #endif
-
                 // #ifdef ENABLE_CHAMELEON
                 if (window.setGraphicsForCanvas(screenGraphics)) {
                     // If the window is not dirty and we are repainting it
@@ -2566,18 +2375,13 @@ public class Display {
                     region[1] += ty;
                     region[2] += tx;
                     region[3] += ty;
+
                     currentCopy.uCallPaint(screenGraphics, null);
                     // SetFullScreenMode TCK test fails unless the following
                     // translate is present
                     screenGraphics.translate(-screenGraphics.getTranslateX(),
                                              -screenGraphics.getTranslateY());
-                    // #ifdef ENABLE_OPENGL
-                    displayDevice.refresh(displayId, region[0], region[1],
-                                          region[2], region[3], useOpenGL);
-                    // #else
-                    displayDevice.refresh(displayId, region[0], region[1],
-                                          region[2], region[3]);
-                    // #endif
+                    displayDevice.refresh(displayId, region[0], region[1], region[2], region[3]);
                 } else {
                     // Chameleon redirects the paint call through its layer logic,
                     // eventually resulting in a call back to the Chameleon Display
@@ -2599,15 +2403,9 @@ public class Display {
                         }
                         // Be sure to convert the regions which are x,y,w,h to
                         // x1, y1, x2, y2
-                        // #ifdef ENABLE_OPENGL
-                        displayDevice.refresh(displayId, subregion[0], subregion[1],
-                                 subregion[0] + subregion[2],
-                                 subregion[1] + subregion[3], useOpenGL);
-                        // #else
                         displayDevice.refresh(displayId, subregion[0], subregion[1],
                                  subregion[0] + subregion[2],
                                  subregion[1] + subregion[3]);
-                        // #endif
                     }
                 }
                 // #else
@@ -2617,22 +2415,16 @@ public class Display {
                 } else {
                     screenGraphics.reset(x1, y1, x2, y2);
                     currentCopy.uCallPaint(screenGraphics, target);
-                    // #ifdef ENABLE_OPENGL
-                    displayDevice.refresh(displayId, x1, y1, x2, y2, useOpenGL);
-                    // #else
                     displayDevice.refresh(displayId, x1, y1, x2, y2);
-                    // #endif
                 }
                 // #endif ENABLE_CHAMELEON
         }
         finally {
-              // #ifdef ENABLE_OPENGL
-                if (useOpenGL) {
-                    // This call to refresh a "zero" region is inserted to
-                    // trigger display update on some platforms
-                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
-                }
-                // #endif ENABLE_OPENGL
+                // #ifdef ENABLE_OPENGL
+                // This call to refresh a "zero" region is inserted to
+                // trigger display update on some platforms
+                displayDevice.refresh(displayId, 0, 0, 0, 0);
+                // #endif
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x1,y1,x2,y2};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -2660,29 +2452,11 @@ public class Display {
 
         // #ifndef ENABLE_GCI
         displayDevice.setFullScreen(displayId, wantFullScnMode);
-        synchronized (midletScreens) {
-            MIDletScreen midletScreen = midletScreens.getMIDletScreen(owner);
-            if (lastFullScnMode) {
-                switch (midletScreen.dimensionId) {
-                case LANDSCAPE_DIMENSION_ID:
-                    midletScreen.dimensionId = LANDSCAPE_FULLSCREEN_DIMENSION_ID;
-                    break;
-                case PORTRAIT_DIMENSION_ID:
-                    midletScreen.dimensionId = PORTRAIT_FULLSCREEN_DIMENSION_ID;
-                    break;
-                }
-            } else {
-                switch (midletScreen.dimensionId) {
-                case LANDSCAPE_FULLSCREEN_DIMENSION_ID:
-                    midletScreen.dimensionId = LANDSCAPE_DIMENSION_ID;
-                    break;
-                case PORTRAIT_FULLSCREEN_DIMENSION_ID:
-                    midletScreen.dimensionId = PORTRAIT_DIMENSION_ID;
-                    break;
-                }
-            }
-
-            updateDisplayDimensions();
+        width = displayDevice.getWidth(); 
+        height = displayDevice.getHeight();
+        if (displayDevice.isPrimaryDisplay()) {
+            WIDTH = width;
+            HEIGHT = height;
         }
 
         // #else
@@ -2888,50 +2662,46 @@ public class Display {
         return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
     }
 
-    /** Get the width of some default displayable depending on the screen mode and
-     * the layers attached to the screen
-     * @param isFullScn true if the full screen is set for the displayable
+    /** Get the width of some default displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full screen is set for the displayable      
      * @param withScrollBar true if the scroll bar is in use for the  displayable
      * @return width of the paticular displayable
      */
     static int getDefaultDisplayableWidth(boolean isFullScn, boolean withScrollBar) {
-        return MIDPWindow.getDefaultBodyWidth(
-                getPrimaryDisplayWidth(), isFullScn, withScrollBar);
+        return MIDPWindow.getDefaultBodyWidth(WIDTH, isFullScn, withScrollBar);
     }
-
-    /** Get the width of some default alert depending on the layers attached to the screen
+    
+    /** Get the width of some default alert depending on the layers attached to the screen 
      * @param withScrollBar true if the scroll bar is in use for the  displayable
      * @return width of the paticular displayable
      */
     static int getDefaultAlertWidth(boolean withScrollBar) {
-        return MIDPWindow.getDefaultAlertWidth(
-                getPrimaryDisplayWidth(), withScrollBar);
+        return MIDPWindow.getDefaultAlertWidth(WIDTH, withScrollBar);
     }
 
-    /**
-     * Get the height of some default displayable depending on the screen mode and
-     * the layers attached to the screen
-     * @param isFullScn true if the full screen is set for the body layer
-     * @param withTitle true if the title is attached
-     * @param withTicker true if the ticker is attached
+    /** 
+     * Get the height of some default displayable depending on the screen mode and 
+     * the layers attached to the screen 
+     * @param isFullScn true if the full screen is set for the body layer      
+     * @param withTitle true if the title is attached      
+     * @param withTicker true if the ticker is attached 
      * @param withCmds true if command layer is visible
      * @return height of the paticular body layer
      */
-    static int getDefaultDisplayableHeight(boolean isFullScn,
-                                           boolean withTitle,
-                                           boolean withTicker,
+    static int getDefaultDisplayableHeight(boolean isFullScn, 
+                                           boolean withTitle, 
+                                           boolean withTicker, 
                                            boolean withCmds) {
-        return MIDPWindow.getDefaultBodyHeight(
-                getPrimaryDisplayHeight(), isFullScn, withTitle,
-                withTicker, withCmds);
+        return MIDPWindow.getDefaultBodyHeight(HEIGHT, isFullScn, withTitle, withTicker, withCmds);
     }
-
-    /**
-     * Get the height of some default alert
+    
+    /** 
+     * Get the height of some default alert 
      * @return height of the paticular body layer
      */
     static int getDefaultAlertHeight() {
-        return MIDPWindow.getDefaultAlertHeight(getPrimaryDisplayHeight());
+        return MIDPWindow.getDefaultAlertHeight(HEIGHT);
     }
 
     // #endif ENABLE_CHAMELEON
@@ -2941,7 +2711,11 @@ public class Display {
      * @return Display width.
      */
     int getDisplayWidth() {
+        // #ifdef ENABLE_GCI
+        return WIDTH;
+        // #else
         return width;
+        // #endif
     }
 
     /**
@@ -2949,18 +2723,37 @@ public class Display {
      * @return Display height.
      */
     int getDisplayHeight() {
+        // #ifdef ENABLE_GCI
+        return HEIGHT;
+        // #else
         return height;
+        // #endif
     }
+    
+    /**
+     *
+     */
+    private void setOrientationMode(int mode) {
+        switch (mode) {
+        case ORIENTATION_AUTO:
+        case ORIENTATION_PORTRAIT:
+        case ORIENTATION_LANDSCAPE:
+            orientationMode = mode;
+            break;
+            
+        default:
+            throw new IllegalArgumentException();
+        }
+        consumer.handleRotationEvent(-1);
+    }         
+    
 
     /**
      * Called to get current display width.
      * @return Display width.
      */
     static int getPrimaryDisplayWidth() {
-        Dimension screenDims =
-            screenDimensions[
-                midletScreens.getCurrentMIDletScreen().dimensionId];
-        return screenDims.width;
+        return WIDTH;
     }
 
     /**
@@ -2968,10 +2761,7 @@ public class Display {
      * @return Display height.
      */
     static int getPrimaryDisplayHeight() {
-        Dimension screenDims =
-            screenDimensions[
-                midletScreens.getCurrentMIDletScreen().dimensionId];
-        return screenDims.height;
+        return HEIGHT;
     }
 
 // #ifdef ENABLE_CDC
@@ -3094,7 +2884,7 @@ public class Display {
                 currentCopy.uCallSizeChanged(w, h);
             }
         }
-
+        
         /**
          * This method is used by Chameleon to invoke
          * hideNotify() method from Canvas. This may call into
@@ -3102,7 +2892,7 @@ public class Display {
          * is a canvas or canvas subclass.
          */
         public void callHideNotify() {
-            // A copy of current LF object
+            // A copy of current LF object            
             DisplayableLF currentCopy = Display.this.current;
             if (currentCopy != null && currentCopy instanceof CanvasLF) {
                 CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
@@ -3114,7 +2904,7 @@ public class Display {
                     Display.handleThrowable(thr);
                 }
             }
-        }
+        } 
 
         /**
          * This method is used by Chameleon to invoke
@@ -3135,7 +2925,7 @@ public class Display {
                     Display.handleThrowable(thr);
                 }
            }
-        }
+        }  
 
         /**
          * This method is used by Chameleon to invoke
@@ -3199,7 +2989,7 @@ public class Display {
         public int getDisplayWidth() {
             return Display.this.width;
         }
-
+        
         /**
          * Called to get current display height.
          * @return Display height.
@@ -3207,7 +2997,7 @@ public class Display {
         public int getDisplayHeight() {
             return Display.this.height;
         }
-
+        
         /**
          * This method is used by Chameleon to invoke
          * CanvasLFImpl.uCallKeyPressed() method.
@@ -3242,10 +3032,10 @@ public class Display {
         public VirtualKeyboardLayer getVirtualKeyboardPopup() {
             return Display.this.getVirtualKeyboardPopup(Display.this.current);
         }
-
+        
     }
     // #endif
-
+ 
     /**
      * ************* Inner Class, DisplayAccesImpl
      */
@@ -3263,7 +3053,7 @@ public class Display {
             // return display;
             return Display.this;
         }
-
+        
         /**
         * Called to release internal resources.
         * This should only be called after a display
@@ -3295,7 +3085,7 @@ public class Display {
                 if (displayDevice.getState() == DisplayDevice.DISPLAY_DEVICE_ENABLED) {
                     if (wantsForeground == WANTS_BACKGROUND) {
                         wantsForeground = WANTS_FOREGROUND;
-
+                        
                         foregroundController.requestForeground(displayId, false);
                     }
                 } else {
@@ -3338,26 +3128,6 @@ public class Display {
          */
         public Object[] getDirtyRegions() {
             return Display.this.graphicsQ.getRefreshRegions();
-        }
-
-        /**
-         * Called to enable OpenGL rendering path instead of default
-         */
-        public void enableOpenGL() {
-            // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
-            use32Bit = true;
-            lastUsed32Bit = true;
-            useOpenGL = true;
-            com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().
-                enableOpenGL(width, height);
-            // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
-        }
-
-        /**
-         * Called to enable default rendering path
-         */
-        public void disableOpenGL() {
-            useOpenGL = false;
         }
 
         private long lastFlushTime = 0;
@@ -3489,11 +3259,11 @@ public class Display {
                             // keep the initial clip area
                             int[] reg = new int[4];
                             screenGraphics.getClip(reg);
-
-                           // #ifdef ENABLE_DIRECT_DRAW
+                            
+                           // #ifdef ENABLE_DIRECT_DRAW 
                             if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
                                 if (x == 0 && x2 == Display.this.width && y == 0 &&
-                                    offscreen_buffer.getWidth() == Display.this.width &&
+                                    offscreen_buffer.getWidth() == Display.this.width && 
                                     offscreen_buffer.getHeight() == Display.this.height &&
                                     //check offscreen_buffer whether rotated
                                     anchorX == 0 && anchorY == 0) {
@@ -3511,51 +3281,38 @@ public class Display {
 
                             screenGraphics.translate(-tranX, -tranY);
                             screenGraphics.setClip(x1, y1, width, height);
-
-                            // #ifdef ENABLE_OPENGL
-                            if (useOpenGL) {
-                                // flush the offscreen buffer to the backing
-                                // surface
-                                com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl =
-                                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
-                                ogl.flushPbufferSurface(offscreen_buffer, x1,
-                                                        y1, width, height);
-                            }
-                            else {
-                            // #endif ENABLE_OPENGL
-                                screenGraphics.drawImage(offscreen_buffer,
-                                    anchorX, anchorY,
-                                    Graphics.TOP | Graphics.LEFT);
-                            // #ifdef ENABLE_OPENGL
-                            }
-                            // #endif ENABLE_OPENGL
+                            
+                            //#ifdef ENABLE_OPENGL
+                            // flush the offscreen buffer to the backing surface
+                            com.sun.midp.lcdui.OpenGLEnvironmentProxy ogl = 
+                                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance();
+                            ogl.flushPbufferSurface(offscreen_buffer, y1, y2);
+                            //#else
+                            screenGraphics.drawImage(offscreen_buffer,
+                                     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
+                            //#endif
                             // restore initial clip area and translation
                             screenGraphics.translate(tranX, tranY);
                             screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
                         }
                         // #ifdef ENABLE_OPENGL
-                        if (!useOpenGL)
-                            displayDevice.refresh(displayId, x1, y1, x2, y2,
-                                                  useOpenGL);
                         // #else
-                            displayDevice.refresh(displayId, x1, y1, x2, y2);
+                        displayDevice.refresh(displayId, x1, y1, x2, y2);
                         // #endif
                     }
             }
             finally {
                 // #ifdef ENABLE_OPENGL
-                if (useOpenGL) {
-                    // This call to refresh a "zero" region is inserted to
-                    // trigger display update on some platforms
-                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
-                }
-                // #endif ENABLE_OPENGL
+                // This call to refresh a "zero" region is inserted to
+                // trigger display update on some platforms
+                displayDevice.refresh(displayId, 0, 0, 0, 0);
+                // #endif
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x,y,x+width,y+height};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
                 // #endif
             }
-
+        
         }
 
         /**
@@ -3584,7 +3341,7 @@ public class Display {
          * DisplayAccess I/F method.
          *
          * @return Hardware display object
-         * !IMPL_NOTE
+         * !IMPL_NOTE   
          */
         public DisplayDevice getDisplayDevice() {
             return Display.this.displayDevice;
@@ -3633,6 +3390,7 @@ public class Display {
                 Display.this.lSetMode(m);
             }
         }
+        
     } // END DisplayAccessImpl Class
 
 
@@ -3975,7 +3733,7 @@ public class Display {
 
         /**
          * Called by event delivery when state of display device was changed.
-         * @param int new state of the display
+         * @param int new state of the display 
          */
         public void handleDisplayDeviceStateChangedEvent(int state) {
             switch(state) {
@@ -4004,31 +3762,51 @@ public class Display {
         /**
          * Called by event delivery when size of screen was changed.
          *
-         * @param setPortrait If <code>true<code/> then display should be set
-         *  to portrait orientation, otherwise should be set to
-         *  landscape orientation
+         * @param state The new state or -1 when state is not supported
+         * @see OrientationListener interface
          */
-        public void handleRotationEvent(boolean setPortrait) {
-            boolean isPortrait =
-                !Display.this.displayDevice.getReverseOrientation();
-            if (isPortrait == setPortrait) {
+        public void handleRotationEvent(int state) {
+            // IMPL_NOTE: DisplayDevice class supports only 2 states now: landscape and portrait
+            boolean isDevicePortrait;
+            
+            switch (orientationMode) {
+            case ORIENTATION_AUTO:
+                isDevicePortrait = !Display.this.displayDevice.getReverseOrientation();
+                break;
+            case ORIENTATION_PORTRAIT:
+                isDevicePortrait = true;
+                break; 
+            case ORIENTATION_LANDSCAPE:
+                isDevicePortrait = false;
+                break;
+            default:
+                throw new IllegalArgumentException();
+            }
+            
+            boolean isDisplayPortrait = Display.this.displayDevice.getWidth() <
+                Display.this.displayDevice.getHeight(); 
+            if (isDisplayPortrait == isDevicePortrait) {
                 return;
             }
-
-            try {
-                handleRotationEventInternal();
-            } finally {
-                if (owner instanceof MIDlet) {
-                    if (displayDevice.getReverseOrientation()) {
-                        orientation = ORIENTATION_LANDSCAPE;
-                    } else {
-                        orientation = ORIENTATION_PORTRAIT;
-                    }
-                }
+            /* We don't support state in the current project */
+            if (state != -1) {
+                throw new IllegalArgumentException();
             }
-        }
-
-        private void handleResize() {
+            synchronized (LCDUILock) {
+                // #ifndef ENABLE_GCI
+                Display.this.displayDevice.reverseOrientation();
+                Display.this.width = Display.this.displayDevice.getWidth(); 
+                Display.this.height = Display.this.displayDevice.getHeight();
+                if (Display.this.displayDevice.isPrimaryDisplay()) {
+                    Display.this.WIDTH = Display.this.width;
+                    Display.this.HEIGHT = Display.this.height;
+                }
+                
+                // #else
+                // TBD: not implemented for GCI yet
+                // #endif ENABLE_GCI
+                screenGraphics.setDimensions(Display.this.width, Display.this.height);
+            }
             // #ifdef ENABLE_CHAMELEON
             MIDPWindow windowCopy;
             DisplayableLF currentCopy;
@@ -4062,42 +3840,68 @@ public class Display {
             // #endif ENABLE_CHAMELEON
         }
 
-        private void handleRotationEventInternal() {
-            synchronized (LCDUILock) {
-                // #ifndef ENABLE_GCI
-                wantRotation = Display.this.displayDevice.reverseOrientation();
-                isRotatedKnown = true;
-                updateScreenDimensions();
-
-                // #else
-                // TBD: not implemented for GCI yet
-                // #endif ENABLE_GCI
-                screenGraphics.setDimensions(Display.this.width, Display.this.height);
-            }
-
-            handleResize();
-        }
-
-        /**
-         * Called by event delivery when clamshell event occurs.
-         */
+      /**
+      * Called by event delivery when clamshell event occurs.
+      */
         public void handleClamshellEvent() {
             synchronized (LCDUILock) {
                 // #ifndef ENABLE_GCI
                 Display.this.displayDevice.clamshellHandling();
 
-                updateScreenDimensions();
+                Display.this.width = Display.this.displayDevice.getWidth(); 
+                Display.this.height = Display.this.displayDevice.getHeight();
 
+                if (Display.this.displayDevice.isPrimaryDisplay()){
+                Display.this.WIDTH = Display.this.width;
+                Display.this.HEIGHT = Display.this.height;
+                }
+          
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
-
+                
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
+            // #ifdef ENABLE_CHAMELEON
 
-            handleResize();
+            MIDPWindow windowCopy;
+            DisplayableLF currentCopy;
+            synchronized (LCDUILock) {
+                windowCopy = window;
+                currentCopy = Display.this.current;
+            }
+
+            windowCopy.resize();
+            if (currentCopy != null) {
+            // IMPL_NOTE: uCallSizeChanged was added to prevent form content reculculation before size changing of
+            // Displayable (Form)
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+                currentCopy.uCallInvalidate();
+            }
+
+            // IMPL_NOTE: The entire screen repaint is requested instead
+            //   of usual repaint of the current Displayable over callPaint().
+            //   It is done so because various layers can logically belong
+            //   to the Displayable, but be beyond of its area. For instance,
+            //   date editor popup dialogs can intersect with soft buttons
+            //   layer, thus require repaint for all layers involved.
+            requestScreenRepaint();
+
+            // #else
+            DisplayableLF currentCopy = getCurrent().displayableLF;
+            if (currentCopy != null) {
+                currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
+            }
+            /*This will result in calls to MIDlet code*/
+            //Displayable currentDisplayable = getCurrent();
+            //if (currentDisplayable instanceof Canvas){
+                //currentDisplayable.sizeChanged(Display.this.width, Display.this.height);
+            //}
+            
+            // #endif ENABLE_CHAMELEON
+
         }
-
+            
 
         /**
          * Called by event delivery to process a Form invalidation.
@@ -4189,7 +3993,7 @@ public class Display {
     class ForegroundEventConsumerImpl implements ForegroundEventConsumer {
 
         /**
-         * Called by event delivery when the display manager (in AMS Isolate)
+         * Called by event delivery when the display manager (in AMS Isolate) 
          * notifies a display that it has been moved to the foreground.
          *
          * ForegroundEventConsumer I/F method.
@@ -4198,48 +4002,19 @@ public class Display {
          * holding the LCDUILock.
          */
         public void handleDisplayForegroundNotifyEvent() {
+
             // A copy of current LF object
             DisplayableLF currentCopy;
             synchronized (LCDUILock) {
                 if (hasForeground) {
                     return;
                 }
-                // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
-                if (useOpenGL) {
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().raiseOpenGL();
-                    if (use32Bit) {
-                        lastUsed32Bit = true;
-                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(1);
-                    }
-                }
-                // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
+
                 currentCopy = current;
                 // When foreground-background state changes we loose control
                 // under the current display mode on the device
                 screenModeKnown = false;
-                isRotatedKnown = false;
             }
-
-            if (orientation != ORIENTATION_AUTO) {
-                int screenOrientation = ORIENTATION_PORTRAIT;
-
-                if (displayDevice.getReverseOrientation()) {
-                    screenOrientation = ORIENTATION_LANDSCAPE;
-                }
-
-                if (screenOrientation != orientation) {
-                    consumer.handleRotationEventInternal();
-                }
-            } else if (!hasForegroundDisplay
-                    && displayDevice.getReverseOrientation()) {
-                // rotate to portrait mode
-                consumer.handleRotationEventInternal();
-            } else if (updateScreenDimensions()) {
-                consumer.handleResize();
-            }
-
-            hasForegroundDisplay = true;
-
             // SYNC NOTE: for Canvas and CustomItem, dsHide/Show() will
             // call into app functions like hide/showNotify().
             // So we call it outside LCDUILock.
@@ -4304,7 +4079,7 @@ public class Display {
                 // correct screen mode (full or normal)
 
             } // synchronized
-
+            consumer.handleRotationEvent(-1);
             // SYNC NOTE: The implementation of dsPaint() could call
             // out to MIDlet's paint() function. So we have to call it
             // outside LCDUILock. dsPaint will use LCDUILock to lock
@@ -4320,7 +4095,7 @@ public class Display {
         }
 
         /**
-         * Called by event delivery when the display manager (in AMS Isolate)
+         * Called by event delivery when the display manager (in AMS Isolate) 
          * notifies a display that it has been moved to the background.
          *
          * ForegroundEventConsumer I/F method.
@@ -4332,18 +4107,11 @@ public class Display {
             // A copy of current LF object
             DisplayableLF currentCopy;
 
+
             synchronized (LCDUILock) {
                 if (!hasForeground) {
                     return;
                 }
-                // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
-                if (useOpenGL) {
-                    com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
-                    if (use32Bit) {
-                        com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
-                    }
-                }
-                // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
 
                 currentCopy = current;
 
@@ -4370,54 +4138,6 @@ public class Display {
         }
     } // END ForegroundEventConsumerImpl Class
 
-    private final static class MIDletScreens {
-        private final Hashtable container = new Hashtable();
-        private final MIDletScreen systemScreen = new MIDletScreen();
-
-        synchronized MIDletScreen getCurrentMIDletScreen() {
-            return getMIDletScreen(getMIDlet());
-        }
-
-        synchronized MIDletScreen getMIDletScreen(Object midlet) {
-            if (!(midlet instanceof MIDlet)) {
-                return systemScreen;
-            }
-
-            String key = midlet.toString();
-
-            MIDletScreen midletScreen = (MIDletScreen)container.get(key);
-            if (midletScreen == null) {
-                midletScreen = new MIDletScreen();
-                container.put(key, midletScreen);
-            }
-            return midletScreen;
-        }
-
-        private static Object getMIDlet() {
-            try {
-                return com.sun.midp.midlet.MIDletStateHandler
-                        .getMidletStateHandler().getMIDlet();
-            } catch(Exception ex) {
-            }
-            return null;
-        }
-    }
-
-    private final static class Dimension {
-        final int width;
-        final int height;
-
-        public Dimension(int width, int height) {
-            this.width = width;
-            this.height = height;
-        }
-    }
-
-    private final static class MIDletScreen {
-        int dimensionId;
-    }
-
-
     // *************** tracing support ***************
 
     // #ifdef ENABLE_I3_TEST
@@ -4432,4 +4152,26 @@ public class Display {
     LiveTracer liveTracer = new LiveTracer();
 
     // #endif ENABLE_I3_TEST
+    
+    /* An event listener for MIDP_DISPLAY_FIX_ORIENTATION event which notify
+     * a Display with the desired orientation mode.
+     */
+    private static class FixOrientationEventListener implements EventListener {
+        public boolean preprocess(Event event, Event waitingEvent) {
+            return true;
+        }
+
+        public void process(Event event) {
+            NativeEvent ne = (NativeEvent)event;
+            int displayId = ne.intParam4;
+            DisplayAccess da = displayContainer.findDisplayById(displayId);
+            if (da != null) {
+                Display d = da.getDisplay();
+                if (d != null) {
+                    d.setOrientationMode(ne.intParam1);
+                }
+            }
+        }
+    }
+
 }

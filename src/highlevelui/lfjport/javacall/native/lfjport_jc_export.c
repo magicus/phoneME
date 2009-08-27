@@ -64,18 +64,10 @@ void lfjport_ui_finalize() {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-#if ENABLE_OPENGL
-void lfjport_refresh(int hardwareId, int x1, int y1, int x2, int y2,
-                     boolean useOpenGL)
-{
-    jcapp_refresh (hardwareId, x1, y1, x2, y2, useOpenGL);
-}
-#else
 void lfjport_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
     jcapp_refresh (hardwareId, x1, y1, x2, y2);
 }
-#endif
 
 /**
  * Porting API function to update scroll bar.
@@ -105,12 +97,13 @@ int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
  * @param mode true for full screen mode
  *             false for normal
  */
-javacall_result lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
+void lfjport_set_fullscreen_mode(int hardwareId, jboolean mode) {
     REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:lfjport_ui_setFullScreenMode(%1)\n",
                        mode);
 
     /* Suppress unused parameter warnings */
-    return jcapp_set_fullscreen_mode(hardwareId, mode);
+    jcapp_set_fullscreen_mode(hardwareId, mode);
+    return;
 }
 
 /**

@@ -39,8 +39,6 @@
 #include <javacall_logging.h>
 #include <suitestore_listeners.h>
 
-#include "imgdcd_image_util.h"
-
 gxj_screen_buffer gxj_system_screen_buffer;
 
 static jboolean isLcdDirty = KNI_FALSE;
@@ -54,36 +52,18 @@ static jboolean disableRefresh=KNI_FALSE;
  */
 
 int jcapp_get_screen_buffer(int hardwareId) {
-    javacall_lcd_color_encoding_type color_encoding;
-    gxj_system_screen_buffer.alphaData = NULL;
-    gxj_system_screen_buffer.pixelData = 
-        javacall_lcd_get_screen (hardwareId,
-                                 &gxj_system_screen_buffer.width,
-                                 &gxj_system_screen_buffer.height,
-                                 &color_encoding);
+     javacall_lcd_color_encoding_type color_encoding;
+     gxj_system_screen_buffer.alphaData = NULL;
+     gxj_system_screen_buffer.pixelData = 
+         javacall_lcd_get_screen (hardwareId,
+                                  &gxj_system_screen_buffer.width,
+                                  &gxj_system_screen_buffer.height,
+                                  &color_encoding);                                
+     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {        
+	    return -2;
+     };
 
-#if ENABLE_DYNAMIC_PIXEL_FORMAT
-    if (jc_enable_32bit_mode) {
-        if (JAVACALL_LCD_COLOR_RGBA != color_encoding) {
-            return -2;
-        };
-
-    } else {
-        if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
-            return -2;
-        };
-    }
-#elif ENABLE_32BITS_PIXEL_FORMAT
-    if (JAVACALL_LCD_COLOR_RGBA != color_encoding) {
-        return -2;
-    };
-#else
-    if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
-        return -2;
-    };
-#endif
-
-    return 0;
+     return 0;
 }
 
 
@@ -91,18 +71,9 @@ int jcapp_get_screen_buffer(int hardwareId) {
  * Reset screen buffer content.
  */
 void static jcapp_reset_screen_buffer(int hardwareId) {
-    int pixelSize;
-
-#if ENABLE_DYNAMIC_PIXEL_FORMAT
-    pixelSize = (jc_enable_32bit_mode) ? sizeof(gxj_pixel32_type) : sizeof(gxj_pixel16_type);
-#else
-    pixelSize = sizeof(gxj_pixel_type);
-#endif
-
     memset (gxj_system_screen_buffer.pixelData, 0,
         gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
-            pixelSize
-    );
+            sizeof (gxj_pixel_type));
 }
 
 /**
@@ -164,8 +135,13 @@ int jcapp_init() {
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
         return -1;        
  
+    /**
+     *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME 
+     *     implementation. Other values are reserved for future  use. Returning
+     *     the buffer in other encoding will result in application termination.
+     */
     if (jcapp_get_screen_buffer(hardwareId) == -2) {
-        REPORT_ERROR(LC_LOWUI, "Screen pixel format is incorrect!");
+        REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
         return -2;
     }    
 
@@ -202,19 +178,7 @@ void jcapp_finalize() {
  * @param y2 bottom-right y coordinate of the area to refresh
  */
 #define TRACE_LCD_REFRESH
-#if ENABLE_OPENGL
-void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2, 
-                   boolean useOpenGL)
-{
-    /*block any refresh calls in case of native master volume*/
-    if(disableRefresh==KNI_TRUE){
-        return;
-    }
-
-    javacall_lcd_flush_partial (hardwareId, y1, y2, useOpenGL);
-}
-#else
-void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2) 
+void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 {
     /*block any refresh calls in case of native master volume*/
     if(disableRefresh==KNI_TRUE){
@@ -223,7 +187,7 @@ void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
 
     javacall_lcd_flush_partial (hardwareId, y1, y2);
 }
-#endif
+
 /**
  * Turn on or off the full screen mode
  *
@@ -231,15 +195,11 @@ void jcapp_refresh(int hardwareId, int x1, int y1, int x2, int y2)
  * @param mode true for full screen mode
  *             false for normal
  */
-javacall_result jcapp_set_fullscreen_mode(int hardwareId, jboolean mode) {
-    javacall_result res;
+void jcapp_set_fullscreen_mode(int hardwareId, jboolean mode) {    
 
-    res = javacall_lcd_set_full_screen_mode(hardwareId, mode);
-    if (res != JAVACALL_OK)
-        return res;
+    javacall_lcd_set_full_screen_mode(hardwareId, mode);
     jcapp_get_screen_buffer(hardwareId);
     jcapp_reset_screen_buffer(hardwareId);
-    return JAVACALL_OK;
 }
 
 /**
@@ -255,8 +215,8 @@ jboolean jcapp_reverse_orientation(int hardwareId) {
      * can appear. That's why the buffer content is not preserved. 
      */ 
 
-    jcapp_reset_screen_buffer(hardwareId);
-    return res;
+	jcapp_reset_screen_buffer(hardwareId);
+	return res;
 }
 
 /**
@@ -382,17 +342,4 @@ jint* jcapp_get_display_device_ids(jint* n) {
 void jcapp_display_device_state_changed(int hardwareId, int state) {
     (void)hardwareId;
     (void)state;
-}
-
-void jcapp_switch_color_depth(int mode_32bit) {
-#if ENABLE_DYNAMIC_PIXEL_FORMAT
-    int hardwareId = jcapp_get_current_hardwareId();
-
-    set_jc_enable_32bit_mode(mode_32bit);
-    set_pp_enable_32bit_mode(mode_32bit);
-    set_img_enable_32bit_mode(mode_32bit);
-
-    jcapp_get_screen_buffer(hardwareId);
-    jcapp_reset_screen_buffer(hardwareId);
-#endif
 }

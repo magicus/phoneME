@@ -29,8 +29,6 @@ package com.sun.midp.lcdui;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 
-import com.sun.midp.chameleon.skins.SoftButtonSkin;
-
 /**
  * This class provides methods needed for JSRs to access OpenGL 
  * rendering capabilities in lcdui in order to properly synchronize 
@@ -42,7 +40,6 @@ public class OpenGLEnvironmentProxy{
     private DisplayContainer container;
     private static OpenGLEnvironmentProxy instance = null;
     private OpenGLEnvironment env;
-    private boolean openGLIsEnabled = false;
     
     public OpenGLEnvironmentProxy() {
         env = new OpenGLEnvironment();
@@ -75,73 +72,20 @@ public class OpenGLEnvironmentProxy{
     }
     
     /** 
-     * Return shared drawing surface for given Graphics targets
-     */
-    public int getDrawingSurface(Object bindTarget, int api) {
-        int retval;
-        retval =  env.getDrawingSurface((Graphics)bindTarget, api);
-        return retval;
-    }
-    
-    /** 
      * Prepare openGL renderer to switch between lcdui and some exernal
      * API - can be either JSR226 or JSR239
      *
      */
-    public void flushOpengGL(Object bindTarget) {
-        env.flushOpengGL(container, (Graphics)bindTarget);
+    public void flushOpengGL() {
+        env.flushOpengGL(container);
     }
     
     public void createPbufferSurface(Image img) {
-        if (openGLIsEnabled)
-            env.createPbufferSurface(img);
+        env.createPbufferSurface(img);
     }
     
     public void flushPbufferSurface(Image offscreen_buffer,
-                                    int x, int y, int width, int height){
-        env.flushPbufferSurface(offscreen_buffer, x, y, width, height);
+                                    int ystart, int yend){
+        env.flushPbufferSurface(offscreen_buffer, ystart, yend);
     }
-
-    public void startMidpRendering() {
-        env.startMidpRendering();
-    }
-
-    public void endMidpRendering() {
-        env.endMidpRendering();
-    }
-    
-    public void enableOpenGL(int width, int height) {
-        setSoftButtonHeight(SoftButtonSkin.HEIGHT);
-        env.enableOpenGL(width, height);
-        openGLIsEnabled = true;
-    }
-    
-    public void disableOpenGL() {
-        env.disableOpenGL();
-        openGLIsEnabled = false;
-    }
-    
-    public void raiseOpenGL() {
-        env.raiseOpenGL();
-    }    
-    public void lowerOpenGL() {
-        env.lowerOpenGL();
-    }
-    
-    public void switchColorDepth(int param) {
-        env.switchColorDepth(param);
-    }
-
-    public void setSoftButtonHeight(int height) {
-        env.setSoftButtonHeight(height);
-    }
-    
-    public void setSoftButtonBarVisible(boolean visible) {
-        env.setSoftButtonBarVisible(visible);
-    }
-
-    public boolean isOpenGLEnabled() {
-        return env.isOpenGLEnabled();
-    }
-
 }

@@ -1,24 +1,24 @@
 /*
- *
+ *   
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -55,7 +55,7 @@ abstract class ItemLFImpl implements ItemLF {
     // *****************************************************
     //  Public methods - ItemLF interface implementation
     // *****************************************************
-
+        
     /**
      * Get the minimum width of this Item
      *
@@ -65,7 +65,7 @@ abstract class ItemLFImpl implements ItemLF {
         // IMPL_NOTE minimum width should be less than preferred
         return lGetPreferredWidth(-1);
     }
-
+    
     /**
      * Get the preferred width of this Item
      *
@@ -86,20 +86,20 @@ abstract class ItemLFImpl implements ItemLF {
         if (contentBounds[HEIGHT] == 0) {
             return labelBounds[WIDTH];
         }
-
+        
         // no label
         if (labelBounds[HEIGHT] == 0) {
             return contentBounds[WIDTH];
         }
 
         if (labelAndContentOnSameLine(labelBounds[HEIGHT]) &&
-            (labelBounds[WIDTH] + getHorizontalPad() +
+            (labelBounds[WIDTH] + getHorizontalPad() + 
              contentBounds[WIDTH] <= availableWidth)) {
-            return labelBounds[WIDTH] + getHorizontalPad() +
+            return labelBounds[WIDTH] + getHorizontalPad() + 
                    contentBounds[WIDTH];
         }
 
-        return (labelBounds[WIDTH] > contentBounds[WIDTH] ?
+        return (labelBounds[WIDTH] > contentBounds[WIDTH] ? 
                 labelBounds[WIDTH] : contentBounds[WIDTH]);
     }
 
@@ -136,14 +136,14 @@ abstract class ItemLFImpl implements ItemLF {
         if (contentBounds[HEIGHT] == 0) {
             return labelBounds[HEIGHT];
         }
-
+        
         // no label
         if (labelBounds[HEIGHT] == 0) {
             return contentBounds[HEIGHT];
         }
 
         if (labelAndContentOnSameLine(labelBounds[HEIGHT]) &&
-            (labelBounds[WIDTH] + getHorizontalPad() +
+            (labelBounds[WIDTH] + getHorizontalPad() + 
              contentBounds[WIDTH] <= w)) {
             return labelBounds[HEIGHT] < contentBounds[HEIGHT] ?
                    contentBounds[HEIGHT] : labelBounds[HEIGHT];
@@ -158,9 +158,9 @@ abstract class ItemLFImpl implements ItemLF {
      * is within the bounds of the 'clickable' area of this
      * ItemLFImpl. We exclude non-interactive areas such as the
      * label. <p>
-     *
+     * 
      * Most items can use this method. The only case that needs
-     * overriding is the ChoiceGroupPopupLFImpl.
+     * overriding is the ChoiceGroupPopupLFImpl.  
      */
     boolean itemContainsPointer(int x, int y) {
         int contentX = bounds[X] + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2;
@@ -220,7 +220,7 @@ abstract class ItemLFImpl implements ItemLF {
 
     }
 
-
+    
     /**
      * Notifies L&F of a label change in the corresponding Item.
      * @param label the new label string
@@ -272,19 +272,19 @@ abstract class ItemLFImpl implements ItemLF {
      * Notifies L&F of a preferred size change in the corresponding Item.
      * @param width the value to which the width is locked, or
      * <code>-1</code> if it is unlocked
-     * @param height the value to which the height is locked, or
+     * @param height the value to which the height is locked, or 
      * <code>-1</code> if it is unlocked
      */
     public void lSetPreferredSize(int width, int height) {
 
         // the "preferred size" is in "inner bounds" (contents) terms
         if (width == getInnerBounds(WIDTH) &&
-            height == getInnerBounds(HEIGHT)) {
+            height == getInnerBounds(HEIGHT)) { 
             /* no need to invalidate */
             return;
         }
         lRequestInvalidate(width != getInnerBounds(WIDTH),
-                           height != getInnerBounds(HEIGHT));
+                           height != getInnerBounds(HEIGHT));   
     }
 
     /**
@@ -297,8 +297,8 @@ abstract class ItemLFImpl implements ItemLF {
     /**
      * Notify this itemLF that its owner screen has changed.
      * Clear internal state if its new owner is null.
-     *
-     * @param oldOwner old owner screen before this change. New owner
+     * 
+     * @param oldOwner old owner screen before this change. New owner 
      *                 can be found in Item model.
      */
 
@@ -306,7 +306,7 @@ abstract class ItemLFImpl implements ItemLF {
         if (item.owner == null) {
             // Hide it
             if (visible) {
-                // IMPL_NOTE: We are holding LCDUILock and this
+                // IMPL_NOTE: We are holding LCDUILock and this 
                 //         will call into app code on CustomItem.
                 //         Need to schedule an event to do that.
                 uCallHideNotify();
@@ -330,7 +330,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @param h the new height of the viewport of the screen
      */
     public void uCallScrollChanged(int newViewportX, int newViewportY) {
-        // do nothing by default.
+        // do nothing by default. 
     }
 
     /**
@@ -342,7 +342,7 @@ abstract class ItemLFImpl implements ItemLF {
     public final boolean isRequestedSizesValid() {
         return (cachedWidth != INVALID_SIZE);
     }
-
+ 
     // *****************************************************
     //  Package private methods
     // *****************************************************
@@ -350,7 +350,7 @@ abstract class ItemLFImpl implements ItemLF {
      * Used by the Form Layout to set the size of this Item
      *
      * @param height the tentative content height in pixels
-     * @return the preferred width
+     * @return the preferred width 
      */
     int lGetAdornedPreferredWidth(int height) {
         if (height > 2 * ScreenSkin.PAD_FORM_ITEMS) {
@@ -362,7 +362,7 @@ abstract class ItemLFImpl implements ItemLF {
         return lGetPreferredWidth(height) + 2 * ScreenSkin.PAD_FORM_ITEMS;
 
     }
-
+    
     /**
      * Used by the Form Layout to set the size of this Item
      *
@@ -386,7 +386,7 @@ abstract class ItemLFImpl implements ItemLF {
     int lGetAdornedMinimumWidth() {
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION,
+            Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "  [I] lGetAdornedMinimumWidth() " + this);
         }
@@ -400,7 +400,7 @@ abstract class ItemLFImpl implements ItemLF {
     int lGetAdornedMinimumHeight() {
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION,
+            Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "  [I] lGetAdornedMinimumHeight() " + this);
         }
@@ -415,13 +415,13 @@ abstract class ItemLFImpl implements ItemLF {
     int lGetAvailableWidth() {
         int w = (item.owner != null) ?
             ((DisplayableLFImpl)item.owner.getLF()).lGetWidth() :
-            Display.getPrimaryDisplayWidth() - 2 * ScreenSkin.PAD_FORM_ITEMS;
+            Display.WIDTH - 2 * ScreenSkin.PAD_FORM_ITEMS;
         return w;
     }
 
     /**
      * Sets item's size
-     *
+     * 
      * @param w - the new width of the item
      * @param h - the new height of the item
      */
@@ -505,13 +505,13 @@ abstract class ItemLFImpl implements ItemLF {
 
     /**
      * Does internal Item layout which includes setting of location
-     * and size of label and content.
+     * and size of label and content. 
      * @param labelBounds The array that will hold label location and size
      * @param contentBounds The array that will hold content location and size
      * @param w The width given to the Item
      * @param h The height given to the Item
-     */
-    void lDoInternalLayout(int labelBounds[], int contentBounds[],
+     */        
+    void lDoInternalLayout(int labelBounds[], int contentBounds[], 
                            int w, int h) {
         if (cachedWidth == INVALID_SIZE || cachedWidth != w) {
             if (actualBoundsInvalid[WIDTH] || actualBoundsInvalid[HEIGHT]) {
@@ -562,14 +562,14 @@ abstract class ItemLFImpl implements ItemLF {
 
             // label and content fit in the width available
             if (labelAndContentOnSameLine(labelBounds[HEIGHT]) &&
-                (labelBounds[WIDTH] + getHorizontalPad() +
+                (labelBounds[WIDTH] + getHorizontalPad() + 
                  contentBounds[WIDTH]) <= w) {
                 if (contentBounds[HEIGHT] < labelBounds[HEIGHT]) {
-                    contentBounds[Y] =
+                    contentBounds[Y] = 
                         (labelBounds[HEIGHT] - contentBounds[HEIGHT]) / 2;
                     itemHeight = labelBounds[HEIGHT];
                 } else {
-                    labelBounds[Y] =
+                    labelBounds[Y] = 
                         (contentBounds[HEIGHT] - labelBounds[HEIGHT]) / 2;
                     itemHeight = contentBounds[HEIGHT];
                 }
@@ -592,11 +592,11 @@ abstract class ItemLFImpl implements ItemLF {
                 if (contentBounds[WIDTH] < labelBounds[WIDTH]) {
                     switch (item.layout & ImageItem.LAYOUT_CENTER) {
                     case Item.LAYOUT_CENTER:
-                        contentBounds[X] =
+                        contentBounds[X] = 
                             (labelBounds[WIDTH] - contentBounds[WIDTH]) / 2;
                         break;
                     case Item.LAYOUT_RIGHT:
-                        contentBounds[X] =
+                        contentBounds[X] = 
                             labelBounds[WIDTH] - contentBounds[WIDTH];
                         break;
                     case Item.LAYOUT_LEFT:
@@ -614,7 +614,7 @@ abstract class ItemLFImpl implements ItemLF {
                     // wider than label
                     switch (item.layout & ImageItem.LAYOUT_CENTER) {
                     case Item.LAYOUT_CENTER:
-                        labelBounds[X] =
+                        labelBounds[X] = 
                             (contentBounds[WIDTH] - labelBounds[WIDTH]) / 2;
                         break;
                     case Item.LAYOUT_RIGHT:
@@ -690,7 +690,7 @@ abstract class ItemLFImpl implements ItemLF {
     boolean shouldHShrink() {
         return ((item.layout & Item.LAYOUT_SHRINK) == Item.LAYOUT_SHRINK);
     }
-
+    
     /**
      * Determine if this Item should horizontally expand
      *
@@ -699,7 +699,7 @@ abstract class ItemLFImpl implements ItemLF {
     boolean shouldHExpand() {
         return ((item.layout & Item.LAYOUT_EXPAND) == Item.LAYOUT_EXPAND);
     }
-
+    
     /**
      * Determine if this Item should vertically shrink
      *
@@ -708,7 +708,7 @@ abstract class ItemLFImpl implements ItemLF {
     boolean shouldVShrink() {
         return ((item.layout & Item.LAYOUT_VSHRINK) == Item.LAYOUT_VSHRINK);
     }
-
+    
     /**
      * Determine if this Item should vertically expand
      *
@@ -717,27 +717,27 @@ abstract class ItemLFImpl implements ItemLF {
     boolean shouldVExpand() {
         return ((item.layout & Item.LAYOUT_VEXPAND) == Item.LAYOUT_VEXPAND);
     }
-
+    
     /**
      * Determine if this Item should have a newline after it
      *
      * @return true if it should have a newline after
      */
     boolean equateNLA() {
-        return ((item.layout & Item.LAYOUT_NEWLINE_AFTER) ==
+        return ((item.layout & Item.LAYOUT_NEWLINE_AFTER) == 
                 Item.LAYOUT_NEWLINE_AFTER);
     }
-
+    
     /**
      * Determine if this Item should have a newline before it
      *
      * @return true if it should have a newline before
      */
     boolean equateNLB() {
-        return ((item.layout & Item.LAYOUT_NEWLINE_BEFORE) ==
+        return ((item.layout & Item.LAYOUT_NEWLINE_BEFORE) == 
                 Item.LAYOUT_NEWLINE_BEFORE);
     }
-
+    
     /**
      * Get the effective layout type of this Item
      *
@@ -751,7 +751,7 @@ abstract class ItemLFImpl implements ItemLF {
             return l;
         }
     }
-
+    
     /**
      * Determine if this Item should not be traversed to. By default,
      * this method will return true only if the owner item has a
@@ -760,7 +760,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @return true if this Item should not be traversed to
      */
     boolean shouldSkipTraverse() {
-        return (item.defaultCommand == null && item.numCommands == 0);
+        return (item.defaultCommand == null && item.numCommands == 0);        
     }
 
     /**
@@ -778,8 +778,8 @@ abstract class ItemLFImpl implements ItemLF {
     boolean uCallTraverse(int dir, int viewportWidth, int viewportHeight,
                          int[] visRect_inout) {
         synchronized (Display.LCDUILock) {
-            return lCallTraverse(dir,
-                                 viewportWidth,
+            return lCallTraverse(dir, 
+                                 viewportWidth, 
                                  viewportHeight,
                                  visRect_inout);
         }
@@ -806,9 +806,9 @@ abstract class ItemLFImpl implements ItemLF {
      */
     boolean lCallTraverse(int dir, int viewportWidth, int viewportHeight,
                          int[] visRect_inout) {
-
+        
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION,
+            Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "  [I] lCallTraverse()");
         }
@@ -828,7 +828,7 @@ abstract class ItemLFImpl implements ItemLF {
         visRect[HEIGHT] = bounds[HEIGHT];
         return true;
     }
-
+        
     /**
      * Called by the system to indicate traversal has left this Item
      * This function simply calls lCallTraverseOut() after obtaining LCDUILock.
@@ -850,14 +850,14 @@ abstract class ItemLFImpl implements ItemLF {
     void lCallTraverseOut() {
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION,
+            Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "  [I] uCallTraverseOut()");
         }
 
         hasFocus = false;
     }
-
+    
     /**
      * Called by the system to notify this Item it is being shown
      * This function simply calls lCallShowNotify() after obtaining LCDUILock.
@@ -877,14 +877,14 @@ abstract class ItemLFImpl implements ItemLF {
     void lCallShowNotify() {
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION,
+            Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "  [I] uCallShowNotify()");
         }
 
         this.visible  = true;
     }
-
+    
     /**
      * Called by the system to notify this Item it is being hidden.
      * This function simply calls lCallHideNotify() after obtaining LCDUILock.
@@ -905,7 +905,7 @@ abstract class ItemLFImpl implements ItemLF {
         this.visible = false;
     }
 
-
+    
     /**
      * Called by the system to signal a key press
      *
@@ -913,7 +913,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @see #getInteractionModes
      */
     void uCallKeyPressed(int keyCode) { }
-
+    
     /**
      * Called by the system to signal a key release
      *
@@ -921,7 +921,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @see #getInteractionModes
      */
     void uCallKeyReleased(int keyCode) { }
-
+    
     /**
      * Called by the system to signal a key repeat
      *
@@ -929,7 +929,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @see #getInteractionModes
      */
     void uCallKeyRepeated(int keyCode) { }
-
+    
     /**
      * Called by the system to signal a pointer press
      *
@@ -942,7 +942,7 @@ abstract class ItemLFImpl implements ItemLF {
         itemWasPressed = true;
         pointerDragged = false;
     }
-
+    
     /**
      * Called by the system to signal a pointer release
      *
@@ -956,7 +956,7 @@ abstract class ItemLFImpl implements ItemLF {
         y -= contentBounds[Y];
         if ( (x >= 0 && x <= contentBounds[WIDTH] && y >= 0 &&
               y <= contentBounds[HEIGHT]) &&
-             (itemWasPressed && !pointerDragged
+             (itemWasPressed && !pointerDragged 
                      && (hasFocus || item.owner.numCommands <= 1))) {
             //should check the x,y is in item's content area
             uCallKeyPressed(Constants.KEYCODE_SELECT);
@@ -964,7 +964,7 @@ abstract class ItemLFImpl implements ItemLF {
         itemWasPressed = false;
         pointerDragged = false;
     }
-
+    
     /**
      * Called by the system to signal a pointer drag
      *
@@ -976,7 +976,7 @@ abstract class ItemLFImpl implements ItemLF {
     void uCallPointerDragged(int x, int y) {
         pointerDragged = true;
     }
-
+    
     /**
      * Called by the system to indicate the size available to this Item
      * has changed
@@ -990,7 +990,7 @@ abstract class ItemLFImpl implements ItemLF {
             item.lUpdateLockedSize();
         }
     }
-
+    
     /**
      * Called to commit any pending user interaction for the item
      */
@@ -1001,14 +1001,14 @@ abstract class ItemLFImpl implements ItemLF {
      * re-layout if only the height was changed.
      *
      * request the event scheduler to schedule an invalidate event, that
-     * eventually will call uCallInvalidate(this item) of this item's
+     * eventually will call uCallInvalidate(this item) of this item's 
      * DisplayableLFImpl
      * @param width true if it was changed
      * @param height true if it was changed
      */
     void lRequestInvalidate(boolean width, boolean height) {
 
-        // note: we should also not call invalidate if size has not changed,
+        // note: we should also not call invalidate if size has not changed, 
         // and traversal has not changed.
 
         actualBoundsInvalid[WIDTH] = actualBoundsInvalid[WIDTH] || width;
@@ -1016,7 +1016,7 @@ abstract class ItemLFImpl implements ItemLF {
 
         cachedWidth = INVALID_SIZE;
         layoutDone = false;
-
+        
         if (item.owner != null) {
             ((DisplayableLFImpl)item.owner.getLF()).lRequestInvalidate();
         }
@@ -1030,7 +1030,7 @@ abstract class ItemLFImpl implements ItemLF {
             lRequestPaint();
         }
     }
-
+    
     /**
      * Called by subclasses to repaint this entire Item's bounds
      */
@@ -1041,7 +1041,7 @@ abstract class ItemLFImpl implements ItemLF {
 
         }
     }
-
+    
     /**
      * Called by subclasses to repaint a portion of this Item's bounds
      *
@@ -1055,7 +1055,7 @@ abstract class ItemLFImpl implements ItemLF {
         // target[] is recalculated completely, so ne need
         // to initialize it beforehand.
         if (item.owner != null) {
-
+            
             if (x >= bounds[WIDTH] || y >= bounds[HEIGHT] ||
                 x + w <= 0 || y + h <= 0 || w <= 0 || h <= 0) {
                 return;
@@ -1079,22 +1079,22 @@ abstract class ItemLFImpl implements ItemLF {
             if (w < target[WIDTH]) {
                 target[WIDTH] = w;
             }
-
+            
             target[HEIGHT] = bounds[HEIGHT] - target[Y];
             if (h < target[HEIGHT]) {
                 target[HEIGHT] = h;
             }
 
             if (item.owner.getLF() instanceof FormLFImpl) {
-                ((FormLFImpl)item.owner.getLF()).lRequestPaintItem(item,
+                ((FormLFImpl)item.owner.getLF()).lRequestPaintItem(item, 
                                                              target[X],
                                                              target[Y],
                                                              target[WIDTH],
                                                              target[HEIGHT]);
             } else if (item.owner.getLF() instanceof AlertLFImpl) {
-                // ((AlertLFImpl)item.owner.getLF()).lRequestPaintItem(item,
-                //                                               x, y, w, h);
-                // Causes a paint error in Alert
+                // ((AlertLFImpl)item.owner.getLF()).lRequestPaintItem(item, 
+                //                                               x, y, w, h); 
+                // Causes a paint error in Alert 
                 // only a partial painting of the gauge...
                 ((AlertLFImpl)item.owner.getLF()).lRequestPaint();
             }
@@ -1102,7 +1102,7 @@ abstract class ItemLFImpl implements ItemLF {
     }
 
     /**
-     * Paint an item - called by Form.
+     * Paint an item - called by Form. 
      * IMPL_NOTE: This function must be called with LCDUILock unlocked.
      *              To be renamed to uPaintItem.
      *
@@ -1114,23 +1114,23 @@ abstract class ItemLFImpl implements ItemLF {
     void paintItem(Graphics g, int[] clip, int trX, int trY) {
         // SYNC NOTE: see uCallPaint()
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION,
+            Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_ITEM_PAINT,
-                           "  [I] paintItem " + this +
+                           "  [I] paintItem " + this + 
                            "\t visible=" + visible);
             // note: paintItem is called more times than needed.
         }
-
+        
         // NOTE: Its possible, that an Item is in an invalid state
         // during a requested repaint. Its ok to simply return,
         // because it means there is a validation event coming on
         // the event thread. When the form re-validates, the Item
         // will be given a proper bounds and will be repainted
-        if (actualBoundsInvalid[X] || actualBoundsInvalid[Y] ||
+        if (actualBoundsInvalid[X] || actualBoundsInvalid[Y] || 
             actualBoundsInvalid[WIDTH] || actualBoundsInvalid[HEIGHT]) {
             // I assume the invalid flag is turned to true before
             // calling paint.
-
+            
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION,
                                LogChannels.LC_HIGHUI_ITEM_PAINT,
@@ -1139,7 +1139,7 @@ abstract class ItemLFImpl implements ItemLF {
             }
             // should have returned here
         }
-
+        
         // it cannot be null, since it's initialized in the CTOR, and
         // it's never get nullified afterwards:
         // if (bounds == null) {
@@ -1153,11 +1153,11 @@ abstract class ItemLFImpl implements ItemLF {
         // If we're already beyond the clip, quit looping, as long
         // as we're not validating the visibility of Items after a
         // scroll (calling show/hideNotify())
-        if (((tY + getInnerBounds(HEIGHT) < clip[Y]) ||
+        if (((tY + getInnerBounds(HEIGHT) < clip[Y]) || 
              (tY > (clip[Y] + clip[HEIGHT])))) {
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION,
+                Logging.report(Logging.INFORMATION, 
                                LogChannels.LC_HIGHUI_ITEM_PAINT,
                                "  [I] ItemLFImpl: paintItem(..) " +
                                "- cutting the loop");
@@ -1169,7 +1169,7 @@ abstract class ItemLFImpl implements ItemLF {
         // g.clipRect(tX, tY, bounds[WIDTH], bounds[HEIGHT]);
 
         // "inner" bounds
-        g.clipRect(tX, tY,
+        g.clipRect(tX, tY, 
                    getInnerBounds(WIDTH),
                    getInnerBounds(HEIGHT));
 
@@ -1192,14 +1192,14 @@ abstract class ItemLFImpl implements ItemLF {
             // but DO NOT use g.reset() as the translate needs to remain
             // for the surrounding layer mechanics.
             g.translate(-tX, -tY);
-        }
+        } 
 
         // Restore the clip to its original context so
         // future clipRect() calls will have the correct intersection
         g.setClip(clip[X], clip[Y], clip[WIDTH], clip[HEIGHT]);
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-            Logging.report(Logging.INFORMATION,
+            Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_ITEM_PAINT,
                            "  [I] draw border? hasFocus="+hasFocus);
         }
@@ -1212,7 +1212,7 @@ abstract class ItemLFImpl implements ItemLF {
             paintTraversalIndicator(g, bounds[X] + trX, bounds[Y] + trY);
 
             g.setClip(clip[X], clip[Y], clip[WIDTH], clip[HEIGHT]);
-        }
+        }        
     }
 
     /**
@@ -1223,29 +1223,29 @@ abstract class ItemLFImpl implements ItemLF {
      * @param x the x origin coordinate to paint the traversal indicator
      * @param y the y origin coordinate to paint the traversal indicator
      */
+    
 
-
-    // should move to ScreenLFImpl.paintTraversalIndicator(..) -
+    // should move to ScreenLFImpl.paintTraversalIndicator(..) - 
     // could be used in Alert as well
-
+    
     void paintTraversalIndicator(Graphics g, int x, int y) {
         // SYNC NOTE: see uCallPaint()
-
+        
         // ItemLFImpl itemLF = itemLFs[traverseIndex];
-
+        
         // NTS: This may need to special case StringItem?
         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-
+         
         g.drawRect(x + 1, y + 1, bounds[WIDTH] - 2, bounds[HEIGHT]- 2);
     }
-
+    
 
     /**
      * Sets the content size in the passed in array.
      * Content is calculated based on the availableWidth.
      * size[WIDTH] and size[HEIGHT] should be set by this method.
      * Subclasses need to override this method for correct layout.
-     * @param size The array that holds Item content size and location
+     * @param size The array that holds Item content size and location 
      *             in Item internal bounds coordinate system.
      * @param availableWidth The width available for this Item
      */
@@ -1266,7 +1266,7 @@ abstract class ItemLFImpl implements ItemLF {
      * Content is calculated based on the availableWidth.
      * size[WIDTH] and size[HEIGHT] should be set by this method.
      * Subclasses need to override this method for correct layout.
-     * @param size The size array that holds Item label size and location
+     * @param size The size array that holds Item label size and location 
      *             in Item internal bounds coordinate system.
      * @param availableWidth The width available for this Item
      */
@@ -1275,8 +1275,8 @@ abstract class ItemLFImpl implements ItemLF {
         if (item.label == null || item.label.length() == 0) {
             size[WIDTH] = size[HEIGHT] = 0;
             return;
-        }
-
+        } 
+        
         if (availableWidth == -1) {
             availableWidth = lGetAvailableWidth();
         }
@@ -1296,14 +1296,14 @@ abstract class ItemLFImpl implements ItemLF {
                    ScreenSkin.COLOR_FG, 0,
                    width, labelBounds[HEIGHT], 0, Text.NORMAL, null);
     }
-
+    
     /**
      * Returns true if label and content can be placed on the same line.
      * If this function returns always false then content will be
      * always put on a new line in relation to label.
-     *
+     * 
      * @param labelHeight The height available for the label
-     * @return true If label and content can be placed on the same line;
+     * @return true If label and content can be placed on the same line; 
      *              otherwise - false.
      */
     boolean labelAndContentOnSameLine(int labelHeight) {
@@ -1336,15 +1336,15 @@ abstract class ItemLFImpl implements ItemLF {
      * @return the current Display
      */
     Display getCurrentDisplay() {
-        return (item.owner == null) ?
+        return (item.owner == null) ? 
             null :
             item.owner.getLF().lGetCurrentDisplay();
     }
 
     /**
      * Used by child classes to get their location and size.
-     * the bounds represent the "outer" bounds of the Item,
-     * i.e. location and size that include the space needed for
+     * the bounds represent the "outer" bounds of the Item, 
+     * i.e. location and size that include the space needed for 
      * painting the border.
      * The "inner" bounds is the space for the Item to paint into.
      * (alternatively, it's possible to do setOuterBounds(..) instead
@@ -1360,9 +1360,9 @@ abstract class ItemLFImpl implements ItemLF {
         if (dimension == X || dimension == Y) {
             return bounds[dimension] + ScreenSkin.PAD_FORM_ITEMS;
         } else {
-            return bounds[dimension] -
+            return bounds[dimension] - 
                 ScreenSkin.PAD_FORM_ITEMS -
-                ScreenSkin.PAD_FORM_ITEMS;
+                ScreenSkin.PAD_FORM_ITEMS;                
         }
     }
 
@@ -1377,51 +1377,51 @@ abstract class ItemLFImpl implements ItemLF {
             return -1;
         }
 
-        return item.lockedWidth + ScreenSkin.PAD_FORM_ITEMS +
+        return item.lockedWidth + ScreenSkin.PAD_FORM_ITEMS + 
             ScreenSkin.PAD_FORM_ITEMS;
     }
-
+    
     /**
      * Returns the locked height of the Item, or -1 if it's not locked
      * @return locked height plus adornment height, or -1 if it's not locked
      */
     protected int lGetLockedHeight() {
-
+        
         if (item.lockedHeight == -1) {
             return -1;
         }
 
-        return item.lockedHeight + ScreenSkin.PAD_FORM_ITEMS +
+        return item.lockedHeight + ScreenSkin.PAD_FORM_ITEMS + 
             ScreenSkin.PAD_FORM_ITEMS;
     }
-
+    
     /**
      * This method set up internal cycle.
-     *
+     *   
      * @param cycle - show if internal cycle need in
-     * this item.
+     * this item. 
      */
     void setInternalCycle(boolean cycle) {
-        this.isInternalCycle = cycle;
+        this.isInternalCycle = cycle;   
     }
 
     /** bounds[] array index to x coordinate */
     final static int X      = DisplayableLFImpl.X;
-
+    
     /** bounds[] array index to y coordinate */
     final static int Y      = DisplayableLFImpl.Y;
-
+    
     /** bounds[] array index to width */
     final static int WIDTH  = DisplayableLFImpl.WIDTH;
-
+    
     /** bounds[] array index to height */
     final static int HEIGHT = DisplayableLFImpl.HEIGHT;
-
+    
     /**
      * The owner of this view. Set in the constructor.
      */
     Item item; // = null
-
+    
     /**
      * An array of 4 elements, describing the x, y, width, height
      * of this Item's bounds in the viewport coordinate space.
@@ -1429,7 +1429,7 @@ abstract class ItemLFImpl implements ItemLF {
      * If its null, it means the Item is currently not in the viewport
      */
     int[] bounds;
-
+    
 
     /**
      * A flag indicating this Item has the input focus. This is
@@ -1459,7 +1459,7 @@ abstract class ItemLFImpl implements ItemLF {
      * It will turn to false after it get laid out
      */
     boolean[] actualBoundsInvalid;
-
+    
     /**
      * This flag marks if the last layout performed placed
      * this Item at the beginning of a line.
@@ -1478,7 +1478,7 @@ abstract class ItemLFImpl implements ItemLF {
     int target[];
 
     /**
-     * Is true only if this item can indicate that it has focus by
+     * Is true only if this item can indicate that it has focus by 
      * changing appearance, requiring no external traversal indicator
      */
 
@@ -1490,7 +1490,7 @@ abstract class ItemLFImpl implements ItemLF {
     static final int INVALID_SIZE = -1;
 
     /**
-     * Width used for last calculations. If the width passed into
+     * Width used for last calculations. If the width passed into 
      * lGetPreferredWidth/Height and lCallPaint is the same as cachedWidth
      * then values from labelBounds and contentBounds could be used
      * without recalculation.
@@ -1504,11 +1504,11 @@ abstract class ItemLFImpl implements ItemLF {
      * defined in this class.
      */
     int labelBounds[]; // = null
-
+     
     /**
-     * Current content location and size. This array is newed in the
-     * constructor. It holds location and size of the label
-     * in the internal bounds coordinate system.
+     * Current content location and size. This array is newed in the 
+     * constructor. It holds location and size of the label 
+     * in the internal bounds coordinate system. 
      * It can be referenced using X, Y, WIDTH, HEIGHT defined in this class.
      */
     int contentBounds[]; // = null
@@ -1526,7 +1526,7 @@ abstract class ItemLFImpl implements ItemLF {
     /** true if pointer dragged over the item **/
     boolean pointerDragged; // = false;
 
-
+    
     /** True if internal cycle need in this item.*/
     boolean isInternalCycle;
 }

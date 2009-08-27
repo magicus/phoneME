@@ -463,13 +463,13 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @param y the x coordinate of the pointer up
      */
     void uCallPointerReleased(int x, int y) {
-        if (!itemWasPressed) {
+        if (!itemWasPressed || pointerDragged) {
             itemSelectedWhenPressed = false;
             itemWasPressed = false;
             pointerDragged = false;
             return;
         }
-
+        
         if (popupLayer.isPopupOpen()) {
             // do not dismiss the popup until a new selection is made.
             int i = getIndexByPointer(x, y);

@@ -72,10 +72,6 @@ $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java: \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.jpp
 	@$(call runjpp,$^,$@)
 
-$(GENERATED_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java: \
-    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.jpp
-	@$(call runjpp,$^,$@)
-
 $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java: \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.jpp
 	@$(call runjpp,$^,$@)
@@ -86,7 +82,6 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java \
     $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java \
     $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameAccess.java \
@@ -107,6 +102,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironment.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/PhoneDial.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DefaultDisplayIdPolicy.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandler.java \
@@ -117,8 +113,6 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundController.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/SystemAlert.java \
-    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/NativeWindowStateListener.java \
-    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayOrientationAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayStaticAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationFactory.java \
@@ -207,10 +201,6 @@ endif
 
 ifeq ($(USE_OPENGL), true)
   JPP_DEFS += -DENABLE_OPENGL
-endif
-
-ifeq ($(USE_DYNAMIC_PIXEL_FORMAT), true)
-  JPP_DEFS += -DENABLE_DYNAMIC_PIXEL_FORMAT
 endif
 
 ifeq ($(USE_MULTIPLE_DISPLAYS), true)
