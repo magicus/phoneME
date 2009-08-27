@@ -348,6 +348,21 @@ JVM_GetComponentType(JNIEnv *env, jclass cls)
     return (*env)->NewLocalRef(env, CVMcbJavaInstance(elementCb));
 }
 
+#ifdef JAVASE
+JNIEXPORT jint JNICALL
+JVM_GetClassAccessFlags(JNIEnv *env, jclass cls)
+{
+    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
+    CVMClassBlock* cb = CVMgcSafeClassRef2ClassBlock(ee, cls);
+    jint access = CVMcbAccessFlags(cb);
+
+    /* Remove the CVM internal bits: */
+    access &= ~(CVM_CLASS_ACC_PRIMITIVE | CVM_CLASS_ACC_FINALIZABLE |
+        CVM_CLASS_ACC_REFERENCE);
+    return access; 
+}
+#endif
+
 /* Remember that ACC_SUPER is added by the VM, and must be stripped. */
 JNIEXPORT jint JNICALL
 JVM_GetClassModifiers(JNIEnv *env, jclass cls)

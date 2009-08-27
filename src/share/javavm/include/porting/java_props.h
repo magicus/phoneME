@@ -71,6 +71,7 @@ typedef struct {
 
     const char *country;
     const char *variant;
+    const char *sun_jnu_encoding;
 #endif
 
 } java_props_t;

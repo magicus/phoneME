@@ -579,6 +579,18 @@ JNIEXPORT jobject JNICALL
 JVM_AssertionStatusDirectives(JNIEnv *env, jclass unused);
 #endif
 
+#ifdef JAVASE
+/*
+ * sun.misc.AtomicLong
+ */
+JNIEXPORT jboolean JNICALL
+JVM_SupportsCX8(void);
+
+JNIEXPORT jboolean JNICALL
+JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fldID, jlong oldVal, jlong newVal);
+
+#endif
+
 /* Constants in class files */
 
 #define JVM_ACC_PUBLIC        0x0001  /* visible to everyone */

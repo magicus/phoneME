@@ -2281,6 +2281,18 @@ CVMconvertJavaStringToCString(CVMExecEnv* ee, jobject stringobj)
     int        i;
 
     strDirect = CVMID_icellDirect(ee, stringobj);
+
+#ifdef JAVASE
+    /* FIXME - investigate the need for this. Supposedly SE will crash
+       if NULL is returned. This fix is just a hack.
+    */
+    if (strDirect == NULL) { 
+	buffer = malloc(16);
+	*buffer = '\0';
+        return buffer;
+    }
+#endif
+
     CVMD_fieldReadInt(strDirect, CVMoffsetOfjava_lang_String_offset, offset);
     CVMD_fieldReadInt(strDirect, CVMoffsetOfjava_lang_String_count, length);
     CVMD_fieldReadRef(strDirect, CVMoffsetOfjava_lang_String_value, charObj);

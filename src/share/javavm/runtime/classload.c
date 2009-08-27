@@ -1466,10 +1466,21 @@ CVMclassPathInit(JNIEnv* env, CVMClassPath* classPath,
 		    currEntry->zip = zip;
                     /* For classpath entries only */
                     if (initJavaSide) {
+
+/* Java SE Doesn't support this ZIP function
+   FIXME - need to determine where jar file signing occurs in SE and
+   make sure that wearen't disabling some security check with this change.
+*/
+#ifndef JAVASE
                         if (ZIP_IsSigned(currEntry->zip)) {
                             currEntry->isSigned = CVM_TRUE;
                         }
+#endif
                         if (!hasExtInfo) {
+/* Java SE Doesn't support this ZIP function.
+   FIXME - see comment above
+*/
+#ifndef JAVASE
                             if (ZIP_HasExtInfo(currEntry->zip)) {
                                 CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
                                 jclass appclClass; 
@@ -1489,6 +1500,7 @@ CVMclassPathInit(JNIEnv* env, CVMClassPath* classPath,
                                 }
                                 hasExtInfo = CVM_TRUE; 
                             }
+#endif
                         }
                     }
 		}

@@ -338,6 +338,10 @@ CVMgetJavaProperties(java_props_t *sprops)
                 std_encoding = "EUC-JP-LINUX";
             }
             sprops->encoding = std_encoding;
+#ifdef JAVASE 
+            sprops->sun_jnu_encoding = sprops->encoding;
+#endif
+
         }
     }
     

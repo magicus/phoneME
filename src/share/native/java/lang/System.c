@@ -124,6 +124,9 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
      */
     PUTPROP(props, "user.language", sprops.language);
     PUTPROP(props, "file.encoding", sprops.encoding);
+#ifdef JAVASE
+    PUTPROP(props, "sun.jnu.encoding", sprops.sun_jnu_encoding);
+#endif
     if (sprops.region) {
         PUTPROP(props, "user.region", sprops.region);
     }

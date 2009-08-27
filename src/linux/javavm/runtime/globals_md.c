@@ -307,7 +307,7 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 		dllpath = archlib;
 	    }
             pathInfo->basePath = strdup(javahomepath);
-            pathInfo->libPath = strdup(libPath);
+            pathInfo->libPath = strdup(libpath);
             pathInfo->dllPath = strdup(dllpath);
 	    return CVM_TRUE;
         }

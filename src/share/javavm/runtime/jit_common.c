@@ -1843,6 +1843,8 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	"nextSimpleSync",
         0
     },
+/* Java 5 doesn't sync these methods anymore */
+#ifndef JAVASE
     {
 	/* java.util.Hashtable.size()I */
 	CVMsystemClass(java_util_Hashtable),
@@ -1893,6 +1895,7 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	"appendSimpleSync",
         0
     },
+#endif /* !JAVASE */
     {
 	/* java.util.Vector.capacity()I */
 	CVMsystemClass(java_util_Vector),
