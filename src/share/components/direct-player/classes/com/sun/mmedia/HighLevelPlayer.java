@@ -548,17 +548,19 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         final int appId = AppIsolate.getIsolateId();
 
         asyncExecutor = new AsyncExecutor();
-        asyncExecutor.runAsync( new AsyncTask() {
-            public void run() throws MediaException {
+
+        int result = -1;
+        if( asyncExecutor.runAsync( new AsyncTask() {
+            public boolean run() throws MediaException {
                 hNative = nCreateAndRealizeURLBasedPlayerAsync(appId,
                         pID, locator);
-
+                return ( 0 != hNative );
             }
-        } );
+        } ) ) {
+            result = asyncExecutor.getResult();
+            nDoOnRealizeResult(result);
+        }
         System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
-
-        int result = asyncExecutor.getResult();
-        nDoOnRealizeResult( result );
 
         handledByDevice = ( 0 == result );
 
@@ -599,15 +601,16 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
             final String contentType = type;
 
-            asyncExecutor.runAsync( new AsyncTask() {
-                public void run() throws MediaException {
+            if( asyncExecutor.runAsync( new AsyncTask() {
+                public boolean run() throws MediaException {
                     hNative = nCreateAndRealizeJavaFedPlayerAsync(appId, pID,
                             locator, contentType, len );
+                    return ( 0 != hNative );
                 }
-            });
-
-            result = asyncExecutor.getResult();
-            nDoOnRealizeResult( result );
+            }) ) {
+                result = asyncExecutor.getResult();
+                nDoOnRealizeResult( result );
+            }
             System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
         }
 
@@ -726,8 +729,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         /* predownload media data to fill native buffers */
         if( null != asyncExecutor ) {
             asyncExecutor.runAsync( new AsyncTask() {
-                public void run() throws MediaException {
+                public boolean run() throws MediaException {
                     lowLevelPlayer.doPrefetch();
+                    return true;
                 }
             });
             System.out.println("HighLevelPlayer: Prefetch resumed");
@@ -853,10 +857,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if( null != asyncExecutor ) {
             asyncExecutor.runAsync(new AsyncTask() {
-                public void run() throws MediaException {
+                public boolean run() throws MediaException {
                     if (!lowLevelPlayer.doStart()) {
                         throw new MediaException("start");
                     }
+                    return true;
                 }
             });
             System.out.println("HighLevelPlayer: start() resumed");
@@ -926,8 +931,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         if( null != asyncExecutor )
         {
             asyncExecutor.runAsync( new AsyncTask() {
-                public void run() throws MediaException {
+                public boolean run() throws MediaException {
                     lowLevelPlayer.doStop();
+                    return true;
                 }
             });
             System.out.println("HighLevelPlayer: stop() resumed");
@@ -992,8 +998,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         if( null != asyncExecutor ) {
             try {
                 asyncExecutor.runAsync(new AsyncTask() {
-                    public void run() throws MediaException {
+                    public boolean run() throws MediaException {
                         lowLevelPlayer.doDeallocate();
+                        return true;
                     }
                 });
             } catch (MediaException ex) {}
@@ -1074,9 +1081,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             try {
                 asyncExecutor.runAsync(new AsyncTask() {
 
-                    public void run() throws MediaException {
+                    public boolean run() throws MediaException {
                         lowLevelPlayer.doClose();
                         System.out.println("HighLevelPlayer: doClose() returned");
+                        return true;
                     }
                 });
             } catch (MediaException ex) {}
@@ -1190,8 +1198,9 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         if( null != asyncExecutor ) {
             final long timeToSet = now;
             asyncExecutor.runAsync( new AsyncTask() {
-                public void run() throws MediaException {
+                public boolean run() throws MediaException {
                     lowLevelPlayer.doSetMediaTime(timeToSet);
+                    return true;
                 }
             });
             System.out.println("HighLevelPlayer: setMediaTime resumed");
@@ -1930,7 +1939,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
 interface AsyncTask {
 
-    public void run() throws MediaException;
+    public boolean run() throws MediaException;
 }
 
 class AsyncExecutor {
@@ -1939,17 +1948,22 @@ class AsyncExecutor {
     private int asyncExecResult = 0;
     private int asyncExecOutputParam = 0;
 
-    synchronized void runAsync(AsyncTask task) throws MediaException {
-        task.run();
-        isBlockedUntilEvent = true;
-        while (isBlockedUntilEvent) {
-            try {
-                wait();
-            } catch (InterruptedException ex) {
+    synchronized boolean runAsync(AsyncTask task) throws MediaException {
+        boolean res = task.run();
+        if( res ) {
+            isBlockedUntilEvent = true;
+            while (isBlockedUntilEvent) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                }
             }
+            System.out.println(
+                    "HighLevelPlayer: runAsync() unblocked");
+        } else {
+            System.out.println( "HighLevelPlayer: runAsync() didn't block" );
         }
-        System.out.println(
-                "HighLevelPlayer: runAsync() unblocked");
+        return res;
     }
 
     int getResult() {
