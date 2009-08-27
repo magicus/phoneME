@@ -37,19 +37,19 @@ class Symbol: public Oop {
   HANDLE_DEFINITION_CHECK(Symbol, Oop);
   ~Symbol() {}
   static int length_offset() { return FIELD_OFFSET(SymbolDesc, _length); }
-  jushort length() const { return ushort_field(length_offset()); }
+  jushort length(void) const { return ushort_field(length_offset()); }
 
  public:
   // To avoid endless lists of friends the static offset computation
   // routines are all public.
-  static int base_offset() { return SymbolDesc::header_size(); }
+  static int base_offset(void) { return SymbolDesc::header_size(); }
 
-  utf8 utf8_data() {
+  utf8 utf8_data(void) const {
     return symbol()->utf8_data();
   }
 
   // The address of the first byte of the string held in this Symbol
-  char * base_address() const {
+  const char* base_address(void) const {
     return ((char*)obj()) + base_offset();
   }
 
@@ -77,7 +77,12 @@ class Symbol: public Oop {
   // Returns unbounded equality hash value
   juint hash();
 
-  bool matches(Symbol *other_symbol);
+  bool matches(const SymbolDesc* other_symbol) const {
+    return symbol()->matches(other_symbol);
+  }
+  bool matches(Symbol* other_symbol) const {
+    return matches(other_symbol->symbol());
+  }
 
   int strrchr(jbyte c);
   bool is_same_class_package(Symbol* other);

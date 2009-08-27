@@ -1944,7 +1944,7 @@ ROMOptimizer::rename_non_public_fields(InstanceClass *klass JVM_TRAPS) {
   jint package_flags = get_package_flags(klass);
   const AccessFlags class_flags = klass->access_flags();
 
-  for (int i=0; i<fields().length(); i+= 5) {
+  for (int i=0; i<fields().length(); i+= Field::NUMBER_OF_SLOTS) {
     //5-tuples of shorts [access, name index, sig index, initval index, offset]
     AccessFlags field_flags;
     field_flags.set_flags(fields().ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
@@ -2597,7 +2597,7 @@ inline void ROMOptimizer::scan_live_symbols_in_fields(ObjArray *live_symbols,
   ConstantPool::Raw cp = klass->constants();
   const int fields_len = fields().length();
 
-  for( int i=0; i < fields_len; i += 5 ) {
+  for( int i=0; i < fields_len; i += Field::NUMBER_OF_SLOTS ) {
     //5-tuples of shorts [access, name index, sig index, initval index, offset]
     const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
     const jushort sig_index  = fields().ushort_at(i + Field::SIGNATURE_OFFSET);
@@ -2687,20 +2687,23 @@ bool ROMOptimizer::is_symbol_alive(ObjArray *live_symbols, Symbol* s) {
   return false;
 }
 
-class DisableCompilationMatcher : public JavaClassPatternMatcher {
+class DisableCompilationMatcher: public JavaClassMethodPatternMatcher {
   ROMVector *_log_vector;
 public:
-  DisableCompilationMatcher(ROMVector *log_vector) {
+  DisableCompilationMatcher(ROMVector* log_vector) {
     _log_vector = log_vector;
   }
 
-  virtual void handle_matching_method(Method *m JVM_TRAPS) {
-    if (!m->is_impossible_to_compile()) {
-      m->set_impossible_to_compile();
-      _log_vector->add_element(m JVM_CHECK);
-    }
-  }
+  virtual void handle_matching_method(Method *m JVM_TRAPS);
 };
+
+void DisableCompilationMatcher::handle_matching_method(Method* m JVM_TRAPS) {
+  if (!m->is_impossible_to_compile()) {
+    m->set_impossible_to_compile();
+    _log_vector->add_element(m JVM_CHECK);
+  }
+}
+
 
 void ROMOptimizer::disable_compilation(const char * pattern JVM_TRAPS) {
   DisableCompilationMatcher matcher(_disable_compilation_log);
@@ -2862,90 +2865,34 @@ void ROMHashtableManager::add_to_bucket(ObjArray *rom_table, int index,
   SHOULD_NOT_REACH_HERE();
 }
 
-void JavaClassPatternMatcher::run(const char *pattern JVM_TRAPS) {
-  initialize(pattern JVM_CHECK);
-
-  if (!_has_wildcards) {
-    quick_match(JVM_SINGLE_ARG_CHECK);
-  } else {
-    wildcard_match(JVM_SINGLE_ARG_CHECK);
-  }
-}
-
-void JavaClassPatternMatcher::quick_match(JVM_SINGLE_ARG_TRAPS) {
-  LoaderContext ctx(&_class, ErrorOnFailure);
-  UsingFastOops level1;
-  InstanceClass::Fast instance_class = SystemDictionary::find(&ctx,
-                                                   /*lookup_only=*/ true,
-                                                   /*check_only= */ true
-                                                   JVM_NO_CHECK);
-  if (instance_class.is_null()) {
-    Thread::clear_current_pending_exception();
-    return;
-  }
-
-  ObjArray::Fast methods = instance_class().methods();
+void JavaClassMethodPatternMatcher::handle_methods(const InstanceClass* klass
+                                                   JVM_TRAPS) {
+  UsingFastOops fast_oops;
+  ObjArray::Fast methods = klass->methods();
   Method::Fast m;
-  Symbol::Fast mname;
-  Symbol::Fast msignature;
-  for (int i=0; i<methods().length(); i++) {
+  const int length = methods().length();
+  for (int i = 0; i < length; i++) {
     m = methods().obj_at(i);
-    if (m.not_null()) {
-      mname = m().name();
-      msignature = m().signature();
-
-      if (match_method(&mname, &msignature)) {
-        handle_matching_method(&m JVM_CHECK);
-      }
+    if (m.not_null() && match_method(&m)) {
+      _match_found = true;
+      handle_matching_method(&m JVM_CHECK);
     }
   }
 }
 
-void JavaClassPatternMatcher::wildcard_match(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops level1;
-  InstanceClass::Fast klass;
-  Symbol::Fast cname;
-  ObjArray::Fast methods;
-  Method::Fast m;
-  Symbol::Fast mname;
-  Symbol::Fast msignature;
-  for (SystemClassStream st; st.has_next();) {
-    klass = st.next();
-    cname = klass().name();
+inline
+void JavaClassMethodPatternMatcher::initialize(const char* pattern JVM_TRAPS) {
+  _match_found = false;
 
-    if (match_class(&cname)) {
-      methods = klass().methods();
-
-      for (int i=0; i<methods().length(); i++) {
-        m = methods().obj_at(i);
-
-        if (m.not_null()) {
-          mname = m().name();
-          msignature = m().signature();
-
-          if (match_method(&mname, &msignature)) {
-            handle_matching_method(&m JVM_CHECK);
-          }
-        }
-      }
-    }
-  }
-} 
-
-void JavaClassPatternMatcher::initialize(const char* pattern JVM_TRAPS) {
-  GUARANTEE(pattern != NULL, "No empty pattern allowed");
-  const char* delimiter;
-  int pos = 0;
-
-  _as_package = false; 
-  _has_wildcards = ((char *) jvm_strrchr(pattern, '*')) != NULL;
-
-  if ((delimiter = ((char *) jvm_strrchr(pattern, '.'))) != NULL) {
-    pos = delimiter - pattern;
+  const char* delimiter = (const char*) jvm_strrchr(pattern, '.');
+  if (delimiter) {
+    int pos = delimiter - pattern;
     if (pos == 0 || (size_t) pos == jvm_strlen(pattern)) {
       tty->print_cr("invalid pattern: %s", pattern);
       return;
     }
+
+    _has_wildcards = delimiter[-1] == '*';
 
     // found at least one '.' in the middle    
     _class  = SymbolTable::slashified_symbol_for((utf8) pattern,
@@ -2971,70 +2918,47 @@ void JavaClassPatternMatcher::initialize(const char* pattern JVM_TRAPS) {
   } else {
     // no dots in it whatsoever, the only possible case is '*'
     // maybe generate an error
-    if (pattern[0] != '*') {
+    if (pattern[0] != '*' || pattern[1] != 0) {
       tty->print_cr("invalid pattern: %s", pattern);
       return;
     }
-    _class = SymbolTable::symbol_for("*" JVM_CHECK);
-    _method = SymbolTable::symbol_for("*" JVM_CHECK);
+    _has_wildcards = true;
+    OopDesc* ast = SymbolTable::symbol_for("*" JVM_CHECK);
+    _class = ast;
+    _method = ast;
   }
-
-  return;
 }
 
-void JavaClassPatternMatcher::initialize_as_package(Symbol* class_name JVM_TRAPS) {
-  GUARANTEE(class_name != NULL, "sanity");
+void JavaClassMethodPatternMatcher::run(const char pattern[] JVM_TRAPS) {
+  initialize(pattern JVM_CHECK);
 
-  int pos = class_name->strrchr('/');
-  GUARANTEE(pos > -1, "ROMizing class without package, are you sure?");
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
 
-  _as_package = true;  
-  
-  // forge java.lang.* from java.lang.Object
-  TypeArray byte_array = Universe::new_byte_array(pos+2 JVM_CHECK);
-  jvm_memcpy(byte_array.data(), class_name->base_address(), pos+1);
-  *((jbyte*)byte_array.data()+pos+1) = '*';
-
-  // create symbols for matching
-  _class  = SymbolTable::symbol_for(&byte_array JVM_CHECK);
-  _method = SymbolTable::symbol_for("*" JVM_CHECK); // just in case
-}
-
-bool JavaClassPatternMatcher::match_class(Symbol* symbol) {
-  return match(&_class, symbol);
-}
-
-bool JavaClassPatternMatcher::match_method(Symbol* name, Symbol* signature) {
-  if (_signature.is_null()) {
-    return match(&_method, name);
+  if (!_has_wildcards) {
+    LoaderContext ctx(&_class, ErrorOnFailure);
+    klass = SystemDictionary::find(&ctx, /*lookup_only=*/ true,
+                                         /*check_only= */ true JVM_NO_CHECK);
+    if (klass.not_null()) {
+      handle_methods(&klass JVM_NO_CHECK_AT_BOTTOM);
+    } else {
+      Thread::clear_current_pending_exception();
+    }
   } else {
-    return match(&_method, name) && _signature.matches(signature);
-  }
-}
-
-bool JavaClassPatternMatcher::match(Symbol* pattern, Symbol* symbol) {
-  int i;
-
-  for (i=0; i<symbol->length(); i++) {
-
-    if (i >= pattern->length()) {
-      return false;
-    }
-
-    char ch1 = *(symbol->base_address() + i);    
-    char ch2 = *(pattern->base_address() + i);
-
-    if (ch2 == '*') {
-      return true;
-    }
-    if (ch1 != ch2) {
-      return false;
+    for (SystemClassStream st; st.has_next();) {
+      klass = st.next();
+      if (match_class(&klass)) {
+        handle_methods(&klass JVM_CHECK);
+      }
     }
   }
-
-  // maybe just true, but let's be verbose
-  return (i == pattern->length());
+#if USE_SOURCE_IMAGE_GENERATOR
+  if (!_match_found) {
+    ROMOptimizer::config_warning("No match found");
+  }
+#endif
 }
+
 
 bool ROMOptimizer::is_special_method(Method* method) {
   Symbol::Raw name = method->name();
@@ -3556,46 +3480,52 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
  * allocation in java heap!
  */
 void ROMOptimizer::initialize_subclasses_cache(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops level1;
   *subclasses_array() =
       Universe::new_obj_array(Universe::number_of_java_classes() JVM_CHECK);
+
+  UsingFastOops fast_oops;
   TypeArray::Fast sizes =
-      Universe::new_short_array(Universe::number_of_java_classes() JVM_CHECK);
+    Universe::new_short_array(Universe::number_of_java_classes() JVM_CHECK);
 
   //first loop - counting required array sizes
-  InstanceClass::Fast klass;  
-  for (SystemClassStream st(true); st.has_next(); ) {
-    klass = st.next();
-    if (klass().is_interface()) {
-      continue;
-    }    
-    while (klass.not_null()) {            
-      int class_id = klass().class_id();
-      sizes().short_at_put(class_id, sizes().short_at(class_id) + 1);
-      klass = klass().super();
+  {
+    for (SystemClassStream st(true); st.has_next(); ) {
+      InstanceClass::Raw klass = st.next();
+      if (klass().is_interface()) {
+        continue;
+      }    
+      do {            
+        const int class_id = klass().class_id();
+        const short size = sizes().short_at(class_id);
+        sizes().short_at_put(class_id, size+1);
+      } while( klass = klass().super(), klass.not_null() );
     }
   }
 
-  TypeArray::Fast cur_item;
-  for (int i = 0; i < Universe::number_of_java_classes(); i++) {
-    cur_item = Universe::new_short_array(sizes().short_at(i) JVM_CHECK);
-    subclasses_array()->obj_at_put(i, cur_item);
-    sizes().short_at_put(i, 0);
+  {
+    for (int i = 0; i < Universe::number_of_java_classes(); i++) {
+      OopDesc* cur_item =
+        Universe::new_short_array(sizes().short_at(i) JVM_ZCHECK(cur_item));
+      subclasses_array()->obj_at_put(i, cur_item);
+      sizes().short_at_put(i, 0);
+    }
   }
   
-  for (SystemClassStream st1(true); st1.has_next(); ) {
-    klass = st1.next();
-    if (klass().is_interface()) {
-      continue;
-    } 
+  {
+    for (SystemClassStream st(true); st.has_next(); ) {
+      InstanceClass::Raw klass = st.next();
+      if (klass().is_interface()) {
+        continue;
+      } 
 
-    int processed_class_id = klass().class_id();        
-    while (klass.not_null()) {            
-      int class_id = klass().class_id();      
-      cur_item = subclasses_array()->obj_at(class_id);
-      cur_item().short_at_put(sizes().short_at(class_id), processed_class_id);
-      sizes().short_at_put(class_id, sizes().short_at(class_id) + 1);
-      klass = klass().super();
+      const int processed_class_id = klass().class_id();        
+      do {
+        const int class_id = klass().class_id();      
+        TypeArray::Raw cur_item = subclasses_array()->obj_at(class_id);
+        const short size = sizes().short_at(class_id);
+        cur_item().short_at_put(size, processed_class_id);
+        sizes().short_at_put(class_id, size+1);
+      } while (klass = klass().super(), klass.not_null());
     }
   }
 }

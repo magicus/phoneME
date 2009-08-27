@@ -2437,7 +2437,7 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
 OopDesc* Method::compute_entry_counts(JVM_SINGLE_ARG_TRAPS) const {
   const int codesize = code_size();
   TypeArray::Raw entry_count_array =
-    Universe::new_byte_array(codesize JVM_OZCHECK(entry_count_array));
+    Universe::new_byte_array(codesize JVM_OZCHECK_0(entry_count_array));
 
   AllocationDisabler raw_pointers_used_in_this_function;
   jubyte* entry_counts = entry_count_array().base_address();

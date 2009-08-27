@@ -58,10 +58,6 @@ juint Symbol::hash() {
   return SymbolTable::hash(utf8_data(), length());
 }
 
-bool Symbol::matches(Symbol *other_symbol) {
-  return symbol()->matches(other_symbol->symbol());
-}
-
 int Symbol::strrchr(jbyte c) {
   int len = length();
   GUARANTEE(len >= 0, "sanity check");  

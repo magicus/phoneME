@@ -219,7 +219,7 @@
 #define JavaClass  JVMJavaClass
 #define JavaClassDesc  JVMJavaClassDesc
 #define JavaClassObj  JVMJavaClassObj
-#define JavaClassPatternMatcher  JVMJavaClassPatternMatcher
+#define JavaClassMethodPatternMatcher  JVMJavaClassMethodPatternMatcher
 #define JavaDebugger  JVMJavaDebugger
 #define JavaDesc  JVMJavaDesc
 #define JavaFrame  JVMJavaFrame
@@ -1252,9 +1252,11 @@ extern jint global_check_count;
         _IGNORE_ME_(0
 
 #define JVM_ZCHECK(cond)                  , JVM_SINGLE_ARG_ZCHECK(cond)
+#define JVM_OZCHECK(obj)                  , JVM_SINGLE_ARG_ZCHECK((obj).not_null())
+#define JVM_SINGLE_ARG_OZCHECK(obj)         JVM_SINGLE_ARG_ZCHECK((obj).not_null())
 #define JVM_ZCHECK_0(cond)                , JVM_SINGLE_ARG_ZCHECK_0(cond)
-#define JVM_OZCHECK(obj)                  , JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
-#define JVM_SINGLE_ARG_OZCHECK(obj)         JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_OZCHECK_0(obj)                , JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_SINGLE_ARG_OZCHECK_0(obj)       JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
 
 // Single-argument signature versions of the JVM_CHECK and THROW macros below:
 #define JVM_SINGLE_ARG_CHECK \
@@ -1356,9 +1358,11 @@ extern jint global_check_count;
         _IGNORE_ME_(0
 
 #define JVM_ZCHECK(cond)                  JVM_SINGLE_ARG_ZCHECK(cond)
+#define JVM_OZCHECK(obj)                  JVM_SINGLE_ARG_ZCHECK(((obj).not_null()))
+#define JVM_SINGLE_ARG_OZCHECK(obj)       JVM_SINGLE_ARG_ZCHECK(((obj).not_null()))
 #define JVM_ZCHECK_0(cond)                JVM_SINGLE_ARG_ZCHECK_0(cond)
-#define JVM_OZCHECK(obj)                  JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
-#define JVM_SINGLE_ARG_OZCHECK(obj)       JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_OZCHECK_0(obj)                JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_SINGLE_ARG_OZCHECK_0(obj)     JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
 
 // In product builds we minimize the amount of code these macros expand to,
 // forgoing syntax checks that are present otherwise (see non-product above)

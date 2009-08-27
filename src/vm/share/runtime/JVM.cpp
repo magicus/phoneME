@@ -707,7 +707,7 @@ bool JVM::start_standalone_rom_generator(JVM_SINGLE_ARG_TRAPS) {
     GUARANTEE(method.not_null() && method().is_static(), "sanity");
 
     EntryActivation::Fast entry =
-      Universe::new_entry_activation(&method, 0 JVM_OZCHECK(entry));
+      Universe::new_entry_activation(&method, 0 JVM_OZCHECK_0(entry));
     Thread::current()->append_pending_entry(&entry);
 #else
     Symbol* method_name = Symbols::create_app_image_name();
@@ -726,7 +726,7 @@ bool JVM::start_standalone_rom_generator(JVM_SINGLE_ARG_TRAPS) {
 
     // Create a delayed activation for the generateROMImage() method
     EntryActivation::Fast entry =
-        Universe::new_entry_activation(&method, 3 JVM_CHECK_0);
+        Universe::new_entry_activation(&method, 3 JVM_OZCHECK_0(entry));
     entry().obj_at_put(0, &input);
     entry().obj_at_put(1, &output);
     entry().int_at_put(2, flags);

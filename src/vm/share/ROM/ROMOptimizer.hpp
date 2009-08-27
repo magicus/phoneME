@@ -437,15 +437,19 @@ private:
   void read_hardcoded_config(JVM_SINGLE_ARG_TRAPS);
   void optimize_package_lists(JVM_SINGLE_ARG_TRAPS);
   static void abort( void );
-  void config_message( const char category[], const char msg[] ) const;
-  void config_warning( const char msg[] ) const;
-  void config_error( const char msg[] ) const;
+  static void config_message( const char category[], const char msg[] );
+  static void config_warning( const char msg[] );
+  static void config_error( const char msg[] );
+  bool validate_pattern( const char pattern[], const int len ) const;
   bool validate_pattern( const char pattern[] ) const;
+  bool validate_class_pattern( const char pattern[] ) const;
+  bool validate_member_pattern( const char pattern[] ) const;
+  bool validate_field_pattern( const char pattern[] ) const;
+  bool validate_method_pattern( const char pattern[] ) const;
   void process_config_line(char* config_line JVM_TRAPS);
   void include_config_file(const char* config_file JVM_TRAPS);
   static char parse_config(char* line, const char*& name, const char*& value);
-  void add_class_to_list(ObjArray *list, const char *flag, const char *classname
-                         JVM_TRAPS);
+  void add_class_to_list(ObjArray* list, const char classname[] JVM_TRAPS);
   void add_package_to_list(ROMVector* vector, const char *pkgname JVM_TRAPS);
   void add_package_to_list(ROMVector* vector, Symbol* pkgname JVM_TRAPS);
   void remove_packages(ROMVector* from, Symbol* pattern);
@@ -500,7 +504,7 @@ private:
 #if USE_SOURCE_IMAGE_GENERATOR
   static bool name_matches_pattern(const char name[], const int name_len,
                                          ROMVector* patterns);
-  static bool name_matches_pattern(Symbol* s, ROMVector* patterns);
+  static bool name_matches_pattern(const Symbol* s, ROMVector* patterns);
 #endif
 
   bool has_subclasses(InstanceClass *klass);
@@ -721,33 +725,40 @@ private:
   };
 
   friend class MethodIterator;
+  friend class JavaClassMethodPatternMatcher;
 };
 
-class JavaClassPatternMatcher {
+class JavaClassMethodPatternMatcher {
   Symbol _class, _method, _signature;
-  bool   _as_package;
   bool   _has_wildcards;
+  bool   _match_found;
 private:
-  bool match(Symbol* pattern, Symbol* symbol);
+  static bool name_matches_pattern(const char name[],    const int name_len, 
+                                   const char pattern[], const int pattern_len){
+    return Universe::name_matches_pattern(name, name_len, pattern, pattern_len);
+  }
+  static bool name_matches_pattern(const SymbolDesc* name, const Symbol* pattern) {
+    return name_matches_pattern(name->utf8_data(), name->utf8_length(),
+                                pattern->utf8_data(), pattern->length());
+  }
 
   void initialize(const char* pattern JVM_TRAPS);
-  void initialize_as_package(Symbol* class_name JVM_TRAPS);
 
-  bool match_class(Symbol* symbol);
-  bool match_method(Symbol* name, Symbol* signature);
+  bool match_class(const InstanceClass* klass) const {
+    return name_matches_pattern((SymbolDesc*)klass->name(), &_class);
+  }
+  bool match_method(const Method* method) const {
+    return name_matches_pattern((SymbolDesc*)method->name(), &_method) &&
+           (_signature.is_null() || _signature.obj() == method->signature());
+  }
 
-  void quick_match(JVM_SINGLE_ARG_TRAPS);
-  void wildcard_match(JVM_SINGLE_ARG_TRAPS);
+  void handle_methods(const InstanceClass* klass JVM_TRAPS);
 public:
   /**
    * Override this method to handle all matching methods.
    */
-  virtual void handle_matching_method(Method* /*method*/ JVM_TRAPS) {
-    JVM_IGNORE_TRAPS;
-    SHOULD_NOT_REACH_HERE();
-  }
-
-  void run(const char *pattern JVM_TRAPS);
+  virtual void handle_matching_method(Method* /*method*/ JVM_TRAPS) = 0;
+  void run(const char pattern[] JVM_TRAPS);
 };
 
 #endif // ENABLE_ROM_GENERATOR

@@ -92,7 +92,7 @@ class Universe: public AllStatic {
                               JVM_TRAPS);
   static ReturnOop interned_string_for(CharacterStream *stream JVM_TRAPS);
   static ReturnOop interned_string_for(String *string JVM_TRAPS);
-  static ReturnOop interned_string_from_utf8(Oop *oop JVM_TRAPS);
+  static ReturnOop interned_string_from_utf8(OopDesc* p JVM_TRAPS);
 
   // Allocate a new java near
   static ReturnOop new_java_near(JavaClass* java_class JVM_TRAPS) {
@@ -310,8 +310,8 @@ private:
   static ReturnOop new_vector(JVM_SINGLE_ARG_TRAPS);  
 #endif // USE_SOURCE_IMAGE_GENERATOR
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-  static bool name_matches_pattern(const char* name, int name_len, 
-                                   const char* pattern, int pattern_len);  
+  static bool name_matches_pattern(const char name[],    int name_len, 
+                                   const char pattern[], int pattern_len);  
  
  private:
   typedef OopDesc* Allocator(size_t size JVM_TRAPS);

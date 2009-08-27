@@ -1303,7 +1303,7 @@ void BytecodeCompileClosure::set_field_class_id(Value& field_value,
     ENABLE_ROM_GENERATOR ? ic->original_fields() : ic->fields();
   const int fields_count = fields().length();
 
-  for (int index = 0; index < fields_count; index += 5) {
+  for (int index = 0; index < fields_count; index += Field::NUMBER_OF_SLOTS) {
 #if ENABLE_ROM_GENERATOR
     OriginalField field(ic, index);
 #else

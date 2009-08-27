@@ -31,7 +31,7 @@
 ReturnOop ROMProfile::create(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   ROMProfile::Fast profile =
-    Universe::new_profile(JVM_SINGLE_ARG_OZCHECK(profile));
+    Universe::new_profile(JVM_SINGLE_ARG_OZCHECK_0(profile));
 
   OopDesc* p = Universe::new_vector(JVM_SINGLE_ARG_ZCHECK_0(p));
   profile().set_hidden_classes(p);
@@ -46,7 +46,7 @@ ReturnOop ROMProfile::create(JVM_SINGLE_ARG_TRAPS) {
 
 ReturnOop ROMProfile::create(const char name[] JVM_TRAPS) {
   UsingFastOops fast_oops;
-  ROMProfile::Fast profile = create(JVM_SINGLE_ARG_OZCHECK(profile));
+  ROMProfile::Fast profile = create(JVM_SINGLE_ARG_OZCHECK_0(profile));
 
   OopDesc* p = SymbolTable::symbol_for(name JVM_ZCHECK_0(p));
   profile().set_profile_name(p);  

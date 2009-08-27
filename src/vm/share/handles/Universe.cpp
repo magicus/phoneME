@@ -87,16 +87,14 @@ ReturnOop Universe::new_vector(JVM_SINGLE_ARG_TRAPS) {
 #endif // USE_SOURCE_IMAGE_GENERATOR
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
-bool Universe::name_matches_pattern(const char* name, int name_len, 
-                                    const char* pattern, int pattern_len) {
-  if( pattern_len > 1 &&
-      pattern[pattern_len-2] == '/' && pattern[pattern_len-1] == '*' ) {
-    pattern_len -= 2;
-    if( name_len > pattern_len && name[pattern_len] == '/' ) {
+bool Universe::name_matches_pattern(const char name[],    int name_len, 
+                                    const char pattern[], int pattern_len) {
+  if( pattern_len > 0 && pattern[pattern_len-1] == '*' ) {
+    if( name_len > --pattern_len ) {
       name_len = pattern_len;
     }
   }
-
+  // memcmp returns 0 when length is 0
   return name_len == pattern_len &&
          jvm_memcmp(pattern, name, pattern_len) == 0;
 }
@@ -1288,9 +1286,13 @@ ReturnOop Universe::new_method(const int code_length,
 
 ReturnOop Universe::new_constant_pool(int length JVM_TRAPS) {
   UsingFastOops fast_oops;
-  ConstantPool::Fast cp = allocate_constant_pool(length JVM_OZCHECK(cp));
-  TypeArray::Raw tags = new_byte_array(length JVM_OZCHECK(tags));
-  cp().set_tags(&tags);
+  ConstantPool::Fast cp = allocate_constant_pool(length JVM_NO_CHECK);
+  if (cp.not_null()) {
+    TypeArray::Raw tags = new_byte_array(length JVM_NO_CHECK);
+    if (tags.not_null()) {
+      cp().set_tags(&tags);
+    }
+  }
   return cp;
 }
 
@@ -1367,7 +1369,7 @@ ReturnOop Universe::new_instance_class(int vtable_length,
   ClassInfo::Fast info = allocate_class_info(vtable_length, itable_length,
                                              itable_size,
                                              ISOLATES_PARAM(static_field_size)
-                                             false JVM_CHECK_0);
+                                             false JVM_OZCHECK_0(info));
 
   // (2) Allocate the InstanceClass
   size_t object_size =
@@ -1383,7 +1385,7 @@ ReturnOop Universe::new_instance_class(int vtable_length,
   result().set_class_info(&info);
 
   {
-    Near::Raw prototype = allocate_java_near(&result JVM_OZCHECK(prototype));
+    Near::Raw prototype = allocate_java_near(&result JVM_OZCHECK_0(prototype));
     result().set_prototypical_near(&prototype);
   }
 
@@ -1534,44 +1536,43 @@ ReturnOop Universe::new_obj_array(int length JVM_TRAPS) {
 
 ReturnOop Universe::new_obj_array(JavaClass* klass, int length JVM_TRAPS) {
   UsingFastOops fast_oops;
-  FarClass::Fast f = klass->get_array_class(1 JVM_OZCHECK(f));
+  FarClass::Fast f = klass->get_array_class(1 JVM_OZCHECK_0(f));
   return allocate_array(&f, length, sizeof(OopDesc*) JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
-ReturnOop Universe::interned_string_from_utf8(Oop *oop JVM_TRAPS) {
+ReturnOop Universe::interned_string_from_utf8(OopDesc* p JVM_TRAPS) {
   // Here's a fast path for interning a string that contains only
   // ASCII characters.
 
   UsingFastOops fast_oops;
-  String::Fast s = new_instance(string_class() JVM_CHECK_0);
-  bool is_symbol = oop->is_symbol();
+  Oop::Fast oop = p;
+  String::Fast s = new_instance(string_class() JVM_OZCHECK_0(s));
+  const bool is_symbol = oop().is_symbol();
   jint length;
 
   if (is_symbol) {
-    length = ((Symbol*)oop)->length();
+    length = ((const Symbol&)oop()).length();
   } else {
-    GUARANTEE(oop->is_byte_array(), "sanity");
-    length = ((TypeArray*)oop)->length();
+    GUARANTEE(oop().is_byte_array(), "sanity");
+    length = ((const TypeArray&)oop()).length();
   }
 
   s().set_offset(0);
   s().set_count(length);
-  TypeArray::Fast t = new_char_array(length JVM_CHECK_0);
+  TypeArray::Fast t = new_char_array(length JVM_OZCHECK_0(t));
   s().set_value(&t);
 
   {
     AllocationDisabler raw_pointers_used_in_this_block;
-    jubyte *src;
-    jubyte *src_end;
+    const jubyte* src;
+    if (is_symbol) {
+      src = (jubyte*) ((const Symbol&)oop()).base_address();
+    } else {
+      src = (jubyte*) ((const TypeArray&)oop()).base_address();
+    }
+    const jubyte* src_end = src + length;
     jchar  *dst = (jchar*) t().base_address();
     jint mask = 0x80;
-
-    if (is_symbol) {
-      src = (jubyte*) ((Symbol*)oop)->base_address();
-    } else {
-      src = (jubyte*) ((TypeArray*)oop)->base_address();
-    }
-    src_end = src + length;
 
     while (src < src_end) {
       juint b = (jint)(*src++);
@@ -1587,10 +1588,10 @@ ReturnOop Universe::interned_string_from_utf8(Oop *oop JVM_TRAPS) {
 
 slow:
   if (is_symbol) {
-    SymbolStream stream((Symbol*)oop);
+    SymbolStream stream((Symbol*)&oop);
     return Universe::interned_string_for(&stream JVM_NO_CHECK_AT_BOTTOM_0);
   } else {
-    ByteStream stream((TypeArray*)oop);
+    ByteStream stream((TypeArray*)&oop);
     return Universe::interned_string_for(&stream JVM_NO_CHECK_AT_BOTTOM_0);
   }
 }
@@ -1602,7 +1603,7 @@ ReturnOop Universe::interned_string_for(CharacterStream *stream JVM_TRAPS) {
   // defined in multiple classfiles in the same Midlet. So we always
   // create the String at the beginning to make things go faster.
   UsingFastOops fast_oops;
-  String::Fast string = Universe::new_string(stream JVM_OZCHECK(string));
+  String::Fast string = Universe::new_string(stream JVM_OZCHECK_0(string));
 
   return Universe::interned_string_for(&string JVM_NO_CHECK_AT_BOTTOM_0);
 }
@@ -2225,11 +2226,11 @@ ReturnOop Universe::copy_strings_to_byte_arrays(OopDesc* strings JVM_TRAPS) {
   UsingFastOops fastoops;
   ObjArray::Fast string_array = strings;
   const int new_len = string_array.is_null() ? 0 : string_array().length();  
-  ObjArray::Fast result = new_obj_array(new_len JVM_OZCHECK(result));
+  ObjArray::Fast result = new_obj_array(new_len JVM_OZCHECK_0(result));
   for( int i = 0; i < new_len; i++ ) {
-    String::Raw str = string_array().obj_at(i);
-    TypeArray::Raw sym = Symbol::copy_string_to_byte_array(str.obj(), false
-                                                           JVM_OZCHECK(sym));
+    OopDesc* str = string_array().obj_at(i);
+    OopDesc* sym = Symbol::copy_string_to_byte_array(str, false
+                                                           JVM_ZCHECK_0(sym));
     result().obj_at_put(i, sym);
   }
   return result.obj();
@@ -2241,7 +2242,7 @@ ReturnOop Universe::copy_strings_to_char_arrays(OopDesc* strings JVM_TRAPS) {
   GUARANTEE(string_array.not_null(), "no nulls allowed today");
   const int length = string_array().length();
   ObjArray::Fast result = new_obj_array(char_array_class(), length
-                                        JVM_OZCHECK(result));
+                                        JVM_OZCHECK_0(result));
   String::Fast s;
   TypeArray::Fast chars, chars_copy;
 
@@ -2249,7 +2250,7 @@ ReturnOop Universe::copy_strings_to_char_arrays(OopDesc* strings JVM_TRAPS) {
     s = string_array().obj_at(i);
     chars = s().value();
     int char_count = s().count();
-    chars_copy = Universe::new_char_array(char_count JVM_OZCHECK(chars_copy));
+    chars_copy = Universe::new_char_array(char_count JVM_OZCHECK_0(chars_copy));
     TypeArray::array_copy(&chars, s().offset(), &chars_copy, 0, char_count);
     result().obj_at_put(i, &chars_copy);
   }
@@ -2262,14 +2263,12 @@ ReturnOop Universe::make_strings_from_char_arrays(OopDesc* chars JVM_TRAPS) {
   GUARANTEE(char_arrays.not_null(), "no nulls allowed today");
   const int length = char_arrays().length();
   ObjArray::Fast result = new_obj_array(string_class(), length
-                                        JVM_OZCHECK(result));
+                                        JVM_OZCHECK_0(result));
   TypeArray::Fast ca;
-  String::Fast s;
-
   for (int i = 0; i < length; i++) {
     ca = char_arrays().obj_at(i);
-    s = new_string(&ca, 0, ca().length() JVM_OZCHECK(s));
-    result().obj_at_put(i, &s);
+    OopDesc* s = new_string(&ca, 0, ca().length() JVM_ZCHECK_0(s));
+    result().obj_at_put(i, s);
   }
   return result;
 }
@@ -2281,7 +2280,7 @@ ReturnOop Universe::deep_copy(OopDesc* obj JVM_TRAPS) {
     UsingFastOops fast_oops;
     ObjArray::Fast orig = obj;
     const int length = orig().length();
-    ObjArray::Fast copy = new_obj_array(length JVM_OZCHECK(copy));
+    ObjArray::Fast copy = new_obj_array(length JVM_OZCHECK_0(copy));
     for (int i = 0; i < length; i++) {
       OopDesc* p = deep_copy(orig().obj_at(i) JVM_CHECK_0); // can be NULL
       copy().obj_at_put(i, p);
@@ -2293,7 +2292,7 @@ ReturnOop Universe::deep_copy(OopDesc* obj JVM_TRAPS) {
     const int offset = orig().offset();
     const int length = orig().count();
     TypeArray::Fast orig_value = orig().value();
-    TypeArray::Fast copy_value = new_char_array(length JVM_OZCHECK(copy_value));
+    TypeArray::Fast copy_value = new_char_array(length JVM_OZCHECK_0(copy_value));
     TypeArray::array_copy(&orig_value, offset, &copy_value, 0, length);
     return new_string(&copy_value, 0, length JVM_NO_CHECK_AT_BOTTOM);
   } else {

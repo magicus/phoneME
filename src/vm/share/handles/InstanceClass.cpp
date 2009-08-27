@@ -1258,7 +1258,7 @@ void InstanceClass::iterate_non_static_fields(OopVisitor* visitor) {
     int next_field_index = -1;
     int min_offset = 0x7fffffff;
 
-    for (int index = 0; index < f.length(); index += 5) {
+    for (int index = 0; index < f.length(); index += Field::NUMBER_OF_SLOTS) {
       OriginalField f(this, index);
       if (!f.is_static() &&
           f.offset() > last_field_offset && 
