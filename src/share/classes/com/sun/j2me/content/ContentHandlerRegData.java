@@ -82,7 +82,12 @@ public class ContentHandlerRegData {
      * The action names that are defined by this content handler.
      */
     protected ActionNameMap[] actionnames;
+    protected ActionNameMap[] getActionNames(){
+        return actionnames;
+    }
+    
     public String getActionName( String action, String locale ){
+        actionnames = getActionNames();
         for( int i = 0; i < actionnames.length; i++){
             if( actionnames[ i ].getLocale().equals(locale) )
                 return actionnames[ i ].getActionName(action);
@@ -111,7 +116,7 @@ public class ContentHandlerRegData {
         types = data.types;
         suffixes = data.suffixes;
         actions = data.actions;
-        actionnames = data.actionnames;
+        actionnames = data.getActionNames();
         accessRestricted = data.accessRestricted;
     }
     
@@ -227,6 +232,7 @@ public class ContentHandlerRegData {
         serialize(suffixes, dataOut);
         serialize(actions, dataOut);
         
+        actionnames = getActionNames();
         dataOut.writeInt(actionnames.length);
         for( int i = 0; i < actionnames.length; i++){
             serialize( actionnames[i], dataOut );

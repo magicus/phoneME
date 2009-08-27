@@ -39,67 +39,67 @@ import javax.microedition.content.Invocation;
  * The internal structure of a registered content handler.
  */
 public class ContentHandlerImpl extends ContentHandlerRegData 
-					implements ContentHandler {
-	
-	public static interface Handle {
-		public static interface Receiver {
-			void push( Handle handle );
-		}
-		
-		String				getID();
-		
-	    /**
-	     * Returns array field
-	     * @param fieldId index of field. Allowed: 
-	     *        @link FIELD_TYPES, @link FIELD_SUFFIXES, @link FIELD_ACTIONS
-	     *        @link FIELD_LOCALES, @link FIELD_ACTION_MAP, @link FIELD_ACCESSES
-	     *        values.
-	     * @return array of values
-	     */
-	    String[] getHandlerValues(int fieldId);
-		ContentHandlerImpl 	get();
-	}
-	
-    static class Data {
-		String 			ID;
-    	ApplicationID 	appID;
-    	int				registrationMethod;
-    	
-    	public Data(){
-    		this( null, null, ~REGISTERED_STATIC_FLAG & REGISTERED_STATIC_FLAG);
-    	}
-		public Data(String handlerID, ApplicationID applicationID, int registrationMethod) {
-			ID = handlerID;
-			appID = applicationID;
-			this.registrationMethod = registrationMethod;
-			if( Logger.LOGGER != null )
-				Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
-		}
-		public Data(DataInputStream in) throws IOException {
-			ID = in.readUTF();
-			appID = AppProxy.createAppID().read(in);
-			registrationMethod = in.readInt();
-			if( Logger.LOGGER != null )
-				Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
-		}
-
-		public void serialize(DataOutputStream out) throws IOException {
-			out.writeUTF(ID);
-			appID.serialize(out);
-			out.writeInt(registrationMethod);
-		}
-		
-		public String toString(){
-			return "{ ID = '" + ID + "', appID = " + appID + ", regMethod = " + registrationMethod + "}";
-		}
+                    implements ContentHandler {
+    
+    public static interface Handle {
+        public static interface Receiver {
+            void push( Handle handle );
+        }
+        
+        String getID();
+        
+        /**
+         * Returns array field
+         * @param fieldId index of field. Allowed: 
+         *        @link FIELD_TYPES, @link FIELD_SUFFIXES, @link FIELD_ACTIONS
+         *        @link FIELD_LOCALES, @link FIELD_ACTION_MAP, @link FIELD_ACCESSES
+         *        values.
+         * @return array of values
+         */
+        String[] getHandlerValues(int fieldId);
+        ContentHandlerImpl get();
     }
     
-	/**
-	 * handle of registered content handler.
-	 */
-	final protected Handle handle;
-	
-	final protected ApplicationID applicationID;
+    static class Data {
+        String          ID;
+        ApplicationID   appID;
+        int             registrationMethod;
+        
+        public Data(){
+            this( null, null, ~REGISTERED_STATIC_FLAG & REGISTERED_STATIC_FLAG);
+        }
+        public Data(String handlerID, ApplicationID applicationID, int registrationMethod) {
+            ID = handlerID;
+            appID = applicationID;
+            this.registrationMethod = registrationMethod;
+            if( Logger.LOGGER != null )
+                Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
+        }
+        public Data(DataInputStream in) throws IOException {
+            ID = in.readUTF();
+            appID = AppProxy.createAppID().read(in);
+            registrationMethod = in.readInt();
+            if( Logger.LOGGER != null )
+                Logger.LOGGER.println( "ContentHandlerImpl.Data(): " + this );
+        }
+
+        public void serialize(DataOutputStream out) throws IOException {
+            out.writeUTF(ID);
+            appID.serialize(out);
+            out.writeInt(registrationMethod);
+        }
+        
+        public String toString(){
+            return "{ ID = '" + ID + "', appID = " + appID + ", regMethod = " + registrationMethod + "}";
+        }
+    }
+    
+    /**
+     * handle of registered content handler.
+     */
+    final protected Handle handle;
+    
+    final protected ApplicationID applicationID;
 
     /** Count of requests retrieved via {@link #getRequest}. */
     protected int requestCalls;
@@ -133,7 +133,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      * @see com.sun.j2me.content.ContentHandlerServerImpl
      */
     protected ContentHandlerImpl(ContentHandlerImpl handler) {
-    	super( handler );
+        super( handler );
         handle = handler.handle;
         applicationID = handler.applicationID;
         version = handler.version;
@@ -142,21 +142,21 @@ public class ContentHandlerImpl extends ContentHandlerRegData
         appname = handler.appname;
         
         if( handler.listenerImpl != null ){
-        	listenerImpl = new RequestListenerImpl(this);
-        	handler.activateListening(false);
+            listenerImpl = new RequestListenerImpl(this);
+            handler.activateListening(false);
         }
     }
     
     protected ContentHandlerImpl( ApplicationID appID, Handle handle ){
-    	this.applicationID = appID;
-    	this.handle = handle; 
+        this.applicationID = appID;
+        this.handle = handle; 
     }
     
     public Data getHandlerData(){
-    	return new Data( getID(), applicationID, getRegistrationMethod() );
+        return new Data( getID(), applicationID, getRegistrationMethod() );
     }
 
-	/**
+    /**
      * Get the nth type supported by the content handler.
      * @param index the index into the types
      * @return the nth type
@@ -409,7 +409,7 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      *
      * @return array of actions names
      */
-    private ActionNameMap[] getActionNames() {
+    protected ActionNameMap[] getActionNames() {
         if (actionnames == null) {
             String[] locales = handle.getHandlerValues(RegistryGate.FIELD_LOCALES);
             String[] names   = handle.getHandlerValues(RegistryGate.FIELD_ACTION_MAP);
@@ -594,13 +594,13 @@ public class ContentHandlerImpl extends ContentHandlerRegData
      * @exception NullPointerException if the invocation is <code>null</code>
      */
     protected boolean finish(InvocationImpl invoc, int status) {
-		int currst = invoc.getStatus();
-		if (currst != Invocation.ACTIVE && currst != Invocation.HOLD) {
-			throw new IllegalStateException("Status already set");
-		}
-		// If ACTIVE or HOLD it must be an InvocationImpl
-		return invoc.finish(status);
-	}
+        int currst = invoc.getStatus();
+        if (currst != Invocation.ACTIVE && currst != Invocation.HOLD) {
+            throw new IllegalStateException("Status already set");
+        }
+        // If ACTIVE or HOLD it must be an InvocationImpl
+        return invoc.finish(status);
+    }
 
     /**
      * Set the listener to be notified when a new request is
@@ -661,132 +661,132 @@ public class ContentHandlerImpl extends ContentHandlerRegData
 
 class HandlerNameFinder implements ContentHandlerImpl.Handle.Receiver {
 
-	static class FoundException extends RuntimeException {
-		public ContentHandlerImpl.Handle handle;
-		
-		FoundException(ContentHandlerImpl.Handle handle) {
-			this.handle = handle;
-		}
-	}
+    static class FoundException extends RuntimeException {
+        public ContentHandlerImpl.Handle handle;
+        
+        FoundException(ContentHandlerImpl.Handle handle) {
+            this.handle = handle;
+        }
+    }
 
-	private String handlerID;
-	private boolean exact;
+    private String handlerID;
+    private boolean exact;
 
-	HandlerNameFinder(String handlerID, boolean exact) {
-		this.handlerID = handlerID;
-		this.exact = exact;
-	}
+    HandlerNameFinder(String handlerID, boolean exact) {
+        this.handlerID = handlerID;
+        this.exact = exact;
+    }
 
-	public void push(ContentHandlerImpl.Handle handle) {
-		if( exact ){
-			if( handle.getID().equals(handlerID) )
-				throw new FoundException( handle );
-		} else if( handle.getID().startsWith(handlerID) )
-			throw new FoundException( handle );
-	}
+    public void push(ContentHandlerImpl.Handle handle) {
+        if( exact ){
+            if( handle.getID().equals(handlerID) )
+                throw new FoundException( handle );
+        } else if( handle.getID().startsWith(handlerID) )
+            throw new FoundException( handle );
+    }
 }
 
 abstract class HandlerFilter implements ContentHandlerImpl.Handle.Receiver {
-	protected ContentHandlerImpl.Handle.Receiver output;
-	protected HandlerFilter( ContentHandlerImpl.Handle.Receiver output ){
-		this.output = output;
-	}
+    protected ContentHandlerImpl.Handle.Receiver output;
+    protected HandlerFilter( ContentHandlerImpl.Handle.Receiver output ){
+        this.output = output;
+    }
 }
 
 class HandlerNameFilter extends HandlerFilter {
-	private String testID;
-	
-	protected HandlerNameFilter(String testID, ContentHandlerImpl.Handle.Receiver r) {
-		super( r );
-		this.testID = testID;
-	}
+    private String testID;
+    
+    protected HandlerNameFilter(String testID, ContentHandlerImpl.Handle.Receiver r) {
+        super( r );
+        this.testID = testID;
+    }
 
-	public void push(ContentHandlerImpl.Handle handle) {
-		if( handle.getID().startsWith(testID) || testID.startsWith(handle.getID()) )
-			output.push(handle);
-	} 
+    public void push(ContentHandlerImpl.Handle handle) {
+        if( handle.getID().startsWith(testID) || testID.startsWith(handle.getID()) )
+            output.push(handle);
+    } 
 }
 
 //class HandlerSuiteIDFilter extends HandlerFilter {
-//	private int suiteId;
+//  private int suiteId;
 //
-//	HandlerSuiteIDFilter( int suiteId, ContentHandlerImpl.Handle.Receiver r ){
-//		super( r );
-//		this.suiteId = suiteId;
-//	}
+//  HandlerSuiteIDFilter( int suiteId, ContentHandlerImpl.Handle.Receiver r ){
+//      super( r );
+//      this.suiteId = suiteId;
+//  }
 //
-//	public void push(ContentHandlerImpl.Handle handle) {
-//		if( handle.getSuiteId() == suiteId )
-//			output.push(handle);
-//	}
+//  public void push(ContentHandlerImpl.Handle handle) {
+//      if( handle.getSuiteId() == suiteId )
+//          output.push(handle);
+//  }
 //}
 
 class HandlerTypeFilter extends HandlerFilter {
-	private String type;
-	
-	protected HandlerTypeFilter(String type, ContentHandlerImpl.Handle.Receiver r) {
-		super( r );
-		this.type = type;
-	}
+    private String type;
+    
+    protected HandlerTypeFilter(String type, ContentHandlerImpl.Handle.Receiver r) {
+        super( r );
+        this.type = type;
+    }
 
-	public void push(ContentHandlerImpl.Handle handle) {
-		if( handle.get().hasType(type) )
-			output.push(handle);
-	} 
+    public void push(ContentHandlerImpl.Handle handle) {
+        if( handle.get().hasType(type) )
+            output.push(handle);
+    } 
 }
 
 class HandlerActionFilter extends HandlerFilter {
-	private String action;
-	
-	protected HandlerActionFilter(String action, ContentHandlerImpl.Handle.Receiver r) {
-		super( r );
-		this.action = action;
-	}
+    private String action;
+    
+    protected HandlerActionFilter(String action, ContentHandlerImpl.Handle.Receiver r) {
+        super( r );
+        this.action = action;
+    }
 
-	public void push(ContentHandlerImpl.Handle handle) {
-		if( handle.get().hasAction(action) )
-			output.push(handle);
-	} 
+    public void push(ContentHandlerImpl.Handle handle) {
+        if( handle.get().hasAction(action) )
+            output.push(handle);
+    } 
 }
 
 class HandlerSuffixFilter extends HandlerFilter {
-	private String suffix;
-	
-	protected HandlerSuffixFilter(String suffix, ContentHandlerImpl.Handle.Receiver r) {
-		super( r );
-		this.suffix = suffix;
-	}
+    private String suffix;
+    
+    protected HandlerSuffixFilter(String suffix, ContentHandlerImpl.Handle.Receiver r) {
+        super( r );
+        this.suffix = suffix;
+    }
 
-	public void push(ContentHandlerImpl.Handle handle) {
-		if( handle.get().hasSuffix(suffix) )
-			output.push(handle);
-	} 
+    public void push(ContentHandlerImpl.Handle handle) {
+        if( handle.get().hasSuffix(suffix) )
+            output.push(handle);
+    } 
 }
 
 class HandlerAccessFilter extends HandlerFilter {
-	private String callerId;
-	
-	public HandlerAccessFilter(String callerId, ContentHandlerImpl.Handle.Receiver r) {
-		super( r );
-		this.callerId = callerId;
-	}
+    private String callerId;
+    
+    public HandlerAccessFilter(String callerId, ContentHandlerImpl.Handle.Receiver r) {
+        super( r );
+        this.callerId = callerId;
+    }
 
-	public void push(ContentHandlerImpl.Handle handle) {
-		if( handle.get().isAccessAllowed(callerId) )
-			output.push(handle);
-	}
+    public void push(ContentHandlerImpl.Handle handle) {
+        if( handle.get().isAccessAllowed(callerId) )
+            output.push(handle);
+    }
 }
 
 class HandlersCollection implements ContentHandlerImpl.Handle.Receiver {
-	Vector/*<ContentHandlerImpl>*/ vector = new Vector(); 
-	
-	public void push(ContentHandlerImpl.Handle handle) {
-		vector.addElement( handle.get() );
-	}
+    Vector/*<ContentHandlerImpl>*/ vector = new Vector(); 
+    
+    public void push(ContentHandlerImpl.Handle handle) {
+        vector.addElement( handle.get() );
+    }
 
-	public ContentHandlerImpl[] getArray() {
-		ContentHandlerImpl[] result = new ContentHandlerImpl[ vector.size() ];
-		vector.copyInto(result);
-		return result;
-	}
+    public ContentHandlerImpl[] getArray() {
+        ContentHandlerImpl[] result = new ContentHandlerImpl[ vector.size() ];
+        vector.copyInto(result);
+        return result;
+    }
 }
