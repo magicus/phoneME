@@ -759,6 +759,7 @@ javacall_result javacall_media_create_unmanaged_player(
     pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_UNKNOWN;
     pPlayer->mediaItfPtr      = NULL;
     pPlayer->uri              = NULL;
+    pPlayer->mime             = NULL;
     pPlayer->streamLen        = (JAVACALL_TRUE==stream_len_known) ? stream_len : -1;
 
     if( NULL != locator )

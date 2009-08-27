@@ -431,7 +431,12 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 {
     dshow_player* p = new dshow_player;
 
-    PRINTF( "\n\n*** create('%S','%S') ***\n", outer_player->uri, outer_player->mime );
+    PRINTF( "\n\n*** create('%S','%S') ***\n", 
+        ( NULL == outer_player->uri ) ? L"" : (const wchar_t*)outer_player->uri, 
+        ( NULL == outer_player->mime ) ? L"" : (const wchar_t*)outer_player->mime );
+
+    javacall_const_utf16_string mime     = outer_player->mime;
+    int                         mime_len = ( NULL == mime ) ? 0 : (long)wcslen( (const wchar_t*)mime );
 
     if( dshow_player::num_players >= MAX_DSHOW_PLAYERS )
         return JAVACALL_OUT_OF_MEMORY;
@@ -448,9 +453,6 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     //==================
 
     p->duration = -1;
-
-    javacall_const_utf16_string mime     = outer_player->mime;
-    int                         mime_len = (long)wcslen( (const wchar_t*)mime );;
 
     if( NULL == mime || mime_equal( mime, mime_len, L"text/plain" ) )
     {
