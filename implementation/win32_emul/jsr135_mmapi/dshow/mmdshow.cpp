@@ -450,9 +450,47 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
         return JAVACALL_NO_AUDIO_DEVICE;
     }
 
-    //==================
+    p->duration         = -1;
 
-    p->duration = -1;
+    p->appId            = outer_player->appId;
+    p->playerId         = outer_player->playerId;
+    p->mediaType        = fmt_str2enum( outer_player->mediaType );
+
+    p->playing          = false;
+
+    p->all_data_arrived = false;
+    p->whole_content_size = outer_player->streamLen;
+    p->bytes_buffered   = 0;
+
+    p->media_time       = 0;
+    p->volume           = 100;
+    p->muted            = false;
+    p->visible          = false;
+
+    p->video_width      = 0;
+    p->video_height     = 0;
+    p->video_frame      = NULL;
+
+    p->out_width        = -1;
+    p->out_height       = -1;
+    p->out_frame        = NULL;
+
+    p->snapshot         = NULL;
+    p->snapshot_len     = NULL;
+
+    p->ppl              = NULL;
+    p->pModule          = NULL;
+    p->our_module       = true;
+
+    InitializeCriticalSection( &(p->cs) );
+    p->out_queue_w      = 0;
+    p->out_queue_r      = 0;
+    p->out_queue_n      = 0;
+
+    p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
+    p->dwr_cancel       = false;
+
+    outer_player->mediaHandle = (javacall_handle)p;
 
     if( NULL == mime || mime_equal( mime, mime_len, L"text/plain" ) )
     {
@@ -534,57 +572,12 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     p->mime       = mime;
     p->mimeLength = mime_len;
 
-    //==================
-
-    p->appId            = outer_player->appId;
-    p->playerId         = outer_player->playerId;
-    p->mediaType        = fmt_str2enum( outer_player->mediaType );
     p->is_video         = ( JC_FMT_FLV        == p->mediaType || 
                             JC_FMT_VIDEO_3GPP == p->mediaType || 
                             JC_FMT_MPEG_4_SVP == p->mediaType || 
                             JC_FMT_MPEG_1     == p->mediaType );
 
-    p->playing          = false;
-
-    p->all_data_arrived = false;
-    p->whole_content_size = outer_player->streamLen;
-    p->bytes_buffered   = 0;
-
-    p->media_time       = 0;
-    p->volume           = 100;
-    p->muted            = false;
-    p->visible          = false;
-
-    p->video_width      = 0;
-    p->video_height     = 0;
-    p->video_frame      = NULL;
-
-    p->out_width        = -1;
-    p->out_height       = -1;
-    p->out_frame        = NULL;
-
-    p->snapshot         = NULL;
-    p->snapshot_len     = NULL;
-
-    p->ppl              = NULL;
-    p->pModule          = NULL;
-    p->our_module       = true;
-
-    InitializeCriticalSection( &(p->cs) );
-    p->out_queue_w      = 0;
-    p->out_queue_r      = 0;
-    p->out_queue_n      = 0;
-
-    p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
-    p->dwr_cancel       = false;
-
-    outer_player->mediaHandle = (javacall_handle)p;
-
     lcd_set_color_key( JAVACALL_FALSE, 0 );
-
-    dshow_player::players[ dshow_player::num_players++ ] = p;
-
-    //========================================
 
     PRINTF( "*** creating dshow player... ***\n" );
 
@@ -607,9 +600,18 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
             (ok ? "success" : "fail") );
 
-    add_to_qsound( p );
+    if( ok )
+    {
+        dshow_player::players[ dshow_player::num_players++ ] = p;
+        add_to_qsound( p );
+    }
+    else
+    {
+        outer_player->mediaHandle = NULL;
+        delete p;
+    }
 
-    return JAVACALL_OK;
+    return ok ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 static javacall_result dshow_destroy(javacall_handle handle)
