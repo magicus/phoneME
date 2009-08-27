@@ -74,8 +74,8 @@ class dshow_player : public player_callback,
     virtual result      get_stream_length(int64 *plength);
 
     // IWaveStream methods:
-	virtual long        getFormat(int* pChannels, long* pSampleRate);
-	virtual long        read(short* buffer, int samples);
+    virtual long        getFormat(int* pChannels, long* pSampleRate);
+    virtual long        read(short* buffer, int samples);
 
 public:
     long                  get_media_time();

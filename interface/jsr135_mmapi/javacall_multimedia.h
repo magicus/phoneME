@@ -510,20 +510,15 @@ javacall_result javacall_media_create_unmanaged_player(
 /**
  * Destroy the native player object and release all its resources.
  * 
- * Immediately following procedure return, handle to the native player becomes
- * invalid and must not be further used with the exception of responding to
- * data request events.
+ * Immediately following procedure call, handle to the native player becomes
+ * invalid and must not be further used, data processing must be aborted,
+ * possible pending data request event must be ignored.
  *
  * This procedure is asynchronous, an event
  * JAVACALL_EVENT_MEDIA_DESTROY_FINISHED will be posted on completion.
  *
  * After an event JAVACALL_EVENT_MEDIA_DESTROY_FINISHED has been posted, the
- * native player will not post any other events, including data requests, thus
- * allowing Java to discard the handle to the native player.
- *
- * The native player may process some stream data, but is responsible to
- * complete the destroy procedure in rational time even if data flow is not
- * working (Java does not respond to data request events).
+ * native player will not post any other events, including data requests.
  *
  * @param handle  Handle to the native player.
  *
@@ -707,7 +702,7 @@ javacall_result javacall_media_data_written(
  * Get the native player's current media time.
  *
  * @param handle  Handle to the native player.
- * @param time    Out - media time in milliseconds.
+ * @param time    Out - media time in milliseconds or -1 if time is unknown.
  *
  * @retval JAVACALL_OK  Always succeeds.
  */
