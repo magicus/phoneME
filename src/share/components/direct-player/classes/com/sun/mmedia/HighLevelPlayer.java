@@ -1209,7 +1209,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             if( 0 != asyncExecutor.getResult() ) {
                 throw new MediaException( "Media time cannot be set" );
             }
-            rtn = ( long )asyncExecutor.getOutputParam();
+            rtn = ( long )1000 * asyncExecutor.getOutputParam();
         } else {
             rtn = lowLevelPlayer.doSetMediaTime( now );
         }
