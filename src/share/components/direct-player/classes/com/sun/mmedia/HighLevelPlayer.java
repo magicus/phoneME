@@ -1090,7 +1090,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             } catch (MediaException ex) {}
             System.out.println("HighLevelPlayer: close() resumed");
         } else {
-            lowLevelPlayer.doClose();
+            if(null != lowLevelPlayer) lowLevelPlayer.doClose();
         }
 
         hNative = 0;
