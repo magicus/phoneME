@@ -417,6 +417,12 @@ static javacall_result fake_camera_start_video_snapshot( javacall_handle handle,
 
     LeaveCriticalSection( &(c->cs) );
 
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
+                                     c->appId,
+                                     c->playerId,
+                                     res,
+                                     NULL );
+
     return res;
 }
 

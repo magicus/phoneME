@@ -1094,16 +1094,23 @@ static javacall_result dshow_start_video_snapshot( javacall_handle handle,
 
     EnterCriticalSection( &(p->cs) );
 
-    for( int y = 0; y < p->video_height; y++ )
+    if( NULL != p->video_frame )
     {
-        for( int x = 0; x < p->video_width; x++ )
+        for( int y = 0; y < p->video_height; y++ )
         {
-            javacall_pixel pixel = *( p->video_frame + y * p->video_width + x );
-            javacall_uint8* ptr = rgb888 + 3 * ( y * p->video_width + x );
-            *ptr++ = pixel >> 11;             // R
-            *ptr++ = ( pixel >> 5 ) & 0x3F;   // G
-            *ptr++ = pixel & 0x1F;            // B
+            for( int x = 0; x < p->video_width; x++ )
+            {
+                javacall_pixel pixel = *( p->video_frame + y * p->video_width + x );
+                javacall_uint8* ptr = rgb888 + 3 * ( y * p->video_width + x );
+                *ptr++ = pixel >> 11;             // R
+                *ptr++ = ( pixel >> 5 ) & 0x3F;   // G
+                *ptr++ = pixel & 0x1F;            // B
+            }
         }
+    }
+    else
+    {
+        memset( rgb888, 0, 3 * p->video_width * p->video_height );
     }
 
     res = javacall_media_encode_start( rgb888,
@@ -1118,6 +1125,12 @@ static javacall_result dshow_start_video_snapshot( javacall_handle handle,
     FREE( rgb888 );
 
     LeaveCriticalSection( &(p->cs) );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
+                                     p->appId,
+                                     p->playerId,
+                                     res,
+                                     NULL );
 
     return res;
 }
