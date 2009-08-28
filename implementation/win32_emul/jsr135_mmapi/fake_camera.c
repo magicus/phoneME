@@ -175,9 +175,16 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
 {
     fake_camera* c        = (fake_camera*)handle;
     int          appId    = c->appId;
-    int          playerId = c->playerId;\
+    int          playerId = c->playerId;
 
     PRINTF( "*** destroy ***\n" );
+
+    if( c->playing )
+    {
+        c->playing = FALSE;
+        WaitForSingleObject( c->hThread, INFINITE );
+        c->hThread = NULL;
+    }
 
     if( NULL != c->video_frame ) FREE( c->video_frame );
 
