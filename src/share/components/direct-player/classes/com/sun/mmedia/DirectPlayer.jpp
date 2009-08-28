@@ -974,7 +974,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         getOwner().checkSnapshotPermission();
         if (getOwner().getState() != Player.STARTED || !videoControl.getVisible()) {
             System.out.println("Player is not started or invisible");
-            return null;
+            return new byte[0];
         }
         int hNative = getOwner().getNativeHandle();
         try {
