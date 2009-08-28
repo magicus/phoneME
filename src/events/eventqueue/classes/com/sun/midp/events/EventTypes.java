@@ -503,7 +503,12 @@ public final class EventTypes {
     public static final int NATIVE_VIRTUAL_KEYBOARD_EVENT = 82;
 
     /**
+     * This event is used by Display
+     */
+    public static final int MIDP_DISPLAY_FIX_ORIENTATION = 83;
+
+    /**
      * This event is used to check if the queue is not blocked.
      */
-    public static final int KEEP_ALIVE = 83;
+    public static final int KEEP_ALIVE = 84;
 }

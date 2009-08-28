@@ -51,9 +51,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
     CanvasLFImpl(Canvas canvas) {
         super(canvas);
         this.canvas = canvas;
-        if (currentDisplay != null) {
-            isDisplayRotated = currentDisplay.wantRotation;
-        }
     }
 
     // ************************************************************
@@ -285,14 +282,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
         g.resetGC();
 
         synchronized (Display.calloutLock) {
-            // We need repaint background if an orientation has changed
-            if (currentDisplay != null) {
-                boolean isRotated = currentDisplay.wantRotation;
-                if (isDisplayRotated != isRotated) {
-                    isDisplayRotated = isRotated;
-                    needRepaintBackground = true;
-                }
-            }
             try {
                 // Paint black background under the canvas
                 boolean isShown = canvas.isShown();
@@ -497,11 +486,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      * Is a repaint of black background needed?
      */
     private boolean needRepaintBackground = true;
-    
-    /**
-     * Is the display rotated?
-     */
-    private boolean isDisplayRotated = false;
     
     /**
      * A vector of embedded video players.

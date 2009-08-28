@@ -40,6 +40,9 @@ SUBSYSTEM_PLATFORMGRAPHICSPORT_JAVA_FILES +=
 SUBSYSTEM_PLATFORMGRAPHICSPORT_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/linux_qte/include
 
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/platform_graphics_port/linux_qte/include
+
 # vpath for sub-system
 #
 vpath % \

@@ -135,6 +135,7 @@ public abstract class Layer {
      *
      **/
     public final int getWidth() {
+        System.out.println("+++ getWidth: "+width);
 	return width;
     }
 
@@ -145,6 +146,7 @@ public abstract class Layer {
      *
      **/
     public final int getHeight() {
+        System.out.println("+++ getHeight: "+height);
 	return height;
     }
 

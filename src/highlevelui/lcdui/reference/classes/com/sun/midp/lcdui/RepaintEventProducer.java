@@ -196,6 +196,10 @@ public class RepaintEventProducer implements EventListener {
                 event.paintX1, event.paintY1, 
                 event.paintX2, event.paintY2, 
                 event.paintTarget);
+
+        // Clear the event object, to avoid memory leak when
+        // returning the processed event to the pool.
+        event.setRepaintFields(null, 0, 0, 0, 0, null);
         } finally {
             /*
              * Clear the event object, to avoid memory leak when
