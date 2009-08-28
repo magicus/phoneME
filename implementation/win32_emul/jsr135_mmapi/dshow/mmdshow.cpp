@@ -228,7 +228,6 @@ void dshow_player::playback_finished()
 
 player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata, int32 *plen)
 {
-
     PRINTF( "*** data(@%I64d l=%i) ***\n",offset,len );
 
     dwr_offset    = offset;
@@ -241,7 +240,11 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
                                       JAVACALL_OK,
                                       NULL );
 
-    WaitForSingleObject( dwr_event, INFINITE );
+    if( WAIT_OBJECT_0 != WaitForSingleObject( dwr_event, 30000 ) )
+    {
+        PRINTF( "*** ERROR: timeout waiting for data (@%I64d l=%i) ***\n", offset, len );
+        return player_callback::result_io;
+    }
 
     if( dwr_cancel )
     {
