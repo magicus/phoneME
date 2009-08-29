@@ -1099,6 +1099,11 @@ CVMgcSafeFindPCForException(CVMExecEnv* ee, CVMFrameIterator* iter,
 	CVMUint16 pcTarget = 
 	    (CVMUint16)(pc - CVMjmdCode(jmd)); /* offset from start of code */
 	CVMClassBlock*  cb = CVMmbClassBlock(mb);
+        CVMClassLoaderICell* loader = CVMcbClassLoader(cb);
+#ifdef CVM_DUAL_STACK
+        CVMClassBlock* loaderCB;
+#endif
+        CVMBool ignoreHandler = CVM_FALSE;
 	CVMConstantPool* cp;
 #ifdef CVM_JVMTI
 	if (CVMjvmtiMbIsObsolete(mb)) {
@@ -1111,6 +1116,25 @@ CVMgcSafeFindPCForException(CVMExecEnv* ee, CVMFrameIterator* iter,
 	{
 	    cp = CVMcbConstantPool(cb);
 	}	
+
+        /* If the code in the current frame is not system code,
+         * and if the 'ignoreInterruptedException' flag in the 'ee'
+         * is set, just ignore the InterruptedException handler.
+         * The finally handler is still honored. 
+         */
+        if (ee->ignoreInterruptedException && loader != NULL) {
+#ifdef CVM_DUAL_STACK
+            CVMID_objectGetClass(ee, loader, loaderCB);
+            if (CVMcbClassName(loaderCB) != CVMglobals.midpImplClassLoaderTid)
+#endif
+            {
+                if (exceptionClass == CVMsystemClass(
+                                    java_lang_InterruptedException)) {
+                    ignoreHandler = CVM_TRUE;
+                }
+            }
+        }
+
 	/* Check each exception handler to see if the pc is in its range */
 	for (; eh < ehEnd; eh++) { 
 	    if (eh->startpc <= pcTarget && pcTarget < eh->endpc) { 
@@ -1121,8 +1145,13 @@ CVMgcSafeFindPCForException(CVMExecEnv* ee, CVMFrameIterator* iter,
 		CVMClassBlock* catchClass;
 
 		/* Special note put in for finally.  Always succeed. */
-		if (catchtype == 0)
+		if (catchtype == 0) {
 		    goto found;
+                }
+
+                if (ignoreHandler) {
+                    continue;
+                }
 
 		/* See if the class of the exception that the handler catches
 		 * is the object's class or one of its superclasses.

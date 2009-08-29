@@ -258,6 +258,8 @@ struct CVMExecEnv {
     CVMBool maskedInterrupt;	/* Was Thread.interrupt() called while
 				   interrupts were masked? */
 
+    CVMBool ignoreInterruptedException;
+
 #if defined(CVMJIT_SIMPLE_SYNC_METHODS) \
     && CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
     CVMOwnedMonitor simpleSyncReservedOwnedMonitor;

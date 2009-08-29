@@ -1006,8 +1006,9 @@ public final class CVM {
 
     public static void nullifyRefsToDeadApp() {
         if (!deadLoaders.isEmpty()) {
-            System.out.println("************** nullify refs to app ************");
-	    java.lang.ref.Reference clRef = (java.lang.ref.Reference) deadLoaders.remove(0);
+            //System.out.println("******** nullify refs to app ********");
+	    java.lang.ref.Reference clRef = 
+                (java.lang.ref.Reference)deadLoaders.remove(0);
 	    if (clRef != null) {
 		ClassLoader cl = (ClassLoader) clRef.get();
 		if (cl != null) {
@@ -1018,4 +1019,10 @@ public final class CVM {
     }
 
     public static native void nullifyRefsToDeadApp0(ClassLoader cl);
+
+    /* Set the 'ignoreInterruptedException' flag in the target
+     * thread's 'ee'. The VM will ignore the InterruptedException
+     * handler in the target thread's non-system code.
+     */
+    public static native void ignoreInterruptedException(Thread t);
 }
