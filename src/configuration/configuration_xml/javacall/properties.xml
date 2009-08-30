@@ -79,11 +79,11 @@
             Scope="internal"
             Comment="Default MIDletSuite Memory Limit."/>
   <property Key="MAIN_MEMORY_CHUNK_SIZE"
-            Value="8388608"
+            Value="16777216"
             Scope="internal"
             Comment=""/>
   <property Key="JAVA_HEAP_SIZE"
-            Value="4194304"
+            Value="8388608"
             Scope="internal"
             Comment=""/>
   <property Key="RMS_CACHE_LIMIT"
