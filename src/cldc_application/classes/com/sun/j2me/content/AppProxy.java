@@ -124,7 +124,7 @@ class AppProxy extends CLDCAppID {
     /** The application name. */
     private String applicationName;
 
-    /** The ApplicationID, (same a suiteId). */
+    /** The ApplicationID. */
     private String applicationID;
 
     /** The application is registered. */
@@ -647,6 +647,8 @@ class CLDCAppProxyAgent extends AppProxyAgent {
      * @return <code>true</code> if the application is started.
      */
     static boolean launch(CLDCAppID appID, String displayName) {
+        if( Logger.LOGGER != null )
+            Logger.LOGGER.println("AppProxy.launch( " + appID +  ", '" + displayName + "' )");
         if( isMidletRunning(appID.suiteID, appID.className) )
             return true;
         if( Logger.LOGGER != null ) 
