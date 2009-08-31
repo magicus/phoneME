@@ -234,6 +234,12 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
     dwr_len       = len;
     dwr_pdata     = (BYTE*)pdata;
 
+    if( dwr_cancel )
+    {
+        PRINTF( "*** data -- refusing ***\n" );
+        return player_callback::result_io;
+    }
+        
     javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
                                       appId,
                                       playerId, 
@@ -248,6 +254,7 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
 
     if( dwr_cancel )
     {
+        PRINTF( "*** data -- aborted ***\n" );
         return player_callback::result_io;
     }
     else
