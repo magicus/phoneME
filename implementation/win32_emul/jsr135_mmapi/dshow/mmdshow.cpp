@@ -509,12 +509,12 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
         case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
         case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
         case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
-        case JC_FMT_MPEG_4_SVP:   mime = (javacall_const_utf16_string)L"video/mp4";  break;
+        case JC_FMT_MPEG_4_SVP:   mime = (javacall_const_utf16_string)L"video/mp4";   break;
         case JC_FMT_MPEG_1:       mime = (javacall_const_utf16_string)L"video/mpeg";  break;
         case JC_FMT_AMR:          
         case JC_FMT_AMR_WB:          
-        case JC_FMT_AMR_WB_PLUS:          
-                                  mime = (javacall_const_utf16_string)L"audio/amr";  break;
+        case JC_FMT_AMR_WB_PLUS:  mime = (javacall_const_utf16_string)L"audio/amr";   break;
+        case JC_FMT_MS_PCM:       mime = (javacall_const_utf16_string)L"audio/wav";   break;
         default:
             return JAVACALL_FAIL;
         }
