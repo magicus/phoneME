@@ -1086,7 +1086,7 @@ static javacall_result dshow_set_video_alpha(javacall_handle /*handle*/, javacal
 
 static javacall_result dshow_set_video_fullscreenmode(javacall_handle /*handle*/, javacall_bool /*fullScreenMode*/)
 {
-    return JAVACALL_FAIL;
+    return JAVACALL_OK;
 }
 
 /*****************************************************************************\

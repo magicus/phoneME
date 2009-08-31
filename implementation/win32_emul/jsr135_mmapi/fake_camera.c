@@ -211,7 +211,7 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
 static javacall_result fake_camera_get_player_controls(javacall_handle handle,
     int* controls)
 {
-    fake_camera* c = (fake_camera*)handle;
+    //fake_camera* c = (fake_camera*)handle;
     PRINTF( "*** get controls ***\n" );
     *controls = JAVACALL_MEDIA_CTRL_VIDEO;
     return JAVACALL_OK;
@@ -290,7 +290,7 @@ static javacall_result fake_camera_run(javacall_handle handle)
 
 static javacall_result fake_camera_get_time(javacall_handle handle, javacall_int32* ms)
 {
-    fake_camera* c = (fake_camera*)handle;
+    //fake_camera* c = (fake_camera*)handle;
     *ms = -1;
     PRINTF( "--- get_time: %ld",*ms );
     return JAVACALL_OK;
@@ -391,7 +391,7 @@ static javacall_result fake_camera_set_video_alpha(javacall_handle handle, javac
 
 static javacall_result fake_camera_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode)
 {
-    return JAVACALL_FAIL;
+    return JAVACALL_OK;
 }
 
 /*****************************************************************************\
