@@ -208,12 +208,6 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result fake_camera_get_format(javacall_handle handle, jc_fmt* fmt)
-{
-    PRINTF( "*** get_format ***\n" );
-    return JAVACALL_OK;
-}
-
 static javacall_result fake_camera_get_player_controls(javacall_handle handle,
     int* controls)
 {
@@ -465,7 +459,7 @@ static media_basic_interface _fake_camera_basic_itf =
     fake_camera_create,
     fake_camera_destroy,
 
-    fake_camera_get_format,
+    NULL, // get_format
     fake_camera_get_player_controls,
 
     fake_camera_stop,
