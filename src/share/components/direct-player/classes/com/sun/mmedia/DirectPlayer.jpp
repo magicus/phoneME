@@ -466,7 +466,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
     private void releaseRadioAccess()
     {
-        if( getOwner().isRadioPlayer() )
+        if( getOwner().isRadioPlayer() && hasTakenRadioAccess )
         {
             nReleaseRadioAccess();
             hasTakenRadioAccess = false;
@@ -528,6 +528,8 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             dVolumeControl = null;
         }
 
+        releaseRadioAccess();
+        
         int hNative = getOwner().getNativeHandle();
 
         if (hNative != 0) {
