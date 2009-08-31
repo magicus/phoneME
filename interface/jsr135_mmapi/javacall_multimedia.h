@@ -625,14 +625,18 @@ javacall_result javacall_media_run(javacall_handle handle);
  *
  * Must not be called for players with native data flow management.
  *
- * @param handle  Handle to the native player.
- * @param length  Stream length, in bytes.
+ * @param handle            Handle to the native player.
+ * @param stream_len_known  JAVACALL_TRUE if stream length is known and
+ *                          specified in stream_len, JAVACALL_FALSE otherwise.
+ * @param stream_len        Stream length, in bytes, ignored if
+ *                          strean_len_known is JAVACALL_FALSE.
  *
  * @retval JAVACALL_OK  Always succeeds.
  */
 javacall_result javacall_media_stream_length(
     javacall_handle handle,
-    javacall_int64 length);
+    javacall_bool stream_len_known,
+    javacall_int64 stream_len);
 
 /**
  * Get the native player's data for the JAVACALL_EVENT_MEDIA_DATA_REQUEST
