@@ -81,7 +81,7 @@ public class CGraphicsQ {
                 // We also test to see if the dirty region is wholely
                 // contained within another region
                 if (x >= region[0] && y >= region[1] &&                
-                    (x + w) <= (region[0] + region[1]) && 
+                    (x + w) <= (region[0] + region[2]) && 
                     (y + h) <= (region[1] + region[3])) 
                 {
                     return;                    
