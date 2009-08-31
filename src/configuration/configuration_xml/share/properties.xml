@@ -112,6 +112,14 @@
 	  Scope="internal"
 	  Comment="If not 0, don't display start up errors in a
                   Java Alert."/>
+
+  <property Key="LaunchJustInstalledMidlet"
+	  Value="-1"
+	  Scope="internal"
+	  Comment="After a MIDlet suite is successfully installed,
+              if 1, launch the suite without a question,
+              if 0, silently do nothing,
+              if -1, ask the user whether or not to launch the suite."/>
       
   <!-- Parser class names for push supported protocols -->
   <property Key="btl2cap"

@@ -465,6 +465,29 @@ class AppManagerUIImpl extends Form
     }
 
     /**
+     * Mark the latest installed MIDlet as current than run it.
+     *
+     * @return in the case the method is called from an Alert command handler,
+     *         true indicates display.setCurrent(this) need to be called
+     *         after the method to restore current displayble,
+     *         false if the current displayble is set by the method.
+     */
+    private boolean selectAndLaunchLastInstalledMidlet() {
+            RunningMIDletSuiteInfo msiToRun = appManager.getLastInstalledMidletItem();
+            if (msiToRun != null) {
+                display.setCurrentItem(findItem(msiToRun));
+                if (msiToRun.hasSingleMidlet()) {
+                    appManager.launchMidlet(msiToRun);
+                    return true;
+                } else {
+                    appManager.showMidletSelector(msiToRun);
+                    return false;
+                }
+            }
+            return true;
+    }
+
+    /**
      * Respond to a command issued on any Screen.
      *
      * @param c command activated by the user
@@ -501,15 +524,7 @@ class AppManagerUIImpl extends Form
         } else if (c == runYesCmd) {
 
             // user decided run the midlet suite after installation
-            RunningMIDletSuiteInfo msiToRun = appManager.getLastInstalledMidletItem();
-            if (msiToRun != null) {
-                display.setCurrentItem(findItem(msiToRun));
-                if (msiToRun.hasSingleMidlet()) {
-                    appManager.launchMidlet(msiToRun);
-                    display.setCurrent(this);
-                } else {
-                    appManager.showMidletSelector(msiToRun);
-                }
+            if (!selectAndLaunchLastInstalledMidlet()) {
                 return;
             }
 
@@ -557,7 +572,6 @@ class AppManagerUIImpl extends Form
                     mciToChangeFolder = null;
                 }
             }
-            display.setCurrent(this);
         } else if (c == backCmd) {
             if ((display.getCurrent() == this) && foldersOn) {
                 folderList.removeCommand(selectItemFolderCmd);
@@ -1024,6 +1038,17 @@ class AppManagerUIImpl extends Form
      * @param si corresponding suite info
      */
     public void notifySuiteInstalled(RunningMIDletSuiteInfo si) {
+        int launchMode = Configuration.getIntProperty(
+            "LaunchJustInstalledMidlet", -1);
+
+        if (launchMode == 0) {
+            return;
+        } else if (launchMode == 1) {
+
+            selectAndLaunchLastInstalledMidlet();
+            return;
+        }
+
         if (Constants.EXTENDED_MIDLET_ATTRIBUTES_ENABLED) {
             boolean userMidletExists = true;
             boolean sysFgMidletExists = false;
@@ -1054,6 +1079,8 @@ class AppManagerUIImpl extends Form
                 }
             }
 
+            // IMPL_NOTE: MIDlets with the LAUNCH_POWER_ON_PROP attribute
+            // specifed are launched in AppManagerPeer.launchSuite
             if (userMidletExists && !sysFgMidletExists) {
                 askUserIfLaunchMidlet();
             }
