@@ -35,40 +35,35 @@
 #include <midpJar.h>
 #include <suitestore_task_manager.h>
 #include <midp_constants_data.h>
-#include <img_image.h>
 #include <midpUtilKni.h>
 #include <fileCache.h>
 
 /**
  * @file
  *
- * Implements a cache for native images.
+ * Implements a cache for fonts.
  * <p>
- * All images are loaded from the Jar file, converted to the native platform
- * representation, and stored as files. When an ImmutableImage is created then
- * loadCachedImage() is called to check if that particular image has been
- * cached, and if yes the native representation is loaded from the file. This
- * significantly reduce the time spent instantiating an ImmutableImage.
+ * All fonts are loaded from the Jar file and stored as files. 
  * <p>
- * Each cached image is stored with the following naming conventions:
+ * Each cached font is stored with the following naming conventions:
  * <blockquote>
- *   <suite Id><image resource name>".tmp"
+ *   <suite Id><font resource name>".tmp"
  * </blockquote>
  * All cache files are deleted when a suite is updated or removed.
  * <p>
- * Note: Currently, only png and jpeg images are supported.
+ * Note: Currently, true type fonts (ttf) are supported.
  */
 
 /**
- * Holds the suite ID. It is initialized during createImageCache() call
- * and used in image_cache_action() to avoid passing an additional parameter to it
- * because this function is called for each image entry in the suite's jar file.
+ * Holds the suite ID. It is initialized during createFontCache() call
+ * and used in font_cache_action() to avoid passing an additional parameter to it
+ * because this function is called for each font entry in the suite's jar file.
  */
 static SuiteIdType globalSuiteId;
 
 /**
- * Holds the storage ID where the cached images will be saved. It is initialized
- * during createImageCache() call and used in image_cache_action() to avoid
+ * Holds the storage ID where the cached fonts will be saved. It is initialized
+ * during createFontCache() call and used in font_cache_action() to avoid
  * passing an additional parameter to it.
  */
 static StorageIdType globalStorageId;
@@ -81,54 +76,34 @@ static void *handle;
 
 /**
  * Holds the amount of free space in the storage. It is initialized during
- * createImageCache() call and used in image_cache_action() to avoid passing
+ * createFontCache() call and used in font_cache_action() to avoid passing
  * an additional parameter to it.
  */
 static jlong remainingSpace;
 
 /**
  * Holds the amount of cached data placed into the storage. It is initialized
- * during createImageCache() call and used in image_cache_action() to avoid
+ * during createFontCache() call and used in fonr_cache_action() to avoid
  * passing an additional parameter to it.
  */
 static long cachedDataSize;
 
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PNG_EXT1)
-    {'.', 'p', 'n', 'g', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PNG_EXT1);
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(TTF_EXT1)
+    {'.', 't', 't', 'f', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(TTF_EXT1);
 
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PNG_EXT2)
-    {'.', 'P', 'N', 'G', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PNG_EXT2);
-
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT1)
-    {'.', 'j', 'p', 'g', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT1);
-
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT2)
-    {'.', 'J', 'P', 'G', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT2);
-
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT3)
-    {'.', 'j', 'p', 'e', 'g', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT3);
-
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(JPEG_EXT4)
-    {'.', 'J', 'P', 'E', 'G', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(JPEG_EXT4);
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(TTF_EXT2)
+    {'.', 'T', 'T', 'F', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(TTF_EXT2);
 
 
 /**
- * Tests if JAR entry is a PNG or JPEG image, by name extension
+ * Tests if JAR entry is a TTF font, by name extension
  */
-static jboolean image_filter(const pcsl_string * entry) {
+static jboolean font_filter(const pcsl_string * entry) {
 
-    if (pcsl_string_ends_with(entry, &PNG_EXT1)
-        || pcsl_string_ends_with(entry, &PNG_EXT2)
-        || pcsl_string_ends_with(entry, &JPEG_EXT1)
-        || pcsl_string_ends_with(entry, &JPEG_EXT2)
-        || pcsl_string_ends_with(entry, &JPEG_EXT3)
-        || pcsl_string_ends_with(entry, &JPEG_EXT4)
+    if (pcsl_string_ends_with(entry, &TTF_EXT1)
+        || pcsl_string_ends_with(entry, &TTF_EXT2)
         ) {
         return KNI_TRUE;
     }
@@ -137,55 +112,41 @@ static jboolean image_filter(const pcsl_string * entry) {
 }
 
 /**
- * Loads PNG or JPEG image from JAR, decodes it and writes as native
+ * Loads TTF fonts from JAR, writes to storage
  */
-static jboolean image_cache_action(const pcsl_string * entry) {
-    unsigned char *pngBufPtr = NULL;
-    int pngBufLen = 0;
-    unsigned char *nativeBufPtr = NULL;
-    unsigned int nativeBufLen = 0;
+static jboolean font_cache_action(const pcsl_string * entry) {
+    unsigned char *fontBufPtr = NULL;
+    int fontBufLen = 0;
     jboolean status = KNI_FALSE;
 
     do {
-        pngBufLen = midpGetJarEntry(handle, entry, &pngBufPtr);
-        if (pngBufLen < 0) {
-            break;
-        }
-
-        if (img_decode_data2cache(pngBufPtr, pngBufLen,
-                &nativeBufPtr, &nativeBufLen) != MIDP_ERROR_NONE) {
-            break;
-        }
-
-        /* Check if we can store this file in the remaining storage space */
-        if (remainingSpace - IMAGE_CACHE_THRESHOLD < (long)nativeBufLen) {
+        fontBufLen = midpGetJarEntry(handle, entry, &fontBufPtr);
+        if (fontBufLen < 0) {
             break;
         }
 
         /* write native buffer to persistent store */
         /* status = KNI_TRUE on success */
         status = storeFileToCache(globalSuiteId, globalStorageId, entry,
-                                   nativeBufPtr, nativeBufLen);
+                                   fontBufPtr, fontBufLen);
 
     } while (0);
 
     if (status != KNI_FALSE) {
-        remainingSpace -= nativeBufLen;
-        cachedDataSize += nativeBufLen;
+        remainingSpace -= fontBufLen;
+        cachedDataSize += fontBufLen;
     }
 
-    if (nativeBufPtr != NULL) {
-        midpFree(nativeBufPtr);
-    }
-    if (pngBufPtr != NULL) {
-        midpFree(pngBufPtr);
+    if (fontBufPtr != NULL) {
+        midpFree(fontBufPtr);
     }
 
     return status;
 }
 
 /**
- * Iterates over all images in a jar, and tries to load and cached them.
+ * Iterates over all files in a jar based on filter function, and tries to load 
+ * and cached them.
  *
  * @param  jarFileName   The name of the jar file
  * @param  filter        Pointer to filter function
@@ -202,7 +163,7 @@ static int loadAndCacheJarFileEntries(const pcsl_string * jarFileName,
     handle = midpOpenJar(&error, jarFileName);
     if (error) {
         REPORT_WARN1(LC_LOWUI,
-                     "Warning: could not open image cached; Error: %d\n",
+                     "Warning: could not open font cached; Error: %d\n",
                      error);
         handle = NULL;
         return status;
@@ -215,10 +176,9 @@ static int loadAndCacheJarFileEntries(const pcsl_string * jarFileName,
     return status;
 }
 
-
 /**
- * Creates a cache of natives images by iterating over all png and jpeg images
- * in the jar file, loading each one, decoding it into native, and caching it
+ * Creates a cache of fonts by iterating over all TTF files
+ * in the jar file, loading each one and caching it
  * persistent store.
  *
  * @param suiteId The suite ID
@@ -226,7 +186,7 @@ static int loadAndCacheJarFileEntries(const pcsl_string * jarFileName,
  * @param pOutDataSize [out] points to a place where the size of the
  *                           written data is saved; can be NULL
  */
-void createImageCache(SuiteIdType suiteId, StorageIdType storageId,
+void createFontCache(SuiteIdType suiteId, StorageIdType storageId,
                       jint* pOutDataSize) {
     pcsl_string jarFileName;
     int result;
@@ -244,7 +204,8 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId,
     globalStorageId = storageId;
 
     cachedDataSize = 0;
-    
+
+#if ENABLE_IMAGE_CACHE == 0
     /*
      * First, blow away any existing cache. Note: when a suite is
      * removed, midp_remove_suite() removes all files associated with
@@ -252,9 +213,10 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId,
      * explicitly.
      */
     deleteFileCache(suiteId, storageId);
+#endif
 
     /* Get the amount of space available at this point */
-    remainingSpace = storage_get_free_space(storageId);
+    //remainingSpace = storage_get_free_space(storageId);
 
     errorCode = midp_suite_get_class_path(suiteId, storageId,
                                           KNI_TRUE, &jarFileName);
@@ -264,13 +226,13 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId,
     }
 
     result = loadAndCacheJarFileEntries(&jarFileName,
-        (jboolean (*)(const pcsl_string *))&image_filter,
-        (jboolean (*)(const pcsl_string *))&image_cache_action);
+        (jboolean (*)(const pcsl_string *))&font_filter,
+        (jboolean (*)(const pcsl_string *))&font_cache_action);
 
     /* If something went wrong then clean up anything that was created */
     if (result != 1) {
         REPORT_WARN1(LC_LOWUI,
-            "Warning: image cache could not be created; Error: %d\n",
+            "Warning: font cache could not be created; Error: %d\n",
             result);
         deleteFileCache(suiteId, storageId);
         if (pOutDataSize != NULL) {
@@ -286,31 +248,16 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId,
 }
 
 /**
- * Moves cached native images from ome storage to another.
+ * Moves cached fonts from ome storage to another.
  * For security reasons we allow to move cache only to the
  * internal storage.
  *
  * @param suiteId The suite ID
- * @param storageIdFrom ID of the storage where images are cached
+ * @param storageIdFrom ID of the storage where fonts are cached
  * @param storageIdTo ID of the storage where to move the cache
  */
-void moveImageCache(SuiteIdType suiteId, StorageIdType storageIdFrom,
+void moveFontCache(SuiteIdType suiteId, StorageIdType storageIdFrom,
                     StorageIdType storageIdTo) {
     moveFileCache(suiteId, storageIdFrom, storageIdTo);
-}
-
-
-/**
- * Loads a native image from cache, if present.
- *
- * @param suiteId    The suite id
- * @param resName    The image resource name
- * @param **bufPtr   Pointer where a buffer will be allocated and data stored
- * @return           -1 if failed, else length of buffer
- */
-int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
-                       unsigned char **bufPtr) {
-
-    return loadFileFromCache(suiteId, resName, bufPtr);
 }
 

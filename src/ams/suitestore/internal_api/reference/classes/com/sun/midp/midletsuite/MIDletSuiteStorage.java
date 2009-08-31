@@ -793,4 +793,28 @@ public class MIDletSuiteStorage {
      */
     public native int checkSuitesIntegrity(boolean fullCheck,
                                            boolean delCorruptedSuites);
+
+
+    /**
+     * Returns absolute path of a resource file cached in app storage
+     *
+     * @param resName resource file name
+     * @return absolute file path
+     */
+    public static String getCachedFilePath(String resName) {
+        com.sun.midp.midlet.MIDletSuite midletSuite =
+            com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler()
+            .getMIDletSuite();
+
+        return getCachedFilePath0(midletSuite.getID(), resName);
+    }
+
+    /**
+     * Returns absolute path of a resource file cached in app storage
+     *
+     * @param suiteId MIDlet suite ID
+     * @param resName resource file name
+     * @return absolute file path
+     */
+    private static native String getCachedFilePath0(int suiteId, String resName);
 }

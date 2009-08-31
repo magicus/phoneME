@@ -1924,3 +1924,54 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_checkSuitesIntegrity) {
 
     KNI_ReturnInt(retCode);
 }
+
+
+/**
+ * Returns absolute path of cached resource file
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     String getCachedFilePath0(int suiteId, String resName);
+ * </pre>
+ *
+ * @param suiteId the suite Id
+ * @param resName the name of the resource file
+ * @return Java byte[] object with icon data,
+ *     or NULL if the data wasn't found in the cache
+ */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getCachedFilePath0) {
+#if ENABLE_FONT_CACHE
+    pcsl_string pcsl_path = PCSL_STRING_NULL;
+    SuiteIdType suiteID;
+    StorageIdType storageId;
+    int errorCode;
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(pathHandle);
+    suiteID = KNI_GetParameterAsInt(1);
+
+    GET_PARAMETER_AS_PCSL_STRING(2, resName)
+    
+    errorCode = midp_suite_get_suite_storage(suiteID, &storageId);
+    if (errorCode != MIDP_ERROR_NONE) {
+        KNI_ThrowNew(midpRuntimeException, NULL);
+        KNI_ReleaseHandle(pathHandle);
+    }
+    
+    errorCode = midp_suite_get_cached_resource_filename(suiteID, storageId,
+                                                        &resName, &pcsl_path);
+    if (errorCode == MIDP_ERROR_NONE) {
+        midp_jstring_from_pcsl_string(KNIPASSARGS &pcsl_path, pathHandle);
+    }
+                                                       
+    RELEASE_PCSL_STRING_PARAMETER
+
+    KNI_EndHandlesAndReturnObject(pathHandle);
+#else
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(tempHandle);
+    KNI_ReleaseHandle(tempHandle);
+    KNI_EndHandlesAndReturnObject(tempHandle);
+#endif
+}

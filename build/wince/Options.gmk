@@ -66,6 +66,7 @@ USE_CMS			= false
 USE_MULTIPLE_ISOLATES   = false
 USE_STATIC_PROPERTIES   = true
 USE_IMAGE_CACHE         = true
+USE_FONT_CACHE          = false
 USE_ICON_CACHE          = true
 USE_RMS_TREE_INDEX      = false
 USE_NETWORK_INDICATOR   = true
