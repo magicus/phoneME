@@ -2010,7 +2010,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
                 // fall through
             default:
-                parent.warnUser(name,
+                parent.warnUser(state.getSuiteName(),
                     state.getAppProperty(MIDletSuite.VENDOR_PROP),
                     state.getAppProperty(MIDletSuite.VERSION_PROP),
                     url, e);
