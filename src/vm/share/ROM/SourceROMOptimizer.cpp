@@ -92,53 +92,6 @@ public:
   }
 };
 
-
-class QuickNativesMatcher : public JavaClassMethodPatternMatcher {
-  ROMVector *_log_vector;
-public:
-  QuickNativesMatcher(ROMVector *log_vector) {
-    _log_vector = log_vector;
-  }
-
-  virtual void handle_matching_method(Method *m JVM_TRAPS) {
-    if( TaggedJavaStack
-        || !UseQuickNativeMethods
-        || m->is_quick_native()
-        || !m->is_native()
-        || m->uses_monitors() ) {
-      return;
-    }
-
-    address quick_entry;
-    Signature::Raw signature = m->signature();
-    switch (signature().return_type()) {
-      default:
-        return;
-      case T_VOID:
-        quick_entry = (address)quick_void_native_method_entry;
-        break;
-      case T_BOOLEAN:
-      case T_CHAR:
-      case T_BYTE:
-      case T_SHORT:
-      case T_INT:
-        quick_entry = (address)quick_int_native_method_entry;
-        break;
-      case T_OBJECT:
-        quick_entry = (address)quick_obj_native_method_entry;
-        break;
-    }
-    m->set_quick_native_code(m->get_native_code());
-    m->set_fixed_entry(quick_entry);
-
-    const jint old_size = m->object_size();
-    m->set_code_size((jushort)0);
-    const jint new_size = m->object_size();
-    ROMTools::shrink_object(m, old_size, old_size - new_size);
-    _log_vector->add_element(m JVM_CHECK);
-  }
-};
-
 int ROMOptimizer::get_max_alternate_constant_pool_count() {
   // The maximum number of entries needed in the alternate constant
   // pool (which stores names and signatures of renamed fields) is the
@@ -297,6 +250,23 @@ bool ROMOptimizer::is_hidden( InstanceClass* klass ) const {
          ( !klass->is_public() && is_in_restricted_package(klass) );
 }
 
+#if USE_ROM_LOGGING
+void ROMOptimizer::write_methods_log(ROMVector* log, const char name[],
+                                                     const char prefix[]) {
+  log->sort();
+
+  const int size = _jni_natives_log->size();
+  _log_stream->print_cr("\n[%s (%d)]\n", name, size);
+
+  for (int i = 0; i < size; i++) {
+    Method::Raw method = log->element_at(i);
+    _log_stream->print("%s: ", prefix);
+    method().print_name_on(_log_stream);
+    _log_stream->cr();
+  }
+}
+#endif
+
 void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
   ROMVector disable_compilation_log;
   ROMVector quick_natives_log;
@@ -341,10 +311,11 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
 #if USE_ROM_LOGGING
-  write_disable_compilation_log();
-  write_quick_natives_log();
-  write_kvm_natives_log();
-  write_jni_natives_log();
+  write_methods_log(_disable_compilation_log, "Disabled compilation",
+                                              "disabled compilation");
+  write_methods_log(_kvm_natives_log, "Quick native methods", "quick native");
+  write_methods_log(_kvm_natives_log, "Kvm native methods", "kvm native");
+  write_methods_log(_jni_natives_log, "Jni native methods", "jni native");
 #endif
 
   update_jni_natives_table(JVM_SINGLE_ARG_CHECK);
@@ -354,17 +325,20 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
-void ROMOptimizer::read_config_file(const JvmPathChar * config_file JVM_TRAPS)
-{
+void ROMOptimizer::read_config_file(const JvmPathChar* config_file JVM_TRAPS) {
 #if defined(WIN32) || defined(LINUX)
   char buff[1024];
   OsFile_Handle f = OsFile_open(config_file, "r");
   if (f == NULL) {
-    tty->print_cr("Error: ROM configuration file not found: %s", config_file);
+    tty->print_raw("Error: ROM configuration file not found: ");
+    tty->print_raw(config_file);
+    tty->cr();
     abort();
   }
 #if USE_ROM_LOGGING
-  _log_stream->print_cr("Reading ROM configuration file %s", config_file);
+  _log_stream->print_raw("Reading ROM configuration file ");
+  _log_stream->print_raw(config_file);
+  _log_stream->cr();
 #endif
 
   // Save file name, line number and conditional state
@@ -500,17 +474,27 @@ void ROMOptimizer::abort(void) {
   JVM::exit(-1);
 }
 
-void
-ROMOptimizer::config_message( const char category[], const char msg[] ) {
+void ROMOptimizer::config_message_head( const char category[] ) {
   tty->cr();
   tty->print_raw( category );
   tty->sp();
   tty->print_raw( config_parsing_file() );
-  tty->print_cr( "(%d):\n      %s", config_parsing_line_number(), msg );
+  tty->print( "(%d):\n      ", config_parsing_line_number() );
+}
+
+void
+ROMOptimizer::config_message( const char category[], const char msg[] ) {
+  config_message_head(category);
+  tty->print_cr( msg );
 }
 
 void ROMOptimizer::config_warning( const char msg[] ) {
   config_message( "Warning", msg );
+}
+
+void ROMOptimizer::config_warning_not_found( const char name[] ) {
+  config_message_head("Warning");
+  tty->print_cr( "%s not found", name );
 }
 
 void ROMOptimizer::config_error( const char msg[] ) {
@@ -518,44 +502,131 @@ void ROMOptimizer::config_error( const char msg[] ) {
   abort();
 }
 
-bool
-ROMOptimizer::validate_pattern( const char pattern[], const int len ) const {
-  if( !len ) {
-    config_warning( "Class or package name or pattern not specified" );
-    return false;
+inline bool ROMOptimizer::validate_class_pattern( const char pattern[] ) const {
+  return ROMClassPatternMatcher::validate(pattern, jvm_strlen(pattern));
+}
+
+ReturnOop
+ROMOptimizer::validate_package_pattern( const char pattern[] JVM_TRAPS ) const {
+  const int pattern_length = jvm_strlen(pattern);
+  if (pattern_length > 255) {
+    config_error("Restricted or hidden package name may not exceed 255 bytes");
   }
-  for( int i = 0; i < len; i++ ) {
-    switch( pattern[i] ) {
-      case '*': if (i != (len-1))
-      case '?': config_error( "Only patterns with * at the end are supported" );
+  if (ROMClassPatternMatcher::validate(pattern, pattern_length)) {
+    Symbol::Raw symbol =
+      SymbolTable::slashified_symbol_for((utf8)pattern JVM_NO_CHECK);
+    if (symbol.not_null()) {
+      const char* sym = symbol().utf8_data();
+      for (SystemClassStream st; st.has_next();) {
+        const InstanceClass::Raw klass = st.next();
+        const Symbol::Raw name = klass().original_name();
+        int name_length = name().strrchr('/');
+        if( name_length <= 0 ) {
+          name_length = name().length();
+        }
+        if (Universe::name_matches_pattern(name().utf8_data(), name_length,
+                                           sym, pattern_length)) {
+          return symbol.obj();
+        }
+      }
     }
   }
-  return true;
-}
+  return NULL;
+} 
 
-bool ROMOptimizer::validate_pattern( const char pattern[] ) const {
-  return validate_pattern(pattern, jvm_strlen(pattern));
-}
 
-bool ROMOptimizer::validate_member_pattern( const char pattern[] ) const {
-  const char* delimiter = (const char*) jvm_strrchr(pattern, '.');
-  if (delimiter) {
-    return validate_pattern(pattern, delimiter-pattern) &&
-           validate_pattern(delimiter+1);
-  } else {
-    return pattern[0] == '*' && pattern[1] == 0;
+class NativesMatcher: public ROMMethodPatternMatcher {
+private:
+  ROMVector* _log_vector;
+
+protected:
+  virtual void handle_matching_method(Method* m JVM_TRAPS);
+
+public:
+  NativesMatcher(ROMVector* log_vector) {
+    _log_vector = log_vector;
+  }
+};
+void NativesMatcher::handle_matching_method(Method *m JVM_TRAPS) {
+  if (m->is_native()) {
+    _log_vector->add_element(m JVM_NO_CHECK_AT_BOTTOM);
   }
 }
 
-inline bool ROMOptimizer::validate_class_pattern( const char pattern[] ) const {
-  return validate_pattern(pattern);
+class QuickNativesMatcher: public ROMMethodPatternMatcher {
+private:
+  ROMVector* _log_vector;
+
+protected:
+  virtual void handle_matching_method(Method *m JVM_TRAPS);
+
+public:
+  QuickNativesMatcher(ROMVector *log_vector) {
+    _log_vector = log_vector;
+  }
+};
+
+void QuickNativesMatcher::handle_matching_method(Method* m JVM_TRAPS) {
+  if( TaggedJavaStack
+      || !UseQuickNativeMethods
+      || m->is_quick_native()
+      || !m->is_native()
+      || m->uses_monitors() ) {
+    return;
+  }
+
+  address quick_entry;
+  Signature::Raw signature = m->signature();
+  switch (signature().return_type()) {
+    default:
+      return;
+    case T_VOID:
+      quick_entry = (address)quick_void_native_method_entry;
+      break;
+    case T_BOOLEAN:
+    case T_CHAR:
+    case T_BYTE:
+    case T_SHORT:
+    case T_INT:
+      quick_entry = (address)quick_int_native_method_entry;
+      break;
+    case T_OBJECT:
+      quick_entry = (address)quick_obj_native_method_entry;
+      break;
+  }
+  m->set_quick_native_code(m->get_native_code());
+  m->set_fixed_entry(quick_entry);
+
+  const jint old_size = m->object_size();
+  m->set_code_size((jushort)0);
+  const jint new_size = m->object_size();
+  ROMTools::shrink_object(m, old_size, old_size - new_size);
+  _log_vector->add_element(m JVM_NO_CHECK_AT_BOTTOM);
 }
-inline bool ROMOptimizer::validate_field_pattern( const char pattern[] ) const {
-  return validate_member_pattern(pattern);
+
+#if USE_AOT_COMPILATION
+class PrecompileMatcher: public ROMMethodPatternMatcher {
+private:
+  ROMVector *_log_vector;
+
+protected:
+  virtual void handle_matching_method(Method* m JVM_TRAPS);
+
+public:
+  PrecompileMatcher(ROMVector *log_vector) {
+    _log_vector = log_vector;
+  }
+};
+
+void PrecompileMatcher::handle_matching_method(Method* m JVM_TRAPS) {
+  if (!m->is_quick_native() &&
+      !m->is_impossible_to_compile() &&
+      !m->is_fast_get_accessor()) { 
+    _log_vector->add_element(m JVM_NO_CHECK_AT_BOTTOM);
+  }
 }
-inline bool ROMOptimizer::validate_method_pattern( const char pattern[] ) const {
-  return validate_member_pattern(pattern);
-}
+#endif
+
 
 // Parse and process the config line.
 void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
@@ -642,26 +713,29 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
   }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT      
   if (jvm_strcmp(name, "HiddenPackage") == 0) {
-    if( !validate_class_pattern(value) ) return;
-
-    // Hidden packages are also restricted.
-    add_package_to_list(hidden_packages(), value JVM_CHECK);
-    add_package_to_list(restricted_packages(), value JVM_NO_CHECK_AT_BOTTOM);
+    UsingFastOops fast_oops;
+    Symbol::Fast package = validate_package_pattern(value JVM_NO_CHECK);
+    if (package.not_null() ) {
+      // Hidden packages are also restricted.
+      add_package_to_list(hidden_packages(), &package JVM_CHECK);
+      add_package_to_list(restricted_packages(), &package JVM_NO_CHECK);
+    }
     return;
   }
   if (jvm_strcmp(name, "RestrictedPackage") == 0) {
-    if( !validate_class_pattern(value) ) return;
-    add_package_to_list(restricted_packages(), value JVM_NO_CHECK_AT_BOTTOM);
+    UsingFastOops fast_oops;
+    Symbol::Fast package = validate_package_pattern(value JVM_NO_CHECK);
+    if (package.not_null() ) {
+      add_package_to_list(restricted_packages(), &package JVM_NO_CHECK);
+    }
     return;
   }
   if (jvm_strcmp(name, "HiddenClass") == 0) {
-    if( !validate_class_pattern(value) ) return;
-
-    UsingFastOops fast_oops;
-    Symbol::Fast class_pattern =
-      SymbolTable::slashified_symbol_for(value JVM_NO_CHECK);
-    if (class_pattern.not_null()) {
-      hidden_classes()->add_element(&class_pattern JVM_NO_CHECK_AT_BOTTOM);
+    ROMClassPatternMatcher matcher;
+    matcher.run(value JVM_CHECK);
+    if (matcher.is_match_found()) {
+      hidden_classes()->add_element(matcher.class_pattern()
+                                    JVM_NO_CHECK_AT_BOTTOM);
     }
     return;
   }
@@ -710,30 +784,31 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
     return;
   }
   if (jvm_strcmp(name, "DontCompile") == 0) {
-    if( !validate_method_pattern(value) ) return;
     disable_compilation(value JVM_NO_CHECK_AT_BOTTOM);
     return;
   }
   if (jvm_strcmp(name, "KvmNative") == 0) {
-    if( !validate_method_pattern(value) ) return;
-    enable_kvm_natives(value JVM_NO_CHECK_AT_BOTTOM);
+    NativesMatcher matcher(_kvm_natives_log);
+    matcher.run(value JVM_NO_CHECK_AT_BOTTOM);
     return;
   }
   if (jvm_strcmp(name, "QuickNative") == 0) {
-    if( !validate_method_pattern(value) ) return;
-    enable_quick_natives(value JVM_NO_CHECK_AT_BOTTOM);
+    QuickNativesMatcher matcher(_quick_natives_log);
+    matcher.run(value JVM_NO_CHECK_AT_BOTTOM);
     return;
   }
   if (jvm_strcmp(name, "Precompile") == 0) {
-    if( !validate_method_pattern(value) ) return;
 #if USE_AOT_COMPILATION
-    enable_precompile(value JVM_NO_CHECK_AT_BOTTOM);
+    PrecompileMatcher matcher(precompile_method_list());
+#else
+    ROMMethodPatternMatcher matcher;
 #endif
+    matcher.run(value JVM_NO_CHECK_AT_BOTTOM);
     return;
   }
   if (jvm_strcmp(name, "JniNative") == 0) {
-    if( !validate_method_pattern(value) ) return;
-    enable_jni_natives(value JVM_NO_CHECK_AT_BOTTOM);
+    NativesMatcher matcher(_jni_natives_log);
+    matcher.run(value JVM_NO_CHECK_AT_BOTTOM);
     return;
   }
 
@@ -799,7 +874,7 @@ void ROMOptimizer::add_class_to_list(ObjArray* list, const char classname[]
     SystemDictionary::find(&top_ctx, /*lookup_only=*/ true,
                                      /*check_only= */ true JVM_NO_CHECK);
   if (instance_class.is_null()) {
-    config_warning("Class does not exist");
+    config_warning_not_found(classname);
     Thread::clear_current_pending_exception();
     return;
   }
@@ -816,11 +891,11 @@ void ROMOptimizer::add_class_to_list(ObjArray* list, const char classname[]
 
 bool
 ROMOptimizer::name_matches_pattern(const char name[], const int name_len,
-                                    ROMVector* patterns) {
+                                   const ROMVector* patterns) {
   GUARANTEE(patterns != NULL, "Sanity");
   const int list_len = patterns->size();
   for( int i = 0; i < list_len; i++ ) {
-    Symbol::Raw pattern = patterns->element_at(i);
+    const Symbol::Raw pattern = patterns->element_at(i);
     if( Universe::name_matches_pattern(name, name_len,
           pattern().utf8_data(), pattern().length()) ) {
       return true;
@@ -830,13 +905,15 @@ ROMOptimizer::name_matches_pattern(const char name[], const int name_len,
 }
 
 inline bool
-ROMOptimizer::name_matches_pattern(const Symbol* s, ROMVector* patterns) {
+ROMOptimizer::name_matches_pattern(const Symbol* s, const ROMVector* patterns) {
   return name_matches_pattern( s->utf8_data(), s->length(), patterns );
 }
 
-bool ROMOptimizer::class_list_contains(ObjArray *list, InstanceClass *klass) {
-  for (int i=0; i<list->length(); i++) {
-    Oop::Raw oop = list->obj_at(i);
+bool ROMOptimizer::class_list_contains(const ObjArray* list,
+                                       const InstanceClass* klass) {
+  const int length = list->length();
+  for (int i = 0; i < length; i++) {
+    const Oop::Raw oop = list->obj_at(i);
     if (oop.is_null()) {
       // reached end of list
       break;
@@ -848,15 +925,15 @@ bool ROMOptimizer::class_list_contains(ObjArray *list, InstanceClass *klass) {
   return false;
 }
 
-bool ROMOptimizer::class_matches_classes_list(InstanceClass* klass, 
-                                              ROMVector* patterns) {
-  Symbol::Raw name = klass->original_name();
+bool ROMOptimizer::class_matches_classes_list(const InstanceClass* klass, 
+                                              const ROMVector* patterns) {
+  const Symbol::Raw name = klass->original_name();
   return name_matches_pattern(&name, patterns);
 }
 
-bool ROMOptimizer::class_matches_packages_list(InstanceClass* klass,
-                                               ROMVector* patterns) {
-  Symbol::Raw name = klass->original_name();
+bool ROMOptimizer::class_matches_packages_list(const InstanceClass* klass,
+                                               const ROMVector* patterns) {
+  const Symbol::Raw name = klass->original_name();
   int len = name().strrchr('/');
   if( len <= 0 ) {
     len = name().length();
@@ -864,7 +941,7 @@ bool ROMOptimizer::class_matches_packages_list(InstanceClass* klass,
   return name_matches_pattern(name().utf8_data(), len, patterns);
 }
 
-void ROMOptimizer::remove_packages(ROMVector* vector, Symbol* pattern) {
+void ROMOptimizer::remove_packages(ROMVector* vector, const Symbol* pattern) {
   GUARANTEE(vector != NULL, "Sanity");
 
   const char* name = pattern->utf8_data();
@@ -872,7 +949,7 @@ void ROMOptimizer::remove_packages(ROMVector* vector, Symbol* pattern) {
 
   int list_len = vector->size();
   for( int i = 0; i < list_len; ) {
-    Symbol::Raw current = vector->element_at(i);
+    const Symbol::Raw current = vector->element_at(i);
 
     const char* current_name = current().utf8_data();
     const int current_len = current().length();
@@ -886,11 +963,12 @@ void ROMOptimizer::remove_packages(ROMVector* vector, Symbol* pattern) {
   }
 }
 
-void ROMOptimizer::remove_packages(OopDesc* from_vector, ROMVector* patterns) {
+void
+ROMOptimizer::remove_packages(OopDesc* from_vector, const ROMVector* patterns) {
   ROMVector::Raw from( from_vector );
   const int len = patterns->size();
   for( int i = 0; i < len; i++ ) {
-    Symbol::Raw pattern = patterns->element_at(i);
+    const Symbol::Raw pattern = patterns->element_at(i);
     remove_packages( &from, &pattern );
   }
 }
@@ -902,23 +980,6 @@ void ROMOptimizer::add_package_to_list(ROMVector* vector, Symbol* package
   }
   remove_packages(vector, package);
   vector->add_element(package JVM_NO_CHECK_AT_BOTTOM);
-}
-
-void ROMOptimizer::add_package_to_list(ROMVector* vector, const char* pkgname
-                                       JVM_TRAPS) {
-  {
-    const int len = jvm_strlen(pkgname) + 1;
-    if (len > 255) {
-      _log_stream->print_cr("error: restricted or hidden package name may not "
-                            "exceed 255 bytes");
-      _log_stream->print_cr("(%s)", pkgname);
-      Throw::array_index_out_of_bounds_exception(empty_message JVM_THROW);
-    }
-  }
-
-  UsingFastOops fast_oops;
-  Symbol::Fast package = SymbolTable::slashified_symbol_for(pkgname JVM_CHECK);
-  add_package_to_list(vector, &package JVM_NO_CHECK_AT_BOTTOM);
 }
 
 bool ROMOptimizer::is_init_at_build(InstanceClass* klass) {
@@ -1163,98 +1224,6 @@ void ROMOptimizer::record_original_method_info(Method *method JVM_TRAPS) {
   _log_stream->cr();
 }
 
-
-void ROMOptimizer::enable_quick_natives(const char * pattern JVM_TRAPS) {
-  QuickNativesMatcher matcher(_quick_natives_log);
-  matcher.run(pattern JVM_CHECK);
-}
-
-#if USE_ROM_LOGGING
-void ROMOptimizer::write_quick_natives_log( void ) {
-  const int size = _quick_natives_log->size();
-  _quick_natives_log->sort();
-
-  _log_stream->cr();
-  _log_stream->print_cr("[Quick native methods (%d)]", size);
-  _log_stream->cr();
-
-  for (int i=0; i<size; i++) {
-    Method::Raw method = _quick_natives_log->element_at(i);
-    _log_stream->print("quick native: ");
-#ifndef PRODUCT
-    method().print_name_on(_log_stream);
-#endif
-    _log_stream->cr();
-  }
-}
-#endif
-
-#if USE_AOT_COMPILATION
-
-class PrecompileMatcher: public JavaClassMethodPatternMatcher {
-  ROMVector *_log_vector;
-public:
-  PrecompileMatcher(ROMVector *log_vector) {
-    _log_vector = log_vector;
-  }
-  virtual void handle_matching_method(Method *m JVM_TRAPS);
-};
-
-void PrecompileMatcher::handle_matching_method(Method *m JVM_TRAPS) {
-  if (!m->is_quick_native() &&
-      !m->is_impossible_to_compile() &&
-      !m->is_fast_get_accessor()) { 
-    _log_vector->add_element(m JVM_NO_CHECK_AT_BOTTOM);
-  }
-}
-
-void ROMOptimizer::enable_precompile(const char pattern[] JVM_TRAPS) {
-  PrecompileMatcher matcher(precompile_method_list());
-  matcher.run(pattern JVM_NO_CHECK_AT_BOTTOM);
-}
-
-#endif
-
-class KvmNativesMatcher : public JavaClassMethodPatternMatcher {
-  ROMVector *_log_vector;
-public:
-  KvmNativesMatcher(ROMVector *log_vector) {
-    _log_vector = log_vector;
-  }
-
-  virtual void handle_matching_method(Method *m JVM_TRAPS) {
-    if (!m->is_native()) {
-      return;
-    }
-
-    _log_vector->add_element(m JVM_CHECK);
-  }
-};
-
-
-void ROMOptimizer::enable_kvm_natives(const char * pattern JVM_TRAPS) {
-  KvmNativesMatcher matcher(_kvm_natives_log);
-  matcher.run(pattern JVM_CHECK);
-}
-
-void ROMOptimizer::write_kvm_natives_log() {
-#if USE_ROM_LOGGING
-  const int size = _kvm_natives_log->size();
-  _kvm_natives_log->sort();
-
-  _log_stream->cr();
-  _log_stream->print_cr("[Kvm native methods (%d)]", size);
-  _log_stream->cr();
-
-  for (int i=0; i<size; i++) {
-    Method::Raw method = _kvm_natives_log->element_at(i);
-    _log_stream->print("kvm native: ");
-    method().print_name_on(_log_stream);
-    _log_stream->cr();
-  }
-#endif
-}
-
 ReturnOop ROMOptimizer::build_method_table(const ROMVector * methods
                                            JVM_TRAPS) {
   const int size = methods->size();
@@ -1273,46 +1242,6 @@ ReturnOop ROMOptimizer::build_method_table(const ROMVector * methods
   }
 
   return table;
-}
-
-class JniNativesMatcher : public JavaClassMethodPatternMatcher {
-  ROMVector *_log_vector;
-public:
-  JniNativesMatcher(ROMVector *log_vector) {
-    _log_vector = log_vector;
-  }
-
-  virtual void handle_matching_method(Method *m JVM_TRAPS) {
-    if (!m->is_native()) {
-      return;
-    }
-
-    _log_vector->add_element(m JVM_NO_CHECK_AT_BOTTOM);
-  }
-};
-
-
-void ROMOptimizer::enable_jni_natives(const char * pattern JVM_TRAPS) {
-  JniNativesMatcher matcher(_jni_natives_log);
-  matcher.run(pattern JVM_CHECK);
-}
-
-void ROMOptimizer::write_jni_natives_log() {
-#if USE_ROM_LOGGING
-  int size = _jni_natives_log->size();
-  _jni_natives_log->sort();
-
-  _log_stream->cr();
-  _log_stream->print_cr("[Jni native methods (%d)]", size);
-  _log_stream->cr();
-
-  for (int i=0; i<size; i++) {
-    Method::Raw method = _jni_natives_log->element_at(i);
-    _log_stream->print("jni native: ");
-    method().print_name_on(_log_stream);
-    _log_stream->cr();
-  }
-#endif
 }
 
 // In MIDP there are a large number of non-public static final int fields.

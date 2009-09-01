@@ -746,7 +746,7 @@ ReturnOop ROM::compiled_method_from_address(const address addr) {
 #endif // ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
 
 #if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
-ReturnOop ROM::get_original_class_name(ClassInfo *clsinfo) {
+ReturnOop ROM::get_original_class_name(const ClassInfo *clsinfo) {
   if (!GenerateROMImage && _original_class_name_list == NULL) {
     return Symbols::unknown()->obj();
   }
@@ -819,7 +819,7 @@ ReturnOop ROM::get_original_method_name(const Method *method) {
 
 
 // The result is NULL if this class doesn't have renamed fields.
-ReturnOop ROM::get_original_fields(InstanceClass *ic) {
+ReturnOop ROM::get_original_fields(const InstanceClass* ic) {
   ClassInfo::Raw info = ic->class_info();
   const int class_id = info().class_id();
 
@@ -843,7 +843,7 @@ ReturnOop ROM::get_original_fields(InstanceClass *ic) {
   return orig_list().obj_at(class_id);
 }
 
-ReturnOop ROM::alternate_constant_pool(InstanceClass *klass) {
+ReturnOop ROM::alternate_constant_pool(const InstanceClass* klass) {
   Oop::Raw fields;
 
 #if ENABLE_ROM_GENERATOR

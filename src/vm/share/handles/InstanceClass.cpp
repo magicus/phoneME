@@ -1117,17 +1117,13 @@ bool InstanceClass::compute_is_subtype_of(JavaClass* other_class) {
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR \
      ||ENABLE_JVMPI_PROFILE
 // Returns the original set of fields before romizer has renamed them.
-ReturnOop InstanceClass::original_fields() {
+ReturnOop InstanceClass::original_fields(void) const {
   ReturnOop orig = ROM::get_original_fields(this);
-  if (orig != NULL) {
-    return orig;
-  } else {
-    return fields();
-  }
+  return orig ? orig : fields();
 }
 
 // Returns the original name that has been changed by romizer optimization
-ReturnOop InstanceClass::original_name() {
+ReturnOop InstanceClass::original_name(void) const {
   Symbol::Raw n = name();
   if (n.equals(Symbols::unknown())) {
     ClassInfo::Raw info = class_info();

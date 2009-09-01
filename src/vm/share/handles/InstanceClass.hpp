@@ -218,11 +218,11 @@ class InstanceClass: public JavaClass {
   // renamed/removed by the romizer.
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR \
       ||ENABLE_JVMPI_PROFILE
-  ReturnOop original_name();
-  ReturnOop original_fields();
+  ReturnOop original_name(void) const;
+  ReturnOop original_fields(void) const;
 #else
-  ReturnOop original_name()   {return name();}
-  ReturnOop original_fields() {return fields();}
+  ReturnOop original_name(void) const { return name();  }
+  ReturnOop original_fields(void) const { return fields();}
 #endif
 
   bool is_renamed(void) const {

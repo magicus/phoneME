@@ -2687,48 +2687,30 @@ bool ROMOptimizer::is_symbol_alive(ObjArray *live_symbols, Symbol* s) {
   return false;
 }
 
-class DisableCompilationMatcher: public JavaClassMethodPatternMatcher {
+class DisableCompilationMatcher: public ROMMethodPatternMatcher {
+private:
   ROMVector *_log_vector;
+
+protected:
+  virtual void handle_matching_method(Method* m JVM_TRAPS);
+
 public:
   DisableCompilationMatcher(ROMVector* log_vector) {
     _log_vector = log_vector;
   }
-
-  virtual void handle_matching_method(Method *m JVM_TRAPS);
 };
 
 void DisableCompilationMatcher::handle_matching_method(Method* m JVM_TRAPS) {
   if (!m->is_impossible_to_compile()) {
     m->set_impossible_to_compile();
-    _log_vector->add_element(m JVM_CHECK);
+    _log_vector->add_element(m JVM_NO_CHECK_AT_BOTTOM);
   }
 }
-
 
 void ROMOptimizer::disable_compilation(const char * pattern JVM_TRAPS) {
   DisableCompilationMatcher matcher(_disable_compilation_log);
-  matcher.run(pattern JVM_CHECK);
+  matcher.run(pattern JVM_NO_CHECK_AT_BOTTOM);
 }
-
-#if USE_ROM_LOGGING
-void ROMOptimizer::write_disable_compilation_log() {
-  int size = _disable_compilation_log->size();
-  _disable_compilation_log->sort();
-
-  _log_stream->cr();
-  _log_stream->print_cr("[Disabled compilation (%d)]", size);
-  _log_stream->cr();
-
-  for (int i=0; i<size; i++) {
-    Method::Raw method = _disable_compilation_log->element_at(i);
-    _log_stream->print("disabled compilation: ");
-#ifndef PRODUCT
-    method().print_name_on(_log_stream);
-#endif
-    _log_stream->cr();
-  }
-}
-#endif
 
 ROMTableInfo::ROMTableInfo(ObjArray *array) {
   _heap_table = array;
@@ -2864,101 +2846,6 @@ void ROMHashtableManager::add_to_bucket(ObjArray *rom_table, int index,
 
   SHOULD_NOT_REACH_HERE();
 }
-
-void JavaClassMethodPatternMatcher::handle_methods(const InstanceClass* klass
-                                                   JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  ObjArray::Fast methods = klass->methods();
-  Method::Fast m;
-  const int length = methods().length();
-  for (int i = 0; i < length; i++) {
-    m = methods().obj_at(i);
-    if (m.not_null() && match_method(&m)) {
-      _match_found = true;
-      handle_matching_method(&m JVM_CHECK);
-    }
-  }
-}
-
-inline
-void JavaClassMethodPatternMatcher::initialize(const char* pattern JVM_TRAPS) {
-  _match_found = false;
-
-  const char* delimiter = (const char*) jvm_strrchr(pattern, '.');
-  if (delimiter) {
-    int pos = delimiter - pattern;
-    if (pos == 0 || (size_t) pos == jvm_strlen(pattern)) {
-      tty->print_cr("invalid pattern: %s", pattern);
-      return;
-    }
-
-    _has_wildcards = delimiter[-1] == '*';
-
-    // found at least one '.' in the middle    
-    _class  = SymbolTable::slashified_symbol_for((utf8) pattern,
-                                                 pos JVM_CHECK);
-    
-    // parse the method name after '.'
-    pattern += pos + 1;
-    if ((delimiter = (jvm_strchr((char*)pattern, '('))) == NULL) {
-      // no method signature specified
-      _method = SymbolTable::symbol_for((utf8) pattern, 
-                                        jvm_strlen(pattern) JVM_CHECK);
-    } else {
-      // delimiter points to the start of method's signature
-      pos = delimiter - pattern;
-      if (pos == 0 || (size_t) pos == jvm_strlen(pattern)) {
-        tty->print_cr("invalid pattern: %s", pattern);
-        return;
-      }
-      _method = SymbolTable::symbol_for((utf8) pattern, pos JVM_CHECK);
-      _signature = TypeSymbol::parse(pattern + pos JVM_CHECK);
-    }
-    
-  } else {
-    // no dots in it whatsoever, the only possible case is '*'
-    // maybe generate an error
-    if (pattern[0] != '*' || pattern[1] != 0) {
-      tty->print_cr("invalid pattern: %s", pattern);
-      return;
-    }
-    _has_wildcards = true;
-    OopDesc* ast = SymbolTable::symbol_for("*" JVM_CHECK);
-    _class = ast;
-    _method = ast;
-  }
-}
-
-void JavaClassMethodPatternMatcher::run(const char pattern[] JVM_TRAPS) {
-  initialize(pattern JVM_CHECK);
-
-  UsingFastOops fast_oops;
-  InstanceClass::Fast klass;
-
-  if (!_has_wildcards) {
-    LoaderContext ctx(&_class, ErrorOnFailure);
-    klass = SystemDictionary::find(&ctx, /*lookup_only=*/ true,
-                                         /*check_only= */ true JVM_NO_CHECK);
-    if (klass.not_null()) {
-      handle_methods(&klass JVM_NO_CHECK_AT_BOTTOM);
-    } else {
-      Thread::clear_current_pending_exception();
-    }
-  } else {
-    for (SystemClassStream st; st.has_next();) {
-      klass = st.next();
-      if (match_class(&klass)) {
-        handle_methods(&klass JVM_CHECK);
-      }
-    }
-  }
-#if USE_SOURCE_IMAGE_GENERATOR
-  if (!_match_found) {
-    ROMOptimizer::config_warning("No match found");
-  }
-#endif
-}
-
 
 bool ROMOptimizer::is_special_method(Method* method) {
   Symbol::Raw name = method->name();

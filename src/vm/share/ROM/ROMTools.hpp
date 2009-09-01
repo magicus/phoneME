@@ -279,7 +279,7 @@ public:
   /**
    * Adds a new element into the ROMVector.
    */
-  void add_element(Oop *oop JVM_TRAPS);
+  void add_element(const Oop* oop JVM_TRAPS);
 
   /**
    * Adds a new element into the ROMVector without expanding the internal

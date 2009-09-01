@@ -353,18 +353,18 @@ public:
 #endif
 
 #if ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
-  static ReturnOop get_original_class_name(ClassInfo* /*clsinfo*/);
-  static ReturnOop get_original_method_name(const Method* /*method*/);
-  static ReturnOop get_original_fields(InstanceClass* /*ic*/);
-  static ReturnOop alternate_constant_pool(InstanceClass* /*ic*/);
+  static ReturnOop get_original_class_name(const ClassInfo* clsinfo);
+  static ReturnOop get_original_method_name(const Method* method);
+  static ReturnOop get_original_fields(const InstanceClass* ic);
+  static ReturnOop alternate_constant_pool(const InstanceClass* ic);
 #else
-  static ReturnOop get_original_class_name(ClassInfo* /*clsinfo*/)
+  static ReturnOop get_original_class_name(const ClassInfo* /*clsinfo*/)
                PRODUCT_RETURN0;
   static ReturnOop get_original_method_name(const Method* /*method*/)
                PRODUCT_RETURN0;
-  static ReturnOop get_original_fields(InstanceClass* /*ic*/)
+  static ReturnOop get_original_fields(const InstanceClass* /*ic*/)
                PRODUCT_RETURN0;
-  static ReturnOop alternate_constant_pool(InstanceClass* /*ic*/)
+  static ReturnOop alternate_constant_pool(const InstanceClass* /*ic*/)
                PRODUCT_RETURN0;
 #endif
 

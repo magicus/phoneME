@@ -75,17 +75,17 @@ class Symbol: public Oop {
   static ReturnOop copy_string_to_byte_array(OopDesc* string, bool slashify JVM_TRAPS);
 
   // Returns unbounded equality hash value
-  juint hash();
+  juint hash(void) const;
 
   bool matches(const SymbolDesc* other_symbol) const {
     return symbol()->matches(other_symbol);
   }
-  bool matches(Symbol* other_symbol) const {
+  bool matches(const Symbol* other_symbol) const {
     return matches(other_symbol->symbol());
   }
 
-  int strrchr(jbyte c);
-  bool is_same_class_package(Symbol* other);
+  int strrchr(jbyte c) const;
+  bool is_same_class_package(const Symbol* other) const;
 
   void string_copy(char* buffer, int buffer_size);
 

@@ -371,10 +371,10 @@ public:
   void set_classes_as_romized();
   bool is_overridden(InstanceClass *ic, Method *method);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool class_matches_classes_list(InstanceClass* klass,
-                                         ROMVector* patterns);
-  static bool class_matches_packages_list(InstanceClass* klass,
-                                          ROMVector* patterns);
+  static bool class_matches_classes_list(const InstanceClass* klass,
+                                         const ROMVector* patterns);
+  static bool class_matches_packages_list(const InstanceClass* klass,
+                                          const ROMVector* patterns);
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
@@ -437,44 +437,33 @@ private:
   void read_hardcoded_config(JVM_SINGLE_ARG_TRAPS);
   void optimize_package_lists(JVM_SINGLE_ARG_TRAPS);
   static void abort( void );
+  static void config_message_head( const char category[] );
   static void config_message( const char category[], const char msg[] );
   static void config_warning( const char msg[] );
+  static void config_warning_not_found( const char name[] );
   static void config_error( const char msg[] );
-  bool validate_pattern( const char pattern[], const int len ) const;
-  bool validate_pattern( const char pattern[] ) const;
   bool validate_class_pattern( const char pattern[] ) const;
-  bool validate_member_pattern( const char pattern[] ) const;
-  bool validate_field_pattern( const char pattern[] ) const;
-  bool validate_method_pattern( const char pattern[] ) const;
+  ReturnOop validate_package_pattern( const char pattern[] JVM_TRAPS ) const;
   void process_config_line(char* config_line JVM_TRAPS);
   void include_config_file(const char* config_file JVM_TRAPS);
   static char parse_config(char* line, const char*& name, const char*& value);
   void add_class_to_list(ObjArray* list, const char classname[] JVM_TRAPS);
-  void add_package_to_list(ROMVector* vector, const char *pkgname JVM_TRAPS);
   void add_package_to_list(ROMVector* vector, Symbol* pkgname JVM_TRAPS);
-  void remove_packages(ROMVector* from, Symbol* pattern);
-  void remove_packages(OopDesc* from_vector, ROMVector* patterns);
-  bool class_list_contains(ObjArray *list, InstanceClass *klass);
-  void enable_quick_natives(const char* pattern JVM_TRAPS);
-  void write_quick_natives_log();
-
-  void enable_jni_natives(const char* pattern JVM_TRAPS);
-  void write_jni_natives_log();
+  void remove_packages(ROMVector* from, const Symbol* pattern);
+  void remove_packages(OopDesc* from_vector, const ROMVector* patterns);
+  bool class_list_contains(const ObjArray* list, const InstanceClass* klass);
+  void write_methods_log(ROMVector* log, const char name[],
+                                         const char prefix[]);
   void update_jni_natives_table(JVM_SINGLE_ARG_TRAPS) {
     *jni_native_methods_table() = build_method_table(_jni_natives_log 
                                                      JVM_NO_CHECK_AT_BOTTOM);
   }
 
-  void enable_kvm_natives(const char* pattern JVM_TRAPS);
-  void write_kvm_natives_log();
   void update_kvm_natives_table(JVM_SINGLE_ARG_TRAPS) {
     *kvm_native_methods_table() = build_method_table(_kvm_natives_log 
                                                      JVM_NO_CHECK_AT_BOTTOM);
   }
   ReturnOop build_method_table(const ROMVector* methods JVM_TRAPS);
-#if USE_AOT_COMPILATION
-  void enable_precompile(const char pattern[] JVM_TRAPS);
-#endif
 
   bool dont_rename_class(InstanceClass *klass) {
     return class_list_contains(dont_rename_classes(), klass);
@@ -495,7 +484,6 @@ private:
 #endif
 
   void disable_compilation(const char* pattern JVM_TRAPS);
-  void write_disable_compilation_log();
   void allocate_empty_arrays(JVM_SINGLE_ARG_TRAPS);
   void make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS);
   void make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS);
@@ -503,8 +491,9 @@ private:
                                   JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
   static bool name_matches_pattern(const char name[], const int name_len,
-                                         ROMVector* patterns);
-  static bool name_matches_pattern(const Symbol* s, ROMVector* patterns);
+                                   const ROMVector* patterns);
+  static bool name_matches_pattern(const Symbol* s,
+                                   const ROMVector* patterns);
 #endif
 
   bool has_subclasses(InstanceClass *klass);
@@ -725,40 +714,7 @@ private:
   };
 
   friend class MethodIterator;
-  friend class JavaClassMethodPatternMatcher;
-};
-
-class JavaClassMethodPatternMatcher {
-  Symbol _class, _method, _signature;
-  bool   _has_wildcards;
-  bool   _match_found;
-private:
-  static bool name_matches_pattern(const char name[],    const int name_len, 
-                                   const char pattern[], const int pattern_len){
-    return Universe::name_matches_pattern(name, name_len, pattern, pattern_len);
-  }
-  static bool name_matches_pattern(const SymbolDesc* name, const Symbol* pattern) {
-    return name_matches_pattern(name->utf8_data(), name->utf8_length(),
-                                pattern->utf8_data(), pattern->length());
-  }
-
-  void initialize(const char* pattern JVM_TRAPS);
-
-  bool match_class(const InstanceClass* klass) const {
-    return name_matches_pattern((SymbolDesc*)klass->name(), &_class);
-  }
-  bool match_method(const Method* method) const {
-    return name_matches_pattern((SymbolDesc*)method->name(), &_method) &&
-           (_signature.is_null() || _signature.obj() == method->signature());
-  }
-
-  void handle_methods(const InstanceClass* klass JVM_TRAPS);
-public:
-  /**
-   * Override this method to handle all matching methods.
-   */
-  virtual void handle_matching_method(Method* /*method*/ JVM_TRAPS) = 0;
-  void run(const char pattern[] JVM_TRAPS);
+  friend class ROMClassPatternMatcher;
 };
 
 #endif // ENABLE_ROM_GENERATOR

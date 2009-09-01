@@ -54,11 +54,11 @@ void Symbol::string_copy(char* buffer, int buffer_size) {
   return;
 }
 
-juint Symbol::hash() {
+juint Symbol::hash(void) const {
   return SymbolTable::hash(utf8_data(), length());
 }
 
-int Symbol::strrchr(jbyte c) {
+int Symbol::strrchr(jbyte c) const {
   int len = length();
   GUARANTEE(len >= 0, "sanity check");  
   // If we ever change jbyte to jubyte, check instead that c < 128
@@ -69,7 +69,7 @@ int Symbol::strrchr(jbyte c) {
   return len;
 }
 
-bool Symbol::is_same_class_package(Symbol* other) {
+bool Symbol::is_same_class_package(const Symbol* other) const {
   // The symbolOop's are in UTF8 encoding. Since we only need to check
   // explicitly for ASCII characters ('/', 'L', '['), we can keep them
   // in UTF8 encoding.
