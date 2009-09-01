@@ -155,6 +155,20 @@ javacall_result javautil_unicode_utf16_to_utf8(const javacall_utf16* pUtf16,
                                                /*OUT*/ javacall_int32* length);
 
 /**
+ * Calculates maximum number of UTF8 bytes in pUtf8 buffer that can be converted into UTF16 buffer of length *utf16Len.
+ * Returns the number of consumed UTF8 bytes in *utf8Len and the number of required UTF16 chars in *utf16Len.
+ *
+ * @param pUtf8 UTF-8 bytes buffer (may contain not whole number of characters)
+ * @param utf8Len in: the number of bytes in pUtf8; out: the number of bytes that can be converted
+ * @param utf16Len in: upper bound for UTF-16 positions; out: the number of UTF-16 positions required for converting *utf8Len UTF-8 bytes.
+ *
+ * @return if pUtf8 string contains illegal UTF8 codes JAVACALL_INVALID_ARGUMENT otherwise JAVACALL_OK
+ */
+javacall_result javautil_unicode_get_max_lengths(const unsigned char * pUtf8, 
+                                                 /*IN/OUT*/javacall_int32 * utf8Len, 
+                                                 /*IN/OUT*/javacall_int32 * utf16Len);
+
+/**
  * Converts the UTF-8 to UTF-16.
  * If length is not NULL, the number of 16-bit units in the UTF-16 representation
  * of the string is written to it.
