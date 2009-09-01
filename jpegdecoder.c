@@ -49,7 +49,6 @@
 #define pcsl_mem_free free
 #else
 #include <pcsl_memory.h>
-#include <javacall_memory.h>
 #endif
 #include "jpeglib.h"
 #include <setjmp.h>
@@ -157,15 +156,6 @@ struct jmf_error_mgr2 {
 };
 
 typedef struct jmf_error_mgr2 * jmf_error_ptr2;
-
-/**
- * @enum malloc_model
- * @brief memory malloc model
- */
-typedef enum {
-    JAVACALL_MEMORY_MODEL    	= 0x01,
-    PCSL_MEMORY_MODEL     		= 0x02
-} malloc_model;
 
 #define JMF_INPUT_BUF_SIZE  4096	/* choose an efficiently fwrite'able size */
 
@@ -521,7 +511,7 @@ int JPEG_To_RGB_decodeData2(void *info, char *outData, int outPixelSize,
     row_pointer[0] = (unsigned char *)javacall_malloc(cinfo->output_width * pixelSize);
     malloc_model = JAVACALL_MEMORY_MODEL;
     if(row_pointer[0] == NULL){
-    row_pointer[0] = (unsigned char *)pcsl_mem_malloc(cinfo->output_width * pixelSize);
+    	row_pointer[0] = (unsigned char *)pcsl_mem_malloc(cinfo->output_width * pixelSize);
     	malloc_model = PCSL_MEMORY_MODEL;
     }
 
@@ -573,7 +563,7 @@ int JPEG_To_RGB_decodeData2(void *info, char *outData, int outPixelSize,
         if(malloc_model == JAVACALL_MEMORY_MODEL){
         	javacall_free(row_pointer[0]);
         }else{
-        pcsl_mem_free(row_pointer[0]);
+        	pcsl_mem_free(row_pointer[0]);
         }
     }
 
