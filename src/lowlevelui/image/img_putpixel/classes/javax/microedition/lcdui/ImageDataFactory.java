@@ -128,7 +128,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
         int length = width * height * 2;
 
         return  new ImageData(width, height, false,
-                              mutableSource.getPixelData());
+                              mutableSource);
     }
 
     /**

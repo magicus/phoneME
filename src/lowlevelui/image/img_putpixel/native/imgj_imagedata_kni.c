@@ -34,11 +34,23 @@
 #include <stdlib.h>
 #include <sni.h>
 #include <midpError.h>
+#include <midpUtilKni.h>
+#include <Midp_logging.h>
+#include <commonKNIMacros.h>
 
 #include <imgapi_image.h>
+#include <imgdcd_image_util.h>
 #include <img_errorcodes.h>
 #include "imgj_rgb.h"
 
+#include "javacall_memory.h"
+
+#define PIXEL imgdcd_pixel_type
+#define ALPHA imgdcd_alpha_type
+
+/* Macro to retrieve C structure representation of an Object */
+typedef struct Java_javax_microedition_lcdui_ImageData _ImageData;
+#define getMidpImageDataPtr(handle) (unhand(_ImageData,(handle)))
 
 /**
  * Gets an ARGB integer array from this <tt>ImmutableImage</tt>. The
@@ -97,4 +109,161 @@ KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
 
     KNI_EndHandles();
     KNI_ReturnVoid();
+}
+
+/**
+ * Get image native data buffer
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_ImageData_nAllocateDataBuffer) {
+	jint w, h;
+	PIXEL *pixelData = NULL;
+	ALPHA *alphaData = NULL;
+	jboolean allocateAlpha;
+	jboolean result = KNI_FALSE;
+
+	KNI_StartHandles(1);
+	KNI_DeclareHandle(imageData);
+
+	allocateAlpha = KNI_GetParameterAsBoolean(1);
+	KNI_GetThisPointer(imageData);
+
+    	w = (jint)getMidpImageDataPtr(imageData)->width;
+    	h = (jint)getMidpImageDataPtr(imageData)->height;
+
+REPORT_CRIT2(LC_CORE, "nAllocateDataBuffer >> w = %d , h = %d ", w, h);
+	do{
+    	 	pixelData = (PIXEL *)javacall_malloc(w * h * sizeof(PIXEL));
+    	 	if(pixelData == NULL){
+    	 		REPORT_INFO(LC_LOWUI, "pdLCDUIimage nAllocateDataBuffer pixel data failed !\n");
+    	 		break;
+    	 	}
+
+    	 	if(allocateAlpha){
+    	 		alphaData = (ALPHA *)javacall_malloc(w * h);
+    	 		if(alphaData == NULL){
+    	 			javacall_free(pixelData);
+    	 			pixelData = NULL;
+    	 			REPORT_INFO(LC_LOWUI, "pdLCDUIimage nAllocateDataBuffer alpha data failed !\n");
+    	 			break;
+    	 		}    	 		
+    	 	}
+    	 	
+    	 	result = KNI_TRUE;
+	}while(0);
+
+ 	getMidpImageDataPtr(imageData)->nativePixelData = (jint)pixelData;
+ 	getMidpImageDataPtr(imageData)->nativeAlphaData = (jint)alphaData;	
+ 	
+	KNI_EndHandles();
+	KNI_ReturnBoolean(result);
+}
+
+ /**
+  * Make a copy of native pxiel data.
+  */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_ImageData_nClonePixelData) {
+	jint w, h;
+	PIXEL *pixelDataSrc = NULL;
+	PIXEL *pixelData = NULL;
+
+	KNI_StartHandles(2);
+	KNI_DeclareHandle(imageData);
+	KNI_DeclareHandle(imageDataSrc);
+
+	KNI_GetThisPointer(imageData);
+
+	KNI_GetParameterAsObject(1, imageDataSrc);
+    	w = (jint)getMidpImageDataPtr(imageDataSrc)->width;
+    	h = (jint)getMidpImageDataPtr(imageDataSrc)->height;	
+	pixelDataSrc = (PIXEL *)getMidpImageDataPtr(imageDataSrc)->nativePixelData;
+
+	if(pixelDataSrc != NULL){
+		pixelData = (PIXEL *)javacall_malloc(w * h * sizeof(PIXEL));
+		if(pixelData != NULL){
+			memcpy(pixelData, pixelDataSrc, w * h * sizeof(PIXEL));
+		}else{
+			KNI_ThrowNew(midpOutOfMemoryError, NULL);
+		}
+		getMidpImageDataPtr(imageData)->nativePixelData = (jint)pixelData;
+	}
+
+	KNI_EndHandles();
+	KNI_ReturnVoid();	
+ }
+ 
+ /**
+  * Set each pixel data to 0xff.
+  */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_ImageData_nClearPixelData) {
+	jint w, h;
+	PIXEL *pixelData = NULL;
+
+	KNI_StartHandles(1);
+	KNI_DeclareHandle(imageData);
+
+	KNI_GetThisPointer(imageData);
+
+    	w = (jint)getMidpImageDataPtr(imageData)->width;
+    	h = (jint)getMidpImageDataPtr(imageData)->height;	
+	pixelData = (PIXEL *)getMidpImageDataPtr(imageData)->nativePixelData;
+
+	if(pixelData != NULL){
+		memset((char*)pixelData, 0xFF, w * h * sizeof(PIXEL));
+	}
+
+	KNI_EndHandles();
+	KNI_ReturnVoid();	
+ }
+
+ /**
+  * Removes native alpha data information
+  */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_ImageData_nRemoveAlpha) {
+	ALPHA *alphaData = NULL;
+
+	KNI_StartHandles(1);
+	KNI_DeclareHandle(imageData);
+
+	KNI_GetThisPointer(imageData);
+
+	alphaData = (PIXEL *)getMidpImageDataPtr(imageData)->nativeAlphaData;
+
+	if(alphaData != NULL){
+		javacall_free(alphaData);
+	}
+	getMidpImageDataPtr(imageData)->nativeAlphaData = NULL;
+
+	KNI_EndHandles();
+	KNI_ReturnVoid();	
+ }
+ 
+ /**
+  * Cleanup after garbage collected instance.
+  */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_ImageData_finalize) {
+	PIXEL *pixelData = NULL;
+	ALPHA *alphaData = NULL;
+	
+	KNI_StartHandles(1);
+	KNI_DeclareHandle(imageData);
+
+	KNI_GetThisPointer(imageData);
+
+	pixelData = (PIXEL *)((const java_imagedata*)imageData)->nativePixelData;
+	if(pixelData != NULL){
+		javacall_free(pixelData);
+	}
+
+	alphaData = (ALPHA *)((const java_imagedata*)imageData)->nativeAlphaData;
+	if(alphaData != NULL){
+		javacall_free(alphaData);
+	}
+
+	KNI_EndHandles();
+	KNI_ReturnVoid();
 }

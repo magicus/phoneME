@@ -28,6 +28,7 @@
 
 #include <jar.h>
 #include <pcsl_memory.h>
+#include <javacall_memory.h>
 #include <midp_logging.h>
 
 #include "imgdcd_intern_image_decode.h"
@@ -44,7 +45,9 @@
 #define CT_COLOR    0x02
 #define CT_ALPHA    0x04
 
-#define freeBytes(p) pcsl_mem_free((p))
+#define allocBytes(n) smartAllocFunction(n)
+//#define freeBytes(p) pcsl_mem_free((p))
+#define freeBytes(p) smartFreeFunction(p)
 
 typedef struct _pngData {
       signed int   width;
@@ -158,6 +161,46 @@ static int PNGdecodeImage_seek(void* p, long offset, int whence) {
     (void)offset;
     (void)whence;
     return -1;
+}
+
+/**
+ * @enum malloc_model
+ * @brief memory malloc model
+ */
+typedef enum {
+    JAVACALL_MEMORY_MODEL    	= 0x01,
+    PCSL_MEMORY_MODEL     		= 0x02
+} malloc_model;
+
+/* returns a memory handle, from javacall or pcsl */
+static void* smartAllocFunction(int n) {
+        unsigned char* outBuf;
+        unsigned char malloc_model;
+
+    	 outBuf = javacall_malloc(n + 1);
+    	 malloc_model = JAVACALL_MEMORY_MODEL;
+    	 if(outBuf == NULL){
+    	 	outBuf = pcsl_mem_malloc(n + 1);
+    		malloc_model = PCSL_MEMORY_MODEL;
+    	 }
+
+    	 if(outBuf != NULL){
+    	 	*outBuf = malloc_model;
+    	 	outBuf ++;
+    	 }    
+    	 return (void*)outBuf;
+}
+
+/* handle, is a memory handle */
+static void smartFreeFunction(void* handle) {
+	 unsigned char* cHandle = (unsigned char*) handle;
+	 
+        cHandle --;
+        if((*cHandle) == JAVACALL_MEMORY_MODEL){
+        	javacall_free(cHandle);
+        }else{
+        	pcsl_mem_free(cHandle);
+        }
 }
 
 /* returns a memory handle, call addrFromHandle to use */
@@ -407,7 +450,8 @@ PNGdecodeImage_real(imageSrcPtr src, imageDstPtr dst,
 
             src->seek(src, startPos);    /* reset to the first IDAT_CHUNK */
 
-            decompBuf = (unsigned char*)pcsl_mem_malloc(decompLen);
+            //decompBuf = (unsigned char*)pcsl_mem_malloc(decompLen);
+            decompBuf = (unsigned char*)allocBytes(decompLen);
             if (decompBuf == NULL) {
                 OK = FALSE;
 		goto done;
@@ -1505,7 +1549,8 @@ handleImageData(unsigned char *pixels, int pixelsLength,
     filterAllRows(pixels, data);
 
     if (data->interlace) {
-        scanline = (unsigned char *) pcsl_mem_malloc(data->width * pixelSize);
+        //scanline = (unsigned char *) pcsl_mem_malloc(data->width * pixelSize);
+        scanline = (unsigned char *) allocBytes(data->width * pixelSize);
         if (scanline == NULL) {
             return FALSE;
         }
@@ -1524,7 +1569,8 @@ handleImageData(unsigned char *pixels, int pixelsLength,
          i.e. 8 bit Palette or 8 bit RGB/gs without transparency*/
         sendDirect = TRUE;
     } else if (scanline == NULL) {
-        scanline = (unsigned char *) pcsl_mem_malloc(data->width * pixelSize);
+        //scanline = (unsigned char *) pcsl_mem_malloc(data->width * pixelSize);
+        scanline = (unsigned char *) allocBytes(data->width * pixelSize);
         if (scanline == NULL) {
             return FALSE;
         }
@@ -1575,7 +1621,8 @@ handleImageData(unsigned char *pixels, int pixelsLength,
     }
 
     if (scanline != NULL) {
-        pcsl_mem_free(scanline);
+        //pcsl_mem_free(scanline);
+        freeBytes(scanline);
     }
 
     return TRUE;

@@ -94,36 +94,42 @@ final class ImageData implements AbstractImageData {
         initImageData(width, height, isMutable, allocateAlpha);
 
         if (clearPixelData) {
+            if(pixelData != null){ 
             for (int i = 0; i < pixelData.length; i++) {
                 pixelData[i] = (byte)0xFF;
+            	  }
+            }else{
+            	  nClearPixelData();
             }
         }
     }
 
     /**
      * Constructs mutable or immutable <code> ImageData </code>
-     * using passed in width, height and pixel data.
+     * using passed in width, height and image data.
      *
      * @param width The width of the <code>ImageData </code> to be created.
      * @param height The height of the <code>ImageData </code> to be created.
      * @param isMutable true to create mutable <code>ImageData</code>,
      *                  false to create immutable <code>ImageData</code>
-     * @param pixelData byte array that contains pixel data for the 
-     *                  <code>ImageData</code>.
+     * @param imageSource the <code>ImageData</code> to be copy.
      */
     ImageData(int width, int height, boolean isMutable,
-              byte[] pixelData) {
+              ImageData imageSource) {
         this.width = width;
         this.height = height;
         this.isMutable = isMutable;
 
+	 byte[] pixelData = imageSource.getPixelData();
+	 if(pixelData != null){
         int length = width * height * 2;
         byte[] newPixelData = new byte[length];
         System.arraycopy(pixelData, 0, newPixelData, 0, length);
 
         this.pixelData = newPixelData;
-
-        
+	 }else{
+	 	nClonePixelData(imageSource);
+	 }
     }
 
     /**
@@ -144,13 +150,35 @@ final class ImageData implements AbstractImageData {
         this.height = height;
         this.isMutable = isMutable;
 
+	if(!nAllocateDataBuffer(allocateAlpha)){
         pixelData = new byte[width * height * 2];
 
         if (allocateAlpha) {
             alphaData = new byte[width * height];
         } else {
             alphaData = null;
-        }
+        	}
+	}
+    }
+
+/**
+     * Initializes mutable or immutable <code> ImageData </code> 
+     * using known width, height.
+     * Alpha array is allocated if allocateAlpha is true.
+     *
+     */
+    void initImageData() {
+        this.isMutable = false;
+
+	 if(!nAllocateDataBuffer(hasAlpha)){
+        	pixelData = new byte[width * height * 2];
+
+        	if (hasAlpha) {
+            		alphaData = new byte[width * height];
+        	} else {
+            		alphaData = null;
+        	}
+	 }
     }
 
     /**
@@ -215,6 +243,7 @@ final class ImageData implements AbstractImageData {
      */
     public void removeAlpha() {
         alphaData = null;
+        nRemoveAlpha();
     }
 
     /**
@@ -225,4 +254,29 @@ final class ImageData implements AbstractImageData {
     byte[] getPixelData() {
         return pixelData;
     }
+
+    /**
+     * Get image native data buffer
+     */
+    private native boolean nAllocateDataBuffer(boolean allocateAlpha);
+    
+    /**
+     *  Make a copy of native pxiel data
+     */
+    private native void nClonePixelData(ImageData imageSource);
+    
+    /**
+     *  Set each pixel data to 0xff
+     */
+    private native void nClearPixelData();
+
+    /**
+     *  Removes native alpha data information 
+     */
+    private native void nRemoveAlpha();
+    
+    /**
+     * Cleanup after garbage collected instance.
+     */
+    private native void finalize();    
 }

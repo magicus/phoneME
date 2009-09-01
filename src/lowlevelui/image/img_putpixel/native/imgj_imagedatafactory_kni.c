@@ -39,6 +39,7 @@
 #include <img_imagedata_load.h>
 #include <imgdcd_image_util.h>
 
+#include <javacall_defs.h>
 
 #define PIXEL imgdcd_pixel_type
 #define ALPHA imgdcd_alpha_type
@@ -533,7 +534,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
      *            JavaByteArray(pngData)->length, srcBuffer);
      */
 
-
+    imgPixelData = (PIXEL *)midpImageData->nativePixelData;
+    if(imgPixelData == NULL){
     unhand(jbyte_array, pixelData) = midpImageData->pixelData;
     if (!KNI_IsNullHandle(pixelData)) {
         imgPixelData = (PIXEL *)JavaByteArray(pixelData);
@@ -544,7 +546,10 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     } else {
         imgPixelData = NULL;
     }
+    }
 
+    imgAlphaData = (ALPHA *)midpImageData->nativeAlphaData;
+    if(imgAlphaData == NULL){
     unhand(jbyte_array, alphaData) = midpImageData->alphaData;
     if (!KNI_IsNullHandle(alphaData)) {
         imgAlphaData = (ALPHA *)JavaByteArray(alphaData);
@@ -554,6 +559,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
          */
     } else {
         imgAlphaData = NULL;
+    	}
     }
 
     /* assert
@@ -625,6 +631,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     imgWidth  = midpImageData->width;
     imgHeight = midpImageData->height;
 
+    imgPixelData = (PIXEL *)midpImageData->nativePixelData;
+    if(imgPixelData == NULL){
     unhand(jbyte_array, pixelData) = midpImageData->pixelData;
     if (!KNI_IsNullHandle(pixelData)) {
         imgPixelData = (PIXEL *)JavaByteArray(pixelData);
@@ -632,6 +640,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
          * JAVA_TRACE("loadJPEG pixelData length=%d\n",
          *            JavaByteArray(pixelData)->length);
          */
+    	}
     }
 
     /* assert
