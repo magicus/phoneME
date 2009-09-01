@@ -809,22 +809,32 @@ static javacall_result dshow_run(javacall_handle handle)
 
 //=============================================================================
 
-javacall_result dshow_stream_length(javacall_handle handle, javacall_int64 length)
+javacall_result dshow_stream_length(javacall_handle handle,
+                                    javacall_bool stream_len_known, 
+                                    javacall_int64 length)
 {
     dshow_player* p = (dshow_player*)handle;
 
-    PRINTF( "*** stream_length(%I64d) ***\n", length );
+    PRINTF( "*** stream_length %s (%I64d) ***\n", 
+            (stream_len_known ? "known" : "unknown"), length );
 
-    p->whole_content_size = length;
-
-    if( NULL != p->ppl ) 
+    if( JAVACALL_TRUE == stream_len_known )
     {
-        player::result r = p->ppl->set_stream_length(length);
-        return (player::result_success==r) ? JAVACALL_OK : JAVACALL_FAIL;
+        p->whole_content_size = length;
+
+        if( NULL != p->ppl ) 
+        {
+            player::result r = p->ppl->set_stream_length(length);
+            return (player::result_success==r) ? JAVACALL_OK : JAVACALL_FAIL;
+        }
+        else
+        {
+            return JAVACALL_OK;
+        }
     }
     else
     {
-        return JAVACALL_OK;
+        return JAVACALL_FAIL;
     }
 }
 

@@ -947,6 +947,7 @@ javacall_result javacall_media_run(javacall_handle handle)
 
 javacall_result javacall_media_stream_length(
     javacall_handle handle,
+    javacall_bool stream_len_known,
     javacall_int64 length)
 {
     javacall_result ret = JAVACALL_FAIL;
@@ -954,7 +955,9 @@ javacall_result javacall_media_stream_length(
     media_interface* pItf = pPlayer->mediaItfPtr;
 
     if (QUERY_BASIC_ITF(pItf, stream_length)) {
-        ret = pItf->vptrBasic->stream_length(pPlayer->mediaHandle,length);
+        ret = pItf->vptrBasic->stream_length(pPlayer->mediaHandle,
+                                             stream_len_known,
+                                             length);
     }
 
     return ret;

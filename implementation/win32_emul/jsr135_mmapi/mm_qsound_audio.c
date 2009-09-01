@@ -864,23 +864,28 @@ static javacall_result audio_qs_run(javacall_handle handle){
 
 //=============================================================================
 
-static javacall_result audio_qs_stream_length(javacall_handle handle, 
+static javacall_result audio_qs_stream_length(javacall_handle handle,
+                                              javacall_bool stream_len_known, 
                                               javacall_int64 length)
 {
     ah* h = (ah*)handle;
 
-    PRINTF( "- stream length(%i)", (int)length );
+    PRINTF( "- stream length %s (%I64d)", 
+            (stream_len_known ? "known" : "unknown"), length );
 
-    if(length > INT_MAX) return JAVACALL_OUT_OF_MEMORY;
-
-    h->streamLen = length;
-
-    if( h->dataBufferLen < (int)length )
+    if( stream_len_known )
     {
-        h->dataBufferLen = (int)length;
-        h->dataBuffer    = realloc( h->dataBuffer, h->dataBufferLen );
+        if(length > INT_MAX) return JAVACALL_OUT_OF_MEMORY;
 
-        if( NULL == h->dataBuffer ) return JAVACALL_OUT_OF_MEMORY;
+        h->streamLen = length;
+
+        if( h->dataBufferLen < (int)length )
+        {
+            h->dataBufferLen = (int)length;
+            h->dataBuffer    = realloc( h->dataBuffer, h->dataBufferLen );
+
+            if( NULL == h->dataBuffer ) return JAVACALL_OUT_OF_MEMORY;
+        }
     }
 
     return JAVACALL_OK;
