@@ -466,7 +466,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
     private void releaseRadioAccess()
     {
-        if( getOwner().isRadioPlayer() && hasTakenRadioAccess )
+        if( hasTakenRadioAccess )
         {
             nReleaseRadioAccess();
             hasTakenRadioAccess = false;
