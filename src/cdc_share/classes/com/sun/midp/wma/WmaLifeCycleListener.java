@@ -130,6 +130,7 @@ public class WmaLifeCycleListener implements LifeCycleListener {
         MIDletStateHandler msh = MIDletStateHandler.getMidletStateHandler();
         if (msh == null) return;
         MIDletSuite suite = msh.getMIDletSuite();
+        init();
 
         singletoneThis.addProtocol(protocol, suite);
     }
@@ -173,21 +174,17 @@ public class WmaLifeCycleListener implements LifeCycleListener {
 
     private static boolean initialized = false;
     private static Object initSync = new Object();
-    public static void init() {
+    public synchronized static void init() {
         if (!initialized) {
-            synchronized (initSync) {
-                if (!initialized) {
-                    AccessController.doPrivileged(new PrivilegedAction() {
-                        public Object run() {
-                            LifeCycleNotifier notifier = LifeCycleNotifierProvider.getInstance();
-                            singletoneThis = new WmaLifeCycleListener();
-                            notifier.addListener(singletoneThis);
-                            return null;
-                        }
-                    });
-                    initialized = true;
+            AccessController.doPrivileged(new PrivilegedAction() {
+                public Object run() {
+                    LifeCycleNotifier notifier = LifeCycleNotifierProvider.getInstance();
+                    singletoneThis = new WmaLifeCycleListener();
+                    notifier.addListener(singletoneThis);
+                    return null;
                 }
-            }
+            });
+            initialized = true;
         }
     }
 }
