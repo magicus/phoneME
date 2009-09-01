@@ -946,6 +946,18 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private boolean isWaitingForSnapshot;
     // Get snapshot
     public synchronized byte[] getVideoSnapshot(final String imageType) throws MediaException {
+        
+        getOwner().checkSnapshotPermission();
+        if (getOwner().getState() != Player.STARTED || videoControl == null ||
+                    !videoControl.getVisible()) {
+            System.out.println("Player is not started or invisible");
+            return new byte[0];
+        }
+
+        if (!videoControl.waitForPaint()) {
+            return new byte[0];
+        }
+        
         byte[] result = null;
         final Exception[] exc = new Exception[1];
         result =  (byte[]) doSynchronously(new SynchronousAction() {
@@ -971,7 +983,6 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private byte[] getVideoSnapshot0(String imageType) throws MediaException
     {
         byte [] ret = null;
-        getOwner().checkSnapshotPermission();
         if (getOwner().getState() != Player.STARTED || !videoControl.getVisible()) {
             System.out.println("Player is not started or invisible");
             return new byte[0];

@@ -86,6 +86,14 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private MMHelper mmh = null;
     // Lock
     private Object boundLock = new Object();
+    private Object repaintSync = new Object();
+
+    // is the player camera?
+    private boolean isCamera = false;
+    
+    // need to wait for paint before taking snapshot
+    private boolean waitingForPaint = false;
+
     
     /** 
      * Refers to current display mode: normal or full screen, provides location 
@@ -112,6 +120,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         else dw = sw;
         if (sh <= 0) dh = DEFAULT_HEIGHT;
         else dh = sh;
+        
+        if (src instanceof DirectPlayer) {
+            DirectPlayer dp = (DirectPlayer)src;
+            isCamera = dp.getOwner().isCapturePlayer();
+        }
     }
     
     /**
@@ -203,6 +216,22 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         started = false;
     }
     
+    boolean waitForPaint() {
+        if (isCamera && waitingForPaint) {
+            repaint();
+            synchronized (repaintSync) {
+                try {
+                    repaintSync.wait(3000); 
+                } catch (InterruptedException ignored) {}
+                if (waitingForPaint) {
+                    System.out.println("waitForPaint - paint wasn't occured");
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
     void notifySizeChanged() {
         if (source instanceof DirectPlayer) {
             DirectPlayer p = (DirectPlayer) source;
@@ -275,6 +304,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             ret = (Object)item;
 // #endif ]
             visible = true;
+            waitingForPaint = true;
         }
 
         return ret;
@@ -391,13 +421,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             repaint();
         }
 
-        boolean isCamera = false;
-        if (source instanceof DirectPlayer) {
-            DirectPlayer dp = (DirectPlayer)source;
-            isCamera = dp.getOwner().isCapturePlayer();
-        }
-        if (isCamera || visible == false) {
+        if (visible == false) {
             source.setVideoVisible(visible);
+        } else {
+            waitingForPaint = true;
         }
     }
     
@@ -511,6 +538,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                 prepareVideoSurface(g, x, y, w, h);
             }
         }
+        if (isCamera) {
+            synchronized (repaintSync) {
+                waitingForPaint = false;
+                repaintSync.notifyAll();
+            }
+        }
     }
 
     /**
@@ -558,6 +591,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
         
         public void paint(Graphics g, int w, int h) {
+
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "DVItem.paint visible=" + visible); 
@@ -568,6 +602,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                     prepareClippedPreview(g, 0, 0, w, h);
                 } else {
                     prepareVideoSurface(g, 0, 0, w, h);
+                }
+            }
+            if (isCamera) {
+                synchronized (repaintSync) {
+                    waitingForPaint = false;
+                    repaintSync.notifyAll();
                 }
             }
         }
