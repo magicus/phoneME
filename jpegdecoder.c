@@ -470,7 +470,6 @@ int JPEG_To_RGB_decodeData2(void *info, char *outData, int outPixelSize,
     JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
     int rowStride;		/* physical row width in image buffer */
     int pixelSize;
-    unsigned char malloc_model;
 
     /*
      * Comment out unused variables.
@@ -508,21 +507,13 @@ int JPEG_To_RGB_decodeData2(void *info, char *outData, int outPixelSize,
     /* JSAMPLEs per row in image_buffer */
     /*rowStride = cinfo->output_width * pixelSize;*/
     rowStride = (right - left) * outPixelSize;
-    row_pointer[0] = (unsigned char *)javacall_malloc(cinfo->output_width * pixelSize);
-    malloc_model = JAVACALL_MEMORY_MODEL;
-    if(row_pointer[0] == NULL){
-    	row_pointer[0] = (unsigned char *)pcsl_mem_malloc(cinfo->output_width * pixelSize);
-    	malloc_model = PCSL_MEMORY_MODEL;
-    }
+    row_pointer[0] = (unsigned char *)pcsl_mem_malloc(cinfo->output_width * pixelSize);
 
     /* Establish the setjmp return context for jmf_error_exit to use. */
     if (setjmp(jerr->setjmp_buffer)) {
         /* If we get here, the JPEG code has signaled an error. */
-        if(malloc_model == JAVACALL_MEMORY_MODEL){
-        	javacall_free(row_pointer[0]);
-        }else{
-        	pcsl_mem_free(row_pointer[-0]);
-        }
+        pcsl_mem_free(row_pointer[-
+        0]);
         return 0;
     }
     outDataPtr = (unsigned char *)outData;
@@ -560,11 +551,7 @@ int JPEG_To_RGB_decodeData2(void *info, char *outData, int outPixelSize,
     jm_jpeg_finish_decompress(cinfo);
 
     if (row_pointer[0] != NULL) {
-        if(malloc_model == JAVACALL_MEMORY_MODEL){
-        	javacall_free(row_pointer[0]);
-        }else{
-        	pcsl_mem_free(row_pointer[0]);
-        }
+        pcsl_mem_free(row_pointer[0]);
     }
 
     return cinfo->output_width * cinfo->output_height * outPixelSize;
@@ -578,30 +565,11 @@ JPEG_To_RGB_decode(void *info, char *inData, int inDataLen,
         return NULL;
     else {
         int outPixelSize = 3;
-        //char* outData = pcsl_mem_malloc((*width) * (*height) * outPixelSize);
-        char* outData;
-        unsigned char malloc_model;
-    	 outData = javacall_malloc((*width) * (*height) * outPixelSize + 1);
-    	 malloc_model = JAVACALL_MEMORY_MODEL;
-    	 if(outData == NULL){
-    	 	outData = pcsl_mem_malloc((*width) * (*height) * outPixelSize + 1);
-    		malloc_model = PCSL_MEMORY_MODEL;
-    	 }
-
-    	 if(outData != NULL){
-    	 	*outData = malloc_model;
-    	 	outData ++;
-    	 }
-
+        char* outData = pcsl_mem_malloc((*width) * (*height) * outPixelSize);
         if (JPEG_To_RGB_decodeData(info, outData) != 0)
             return outData;
         else {
-            outData --;
-            if((unsigned char)(*outData) == JAVACALL_MEMORY_MODEL){
-            		javacall_free(outData);
-            }else{
-            		pcsl_mem_free(outData);
-            }
+            pcsl_mem_free(outData);
             return NULL;
         }
     }
@@ -618,31 +586,12 @@ JPEG_To_RGB_decode2(void *info, char *inData, int inDataLen, int outPixelSize,
     if (JPEG_To_RGB_decodeHeader(info, inData, inDataLen, width, height) == 0)
         return NULL;
     else {
-        //char* outData = pcsl_mem_malloc((*width) * (*height) * outPixelSize);
-        char* outData;
-        unsigned char malloc_model;
-    	 outData = javacall_malloc((*width) * (*height) * outPixelSize + 1);
-    	 malloc_model = JAVACALL_MEMORY_MODEL;
-    	 if(outData == NULL){
-    	 	outData = pcsl_mem_malloc((*width) * (*height) * outPixelSize + 1);
-    		malloc_model = PCSL_MEMORY_MODEL;
-    	 }
-
-    	 if(outData != NULL){
-    	 	*outData = malloc_model;
-    	 	outData ++;
-    	 }
-    	 
+        char* outData = pcsl_mem_malloc((*width) * (*height) * outPixelSize);
         if (JPEG_To_RGB_decodeData2(info, outData, outPixelSize,
             left, top, right, bottom) != 0)
             return outData;
         else {
-            outData --;
-            if((unsigned char)(*outData) == JAVACALL_MEMORY_MODEL){
-            		javacall_free(outData);
-            }else{
-            		pcsl_mem_free(outData);
-            }
+            pcsl_mem_free(outData);
             return NULL;
         }
     }
