@@ -371,7 +371,11 @@ static WMA_STATUS jsr120_sms_push_listener(jint port, SmsMessage* smsmessg,
     (void)smsmessg;
 
     /** unblock the receiver thread here */
-    return jsr120_sms_unblock_thread(0, PUSH_SIGNAL);
+#if (ENABLE_CDC == 1)                                                                                                           
+    return jsr120_sms_unblock_thread(0, PUSH_SIGNAL);                                                                           
+#else                                                                                                                           
+    return jsr120_sms_unblock_thread((jint)userData, PUSH_SIGNAL);                                                              
+#endif
 }
 
 /*
