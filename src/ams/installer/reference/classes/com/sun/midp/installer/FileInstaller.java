@@ -94,12 +94,12 @@ public class FileInstaller extends Installer {
         int jarSize;
         RandomAccessStream jarOutputStream;
                
-        // If jad attribute 'Midlet-Jar-Url' begins with schema 'file:///',
+        // If jad attribute 'Midlet-Jar-Url' begins with a schema,
         // than get jar path from this jad attribute,
         // else searching jar file in same directory as a jad file.
         if (info.jarUrl.indexOf(':') == -1) {
             info.jarUrl = info.jadUrl.substring(0,
-                    info.jadUrl.lastIndexOf('.')) + ".jar";
+                    info.jadUrl.lastIndexOf('/') + 1) + info.jarUrl;
         }
 
         // Open source (jar) file
