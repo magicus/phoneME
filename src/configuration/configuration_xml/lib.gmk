@@ -378,7 +378,7 @@ ifeq ($(GENERATE_CHAMELEON_ELEMENTS), true)
 GENERATE_CHAMELEMENT_SOURCE = \
       -xml $(INT_MERGED_XML_FILE) \
       -xsl $(INT_XSL_DIR)/cldc/chameleonElements.xsl \
-      -out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/ChameleonVsElements.java)`
+      -out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/ChameleonVsElements.java)`
 endif
 
 define generate_configuration

@@ -164,4 +164,10 @@ public interface DisplayAccess {
      * @return true when display is foreground
      */
     public boolean isDisplayForeground();
+
+    /**
+     * Posts an event to repaint the screen.
+     */
+    public void requestScreenRepaint();
+
 }

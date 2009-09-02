@@ -102,6 +102,10 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         // Initialize AMS task resources needed for all tasks
         MIDletSuiteUtils.initAmsResources();
 
+        // Initialize Pipe service
+        com.sun.midp.io.j2me.pipe.Protocol.registerService(internalSecurityToken);
+        com.sun.midp.io.j2me.pipe.Protocol.initUserContext();
+
         // Initialize JSR subsystems
         JSRInitializer.init();
 
@@ -118,16 +122,13 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
         // Initialize WMA's cleanup monitor
         WMACleanupMonitor.init(midletProxyList);
-
-        // Initialize Pipe service
-        com.sun.midp.io.j2me.pipe.Protocol.registerService(internalSecurityToken);
-        
+      
         // Initialize AutoTester service
         com.sun.midp.installer.AutoTesterServiceInitializer.init(
                 internalSecurityToken);
 
-        // Initialize Pipe service
-        com.sun.midp.io.j2me.pipe.Protocol.registerService(internalSecurityToken);
+        // Initialize access to ThemeManager
+        com.sun.midp.theme.ThemeConnectionTunnel.init();
     }
 
     /**

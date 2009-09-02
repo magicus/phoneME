@@ -40,3 +40,9 @@ ifneq ($(USE_JSR_229), true)
     LIB_EXPORT_JAVA_FILES += \
         com/sun/midp/payment/PAPICleanUp.java
 endif
+
+ifneq ($(USE_JSR_258), true)
+# Include stub implementation of JSR 258 class
+    LIB_EXPORT_JAVA_FILES += \
+        com/sun/midp/theme/ThemeConnectionTunnel.java
+endif

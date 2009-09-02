@@ -12,7 +12,38 @@ import javax.microedition.lcdui.Graphics;
 import java.io.IOException;
 
 public class SkinLoader {
+
+// #ifndef ENABLE_JSR_258
     private static SkinResources skinResources = new SkinResourcesImpl();
+// #else
+    private static SkinResources skinResources = new ThemeResourcesImpl();
+
+    
+    public static void activateTheme(String theme) {
+ //       skinResources.activateTheme(theme);
+        loadResources(true, true);
+    }
+    
+
+    /**
+     * A special internal reference to a tunnel which will provide
+     * package access to Image inside of javax.microedition.lcdui.
+     */
+    private static DisplayAccess displayAccess;
+
+    /**
+    * This method is called by the Display class to hand out GraphicsAccess
+    * tunnel instance created in the public javax.microedition.lcdui
+    * package and needed for romized images loading.
+    *
+    * @param access used to get images from the public LCDUI package
+    */
+    public static void initDisplayAccess(DisplayAccess access) {
+        displayAccess = access;
+    }
+
+// #endif
+
 
     /**
      * This method is called by the Display class to hand out GraphicsAccess
@@ -25,7 +56,8 @@ public class SkinLoader {
         skinResources.initGraphicsAccess(access);
     }
 
-    /**
+
+   /**
      * Load the skin, including all its properties and images. Some parts
      * of the skin may be lazily initialized, but this method starts the
      * process. If the flag to 'reload' is true, the method will ignore
@@ -38,11 +70,12 @@ public class SkinLoader {
     public static void loadSkin(boolean reload)
         throws IllegalStateException, IOException {
         skinResources.loadSkin(reload);
+
         // After reading in the properties from storage (either ROM
         // image or filesystem, we establish all the individual values
         // in the various properties classes
         boolean loadAll = skinResources.ifLoadAllResources();
-        loadResources(loadAll);
+        loadResources(loadAll, false);
     }
 
     /**
@@ -52,35 +85,42 @@ public class SkinLoader {
      * load only selected resources. The rest will be loaded
      * lazily.
      */
-    private static void loadResources(boolean loadAll) {
+    private static void loadResources(boolean loadAll, boolean reload) {
         // load selected resources
-        ScreenResources.load();
-        ScrollIndResources.load();
-        SoftButtonResources.load();
-        TickerResources.load();
-        TitleResources.load();
-        AlertResources.load();
+        ScreenResources.load(reload);
+        ScrollIndResources.load(reload);
+        SoftButtonResources.load(reload);
+        TickerResources.load(reload);
+        TitleResources.load(reload);
+        AlertResources.load(reload);
 
 
         // load the rest of resources
         if (loadAll) {
-            PTIResources.load();
-            InputModeResources.load();
-            BusyCursorResources.load();
-            ChoiceGroupResources.load();
-            DateEditorResources.load();
-            DateFieldResources.load();
-            GaugeResources.load();
-            ImageItemResources.load();
-            MenuResources.load();
-            ProgressBarResources.load();
-            StringItemResources.load();
-            TextFieldResources.load();
-            UpdateBarResources.load();
-            VirtualKeyboardResources.load();
+            PTIResources.load(reload);
+            InputModeResources.load(reload);
+            BusyCursorResources.load(reload);
+            ChoiceGroupResources.load(reload);
+            DateEditorResources.load(reload);
+            DateFieldResources.load(reload);
+            GaugeResources.load(reload);
+            ImageItemResources.load(reload);
+            MenuResources.load(reload);
+            ProgressBarResources.load(reload);
+            StringItemResources.load(reload);
+            TextFieldResources.load(reload);
+            UpdateBarResources.load(reload);
+            VirtualKeyboardResources.load(reload);
         }
 
         checkLocale();
+
+// #ifdef ENABLE_JSR_258
+        if (reload && (displayAccess != null)) {
+            displayAccess.requestScreenRepaint();
+        }
+// #endif
+
     }
 
     public static void checkLocale() {
@@ -136,8 +176,8 @@ public class SkinLoader {
      */
     public static Image[] getCompositeImage(
             int identifier, int piecesNumber) {
-        return skinResources.getCompositeImage(identifier, piecesNumber);
 
+        return skinResources.getCompositeImage(identifier, piecesNumber);
     }
 
     /**
