@@ -115,10 +115,10 @@ public class FileInstaller extends Installer {
         InputConnection conn;
         RandomAccessStream jarOutputStream;
 
-        // If jad attribute 'Midlet-Jar-Url' begins with a schema,
+        // If jad attribute 'Midlet-Jar-Url' begins with schema 'file:///',
         // than get jar path from this jad attribute,
         // else searching jar file in same directory as a jad file.
-        if (info.jarUrl.indexOf(':') == -1) {
+        if (!info.jarUrl.startsWith("file:///")) {
             info.jarUrl = info.jadUrl.substring(0,
                     info.jadUrl.lastIndexOf('/') + 1) + info.jarUrl;
         }
