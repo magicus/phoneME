@@ -24,7 +24,8 @@
 
 JSR_CONFIGURATION_INPUT_FILES += \
     $(ABSTRACTIONS_DIR)/src/share/config/i18n_constants_abstractions.xml \
-    $(ABSTRACTIONS_DIR)/src/share/config/l10n/en-US_abstractions.xml
+    $(ABSTRACTIONS_DIR)/src/share/config/l10n/en-US_abstractions.xml \
+    $(ABSTRACTIONS_DIR)/src/share/config/l10n/es-ES_abstractions.xml
 
 # start dirs for java source trees
 ABSTRACTIONS_CDC_JAVASRCDIRS = \
