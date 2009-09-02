@@ -801,7 +801,7 @@ public class MIDletSuiteStorage {
      * @param resName resource file name
      * @return absolute file path
      */
-    public static String getCachedFilePath(String resName) {
+    public static String getCachedFilePath(String resName) throws IOException {
         com.sun.midp.midlet.MIDletSuite midletSuite =
             com.sun.midp.midlet.MIDletStateHandler.getMidletStateHandler()
             .getMIDletSuite();
@@ -816,5 +816,6 @@ public class MIDletSuiteStorage {
      * @param resName resource file name
      * @return absolute file path
      */
-    private static native String getCachedFilePath0(int suiteId, String resName);
+    private static native String getCachedFilePath0(int suiteId, String resName)
+            throws IOException;
 }
