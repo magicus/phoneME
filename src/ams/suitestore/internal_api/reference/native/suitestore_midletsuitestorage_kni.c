@@ -1955,7 +1955,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getCachedFilePath0) {
     
     errorCode = midp_suite_get_suite_storage(suiteID, &storageId);
     if (errorCode != MIDP_ERROR_NONE) {
-        KNI_ThrowNew(midpRuntimeException, NULL);
+        KNI_ThrowNew(midpIOException, NULL);
         KNI_ReleaseHandle(pathHandle);
     }
     
@@ -1966,6 +1966,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getCachedFilePath0) {
     }
                                                        
     RELEASE_PCSL_STRING_PARAMETER
+    pcsl_string_free(&pcsl_path);
 
     KNI_EndHandlesAndReturnObject(pathHandle);
 #else
