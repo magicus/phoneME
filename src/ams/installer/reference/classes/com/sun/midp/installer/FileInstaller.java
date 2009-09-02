@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
+import javax.microedition.io.InputConnection;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.FileUrl;
 
@@ -58,32 +59,22 @@ public class FileInstaller extends Installer {
      *            of the JAD
      */
     protected byte[] downloadJAD() throws IOException {
-        
         if (info.jadUrl.endsWith(".jar")) {           
             throw new InvalidJadException (
                     InvalidJadException.INVALID_JAD_TYPE,
                     Installer.JAR_MT_2);
-        }
-        else {           
-        RandomAccessStream jadInputStream;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);
-        // Encode jad file path in order to keep of 
-        // IllegalArgumentException
-        info.jadUrl = FileUrl.encodeFilePath(info.jadUrl);
-        String jadFilename = getUrlPath(info.jadUrl);
+        } else {
+            InputConnection fc = (InputConnection)Connector.open(
+                    info.jadUrl, Connector.READ);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);
         
-        state.beginTransferDataStatus = DOWNLOADING_JAD;
-        state.transferStatus = DOWNLOADED_1K_OF_JAD;
+            state.beginTransferDataStatus = DOWNLOADING_JAD;
+            state.transferStatus = DOWNLOADED_1K_OF_JAD;
 
-        jadInputStream = new RandomAccessStream();
-                
-        jadFilename=FileUrl.decodeFilePath(jadFilename);                
-            
-        jadInputStream.connect(jadFilename, Connector.READ);
-        transferData(jadInputStream.openInputStream(), bos, CHUNK_SIZE);
-          
-        jadInputStream.close();
-        return bos.toByteArray();
+            transferData(fc.openInputStream(), bos, CHUNK_SIZE);
+
+            fc.close();
+            return bos.toByteArray();
         }
     }
 
@@ -101,33 +92,19 @@ public class FileInstaller extends Installer {
      */
     protected int downloadJAR(String filename) throws IOException {
         int jarSize;
-        RandomAccessStream jarInputStream, jarOutputStream;
-        // get the path from URI, but first encode it
-        info.jarUrl = FileUrl.encodeFilePath(info.jarUrl);
-        String jarFilename = getUrlPath(info.jarUrl);
+        RandomAccessStream jarOutputStream;
                
         // If jad attribute 'Midlet-Jar-Url' begins with schema 'file:///',
         // than get jar path from this jad attribute,
         // else searching jar file in same directory as a jad file.
-        if (!info.jarUrl.startsWith("file:///")) {
-            String jadFilename= getUrlPath(info.jadUrl);
-            
-            if (jadFilename.endsWith(".jad")) {
-                jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
-            }
-            else {
-                jarFilename=jadFilename.substring(
-                          0,jadFilename.lastIndexOf('.'))+".jar";
-            }
-            info.jarUrl = jarFilename;            
-        } 
-          
-        jarFilename=FileUrl.decodeFilePath(jarFilename);
-        
-        // Open source (jar) file
-        jarInputStream = new RandomAccessStream();
-        jarInputStream.connect(jarFilename, Connector.READ);
+        if (info.jarUrl.indexOf(':') == -1) {
+            info.jarUrl = info.jadUrl.substring(0,
+                    info.jadUrl.lastIndexOf('.')) + ".jar";
+        }
 
+        // Open source (jar) file
+        InputConnection fc = (InputConnection)Connector.open(
+                info.jarUrl, Connector.READ);
         // Open destination (temporary) file
         jarOutputStream = new RandomAccessStream();
         jarOutputStream.connect(filename,
@@ -136,11 +113,9 @@ public class FileInstaller extends Installer {
         // transfer data
         state.beginTransferDataStatus = DOWNLOADING_JAR;
         state.transferStatus = DOWNLOADED_1K_OF_JAR;
-
-        jarSize = transferData(jarInputStream.openInputStream(),
+        jarSize = transferData(fc.openInputStream(),
                                jarOutputStream.openOutputStream(), CHUNK_SIZE);
-        
-        jarInputStream.close();
+        fc.close();
         jarOutputStream.disconnect();
 
         return jarSize;
