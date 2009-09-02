@@ -52,11 +52,9 @@ typedef enum
 /* Native porting layer context */
 typedef enum
 {
-    PL135_UNREALIZED,
-    PL135_REALIZED,
-    PL135_PREFETCHED,
-    PL135_STARTED,
-    PL135_CLOSED
+    PL135_STOPPED,
+    PL135_PAUSED,
+    PL135_RUNNING
 } player_state_enum;
 
 typedef struct {
