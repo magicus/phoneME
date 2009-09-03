@@ -61,7 +61,7 @@ mainloop:
         for(;;) {
             HighLevelPlayer owner = (HighLevelPlayer) wrPlayer.get();
             if (null == owner || isDismissed ) {
-                System.out.println( "DirectInputThread: exit 1" );
+                //System.out.println( "DirectInputThread: exit 1" );
                 return;
             }
 
@@ -72,13 +72,13 @@ mainloop:
                         requestLock.wait(1000);
                     } catch (InterruptedException ex) {}
                     if( isDismissed ) {
-                        System.out.println( "DirectInputThread: exit 2" );
+                        //System.out.println( "DirectInputThread: exit 2" );
                         return;
                     }
 
                     owner = (HighLevelPlayer) wrPlayer.get();
                     if (null == owner) {
-                        System.out.println( "DirectInputThread: exit 3" );
+                        //System.out.println( "DirectInputThread: exit 3" );
                         return;
                     }
 
@@ -92,7 +92,7 @@ mainloop:
                 int read = 0;
                 
                 if( isDismissed ) {
-                    System.out.println( "DirectInputThread: exit 4" );
+                    //System.out.println( "DirectInputThread: exit 4" );
                     return;
                 }
 
@@ -100,7 +100,7 @@ mainloop:
                     seek( owner.stream );
 
                     if( isDismissed ) {
-                        System.out.println( "DirectInputThread: exit 5" );
+                        //System.out.println( "DirectInputThread: exit 5" );
                         return;
                     }
 
@@ -111,19 +111,19 @@ mainloop:
                     if (!isDismissed) {
                         owner.doOnDirectInputError( ex.getMessage() );
                     }
-                    System.out.println( "DirectInputThread: exit 6" );
+                    //System.out.println( "DirectInputThread: exit 6" );
                     return;
                 } catch ( IOException e ) {
                     if( !isDismissed ) {
                         owner.doOnDirectInputError("Stream reading IOException: " + e.getMessage());
                     }
-                    System.out.println( "DirectInputThread: exit 7" );
+                    //System.out.println( "DirectInputThread: exit 7" );
                     return;
                 }
 
                 owner = (HighLevelPlayer) wrPlayer.get();
                 if ( null == owner || isDismissed ) {
-                    System.out.println( "DirectInputThread: exit 8" );
+                    //System.out.println( "DirectInputThread: exit 8" );
                     return;
                 }
                 

@@ -32,6 +32,7 @@ import  javax.microedition.media.protocol.DataSource;
 import  java.util.Enumeration;
 import  java.util.Hashtable;
 import  java.util.Vector;
+import  com.sun.j2me.security.Permission;
 import  com.sun.j2me.app.AppPackage;
 import  com.sun.j2me.security.FileConnectionPermission;
 import  com.sun.j2me.security.ConnectorPermission;
@@ -272,13 +273,14 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * Constructor 
      */
     public HighLevelPlayer(DataSource source) throws MediaException, IOException {
-        System.out.println( "HighLevelPlayer: constructor called");
+        //System.out.println( "HighLevelPlayer: constructor called");
         synchronized (idLock) {
             pcount = (pcount + 1) % 32767;
             pID = pcount;
         }
 
         locator = source.getLocator();
+        checkPermission( locator );
         mplayers.put(new Integer(pID), this);
 
         this.source = source;
@@ -286,7 +288,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         // Set event listener
         new MMEventListener();
         state = UNREALIZED;
-        System.out.println( "HighLevelPlayer: construction complete");
+        //System.out.println( "HighLevelPlayer: construction complete");
     }
 
     void receiveRSL()
@@ -551,7 +553,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
-        System.out.println( "HighLevelPlayer: realize() entered" );
+        //System.out.println( "HighLevelPlayer: realize() entered" );
         // Get current application ID to support MVM
         final int appId = AppIsolate.getIsolateId();
 
@@ -568,13 +570,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             result = asyncExecutor.getResult();
             nDoOnRealizeResult(result);
         }
-        System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
+        //System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
 
         handledByDevice = ( 0 == result );
 
-        if( handledByDevice ) {
-            checkPermission( source.getLocator() );
-        } else {
+        if( !handledByDevice ) {
             try {
                 source.connect();
             } catch (IOException ex) {
@@ -621,7 +621,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 result = asyncExecutor.getResult();
                 nDoOnRealizeResult( result );
             }
-            System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
+            //System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
         }
 
         if( 0 != hNative ) {
@@ -654,41 +654,38 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         if (null != state_subscriber) {
             state_subscriber.PlayerRealized(this);
         }
-        System.out.println( "HighLevelPlayer: returning from realize()" );
+        //System.out.println( "HighLevelPlayer: returning from realize()" );
     }
 
-    private void checkPermission( String URL )
+    static private void checkPermission( Permission p )
+    {
+        final AppPackage appPkg = AppPackage.getInstance();
+        final int prevStatus = appPkg.checkPermission( p );
+        if( -1 == prevStatus ) {
+            try {
+                appPkg.checkForPermission( p );
+            } catch (InterruptedException ex) {
+                throw new SecurityException(
+                        "Interrupted while trying to ask user permission");
+            }
+        } else if( 1 != prevStatus ) {
+            throw new SecurityException(
+                    "This type of protocol handling is not allowed");
+        }
+    }
+    
+    static private void checkPermission( String URL )
     {
         if( null != URL ) {
             String url = URL.toLowerCase();
-            if( url.startsWith("file://") ) {
-                try {
-                    AppPackage.getInstance().checkForPermission( FileConnectionPermission.READ );
-                } catch (InterruptedException ex) {
-                    throw new SecurityException(
-                            "Interrupted while trying to ask user permission");
-                }
-            } else if( url.startsWith("http://") ) {
-                try {
-                    AppPackage.getInstance().checkForPermission(ConnectorPermission.HTTP);
-                } catch (InterruptedException ex) {
-                    throw new SecurityException(
-                            "Interrupted while trying to ask user permission");
-                }
+            if( url.startsWith( "file://" ) ) {
+                checkPermission( FileConnectionPermission.READ );
+            } else if( url.startsWith( "http://" ) ) {
+                checkPermission( ConnectorPermission.HTTP );
             } else if( url.startsWith( "https://" ) ) {
-                try {
-                    AppPackage.getInstance().checkForPermission(ConnectorPermission.HTTPS);
-                } catch (InterruptedException ex) {
-                    throw new SecurityException(
-                            "Interrupted while trying to ask user permission");
-                }
+                checkPermission( ConnectorPermission.HTTPS );
             } else if( url.startsWith( "rtsp://" ) ) {
-                try {
-                    AppPackage.getInstance().checkForPermission(ConnectorPermission.RTSP);
-                } catch (InterruptedException ex) {
-                    throw new SecurityException(
-                            "Interrupted while trying to ask user permission");
-                }
+                checkPermission( ConnectorPermission.RTSP );
             }
         }
     }
@@ -779,7 +776,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     return true;
                 }
             });
-            System.out.println("HighLevelPlayer: Prefetch resumed");
+            //System.out.println("HighLevelPlayer: Prefetch resumed");
             if( 0 != asyncExecutor.getResult() )
             {
                 throw new MediaException("prefetch() failed");
@@ -907,7 +904,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     return true;
                 }
             });
-            System.out.println("HighLevelPlayer: start() resumed");
+            //System.out.println("HighLevelPlayer: start() resumed");
             if( 0 != asyncExecutor.getResult() ) {
                 throw new MediaException("start");
             }
@@ -977,7 +974,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     return true;
                 }
             });
-            System.out.println("HighLevelPlayer: stop() resumed");
+            //System.out.println("HighLevelPlayer: stop() resumed");
             if( 0 != asyncExecutor.getResult() )
             {
                 throw new MediaException("stop() failed");
@@ -1045,7 +1042,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     }
                 });
             } catch (MediaException ex) {}
-            System.out.println("HighLevelPlayer: deallocate() resumed");
+            //System.out.println("HighLevelPlayer: deallocate() resumed");
         } else {
             lowLevelPlayer.doDeallocate();
         }
@@ -1100,7 +1097,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
-        System.out.println( "HighLevelPlayer: close() entered" );
+        //System.out.println( "HighLevelPlayer: close() entered" );
 
         if (null != directInputThread) {
             directInputThread.close();
@@ -1121,12 +1118,12 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
                         public boolean run() throws MediaException {
                             lowLevelPlayer.doClose();
-                            System.out.println("HighLevelPlayer: doClose() returned");
+                            //System.out.println("HighLevelPlayer: doClose() returned");
                             return true;
                         }
                     });
                 } catch (MediaException ex) {}
-                System.out.println("HighLevelPlayer: close() resumed");
+                //System.out.println("HighLevelPlayer: close() resumed");
             } else {
                 lowLevelPlayer.doClose();
             }
@@ -1144,7 +1141,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         
         sendEvent(PlayerListener.CLOSED, null);
         mplayers.remove(new Integer(pID));
-        System.out.println("HighLevelPlayer: returning from close()");
+        //System.out.println("HighLevelPlayer: returning from close()");
     }
 
     private native void nRejectStreamLengthRequest();
@@ -1249,7 +1246,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                     return true;
                 }
             });
-            System.out.println("HighLevelPlayer: setMediaTime resumed");
+            //System.out.println("HighLevelPlayer: setMediaTime resumed");
             if( 0 != asyncExecutor.getResult() ) {
                 throw new MediaException( "Media time cannot be set" );
             }
@@ -1624,7 +1621,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
-        System.out.println( "HighLevelPlayer: entered sendSystemVolumeChanged()" );
+        //System.out.println( "HighLevelPlayer: entered sendSystemVolumeChanged()" );
         systemVolume = volume;
         
         if (changeSystemVolumeTask == null) {
@@ -2005,10 +2002,9 @@ class AsyncExecutor {
                 } catch (InterruptedException ex) {
                 }
             }
-            System.out.println(
-                    "HighLevelPlayer: runAsync() unblocked");
+            //System.out.println( "HighLevelPlayer: runAsync() unblocked");
         } else {
-            System.out.println( "HighLevelPlayer: runAsync() didn't block" );
+            //System.out.println( "HighLevelPlayer: runAsync() didn't block" );
         }
         return res;
     }
