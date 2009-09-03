@@ -206,7 +206,7 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nNotifyStreamLen) {
     
     {
         jlong len = KNI_GetParameterAsLong(2);
-        javacall_media_stream_length( handle, ( javacall_int64 )len );
+        javacall_media_stream_length( handle, JAVACALL_TRUE, ( javacall_int64 )len );
     }
     
     KNI_ReturnVoid();
