@@ -51,6 +51,8 @@ vpath % \
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
     listeners_intern.c \
+    fileCache.c \
+    fontCache.c \
     imageCache.c \
     midp_foreground_id.c \
     midpInflate.c \
