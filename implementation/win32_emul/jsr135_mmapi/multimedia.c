@@ -672,6 +672,8 @@ javacall_result javacall_media_create_managed_player(
     javacall_const_utf16_string locator,
     /*OUT*/ javacall_handle*    handle)
 {
+    jc_fmt fmt;
+
     javacall_impl_player* pPlayer 
         = (javacall_impl_player*)MALLOC(sizeof(javacall_impl_player));
 
@@ -721,7 +723,13 @@ javacall_result javacall_media_create_managed_player(
     else if( NULL != locator )
     {
         pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
-        pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
+        fmt = fmt_str2enum( pPlayer->mediaType );
+        if( JC_FMT_AMR         == fmt ||
+            JC_FMT_AMR_WB      == fmt ||
+            JC_FMT_AMR_WB_PLUS == fmt )
+        {
+            pPlayer->mediaItfPtr = g_dshow_itf;
+        }
     }
 
     if( NULL != pPlayer->mediaItfPtr )
