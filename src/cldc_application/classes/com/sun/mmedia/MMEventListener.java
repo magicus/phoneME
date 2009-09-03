@@ -156,7 +156,6 @@ class MMEventListener implements EventListener {
 
         case EVENT_MEDIA_DATA_REQUEST:
             p = HighLevelPlayer.get(nevt.intParam1);
-            DirectDebugOut.nDebugPrint("Java: MMEventListener: Data request");
             if (p != null) {
                 p.continueDownload();
             }
