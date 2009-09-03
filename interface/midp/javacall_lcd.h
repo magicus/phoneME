@@ -338,6 +338,12 @@ void javacall_lcd_handle_clamshell();
 javacall_bool javacall_lcd_get_reverse_orientation(int hardwareId);
 
 /**
+ * Returns JAVACALL_TRUE if the device (handset) is landscape oriented. 
+ * Returns JAVACALL_FALSE otherwise.
+ */
+javacall_bool javacall_lcd_is_device_orientation_landscape(void);
+
+/**
  * checks the implementation supports native softbutton label.
  *
  * @retval JAVACALL_TRUE   implementation supports native softbutton layer
