@@ -89,8 +89,9 @@ const nat32 null = 0;
 
 class player_dshow : public player
 {
-    AM_MEDIA_TYPE amt;
     player_callback *pcallback;
+    nat32 locator_len;
+    char16 *plocator;
     int32 state;
     int64 media_time;
     IGraphBuilder *pgb;
@@ -135,7 +136,15 @@ class player_dshow : public player
             return result_illegal_state;
         }
 
-        HRESULT hr = pgb->Render(pp);
+        HRESULT hr;
+        if(locator_len)
+        {
+            hr = pgb->RenderFile(plocator, null);
+        }
+        else
+        {
+            hr = pgb->Render(pp);
+        }
         if(hr != S_OK)
         {
             error("IGraphBuilder::Render", hr);
@@ -278,19 +287,20 @@ class player_dshow : public player
 #ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
                 pbf_flv_split->Release();
 #endif
-            pp->Release();
+            if(!locator_len) pp->Release();
 #ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
                 pfo_v->Release();
 #endif
 #ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
                 pfo_a->Release();
 #endif
-            pfi->Release();
+            if(!locator_len) pfi->Release();
             pms->Release();
             pmc->Release();
             pgb->Release();
             CoUninitialize();
             state = closed;
+            if(locator_len) delete[] plocator;
         }
         else
         {
@@ -420,173 +430,30 @@ class player_dshow : public player
         return pfi->data(len, pdata);
     }*/
 
+    friend bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer);
     friend bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer);
 };
 
-bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer)
+bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer)
 {
     player_dshow *pplayer;
-    if(len > 0x7fffffff || !pformat || !pcallback || !ppplayer)
+    if(len > 0x7fffffff || !plocator || !pcallback || !ppplayer)
     {
         return false;
     }
-#ifdef ENABLE_JSR_135_CONT_3GP_DSHOW_EXT
-    else if(len >= wcslen(L"video/3gpp") && !wcsncmp(pformat, L"video/3gpp", wcslen(L"video/3gpp")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
 
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = GUID_NULL;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_JSR_135_CONT_AMR_DSHOW_EXT
-    else if(len >= wcslen(L"audio/amr") && !wcsncmp(pformat, L"audio/amr", wcslen(L"audio/amr")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
+    pplayer = new player_dshow;
+    if(!pplayer) return false;
 
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = GUID_NULL;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_JSR_135_CONT_AVI_DSHOW_EXT
-    else if(len >= wcslen(L"video/avi") && !wcsncmp(pformat, L"video/avi", wcslen(L"video/avi")))
+    pplayer->locator_len = len + 1;
+    pplayer->plocator = new char16[len + 1];
+    if(!pplayer->plocator)
     {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = GUID_NULL;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#if defined ENABLE_JSR_135_CONT_FLV_DSHOW_EXT || defined ENABLE_JSR_135_CONT_FLV_DSHOW_INT
-    else if(len >= wcslen(L"video/x-flv") && !wcsncmp(pformat, L"video/x-flv", wcslen(L"video/x-flv")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = GUID_NULL;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_JSR_135_CONT_MP3_DSHOW_EXT
-    else if(len >= wcslen(L"audio/mpeg") && !wcsncmp(pformat, L"audio/mpeg", wcslen(L"audio/mpeg")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = MEDIASUBTYPE_MPEG1Audio;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_JSR_135_CONT_MP4_DSHOW_EXT
-    else if(len >= wcslen(L"video/mp4") && !wcsncmp(pformat, L"video/mp4", wcslen(L"video/mp4")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = GUID_NULL;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_JSR_135_CONT_MPG_DSHOW_EXT
-    else if(len >= wcslen(L"video/mpeg") && !wcsncmp(pformat, L"video/mpeg", wcslen(L"video/mpeg")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = MEDIASUBTYPE_MPEG1System;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_JSR_135_CONT_OGG_DSHOW_EXT
-    else if(len >= wcslen(L"video/ogg") && !wcsncmp(pformat, L"video/ogg", wcslen(L"video/ogg")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = GUID_NULL;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-#ifdef ENABLE_JSR_135_CONT_WAV_DSHOW_EXT
-    else if(len >= wcslen(L"audio/wav") && !wcsncmp(pformat, L"audio/wav", wcslen(L"audio/wav")))
-    {
-        pplayer = new player_dshow;
-        if(!pplayer) return false;
-
-        pplayer->amt.majortype = MEDIATYPE_Stream;
-        pplayer->amt.subtype = MEDIASUBTYPE_WAVE;
-        pplayer->amt.bFixedSizeSamples = TRUE;
-        pplayer->amt.bTemporalCompression = FALSE;
-        pplayer->amt.lSampleSize = 1;
-        pplayer->amt.formattype = GUID_NULL;
-        pplayer->amt.pUnk = null;
-        pplayer->amt.cbFormat = 0;
-        pplayer->amt.pbFormat = null;
-    }
-#endif
-    else
-    {
+        delete pplayer;
         return false;
     }
+    memcpy(pplayer->plocator, plocator, sizeof(char16) * len);
+    pplayer->plocator[len] = 0;
 
     pplayer->pcallback = pcallback;
     pplayer->state = player::unrealized;
@@ -623,7 +490,339 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                 }
                 else
                 {
-                    if(!filter_in::create(&pplayer->amt, pcallback, &pplayer->pfi))
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
+                    AM_MEDIA_TYPE amt_a;
+                    amt_a.majortype = MEDIATYPE_Audio;
+                    amt_a.subtype = MEDIASUBTYPE_PCM;
+                    amt_a.bFixedSizeSamples = TRUE;
+                    amt_a.bTemporalCompression = FALSE;
+                    amt_a.lSampleSize = 1;
+                    amt_a.formattype = GUID_NULL;
+                    amt_a.pUnk = null;
+                    amt_a.cbFormat = 0;
+                    amt_a.pbFormat = null;
+                    if(!filter_out::create(&amt_a, pcallback, &pplayer->pfo_a))
+                    {
+                        error("filter_out::create(Audio)", 0);
+                    }
+                    else
+#endif
+                    {
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
+                        AM_MEDIA_TYPE amt_v;
+                        amt_v.majortype = MEDIATYPE_Video;
+                        amt_v.subtype = MEDIASUBTYPE_RGB565;
+                        amt_v.bFixedSizeSamples = TRUE;
+                        amt_v.bTemporalCompression = FALSE;
+                        amt_v.lSampleSize = 1;
+                        amt_v.formattype = GUID_NULL;
+                        amt_v.pUnk = null;
+                        amt_v.cbFormat = 0;
+                        amt_v.pbFormat = null;
+                        if(!filter_out::create(&amt_v, pcallback, &pplayer->pfo_v))
+                        {
+                            error("filter_out::create", 0);
+                        }
+                        else
+#endif
+                        {
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
+                            hr = flv_splitter_create(null, IID_IBaseFilter,
+                                (void **)&pplayer->pbf_flv_split);
+                            if(hr != S_OK)
+                            {
+                                error("FlvSplitCreateInstance", hr);
+                            }
+                            else
+#endif
+                            {
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
+                                hr = flv_decoder_create(null, IID_IBaseFilter,
+                                    (void **)&pplayer->pbf_flv_dec);
+                                if(hr != S_OK)
+                                {
+                                    error("FlvDecVP6CreateInstance", hr);
+                                }
+                                else
+#endif
+                                {
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
+                                    hr = pplayer->pgb->AddFilter(pplayer->pfo_a, L"Output audio filter");
+                                    if(hr != S_OK)
+                                    {
+                                        error("IGraphBuilder::AddFilter(Output audio filter)", hr);
+                                    }
+                                    else
+#endif
+                                    {
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
+                                        hr = pplayer->pgb->AddFilter(pplayer->pfo_v, L"Output video filter");
+                                        if(hr != S_OK)
+                                        {
+                                            error("IGraphBuilder::AddFilter(Output video filter)", hr);
+                                        }
+                                        else
+#endif
+                                        {
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
+                                            hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
+                                            if(hr != S_OK)
+                                            {
+                                                error("IGraphBuilder::AddFilter(FLV splitter)", hr);
+                                            }
+                                            else
+#endif
+                                            {
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
+                                                hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
+                                                if(hr != S_OK)
+                                                {
+                                                    error("IGraphBuilder::AddFilter(FLV decoder)", hr);
+                                                }
+                                                else
+#endif
+                                                {
+                                                    r = true;
+                                                }
+                                            }
+                                        }
+                                    }
+#ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
+                                    if(!r) pplayer->pbf_flv_dec->Release();
+#endif
+                                }
+#ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
+                                if(!r) pplayer->pbf_flv_split->Release();
+#endif
+                            }
+#ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
+                            if(!r) pplayer->pfo_v->Release();
+#endif
+                        }
+#ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
+                        if(!r) pplayer->pfo_a->Release();
+#endif
+                    }
+                    if(!r) pplayer->pms->Release();
+                }
+                if(!r) pplayer->pmc->Release();
+            }
+            if(!r) pplayer->pgb->Release();
+        }
+        if(!r) CoUninitialize();
+    }
+    if(!r)
+    {
+        delete pplayer;
+        return false;
+    }
+    *ppplayer = pplayer;
+    return true;
+}
+
+bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer)
+{
+    player_dshow *pplayer;
+    AM_MEDIA_TYPE amt;
+    if(len > 0x7fffffff || !pformat || !pcallback || !ppplayer)
+    {
+        return false;
+    }
+#ifdef ENABLE_JSR_135_CONT_3GP_DSHOW_EXT
+    else if(len >= wcslen(L"video/3gpp") && !wcsncmp(pformat, L"video/3gpp", wcslen(L"video/3gpp")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = GUID_NULL;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_JSR_135_CONT_AMR_DSHOW_EXT
+    else if(len >= wcslen(L"audio/amr") && !wcsncmp(pformat, L"audio/amr", wcslen(L"audio/amr")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = GUID_NULL;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_JSR_135_CONT_AVI_DSHOW_EXT
+    else if(len >= wcslen(L"video/avi") && !wcsncmp(pformat, L"video/avi", wcslen(L"video/avi")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = GUID_NULL;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#if defined ENABLE_JSR_135_CONT_FLV_DSHOW_EXT || defined ENABLE_JSR_135_CONT_FLV_DSHOW_INT
+    else if(len >= wcslen(L"video/x-flv") && !wcsncmp(pformat, L"video/x-flv", wcslen(L"video/x-flv")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = GUID_NULL;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_JSR_135_CONT_MP3_DSHOW_EXT
+    else if(len >= wcslen(L"audio/mpeg") && !wcsncmp(pformat, L"audio/mpeg", wcslen(L"audio/mpeg")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = MEDIASUBTYPE_MPEG1Audio;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_JSR_135_CONT_MP4_DSHOW_EXT
+    else if(len >= wcslen(L"video/mp4") && !wcsncmp(pformat, L"video/mp4", wcslen(L"video/mp4")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = GUID_NULL;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_JSR_135_CONT_MPG_DSHOW_EXT
+    else if(len >= wcslen(L"video/mpeg") && !wcsncmp(pformat, L"video/mpeg", wcslen(L"video/mpeg")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = MEDIASUBTYPE_MPEG1System;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_JSR_135_CONT_OGG_DSHOW_EXT
+    else if(len >= wcslen(L"video/ogg") && !wcsncmp(pformat, L"video/ogg", wcslen(L"video/ogg")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = GUID_NULL;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+#ifdef ENABLE_JSR_135_CONT_WAV_DSHOW_EXT
+    else if(len >= wcslen(L"audio/wav") && !wcsncmp(pformat, L"audio/wav", wcslen(L"audio/wav")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = MEDIASUBTYPE_WAVE;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
+#endif
+    else
+    {
+        return false;
+    }
+
+    pplayer->locator_len = 0;
+    pplayer->pcallback = pcallback;
+    pplayer->state = player::unrealized;
+    pplayer->media_time = player::time_unknown;
+
+    bool r = false;
+
+    HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
+    if(FAILED(hr))
+    {
+        error("CoInitializeEx", hr);
+    }
+    else
+    {
+        hr = CoCreateInstance(CLSID_FilterGraph, null, CLSCTX_INPROC_SERVER,
+            IID_IGraphBuilder, (void **)&pplayer->pgb);
+        if(hr != S_OK)
+        {
+            error("CoCreateInstance", hr);
+        }
+        else
+        {
+            hr = pplayer->pgb->QueryInterface(IID_IMediaControl, (void **)&pplayer->pmc);
+            if(hr != S_OK)
+            {
+                error("IGraphBuilder::QueryInterface(IID_IMediaControl)", hr);
+            }
+            else
+            {
+                hr = pplayer->pgb->QueryInterface(IID_IMediaSeeking, (void **)&pplayer->pms);
+                if(hr != S_OK)
+                {
+                    error("IGraphBuilder::QueryInterface(IID_IMediaSeeking)", hr);
+                }
+                else
+                {
+                    if(!filter_in::create(&amt, pcallback, &pplayer->pfi))
                     {
                         error("filter_in::create", 0);
                     }
@@ -648,17 +847,17 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
 #endif
                         {
 #ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
-                            AM_MEDIA_TYPE amt2;
-                            amt2.majortype = MEDIATYPE_Video;
-                            amt2.subtype = MEDIASUBTYPE_RGB565;
-                            amt2.bFixedSizeSamples = TRUE;
-                            amt2.bTemporalCompression = FALSE;
-                            amt2.lSampleSize = 1;
-                            amt2.formattype = GUID_NULL;
-                            amt2.pUnk = null;
-                            amt2.cbFormat = 0;
-                            amt2.pbFormat = null;
-                            if(!filter_out::create(&amt2, pcallback, &pplayer->pfo_v))
+                            AM_MEDIA_TYPE amt_v;
+                            amt_v.majortype = MEDIATYPE_Video;
+                            amt_v.subtype = MEDIASUBTYPE_RGB565;
+                            amt_v.bFixedSizeSamples = TRUE;
+                            amt_v.bTemporalCompression = FALSE;
+                            amt_v.lSampleSize = 1;
+                            amt_v.formattype = GUID_NULL;
+                            amt_v.pUnk = null;
+                            amt_v.cbFormat = 0;
+                            amt_v.pbFormat = null;
+                            if(!filter_out::create(&amt_v, pcallback, &pplayer->pfo_v))
                             {
                                 error("filter_out::create", 0);
                             }
