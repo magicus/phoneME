@@ -1146,6 +1146,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         mplayers.remove(new Integer(pID));
         System.out.println("HighLevelPlayer: returning from close()");
     }
+
+    private native void nRejectStreamLengthRequest();
+    
+    void doOnStreamLengthRequest()
+    {
+        nRejectStreamLengthRequest();
+    }
     
     /**
      * Sets the <code>TimeBase</code> for this <code>Player</code>.

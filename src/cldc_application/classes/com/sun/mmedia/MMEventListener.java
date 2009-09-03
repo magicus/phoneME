@@ -76,40 +76,12 @@ class MMEventListener implements EventListener {
         NativeEvent nevt = (NativeEvent)event;
         HighLevelPlayer p = null;
 
-                if( EventTypes.MMAPI_EVENT != nevt.getType() ) {
-                    return;
-                }
-
-        switch ( nevt.intParam4 ) {
-        case EVENT_MEDIA_END_OF_MEDIA:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
-                p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nevt.intParam2 * 1000));
-            }
-            break;
-
-        case EVENT_MEDIA_DURATION_UPDATED:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
-                p.sendEvent(PlayerListener.DURATION_UPDATED, new Long(nevt.intParam2 * 1000));
-            }
-            break;
-
-        case EVENT_MEDIA_VOLUME_CHANGED:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
-                if (nevt.intParam2 < 0) {
-                    nevt.intParam2 = 0;
-                }
-                if (nevt.intParam2 > 100) {
-                    nevt.intParam2 = 100;
-                }
-                p.sendEvent(PlayerListener.VOLUME_CHANGED, new Long(nevt.intParam2));
-            }
-            break;
+        if( EventTypes.MMAPI_EVENT != nevt.getType() ) {
+            return;
+        }
 
         // System volume event handler - Send to the all players in this isolate
-        case EVENT_MEDIA_SYSTEM_VOLUME_CHANGED:
+        if( EVENT_MEDIA_SYSTEM_VOLUME_CHANGED == nevt.intParam4 ) {
             if (nevt.intParam2 < 0) {
                 nevt.intParam2 = 0;
             }
@@ -117,73 +89,82 @@ class MMEventListener implements EventListener {
                 nevt.intParam2 = 100;
             }
             HighLevelPlayer.sendSystemVolumeChanged(nevt.intParam2);
-            break;
-
-        case EVENT_MEDIA_RECORD_SIZE_LIMIT:
+        } else { // event addressed to an individual Player
             p = HighLevelPlayer.get(nevt.intParam1);
-            if(p != null) {
+            if (p != null) {
+                processPlayerEvent( nevt, p );
+            }
+        }
+    }
+
+    private void processPlayerEvent( NativeEvent nevt, HighLevelPlayer p )
+    {
+        if( null == p ) {
+            return;
+        }
+        switch (nevt.intParam4) {
+            case EVENT_MEDIA_END_OF_MEDIA:
+                p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nevt.intParam2 * 1000));
+                break;
+
+            case EVENT_MEDIA_DURATION_UPDATED:
+                p.sendEvent(PlayerListener.DURATION_UPDATED, new Long(nevt.intParam2 * 1000));
+                break;
+
+            case EVENT_MEDIA_VOLUME_CHANGED:
+                if (nevt.intParam2 < 0) {
+                    nevt.intParam2 = 0;
+                }
+                if (nevt.intParam2 > 100) {
+                    nevt.intParam2 = 100;
+                }
+                p.sendEvent(PlayerListener.VOLUME_CHANGED, new Long(nevt.intParam2));
+                break;
+
+            case EVENT_MEDIA_RECORD_SIZE_LIMIT:
                 p.receiveRSL();
-                        }       
-            break;
+                break;
 
-        case EVENT_MEDIA_RECORD_ERROR:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
+            case EVENT_MEDIA_RECORD_ERROR:
                 p.sendEvent(PlayerListener.RECORD_ERROR, new String("Unexpected Record Error"));
-            }
-            break;
+                break;
 
-        case EVENT_MEDIA_BUFFERING_STARTED:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
+            case EVENT_MEDIA_BUFFERING_STARTED:
                 p.sendEvent(PlayerListener.BUFFERING_STARTED, new Long(nevt.intParam2 * 1000));
-            }
-            break;
+                break;
 
-        case EVENT_MEDIA_BUFFERING_STOPPED:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
+            case EVENT_MEDIA_BUFFERING_STOPPED:
                 p.sendEvent(PlayerListener.BUFFERING_STOPPED, new Long(nevt.intParam2 * 1000));
-            }
-            break;
+                break;
 
-        case EVENT_MEDIA_ERROR:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
+            case EVENT_MEDIA_ERROR:
                 p.sendEvent(PlayerListener.ERROR, new String("Unexpected Media Error"));
-            }
-            break;
+                break;
 
-        case EVENT_MEDIA_DATA_REQUEST:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            if (p != null) {
+            case EVENT_MEDIA_DATA_REQUEST:
                 p.continueDownload();
-            }
-            break;
+                break;
 
-        case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
-        case EVENT_MEDIA_CREATE_FINISHED:
-        case EVENT_MEDIA_PAUSE_FINISHED:
-        case EVENT_MEDIA_RUN_FINISHED:
-        case EVENT_MEDIA_STOP_FINISHED:
-        case EVENT_MEDIA_DESTROY_FINISHED:
-            p = HighLevelPlayer.get(nevt.intParam1);
-            AsyncExecutor ae = null;
-            if ( null != p ) {
+            case EVENT_MEDIA_LENGTH_REQUEST:
+                p.doOnStreamLengthRequest();
+                break;
+
+            case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
+            case EVENT_MEDIA_CREATE_FINISHED:
+            case EVENT_MEDIA_PAUSE_FINISHED:
+            case EVENT_MEDIA_RUN_FINISHED:
+            case EVENT_MEDIA_STOP_FINISHED:
+            case EVENT_MEDIA_DESTROY_FINISHED:
+                AsyncExecutor ae = null;
                 ae = p.getAsyncExecutor();
                 if (null != ae) {
                     ae.unblockOnEvent(nevt.intParam5, nevt.intParam2);
                 }
-            }
-            break;
+                break;
 
-        case EVENT_MEDIA_SNAPSHOT_FINISHED:
-            p = HighLevelPlayer.get( nevt.intParam1 );
-            if( null != p )
-            {
+            case EVENT_MEDIA_SNAPSHOT_FINISHED:
                 p.notifySnapshotFinished();
-            }
-            break;
+                break;
         }
     }
 }

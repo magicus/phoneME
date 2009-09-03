@@ -182,32 +182,10 @@ KNIDECL(com_sun_mmedia_DirectInputThread_nNotifyEndOfStream) {
     pos = KNI_GetLongField( instance, KNI_GetFieldID( clazz, "posToRead", "J" ));
     
     //notify End Of Stream
-    javacall_media_stream_length( handle, ( javacall_int64 )pos );
+    javacall_media_stream_length( handle, JAVACALL_TRUE, ( javacall_int64 )pos );
     
     
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectInputThread_nNotifyStreamLen) {
-    jint jHandle = KNI_GetParameterAsInt(1);
-    javacall_handle handle = NULL;
-    
-    if( 0 == jHandle )
-    {
-        KNI_ReturnVoid();
-    }
-    
-    if( NULL == ( handle = (( KNIPlayerInfo* )jHandle)->pNativeHandle) )
-    {
-        KNI_ReturnVoid();
-    }
-    
-    {
-        jlong len = KNI_GetParameterAsLong(2);
-        javacall_media_stream_length( handle, JAVACALL_TRUE, ( javacall_int64 )len );
-    }
-    
-    KNI_ReturnVoid();
-}

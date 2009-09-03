@@ -68,6 +68,31 @@ jchar* getUTF16StringFromParameter(KNIDECLARGS int par_num, /* OUT */ int *len)
 
 /* KNI Implementation **********************************************************************/
 
+/* private native void nRejectStreamLengthRequest(); */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_HighLevelPlayer_nRejectStreamLengthRequest) {
+    KNIPlayerInfo* pKniInfo;
+    jint jHandle = 0;
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(instance);
+    KNI_DeclareHandle(clazz);
+    
+    /* Get this object instance and clazz */
+    KNI_GetThisPointer(instance);
+    KNI_GetObjectClass(instance, clazz);
+    
+    pKniInfo = ( KNIPlayerInfo* )KNI_GetIntField( instance, KNI_GetFieldID(
+                                    clazz, "hNative", "I" ) );
+    
+    if( NULL != pKniInfo && NULL != pKniInfo->pNativeHandle ) {
+        javacall_media_stream_length( pKniInfo->pNativeHandle, JAVACALL_FALSE,
+            ( javacall_int64 )0 );
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
 /* private native int nCreateAndRealizeJavaFedPlayerAsync( int appId, int pID,
 String URI, String contentType, long streamLen ) throws MediaException; */
 KNIEXPORT KNI_RETURNTYPE_INT
