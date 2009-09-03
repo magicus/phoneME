@@ -1,0 +1,288 @@
+<?xml version="1.0" ?>
+<!--
+Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+<project name="uig-shared" default="gen" basedir=".">
+    <description>Build UI screens from XML
+    </description>
+
+    <property name="uig-shared.root"    location="${ant.file.uig-shared}/../.."/>
+
+    <property name="toolkit"            value="lcdui"/>
+    <property name="toolkit.src"        value="${uig-shared.root}/src/classes/${toolkit}"/>
+    <property name="screens"            location=""/>
+    <property name="toolkit.traits"     value=""/>
+    <property name="package"            value="foo"/>
+
+    <property name="debug.port"         value=""/> <!-- 8000 -->
+
+    <!-- used by Antenna -->
+    <property name="wtk.home"           value="c:/WTK2.5.2"/>
+    <property name="wtk.midp.version"   value="2.0"/>
+    <property name="wtk.device"         value="DefaultColorPhone"/>
+
+    <property name="utest.classpath"    value="${wtk.home}/lib/cldcapi11.jar${path.separator}${wtk.home}/lib/midpapi20.jar"/>
+
+    <property name="out.root"               location="${uig-shared.root}/out"/>
+    <property name="out.classes"            location="${out.root}/classes"/>
+    <property name="out.utest.classes"      location="${out.root}/utest_classes"/>
+    <property name="out.src"                location="${out.root}/generated/classes"/>
+    <property name="generated.files.list"   location="${out.root}/generated/file_list"/>
+
+    <property name="makefile"                       location="${out.root}/generated/ui_makefile"/>
+    <property name="makefile.files_list.varname"    value="GENERATED_FILES"/>
+
+    <property name="xslt.merge"             location="${uig-shared.root}/xslt/merge.xsl"/>
+    <property name="xslt.main"              location="${uig-shared.root}/xslt/${toolkit}/main.xsl"/>
+    <property name="xsd"                    location="${uig-shared.root}/xslt/screens.xsd"/>
+
+    <filelist id="output-java-dir" dir="${out.src}">
+        <file name="${package}"/>
+    </filelist>
+    <pathconvert property="output-java-dir" refid="output-java-dir" dirsep="/">
+        <unpackagemapper from="${out.src}*" to="${out.src}*"/>
+    </pathconvert>
+
+    <target name="gen">
+        <description>Generate UI screen sources from XML with/without unit tests
+        </description>
+
+        <property name="with-unit-tests" value="no"/>
+
+        <path id="output-xml-dir" location="${out.root}"/>
+        <pathconvert property="output-xml-dir" refid="output-xml-dir" dirsep="/"/>
+
+        <condition property="toolkit.traits.set">
+            <not><equals arg1="${toolkit.traits}" arg2="" trim="true"/></not>
+        </condition>
+        <path id="toolkit-traits" location="${toolkit.traits}"/>
+        <pathconvert property="toolkit-traits" refid="toolkit-traits" dirsep="/"/>
+
+        <!-- Produce a single xml from multiple files handling 'include' elements -->
+        <mkdir dir="${out.root}"/>
+        <xslt in="${screens}" out="${out.root}/merged.xml" style="${xslt.merge}" force="yes"/>
+
+        <!-- Validate temporary xml -->
+        <pathconvert dirsep="/" property="xsd.file">
+            <path>
+                <pathelement location="${xsd}"/>
+            </path>
+        </pathconvert>
+        <xmlvalidate    file="${out.root}/merged.xml"
+                        lenient="false"
+                        failonerror="true"
+                        warn="true">
+            <attribute  name="http://apache.org/xml/features/validation/schema"
+                        value="true"/>
+            <attribute  name="http://xml.org/sax/features/validation"
+                        value="true"/>
+            <property   name="http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation"
+                        value="${xsd.file}"/>
+            <property   name="http://apache.org/xml/properties/schema/external-schemaLocation"
+                        value="${xsd.file}"/>
+        </xmlvalidate>
+
+
+        <!-- Generate temporary xslt stylesheet resolving {UIG-SHARED-XSLT-DIR} token if any -->
+        <path id="uig-shared-xslt-dir" location="${uig-shared.root}/xslt"/>
+        <pathconvert property="uig-shared-xslt-dir" refid="uig-shared-xslt-dir" dirsep="/"/>
+
+        <copy file="${xslt.main}" tofile="${xslt.main}.filtered" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="UIG-SHARED-XSLT-DIR" value="${uig-shared-xslt-dir}"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+
+
+        <!-- Run source generator -->
+        <mkdir dir="${output-java-dir}"/>
+        <xslt in="${out.root}/merged.xml" out="${generated.files.list}" style="${xslt.main}.filtered">
+            <param name="package-name" expression="${package}"/>
+            <param name="output-java-dir" expression="file:///${output-java-dir}"/>
+            <param name="output-xml-dir" expression="file:///${output-xml-dir}"/>
+            <param name="with-unit-tests" expression="${with-unit-tests}"/>
+            <param name="toolkit-traits" expression="file:///${toolkit-traits}" if="toolkit.traits.set"/>
+        </xslt>
+
+        <delete file="${xslt.main}.filtered"/>
+    </target>
+
+    <target name="gen-with-unit-tests">
+        <description>Generate UI screen sources from XML with unit tests
+        </description>
+
+        <antcall target="gen">
+            <param name="with-unit-tests" value="yes"/>
+        </antcall>
+    </target>
+
+    <target name="makefile" depends="gen">
+        <description>Generate Makefile fragment that initiates make variable with the list of generated files
+        </description>
+
+        <copy file="${generated.files.list}" tofile="${makefile}">
+            <filterchain>
+                <tokenfilter>
+                    <replacestring from="file:///${output-java-dir}/" to=""/>
+                </tokenfilter>
+                <prefixlines prefix=" "/>
+                <striplinebreaks/>
+                <prefixlines prefix="${makefile.files_list.varname} :="/>
+            </filterchain>
+        </copy>
+    </target>
+
+    <target name="javac-unit-tests">
+        <description>Compiles unit tests for things other then generated sources
+        </description>
+
+        <!-- Build unit tests -->
+        <mkdir dir="${out.utest.classes}"/>
+        <javac  srcdir="${uig-shared.root}/test${path.separator}${uig-shared.root}/src/classes/shared"
+                destdir="${out.utest.classes}"
+                debug="true">
+            <include name="**/AllTests.java"/>
+            <include name="**/BaseScreenStack.java"/>
+            <include name="**/TestBaseScreenStack.java"/>
+        </javac>
+    </target>
+
+    <target name="run-unit-tests" depends="javac-unit-tests">
+        <description>Runs unit tests for things other then generated sources
+        </description>
+
+        <condition  property="run-unit-tests.java.jvmargs"
+                    value="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=${debug.port}"
+                    else="">
+            <not><equals arg1="${debug.port}" arg2="" trim="true"/></not>
+        </condition>
+
+        <!-- Run unit tests -->
+        <java   classname="com.sun.uig.AllTests"
+                classpath="${out.utest.classes}"
+                fork="true">
+            <jvmarg line="${run-unit-tests.java.jvmargs}"/>
+        </java>
+    </target>
+
+    <target name="javac" depends="gen-with-unit-tests">
+        <description>Generates and compiles UI screen sources with unit tests
+        </description>
+
+        <mkdir dir="${out.classes}"/>
+        <javac  srcdir="${uig-shared.root}/src/classes/shared${path.separator}${toolkit.src}${path.separator}${uig-shared.root}/test${path.separator}${out.src}"
+                destdir="${out.classes}"
+                classpath="${utest.classpath}"
+                includes="**/*.java"
+                excludes="**/AllTests.java,**/TestBaseScreenStack.java"
+                debug="true"/>
+    </target>
+
+    <target name="build-test-midlet" depends="javac">
+        <description>Builds JAD/JAR with the test midlet
+        </description>
+
+        <!--
+        Optional JAD/JAR tasks (http://antenna.sourceforge.net/)
+
+        WARNING: Don't use antenna v1.0.0 - it has a bug: http://forum.java.sun.com/thread.jspa?threadID=5227164&tstart=195,
+        use v0.9.14 instead.
+        -->
+        <taskdef resource="antenna.properties"/>
+
+        <wtkjad jadfile="${out.root}/test.jad"
+                jarfile="${out.root}/test.jar"
+                vendor="SUN Microsystems"
+                name="TestMIDlet"
+                version="1.0">
+            <midlet name="TestMIDlet" class="com.sun.uig.TestMIDlet" />
+        </wtkjad>
+
+        <!-- Run preverefier manually as wtkpackage is stuck with
+            ===
+                [wtkpackage] JAR file creation failed with error -1
+                [wtkpackage] The preverified classes if any are in tmp41.
+            ===
+            error.
+        -->
+
+        <antcall target="build-test-midlet-before-preverify"/>
+
+        <!-- classes to preverify -->
+        <pathconvert property="preverify.classes" pathsep=" ">
+            <packagemapper from="${out.classes}${file.separator}*.class" to="*"/>
+            <path>
+                <fileset dir="${out.classes}" includes="**/*.class"/>
+            </path>
+        </pathconvert>
+
+        <exec   executable="${wtk.home}/bin/preverify"
+                dir="${out.classes}">
+            <arg line="-classpath"/>
+            <arg path="${utest.classpath}"/>
+            <arg line="-d"/>
+            <arg path="${out.root}/preverified"/>
+            <arg line="${preverify.classes}"/>
+        </exec>
+
+        <copy file="${output-java-dir}/TestClassList.txt" todir="${out.root}/preverified"/>
+
+        <antcall target="build-test-midlet-after-preverify"/>
+
+        <wtkpackage jadfile="${out.root}/test.jad"
+                    jarfile="${out.root}/test.jar"
+                    basedir="${out.root}/preverified"/>
+        <delete dir="${out.root}/preverified"/>
+    </target>
+
+
+    <condition property="debug-run">
+        <not><equals arg1="${debug.port}" arg2="" trim="true"/></not>
+    </condition>
+
+    <target name="run-test-midlet-debug" depends="build-test-midlet" if="debug-run">
+        <wtkrun jadfile="${out.root}/test.jad" debug="${debug.port}"
+                device="${wtk.device}"/>
+    </target>
+    <target name="run-test-midlet-nodebug" depends="build-test-midlet" unless="debug-run">
+        <wtkrun jadfile="${out.root}/test.jad"
+                device="${wtk.device}"/>
+    </target>
+
+    <target name="run-test-midlet" depends="run-test-midlet-debug,run-test-midlet-nodebug">
+        <description>Runs test midlet with emulator
+        </description>
+    </target>
+
+    <target name="build-test-midlet-before-preverify">
+        <description>Task executed before preverifier is called to preverify classes for test midlet
+        </description>
+    </target>
+
+    <target name="build-test-midlet-after-preverify">
+        <description>Task executed after preverifier preverified classes for test midlet
+        </description>
+    </target>
+</project>
