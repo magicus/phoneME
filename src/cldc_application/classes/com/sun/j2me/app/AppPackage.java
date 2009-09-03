@@ -48,10 +48,17 @@ public class AppPackage {
     }
     
     public int getId() {
-        return MIDletStateHandler.getMidletStateHandler().
-            getMIDletSuite().getID();
+        MIDletStateHandler msh = MIDletStateHandler.getMidletStateHandler();
+        MIDletSuite ms = msh.getMIDletSuite();
+        if (ms == null)
+        {
+            return UNUSED_APP_ID;
+        }
+        else
+        {
+            return ms.getID();
+        }
     }
-
 
     /** Unused ID */
     public static final int UNUSED_APP_ID = -1;
