@@ -728,7 +728,7 @@ javacall_result javacall_media_create_managed_player(
             JC_FMT_AMR_WB      == fmt ||
             JC_FMT_AMR_WB_PLUS == fmt )
         {
-            pPlayer->mediaItfPtr = g_dshow_itf;
+            pPlayer->mediaItfPtr = &g_dshow_itf;
         }
     }
 
