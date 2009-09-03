@@ -591,7 +591,17 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     PRINTF( "*** creating dshow player... ***\n" );
 
-    bool ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
+    bool ok;
+
+    if(JC_FMT_AMR == p->mediaType)
+    {
+        ok = create_player_dshow_managed( wcslen( (const wchar_t*)outer_player->uri), 
+                                          (const wchar_t*)outer_player->uri, p, &(p->ppl));
+    }
+    else
+    {
+        ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
+    }
 
     PRINTF( "*** dshow player creation finished (%s) ***\n",
             (ok ? "success" : "fail") );

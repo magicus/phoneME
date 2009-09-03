@@ -679,6 +679,7 @@ javacall_result javacall_media_create_managed_player(
     pPlayer->playerId         = player_id;
     pPlayer->downloadByDevice = JAVACALL_TRUE;
     pPlayer->mime             = NULL;
+    pPlayer->uri              = NULL;
     pPlayer->streamLen        = -1;
     pPlayer->mediaItfPtr      = NULL;
 
@@ -716,6 +717,11 @@ javacall_result javacall_media_create_managed_player(
     {
         pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
         pPlayer->mediaItfPtr      = &g_qsound_itf;
+    }
+    else if( NULL != locator )
+    {
+        pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
+        pPlayer->mediaItfPtr = fmt_enum2itf( fmt_str2enum(pPlayer->mediaType) );
     }
 
     if( NULL != pPlayer->mediaItfPtr )
