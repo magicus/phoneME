@@ -593,7 +593,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     bool ok;
 
-    if(JC_FMT_AMR == p->mediaType)
+    if( JC_FMT_MPEG_1 == p->mediaType )
     {
         ok = create_player_dshow_managed( wcslen( (const wchar_t*)outer_player->uri), 
                                           (const wchar_t*)outer_player->uri, p, &(p->ppl));
