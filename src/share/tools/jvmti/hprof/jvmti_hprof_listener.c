@@ -243,7 +243,9 @@ listener_loop_function(jvmtiEnv *jvmti, JNIEnv *env, void *p)
                 runGC();
                 break;
             case HPROF_CMD_DUMP_HEAP: {
-                site_heapdump(env);
+                if (gdata->heap_fd != -1) {
+                    site_heapdump(env);
+                }
                 break;
             }
             case HPROF_CMD_ALLOC_SITES: {
