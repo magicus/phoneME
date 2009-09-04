@@ -465,7 +465,10 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     public byte[] getSnapshot( String imageType ) throws MediaException
     {
         checkState();
-
+        if (!isCamera) {
+            // Only camera supports taking snapshots in this project
+            throw new MediaException("Not supported for this player");
+        }
         if (null == imageType)
         {
             imageType = System.getProperty("video.snapshot.encodings");

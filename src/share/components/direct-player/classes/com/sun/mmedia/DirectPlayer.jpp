@@ -1033,7 +1033,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             }
             public Object onTimeout() throws Throwable {
                 System.out.println("setVideoFullScreen: sync timeout");
-                return new Boolean(fullscreen);
+                return Boolean.FALSE;
             }
         })).booleanValue();
     }
