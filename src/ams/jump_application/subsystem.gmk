@@ -124,6 +124,8 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
   MIDletContainer.c \
   listeners_intern.c \
   imageCache.c \
+  fileCache.c \
+  fontCache.c \
   midp_foreground_id.c \
   midpInflate.c \
   midpInit.c \
