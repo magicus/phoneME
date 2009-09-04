@@ -750,15 +750,15 @@ javacall_result javacall_media_get_duration(
     /*OUT*/ javacall_int32 *duration);
 
 /**
- * This function is called to get all the necessary return values from 
+ * This function is called to get all the necessary return values from
  * the JavaCall Media functions that can run in asynchronous mode.
  * This function is called every time the following situation occurs.
  * A JSR-135 JavaCall API function returned JAVACALL_WOULD_BLOCK and continued
- * its 
+ * its
  * execution in asynchronous mode. Then it finished the execution and send the
  * corresponding event to inform Java layer about it. Such events are described
  * in the description of the enum javacall_media_notification_type after the
- * event 
+ * event
  * JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER. After the event Java
  * layer calls javacall_media_get_event_data() to get the return values.
  *
