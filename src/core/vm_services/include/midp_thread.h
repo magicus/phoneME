@@ -64,8 +64,11 @@ void midp_thread_set_timeslice_proc(VmThreadTimesliceProc p);
  * @param waitingFor set into MidpReentryData.waitingFor
  * @param descriptor set into MidpReentryData.descriptor
  * @param pResult set into MidpReentryData.pResult
+ *
+ * @return 0 in case of succes
+ *         1 in case error occured
  */
-void midp_thread_wait(
+int midp_thread_wait(
         midpSignalType waitingFor, int descriptor, void* pResult);
 
 /**
