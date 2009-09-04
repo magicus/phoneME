@@ -122,4 +122,16 @@ CVMdynlinkClose(void *dsoHandle)
     dlclose(dsoHandle);
 }
 
+CVMBool
+CVMdynlinkExists(const char *name)
+{
+    void *handle;
+
+    handle = dlopen((const char *) name, RTLD_LAZY);
+    if (handle != NULL) {
+        dlclose(handle);
+    }
+    return (handle != NULL);
+}
+
 #endif /* #defined CVM_DYNAMIC_LINKING */

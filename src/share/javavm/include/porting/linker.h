@@ -91,6 +91,10 @@ void *CVMdynlinkSym(void *dsoHandle, const void *name);
 
 void CVMdynlinkClose(void *dsoHandle);
 
+/* check is library exists */
+
+CVMBool CVMdynlinkExists(const char *name);
+
 #include CVM_HDR_LINKER_H
 
 #endif  /* #defined _INCLUDED_PORTING_LINKER_H */

@@ -1457,6 +1457,7 @@ public abstract class ClassLoader {
         native void load(String name);
         native long find(String name);
         native void unload();
+        static native boolean exists(String name);
 
         public NativeLibrary(Class fromClass, String name,
                              boolean isXrunLibrary, boolean isBuiltin) {
@@ -1754,6 +1755,11 @@ public abstract class ClassLoader {
     private static Object loadLibrary0(Class fromClass, final File file,
                                        boolean isXrunLibrary)
     {
+        // Check to see if the file exists:
+        if (!NativeLibrary.exists(file.getName())) {
+            return null;
+        }
+
         // Go load the library:
 	String name;
 	try {

@@ -293,6 +293,23 @@ Java_java_lang_ClassLoader_00024NativeLibrary_initIDs(JNIEnv *env, jclass thisOb
 typedef jint (JNICALL *JNI_OnLoad_t)(JavaVM *, void *);
 typedef void (JNICALL *JNI_OnUnload_t)(JavaVM *, void *);
 
+JNIEXPORT jboolean JNICALL 
+Java_java_lang_ClassLoader_00024NativeLibrary_exists(JNIEnv *env,
+                                                     jclass thisObj,
+                                                     jstring name)
+{
+    const char *cname;
+    jboolean ret;
+
+    cname = JNU_GetStringPlatformChars(env, name, 0);
+    if (cname == 0) {
+        return JNI_FALSE;
+    }
+    ret = CVMdynlinkExists(cname);
+    JNU_ReleaseStringPlatformChars(env, name, cname);
+    return ret;
+ }
+
 /*
  * Class:     java_lang_ClassLoader_NativeLibrary
  * Method:    load
