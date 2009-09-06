@@ -44,8 +44,6 @@ class filter_out_filter;
 
 class filter_out_sample : public IMediaSample
 {
-    friend filter_out_allocator;
-
     nat32 reference_count;
     IMemAllocator *p_allocator;
     bits8 *p_data;

@@ -91,9 +91,9 @@ const nat32 null = 0;
 
 class player_dshow : public player
 {
-    player_callback *pcallback;
     nat32 locator_len;
     char16 *plocator;
+    player_callback *pcallback;
     int32 state;
     int64 media_time;
     IGraphBuilder *pgb;
@@ -153,7 +153,7 @@ class player_dshow : public player
             return result_media;
         }
 
-        // dump_filter_graph(pgb);
+        dump_filter_graph(pgb);
 
         // int64 tc = 40200000;
         // pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);
