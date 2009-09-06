@@ -3,6 +3,8 @@
  */
 
 #ifndef SPLIT_VERIFY_H
+#define SPLIT_VERIFY_H
+
 /*
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -73,11 +75,11 @@ typedef fullinfo_type CVMsplitVerifyMapElement;
 extern fullinfo_type CVMsplitVerifyMakeVerifierType(CVMClassTypeID key);
 
 #define VERIFY_MAKE_UNINIT(_offset)  MAKE_FULLINFO(ITEM_NewObject,0,_offset)
-#define VERIFY_MAKE_OBJECT(_typeid)  \
-    (CVMassert(CVMtypeidFieldIsRef(_typeid)), \
-    (CVMtypeidGetArrayDepth(_typeid)==0) ? \
-	MAKE_FULLINFO(ITEM_Object,0,_typeid) : \
-	CVMsplitVerifyMakeVerifierType(_typeid))
+#define VERIFY_MAKE_OBJECT(_typeid)					\
+    (CVMassert(CVMtypeidClassIsRef(_typeid)),				\
+    (CVMtypeidGetArrayDepth(_typeid) == 0)				\
+     ? MAKE_FULLINFO(ITEM_Object, 0, CVMtypeidGetToken(_typeid))	\
+     : CVMsplitVerifyMakeVerifierType(_typeid))
 
 typedef struct CVMsplitVerifyMap{
     CVMUint32			pc;

@@ -1253,10 +1253,43 @@ CVMtypeidGetSignatureIterator(CVMMethodTypeID tid, CVMSigIterator* result);
 */
 #define CVMtypeidArrayShift	24
 #define CVMtypeidArrayMask	0xff000000
-#define CVMtypeidBaseTypeMask	0x00ffffff
+#define CVMtypeidBaseTypeMask	0x007fffff
 #define CVMtypeidBigArray	CVMtypeidArrayMask
 #define CVMtypeidLastPrimitive  CVM_TYPEID_BOOLEAN
 #define CVMtypeidMaxSmallArray	0xff
+
+/* A "special" classID token is one that has its "special" bit set.
+   The purpose is to allow users of the typeID system to have a 32-bit
+   token that can either be a ClassID token, or be something else.
+   The "special" bit is a reserved bit used to distinguish between the
+   two.
+
+   The "special" bit will never be set for ClassIDs within the typeID system.
+   It should also never be set for ClassIDs passed to the typeID system.
+   
+   The split verifier uses the "special" bit for fullinfo_type, which is
+   also called VERIFIERTYPE. It chooses to set the bit for true ClassIDs,
+   and leave it clear for other types of uses. This means it also must
+   clear the bit before passing the ClassID to the typeID system.
+*/
+
+/* CVMtypeidSpecialClassIDMask must agree with CVMtypeidBaseTypeMask */
+#define CVMtypeidSpecialClassIDTokenMask 0x00800000
+
+#define CVMtypeidMakeSpecialClassIDToken(t) \
+    ((t) | CVMtypeidSpecialClassIDTokenMask)
+
+#define CVMtypeidGetSpecialClassIDToken(t) \
+    (CVMassert(CVMtypeidIsSpecialClassIDToken(t)), \
+     ((t) & ~CVMtypeidSpecialClassIDTokenMask))
+
+#define CVMtypeidIsSpecialClassIDToken(t) \
+    (((t) & CVMtypeidSpecialClassIDTokenMask) == \
+     CVMtypeidSpecialClassIDTokenMask)
+
+#define CVMtypeidSpecialToken2ClassID(t) \
+    CVMtypeidToken2ClassID(CVMtypeidGetSpecialClassIDToken(t))
+
 
 #endif /* CVM_16BIT_TYPEID */
 

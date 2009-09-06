@@ -3062,24 +3062,24 @@ CVMreadStackMapTable(CVMExecEnv* ee, CICcontext* context,
     /* Initialize locals from args */
 {
     CVMSigIterator sig;
-    CVMClassTypeID cid;
+    CVMTypeIDToken classIDToken;
     CVMtypeidGetSignatureIterator(CVMmbNameAndTypeID(mb), &sig);
 
     if (!CVMmbIs(mb, STATIC)) {
 	nLocalSlots = 1;
 	locals[0] = VERIFY_MAKE_OBJECT(CVMcbClassName(context->cb));
     }
-    while ((cid = CVM_SIGNATURE_ITER_NEXT(sig))
+    while ((classIDToken = CVM_SIGNATURE_ITER_NEXT(sig))
 	!= CVM_TYPEID_ENDFUNC)
     {
-	CVMClassTypeID t = cid;
-	if (!CVMtypeidIsPrimitive(cid)) {
-	    t = CVM_TYPEID_OBJ;
+	CVMClassTypeID classID = CVMtypeidToken2ClassID(classIDToken);
+	if (!CVMtypeidIsPrimitive(classID)) {
+	    classIDToken = CVM_TYPEID_OBJ;
 	}
-	switch (t) {
+	switch (classIDToken) {
 	case CVM_TYPEID_OBJ:
 	    locals[nLocalSlots++] =
-		VERIFY_MAKE_OBJECT(cid);
+		VERIFY_MAKE_OBJECT(classID);
 	    break;
 	case CVM_TYPEID_BOOLEAN:
 	case CVM_TYPEID_BYTE:

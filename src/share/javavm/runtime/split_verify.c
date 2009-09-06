@@ -79,7 +79,6 @@
 typedef CVMClassBlock*   CLASS;
 typedef CVMMethodBlock*  METHOD;
 typedef CVMFieldBlock*   FIELD;
-typedef CVMTypeID	 NameTypeKey;
 
 /*
  * The following are type definitions that are only used by the
@@ -180,7 +179,7 @@ typedef struct VfyContext{
      * Signature & return type of an invocation we're processing.
      */
     CVMMethodTypeID   calleeContext;
-    VERIFIERTYPE      sigResult;
+    CVMTypeIDToken    sigResult;
 
     unsigned long *   NEWInstructions;
     /* must call a this.<init> or super.<init> */
@@ -221,8 +220,9 @@ typedef struct VfyContext{
 
 /* These two are private helpers for contructing the others */
 #define Vfy_getPrimArrayVfyType(x) MAKE_FULLINFO(ITEM_##x, 1, 0)
-#define Vfy_getSystemVfyType(x)    MAKE_FULLINFO(ITEM_Object, 0, \
-					Vfy_getSystemClassName(x))
+#define Vfy_getSystemVfyType(x)		\
+    MAKE_FULLINFO(ITEM_Object, 0,	\
+		  CVMtypeidGetToken(Vfy_getSystemClassName(x)))
 
 #define Vfy_getBooleanArrayVerifierType() Vfy_getPrimArrayVfyType(Byte)
 #define Vfy_getByteArrayVerifierType()    Vfy_getPrimArrayVfyType(Byte)
@@ -232,8 +232,9 @@ typedef struct VfyContext{
 #define Vfy_getLongArrayVerifierType()    Vfy_getPrimArrayVfyType(Long)
 #define Vfy_getFloatArrayVerifierType()   Vfy_getPrimArrayVfyType(Float)
 #define Vfy_getDoubleArrayVerifierType()  Vfy_getPrimArrayVfyType(Double)
-#define Vfy_getObjectArrayVerifierType()  MAKE_FULLINFO(ITEM_Object, 1, \
-			    Vfy_getSystemClassName(java_lang_Object))
+#define Vfy_getObjectArrayVerifierType() \
+    MAKE_FULLINFO(ITEM_Object, 1,        \
+		  CVMtypeidGetToken(Vfy_getSystemClassName(java_lang_Object)))
 
 #define Vfy_getObjectVerifierType()    Vfy_getSystemVfyType(java_lang_Object)
 #define Vfy_getStringVerifierType()    Vfy_getSystemVfyType(java_lang_String)
@@ -251,13 +252,17 @@ typedef struct VfyContext{
 /*
  * Get a class array from a CVMClassTypeID data type that some kind of object
  * reference. It is used for ANEWARRAY
+ *
+ * WARNING: Assumes CVMClassTypeID array depth is in upper 8 bits.
  */
 #define Vfy_getClassArrayVerifierType(typeKey) \
-	(CVMassert(CVMtypeidFieldIsRef(typeKey)), \
+	(CVMassert(CVMtypeidClassIsRef(typeKey)), \
 	(Vfy_toVerifierType(typeKey) + MAKE_FULLINFO(0, 1, 0)))
 
 /*
  * Gets the VERIFIERTYPE that represents the element type of an array
+ *
+ * WARNING: Assumes CVMClassTypeID array depth is in upper 8 bits.
  */
 #define Vfy_getArrayElementType(typeKey) \
 	(CVMassert(GET_INDIRECTION(typeKey) != 0), \
@@ -514,7 +519,7 @@ VERIFIERTYPE CVMvfy_makeVerifierType(CVMClassTypeID key);
  */
 /*
 #define Vfy_toVerifierType(classKey)  \
-    (CVMassert(CVMtypeidFieldIsRef(classKey)), \
+    (CVMassert(CVMtypeidClassIsRef(classKey)), \
     (CVMtypeidGetArrayDepth(classKey)==0) ? VERIFY_MAKE_OBJECT(classKey) : \
     CVMvfy_makeVerifierType(classKey))
 */
@@ -533,12 +538,12 @@ VERIFIERTYPE CVMvfy_makeVerifierType(CVMClassTypeID key);
  */
 /* Assert that this is really a class type, not an array or e.g. int */
 #define Vfy_toClassKey(verifierType) \
-    (CVMassert(WITH_ZERO_EXTRA_INFO(verifierType)==NULL_FULLINFO), \
-    GET_EXTRA_INFO(verifierType))
-/* Same, but with a more lenient assertion */
+    (CVMassert( \
+	 !CVMtypeidIsArray(CVMtypeidSpecialToken2ClassID(verifierType)) && \
+	 !CVMtypeidIsPrimitive(CVMtypeidSpecialToken2ClassID(verifierType))), \
+     CVMtypeidSpecialToken2ClassID(verifierType))
 #define Vfy_baseClassKey(verifierType) \
-    (CVMassert(GET_ITEM_TYPE(verifierType) == ITEM_Object),        \
-    GET_EXTRA_INFO(verifierType))
+    CVMtypeidGetArrayBaseType(CVMtypeidSpecialToken2ClassID(verifierType))
 
 /*
  * Test to see if a type is a primitive type
@@ -1102,10 +1107,7 @@ Cls_lookupFieldByName(CLASS context, CLASS target, CVMFieldTypeID field);
  * @return                  The CVMMethodTypeID of that entry
  */
 #define Pol_getFieldTypeKey(vPool, nameAndTypeIndex)             \
-    CVMtypeidGetTypePart(Pol_getFieldNameTypeKey(vPool, nameAndTypeIndex))
-
-#define Pol_getMethodTypeKey(vPool, nameAndTypeIndex)             \
-    CVMtypeidGetTypePart(Pol_getMethodNameTypeKey(vPool, nameAndTypeIndex))
+    CVMtypeidGetMemberType(Pol_getFieldNameTypeKey(vPool, nameAndTypeIndex))
 
 /*
  * Get the descriptor key of a Name-and-type for the pool entry at index
@@ -1663,7 +1665,9 @@ vIsAssignable(
     }
     /* if target is Object, then of course it can be assigned */
     if ((fromDepth > toDepth) && toTag == ITEM_Object 
-	&& Vfy_baseClassKey(toKey) == Vfy_getSystemClassName(java_lang_Object)){
+	&& CVMtypeidIsSameClass(Vfy_baseClassKey(toKey),
+				Vfy_getSystemClassName(java_lang_Object)))
+    {
 	    return CVM_TRUE;
     }
 
@@ -1710,8 +1714,8 @@ lookMoreDeeply:
     if (fromTag != ITEM_Object || toTag != ITEM_Object){
 	return CVM_FALSE;
     }
-    CVMassert(CVMtypeidFieldIsRef(Vfy_toClassKey(fromKey)));
-    CVMassert(CVMtypeidFieldIsRef(Vfy_toClassKey(toKey)));
+    CVMassert(CVMtypeidClassIsRef(Vfy_toClassKey(fromKey)));
+    CVMassert(CVMtypeidClassIsRef(Vfy_toClassKey(toKey)));
 
     fromClass = CVMvfyLookupClass(cntxt, Vfy_toClassKey(fromKey));
     if (fromClass == NULL)
@@ -1820,7 +1824,7 @@ vIsProtectedAccess(
     {
         if (memberClass == NULL) {
             return CVM_FALSE;
-        } else if (CVMcbClassName(memberClass) == tClass) {
+        } else if (CVMtypeidIsSameClass(CVMcbClassName(memberClass), tClass)) {
             break;
         }
     }
@@ -1931,9 +1935,10 @@ VERIFIERTYPE
 CVMsplitVerifyMakeVerifierType(CVMClassTypeID key){
     int tag;
     int depth = CVMtypeidGetArrayDepth(key);
-    CVMFieldTypeID basetype = CVMtypeidGetArrayBasetype(key);
+    CVMClassTypeID basetype = CVMtypeidGetArrayBaseType(key);
+    CVMTypeIDToken basetypeToken = CVMtypeidGetToken(basetype);
     CVMassert(depth > 0); /* else we are here in error */
-    switch (basetype) {
+    switch (basetypeToken) {
         case CVM_TYPEID_INT:	tag = ITEM_Integer; break;
         case CVM_TYPEID_SHORT:	tag = ITEM_Short;   break;
         case CVM_TYPEID_CHAR:	tag = ITEM_Char;    break;
@@ -1943,8 +1948,8 @@ CVMsplitVerifyMakeVerifierType(CVMClassTypeID key){
         case CVM_TYPEID_DOUBLE:	tag = ITEM_Double;  break;
         case CVM_TYPEID_LONG:	tag = ITEM_Long;    break;
         default:
-            CVMassert(CVMtypeidFieldIsRef(basetype));
-	    return MAKE_FULLINFO(ITEM_Object, depth, basetype);
+            CVMassert(CVMtypeidClassIsRef(basetype));
+	    return MAKE_FULLINFO(ITEM_Object, depth, basetypeToken);
     }
     return MAKE_FULLINFO(tag, depth, 0);
 }
@@ -1964,9 +1969,10 @@ static int
 change_Field_to_StackType(CVMClassTypeID fieldType, VERIFIERTYPE* stackTypeP) 
 {
     int depth = CVMtypeidGetArrayDepth(fieldType);
-    CVMFieldTypeID basetype = CVMtypeidGetArrayBasetype(fieldType);
+    CVMClassTypeID basetype = CVMtypeidGetArrayBaseType(fieldType);
+    CVMTypeIDToken basetypeToken = CVMtypeidGetToken(basetype);
     int tag;
-    switch (basetype) {
+    switch (basetypeToken) {
         case CVM_TYPEID_SHORT:
 	    tag = ITEM_Short;
 	    goto smalltype;
@@ -2010,7 +2016,7 @@ change_Field_to_StackType(CVMClassTypeID fieldType, VERIFIERTYPE* stackTypeP)
 	    *stackTypeP = MAKE_FULLINFO(ITEM_Void, 0, 0);
 	    return 0; /* For return types only!! */
         default:
-            *stackTypeP = MAKE_FULLINFO(ITEM_Object, depth, basetype);
+            *stackTypeP = MAKE_FULLINFO(ITEM_Object, depth, basetypeToken);
             return 1;
     }
 }
@@ -2498,14 +2504,17 @@ printStackType(VERIFIERTYPE key)
     case ITEM_Reference:
         print_str("Ref", depth);
         return;
-    default: /* ITEM_Object and ITEM_InitObject and Item_NULL ? */
-	objectType = GET_EXTRA_INFO(key);
-	if (objectType == 0){
+    case ITEM_Object:
+	if (key == ITEM_Null) {
 	    print_str("null", depth);
-	}else{
-	    CVMtypeidFieldTypeToCString(GET_EXTRA_INFO(key), buf, sizeof(buf));
-	    print_str(buf, depth);
+	} else {
+	    objectType = CVMtypeidSpecialToken2ClassID(key);
+	    CVMtypeidClassNameToCString(objectType, buf, sizeof(buf));
+	    print_str(buf, 0);
 	}
+        return;
+    default:
+	CVMassert(CVM_FALSE);
         return;
     }
 }
@@ -2611,8 +2620,10 @@ Vfy_initializeLocals(VfyContext* cntxt) {
     int i;
     int n;
     CVMSigIterator iter;
-    CVMTypeID retDummy[2];
+    VERIFIERTYPE retDummy[2];
     CVMMethodTypeID mname = Mth_getName(meth);
+    CVMClassTypeID classID;
+    CVMTypeIDToken classIDToken;
 
     n = 0;
     cntxt->vNeedInitialization = CVM_FALSE;
@@ -2629,15 +2640,17 @@ Vfy_initializeLocals(VfyContext* cntxt) {
 			Vfy_toVerifierType(Cls_getKey(Mth_getClass(meth)));
 	}
     }
-    CVMtypeidGetSignatureIterator(CVMtypeidGetTypePart(mname), &iter);
+    CVMtypeidGetSignatureIterator(mname, &iter);
     nargs = CVM_SIGNATURE_ITER_PARAMCOUNT(iter);
     for (i = 0; i < nargs; i++) {
-        n += change_Field_to_StackType(
-	    CVM_SIGNATURE_ITER_NEXT(iter), &(cntxt->vLocals[n]));
+	classIDToken = CVM_SIGNATURE_ITER_NEXT(iter);
+        CVMtypeidSetToken(classID, classIDToken);
+        n += change_Field_to_StackType(classID, &(cntxt->vLocals[n]));
     }
 
-    change_Field_to_StackType(
-    	CVM_SIGNATURE_ITER_RETURNTYPE(iter), &retDummy[0]);
+    classIDToken = CVM_SIGNATURE_ITER_RETURNTYPE(iter);
+    CVMtypeidSetToken(classID, classIDToken);
+    change_Field_to_StackType(classID, &retDummy[0]);
     cntxt->returnSig = retDummy[0];
 }
 
@@ -2729,9 +2742,11 @@ Vfy_popInvokeArguments(VfyContext* cntxt) {
 
     int nargs;
     int nwords = 0;
-    CVMClassTypeID ty[2];
+    VERIFIERTYPE ty[2];
     int i, j, k;
     CVMSigIterator iter;
+    CVMClassTypeID classID;
+    CVMTypeIDToken classIDToken;
 
     CVMtypeidGetSignatureIterator(cntxt->calleeContext, &iter);
     nargs = CVM_SIGNATURE_ITER_PARAMCOUNT(iter);
@@ -2747,8 +2762,10 @@ Vfy_popInvokeArguments(VfyContext* cntxt) {
 
     k = 0;
     for (i = 0; i < nargs; i++) {
-        int n = change_Field_to_StackType(
-	    CVM_SIGNATURE_ITER_NEXT(iter), ty);
+	int n;
+	classIDToken = CVM_SIGNATURE_ITER_NEXT(iter);
+	CVMtypeidSetToken(classID, classIDToken);
+	n = change_Field_to_StackType(classID, ty);
         for (j = 0; j < n; j++) {
             VERIFIERTYPE arg = cntxt->vStack[cntxt->vSP + k];
             if (!Vfy_isAssignable(arg, ty[j])) {
@@ -2758,9 +2775,9 @@ Vfy_popInvokeArguments(VfyContext* cntxt) {
         }
     }
 
-   cntxt->sigResult = CVM_SIGNATURE_ITER_RETURNTYPE(iter);
+    cntxt->sigResult = CVM_SIGNATURE_ITER_RETURNTYPE(iter);
 
-   return nwords;
+    return nwords;
 }
 
 /*=========================================================================
@@ -2780,9 +2797,10 @@ Vfy_pushInvokeResult(VfyContext* cntxt) {
     * Push the result type.
     */
     if (cntxt->sigResult != CVM_TYPEID_VOID) {
-        CVMClassTypeID ty[2];
+        VERIFIERTYPE ty[2];
         int i;
-        int n = change_Field_to_StackType(cntxt->sigResult, ty);
+        int n = change_Field_to_StackType(
+	    CVMtypeidToken2ClassID(cntxt->sigResult), ty);
         for (i = 0 ; i < n; i++) {
             Vfy_push(cntxt, ty[i]);
         }
@@ -3829,7 +3847,7 @@ Vfy_popCategory1(VfyContext* cntxt) {
 
 static void
 Vfy_pushClassKey(VfyContext* cntxt, CVMClassTypeID fieldType) {
-    switch (fieldType) {
+    switch (CVMtypeidGetToken(fieldType)) {
         case CVM_TYPEID_INT:
         case CVM_TYPEID_BYTE:
         case CVM_TYPEID_BOOLEAN:
@@ -3871,7 +3889,7 @@ Vfy_pushClassKey(VfyContext* cntxt, CVMClassTypeID fieldType) {
 
 static void
 Vfy_popClassKey(VfyContext* cntxt, CVMClassTypeID fieldType) {
-    switch (fieldType) {
+    switch (CVMtypeidGetToken(fieldType)) {
         case CVM_TYPEID_INT:
         case CVM_TYPEID_BYTE:
         case CVM_TYPEID_BOOLEAN:
@@ -4375,7 +4393,7 @@ Vfy_verifyMethodOrAbort(VfyContext* cntxt, const METHOD vMethod) {
 
 		    if (tag == CONSTANT_Class) {
 			if (cntxt->classBeingVerified->major_version >= 49) {
-			    CVMClassTypeID typeKey =
+			    VERIFIERTYPE typeKey =
 				Vfy_getSystemVfyType(java_lang_Class);
 			    Vfy_push(cntxt, typeKey);
 			    break;
@@ -5424,11 +5442,12 @@ does this do?
                         if (obj_type == ITEM_InitObject) {
                             /* special case for uninitialized objects */
                             FIELD thisField = NULL;
-                            NameTypeKey nameTypeKey = 
+                            CVMFieldTypeID nameTypeKey = 
                               Pol_getFieldNameTypeKey(vPool, fieldNameAndTypeIndex);
                             CVMClassTypeID fieldClassKey =
                               Pol_getClassKey(vPool, fieldClassIndex);
-                            if (Cls_getKey(vClass) == fieldClassKey) {
+                            if (CVMtypeidIsSameClass(Cls_getKey(vClass),
+						     fieldClassKey)) {
                                 thisField =
                                     Cls_lookupField((CLASS) vClass, nameTypeKey);
                             }
@@ -5464,7 +5483,6 @@ does this do?
                 POOLINDEX      methodNameAndTypeIndex;
                 POOLINDEX      methodClassIndex;
                 CVMMethodTypeID  methodNameKey;
-                CVMMethodTypeID  methodTypeKey;
                 int            nwords;
 
                /*
@@ -5492,19 +5510,14 @@ does this do?
                 methodNameAndTypeIndex = Pol_getNameAndTypeIndex(vPool, methodIndex);
 
                /*
-                * Get the method type key ("(I)J", "(III)D", "(Ljava.lang.Foobar)V" etc.)
-                */
-                methodTypeKey = Pol_getMethodTypeKey(vPool, methodNameAndTypeIndex);
-
-               /*
-                * Get the method name
+                * Get the method name and type
                 */
                 methodNameKey = Pol_getMethodDescriptorKey(vPool, methodNameAndTypeIndex);
 
                /*
                 * Setup the callee context
                 */
-                Vfy_setupCalleeContext(cntxt, methodTypeKey);
+                Vfy_setupCalleeContext(cntxt, methodNameKey);
 
                /*
                 * Pop the arguments from the stack
@@ -5582,13 +5595,15 @@ does this do?
                             * The method must be an <init> method of the 
 			    * indicated class
                             */
-                            if (targetClassKey != methodClassKey) {
+                            if (!CVMtypeidIsSameClass(targetClassKey,
+						      methodClassKey)) {
                                 Vfy_throw(cntxt, VE_BAD_INIT_CALL);
 				/* NOTREACHED */
                             }
 
-                        } else if (receiverType == ITEM_InitObject) {
-
+                        } else if (GET_ITEM_TYPE(receiverType)
+				   == ITEM_InitObject)
+			{
                            /*
                             * This for is a call to <init> that is made as a result of
                             * a constructor calling another constructor (e.g. this() or super())
@@ -5600,8 +5615,10 @@ does this do?
                             /*
                              * Check that it is this() or super()
                              */
-                            if ((methodClassKey != targetClassKey && 
-                                  methodClassKey != Cls_getKey(vSuperClass))
+                            if ((!CVMtypeidIsSameClass(methodClassKey,
+						       targetClassKey) && 
+				 !CVMtypeidIsSameClass(methodClassKey,
+						       Cls_getKey(vSuperClass)))
                                 || !cntxt->vNeedInitialization)
 			    {
                                 Vfy_throw(cntxt, VE_BAD_INIT_CALL);
@@ -5618,7 +5635,8 @@ does this do?
 
                             cntxt->vNeedInitialization = CVM_FALSE;
                         } else {
-			    targetClassKey = 0; /* placate compiler */
+			    /* set targetClassKey to avoid compiler warning */
+			    targetClassKey = CVM_CLASS_TYPEID_ERROR;
                             Vfy_throw(cntxt, VE_EXPECT_UNINIT);
 			    /* NOTREACHED */
                         }
@@ -5638,9 +5656,15 @@ does this do?
                         * Check that an INVOKESPECIAL is either to the method being verified
                         * or a superclass.
                         */
-                        if (opcode == INVOKESPECIAL && methodClassKey != Cls_getKey(vClass)) {
+                        if (opcode == INVOKESPECIAL && 
+			    !CVMtypeidIsSameClass(methodClassKey,
+						  Cls_getKey(vClass)))
+			{
                             CLASS superClass = vSuperClass;
-                            while (superClass != NULL && Cls_getKey(superClass) != methodClassKey) {
+                            while (superClass != NULL && 
+				   !CVMtypeidIsSameClass(Cls_getKey(superClass), 
+							 methodClassKey))
+			    {
                                 superClass = Cls_getSuper(superClass);
                             }
                             if (superClass == NULL) {
@@ -5669,11 +5693,11 @@ does this do?
                                pretend to implement public Object clone()
                                even though they don't */
                             int is_clone = 
-                                CVMtypeidIsSameName(methodNameKey,
-                                                    CVMglobals.cloneTid);
+                                CVMtypeidIsSameMethod(methodNameKey,
+						      CVMglobals.cloneTid);
                             int is_object_class =
-                                (methodClassKey ==
-                                 Vfy_getSystemClassName(java_lang_Object));
+				CVMtypeidIsSameClass(methodClassKey,
+				    Vfy_getSystemClassName(java_lang_Object));
                             int is_array_object =
                                 (cntxt->vSP > 0 &&
                                  Vfy_isArray(cntxt->vStack[cntxt->vSP - 1]));
@@ -5750,7 +5774,7 @@ does this do?
             }
 
             case NEWARRAY: {
-                CVMClassTypeID typeKey;
+                VERIFIERTYPE typeKey;
 
                /*
                 * Get the pool tag and convert it a VERIFIERTYPE
@@ -5981,7 +6005,7 @@ does this do?
                     }
 
                     case ALOAD: {
-                        CVMClassTypeID refType;
+                        VERIFIERTYPE refType;
                         index = Vfy_getUShort(cntxt, ip + 2);
                         ip += 4;
                         refType = Vfy_getLocal(cntxt, index, ITEM_Reference);
@@ -6008,7 +6032,7 @@ does this do?
                     }
 
                     case ASTORE: {
-                        CVMClassTypeID arrayElementType;
+                        VERIFIERTYPE arrayElementType;
                         index = Vfy_getUShort(cntxt, ip + 2);
                         ip += 4;
                         arrayElementType = Vfy_pop(cntxt, ITEM_Reference);

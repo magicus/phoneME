@@ -82,6 +82,8 @@ typedef enum {
 
 typedef CVMUint32 fullinfo_type;
 
+#ifndef SPLIT_VERIFY_H
+
 #define GET_ITEM_TYPE(thing) ((thing) & 0x1F)
 #define GET_INDIRECTION(thing) (((thing) & 0xFFFF) >> 5)
 #define GET_EXTRA_INFO(thing) ((thing) >> 16)
@@ -96,4 +98,44 @@ typedef CVMUint32 fullinfo_type;
 #define NULL_FULLINFO MAKE_FULLINFO(ITEM_Object, 0, 0)
 /* The following somewhat misleading, but I'd have to fix many places...*/
 #define ITEM_Null NULL_FULLINFO
+
+#else /* SPLIT_VERIFY_H */ 
+
+/*
+ * In order to accomodate 32-bit CVMClassTypeIDs in the fullinfo_type,
+ * the CVMClassTypeID "special" bit is used to distinguish between
+ * an encoded CVMClassTypeID and a traditional fullinfo_type.
+ */
+
+/* The split verifier never encodes basic types as CVMClassTypeIDs,
+   so a CVMClassTypeID is always of type ITEM_Object. */
+#define GET_ITEM_TYPE(thing)			\
+    (!CVMtypeidIsSpecialClassIDToken(thing)	\
+     ? (thing) & 0x1F				\
+     : ITEM_Object)
+
+/* The indirection (array depth) is encoded in the upper 8 bits. */
+#define GET_INDIRECTION(thing)					\
+    (!CVMtypeidIsSpecialClassIDToken(thing)			\
+     ? (thing) >> 24						\
+     : CVMtypeidGetArrayDepth(CVMtypeidSpecialToken2ClassID(thing)))
+
+/* "extra" info is never used for encoded CVMClassTypeIDs. */
+#define GET_EXTRA_INFO(thing)				\
+    (CVMassert(!CVMtypeidIsSpecialClassIDToken(thing)),	\
+     ((thing) >> 5) & 0xFFFF)
+
+/* WARNING: Assumes CVMClassTypeID array depth is in upper 8 bits. */
+#define MAKE_FULLINFO(type, indirect, extra)				\
+    (CVMassert(type == ITEM_Object || indirect == 0 || extra == 0),	\
+     type == ITEM_Object						\
+     ? CVMtypeidMakeSpecialClassIDToken(((indirect) << 24) + extra)	\
+     : ((indirect) << 24) + (type) + ((extra) << 5))
+
+#define NULL_FULLINFO ITEM_Object
+/* The following somewhat misleading, but I'd have to fix many places...*/
+#define ITEM_Null NULL_FULLINFO
+
+#endif /* SPLIT_VERIFY_H */
+
 #endif
