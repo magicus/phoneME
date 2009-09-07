@@ -704,8 +704,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             throw new MediaException(PL_ERR_SH + "MediaFormat is not determined");
         }
 
-        if ("GIF".equals(type)) {
-            return new GIFPlayer( this );
+        if( handledByJava ) {
+            if ("GIF".equals(type)) {
+                return new GIFPlayer(this);
+            } else {
+                throw new MediaException( "Couldn't find " +
+                        "handled-by-Java player for the type " + type );
+            }
         } else if (DirectPlayer.nIsToneControlSupported(hNative)) {
             return new DirectTone( this );
         } else if (DirectPlayer.nIsMIDIControlSupported(hNative)) {
