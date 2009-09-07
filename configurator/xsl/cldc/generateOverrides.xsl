@@ -42,10 +42,8 @@
     <xsl:element name="configuration">
         <xsl:element name="constants">
             <xsl:element name="constant_class">
-                <xsl:attribute name="Package">
-                </xsl:attribute>
-                <xsl:attribute name="Name">
-                </xsl:attribute>
+                <xsl:attribute name="Package"></xsl:attribute>
+                <xsl:attribute name="Name"></xsl:attribute>
 
                 <!-- process constantsList if it isn't empty -->
                 <xsl:if test="boolean($constantsList)">
