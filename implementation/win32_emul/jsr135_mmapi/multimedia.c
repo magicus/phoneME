@@ -41,6 +41,7 @@
 #define DEVICE_TONE_LOCATOR     L"device://tone"
 #define DEVICE_MIDI_LOCATOR     L"device://midi"
 #define RTSP_PROTOCOL_PREFIX    L"rtsp://"
+#define HTTP_PROTOCOL_PREFIX    L"rtsp://"
 
 #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
 void extra_camera_controls_init( javacall_impl_player * player );
@@ -685,48 +686,52 @@ javacall_result javacall_media_create_managed_player(
     pPlayer->streamLen        = -1;
     pPlayer->mediaItfPtr      = NULL;
 
-    if( 0 == _wcsnicmp( locator, AUDIO_CAPTURE_LOCATOR, 
-                       min( (long)wcslen( AUDIO_CAPTURE_LOCATOR ), locator_len ) ) )
+    if( NULL != locator )
     {
-        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
-        pPlayer->mediaItfPtr      = &g_record_itf;
-    }
-    else if( 0 == _wcsnicmp( locator, VIDEO_CAPTURE_LOCATOR, 
-                       min( (long)wcslen( VIDEO_CAPTURE_LOCATOR ), locator_len ) ) )
-    {
-        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
-        pPlayer->mediaItfPtr      = &g_fake_camera_itf;
-
-        #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
-        pPlayer->pExtraCC         = NULL;
-        extra_camera_controls_init( pPlayer );
-        #endif //ENABLE_EXTRA_CAMERA_CONTROLS
-    }
-    else if( 0 == _wcsnicmp( locator, RADIO_CAPTURE_LOCATOR, 
-                       min( (long)wcslen( RADIO_CAPTURE_LOCATOR ), locator_len ) ) )
-    {
-        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO;
-        pPlayer->mediaItfPtr      = &g_fake_radio_itf;
-    }
-    else if( 0 == _wcsnicmp( locator, DEVICE_TONE_LOCATOR, 
-                       min( (long)wcslen( DEVICE_TONE_LOCATOR ), locator_len ) ) )
-    {
-        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_TONE;
-        pPlayer->mediaItfPtr      = &g_qsound_itf;
-    }
-    else if( 0 == _wcsnicmp( locator, DEVICE_MIDI_LOCATOR, 
-                       min( (long)wcslen( DEVICE_MIDI_LOCATOR ), locator_len ) ) )
-    {
-        pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
-        pPlayer->mediaItfPtr      = &g_qsound_itf;
-    }
-    else if( NULL != locator )
-    {
-        pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
-        fmt = fmt_str2enum( pPlayer->mediaType );
-        if( JC_FMT_MPEG_1 == fmt )
+        if( 0 == _wcsnicmp( locator, AUDIO_CAPTURE_LOCATOR, 
+                           min( wcslen( AUDIO_CAPTURE_LOCATOR ), (size_t)locator_len ) ) )
         {
-            pPlayer->mediaItfPtr = &g_dshow_itf;
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO;
+            pPlayer->mediaItfPtr      = &g_record_itf;
+        }
+        else if( 0 == _wcsnicmp( locator, VIDEO_CAPTURE_LOCATOR, 
+                           min( wcslen( VIDEO_CAPTURE_LOCATOR ), (size_t)locator_len ) ) )
+        {
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO;
+            pPlayer->mediaItfPtr      = &g_fake_camera_itf;
+
+            #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
+            pPlayer->pExtraCC         = NULL;
+            extra_camera_controls_init( pPlayer );
+            #endif //ENABLE_EXTRA_CAMERA_CONTROLS
+        }
+        else if( 0 == _wcsnicmp( locator, RADIO_CAPTURE_LOCATOR, 
+                           min( wcslen( RADIO_CAPTURE_LOCATOR ), (size_t)locator_len ) ) )
+        {
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO;
+            pPlayer->mediaItfPtr      = &g_fake_radio_itf;
+        }
+        else if( 0 == _wcsnicmp( locator, DEVICE_TONE_LOCATOR, 
+                           min( wcslen( DEVICE_TONE_LOCATOR ), (size_t)locator_len ) ) )
+        {
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_TONE;
+            pPlayer->mediaItfPtr      = &g_qsound_itf;
+        }
+        else if( 0 == _wcsnicmp( locator, DEVICE_MIDI_LOCATOR, 
+                           min( wcslen( DEVICE_MIDI_LOCATOR ), (size_t)locator_len ) ) )
+        {
+            pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
+            pPlayer->mediaItfPtr      = &g_qsound_itf;
+        }
+        else if( 0 == _wcsnicmp( locator, HTTP_PROTOCOL_PREFIX, 
+                                 min( wcslen( HTTP_PROTOCOL_PREFIX ), (size_t)locator_len ) ) )
+        {
+            pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
+            fmt = fmt_str2enum( pPlayer->mediaType );
+            if( JC_FMT_MPEG_1 == fmt )
+            {
+                pPlayer->mediaItfPtr = &g_dshow_itf;
+            }
         }
     }
 

@@ -90,6 +90,7 @@ public:
     long                        mimeLength;
 
     bool                  is_video;
+    bool                  is_managed;
 
     int                   channels;
     int                   rate;
@@ -591,9 +592,11 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     PRINTF( "*** creating dshow player... ***\n" );
 
+    p->is_managed = ( JC_FMT_MPEG_1 == p->mediaType );
+
     bool ok;
 
-    if( JC_FMT_MPEG_1 == p->mediaType )
+    if( p->is_managed )
     {
         ok = create_player_dshow_managed( wcslen( (const wchar_t*)outer_player->uri), 
                                           (const wchar_t*)outer_player->uri, p, &(p->ppl));
@@ -606,7 +609,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     PRINTF( "*** dshow player creation finished (%s) ***\n",
             (ok ? "success" : "fail") );
 
-    if( ok && -1 != p->whole_content_size )
+    if( !p->is_managed && ok && -1 != p->whole_content_size )
     {
         p->ppl->set_stream_length(p->whole_content_size);
     }
