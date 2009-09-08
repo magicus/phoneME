@@ -47,6 +47,11 @@ protected:
   juint  _length;
 #if ENABLE_COMPILER_TYPE_INFO
   jushort _class_id;
+#endif
+#if ENABLE_CSE
+  jushort _push_bci; // bci at which the value was pushed to this location
+#endif
+#if (ENABLE_COMPILER_TYPE_INFO + ENABLE_CSE) == 1
   jushort _padding;
 #endif
 #ifndef PRODUCT
@@ -57,6 +62,73 @@ public:
 };
 
 class RawLocation;
+
+#if ENABLE_CSE
+struct Expression {
+  jshort    _bci;
+  jshort    _length;
+  jint      _locals_map;
+  jint      _fields_map;
+  jint      _array_types_map;
+  BasicType _type;
+};
+
+class ExpressionAttributeClosure : public BytecodeClosure {
+ public:
+  ExpressionAttributeClosure() : 
+   _locals_map(0), _fields_map(0), _array_types_map(0) {}
+
+  virtual void load_local(BasicType kind, int index JVM_TRAPS);
+
+  virtual void load_array(BasicType kind JVM_TRAPS);
+
+  virtual void get_field(int index JVM_TRAPS);
+    
+  virtual void get_static(int index JVM_TRAPS);
+
+  virtual void fast_get_field(BasicType field_type, int field_offset JVM_TRAPS);
+
+  jint locals_map() const {
+    return _locals_map;
+  }
+
+  jint fields_map() const {
+    return _fields_map;
+  }
+
+  jint array_types_map() const {
+    return _array_types_map;
+  }
+
+ private:
+  jint   _locals_map;
+  jint   _fields_map;
+  jint   _array_types_map;
+};
+
+class KillExpressionClosure : public BytecodeClosure {
+ public:
+  KillExpressionClosure(VirtualStackFrame* f) {
+    _frame = f;
+  }
+
+  virtual void store_local(BasicType kind, int index JVM_TRAPS);
+
+  virtual void store_array(BasicType kind JVM_TRAPS);
+
+  virtual void put_field(int index JVM_TRAPS);
+    
+  virtual void put_static(int index JVM_TRAPS);
+
+  virtual void fast_put_field(BasicType field_type, int field_offset JVM_TRAPS);
+
+ private: 
+  VirtualStackFrame* frame() const { return _frame; }
+
+  VirtualStackFrame* _frame;
+};
+
+#endif
 
 class VirtualStackFrame: public CompilerObject {
  private:
@@ -77,6 +149,14 @@ class VirtualStackFrame: public CompilerObject {
   //there's no register assigned for base or boundary.
   //we don't adjust register reference when one is cached.
   int            _bound_mask;
+#endif
+
+#if ENABLE_CSE
+  Expression _expressions_map[Assembler::number_of_registers];
+  // If inside a bytecode segment that represents a valid expression,
+  // keeps the first bci of the most recent expression being calculated on
+  // stack. Otherwise, -1.
+  jshort     _expression_start_bci;
 #endif
 
 #if USE_COMPILER_FPU_MAP
@@ -264,7 +344,11 @@ class VirtualStackFrame: public CompilerObject {
   // Dirtify a given register by invalidating all mappings of this register.
   void dirtify(Assembler::Register reg);
 
-  bool is_mapping_something(const Assembler::Register reg) const;
+  bool is_mapping_something(const Assembler::Register reg) const {
+    return is_mapping_location(reg) || is_annotated(reg);
+  }
+  bool is_mapping_location(const Assembler::Register reg) const;
+  bool is_annotated(const Assembler::Register reg) const;
 
  public:
   // Accessors for the virtual stack pointer variable.
@@ -496,7 +580,6 @@ class VirtualStackFrame: public CompilerObject {
   bool has_no_literals(void) const { return true; }
 #endif
 
-
 #if ENABLE_REMEMBER_ARRAY_LENGTH
   enum BoundMaskElement {
     index_bits = 0xfff, // store the location index of a array bound checked variable
@@ -637,6 +720,104 @@ class VirtualStackFrame: public CompilerObject {
   void set_value_class(Value & value, JavaClass * java_class);
 #endif
 
+#if ENABLE_CSE
+  void push_expression();
+  void pop_expression();
+
+  void set_expr_start_bci(int bci) {
+    _expression_start_bci = bci;
+  }
+
+  int expr_start_bci() const {
+    return _expression_start_bci;
+  }
+
+  void reset_expr_start_bci() {
+    _expression_start_bci = -1;
+  }
+
+  bool in_expression_segment() const {
+    return expr_start_bci() >= 0;
+  }
+
+  void reset_expression_segment();
+
+  void set_expression(const Assembler::Register reg, 
+                      const jshort bci, const jshort length,
+                      const jint locals_map, const jint fields_map,
+                      const jint array_types_map,
+                      const BasicType type) {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    GUARANTEE(bci >= 0, "Invalid bci");
+    GUARANTEE(length > 0, "Invalid length");
+    _expressions_map[reg]._bci = bci + 1;
+    _expressions_map[reg]._length = length;
+    _expressions_map[reg]._locals_map = locals_map;
+    _expressions_map[reg]._fields_map = fields_map;
+    _expressions_map[reg]._array_types_map = array_types_map;
+    _expressions_map[reg]._type = type;
+  }
+
+  bool has_expression(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg]._length > 0;
+  }
+
+  jint expression_bci(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg]._bci - 1;
+  }
+
+  jint expression_length(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg]._length;
+  }
+
+  jint expression_locals_map(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg]._locals_map;
+  }
+
+  jint expression_fields_map(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg]._fields_map;
+  }
+
+  jint expression_array_types_map(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg]._array_types_map;
+  }
+
+  BasicType expression_type(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg]._type;
+  }
+
+  void clear_expression(const Assembler::Register reg) {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    _expressions_map[reg]._bci = 0;
+    _expressions_map[reg]._length = 0;
+  }
+
+  void clear_expressions(void);
+#else
+  void push_expression() {}
+  void pop_expression() {}
+  bool has_expression(const Assembler::Register reg) const { return false; }
+  void reset_expression_segment() {}
+  void clear_expression(const Assembler::Register) {}
+  void clear_expressions(void) {}
+#endif
+
   // Debug dump the state of the virtual stack frame.
   void dump_fp_registers(bool /*as_comment*/) const PRODUCT_RETURN;
   void dump(bool /*as_comment*/)                    PRODUCT_RETURN;
@@ -760,6 +941,68 @@ public:
 private:
   VirtualStackFrame* _vsf;
   int                _index;
+};
+#endif
+
+#if ENABLE_CSE
+class ExpressionStream {
+public:
+  ExpressionStream(VirtualStackFrame* vsf) {
+    _vsf = vsf;
+    _index = -1;
+    next();
+  }
+  void next();
+  bool eos() {
+    return _index >= Assembler::number_of_registers;
+  }
+  void reset() {
+    _index = -1; next();
+  }
+
+  Assembler::Register reg() const {
+    return (Assembler::Register)_index;
+  }
+  jint bci( void ) const {
+    return frame()->expression_bci(reg());
+  }
+  jint length( void ) const {
+    return frame()->expression_length(reg());
+  }
+  jint locals_map( void ) const {
+    return frame()->expression_locals_map(reg());
+  }
+  jint fields_map( void ) const {
+    return frame()->expression_fields_map(reg());
+  }
+  jint array_types_map( void ) const {
+    return frame()->expression_array_types_map(reg());
+  }
+  BasicType type( void ) const {
+    return frame()->expression_type(reg());
+  }
+
+  bool has_local_index(int index) const {
+    GUARANTEE(index >= 0 && index < BitsPerWord, "Invalid index");
+    return locals_map() & (1 << index);
+  }
+  bool has_field_offset(int offset) const {
+    GUARANTEE(offset >= 0 && offset < BitsPerWord, "Invalid offset");
+    return fields_map() & (1 << offset);
+  }
+  bool has_array_type(BasicType type) const {
+    GUARANTEE(type >= T_BOOLEAN && type <= T_ARRAY, "Invalid type");
+    return array_types_map() & (1 << type);
+  }
+
+  void kill() {
+    frame()->clear_expression((Assembler::Register)_index);
+  }
+private:
+  VirtualStackFrame* frame() const { return _vsf; }
+
+  VirtualStackFrame*  _vsf;
+  jint                _index;
 };
 #endif
 

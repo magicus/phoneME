@@ -54,7 +54,7 @@ bool VirtualStackFrame::is_mapped_by(const RawLocation* item,
 }
 
 bool
-VirtualStackFrame::is_mapping_something(const Assembler::Register reg) const {
+VirtualStackFrame::is_mapping_location(const Assembler::Register reg) const {
   const RawLocation* raw_location = raw_location_at(0);
   const RawLocation* end  = raw_location_end(raw_location);
 
@@ -77,6 +77,11 @@ VirtualStackFrame::is_mapping_something(const Assembler::Register reg) const {
     raw_location ++;
   }
 
+  return false;
+}
+
+bool
+VirtualStackFrame::is_annotated(const Assembler::Register reg) const {
 #if USE_COMPILER_LITERALS_MAP
   if (has_literal(reg)) {
     return true;
@@ -95,6 +100,10 @@ VirtualStackFrame::is_mapping_something(const Assembler::Register reg) const {
         //available.
         return true;
     }
+  }
+
+  if (has_expression(reg)) {
+    return true;
   }
 
   return false;
@@ -234,6 +243,7 @@ VirtualStackFrame* VirtualStackFrame::create(Method* method JVM_TRAPS) {
   }
   frame->set_virtual_stack_pointer(method->max_locals() - 1);
   frame->clear_flush_count();
+  frame->reset_expression_segment();
 
   AllocationDisabler allocation_not_allowed_in_this_block;
   {
@@ -401,6 +411,8 @@ void VirtualStackFrame::flush(JVM_SINGLE_ARG_TRAPS) {
   //remember array length: clear cached value
   clear_bound();
 
+  clear_expressions();
+
   // adjust the stack pointer to reflect the virtual stack pointer.
   // (after the loop above, we might still have stack >= vstack.
   set_stack_pointer(virtual_stack_pointer());
@@ -425,6 +437,8 @@ void VirtualStackFrame::mark_as_flushed() {
 
   //remember array length: clear cached value
   clear_bound();
+
+  clear_expressions();
 }
 
 void VirtualStackFrame::conform_to_stack_map(int bci) {
@@ -500,6 +514,9 @@ void VirtualStackFrame::conformance_entry(bool merging) {
 #if ENABLE_COMPILER_TYPE_INFO
       raw_location->reset_class_id();
 #endif
+#if ENABLE_CSE
+      raw_location->reset_push_bci();
+#endif
     }
     if (raw_location->is_two_word()) {
       raw_location += 2;
@@ -517,6 +534,8 @@ void VirtualStackFrame::conformance_entry(bool merging) {
     //clear cached value
     clear_bound();
   }
+
+  clear_expressions();
 
 #if USE_COMPILER_FPU_MAP && ENABLE_FLOAT
   GUARANTEE( fpu_register_map().is_clearable(),
@@ -583,6 +602,13 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
   GUARANTEE(virtual_stack_pointer() == other->virtual_stack_pointer(),
             "other must have same virtual stack pointer");
 
+  clear_literals();
+
+  //remember array length: clear cached value
+  clear_bound();
+
+  clear_expressions();
+
   // Make sure we haven't got any floats or doubles mapped in the source
   // virtual  stack frame.
   // The destination stack frame will not have floats or doubles
@@ -596,11 +622,6 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
   GUARANTEE( other->fpu_register_map().is_empty(),
             "destination x86 FPU stack should be empty");
 #endif
-
-  clear_literals();
-
-  //remember array length: clear cached value
-  clear_bound();
 
   // This optimization prevents a lot of sp thrashing
   if (stack_pointer() < other->stack_pointer()) {
@@ -1711,6 +1732,8 @@ void VirtualStackFrame::spill_register(Assembler::Register reg) {
       clear_bound();
     }
   }
+
+  clear_expression(reg);
 }
 
 // Modify a frame so that it doesn't use a particular register.
@@ -1727,6 +1750,8 @@ void VirtualStackFrame::unuse_register(Assembler::Register reg) {
       clear_bound();
     }
   }
+
+  clear_expression(reg);
 
   for (VSFStream s(this); !s.eos(); s.next()) {
     if (is_mapped_by(s.index(), reg)) {
@@ -2016,6 +2041,8 @@ void VirtualStackFrame::value_at_put(int index, const Value& value) {
 }
 
 void VirtualStackFrame::pop(Value& result) {
+  pop_expression();
+
   // Use the virtual stack pointer as the location.
   bool double_word = result.is_two_word();
   int index = virtual_stack_pointer();
@@ -2046,6 +2073,8 @@ void VirtualStackFrame::push(const Value& value) {
 
   // Put the value as the new top of stack.
   value_at_put(virtual_stack_pointer() - (double_word ? 1 : 0), value);
+
+  push_expression();
 }
 
 // This function is used to determine whether the receiver needs a null check
@@ -2594,6 +2623,165 @@ void LiteralElementStream::next(void) {
 }
 #endif
 
+#if ENABLE_CSE
+void ExpressionAttributeClosure::load_local(BasicType kind, 
+                                            int index JVM_TRAPS) {
+  if (index >= BitsPerWord) {
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+  }
+
+  _locals_map |= (1 << index);
+}
+
+void ExpressionAttributeClosure::load_array(BasicType kind JVM_TRAPS) {
+  _array_types_map |= (1 << kind);
+}
+
+void ExpressionAttributeClosure::get_field(int index JVM_TRAPS) {
+  if (!cp()->tag_at(index).is_resolved_field()) {
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+  }
+
+  int class_id, field_offset;
+  BasicType type = cp()->resolved_field_type_at(index, field_offset, class_id);
+
+  fast_get_field(type, field_offset JVM_NO_CHECK_AT_BOTTOM);
+}
+    
+void ExpressionAttributeClosure::get_static(int index JVM_TRAPS) {
+  get_field(index JVM_NO_CHECK_AT_BOTTOM);
+}
+
+void ExpressionAttributeClosure::fast_get_field(BasicType field_type, 
+                                                int field_offset JVM_TRAPS) {
+  field_offset >>= 2;
+
+  if (field_offset >= BitsPerWord) {
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+  }
+
+  _fields_map |= (1 << field_offset);
+}
+
+void KillExpressionClosure::store_local(BasicType kind, 
+                                        int index JVM_TRAPS) {
+  if (index >= BitsPerWord) {
+    return;
+  }
+
+  ExpressionStream es(frame());
+  for ( ; !es.eos() ; es.next()) {
+    if (es.has_local_index(index)) {
+      es.kill();
+    }
+  }
+}
+
+void KillExpressionClosure::store_array(BasicType kind JVM_TRAPS) {
+  ExpressionStream es(frame());
+  for ( ; !es.eos() ; es.next()) {
+    if (es.has_array_type(kind)) {
+      es.kill();
+    }
+  }
+}
+
+void KillExpressionClosure::put_field(int index JVM_TRAPS) {
+  if (!cp()->tag_at(index).is_resolved_field()) {
+    return;
+  }
+
+  int class_id, field_offset;
+  BasicType type = cp()->resolved_field_type_at(index, field_offset, class_id);
+
+  fast_put_field(type, field_offset JVM_NO_CHECK_AT_BOTTOM);
+}
+    
+void KillExpressionClosure::put_static(int index JVM_TRAPS) {
+  put_field(index JVM_NO_CHECK_AT_BOTTOM);
+}
+
+void KillExpressionClosure::fast_put_field(BasicType field_type, 
+                                                int field_offset JVM_TRAPS) {
+  field_offset >>= 2;
+
+  if (field_offset >= BitsPerWord) {
+    return;
+  }
+
+  ExpressionStream es(frame());
+  for ( ; !es.eos() ; es.next()) {
+    if (es.has_field_offset(field_offset)) {
+      es.kill();
+    }
+  }
+}
+
+void VirtualStackFrame::push_expression() {
+  if (Compiler::is_inlining()) {
+    return;
+  }
+
+  const int bci = expr_start_bci();
+  if (bci >= 0) {
+    GUARANTEE(bci <= code_generator()->bci(), "Invalid bci");
+    const int index = virtual_stack_pointer();
+    RawLocation *raw_location = raw_location_at(index);
+    raw_location->set_push_bci(bci);
+  }
+}
+
+void VirtualStackFrame::pop_expression() {
+  if (Compiler::is_inlining()) {
+    return;
+  }
+
+  const int index = virtual_stack_pointer();
+
+  RawLocation *raw_location = raw_location_at(index);
+
+  if (in_expression_segment()) {
+    const int push_bci = raw_location->push_bci();
+
+    if (push_bci < 0) {
+      // Location push bci is not set, if the expression consumes stack items
+      // pushed before this expression segment starts
+      reset_expression_segment();
+    }
+
+    set_expr_start_bci(push_bci);
+  }
+
+  raw_location->reset_push_bci();
+}
+
+void VirtualStackFrame::reset_expression_segment() {
+  _expression_start_bci = -1;
+
+  const RawLocation* start = raw_location_at(0);
+  const RawLocation* end  = raw_location_end(start);
+  RawLocation* raw_location = raw_location_at(method()->max_locals());
+
+  while (raw_location < end) {
+    raw_location->reset_push_bci();
+    raw_location ++;
+  }
+}
+
+void VirtualStackFrame::clear_expressions(void) {
+  jvm_memset(_expressions_map, 0, sizeof _expressions_map);
+}
+
+void ExpressionStream::next(void) {
+  int index;
+  for (index = _index; ++index < Assembler::number_of_registers;) {
+    if (_vsf->has_expression(Assembler::Register(index))) {
+      break;
+    }
+  }
+  _index = index;
+}
+#endif
 
 #ifndef PRODUCT
 
@@ -2760,6 +2948,16 @@ void VirtualStackFrame::dump(bool as_comment) {
                       break;
     }
     p += jvm_strlen(p);
+
+#if ENABLE_CSE
+    {
+      const int push_bci = location.push_bci();
+      if (push_bci > 0) {
+        jvm_sprintf(p, " [bci:%d]", push_bci);
+        p += jvm_strlen(p);
+      }
+    }
+#endif
   }
 
 #if USE_COMPILER_LITERALS_MAP
@@ -2796,6 +2994,28 @@ void VirtualStackFrame::dump(bool as_comment) {
   } else {
     tty->print_cr(str);
   }
+
+#if ENABLE_CSE
+  {
+    // Print expressions
+    ExpressionStream es(this);
+    for ( ; !es.eos() ; es.next()) {
+      p = str;
+      Assembler::Register reg = es.reg();
+      jint start_bci = es.bci();
+      jint end_bci = start_bci + es.length() - 1;
+      jvm_sprintf(p, "   reg:%s, bci:[%3d,%3d], locals:0x%08x, fields:0x%08x, array_types:0x%08x", 
+                  RegisterAllocator::register_name(reg), start_bci, end_bci,
+                  es.locals_map(), es.fields_map(), es.array_types_map());
+      if (as_comment) {
+        code_generator()->comment(str);
+      } else {
+        tty->print_cr(str);
+      }
+    }
+  }
+#endif
+
 #endif // USE_DEBUG_PRINTING
 }
 
@@ -2818,6 +3038,9 @@ void RawLocationData::print_on(Stream *st) {
   st->print_cr("flags  = %d", _flags);
   st->print_cr("value  = %d", _value);
   st->print_cr("length = %d", _length);
+#if ENABLE_CSE
+  st->print_cr("push_bci = %d", _push_bci);
+#endif
 #endif
 }
 
@@ -2853,6 +3076,9 @@ void PreserveVirtualStackFrameState::save(JVM_SINGLE_ARG_TRAPS) {
 
   // More immediates that need to be flushed
   saved_frame()->clear_literals();
+
+  saved_frame()->clear_expressions();
+
   // flush the frame
   frame()->flush(JVM_SINGLE_ARG_CHECK);
 }

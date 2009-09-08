@@ -96,6 +96,10 @@ class RegisterAllocator {
   }
   static bool is_mapping_something(const Register reg);
 
+  static bool is_mapping_location(const Register reg);
+
+  static bool is_annotated(const Register reg);
+
   // Initialize the register allocator.
   static void initialize(void);
 
@@ -162,6 +166,7 @@ class RegisterAllocator {
   }
 #endif
 
+  public:
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
   static const char* register_name( const Assembler::Register reg ) {
 #if ARM || defined(HITACHI_SH)

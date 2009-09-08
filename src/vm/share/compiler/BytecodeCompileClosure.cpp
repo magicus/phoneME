@@ -287,6 +287,7 @@ void BytecodeCompileClosure::branch_if_flags(JVM_SINGLE_ARG_TRAPS) {
         set_bytecode(bci);
         set_default_next_bytecode_index(bci);
         compiler()->set_bci(bci); // Is it really necessary?
+        frame()->reset_expression_segment();
 
         // Pop argument
         PoppedValue op1(T_INT);
@@ -2108,6 +2109,8 @@ void BytecodeCompileClosure::bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
     GUARANTEE( !(__ has_overflown_compiled_method()), "sanity");
   }
 
+  cse_bytecode_prolog(JVM_SINGLE_ARG_CHECK);
+
   __ bytecode_prolog();
 
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
@@ -2168,6 +2171,8 @@ BytecodeCompileClosure::check_exception_handler_start(JVM_SINGLE_ARG_TRAPS) {
 void BytecodeCompileClosure::bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
   JVM_IGNORE_TRAPS;
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(bytecode_epilog);
+
+  cse_bytecode_epilog(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 
 #ifndef PRODUCT
   if (GenerateCompilerComments && DumpVSFInComments) {
@@ -2233,6 +2238,152 @@ void BytecodeCompileClosure::init_static_array(JVM_SINGLE_ARG_TRAPS) {
   __ init_static_array(result JVM_CHECK);
 }
 #endif //!ENABLE_CPU_VARIANT
+
+#if ENABLE_CSE
+bool BytecodeCompileClosure::eliminate_expression(int bci JVM_TRAPS) {
+  if (Compiler::is_inlining()) {
+    return false;
+  }
+
+  const int max_length = method_size() - bci;
+
+  if (max_length <= 0 || compiler()->entry_count_for(bci) > 1) {
+    return false;
+  }
+
+  Assembler::Register reg = Assembler::no_reg;
+  int best_match_length = 0;
+
+  ExpressionStream es(frame());
+  for ( ; !es.eos() ; es.next()) {
+    int expr_length = es.length();
+    if (expr_length > best_match_length && expr_length < max_length) {
+      int expr_bci = es.bci();
+      const address code_base = method()->code_base();
+      if (jvm_memcmp(code_base + expr_bci, 
+                     code_base + bci, expr_length) == 0) {
+        best_match_length = expr_length;
+        reg = es.reg();
+      }
+    }
+  }
+
+  if (best_match_length <= 0) {
+    return false;
+  }
+
+  BasicType type = frame()->expression_type(reg);
+  GUARANTEE(type >= T_BOOLEAN && type <= T_OBJECT && 
+            !is_two_word(type), "Invalid type");
+  Value match_value(type); 
+
+  RegisterAllocator::reference(reg);
+  match_value.set_register(reg);
+  frame()->increment_virtual_stack_pointer();
+  frame()->value_at_put(frame()->virtual_stack_pointer(), match_value);
+
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
+  if (GenerateCompilerComments) {
+    __ comment("Expression at %s matches bytecodes at [%d,%d]. Skipping: ", 
+               RegisterAllocator::register_name(reg),
+               bci, bci + best_match_length - 1);
+    Verbose++; // force callee names to be printed out, etc.
+    int skip_bci = bci;
+    const int skip_bci_end = bci + best_match_length;
+    const Method * m = method();
+    while (skip_bci < skip_bci_end) {
+      int next_bci = m->next_bci(skip_bci);
+      FixedArrayOutputStream output;
+      method()->print_bytecodes(&output, skip_bci, next_bci, false);
+      __ comment(output.array());
+      skip_bci = next_bci;
+    }
+    Verbose--;
+
+    if (DumpVSFInComments) {
+      // a frame->dump() is potentially quite expensive to compute, so we
+      // avoid computing it unless asked to generate compiler comments.
+      frame()->dump(true);
+      frame()->dump_fp_registers(true);
+    }
+  }
+#endif
+
+  set_next_bytecode_index(bci + best_match_length);
+
+  return true;
+}
+
+void BytecodeCompileClosure::cse_bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
+  if (Compiler::is_inlining()) {
+    return;
+  }
+
+  const jint current_bci = bci();
+  const Bytecodes::Code code = bytecode_at(current_bci);
+  VirtualStackFrame* vsf = frame();
+
+  if (!Bytecodes::is_expr(code)) {
+    KillExpressionClosure cl(vsf);
+    cl.initialize(method());
+    method()->iterate_bytecode(current_bci, &cl, code JVM_CHECK);
+    vsf->reset_expression_segment();
+  } else if (Bytecodes::is_expr_start(code)) {
+    vsf->set_expr_start_bci(current_bci);
+  }
+}
+
+void BytecodeCompileClosure::cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
+  if (Compiler::is_inlining()) {
+    return;
+  }
+
+  const int next_bci = next_bytecode_index();
+
+  if (next_bci < 0) {
+    // terminated compilation
+    return;
+  }
+
+  VirtualStackFrame * vsf = frame();
+  if (vsf->in_expression_segment()) {
+    const int index = vsf->virtual_stack_pointer();
+
+    RawLocation *raw_location = vsf->raw_location_at(index);
+    const int current_bci = code_generator()->bci();
+    int start_bci = vsf->expr_start_bci();
+
+    GUARANTEE(start_bci == raw_location->push_bci(), "Sanity");
+    GUARANTEE(start_bci >= 0 && start_bci <= current_bci, 
+              "Invalid expression start bci");
+    GUARANTEE(!raw_location->is_two_word(), "2-word expressions not supported");
+    if (raw_location->in_register()) {
+      const int next_bci = method()->next_bci(current_bci);
+
+      ExpressionAttributeClosure cl;
+      cl.initialize(method());
+      SETUP_ERROR_CHECKER_ARG;
+      method()->iterate(start_bci, next_bci, &cl JVM_NO_CHECK);
+      if (CURRENT_HAS_PENDING_EXCEPTION) {
+        Thread::clear_current_pending_exception();
+      } else {
+        if (start_bci == current_bci && cl.locals_map() != 0 && 
+            cl.fields_map() == 0 && cl.array_types_map() == 0) {
+          // Do not treat single local load bytecodes as expressions,
+          // since no code is needed to load a local mapped to a register
+        } else {
+          Assembler::Register reg = raw_location->get_register();
+          const int expr_length = next_bci - start_bci;
+          vsf->set_expression(reg, start_bci, expr_length,
+                              cl.locals_map(), cl.fields_map(),
+                              cl.array_types_map(), raw_location->stack_type());
+        }
+      }
+    }
+  }
+}
+#endif
+
 #undef __
 
 inline void
@@ -2255,9 +2406,13 @@ bool BytecodeCompileClosure::compile(JVM_SINGLE_ARG_TRAPS) {
   // overwritten during the compilation.
   set_default_next_bytecode_index(bci);
 
-  const Bytecodes::Code code = bytecode_at(bci);
-  // Compile current bytecode
-  method()->iterate_bytecode(bci, this, code JVM_CHECK_(false));
+  const bool eliminated = eliminate_expression(bci JVM_CHECK_(false));
+
+  if (!eliminated) {
+    const Bytecodes::Code code = bytecode_at(bci);
+    // Compile current bytecode
+    method()->iterate_bytecode(bci, this, code JVM_CHECK_(false));
+  }
 
   // Update current bytecode index
   compiler()->set_bci(next_bytecode_index());

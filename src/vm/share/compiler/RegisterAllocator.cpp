@@ -51,6 +51,20 @@ bool RegisterAllocator::is_mapping_something(const Assembler::Register reg) {
            state->conforming_frame()->is_mapping_something(reg) );
 }
 
+bool RegisterAllocator::is_mapping_location(const Assembler::Register reg) {
+  const CompilerState* state = _compiler_state;
+  return state->frame()->is_mapping_location(reg) ||
+         ( state->conforming_frame() != NULL &&
+           state->conforming_frame()->is_mapping_location(reg) );
+}
+
+bool RegisterAllocator::is_annotated(const Assembler::Register reg) {
+  const CompilerState* state = _compiler_state;
+  return state->frame()->is_annotated(reg) ||
+         ( state->conforming_frame() != NULL &&
+           state->conforming_frame()->is_annotated(reg) );
+}
+
 Assembler::Register RegisterAllocator::allocate( void ) {
   return allocate(_next_register_table, _next_allocate, _next_spill);
 }
@@ -267,26 +281,43 @@ void RegisterAllocator::spill(Assembler::Register reg) {
   }
 }
 
-#define REFERENCE_AND_RETURN(reg)         reference(reg);\
-        return reg;
 Assembler::Register
 RegisterAllocator::allocate_or_fail(const Assembler::Register* next_table,
                                     Assembler::Register& next) {
   // Use a round-robin strategy to allocate the registers.
+  // Select non-annotated register if available.
   const Register current = next;
+  Register next_annotated = Assembler::no_reg;
   do {
     next = next_table[next];
     // Check to see whether or not the register is available for allocation.
-    if (!is_referenced(next) && !is_mapping_something(next)) {
-      // Setup a reference to the newly allocated register.
-      REFERENCE_AND_RETURN(next);
+    if (!is_referenced(next)) {
+      if (!is_mapping_location(next)) {
+        if (!is_annotated(next)) {
+          // Setup a reference to the newly allocated register.
+          reference(next);
+          return next;
+        } else if (next_annotated == Assembler::no_reg) {
+          next_annotated = next;
+        }
+      }
     }
   } while(next != current);
+
+  if (next_annotated != Assembler::no_reg) {
+    GUARANTEE(!is_mapping_location(next_annotated) && is_annotated(next_annotated), 
+              "Must be annotated register not mapping a location");
+    // Remove all annotations.
+    spill(next_annotated);
+    // Setup a reference to the newly allocated register.
+    reference(next_annotated);
+    return next_annotated;
+  }
+
   // Couldn't allocate a register without spilling.
 
   return Assembler::no_reg;
 }
-#undef REFERENCE_AND_RETURN
 
 Assembler::Register
 RegisterAllocator::spill(const Assembler::Register* next_table,
@@ -303,7 +334,8 @@ RegisterAllocator::spill(const Assembler::Register* next_table,
       return next;
     }
   } while(next != current);
-  // Couldn't allocate a register without spilling.
+
+  // All registers are referenced.
   return Assembler::no_reg;
 }
 

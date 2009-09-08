@@ -204,6 +204,17 @@ class BytecodeCompileClosure: public BytecodeClosure {
   // Compile the current compiler bytecode.
   bool compile(JVM_SINGLE_ARG_TRAPS);
 
+#if ENABLE_CSE
+  bool eliminate_expression(int bci JVM_TRAPS);
+  void cse_bytecode_prolog(JVM_SINGLE_ARG_TRAPS);
+  void cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS);
+#else
+  bool eliminate_expression(int bci JVM_TRAPS) 
+    { JVM_IGNORE_TRAPS; return false; }
+  void cse_bytecode_prolog(JVM_SINGLE_ARG_TRAPS) { JVM_IGNORE_TRAPS; }
+  void cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS) { JVM_IGNORE_TRAPS; }
+#endif
+
 #if USE_DEBUG_PRINTING
   void print_on(Stream *st);
   void p();

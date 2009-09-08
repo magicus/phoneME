@@ -422,6 +422,9 @@ class Bytecodes: public AllStatic {
     // Note: need to revisit it for hardware fp on ARM
     SoftFloat       = Exceptions,
 
+    Expr            = 0x800,
+    ExprStart       = 0x1000,
+
     None            = 0
   };
   static jushort get_flags(const Code code) {
@@ -466,6 +469,24 @@ class Bytecodes: public AllStatic {
   static bool can_redo(const Code code) {
     return can_redo_flags(get_flags(code));
   }
+
+#if ENABLE_CSE
+  static bool is_expr(const jushort flags) {
+    return flags & (Expr | ExprStart);
+  }
+
+  static bool is_expr(const Code code) {
+    return is_expr(get_flags(code));
+  }
+
+  static bool is_expr_start(const jushort flags) {
+    return flags & ExprStart;
+  }
+
+  static bool is_expr_start(const Code code) {
+    return is_expr_start(get_flags(code));
+  }
+#endif
 
   static void verify() PRODUCT_RETURN;
 
