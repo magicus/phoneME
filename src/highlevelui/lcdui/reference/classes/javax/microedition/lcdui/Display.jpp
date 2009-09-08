@@ -80,6 +80,8 @@ import com.sun.me.gci.windowsystem.GCIScreenWidget;
 
 import com.sun.midp.orientation.OrientationListener;
 
+import com.sun.midp.lcdui.virtualkeyboard.VirtualKeyboardAPIInitializer;
+
 /**
  * <code>Display</code> represents the manager of the display and
  * input devices of the
@@ -779,6 +781,8 @@ public class Display {
         current = initialDisplayable;
         current.lSetDisplay(Display.this);
         pendingCurrent = initialDisplayable;
+
+        VirtualKeyboardAPIInitializer.intitEventHelper(consumer);
     }
 
     /**
@@ -1771,6 +1775,7 @@ public class Display {
           VirtualKeyboardResources.load();
           keyboardLayer = new VirtualKeyboardLayer();
           keyboardLayer.init();
+          VirtualKeyboardAPIInitializer.initStatusHelper(keyboardLayer);
         }
         return keyboardLayer;
     }
@@ -3802,9 +3807,11 @@ public class Display {
         }
 
         /*
-         * Called by event delivery when need to show or hide virtual keyboard
+         * Called by event delivery when need to show or hide virtual keyboard.
+         * Synchronization used for simultaneous access by native event listener and 
+         * public API
          */
-        public void handleVirtualKeyboardEvent() {
+        public synchronized void handleVirtualKeyboardEvent() {
 
             // #ifdef ENABLE_CHAMELEON
 

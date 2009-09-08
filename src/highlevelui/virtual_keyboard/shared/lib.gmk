@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -30,33 +30,19 @@
 ######################################################################
 
 # Name of the library
-VIRTUAL_KEYBOARD_D_NAME = virtual_keyboard/vkdefault
-VIRTUAL_KEYBOARD_D_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(VIRTUAL_KEYBOARD_D_NAME)
+VIRTUAL_KEYBOARD_S_NAME = virtual_keyboard/shared
+VIRTUAL_KEYBOARD_S_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(VIRTUAL_KEYBOARD_S_NAME)
 
 # Add to library set for this build
-LIB_SET += $(VIRTUAL_KEYBOARD_D_NAME)
-
-# Export include files
-#SUBSYSTEM_VIRTUAL_KEYBOARD_EXTRA_INCLUDES += -I$(VIRTUAL_KEYBOARD_D_DIR)/include
-
+LIB_SET += $(VIRTUAL_KEYBOARD_S_NAME)
+                    
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(VIRTUAL_KEYBOARD_D_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(VIRTUAL_KEYBOARD_S_DIR)/classes
 
 # Java files for the library
 #
 
 SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
-    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
-    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java
+    $(VIRTUAL_KEYBOARD_S_DIR)/classes/com/sun/midp/lcdui/virtualkeyboard/VirtualKeyboard.java \
+    $(VIRTUAL_KEYBOARD_S_DIR)/classes/com/sun/midp/lcdui/virtualkeyboard/VirtualKeyboardAPIInitializer.java
     
-ifeq ($(SUBSYSTEM_LCDUI_MODULES), chameleon)
-SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
-    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/chameleon/input/VirtualKeyboardInputMode.java
-endif
-
-# I3test files for the library
-#
-#ifeq ($(USE_I3_TEST), true)
-#SUBSYSTEM_VIRTUAL_KEYBOARD_I3TEST_JAVA_FILES += \
-#$(VIRTUAL_KEYBOARD_D_DIR)/i3test/javax/microedition/lcdui/TestStringItemSizing.java
-#endif

@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -30,35 +30,35 @@
 ######################################################################
 
 # Name of the library
-VIRTUAL_KEYBOARD_NAME = virtual_keyboard
-VIRTUAL_KEYBOARD_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(VIRTUAL_KEYBOARD_NAME)
+VIRTUAL_KEYBOARD_D_NAME = virtual_keyboard/vkdefault
+VIRTUAL_KEYBOARD_D_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(VIRTUAL_KEYBOARD_D_NAME)
 
 # Add to library set for this build
-LIB_SET += $(VIRTUAL_KEYBOARD_NAME)
+LIB_SET += $(VIRTUAL_KEYBOARD_D_NAME)
 
 # Export include files
-#SUBSYSTEM_VIRTUAL_KEYBOARD_EXTRA_INCLUDES += -I$(VIRTUAL_KEYBOARD_DIR)/include
+#SUBSYSTEM_VIRTUAL_KEYBOARD_EXTRA_INCLUDES += -I$(VIRTUAL_KEYBOARD_D_DIR)/include
 
-# Native files for the library
-# SUBSYSTEM_VIRTUAL_KEYBOARD_NATIVE_FILES +=
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(VIRTUAL_KEYBOARD_D_DIR)/classes
 
-# Source code path for the library
-# vpath $(VIRTUAL_KEYBOARD_DIR)/native
-
-
-# IMPL NOTE: Use library configuration file to select switch library
+# Java files for the library
 #
-ifeq ($(USE_NATIVE_VIRTUAL_KEYBOARD), true)
-    include $(VIRTUAL_KEYBOARD_DIR)/vkplatform/lib.gmk
-# public API implementation
-    include $(VIRTUAL_KEYBOARD_DIR)/shared/lib.gmk
-else
-ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
-    include $(VIRTUAL_KEYBOARD_DIR)/vkjava/lib.gmk
-# public API implementation
-    include $(VIRTUAL_KEYBOARD_DIR)/shared/lib.gmk
-else                                        
-# stubbed public API is also here
-    include $(VIRTUAL_KEYBOARD_DIR)/vkstubs/lib.gmk
+
+SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/public/VirtualKeyboard.java \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/lcdui/public/VirtualKeyboardAPIInitializer.java
+    
+ifeq ($(SUBSYSTEM_LCDUI_MODULES), chameleon)
+SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
+    $(VIRTUAL_KEYBOARD_D_DIR)/classes/com/sun/midp/chameleon/input/VirtualKeyboardInputMode.java
 endif
-endif
+
+# I3test files for the library
+#
+#ifeq ($(USE_I3_TEST), true)
+#SUBSYSTEM_VIRTUAL_KEYBOARD_I3TEST_JAVA_FILES += \
+#$(VIRTUAL_KEYBOARD_D_DIR)/i3test/javax/microedition/lcdui/TestStringItemSizing.java
+#endif
