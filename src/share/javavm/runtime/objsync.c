@@ -1877,10 +1877,8 @@ CVMprivateWait(CVMExecEnv* ee, CVMObjectICell* indirectObj,
 	if (waitStatus != CVM_WAIT_OK) {
 	    CVMassert(waitStatus == CVM_WAIT_INTERRUPTED);
 	    CVMthrowInterruptedException(ee, "operation interrupted");
-#ifdef CVM_JVMTI
 	    /* Clear interrupted state */
 	    ee->threadState &= ~CVM_THREAD_INTERRUPTED;
-#endif
 	}
     }
 

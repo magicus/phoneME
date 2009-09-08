@@ -603,11 +603,9 @@ extern void CVMremoveThread(CVMExecEnv *ee, CVMBool userThread);
 #define CVMeeMarkHasRun(ee)  (CVMeeIncTickCount(ee))
 #endif /* CVM_JVMPI */
 
-#ifdef CVM_JVMTI
 /* Checks to see if the specified thread is suspended or not. */
 #define CVMeeThreadIsSuspended(ee) \
     (((ee)->threadState & CVM_THREAD_SUSPENDED) != 0)
-#endif /* CVM_JVMTI */
 
 /**********************************************************************
  * Interpreter Frames:

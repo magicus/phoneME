@@ -4276,9 +4276,7 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
     }
 #endif
 
-#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
     ee->threadState = CVM_THREAD_IN_NATIVE;
-#endif
     /* Call the JNI method. topOfStack still points just below
      * the arguments in the caller's frame, so you can still
      * use it to access the arguments.
@@ -4300,9 +4298,7 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
     CVMassert(ee->criticalCount == 0);
     TRACE_METHOD_RETURN(frame);
 
-#if defined(CVM_JVMTI) || !defined(CVM_OPTIMIZED)
     ee->threadState &= ~CVM_THREAD_IN_NATIVE;
-#endif
 
 #ifdef CVM_JVMTI
 
