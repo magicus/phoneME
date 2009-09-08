@@ -33,6 +33,7 @@
 #include "jvm.h"
 #include "java_lang_ClassLoader.h"
 #include "java_lang_ClassLoader_NativeLibrary.h"
+#include "javavm/include/porting/linker.h"
 
 #include "jni_statics.h"
 
