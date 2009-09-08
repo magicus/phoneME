@@ -35,14 +35,6 @@
 #define LIME_MMAPI_PACKAGE      "com.sun.mmedia"
 #define LIME_MMAPI_CLASS        "JavaCallBridge"
 
-#define AUDIO_CAPTURE_LOCATOR   L"capture://audio"
-#define VIDEO_CAPTURE_LOCATOR   L"capture://video"
-#define RADIO_CAPTURE_LOCATOR   L"capture://radio"
-#define DEVICE_TONE_LOCATOR     L"device://tone"
-#define DEVICE_MIDI_LOCATOR     L"device://midi"
-#define RTSP_PROTOCOL_PREFIX    L"rtsp://"
-#define HTTP_PROTOCOL_PREFIX    L"rtsp://"
-
 #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
 void extra_camera_controls_init( javacall_impl_player * player );
 void extra_camera_controls_cleanup( javacall_impl_player * player );

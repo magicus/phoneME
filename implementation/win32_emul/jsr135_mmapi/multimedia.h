@@ -189,7 +189,18 @@ javacall_result get_int_param(javacall_const_utf16_string ptr,
 
 extern HWND midpGetWindowHandle();
 
-/*****************************************************************************/
+/*****************************************************************************
+ *               L O C A T O R S   A N D   P R O T O C O L S
+ *****************************************************************************/
+
+#define AUDIO_CAPTURE_LOCATOR   L"capture://audio"
+#define VIDEO_CAPTURE_LOCATOR   L"capture://video"
+#define RADIO_CAPTURE_LOCATOR   L"capture://radio"
+#define DEVICE_TONE_LOCATOR     L"device://tone"
+#define DEVICE_MIDI_LOCATOR     L"device://midi"
+#define RTSP_PROTOCOL_PREFIX    L"rtsp://"
+#define HTTP_PROTOCOL_PREFIX    L"http://"
+#define HTTPS_PROTOCOL_PREFIX   L"https://"
 
 /*****************************************************************************
  *                      S T A T U S   M E S S A G E

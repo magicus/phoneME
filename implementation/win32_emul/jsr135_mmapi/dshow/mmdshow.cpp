@@ -592,7 +592,10 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     PRINTF( "*** creating dshow player... ***\n" );
 
-    p->is_managed = ( JC_FMT_MPEG_1 == p->mediaType );
+    p->is_managed = ( JC_FMT_MPEG_1 == p->mediaType ) &&
+                    ( NULL != outer_player->uri ) &&
+                    ( 0 == _wcsnicmp( (const wchar_t*)outer_player->uri, HTTP_PROTOCOL_PREFIX, 
+                                 min( wcslen( HTTP_PROTOCOL_PREFIX ), wcslen( (const wchar_t*)outer_player->uri ) ) ) );
 
     bool ok;
 
