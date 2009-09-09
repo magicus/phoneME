@@ -21,18 +21,14 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_LIBC_EXT_MD_H
-#define __JSROP_LIBC_EXT_MD_H
+#ifndef __JSROP_PUSH_UTILS_H
+#define __JSROP_PUSH_UTILS_H
 
-#include <stdio.h>
+/** 
+ *  The following macroses are defined in the <platform>/native/include/jsrop_libc_ext_md.h file
+ *  #define JAVAME_SNPRINTF
+ */
+#include <jsrop_push_utils_md.h>
 
-#if ( WIN32 || _WIN32 )
-  #ifndef snprintf
-  #define snprintf _snprintf
-  #endif
-#endif
-
-#define JAVAME_SNPRINTF snprintf
-
-#endif /* __JSROP_LIBC_EXT_MD_H */
+#endif /* __JSROP_LIBC_EXT_H */
 

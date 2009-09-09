@@ -21,18 +21,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_LIBC_EXT_MD_H
-#define __JSROP_LIBC_EXT_MD_H
+#ifndef __JSROP_PUSH_UTILS_MD_H
+#define __JSROP_PUSH_UTILS_MD_H
 
-#include <stdio.h>
-
-#if ( WIN32 || _WIN32 )
-  #ifndef snprintf
-  #define snprintf _snprintf
-  #endif
-#endif
-
-#define JAVAME_SNPRINTF snprintf
+extern int wildComp(const char *pattern, const char *str);
 
 #endif /* __JSROP_LIBC_EXT_MD_H */
 
