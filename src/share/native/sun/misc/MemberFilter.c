@@ -62,21 +62,21 @@ Java_sun_misc_MemberFilter_findROMFilterData(JNIEnv* env,
 }
 					     
 
-static CVMUint32*
+static CVMMemberTypeID*
 parseMemberList(
     JNIEnv* env,
     jarray members, 
     int* memberCount,
-    CVMUint32 (*lookupFn)(CVMExecEnv*, const CVMUtf8*, const CVMUtf8*))
+    CVMMethodTypeID (*lookupFn)(CVMExecEnv*, const CVMUtf8*, const CVMUtf8*))
 {
     int nmembers = (members == NULL) ? 0 : (*env)->GetArrayLength(env, members);
     int i;
-    CVMUint32* memberArray;
+    CVMMemberTypeID* memberArray;
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     *memberCount = nmembers;
     if (nmembers == 0)
 	return NULL;
-    memberArray = (CVMUint32*)calloc(nmembers, sizeof(CVMUint32));
+    memberArray = (CVMMemberTypeID*)calloc(nmembers, sizeof(CVMMemberTypeID));
     for (i=0; i<nmembers; i++){
 	jstring designator;
 	jboolean didCopy;
@@ -140,7 +140,10 @@ Java_sun_misc_MemberFilter_addRestrictions(
 
     nextp = &listroot;
     while(CVM_TRUE){
-	if (*nextp == NULL || (*nextp)->thisClass > lcrp->thisClass){
+	if (*nextp == NULL || 
+	    CVMtypeidGetToken((*nextp)->thisClass) >
+	    CVMtypeidGetToken(lcrp->thisClass))
+	{
 	    lcrp->next = *nextp;
 	    *nextp = lcrp;
 	    break;
@@ -223,7 +226,7 @@ lookupClass(const CVMClassRestrictions* crp, CVMClassTypeID cid)
     } 
     */
     for (i=0; i<n; i++, ep++){
-	if (ep->thisClass == cid){
+	if (CVMtypeidIsSameClass(ep->thisClass, cid)) {
 	    /* CVMconsolePrintf(": found at %d\n", i); */
 	    return ep;
 	}
@@ -234,11 +237,11 @@ lookupClass(const CVMClassRestrictions* crp, CVMClassTypeID cid)
 }
 
 static CVMBool
-lookupMember(CVMUint32 mid, CVMUint32* memberArray, int nMembers){
+lookupMember(CVMMemberTypeID mid, CVMMemberTypeID* memberArray, int nMembers){
     int i;
-    CVMUint32* memberp = memberArray;
+    CVMMemberTypeID* memberp = memberArray;
     for (i=0; i<nMembers; i++, memberp++){
-	if (mid == *memberp)
+	if (CVMtypeidIsSameMember(mid, *memberp))
 	    return CVM_TRUE;
     }
     return CVM_FALSE;
@@ -250,7 +253,7 @@ saveName(
     jobject thisObject,
     jclass thisClass,
     CVMClassTypeID classID, 
-    CVMUint32 memberID,
+    CVMMemberTypeID memberID,
     CVMBool isMethodType)
 {
     char* className;

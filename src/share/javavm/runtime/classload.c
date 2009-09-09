@@ -1589,7 +1589,7 @@ CVMclassloaderIsMIDPClassLoader(CVMExecEnv *ee,
                                   CVMID_icellDirect(ee, loaderICell));
         CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
 
-        if (loaderID == CVMglobals.midletClassLoaderTid) {
+        if (CVMtypeidIsSameClass(loaderID, CVMglobals.midletClassLoaderTid)) {
             if (checkImplClassLoader) {
                 return CVM_TRUE;
             } else {
@@ -1603,7 +1603,9 @@ CVMclassloaderIsMIDPClassLoader(CVMExecEnv *ee,
                 return enableFilter;
             }
         } else if (checkImplClassLoader) {
-            if (loaderID == CVMglobals.midpImplClassLoaderTid) {
+            if (CVMtypeidIsSameClass(loaderID,
+				     CVMglobals.midpImplClassLoaderTid))
+	    {
 	        return CVM_TRUE;
 	    }
             return CVM_FALSE;

@@ -587,8 +587,11 @@ CVMtypeidInit( CVMExecEnv *ee )
             ee, midpImplLoaderName, strlen(midpImplLoaderName));
         CVMglobals.midletClassLoaderTid = CVMtypeidNewClassID(
             ee, midletLoaderName, strlen(midletLoaderName));
-        if (CVMglobals.midpImplClassLoaderTid == CVM_TYPEID_ERROR ||
-            CVMglobals.midletClassLoaderTid == CVM_TYPEID_ERROR) {
+        if (CVMtypeidIsSameClass(CVMglobals.midpImplClassLoaderTid,
+				 CVM_CLASS_TYPEID_ERROR) ||
+            CVMtypeidIsSameClass(CVMglobals.midletClassLoaderTid,
+				 CVM_CLASS_TYPEID_ERROR))
+	{
             return CVM_FALSE;
         }
     }

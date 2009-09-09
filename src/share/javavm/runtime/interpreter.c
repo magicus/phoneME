@@ -3085,7 +3085,7 @@ CVMclassLoaderFindNative(CVMExecEnv* ee, CVMClassLoaderICell* loader,
 	        CVMobjectGetClass(CVMID_icellDirect(ee, loader));
 	});
         loaderID = CVMcbClassName(loaderCB);
-        if (loaderID == CVMglobals.midpImplClassLoaderTid) {
+        if (CVMtypeidIsSameClass(loaderID, CVMglobals.midpImplClassLoaderTid)){
             findBuiltin = CVM_TRUE;
         }
     }
