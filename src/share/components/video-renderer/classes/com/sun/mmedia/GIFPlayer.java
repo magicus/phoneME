@@ -422,6 +422,13 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * @see   Player#close()
      */
     protected void doClose() {
+        try {
+            doPreStop();
+            doStop();
+        } catch (MediaException ex) {}
+
+        doDeallocate();
+        
         done = true;
 
         if (videoRenderer != null) {
