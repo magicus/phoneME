@@ -41,6 +41,7 @@
 #include <midpInit.h>
 #include <midpStorage.h>
 #include <imageCache.h>
+#include <fontCache.h>
 
 #include <suitestore_intern.h>
 #include <suitestore_listeners.h>
@@ -552,6 +553,11 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 
 #if ENABLE_IMAGE_CACHE
         createImageCache(suiteId, pMsd->storageId, &tmpSize);
+        pMsd->suiteSize += tmpSize;
+#endif
+
+#if ENABLE_FONT_CACHE
+        createFontCache(suiteId, pMsd->storageId, &tmpSize);
         pMsd->suiteSize += tmpSize;
 #endif
 

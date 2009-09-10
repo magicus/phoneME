@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
+import javax.microedition.io.InputConnection;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.FileUrl;
 
@@ -58,32 +59,42 @@ public class FileInstaller extends Installer {
      *            of the JAD
      */
     protected byte[] downloadJAD() throws IOException {
-        
-        if (info.jadUrl.endsWith(".jar")) {           
+        if (info.jadUrl.endsWith(".jar")) {
             throw new InvalidJadException (
                     InvalidJadException.INVALID_JAD_TYPE,
                     Installer.JAR_MT_2);
-        }
-        else {           
-        RandomAccessStream jadInputStream;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);
-        // Encode jad file path in order to keep of 
-        // IllegalArgumentException
-        info.jadUrl = FileUrl.encodeFilePath(info.jadUrl);
-        String jadFilename = getUrlPath(info.jadUrl);
-        
-        state.beginTransferDataStatus = DOWNLOADING_JAD;
-        state.transferStatus = DOWNLOADED_1K_OF_JAD;
+        } else {
+            InputConnection conn;
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);
 
-        jadInputStream = new RandomAccessStream();
-                
-        jadFilename=FileUrl.decodeFilePath(jadFilename);                
-            
-        jadInputStream.connect(jadFilename, Connector.READ);
-        transferData(jadInputStream.openInputStream(), bos, CHUNK_SIZE);
-          
-        jadInputStream.close();
-        return bos.toByteArray();
+            state.beginTransferDataStatus = DOWNLOADING_JAD;
+            state.transferStatus = DOWNLOADED_1K_OF_JAD;
+
+            // Encode jad file path in order to keep of 
+            // IllegalArgumentException
+            String jadUrl = FileUrl.encodeFilePath(info.jadUrl);
+            String jadFilename = getUrlPath(jadUrl);
+
+            conn = new RandomAccessStream();
+
+            jadFilename=FileUrl.decodeFilePath(jadFilename);
+
+            try {
+                ((RandomAccessStream)conn).connect(jadFilename, Connector.READ);
+                info.jadUrl = jadUrl;
+            } catch (IOException ioe) {
+                // To support installation using "file:" scheme for CHAPI,
+                // try to open the URL through GCF
+                conn = (InputConnection)Connector.open(
+                        info.jadUrl, Connector.READ);
+            }
+
+            try {
+                transferData(conn.openInputStream(), bos, CHUNK_SIZE);
+            } finally {
+                conn.close();
+            }
+            return bos.toByteArray();
         }
     }
 
@@ -101,32 +112,31 @@ public class FileInstaller extends Installer {
      */
     protected int downloadJAR(String filename) throws IOException {
         int jarSize;
-        RandomAccessStream jarInputStream, jarOutputStream;
-        // get the path from URI, but first encode it
-        info.jarUrl = FileUrl.encodeFilePath(info.jarUrl);
-        String jarFilename = getUrlPath(info.jarUrl);
-               
+        InputConnection conn;
+        RandomAccessStream jarOutputStream;
+
         // If jad attribute 'Midlet-Jar-Url' begins with schema 'file:///',
         // than get jar path from this jad attribute,
         // else searching jar file in same directory as a jad file.
         if (!info.jarUrl.startsWith("file:///")) {
-            String jadFilename= getUrlPath(info.jadUrl);
-            
-            if (jadFilename.endsWith(".jad")) {
-                jarFilename=jadFilename.substring(0,jadFilename.length()-4)+".jar";
-            }
-            else {
-                jarFilename=jadFilename.substring(
-                          0,jadFilename.lastIndexOf('.'))+".jar";
-            }
-            info.jarUrl = jarFilename;            
-        } 
-          
-        jarFilename=FileUrl.decodeFilePath(jarFilename);
-        
+            info.jarUrl = info.jadUrl.substring(0,
+                    info.jadUrl.lastIndexOf('/') + 1) + info.jarUrl;
+        }
+
+        // get the path from URI, but first encode it
+        String jarFilename = getUrlPath(FileUrl.encodeFilePath(info.jarUrl));
+               
         // Open source (jar) file
-        jarInputStream = new RandomAccessStream();
-        jarInputStream.connect(jarFilename, Connector.READ);
+        try {
+            conn = new RandomAccessStream();
+            ((RandomAccessStream)conn).connect(
+                    FileUrl.decodeFilePath(jarFilename), Connector.READ);
+            info.jarUrl = jarFilename;
+        } catch (IOException ioe) {
+            // To support installation using "file:" scheme for CHAPI,
+            // try to open the URL through GCF
+            conn = (InputConnection)Connector.open(info.jarUrl, Connector.READ);
+        }
 
         // Open destination (temporary) file
         jarOutputStream = new RandomAccessStream();
@@ -137,12 +147,13 @@ public class FileInstaller extends Installer {
         state.beginTransferDataStatus = DOWNLOADING_JAR;
         state.transferStatus = DOWNLOADED_1K_OF_JAR;
 
-        jarSize = transferData(jarInputStream.openInputStream(),
-                               jarOutputStream.openOutputStream(), CHUNK_SIZE);
-        
-        jarInputStream.close();
-        jarOutputStream.disconnect();
-
+        try {
+            jarSize = transferData(conn.openInputStream(),
+                    jarOutputStream.openOutputStream(), CHUNK_SIZE);
+        } finally {
+            conn.close();
+            jarOutputStream.disconnect();
+        }
         return jarSize;
     }
 

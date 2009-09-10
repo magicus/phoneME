@@ -70,6 +70,7 @@ USE_STATIC_PROPERTIES   = false
 USE_JAVACALL_PROPERTIES = true
 USE_DYNAMIC_PERMISSIONS ?= true
 USE_IMAGE_CACHE         = true
+USE_FONT_CACHE          = true
 USE_ICON_CACHE          = true
 USE_RMS_TREE_INDEX      = false
 USE_NETWORK_INDICATOR   = true

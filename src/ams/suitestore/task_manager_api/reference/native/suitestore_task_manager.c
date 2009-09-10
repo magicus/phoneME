@@ -43,6 +43,7 @@
 #include <push_server_export.h>
 #include <pcsl_memory.h>
 #include <imageCache.h>
+#include <fontCache.h>
 
 #include <suitestore_intern.h>
 #include <suitestore_locks.h>
@@ -622,6 +623,10 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
 
 #if ENABLE_IMAGE_CACHE
             moveImageCache(suiteId, pData->storageId, newStorageId);
+#endif
+
+#if ENABLE_FONT_CACHE
+            moveFontCache(suiteId, pData->storageId, newStorageId);
 #endif
 
             pData->storageId = newStorageId;
