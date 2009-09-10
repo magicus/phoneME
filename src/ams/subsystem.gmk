@@ -169,8 +169,8 @@ SUBSYSTEM_AMS_COMPONENTS += $(AMS_ADDITIONAL_COMPONENTS)
 # Include subsystem libraries
 include $(SUBSYSTEM_AMS_COMPONENTS)
 
-ifeq ($(USE_CMS), true)
-# API for CMS *Manager
+ifeq ($(USE_PUBLIC_AMS_API), true)
+# Public AMS API (for CMS)
 AMS_SERVICE_DIR = $(PROJECT_MIDP_DIR)/src/ams/ams_service
 include $(AMS_SERVICE_DIR)/lib.gmk
 endif
