@@ -55,7 +55,7 @@ void midp_thread_set_timeslice_proc(VmThreadTimesliceProc p) {
  * @param pResult set into MidpReentryData.pResult
  *
  * @return 0 in case of succes
- *         1 in case error occured
+ *         -1 in case error occured
  */
 int 
 midp_thread_wait(midpSignalType waitingFor, int descriptor, void* pResult)
@@ -69,7 +69,7 @@ midp_thread_wait(midpSignalType waitingFor, int descriptor, void* pResult)
         if (p == NULL) {
             REPORT_CRIT(LC_CORE, 
                         "midp_cond_wait: failed to allocate reentry data");
-	    return -1;
+            return -1;
         }
     }
 
