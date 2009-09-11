@@ -475,6 +475,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     p->media_time       = 0;
     p->volume           = 100;
+    p->pan              = 0;
     p->muted            = false;
     p->visible          = false;
 
@@ -1283,12 +1284,7 @@ javacall_result dshow_add_player_to_ss3d( javacall_handle handle, ISoundSource3D
     javacall_impl_player*  pPlayer = (javacall_impl_player*)handle;
     dshow_player*          p = (dshow_player*)pPlayer->mediaHandle;
 
-    if( NULL != p->pModule )
-    {
-        p->pModule->removePlayer( p );
-        //if( p->our_module ) p->pModule->destroy();
-        p->pModule = NULL;
-    }
+    remove_from_qsound( p );
 
     MQ234_ERROR e = ss3d->addPlayer( p );
 
@@ -1312,6 +1308,8 @@ javacall_result dshow_remove_player_from_ss3d( javacall_handle handle, ISoundSou
     {
         p->pModule = NULL;
     }
+
+    add_to_qsound( p );
 
     return ( MQ234_ERROR_NO_ERROR == e ) ? JAVACALL_OK : JAVACALL_FAIL;
 }
