@@ -822,6 +822,28 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         return false;
     }
 
+    private int read( byte buffer[], int offset, int length) throws IOException {
+        SourceStream stream = getOwner().stream;
+        int bytesRead;
+        int len = length;
+        int off = offset;
+        do {
+            bytesRead = stream.read(buffer, off, len);
+            if (bytesRead == -1) {
+                int totalBytesRead = length - len;
+                return (totalBytesRead > 0) ? totalBytesRead : -1;
+            } else {
+                len -= bytesRead;
+                off += bytesRead;
+            }
+
+            if ( len != 0)
+                Thread.yield();
+
+        } while (len != 0);
+
+        return length;
+    }
     /**
      * Parses the GIF header.
      *
@@ -836,7 +858,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         byte [] header = new byte[6];            
 
         try {
-            getOwner().stream.read(header, 0, 6);
+            read(header, 0, 6);
         } catch (IOException e) {
             return false;
         }
@@ -865,7 +887,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         byte [] globalColorTable = null;
 
         try {
-            getOwner().stream.read(logicalScreenDescriptor, 0, 7);
+            read(logicalScreenDescriptor, 0, 7);
         } catch (IOException e) {
             return false;
         }
@@ -904,7 +926,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             globalColorTable = new byte[size];
 
             try {
-                getOwner().stream.read(globalColorTable, 0, size);
+                read(globalColorTable, 0, size);
             } catch (IOException e) {
             }
 
@@ -964,7 +986,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         byte [] localColorTable = null;
 
         try {
-            getOwner().stream.read(imageDescriptor, 0, 9);
+            read(imageDescriptor, 0, 9);
         } catch (IOException e) {
         }
 
@@ -982,7 +1004,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             localColorTable = new byte[size];
 
             try {
-                getOwner().stream.read(localColorTable, 0, size);
+                read(localColorTable, 0, size);
             } catch (IOException e) {
             }
         }
@@ -1050,7 +1072,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                 }
                 
                 if (size > 0)
-                    idx += getOwner().stream.read(imageData, idx, size);
+                    idx += read(imageData, idx, size);
             
             } while (size != 0);
                                     
@@ -1106,7 +1128,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                 if (size > 0) {
                     byte[] data = new byte[size];
 
-                    getOwner().stream.read(data, 0, size);
+                    read(data, 0, size);
                 }
             } while (size != 0);
         } catch (IOException e) {
@@ -1153,11 +1175,11 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
             // application identifier
             byte[] data = new byte[8];
-            getOwner().stream.read(data, 0, 8);
+            read(data, 0, 8);
 
             // application authentication code
             data = new byte[3];
-            getOwner().stream.read(data, 0, 3);
+            read(data, 0, 3);
 
             do {
                 size = readUnsignedByte();
@@ -1165,7 +1187,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                 if (size > 0) {
                     data = new byte[size];
 
-                    getOwner().stream.read(data, 0, size);
+                    read(data, 0, size);
                 }
             } while (size != 0);
         } catch (IOException e) {
@@ -1187,7 +1209,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                 if (size > 0) {
                     byte[] data = new byte[size];
 
-                    getOwner().stream.read(data, 0, size);
+                    read(data, 0, size);
                 }
             } while (size != 0);
         } catch (IOException e) {
@@ -1204,7 +1226,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         byte [] graphicControl = new byte[6];
 
         try {
-            getOwner().stream.read(graphicControl, 0, 6);
+            read(graphicControl, 0, 6);
         } catch (IOException e) {
         }
 
@@ -1254,7 +1276,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * Reads one byte from the source stream.
      */
     private int readUnsignedByte() throws IOException {
-        if (getOwner().stream.read(oneByte, 0, 1) == -1)
+        if (read(oneByte, 0, 1) == -1)
             throw new IOException();
 
         return oneByte[0] & 0xff;
