@@ -840,7 +840,8 @@ javacall_result javacall_media_destroy(javacall_handle handle)
     media_interface* pItf = pPlayer->mediaItfPtr;
 
     #ifdef ENABLE_EXTRA_CAMERA_CONTROLS
-    if( JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO == pPlayer->mediaType )
+    if( NULL != pPlayer->mediaType &&
+        !strcmp(JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO, pPlayer->mediaType) )
     {
         extra_camera_controls_cleanup( pPlayer );
         pPlayer->pExtraCC = NULL;

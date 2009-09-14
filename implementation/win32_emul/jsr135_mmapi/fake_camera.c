@@ -45,7 +45,7 @@ static void PRINTF( const char* fmt, ... ) {
     vsprintf( str8, fmt, args );
     va_end(args);
 
-    OutputDebugStringA( str8 );
+    //OutputDebugStringA( str8 );
 }
 
 typedef struct _fake_camera
@@ -146,6 +146,8 @@ static javacall_result fake_camera_create(javacall_impl_player* outer_player)
 {
     fake_camera* c = (fake_camera*)MALLOC( sizeof(fake_camera) );
 
+    PRINTF( "*** fake_camera_create: 0x%08X->0x%08X ***\n", outer_player, c );
+
     c->appId       = outer_player->appId;
     c->playerId    = outer_player->playerId;
 
@@ -177,7 +179,7 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
     int          appId    = c->appId;
     int          playerId = c->playerId;
 
-    PRINTF( "*** destroy ***\n" );
+    PRINTF( "*** fake_camera_destroy 0x%08X ***\n", handle );
 
     if( c->playing )
     {
@@ -212,7 +214,6 @@ static javacall_result fake_camera_get_player_controls(javacall_handle handle,
     int* controls)
 {
     //fake_camera* c = (fake_camera*)handle;
-    PRINTF( "*** get controls ***\n" );
     *controls = JAVACALL_MEDIA_CTRL_VIDEO;
     return JAVACALL_OK;
 }
@@ -221,16 +222,12 @@ static javacall_result fake_camera_get_player_controls(javacall_handle handle,
 
 static void fake_camera_do_start(fake_camera* c)
 {
-    PRINTF( "*** start ***" );
-
     c->playing = TRUE;
     c->hThread = (HANDLE)_beginthread( fake_camera_generator_thread, 0, c );
 }
 
 static void fake_camera_do_stop(fake_camera* c)
 {
-    PRINTF( "*** stop***\n" );
-
     c->playing = FALSE;
     WaitForSingleObject( c->hThread, INFINITE );
     c->hThread = NULL;
@@ -241,7 +238,7 @@ static void fake_camera_do_stop(fake_camera* c)
 static javacall_result fake_camera_stop(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    PRINTF( "*** stop ***" );
+    PRINTF( "*** fake_camera_stop ***\n" );
 
     if( c->playing ) fake_camera_do_stop( c );
 
@@ -257,7 +254,7 @@ static javacall_result fake_camera_stop(javacall_handle handle)
 static javacall_result fake_camera_pause(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    PRINTF( "*** pause ***" );
+    PRINTF( "*** fake_camera_pause ***\n" );
 
     if( c->playing ) fake_camera_do_stop( c );
 
@@ -273,7 +270,7 @@ static javacall_result fake_camera_pause(javacall_handle handle)
 static javacall_result fake_camera_run(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    PRINTF( "*** run ***" );
+    PRINTF( "*** fake_camera_run ***\n" );
 
     if( !c->playing ) fake_camera_do_start( c );
 
@@ -292,7 +289,6 @@ static javacall_result fake_camera_get_time(javacall_handle handle, javacall_int
 {
     //fake_camera* c = (fake_camera*)handle;
     *ms = -1;
-    PRINTF( "--- get_time: %ld",*ms );
     return JAVACALL_OK;
 }
 
