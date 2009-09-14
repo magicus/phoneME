@@ -1756,7 +1756,7 @@ public abstract class ClassLoader {
                                        boolean isXrunLibrary)
     {
         // Check to see if the file exists:
-        if (!NativeLibrary.exists(file.getName())) {
+        if (!NativeLibrary.exists(file.getPath())) {
             return null;
         }
 
