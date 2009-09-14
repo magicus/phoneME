@@ -49,9 +49,9 @@ import org.xml.sax.SAXNotRecognizedException;
 
 public abstract class SAXParserFactory
 {
-	private static final String defaultFactoryClassName = 
-				com.sun.ukit.xml.SAX.ParserFactoryImp.class.getName(); 
-	
+    private static final String defaultFactoryClassName = 
+                com.sun.ukit.xml.SAX.ParserFactoryImp.class.getName(); 
+    
     private boolean namespaceAware = false;
     private boolean validating = false;
 
@@ -90,13 +90,13 @@ public abstract class SAXParserFactory
     {
         try {
             String fname = 
-// #ifdef SAX_280            	
-            	System.getProperty("javax.xml.parsers.SAXParserFactory");
+// #ifdef SAX_280                
+                System.getProperty("javax.xml.parsers.SAXParserFactory");
             if(fname == null)
                 fname =
-// #endif                	
-                	defaultFactoryClassName;
-                	
+// #endif                    
+                    defaultFactoryClassName;
+                    
             return (SAXParserFactory) Class.forName(fname).newInstance();
         } catch (java.lang.Throwable ex) {
             throw new FactoryConfigurationError("");
