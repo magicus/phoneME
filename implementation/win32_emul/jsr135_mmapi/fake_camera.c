@@ -37,6 +37,8 @@ void lcd_output_video_frame( javacall_pixel* video );
 
 // ===========================================================================
 
+#define DEBUG_ONLY(x)
+
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
     va_list        args;
@@ -179,7 +181,7 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
     int          appId    = c->appId;
     int          playerId = c->playerId;
 
-    PRINTF( "*** fake_camera_destroy 0x%08X ***\n", handle );
+    DEBUG_ONLY( PRINTF( "*** fake_camera_destroy 0x%08X ***\n", handle ); )
 
     if( c->playing )
     {
@@ -238,7 +240,7 @@ static void fake_camera_do_stop(fake_camera* c)
 static javacall_result fake_camera_stop(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    PRINTF( "*** fake_camera_stop ***\n" );
+    DEBUG_ONLY( PRINTF( "*** fake_camera_stop ***\n" ); )
 
     if( c->playing ) fake_camera_do_stop( c );
 
@@ -254,7 +256,7 @@ static javacall_result fake_camera_stop(javacall_handle handle)
 static javacall_result fake_camera_pause(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    PRINTF( "*** fake_camera_pause ***\n" );
+    DEBUG_ONLY( PRINTF( "*** fake_camera_pause ***\n" ); )
 
     if( c->playing ) fake_camera_do_stop( c );
 
@@ -270,7 +272,7 @@ static javacall_result fake_camera_pause(javacall_handle handle)
 static javacall_result fake_camera_run(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    PRINTF( "*** fake_camera_run ***\n" );
+    DEBUG_ONLY( PRINTF( "*** fake_camera_run ***\n" ); )
 
     if( !c->playing ) fake_camera_do_start( c );
 

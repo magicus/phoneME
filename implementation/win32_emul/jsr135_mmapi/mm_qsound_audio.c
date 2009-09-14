@@ -30,6 +30,8 @@
 #include "javacall_memory.h"
 #include "javautil_unicode.h"
 
+#define DEBUG_ONLY(x)
+
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
     va_list        args;
@@ -468,7 +470,7 @@ static javacall_result audio_qs_create(javacall_impl_player* outer_player)
 
     javacall_result res = appIDtoGM( outer_player->appId, &gmIdx );
     
-    PRINTF( "\n ----- create(%S)", outer_player->uri );
+    DEBUG_ONLY( PRINTF( "\n ----- create(%S)", outer_player->uri ); )
 
     if( JAVACALL_OK != res )
     {
@@ -559,7 +561,7 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
     int gmIdx         = h->gmIdx;
 
     JC_MM_DEBUG_PRINT1("audio_destroy %s\n",__FILE__);
-    PRINTF( "- destroy" );
+    DEBUG_ONLY( PRINTF( "- destroy" ); )
 
     if( h->synth != NULL )
     {
@@ -904,10 +906,10 @@ static javacall_result audio_qs_get_data_request(javacall_handle handle,
 
     if( -1 == h->streamLen )
     {
-        PRINTF( "  request: size unknown" );
+        DEBUG_ONLY( PRINTF( "  request: size unknown" ); )
         if( h->dataPos == h->dataBufferLen )
         {
-            PRINTF( "  request: enlarging buffer" );
+            DEBUG_ONLY( PRINTF( "  request: enlarging buffer" ); )
             h->dataBufferLen += 512;
             h->dataBuffer = realloc( h->dataBuffer, h->dataBufferLen );
         }
@@ -916,7 +918,7 @@ static javacall_result audio_qs_get_data_request(javacall_handle handle,
     *offset = h->dataPos;
     *length = h->dataBufferLen - h->dataPos;
 
-    PRINTF( "- request(%i @%i)", (int)*length, (int)*offset );
+    DEBUG_ONLY( PRINTF( "- request(%i @%i)", (int)*length, (int)*offset ); )
 
     return JAVACALL_OK;
 }
@@ -938,13 +940,13 @@ static javacall_result audio_qs_data_written(javacall_handle handle,
 {
     ah* h = (ah*)handle;
 
-    PRINTF( "  - done(%i)", (int)h->portionLen );
+    DEBUG_ONLY( PRINTF( "  - done(%i)", (int)h->portionLen ); )
 
     h->dataPos += h->portionLen;
 
     if( -1 != h->streamLen && h->dataPos == h->streamLen )
     {
-        PRINTF( "  - realized." );
+        DEBUG_ONLY( PRINTF( "  - realized." ); )
 
         if (h->needProcessHeader)
         {
@@ -993,7 +995,7 @@ static javacall_result audio_qs_set_time(javacall_handle handle, javacall_int32 
     ah* h = (ah*)handle;
     long currtime;
 
-    PRINTF( "- set time (%ld)", ms );
+    DEBUG_ONLY( PRINTF( "- set time (%ld)", ms ); )
 
     if( h->midiStream != NULL && h->storage != NULL )
     {

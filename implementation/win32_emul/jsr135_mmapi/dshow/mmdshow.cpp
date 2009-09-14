@@ -46,6 +46,8 @@ extern "C" {
 
 // ===========================================================================
 
+#define DEBUG_ONLY(x)
+
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
     va_list        args;
@@ -217,19 +219,19 @@ void dshow_player::playback_finished()
         eom_sent = true;
 
         long t = get_media_time();
-        PRINTF( "*** playback finished, t=%ld\n", t );
+        DEBUG_ONLY( PRINTF( "*** playback finished, t=%ld\n", t ); )
         javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                                           appId, playerId, JAVACALL_OK, (void*)(size_t)t );
 
-        PRINTF( "*** stopping...\n" );
+        DEBUG_ONLY( PRINTF( "*** stopping...\n" ); )
         player::result r = ppl->stop();
-        PRINTF( "*** player::stop = %i\n", r );
+        DEBUG_ONLY( PRINTF( "*** player::stop = %i\n", r ); )
     }
 }
 
 player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata, int32 *plen)
 {
-    PRINTF( "*** data(@%I64d l=%i) ***\n",offset,len );
+    DEBUG_ONLY( PRINTF( "*** data(@%I64d l=%i) ***\n",offset,len ); )
 
     dwr_offset    = offset;
     dwr_len       = len;
@@ -237,7 +239,7 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
 
     if( dwr_cancel )
     {
-        PRINTF( "*** data -- refusing ***\n" );
+        DEBUG_ONLY( PRINTF( "*** data -- refusing ***\n" ); )
         return player_callback::result_io;
     }
         
@@ -249,13 +251,13 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
 
     if( WAIT_OBJECT_0 != WaitForSingleObject( dwr_event, 30000 ) )
     {
-        PRINTF( "*** ERROR: timeout waiting for data (@%I64d l=%i) ***\n", offset, len );
+        DEBUG_ONLY( PRINTF( "*** ERROR: timeout waiting for data (@%I64d l=%i) ***\n", offset, len ); )
         return player_callback::result_io;
     }
 
     if( dwr_cancel )
     {
-        PRINTF( "*** data -- aborted ***\n" );
+        DEBUG_ONLY( PRINTF( "*** data -- aborted ***\n" ); )
         return player_callback::result_io;
     }
     else
@@ -276,7 +278,7 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 
     if( out_queue_n + nbytes > OUT_QUEUE_SIZE )
     {
-        PRINTF( "### overflow ###\n" );
+        DEBUG_ONLY( PRINTF( "### overflow ###\n" ); )
         nbytes = (nat32)(OUT_QUEUE_SIZE - out_queue_n);
     }
 
@@ -339,7 +341,7 @@ long dshow_player::read(short* buffer, int samples)
     if( nbytes > out_queue_n ) {
         zero_padding_size = nbytes - out_queue_n;
         nbytes = out_queue_n;
-        //PRINTF( "### underflow ###\n" );
+        //DEBUG_ONLY( PRINTF( "### underflow ###\n" ); )
     }
 
     BYTE*  out = (BYTE*)buffer;
@@ -591,7 +593,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     lcd_set_color_key( JAVACALL_FALSE, 0 );
 
-    PRINTF( "*** creating dshow player... ***\n" );
+    DEBUG_ONLY( PRINTF( "*** creating dshow player... ***\n" ); )
 
     p->is_managed = ( JC_FMT_MPEG_1 == p->mediaType ) &&
                     ( NULL != outer_player->uri ) &&
@@ -620,7 +622,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     if( ok )
     {
-        PRINTF( "*** realizing dshow player... ***\n" );
+        DEBUG_ONLY( PRINTF( "*** realizing dshow player... ***\n" ); )
         ok = ( player::result_success == p->ppl->realize() );
     }
 
@@ -644,7 +646,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 static javacall_result dshow_destroy(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** destroy ***\n" );
+    DEBUG_ONLY( PRINTF( "*** destroy ***\n" ); )
 
     p->dwr_cancel = true;
     SetEvent( p->dwr_event );
@@ -692,7 +694,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
 static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** get format ***\n" );
+    DEBUG_ONLY( PRINTF( "*** get format ***\n" ); )
     *fmt = p->mediaType;
     return JAVACALL_OK;
 }
@@ -701,7 +703,7 @@ static javacall_result dshow_get_player_controls(javacall_handle handle,
     int* controls)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "*** get controls ***\n" );
+    DEBUG_ONLY( PRINTF( "*** get controls ***\n" ); )
     *controls = JAVACALL_MEDIA_CTRL_VOLUME;
     if( p->is_video ) *controls |= JAVACALL_MEDIA_CTRL_VIDEO;
     return JAVACALL_OK;
@@ -741,7 +743,7 @@ static javacall_result dshow_stop(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     player::result r;
-    PRINTF( "*** stop, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
+    DEBUG_ONLY( PRINTF( "*** stop, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) ); )
 
     _beginthread( stop_thread, 0, p );
 
@@ -778,7 +780,7 @@ static javacall_result dshow_pause(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     player::result r;
-    PRINTF( "*** pause, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
+    DEBUG_ONLY( PRINTF( "*** pause, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) ); )
 
     _beginthread( pause_thread, 0, p );
 
@@ -817,7 +819,7 @@ static javacall_result dshow_run(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
     player::result r;
-    PRINTF( "*** run, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) );
+    DEBUG_ONLY( PRINTF( "*** run, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) ); )
 
     _beginthread( run_thread, 0, p );
 
@@ -864,7 +866,7 @@ javacall_result dshow_get_data_request(javacall_handle handle,
     *offset = p->dwr_offset;
     *length = p->dwr_len;
 
-    PRINTF( "   --- get_data_request: @%I64d %d\n", *offset, *length );
+    DEBUG_ONLY( PRINTF( "   --- get_data_request: @%I64d %d\n", *offset, *length ); )
 
     return JAVACALL_OK;
 }
@@ -874,7 +876,7 @@ javacall_result dshow_data_ready(javacall_handle handle,
                                  void**          data)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "       --- data_ready: %d\n", length );
+    DEBUG_ONLY( PRINTF( "       --- data_ready: %d\n", length ); )
 
     p->dwr_len = length;
     *data      = p->dwr_pdata;
@@ -886,7 +888,7 @@ javacall_result dshow_data_written(javacall_handle handle,
                                    javacall_bool*  new_request)
 {
     dshow_player* p = (dshow_player*)handle;
-    PRINTF( "       --- data_written.\n" );
+    DEBUG_ONLY( PRINTF( "       --- data_written.\n" ); )
     SetEvent( p->dwr_event );
     *new_request = JAVACALL_FALSE;
     return JAVACALL_OK;
@@ -896,7 +898,7 @@ static javacall_result dshow_get_time(javacall_handle handle, javacall_int32* ms
 {
     dshow_player* p = (dshow_player*)handle;
     *ms = p->get_media_time();
-    PRINTF( "--- get_time: %ld",*ms );
+    DEBUG_ONLY( PRINTF( "--- get_time: %ld",*ms ); )
     // if( p->duration != -1 && *ms > p->duration ) *ms = p->duration;
     return JAVACALL_OK;
 }
@@ -905,7 +907,7 @@ static void time_set_thread( void* param )
 {
     dshow_player* p = (dshow_player*)param;
 
-    PRINTF( "*** setting media time ***\n" );
+    DEBUG_ONLY( PRINTF( "*** setting media time ***\n" ); )
 
     player::result r;
 
@@ -913,7 +915,7 @@ static void time_set_thread( void* param )
 
     p->media_time = long( p->ppl->set_media_time( mt, &r ) / 1000 );
 
-    PRINTF( "*** set_time(%ld) finished: %ld", p->target_mt, p->media_time );
+    DEBUG_ONLY( PRINTF( "*** set_time(%ld) finished: %ld", p->target_mt, p->media_time ); )
 
     BOOL ok = (player::result_success == r);
 
@@ -942,7 +944,7 @@ static javacall_result dshow_get_duration(javacall_handle handle, javacall_int32
 
     int64 d = p->ppl->get_duration( &res );
 
-    PRINTF( "----------- get_duration: %i, %ld, (%i)\n", res, long( d / 1000 ), p->duration );
+    DEBUG_ONLY( PRINTF( "----------- get_duration: %i, %ld, (%i)\n", res, long( d / 1000 ), p->duration ); )
 
     if( res == player::result_success && player::time_unknown != d ) {
         *ms = long( d / 1000 );
