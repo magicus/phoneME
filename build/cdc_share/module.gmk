@@ -41,7 +41,8 @@ ABSTRACTIONS_SRCDIRS += \
 ABSTRACTIONS_NATIVES += \
     internal_props.c \
 	exceptions.c \
-	kni_utils.c
+	kni_utils.c \
+	push_utils.c
 
 # classes
 ABSTRACTIONS_CLASSES += \
