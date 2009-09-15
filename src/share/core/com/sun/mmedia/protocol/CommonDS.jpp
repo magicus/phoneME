@@ -251,7 +251,11 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @exception     IOException
      */
     public int read(byte buffer[], int offset, int length) throws IOException {
-        return inputStream.read(buffer, offset, length);
+        final int read = inputStream.read(buffer, offset, length);
+        if( read > 0 ) {
+            location += read;
+        }
+        return read;
     }
 
 
