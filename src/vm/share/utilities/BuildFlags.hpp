@@ -526,6 +526,9 @@
 //                                          allocation redo, see 
 //                                          JVMSPI_HandleOutOfMemory().
 //
+// ENABLE_ANNOTATED_LAST_REG_ALLOCATION 1,1 Force register allocator to allocate
+//                                          annotated registers last.
+//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================

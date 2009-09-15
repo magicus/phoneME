@@ -475,6 +475,7 @@ class Value : public StackObj {
   friend class RawLocation;
   friend class ExtendedValue;
   friend class ForwardBranchOptimizer;
+  friend class Expression;
 };
 
 class ExtendedValue {

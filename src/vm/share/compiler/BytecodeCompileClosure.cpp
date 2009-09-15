@@ -2256,9 +2256,9 @@ bool BytecodeCompileClosure::eliminate_expression(int bci JVM_TRAPS) {
 
   ExpressionStream es(frame());
   for ( ; !es.eos() ; es.next()) {
-    int expr_length = es.length();
+    int expr_length = es.expr_length();
     if (expr_length > best_match_length && expr_length < max_length) {
-      int expr_bci = es.bci();
+      int expr_bci = es.start_bci();
       const address code_base = method()->code_base();
       if (jvm_memcmp(code_base + expr_bci, 
                      code_base + bci, expr_length) == 0) {
@@ -2272,15 +2272,19 @@ bool BytecodeCompileClosure::eliminate_expression(int bci JVM_TRAPS) {
     return false;
   }
 
-  BasicType type = frame()->expression_type(reg);
+  const Expression & ex = frame()->expression(reg);
+  BasicType type = (BasicType)ex.value_type();
   GUARANTEE(type >= T_BOOLEAN && type <= T_OBJECT && 
             !is_two_word(type), "Invalid type");
   Value match_value(type); 
 
   RegisterAllocator::reference(reg);
   match_value.set_register(reg);
+  ex.copy_value_flags_to(match_value);
   frame()->increment_virtual_stack_pointer();
-  frame()->value_at_put(frame()->virtual_stack_pointer(), match_value);
+  const int virtual_sp = frame()->virtual_stack_pointer();
+  frame()->value_at_put(virtual_sp, match_value);
+  frame()->raw_location_at(virtual_sp)->set_push_bci(bci);
 
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
   if (GenerateCompilerComments) {
@@ -2373,10 +2377,16 @@ void BytecodeCompileClosure::cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
           // since no code is needed to load a local mapped to a register
         } else {
           Assembler::Register reg = raw_location->get_register();
+          Value value(raw_location, index);
           const int expr_length = next_bci - start_bci;
-          vsf->set_expression(reg, start_bci, expr_length,
-                              cl.locals_map(), cl.fields_map(),
-                              cl.array_types_map(), raw_location->stack_type());
+          Expression & ex = vsf->expression(reg);
+          ex.set_start_bci(start_bci);
+          ex.set_expr_length(expr_length);
+          ex.set_locals_map(cl.locals_map());
+          ex.set_fields_map(cl.fields_map());
+          ex.set_array_types_map(cl.array_types_map());
+          ex.set_value_type(value.type());
+          ex.copy_value_flags_from(value);
         }
       }
     }

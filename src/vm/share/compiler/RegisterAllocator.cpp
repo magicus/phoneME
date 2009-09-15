@@ -287,7 +287,9 @@ RegisterAllocator::allocate_or_fail(const Assembler::Register* next_table,
   // Use a round-robin strategy to allocate the registers.
   // Select non-annotated register if available.
   const Register current = next;
+#if ENABLE_ANNOTATED_LAST_REG_ALLOCATION
   Register next_annotated = Assembler::no_reg;
+#endif
   do {
     next = next_table[next];
     // Check to see whether or not the register is available for allocation.
@@ -297,22 +299,28 @@ RegisterAllocator::allocate_or_fail(const Assembler::Register* next_table,
           // Setup a reference to the newly allocated register.
           reference(next);
           return next;
+#if ENABLE_ANNOTATED_LAST_REG_ALLOCATION
         } else if (next_annotated == Assembler::no_reg) {
           next_annotated = next;
+#endif
         }
       }
     }
   } while(next != current);
 
+#if ENABLE_ANNOTATED_LAST_REG_ALLOCATION
   if (next_annotated != Assembler::no_reg) {
-    GUARANTEE(!is_mapping_location(next_annotated) && is_annotated(next_annotated), 
+    next = next_annotated;
+
+    GUARANTEE(!is_mapping_location(next) && is_annotated(next), 
               "Must be annotated register not mapping a location");
     // Remove all annotations.
-    spill(next_annotated);
+    spill(next);
     // Setup a reference to the newly allocated register.
-    reference(next_annotated);
-    return next_annotated;
+    reference(next);
+    return next;
   }
+#endif
 
   // Couldn't allocate a register without spilling.
 

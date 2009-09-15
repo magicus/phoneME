@@ -64,14 +64,61 @@ public:
 class RawLocation;
 
 #if ENABLE_CSE
-struct Expression {
-  jshort    _bci;
-  jshort    _length;
-  jint      _locals_map;
-  jint      _fields_map;
-  jint      _array_types_map;
-  BasicType _type;
+
+#define FOR_VISIBLE_EXPRESSION_FIELDS(template) \
+  template(jshort,  start_bci, 1)          \
+  template(jshort,  expr_length, 0)        \
+  template(jint,    locals_map, 0)         \
+  template(jint,    fields_map, 0)         \
+  template(jint,    array_types_map, 0)    \
+  template(jubyte,  value_type, 0)
+
+#define FOR_HIDDEN_EXPRESSION_FIELDS(template) \
+  template(jubyte,  value_flags, 0)        \
+  template(jushort, value_class_id, 0)     \
+  template(jint,    value_length, 0)
+
+#define FOR_ALL_EXPRESSION_FIELDS(template) \
+  FOR_VISIBLE_EXPRESSION_FIELDS(template)   \
+  FOR_HIDDEN_EXPRESSION_FIELDS(template)
+
+#define DECLARE_FIELD(type, name, off) \
+    type _##name;
+#define DEFINE_ACCESSOR(type, name, off)       \
+    type name() const { return _##name - off; } \
+    void set_##name(type name) { _##name = name + off; }
+
+class Expression {
+ private:
+
+  FOR_ALL_EXPRESSION_FIELDS(DECLARE_FIELD)
+
+  FOR_HIDDEN_EXPRESSION_FIELDS(DEFINE_ACCESSOR)
+
+ public:
+  FOR_VISIBLE_EXPRESSION_FIELDS(DEFINE_ACCESSOR)
+
+  void copy_value_flags_from(const Value & value) {
+    GUARANTEE(value_type() == value.type(), "Types mismatch");
+    set_value_flags(value.flags());
+#if ENABLE_COMPILER_TYPE_INFO
+    set_value_class_id(value.class_id());
+#endif
+    set_value_length(value.length());
+  }
+
+  void copy_value_flags_to(Value & value) const {
+    GUARANTEE(value_type() == value.type(), "Types mismatch");
+    value.set_flags(value_flags());
+#if ENABLE_COMPILER_TYPE_INFO
+    value.set_class_id(value_class_id());
+#endif
+    value.set_length(value_length());
+  }
 };
+
+#undef DECLARE_FIELD
+#undef DEFINE_ACCESSOR
 
 class ExpressionAttributeClosure : public BytecodeClosure {
  public:
@@ -742,70 +789,28 @@ class VirtualStackFrame: public CompilerObject {
 
   void reset_expression_segment();
 
-  void set_expression(const Assembler::Register reg, 
-                      const jshort bci, const jshort length,
-                      const jint locals_map, const jint fields_map,
-                      const jint array_types_map,
-                      const BasicType type) {
-    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
-              "Invalid register");
-    GUARANTEE(bci >= 0, "Invalid bci");
-    GUARANTEE(length > 0, "Invalid length");
-    _expressions_map[reg]._bci = bci + 1;
-    _expressions_map[reg]._length = length;
-    _expressions_map[reg]._locals_map = locals_map;
-    _expressions_map[reg]._fields_map = fields_map;
-    _expressions_map[reg]._array_types_map = array_types_map;
-    _expressions_map[reg]._type = type;
-  }
-
   bool has_expression(const Assembler::Register reg) const {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
-    return _expressions_map[reg]._length > 0;
+    return _expressions_map[reg].expr_length() > 0;
   }
 
-  jint expression_bci(const Assembler::Register reg) const {
+  const Expression & expression(const Assembler::Register reg) const {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
-    return _expressions_map[reg]._bci - 1;
+    return _expressions_map[reg];
   }
 
-  jint expression_length(const Assembler::Register reg) const {
+  Expression & expression(const Assembler::Register reg) {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
-    return _expressions_map[reg]._length;
-  }
-
-  jint expression_locals_map(const Assembler::Register reg) const {
-    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
-              "Invalid register");
-    return _expressions_map[reg]._locals_map;
-  }
-
-  jint expression_fields_map(const Assembler::Register reg) const {
-    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
-              "Invalid register");
-    return _expressions_map[reg]._fields_map;
-  }
-
-  jint expression_array_types_map(const Assembler::Register reg) const {
-    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
-              "Invalid register");
-    return _expressions_map[reg]._array_types_map;
-  }
-
-  BasicType expression_type(const Assembler::Register reg) const {
-    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
-              "Invalid register");
-    return _expressions_map[reg]._type;
+    return _expressions_map[reg];
   }
 
   void clear_expression(const Assembler::Register reg) {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
-    _expressions_map[reg]._bci = 0;
-    _expressions_map[reg]._length = 0;
+    jvm_memset(_expressions_map + reg, 0, sizeof(Expression));
   }
 
   void clear_expressions(void);
@@ -963,24 +968,11 @@ public:
   Assembler::Register reg() const {
     return (Assembler::Register)_index;
   }
-  jint bci( void ) const {
-    return frame()->expression_bci(reg());
-  }
-  jint length( void ) const {
-    return frame()->expression_length(reg());
-  }
-  jint locals_map( void ) const {
-    return frame()->expression_locals_map(reg());
-  }
-  jint fields_map( void ) const {
-    return frame()->expression_fields_map(reg());
-  }
-  jint array_types_map( void ) const {
-    return frame()->expression_array_types_map(reg());
-  }
-  BasicType type( void ) const {
-    return frame()->expression_type(reg());
-  }
+
+#define DEFINE_EXPR_ACCESSOR(type, name, off) \
+  type name() const { return frame()->expression(reg()).name(); }
+
+  FOR_VISIBLE_EXPRESSION_FIELDS(DEFINE_EXPR_ACCESSOR);
 
   bool has_local_index(int index) const {
     GUARANTEE(index >= 0 && index < BitsPerWord, "Invalid index");

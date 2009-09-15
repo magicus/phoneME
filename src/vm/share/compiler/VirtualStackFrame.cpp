@@ -2097,11 +2097,13 @@ void VirtualStackFrame::set_value_must_be_nonnull(Value &value) {
   register RawLocation *end  = raw_location_end(raw_location);
   int index = 0;
 
+  const Assembler::Register reg = value.lo_register();
+
   while (raw_location < end) {
     BasicType type = raw_location->stack_type();
     if (type == T_OBJECT && !raw_location->is_flushed() &&
         raw_location->in_register()) {
-      if( Value(raw_location, index).lo_register() == value.lo_register()) {
+      if( Value(raw_location, index).lo_register() == reg) {
         RawLocation::Status old_status = raw_location->status();
         value.set_must_be_nonnull();
         raw_location->write_value(value);
@@ -2117,6 +2119,12 @@ void VirtualStackFrame::set_value_must_be_nonnull(Value &value) {
       raw_location += 1;
     }
   }
+
+#if ENABLE_CSE
+  if (has_expression(reg)) {
+    expression(reg).copy_value_flags_from(value);
+  }
+#endif
 }
 
 void VirtualStackFrame::set_value_has_known_min_length(Value &value,
@@ -2126,13 +2134,15 @@ void VirtualStackFrame::set_value_has_known_min_length(Value &value,
             "Guarantee");
   value.set_has_known_min_length(length);
 
+  const Assembler::Register reg = value.lo_register();
+
   for (VSFStream s(this); !s.eos(); s.next()) {
     AllocationDisabler allocation_not_allowed_in_this_block;
     int index = s.index();
     RawLocation *l = raw_location_at(index);
 
     if (l->stack_type() == T_OBJECT && !l->is_flushed() && l->in_register()) {
-      if (Value(l, index).lo_register() == value.lo_register()) {
+      if (Value(l, index).lo_register() == reg) {
         RawLocation::Status old_status = l->status();
         value.set_has_known_min_length(length);
         l->write_value(value);
@@ -2140,6 +2150,12 @@ void VirtualStackFrame::set_value_has_known_min_length(Value &value,
       }
     }
   }
+
+#if ENABLE_CSE
+  if (has_expression(reg)) {
+    expression(reg).copy_value_flags_from(value);
+  }
+#endif
 }
 
 #if ENABLE_COMPILER_TYPE_INFO
@@ -2178,6 +2194,12 @@ void VirtualStackFrame::set_value_class(Value &value, JavaClass * java_class) {
       raw_location += 1;
     }
   }
+
+#if ENABLE_CSE
+  if (has_expression(value_register)) {
+    expression(value_register).copy_value_flags_from(value);
+  }
+#endif
 }
 #endif
 
@@ -3002,8 +3024,8 @@ void VirtualStackFrame::dump(bool as_comment) {
     for ( ; !es.eos() ; es.next()) {
       p = str;
       Assembler::Register reg = es.reg();
-      jint start_bci = es.bci();
-      jint end_bci = start_bci + es.length() - 1;
+      jint start_bci = es.start_bci();
+      jint end_bci = start_bci + es.expr_length() - 1;
       jvm_sprintf(p, "   reg:%s, bci:[%3d,%3d], locals:0x%08x, fields:0x%08x, array_types:0x%08x", 
                   RegisterAllocator::register_name(reg), start_bci, end_bci,
                   es.locals_map(), es.fields_map(), es.array_types_map());
