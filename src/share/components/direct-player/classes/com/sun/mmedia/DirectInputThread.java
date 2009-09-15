@@ -46,14 +46,17 @@ class DirectInputThread extends Thread {
 
     private final Object requestLock = new Object();
 
+    private long streamLen = -1;
+
     DirectInputThread(HighLevelPlayer p) throws MediaException {
         wrPlayer = new WeakReference( p );
+        streamLen = p.stream.getContentLength();
     }
     
 
     private native void nWriteData( byte [] buf, int len, int handle );
     private native void nGetRequestParams( int handle );
-    private native void nNotifyEndOfStream( int handle );
+    private native void nNotifyEndOfStream( int handle, long pos );
 
     public void run(){
 
@@ -97,7 +100,9 @@ mainloop:
                 }
 
                 try {
-                    seek( owner.stream );
+                    if( !seek( owner ) ) {
+                        continue mainloop;
+                    }
 
                     if( isDismissed ) {
                         //System.out.println( "DirectInputThread: exit 5" );
@@ -128,7 +133,8 @@ mainloop:
                 }
                 
                 if( -1 == read ) {
-                    nNotifyEndOfStream( owner.getNativeHandle() );
+                    nNotifyEndOfStream( owner.getNativeHandle(), posToRead );
+                    continue mainloop;
                 }
                 else {
                     nWriteData( tmpBuf, read, owner.getNativeHandle() );
@@ -137,10 +143,21 @@ mainloop:
         }
     }
 
-    private void seek( SourceStream stream ) throws IOException, MediaException {
+    // returns false if failed to seek because end of stream was reached
+    //                          (and the stream length was being unknown)
+    // returns true otherwise
+    private boolean seek( HighLevelPlayer p ) throws IOException, MediaException {
+        SourceStream stream = p.stream;
+
         if( stream.tell() == posToRead ) {
-            return;
+            return true;
         }
+
+        if( posToRead < 0 || ( streamLen != -1 && posToRead > streamLen ) ) {
+            throw new MediaException( "Requested position is negative or " +
+                    "beyond the stream length");
+        }
+        
         if( stream.getSeekType() ==
                 SourceStream.NOT_SEEKABLE ||
             ( posToRead != 0 &&
@@ -149,7 +166,19 @@ mainloop:
             throw new MediaException("The stream is not seekable");
         }
 
-        stream.seek(posToRead);
+        final long seekResult = stream.seek( posToRead );
+        if( seekResult != posToRead ) {
+            byte [] buf = new byte[ 1 ];
+            if( -1 == stream.read(buf, 0, 1) ) {
+                streamLen = seekResult;
+                nNotifyEndOfStream( p.getNativeHandle(), seekResult );
+                return false;
+            } else {
+                throw new MediaException( "Failed to seek to the specified " +
+                        "position" );
+            }
+        }
+        return true;
     }
 
     public void requestData() {
