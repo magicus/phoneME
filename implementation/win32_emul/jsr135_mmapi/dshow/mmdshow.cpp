@@ -214,7 +214,7 @@ void dshow_player::audio_format_changed(nat32 samples_per_second,
 
 void dshow_player::playback_finished()
 {
-    if( !eom_sent )
+    if( !eom_sent && !dwr_cancel )
     {
         eom_sent = true;
 
