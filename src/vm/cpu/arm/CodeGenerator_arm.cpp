@@ -1215,8 +1215,7 @@ void CodeGenerator::method_prolog(Method *method JVM_TRAPS) {
       stub->insert();
       // If we go to the stub, we can't be guaranteed it has preserved literals
       frame()->clear_literals();
-
-      frame()->wipe_notation_for_unmapped();
+      frame()->clear_expressions();
     } else {
       int offset = (int)&gp_interpreter_method_entry_ptr -
                    (int)&gp_base_label;
@@ -2227,11 +2226,6 @@ void CodeGenerator::vcall_simple_c_runtime(Value& result,
 
   for (i = 0; i < ARRAY_SIZE(ctemps); i++) {
     RegisterAllocator::reference(ctemps[i]);
-
-    //cse
-    RegisterAllocator::wipe_notation_of(ctemps[i]);
-    VERBOSE_CSE(("clear reg %s", Disassembler::register_name(ctemps[i])));
-
   }
   for (i = 0; i < ARRAY_SIZE(ctemps); i++) {
     frame()->unuse_register(ctemps[i]);
@@ -3059,8 +3053,7 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
     if (stub.not_null()) {
       stub().insert();
       frame()->clear_literals();
-
-      frame()->wipe_notation_for_unmapped();
+      frame()->clear_expressions();
     }
     return;
   }
@@ -3089,8 +3082,7 @@ bind(done);
                             done JVM_ZCHECK(stub));
   stub->insert();
   frame()->clear_literals();
-
-  frame()->wipe_notation_for_unmapped();
+  frame()->clear_expressions();
 }
 
 void CodeGenerator::check_cast(Value& object, Value& klass, int class_id
@@ -3128,12 +3120,11 @@ void CodeGenerator::check_cast(Value& object, Value& klass, int class_id
   bind(done_checking);
   CheckCastStub::insert(bci(), class_id, slow_case, done_checking JVM_CHECK);
 
-  frame()->wipe_notation_for_unmapped();
-
   frame()->pop(object);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
+  frame()->clear_expressions();
 }
 
 void CodeGenerator::instance_of(Value& result, Value& object,
@@ -3176,12 +3167,11 @@ bind(done_checking);
                                result.lo_register() JVM_ZCHECK(stub));
   stub->insert();
 
-  frame()->wipe_notation_for_unmapped();
-
   frame()->pop(object);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
+  frame()->clear_expressions();
 }
 
 void CodeGenerator::check_cast_stub(CompilationQueueElement* cqe JVM_TRAPS) {
@@ -3320,8 +3310,7 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-
-  frame()->wipe_notation_for_unmapped();
+  frame()->clear_expressions();
 #else // !ENABLE_INLINE_COMPILER_STUBS
 
   GUARANTEE(klass->instance_size().is_fixed(), "Sanity");
@@ -3439,12 +3428,11 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
                                  slow_case, done JVM_ZCHECK(stub));
   stub->insert();
 
-  frame()->wipe_notation_for_unmapped();
-
   frame()->pop(length);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
+  frame()->clear_expressions();
 #else // !ENABLE_INLINE_COMPILER_STUBS
   // Do flushing, and remember to unmap.
   flush_frame(JVM_SINGLE_ARG_CHECK);
@@ -4635,8 +4623,7 @@ bool CodeGenerator::quick_catch_exception(const Value &exception_obj,
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-
-  frame()->wipe_notation_for_unmapped();
+  frame()->clear_expressions();
 
   return true; // successful!
 }
@@ -4728,14 +4715,13 @@ bind(done_checking);
     TypeCheckStub::allocate(bci(), slow_case, done_checking JVM_ZCHECK(stub));
   stub->insert();
 
-  frame()->wipe_notation_for_unmapped();
-
   frame()->pop(object);
   frame()->pop(index);
   frame()->pop(array);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
+  frame()->clear_expressions();
 }
 
 CodeGenerator::Condition

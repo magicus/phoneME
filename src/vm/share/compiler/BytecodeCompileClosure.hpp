@@ -204,6 +204,17 @@ class BytecodeCompileClosure: public BytecodeClosure {
   // Compile the current compiler bytecode.
   bool compile(JVM_SINGLE_ARG_TRAPS);
 
+#if ENABLE_CSE
+  bool eliminate_expression(int bci JVM_TRAPS);
+  void cse_bytecode_prolog(JVM_SINGLE_ARG_TRAPS);
+  void cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS);
+#else
+  bool eliminate_expression(int bci JVM_TRAPS) 
+    { JVM_IGNORE_TRAPS; return false; }
+  void cse_bytecode_prolog(JVM_SINGLE_ARG_TRAPS) { JVM_IGNORE_TRAPS; }
+  void cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS) { JVM_IGNORE_TRAPS; }
+#endif
+
 #if USE_DEBUG_PRINTING
   void print_on(Stream *st);
   void p();
@@ -278,35 +289,6 @@ private:
   // further needs masking.
   void cib_requirements(int class_id, bool &needs_cib,
           bool access_static_var);
-#endif
-
-#if ENABLE_CSE
-  enum {
-    not_found = -1 //no eliminatable byte codes is found
-  };
-
-  //can the byte codes start from current bci be eliminated
-  bool is_following_codes_can_be_eliminated(jint& bci_after_elimination);
-
-  //record the byte codes creating current result value into the  notation
-  //of its register
-  void record_current_code_snippet(void);
-
-  //test whether current byte code can be elimiated before compiling it
-  bool code_eliminate_prologue(Bytecodes::Code code);
-
-  //do byte codes information record after compiling of current byte code.
-  //So the CSE algorithm could use the recorded infomation and the result 
-  //created by current byte code to find new redundant byte codes.
-  void code_eliminate_epilogue(Bytecodes::Code code);
-
-  //if the multi-entry is caused by osr, we try to preserve the register 
-  //notation as much as possible.  
-  void record_passable_statue_of_osr_entry(int dest_bci);
-#else
-  bool code_eliminate_prologue(Bytecodes::Code code) {return false;}
-  void code_eliminate_epilogue(Bytecodes::Code code) {}
-  void record_passable_statue_of_osr_entry(int dest) {}
 #endif
 
   class PoppedValue : public Value {

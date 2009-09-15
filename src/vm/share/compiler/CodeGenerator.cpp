@@ -221,9 +221,6 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
     // Make sure it's possible to conform to this entry.
     frame()->conformance_entry(false);
 
-    //cse
-    frame()->wipe_notation_for_osr_entry();
-
     COMPILER_COMMENT(("OSR entry"));
     Label osr_entry;
     bind(osr_entry);

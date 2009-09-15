@@ -51,6 +51,20 @@ bool RegisterAllocator::is_mapping_something(const Assembler::Register reg) {
            state->conforming_frame()->is_mapping_something(reg) );
 }
 
+bool RegisterAllocator::is_mapping_location(const Assembler::Register reg) {
+  const CompilerState* state = _compiler_state;
+  return state->frame()->is_mapping_location(reg) ||
+         ( state->conforming_frame() != NULL &&
+           state->conforming_frame()->is_mapping_location(reg) );
+}
+
+bool RegisterAllocator::is_annotated(const Assembler::Register reg) {
+  const CompilerState* state = _compiler_state;
+  return state->frame()->is_annotated(reg) ||
+         ( state->conforming_frame() != NULL &&
+           state->conforming_frame()->is_annotated(reg) );
+}
+
 Assembler::Register RegisterAllocator::allocate( void ) {
   return allocate(_next_register_table, _next_allocate, _next_spill);
 }
@@ -238,9 +252,6 @@ RegisterAllocator::allocate(const Assembler::Register* next_table,
     reference(reg);
   }
 
-  //cse
-  wipe_notation_of(reg);
-
   // Return the register.
   return reg;
 }
@@ -258,9 +269,6 @@ Assembler::Register RegisterAllocator::allocate(Assembler::Register reg) {
     reference(reg);
     // Spill the register.
     spill(reg);
-
-    //cse
-    wipe_notation_of(reg);
   }
   // Return the register.
   return reg;
@@ -273,47 +281,51 @@ void RegisterAllocator::spill(Assembler::Register reg) {
   }
 }
 
-#define REFERENCE_AND_RETURN(reg)         reference(reg);\
-        return reg;
 Assembler::Register
 RegisterAllocator::allocate_or_fail(const Assembler::Register* next_table,
                                     Assembler::Register& next) {
-#if ENABLE_CSE
-  //try to free the free register without notation firstly.
-  Register next_with_notation = Assembler::no_reg;
-#endif
-
   // Use a round-robin strategy to allocate the registers.
+  // Select non-annotated register if available.
   const Register current = next;
+#if ENABLE_ANNOTATED_LAST_REG_ALLOCATION
+  Register next_annotated = Assembler::no_reg;
+#endif
   do {
     next = next_table[next];
     // Check to see whether or not the register is available for allocation.
-    if (!is_referenced(next) && !is_mapping_something(next)) {
-      // Setup a reference to the newly allocated register.
-
-#if ENABLE_CSE
-      if (!is_notated(next)) {
-        REFERENCE_AND_RETURN(next);
-      } else if ( next_with_notation == Assembler::no_reg) {
-        next_with_notation = next;
-      }
-#else
-      REFERENCE_AND_RETURN(next);
+    if (!is_referenced(next)) {
+      if (!is_mapping_location(next)) {
+        if (!is_annotated(next)) {
+          // Setup a reference to the newly allocated register.
+          reference(next);
+          return next;
+#if ENABLE_ANNOTATED_LAST_REG_ALLOCATION
+        } else if (next_annotated == Assembler::no_reg) {
+          next_annotated = next;
 #endif
-
+        }
+      }
     }
   } while(next != current);
-  // Couldn't allocate a register without spilling.
 
-#if ENABLE_CSE
-  if ( next_with_notation != Assembler::no_reg ) {
-    REFERENCE_AND_RETURN(next_with_notation);
+#if ENABLE_ANNOTATED_LAST_REG_ALLOCATION
+  if (next_annotated != Assembler::no_reg) {
+    next = next_annotated;
+
+    GUARANTEE(!is_mapping_location(next) && is_annotated(next), 
+              "Must be annotated register not mapping a location");
+    // Remove all annotations.
+    spill(next);
+    // Setup a reference to the newly allocated register.
+    reference(next);
+    return next;
   }
 #endif
 
+  // Couldn't allocate a register without spilling.
+
   return Assembler::no_reg;
 }
-#undef REFERENCE_AND_RETURN
 
 Assembler::Register
 RegisterAllocator::spill(const Assembler::Register* next_table,
@@ -330,7 +342,8 @@ RegisterAllocator::spill(const Assembler::Register* next_table,
       return next;
     }
   } while(next != current);
-  // Couldn't allocate a register without spilling.
+
+  // All registers are referenced.
   return Assembler::no_reg;
 }
 
@@ -349,87 +362,6 @@ bool RegisterAllocator::has_free(int count,
   // Couldn't allocate a register without spilling.
   return false;
 }
-
-#if ENABLE_CSE
-void RegisterAllocator::kill_by_locals(const jint local_index) {
-  const RegisterNotation *table = _register_notation_table;
-  if ( local_index < RegisterNotation::max_local_index ) {
-    jint mask = (1<<local_index);
-    for (Assembler::Register reg = Assembler::first_register;
-         reg <= Assembler::last_register;
-         reg = (Assembler::Register) ((int) reg + 1)) {
-      if ((_notation_map & (1<<reg)) &&
-          (table[reg].locals & mask) !=0) {
-        VERBOSE_CSE(("kill notation[%s] by local_index%d",
-                     register_name(reg), local_index));
-        wipe_notation_of(reg);
-      }
-    }
-  }
-}
-
-void RegisterAllocator::kill_by_fields(const jint constant_index) {
-  const RegisterNotation *table = _register_notation_table;
-  if ( constant_index < RegisterNotation::max_const_index ) {
-    jint mask = (1<<constant_index);
-    for (Assembler::Register reg = Assembler::first_register;
-         reg <= Assembler::last_register;
-         reg = (Assembler::Register) ((int) reg + 1)) {
-      if ((_notation_map & (1<<reg) ) &&
-          (table[reg].constants & mask) !=0) {
-          VERBOSE_CSE(("kill notation[%s] by put field%d",
-                       register_name(reg), constant_index));
-        wipe_notation_of(reg);
-      }
-    }
-  }
-}
-
-void RegisterAllocator::kill_by_array_type(const jint array_element_type) {
-  const RegisterNotation *table = _register_notation_table;
-  if (array_element_type != 0) {
-    for (Assembler::Register reg = Assembler::first_register;
-         reg <= Assembler::last_register;
-         reg = (Assembler::Register) ((int) reg + 1)) {
-      if ((_notation_map & (1<<reg)) &&
-          (table[reg].array_element_type & array_element_type) != 0 ) {
-        VERBOSE_CSE(("kill notation[%s] by array store%d",
-                     register_name(reg), array_element_type));
-        wipe_notation_of(reg);
-      }
-    }
-  }
-}
-
-#ifndef PRODUCT
-void RegisterAllocator::dump_notation() {
-  for (Assembler::Register reg = Assembler::first_register;
-    reg <= Assembler::last_register;
-    reg = (Assembler::Register) ((int) reg + 1)) {
-    dump_notation(reg);
-  }
-}
-
-void RegisterAllocator::dump_notation(const Register reg){
-  const RegisterNotation *table = _register_notation_table;
-  jint cur_notation;
-  cur_notation = table[reg].notation;
-  if (cur_notation != 0) {
-    jint offset = ( cur_notation >> 16 ) & 0xffff ;
-    jint length = cur_notation & 0xffff ;
-    COMPILER_COMMENT(("notation[%s]", register_name(reg)));
-    COMPILER_COMMENT(("    bci start  = %d, length = %d", offset, length));
-    COMPILER_COMMENT(("    local deps = 0x%08x", table[reg].locals));
-    COMPILER_COMMENT(("    field deps = 0x%08x", table[reg].constants));
-    COMPILER_COMMENT(("    array deps = 0x%08x", table[reg].array_element_type));
-    COMPILER_COMMENT(("    value type = 0x%08x", table[reg].type));
-    COMPILER_COMMENT(("    index      =  %s",   (_status_checked & (1<<reg))!=0 ?
-                                                "checked":"not checked"));
-  }
-}
-#endif
-#endif
-
 
 #ifndef PRODUCT
 void RegisterAllocator::print( void ) {
