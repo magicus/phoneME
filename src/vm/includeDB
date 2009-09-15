@@ -878,6 +878,7 @@ BytecodeCompileClosure.cpp       Frame.hpp
 BytecodeCompileClosure.cpp       Compiler.hpp
 BytecodeCompileClosure.cpp       JavaClassObj.hpp
 BytecodeCompileClosure.cpp       ConstantPool.hpp
+BytecodeCompileClosure.cpp       Location.hpp
 BytecodeCompileClosure.cpp       Signature.hpp
 BytecodeCompileClosure.cpp       VMEvent.hpp
 BytecodeCompileClosure.cpp       TypeArrayClass.hpp
