@@ -269,7 +269,7 @@ PRODUCT_CONST Bytecodes::BytecodeData Bytecodes::data[] = {
   def(monitorenter              , 1, "b"    , 0, ""      , NoPatching),
   def(monitorexit               , 1, "b"    , 0, ""      , NoPatching),
   def(wide                      , 0, ""     , 0, ""      , None),
-  def(multianewarray            , 4, "biic" , 0, ""      , Exceptions | NoPatching | NeedsFrameExARM | CanRedo),
+  def(multianewarray            , 4, "biic" , 0, ""      , Exceptions | NoPatching | NoInlining | CanRedo),
   def(ifnull                    , 3, "boo"  , 0, ""      , None),
   def(ifnonnull                 , 3, "boo"  , 0, ""      , None),
   def(goto_w                    , 5, "boooo", 0, ""      , NoFallThru),
