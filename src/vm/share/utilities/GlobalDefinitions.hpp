@@ -65,6 +65,7 @@
 #define BinaryLabel  JVMBinaryLabel
 #define BinaryObjectWriter  JVMBinaryObjectWriter
 #define BinaryROMWriter  JVMBinaryROMWriter
+#define Bits  JVMBits
 #define Bitset  JVMBitset
 #define BlockTypeFinder  JVMBlockTypeFinder
 #define BlockedThread  JVMBlockedThread
@@ -218,7 +219,7 @@
 #define JavaClass  JVMJavaClass
 #define JavaClassDesc  JVMJavaClassDesc
 #define JavaClassObj  JVMJavaClassObj
-#define JavaClassPatternMatcher  JVMJavaClassPatternMatcher
+#define JavaClassMethodPatternMatcher  JVMJavaClassMethodPatternMatcher
 #define JavaDebugger  JVMJavaDebugger
 #define JavaDesc  JVMJavaDesc
 #define JavaFrame  JVMJavaFrame
@@ -322,6 +323,7 @@
 #define QuickCatchStub  JVMQuickCatchStub
 #define QuickNativesMatcher  JVMQuickNativesMatcher
 #define ROM  JVMROM
+#define ROMBitSet  JVMROMBitSet
 #define ROMBundle  JVMROMBundle
 #define ROMHashtableManager  JVMROMHashtableManager
 #define ROMImage  JVMROMImage
@@ -607,7 +609,7 @@ const int WordsPerLong       = 2;    // Number of stack entries for longs
 const int oopSize            = sizeof(char*);
 const int wordSize           = sizeof(char*);
 const int longSize           = sizeof(jlong);
-const int jintSize         = sizeof(jint);
+const int jintSize           = sizeof(jint);
 
 const int BitsPerJavaInteger = 32;
 
@@ -1250,9 +1252,11 @@ extern jint global_check_count;
         _IGNORE_ME_(0
 
 #define JVM_ZCHECK(cond)                  , JVM_SINGLE_ARG_ZCHECK(cond)
+#define JVM_OZCHECK(obj)                  , JVM_SINGLE_ARG_ZCHECK((obj).not_null())
+#define JVM_SINGLE_ARG_OZCHECK(obj)         JVM_SINGLE_ARG_ZCHECK((obj).not_null())
 #define JVM_ZCHECK_0(cond)                , JVM_SINGLE_ARG_ZCHECK_0(cond)
-#define JVM_OZCHECK(obj)                  , JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
-#define JVM_SINGLE_ARG_OZCHECK(obj)         JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_OZCHECK_0(obj)                , JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_SINGLE_ARG_OZCHECK_0(obj)       JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
 
 // Single-argument signature versions of the JVM_CHECK and THROW macros below:
 #define JVM_SINGLE_ARG_CHECK \
@@ -1354,9 +1358,11 @@ extern jint global_check_count;
         _IGNORE_ME_(0
 
 #define JVM_ZCHECK(cond)                  JVM_SINGLE_ARG_ZCHECK(cond)
+#define JVM_OZCHECK(obj)                  JVM_SINGLE_ARG_ZCHECK(((obj).not_null()))
+#define JVM_SINGLE_ARG_OZCHECK(obj)       JVM_SINGLE_ARG_ZCHECK(((obj).not_null()))
 #define JVM_ZCHECK_0(cond)                JVM_SINGLE_ARG_ZCHECK_0(cond)
-#define JVM_OZCHECK(obj)                  JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
-#define JVM_SINGLE_ARG_OZCHECK(obj)       JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_OZCHECK_0(obj)                JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
+#define JVM_SINGLE_ARG_OZCHECK_0(obj)     JVM_SINGLE_ARG_ZCHECK_0(((obj).not_null()))
 
 // In product builds we minimize the amount of code these macros expand to,
 // forgoing syntax checks that are present otherwise (see non-product above)

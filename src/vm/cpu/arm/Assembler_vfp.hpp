@@ -55,21 +55,23 @@
               0x0a << 8 | 0x10);
    }
 
-   // dm <- rd rn
-   void fmdrr(Register sm, Register rd, Register rn VFP_COND
+   // sm, s(m+1) <- rd rn
+   void fmsrr(Register sm, Register rd, Register rn VFP_COND
      juint m = sm - s0;
+     GUARANTEE(m < 31, "Unpredictable instruction");
      jint  Fm = m >> 1;    // top 4 bits
      jint  M  = m & 0x01;  // bottom bits
      VFP_EMIT(cond << 28 | 0xc4 << 20 | rn << 16 | rd << 12 |
-              0x0b << 8 | M << 5 | 0x01 << 4 | Fm);
+              0x0a << 8 | M << 5 | 0x01 << 4 | Fm);
    }
-   // rd rn <- dm
-   void fmrrd(Register rd, Register rn, Register sm VFP_COND
+   // rd rn <- sm, s(m+1)
+   void fmrrs(Register rd, Register rn, Register sm VFP_COND
      juint m = sm - s0;
+     GUARANTEE(m < 31, "Unpredictable instruction");
      jint  Fm = m >> 1;    // top 4 bits
      jint  M  = m & 0x01;  // bottom bits
      VFP_EMIT(cond << 28 | 0xc5 << 20 | rn << 16 | rd << 12 |
-              0x0b << 8 | M << 5 | 0x01 << 4 | Fm);
+              0x0a << 8 | M << 5 | 0x01 << 4 | Fm);
    }
 
    void fmstat( SINGLE_ARG_VFP_COND

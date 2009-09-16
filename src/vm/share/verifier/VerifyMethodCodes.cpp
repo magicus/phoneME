@@ -209,8 +209,7 @@ void VerifyMethodCodes::check_not_final_override(Method *method JVM_TRAPS) {
   Symbol::Fast name = method->name();
   Signature::Fast signature = method->signature();
   Method::Fast superMethod = super_class().lookup_method(&name, &signature);
-  if (superMethod.not_null() && 
-      superMethod().is_final()) {
+  if (superMethod.not_null() && superMethod().is_final()) {
     InstanceClass::Raw holder = method->holder();
     InstanceClass::Raw superHolder = superMethod().holder();
     if (superMethod().can_access_by(&holder, &superHolder)) {

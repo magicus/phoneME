@@ -288,7 +288,7 @@ void Java_illegal_method_execution(JVM_SINGLE_ARG_TRAPS) {
 
 // native public void write(int b)
 void Java_com_sun_cldchi_io_ConsoleOutputStream_write() {
-  const jint value = KNI_GetParameterAsInt(1);
+  const char value = (char) KNI_GetParameterAsInt(1);
   tty->put(value);
 }
 
@@ -962,9 +962,7 @@ void Java_java_lang_Class_init9(JVM_SINGLE_ARG_TRAPS) {
 #else
     ic->remove_clinit();
 #endif
-#if USE_EMBEDDED_VTABLE_BITMAP
-    ic->update_vtable_bitmaps(JVM_SINGLE_ARG_CHECK);
-#endif
+    ic->update_vtable_bitmaps();
   }
 }
 

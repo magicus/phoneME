@@ -1843,6 +1843,10 @@ else
  GCC_WUNINITIALIZED = -Wuninitialized
 endif
 
+ifneq ($(IsTarget), true)
+override GCC_VERSION = $(HOST_GCC_VERSION)
+endif
+
 # for now GCC_VERSION is relevant only on i386
 GCC_POSTFIX_i386   = $(GCC_VERSION)
 GCC_POSTFIX        = $(GCC_POSTFIX_$(gcc_arch))

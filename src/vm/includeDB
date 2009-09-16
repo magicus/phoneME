@@ -125,6 +125,8 @@
 ErrorMessage.hpp                 Allocation.hpp
 ErrorMessage.cpp                 ErrorMessage.hpp
 
+Bits.hpp                         Allocation.hpp
+
 CharacterStream.hpp              Symbol.hpp
 CharacterStream.hpp              TypeArray.hpp
 CharacterStream.cpp              CharacterStream.hpp
@@ -1977,6 +1979,7 @@ Signature.cpp                    ObjectHeap_<iarch>.hpp
 JavaClass.hpp                    FarClass.hpp
 JavaClass.hpp                    ClassInfo.hpp
 JavaClass.hpp                    JavaClassDesc.hpp
+JavaClass.hpp                    ROM.hpp
 JavaClass.hpp                    SymbolTable.hpp
 JavaClass.hpp                    SystemDictionary.hpp
 JavaClass.cpp                    JavaClassObj.hpp
@@ -2027,6 +2030,7 @@ InstanceClass.hpp                ClassInfo.hpp
 InstanceClass.hpp                InstanceClassDesc.hpp
 InstanceClass.hpp                AccessFlags.hpp
 InstanceClass.hpp                Universe.hpp
+InstanceClass.hpp                Symbols.hpp
 #if ENABLE_ISOLATES
 InstanceClass.hpp                TaskMirror.hpp
 #endif
@@ -2306,7 +2310,7 @@ ROMWriter.hpp                    NativesTable.hpp
 ROMWriter.hpp                    Method.hpp
 ROMWriter.hpp                    InstanceClass.hpp
 ROMWriter.hpp                    ConstantPool.hpp
-ROMWriter.hpp                    ROM.hpp
+ROMWriter.hpp                    ROMOptimizer.hpp
 ROMWriter.hpp                    ObjArray.hpp
 ROMWriter.hpp                    TypeArray.hpp
 ROMWriter.hpp                    FilePath.hpp
@@ -2326,8 +2330,6 @@ ROMWriter.cpp                    BinaryROMWriter.hpp
 ROMWriter.cpp                    InstanceClass.hpp
 ROMWriter.cpp                    OopDesc.inline.hpp
 ROMWriter.cpp                    JarFileParser.hpp
-
-ROMWriter.hpp                    ROMOptimizer.hpp
 
 ROMWriter.cpp                    Method.hpp
 ROMWriter.cpp                    CompiledMethod.hpp
@@ -2443,8 +2445,17 @@ ROMTools.cpp                     String.hpp
 ROMTools.cpp                     ObjectHeap_<iarch>.hpp
 ROMTools.cpp                     OopDesc.inline.hpp
 
+ROMClassPatternMatcher.hpp       Universe.hpp
+ROMClassPatternMatcher.hpp       Symbol.hpp
+ROMClassPatternMatcher.cpp       ROMOptimizer.hpp
+
+ROMMethodPatternMatcher.hpp      ROMClassPatternMatcher.hpp
+ROMClassPatternMatcher.hpp       Method.hpp
+ROMMethodPatternMatcher.cpp      ROMOptimizer.hpp
+
 ROMOptimizer.hpp                 ObjectHeap_<iarch>.hpp
 ROMOptimizer.hpp                 ROMTools.hpp
+ROMOptimizer.hpp                 ROMMethodPatternMatcher.hpp
 ROMOptimizer.hpp                 TypeArray.hpp
 ROMOptimizer.hpp                 ObjArray.hpp
 ROMOptimizer.hpp                 InstanceClass.hpp
@@ -3175,7 +3186,14 @@ kvmcompat.cpp                   JavaClassObj.hpp
 kvmcompat.cpp                   ObjectHeap_<iarch>.hpp
 kvmcompat.cpp                   TypeArrayClass.hpp
 
+ROMBitSet.hpp                   Bits.hpp
+ROMBitSet.hpp                   Universe.hpp
+ROMBitSet.cpp                   ROMBitSet.hpp
+ROMBitSet.cpp                   InstanceClass.hpp
+ROMBitSet.cpp                   Stream.hpp
+
 ROMProfile.hpp                  ROMTools.hpp
+ROMProfile.hpp                  ROMBitSet.hpp
 ROMProfile.cpp                  ROMProfile.hpp
 ROMProfile.cpp                  ROMWriter.hpp
 

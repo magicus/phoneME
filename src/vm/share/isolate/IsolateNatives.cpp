@@ -318,12 +318,11 @@ void Java_com_sun_cldc_isolate_Isolate_setProfile(JVM_SINGLE_ARG_TRAPS) {
   TypeArray::Raw cstring = string().to_cstring(JVM_SINGLE_ARG_CHECK);  
   const char* profile_name = (const char*) cstring().data();
   const int profile_id = Universe::profile_id_by_name(profile_name);
-  isolate().set_profile_id(profile_id);
-
-  if (profile_id == Universe::DEFAULT_PROFILE_ID) {
+  if (profile_id == Universe::UNKNOWN_PROFILE_ID) {
     Throw::throw_exception(Symbols::java_lang_IllegalArgumentException() 
       JVM_THROW);
   }
+  isolate().set_profile_id(profile_id);
 #endif
 }
 

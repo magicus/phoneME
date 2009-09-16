@@ -871,6 +871,9 @@ public:
   void set_ ## name(obj_type* value) \
     { obj_field_put(name ## _offset(), (Oop*) value); \
   } \
+  void set_ ## name(OopDesc* value) \
+    { obj_field_put(name ## _offset(), value); \
+  } \
  EMPTY_PRIVATE 
 
 #define DEFINE_ACCESSOR_NUM(oop_class, num_type, name) \

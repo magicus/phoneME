@@ -42,15 +42,15 @@ static int _thread_creation_count;
 HANDLE_CHECK(Thread, is_jvm_thread())
 
 void Thread::append_pending_entry(EntryActivation* entry) {
-  EntryActivation::Raw current = pending_entries();
-  if (current.is_null()) {
+  OopDesc* next = pending_entries();
+  if (!next) {
     set_pending_entries(entry);
   } else {
-    EntryActivation::Raw next = current().next();
-    while (!next.is_null()) {
+    EntryActivation::Raw current;
+    do {
       current = next;
-      next    = current().next();
-    }
+      next = current().next();
+    } while (next);
     current().set_next(entry);
   }
 }
@@ -299,7 +299,7 @@ void Thread::lightweight_thread_exit() {
   if (!Scheduler::get_next_runnable_thread()->is_null()) {
     // Another thread will run, cleanup the task that may have just
     // terminated.
-    int thread_count = 0;
+    int thread_count;
     {
       Task::Raw task = Task::get_task(tid);
       thread_count = task().thread_count();
@@ -423,8 +423,8 @@ void Thread::start(JVM_SINGLE_ARG_TRAPS) {
   InstanceClass::Fast thread_class = receiver.blueprint();
 
   // Find the 'run' method to invoke
-  Method::Fast run_method = thread_class().lookup_method(Symbols::run_name(),
-                                                 Symbols::void_signature());
+  Method::Fast run_method =
+    thread_class().lookup_void_method(Symbols::run_name());
   if (run_method.is_null()) {
 #ifndef PRODUCT
     tty->print_cr("Error: run method not found in ");
@@ -436,7 +436,7 @@ void Thread::start(JVM_SINGLE_ARG_TRAPS) {
 
   // Setup execution entry
   EntryActivation::Fast run_entry =
-      Universe::new_entry_activation(&run_method, 1 JVM_CHECK);
+      Universe::new_entry_activation(&run_method, 1 JVM_ZCHECK(run_entry));
   run_entry().obj_at_put(0, &receiver);
   append_pending_entry(&run_entry);
 
