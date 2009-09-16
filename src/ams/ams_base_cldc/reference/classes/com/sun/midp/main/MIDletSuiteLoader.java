@@ -126,7 +126,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         com.sun.midp.installer.AutoTesterServiceInitializer.init(
                 internalSecurityToken);
 
-        // Intialize AMS services
+        // Initialize AMS services
         com.sun.midp.ams.service.AmsServiceInitializer.init(
                 internalSecurityToken);
     }

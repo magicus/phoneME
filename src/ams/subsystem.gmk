@@ -173,4 +173,6 @@ ifeq ($(USE_PUBLIC_AMS_API), true)
 # Public AMS API (for CMS)
 AMS_SERVICE_DIR = $(PROJECT_MIDP_DIR)/src/ams/ams_service
 include $(AMS_SERVICE_DIR)/lib.gmk
+else
+include $(SUBSYSTEM_AMS_DIR)/ams_service_stubs/lib.gmk
 endif

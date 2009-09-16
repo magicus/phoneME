@@ -39,12 +39,12 @@ public class MIDletProxyUtils {
      *
      * @param mp MIDletProxy
      */
-//    public static void maxPriority(MIDletProxy mp) {
-//        Isolate isolate = getIsolateFromId(mp.getIsolateId());
-//        if (isolate != null) {
-//            isolate.setPriority(Isolate.MAX_PRIORITY);
-//        }
-//    }
+    public static void maxPriority(MIDletProxy mp) {
+        Isolate isolate = getIsolateFromId(mp.getIsolateId());
+        if (isolate != null) {
+            isolate.setPriority(Isolate.MAX_PRIORITY);
+        }
+    }
 
     /**
      * Set the MIDletProxy to run with the Minimum Isolate Priority
@@ -76,7 +76,7 @@ public class MIDletProxyUtils {
      * @param id MIDletProxy's Isolate Id
      * @return MIDletProxy's Isolate
      */
-    static Isolate getIsolateFromId(int id) {
+    public static Isolate getIsolateFromId(int id) {
         if (id > 1) {
             Isolate[] isolate = Isolate.getIsolates();
             for (int i = 0; i < isolate.length; i++) {
