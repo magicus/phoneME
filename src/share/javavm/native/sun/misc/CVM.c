@@ -1870,7 +1870,9 @@ CNIsun_misc_CVM_ignoreInterruptedException(CVMExecEnv* ee,
                        eetop);
     targetEE = (CVMExecEnv *)CVMlong2VoidPtr(eetop);
 
-    targetEE->ignoreInterruptedException = CVM_TRUE;
+    if (targetEE != NULL) {
+        targetEE->ignoreInterruptedException = CVM_TRUE;
+    }
 
     CVMD_gcSafeExec(ee, {
         CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
