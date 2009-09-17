@@ -184,7 +184,7 @@ void ROMVector::initialize(jint capacity JVM_TRAPS) {
   set_compare_to_func((compare_to_func_type)&ROMVector::_compare_to);
 }
 
-void ROMVector::add_element(const Oop* oop JVM_TRAPS) {
+void ROMVector::add_element(Oop *oop JVM_TRAPS) {
   ObjArray array = this->array();
   if (size() == array.length()) {
     ObjArray new_array = Universe::new_obj_array(size() * 2 JVM_CHECK);

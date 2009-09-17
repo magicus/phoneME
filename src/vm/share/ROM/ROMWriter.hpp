@@ -572,10 +572,12 @@ public:
   virtual void write_constant_string(Symbol* /*s*/ JVM_TRAPS) 
                {JVM_IGNORE_TRAPS;}
   virtual void write_constant_string_ref(Symbol* /*s*/) {}
-  virtual void write_restricted_packages( void ) {}
+  virtual void write_restricted_packages(JVM_SINGLE_ARG_TRAPS)
+               {JVM_IGNORE_TRAPS;}
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-  virtual void write_hidden_classes( void ) {}
-  virtual void write_restricted_in_profiles( void ) const {}
+  virtual void write_hidden_classes(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
+  virtual void write_restricted_in_profiles() {}
+  virtual void write_hidden_in_profiles() {}
 #endif
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
 #if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES        
@@ -754,154 +756,6 @@ public:
   void finish();
 };
 
-
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-#define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)\
-   template(hidden_classes        )
-#else
-#define MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)
-#endif
-
-#if ENABLE_ISOLATES
-#define ISOLATES_MEMORY_COUNTERS_DO(template)\
-  template(task_mirror            )
-#else
-#define ISOLATES_MEMORY_COUNTERS_DO(template)
-#endif
-
-#define MEMORY_COUNTERS_DO(template)\
-  template(instance_class         )\
-  template(inited_class           )\
-  template(renamed_class          )\
-  template(static_fields          )\
-  template(vtable                 )\
-  template(itable                 )\
-  template(array_class            )\
-  template(class_info             )\
-  template(method                 )\
-  template(method_header          )\
-  template(method_body            )\
-  template(compiled_method        )\
-  template(native_method          )\
-  template(abstract_method        )\
-  template(virtual_method         )\
-  template(renamed_method         )\
-  template(renamed_abstract_method)\
-  template(clinit_method          )\
-  template(exception_table        )\
-  template(constant_pool          )\
-  template(stackmap               )\
-  template(longmaps               )\
-  template(symbol                 )\
-  template(encoded_symbol         )\
-  template(string                 )\
-  template(array1                 )\
-  template(array2s                )\
-  template(array2c                )\
-  template(array4                 )\
-  template(array8                 )\
-  template(obj_array              )\
-  template(meta                   )\
-  template(other                  )\
-  template(pers_handles           )\
-  template(symbol_table           )\
-  template(string_table           )\
-  template(variable_parts         )\
-  template(restricted_pkgs        )\
-  template(line_number_tables     )\
-  template(total                  )\
-  MULTIPLE_PROFILES_MEMORY_COUNTERS_DO(template)\
-  ISOLATES_MEMORY_COUNTERS_DO(template)
-
-class MemCounter {
-private:
-  enum {
-    #define COUNT_MEMORY_COUNTER(n) _##n,
-      MEMORY_COUNTERS_DO(COUNT_MEMORY_COUNTER)
-    #undef COUNT_MEMORY_COUNTER
-    number_of_memory_counters
-  };
-
-  static MemCounter _data[number_of_memory_counters];
-
-  static MemCounter& at(const int i) {
-    GUARANTEE(unsigned(i) < number_of_memory_counters, "Sanity");
-    return _data[i];
-  }
-
-  void print(Stream* stream, const char name[]);
-  void print_raw(Stream* stream, const char name[]);
-
-public:
-  int text_bytes, text_objects;
-  int data_bytes, data_objects;
-  int heap_bytes, heap_objects;  
-#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
-  int tm_bytes, tm_objects;  
-#endif
-  int all_bytes(void) const {
-    return text_bytes + data_bytes + heap_bytes;
-  }
-
-  int all_objects(void) const {
-    return text_objects + data_objects + heap_objects;
-  }
-
-  int dynamic_bytes(void) const {
-    return data_bytes + heap_bytes;
-  }
-
-  int dynamic_objects(void) const {
-    return data_objects + heap_objects;
-  }
-
-  void add_text(const int bytes) {
-    text_objects ++;
-    text_bytes += bytes;
-  }
-  void add_text_bytes(const int bytes) {
-    text_bytes += bytes;
-  }
-  void add_data(const int bytes) {
-    data_objects ++;
-    data_bytes += bytes;
-  }
-  void add_data_bytes(const int bytes) {
-    data_bytes += bytes;
-  }
-  void add_heap(const int bytes) {
-    heap_objects ++;
-    heap_bytes += bytes;
-  }
-  void add_heap_bytes(const int bytes) {
-    heap_bytes += bytes;
-  }
-#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES  
-  void add_tm(const int bytes) { 
-    tm_objects ++; 
-    tm_bytes += bytes; 
-  } 
-  void add_tm_bytes(const int bytes) { 
-    tm_bytes += bytes; 
-  } 
-#endif 
-
-  static void print_percent(Stream *stream, const char *name, 
-                            int objs, int bytes, int all_bytes);
-  static void print_percent(Stream *stream, int n, int total);
-  static void print_header(Stream *stream);
-  static void print_separator(Stream *stream);
-
-  static void print_all(Stream* stream);
-  static void reset(void) {
-    jvm_memset(&_data, 0, sizeof _data);
-  }
-
-#define DEFINE_MEM_COUNTER_ACCESSOR(n) static MemCounter& n(void) { return at(_##n); }
-  MEMORY_COUNTERS_DO(DEFINE_MEM_COUNTER_ACCESSOR)
-#undef DEFINE_MEM_COUNTER_ACCESSOR
-};
-
 class ObjectWriter : public RomOopVisitor {
 protected:
   int _offset;
@@ -912,11 +766,6 @@ protected:
   ROMOptimizer *optimizer;
   Method _saved_current_method;
   Method _saved_alt_method;
-
-#define DEFINE_MEM_COUNTER_ACCESSOR(n)\
-    static MemCounter& mc_##n(void) { return MemCounter::n(); }
-  MEMORY_COUNTERS_DO(DEFINE_MEM_COUNTER_ACCESSOR)
-#undef DEFINE_MEM_COUNTER_ACCESSOR
 
 public:
   ObjectWriter() : _method_variable_parts() {
@@ -1027,6 +876,130 @@ public:
 
   friend class SourceROMWriter;
 };
+
+class MemCounter {
+  static MemCounter* all_counters[41];
+  static int counter_number;  
+
+public:
+  const char * name;
+  int text_bytes, text_objects;
+  int data_bytes, data_objects;
+  int heap_bytes, heap_objects;  
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
+  int tm_bytes, tm_objects;  
+#endif
+  MemCounter(const char *n);
+
+  int all_bytes() {
+    return text_bytes + data_bytes + heap_bytes;
+  }
+
+  int all_objects() {
+    return text_objects + data_objects + heap_objects;
+  }
+
+  int dynamic_bytes() {
+    return data_bytes + heap_bytes;
+  }
+
+  int dynamic_objects() {
+    return data_objects + heap_objects;
+  }
+
+  void add_text(int bytes) {
+    text_objects ++;
+    text_bytes += bytes;
+  }
+  void add_text_bytes(int bytes) {
+    text_bytes += bytes;
+  }
+  void add_data(int bytes) {
+    data_objects ++;
+    data_bytes += bytes;
+  }
+  void add_data_bytes(int bytes) {
+    data_bytes += bytes;
+  }
+  void add_heap(int bytes) {
+    heap_objects ++;
+    heap_bytes += bytes;
+  }
+  void add_heap_bytes(int bytes) {
+    heap_bytes += bytes;
+  }
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES  
+  void add_tm(int bytes) { 
+    tm_objects ++; 
+    tm_bytes += bytes; 
+  } 
+  void add_tm_bytes(int bytes) { 
+    tm_bytes += bytes; 
+  } 
+#endif 
+  void reset() {
+    text_objects = 0;
+    data_objects = 0;
+    heap_objects = 0;
+    text_bytes   = 0;
+    data_bytes   = 0;
+    heap_bytes   = 0;
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
+    tm_bytes = tm_objects = 0;
+#endif  
+  }
+
+  void print(Stream *stream);
+  static void print_percent(Stream *stream, const char *name, 
+                            int objs, int bytes, int all_bytes);
+  static void print_percent(Stream *stream, int n, int total);
+  static void print_header(Stream *stream);
+  static void print_separator(Stream *stream);
+
+  static void reset_counters();
+};
+
+extern MemCounter mc_instance_class;
+extern MemCounter mc_inited_class;
+extern MemCounter mc_renamed_class;
+extern MemCounter mc_static_fields;
+extern MemCounter mc_vtable;
+extern MemCounter mc_itable;
+extern MemCounter mc_array_class;
+extern MemCounter mc_class_info;
+extern MemCounter mc_method;
+extern MemCounter mc_method_header;
+extern MemCounter mc_method_body;
+extern MemCounter mc_compiled_method;
+extern MemCounter mc_native_method;
+extern MemCounter mc_abstract_method;
+extern MemCounter mc_virtual_method;
+extern MemCounter mc_renamed_method;
+extern MemCounter mc_renamed_abstract_method;
+extern MemCounter mc_clinit_method;
+extern MemCounter mc_exception_table;
+extern MemCounter mc_constant_pool;
+extern MemCounter mc_stackmap;
+extern MemCounter mc_longmaps;
+extern MemCounter mc_symbol;
+extern MemCounter mc_encoded_symbol;
+extern MemCounter mc_string;
+extern MemCounter mc_array1;
+extern MemCounter mc_array2s;
+extern MemCounter mc_array2c;
+extern MemCounter mc_array4;
+extern MemCounter mc_array8;
+extern MemCounter mc_obj_array;
+extern MemCounter mc_meta;
+extern MemCounter mc_other;
+extern MemCounter mc_pers_handles;
+extern MemCounter mc_symbol_table;
+extern MemCounter mc_string_table;
+extern MemCounter mc_variable_parts;
+extern MemCounter mc_restricted_pkgs;
+extern MemCounter mc_task_mirror;
+extern MemCounter mc_line_number_tables;
+extern MemCounter mc_total;
 
 /*
  * Macros for quickly looping through the romizer hashtable

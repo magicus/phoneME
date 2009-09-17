@@ -77,12 +77,12 @@ class MethodDesc: public OopDesc {
 
  public:
   // Returns the object size
-  size_t object_size(void) const {
+  size_t object_size() const {
     return allocation_size(_code_size);
   }
 
   // Used for computing index in profiler table
-  int profile_hash(void) const { 
+  int profile_hash() { 
       return _code_size ^ x._max_execution_stack_count
                      ^ _signature_index ^ _name_index; 
   }
@@ -106,28 +106,28 @@ class MethodDesc: public OopDesc {
     variable_part()->set_execution_entry(entry);
   }
 
-  MethodVariablePart* variable_part(void) const {
+  MethodVariablePart *variable_part() {
     return _variable_part;
   }
   void relocate_variable_part(int delta);
 
-  jushort holder_id(void) const {
+  jushort holder_id() {
     return _holder_id;
   }
 
 #if  ENABLE_JVMPI_PROFILE 
   // get the method id
-  juint method_id(void) const {
+  juint method_id() {
    return _method_id;
   }
 #endif
 
-  jushort max_locals(void) const {
+  jushort max_locals() {
     return x._max_locals;
   }
 
   // This method is called a lot during class loading.
-  bool match(const OopDesc* name, const OopDesc* signature) const {
+  bool match(OopDesc* name, OopDesc* signature) {
     AllocationDisabler raw_pointers_used_in_this_function;
 
     address cp;
@@ -136,16 +136,17 @@ class MethodDesc: public OopDesc {
     } else {
       cp = (address)_constants;
     }
-    const OopDesc* const* const cpbase =
-      (const OopDesc* const*)(cp + ConstantPoolDesc::header_size());
+    OopDesc **cpbase = (OopDesc**)(cp + ConstantPoolDesc::header_size());
 
-    if( cpbase[_name_index] != name ) {
+    OopDesc *my_name = cpbase[_name_index];
+    if (my_name != name) {
       return false;
     }
 
-    // Empty signature means that any method with the same name will match
-    if( signature && cpbase[_signature_index] != signature ) {
-      return false;
+    OopDesc *my_sig = cpbase[_signature_index];
+    if (my_sig != signature) {
+      // Empty signature means that any method with the same name will match
+      return signature == NULL;
     }
 
     return true;

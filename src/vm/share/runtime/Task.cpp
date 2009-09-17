@@ -162,7 +162,7 @@ bool Task::init_first_task(JVM_SINGLE_ARG_TRAPS) {
   isolate_obj().set_memory_limit(TotalMemory);
   isolate_obj().assign_unique_id();
   ObjArray::Raw cp = Universe::make_strings_from_char_arrays(
-      task().app_classpath() JVM_OZCHECK_0(cp));
+      task().app_classpath() JVM_OZCHECK(cp));
   isolate_obj().set_app_classpath(&cp);
   isolate_obj().set_use_verifier(UseVerifier);
 
@@ -174,15 +174,6 @@ bool Task::init_first_task(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   // First task should have profile_id, which is set by JVM_SetProfile.
   task().set_profile_id(Universe::profile_id());
-#endif
-
-#if ENABLE_JAVA_DEBUGGER
-  {
-    JavaDebuggerContext::Raw context = 
-      JavaDebuggerContext::allocate(JVM_SINGLE_ARG_OZCHECK_0(context));
-    context().set_debug_mode(JavaDebugger::main_debug_mode());
-    task().set_debugger_context(&context);
-  }
 #endif
 
   return true;
@@ -204,39 +195,26 @@ ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
   Task::Fast task = allocate_task(id JVM_CHECK_0);
   TaskContext temporarily_switch_task(id);
 
-  {
-    OopDesc* array =
-      Universe::copy_strings_to_byte_arrays(isolate->hidden_packages()
-                                                JVM_ZCHECK_0(array));
-    task().set_hidden_packages(array);
-  }
-  {
-    OopDesc* array =
-      Universe::copy_strings_to_byte_arrays(isolate->restricted_packages()
-                                                JVM_ZCHECK_0(array));
-    task().set_restricted_packages(array);
-  }
-  {
-    OopDesc* array =
-      Universe::copy_strings_to_char_arrays(isolate->sys_classpath()
-                                                JVM_ZCHECK_0(array));
-    task().set_sys_classpath(array);
-  }
-  {
-    OopDesc* array =
-      Universe::copy_strings_to_char_arrays(isolate->app_classpath()
-                                                JVM_ZCHECK_0(array));
-    task().set_app_classpath(array);
-  }
-  {
-    OopDesc* array =
-      Universe::new_obj_array(ThreadObj::NUM_PRIORITY_SLOTS + 1
-                                  JVM_ZCHECK_0(array));
-    task().set_priority_queue(array);
-  }
+  ObjArray::Fast array;
+  array = Universe::copy_strings_to_byte_arrays(isolate->hidden_packages()
+                                                JVM_OZCHECK(array));
+  task().set_hidden_packages(array);
+  array = Universe::copy_strings_to_byte_arrays(isolate->restricted_packages()
+                                                JVM_OZCHECK(array));
+  task().set_restricted_packages(array);
+  array = Universe::copy_strings_to_char_arrays(isolate->sys_classpath()
+                                                JVM_OZCHECK(array));
+
+  task().set_sys_classpath(&array);
+  array = Universe::copy_strings_to_char_arrays(isolate->app_classpath()
+                                                JVM_OZCHECK(array));
+  task().set_app_classpath(&array);
+  array = Universe::new_obj_array(ThreadObj::NUM_PRIORITY_SLOTS + 1
+                                  JVM_OZCHECK(array));
+  task().set_priority_queue(&array);
   task().set_priority(isolate->priority());
   IsolateObj::Fast primary_isolate = isolate->duplicate(
-    JVM_SINGLE_ARG_OZCHECK_0(primary_isolate));
+    JVM_SINGLE_ARG_OZCHECK(primary_isolate));
   task().set_primary_isolate_obj(&primary_isolate);
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   task().set_profile_id(isolate->profile_id()); // Set current active profile
@@ -249,8 +227,7 @@ ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
 #if ENABLE_JAVA_DEBUGGER
   {
     JavaDebuggerContext::Raw context = 
-      JavaDebuggerContext::allocate(JVM_SINGLE_ARG_OZCHECK_0(context));
-    context().set_debug_mode(isolate->connect_debugger());
+      JavaDebuggerContext::allocate(JVM_SINGLE_ARG_OZCHECK(context));
     task().set_debugger_context(&context);
   }
 #endif
@@ -325,8 +302,10 @@ void Task::init_classes_inited_at_build(JVM_SINGLE_ARG_TRAPS) {
   const int len = list().length();
   InstanceClass::Fast klass;
 
-  for (int i = 0; i < len; i++) {    
-    klass = list().obj_at(i);    
+  for (int i=0; i<len; i++) {    
+    
+    klass = list().obj_at(i);
+    
     if (klass.not_null()) {
       klass().initialize(JVM_SINGLE_ARG_CHECK);
     }
@@ -336,7 +315,9 @@ void Task::init_classes_inited_at_build(JVM_SINGLE_ARG_TRAPS) {
 
 ReturnOop Task::allocate_task(int id JVM_TRAPS) {
   // Now, we've got everything to setup the new task atomically to others.
-  Task::Raw task = Universe::new_task(id JVM_OZCHECK_0(task));
+  UsingFastOops fast_oops;
+
+  Task::Fast task = Universe::new_task(id JVM_CHECK_0);
   task().set_status(TASK_NEW);
 
   task().set_task_id(id);
@@ -548,7 +529,7 @@ void Task::terminate_current_isolate(Thread *thread JVM_TRAPS) {
   JarFileParser::flush_caches();
 
 #if ENABLE_JAVA_DEBUGGER
-  {
+  if (_debugger_active) {
     UsingFastOops fastoops;
     Transport::Fast t = transport();
     if (!t.is_null()) {
@@ -610,9 +591,12 @@ bool Task::load_main_class(Thread *new_thread JVM_TRAPS) {
   klass().initialize(JVM_SINGLE_ARG_CHECK_0);
 
   // Find the method to invoke
-  Method::Fast main_method = klass().lookup_main_method();
+  Method::Fast main_method =
+    klass().lookup_method(Symbols::main_name(),
+                          Symbols::string_array_void_signature());
   if (main_method.is_null() || !main_method().is_static()) {
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0); // See CR 6270554.
+
   }
 
   JVM::development_prologue();
@@ -986,7 +970,7 @@ bool Task::is_restricted_package(const char *name, int pkg_len) {
 bool Task::is_hidden_class(Symbol* checking_name) {
   ObjArray::Raw hidden_packages_names = hidden_packages();
   if (hidden_packages_names.is_null()) return false;
-  const char* checking = checking_name->base_address();
+  char* checking = checking_name->base_address();
   int checking_len = checking_name->strrchr('/');
   if (checking_len <= 0) {
     checking_len = checking_name->length();
@@ -994,7 +978,7 @@ bool Task::is_hidden_class(Symbol* checking_name) {
 
   for (int i = 0; i < hidden_packages_names().length(); i++) {
     TypeArray::Raw pkg_value = hidden_packages_names().obj_at(i);
-    const char* pkg = (char*)pkg_value().base_address();
+    char* pkg = (char*)pkg_value().base_address();
     int pkg_len = pkg_value().length();    
     if (Universe::name_matches_pattern(checking, checking_len, pkg, pkg_len)) {
       return true;
@@ -1003,7 +987,6 @@ bool Task::is_hidden_class(Symbol* checking_name) {
   return false;  
 }
 #endif
-
 #ifndef PRODUCT
 
 void Task::iterate(OopVisitor* visitor) {

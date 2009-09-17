@@ -150,7 +150,7 @@ void Value::set_immediate_from_static_field(InstanceClass* ic, int offset) {
   TypeArray::Raw f = ic->fields();
   Oop::Raw object;
 
-  for (int index = 0; index < f().length(); index += Field::NUMBER_OF_SLOTS) {
+  for (int index = 0; index < f().length(); index += 5) {
     Field static_field(ic, index);
 
     if (static_field.offset() == offset) {

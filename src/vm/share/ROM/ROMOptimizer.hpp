@@ -103,29 +103,17 @@ private:
   int _embedded_strings_offset;
 };
 
-class ROMOptimizer {
-#if USE_SOURCE_IMAGE_GENERATOR
-  #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-    #define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)  \
-      template(ROMProfile, global_profile,  "")       \
-      template(ROMProfile, current_profile, "")       \
-      template(ROMVector,  profiles_vector, "")       \
-      template(TypeArray,  profile_hidden_bitmap, "")
-  #else 
-    #define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)
-  #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
-
-  #define SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
-    MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)          \
-    template(ROMVector, hidden_classes, "")           \
-    template(ROMVector, hidden_packages, "")          \
-    template(ROMVector, restricted_packages, "")
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
+#define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
+  template(ROMVector,profiles_vector, "") \
+  template(ROMProfile,current_profile, "") \
+  template(TypeArray,profile_hidden_bitmap, "")
 #else 
-  #define SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template)
-#endif // USE_SOURCE_IMAGE_GENERATOR
+#define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)
+#endif
 
 #define ROMOPTIMIZER_OOP_FIELDS_DO(template) \
-  SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
+  MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
   template(TypeArray,empty_short_array, "") \
   template(ObjArray, empty_obj_array, "") \
   template(ObjArray, init_at_build_classes, "Classes that should be " \
@@ -139,6 +127,8 @@ class ROMOptimizer {
   template(ObjArray, dont_rename_classes,   "Don't rename these classes," \
                                             "even if they belong to a hidden" \
                                             "package") \
+  template(ROMVector, hidden_packages, "") \
+  template(ROMVector, restricted_packages, "") \
   template(ObjArray ,romizer_original_class_name_list, "Original names of" \
                                             "classes we've renamed.") \
   template(ObjArray, romizer_original_method_info, "Original names/signatures"\
@@ -166,14 +156,22 @@ class ROMOptimizer {
                                       multiple classes")
 
 #if USE_SOURCE_IMAGE_GENERATOR
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
+#define MPS_SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
+  template(bool,         config_parsing_in_profile, "")
+#else
+#define MPS_SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template)
+#endif
+
 #define SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
-  template(int,                 if_level, "") \
-  template(int,                 false_if_level, "") \
-  template(int,                 profile_if_level, "") \
+  MPS_SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
+  template(bool,                config_parsing_active, "") \
   template(int,                 config_parsing_line_number, "") \
   template(const JvmPathChar *, config_parsing_file, "")  
 #else
 #define SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template)
+
 #endif
 
 #define ROMOPTIMIZER_INT_FIELDS_DO(template) \
@@ -199,9 +197,6 @@ class ROMOptimizer {
 #define ROMOPTIMIZER_DECLARE_OOP_SETTER(type, name, comment) \
   static void set_ ## name(type* value) { \
     _romoptimizer_oops[name ## _index] = value->obj(); \
-  } \
-  static void set_ ## name(OopDesc* value) { \
-    _romoptimizer_oops[name ## _index] = value; \
   }
 
 #define ROMOPTIMIZER_DECLARE_INT(type, name, comment) \
@@ -223,6 +218,7 @@ class ROMOptimizer {
 #define ROMOPTIMIZER_COUNT_FIELDS(type, name, comment) \
   name ## _index,
 
+class ROMOptimizer {
   // Count the number of integer and oop fields in the ROMOptimizer class
   enum {
     ROMOPTIMIZER_OOP_FIELDS_DO(ROMOPTIMIZER_COUNT_FIELDS)
@@ -234,35 +230,32 @@ class ROMOptimizer {
   };
   static OopDesc* _romoptimizer_oops[_number_of_oop_fields];
 
-// The order is important. Some optimizations depend on
-// the results of earlier optimizations. Do not change.
-#define ROMOPTIMIZER_STATES_DO(template)  \
-  template(MAKE_RESTRICTED_PACKAGES_FINAL )\
-  template(INITIALIZE_CLASSES             )\
-  template(QUICKEN_METHODS                )\
-  template(RESOLVE_CONSTANT_POOL          )\
-  template(REMOVE_REDUNDATE_STACKMAPS     )\
-  template(MERGE_STRING_BODIES            )\
-  template(RESIZE_CLASS_LIST              )\
-  template(REPLACE_EMPTY_ARRAYS           )\
-  template(INLINE_METHODS                 )\
-  template(OPTIMIZE_FAST_ACCESSORS        )\
-  template(REMOVE_DEAD_METHODS            )\
-  template(RENAME_NON_PUBLIC_SYMBOLS      )\
-  template(REMOVE_UNUSED_STATIC_FIELDS    )\
-  template(COMPACT_FIELD_TABLES           )\
-  template(REMOVE_UNUSED_SYMBOLS          )\
-  template(REWRITE_CONSTANT_POOLS         )\
-  template(COMPACT_TABLES                 )\
-  template(PRECOMPILE_METHODS             )\
-  template(REMOVE_DUPLICATED_OBJECTS      )\
-  template(MARK_HIDDEN_CLASSES            )
-
   enum {
-    #define DEFINE_ROMOPTIMIZER_STATE(n) STATE_##n,
-      ROMOPTIMIZER_STATES_DO(DEFINE_ROMOPTIMIZER_STATE)
-    #undef DEFINE_ROMOPTIMIZER_STATE
-    STATE_COUNT
+    // The order is important. Some optimizations depend on
+    // the results of earlier optimizations. Do not change.
+    STATE_MAKE_RESTRICTED_PACKAGES_FINAL =  1,
+    STATE_INITIALIZE_CLASSES             =  2,
+    STATE_QUICKEN_METHODS                =  3,
+    STATE_RESOLVE_CONSTANT_POOL          =  4,
+    STATE_REMOVE_REDUNDATE_STACKMAPS     =  5,
+    STATE_MERGE_STRING_BODIES            =  6,
+    STATE_RESIZE_CLASS_LIST              =  7,
+    STATE_REPLACE_EMPTY_ARRAYS           =  8,
+    STATE_INLINE_METHODS                 =  9,
+    STATE_OPTIMIZE_FAST_ACCESSORS        = 10,
+    STATE_REMOVE_DEAD_METHODS            = 11,
+    STATE_RENAME_NON_PUBLIC_SYMBOLS      = 12,
+    STATE_REMOVE_UNUSED_STATIC_FIELDS    = 13,
+    STATE_COMPACT_FIELD_TABLES           = 14,
+    STATE_REMOVE_UNUSED_SYMBOLS          = 15,
+    STATE_REWRITE_CONSTANT_POOLS         = 16,
+    STATE_COMPACT_TABLES                 = 17,
+    STATE_PRECOMPILE_METHODS             = 18,
+    STATE_REMOVE_DUPLICATED_OBJECTS      = 19,
+    STATE_MARK_HIDDEN_CLASSES            = 20,
+    STATE_DONE                           = 21,
+    STATE_COUNT,
+    STATE_FIRST_STATE                    = STATE_MAKE_RESTRICTED_PACKAGES_FINAL
   };
 
   static int _time_counters[STATE_COUNT];
@@ -293,13 +286,13 @@ public:
     set_state(state() + 1);
   }
   static bool is_active() {
-    return state() < STATE_COUNT;
+    return (STATE_FIRST_STATE <= state() && state() < STATE_DONE);
   }
   static bool is_done() {
-    return state() >= STATE_COUNT;
+    return (state() >= STATE_DONE);
   }
   static int number_of_states() {
-    return STATE_COUNT;
+    return STATE_DONE;
   }
   
   static void init_handles();
@@ -332,53 +325,25 @@ public:
     return romizer_alternate_constant_pool()->obj();
   }
 
-  void initialize_hashtables(ObjArray* symbol_table_input,
-                             ObjArray* string_table_input JVM_TRAPS) {
-    ROMHashtableManager hashtab_mgr;
-    hashtab_mgr.initialize(symbol_table_input, string_table_input JVM_CHECK);
-
-    *string_table()          = hashtab_mgr.string_table();
-    *symbol_table()          = hashtab_mgr.symbol_table();
-    *embedded_table_holder() = hashtab_mgr.embedded_table_holder();
-    _embedded_symbols_offset = hashtab_mgr.embedded_symbols_offset();
-    _embedded_strings_offset = hashtab_mgr.embedded_strings_offset();
-  }
-
+  void initialize_hashtables(ObjArray* symbol_table, ObjArray* string_table 
+                             JVM_TRAPS);
   static void trace_failed_quicken(Method *method, 
                                    JavaClass *dependency JVM_TRAPS);
   static void process_quickening_failure(Method *method);
   bool may_be_initialized(InstanceClass *klass);
-
-#if USE_SOURCE_IMAGE_GENERATOR
-  bool is_in_restricted_package (InstanceClass* klass) const;
-  bool is_in_hidden_package     (InstanceClass* klass) const;
-  bool is_hidden                (InstanceClass* klass) const;
-#else
-  bool is_in_restricted_package (InstanceClass* ) const {
-    // IMPL_NOTE: Monet: all classes can be considered as restricted
-    return false;
-  }
-  bool is_in_hidden_package(InstanceClass* ) const {
-    return false;
-  }
-  bool is_hidden(InstanceClass* ) const {
-    // IMPL_NOTE: Monet: all classes can be considered as restricted
-    return false;
-  }
-#endif // USE_SOURCE_IMAGE_GENERATOR
-
+  bool is_in_restricted_package(InstanceClass *klass);
+  bool is_in_hidden_package(InstanceClass *klass  JVM_TRAPS);
   ReturnOop original_fields(InstanceClass *klass, bool &is_orig);
   void set_classes_as_romized();
   bool is_overridden(InstanceClass *ic, Method *method);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool class_matches_classes_list(const InstanceClass* klass,
-                                         const ROMVector* patterns);
-  static bool class_matches_packages_list(const InstanceClass* klass,
-                                          const ROMVector* patterns);
+  bool class_matches_classes_list(InstanceClass *klass, ROMVector *patterns);
+  bool class_matches_packages_list(InstanceClass *klass, ROMVector *patterns
+                                   JVM_TRAPS);
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
-  void fill_interface_implementation_cache(void);
+  void fill_interface_implementation_cache(JVM_SINGLE_ARG_TRAPS);
   void forbid_invoke_interface_optimization(InstanceClass* cls, bool indirect_only);
   void set_implementing_class(int interface_id, int class_id, bool only_childs, bool direct);  
   enum {
@@ -392,78 +357,41 @@ private:
   int  get_max_alternate_constant_pool_count();
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
-  void set_profile( OopDesc* profile ) {
-    set_current_profile( profile );
-    set_hidden_classes( current_profile()->hidden_classes()  );
-    set_hidden_packages( current_profile()->hidden_packages() );
-    set_restricted_packages( current_profile()->restricted_packages() );
-  }
-
+  void create_profiles_hidden_bitmap(JVM_SINGLE_ARG_TRAPS);
   int find_profile(const char name[]);
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR
-  void set_global_profile( void ) {
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-    set_profile( global_profile()->obj() );
-#endif
-  }
-
-  bool is_in_profile( void ) const {
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-    return current_profile()->obj() != global_profile()->obj();
-#else
-    return false;
-#endif
-  }
-
-  void reset_false_if_level( void ) {
-    set_false_if_level(max_jint);
-  }
-  int if_level_save( void ) {
-    const int old_level = if_level();
-    set_if_level(0);
-    return old_level;
-  }
-  void if_level_restore( const int old_level ) {
-    if( if_level() != 0 ) {
-      config_error( "EndIf expected" );
-    }
-    set_if_level(old_level);
-  }
-
   void read_config_file(JVM_SINGLE_ARG_TRAPS);
   void read_config_file(const JvmPathChar* config_file JVM_TRAPS);
   void read_hardcoded_config(JVM_SINGLE_ARG_TRAPS);
-  void optimize_package_lists(JVM_SINGLE_ARG_TRAPS);
-  static void abort( void );
-  static void config_message_head( const char category[] );
-  static void config_message( const char category[], const char msg[] );
-  static void config_warning( const char msg[] );
-  static void config_warning_not_found( const char name[] );
-  static void config_error( const char msg[] );
-  bool validate_class_pattern( const char pattern[] ) const;
-  ReturnOop validate_package_pattern( const char pattern[] JVM_TRAPS ) const;
-  void process_config_line(char* config_line JVM_TRAPS);
+  void process_config_line(char * config_line JVM_TRAPS);
   void include_config_file(const char* config_file JVM_TRAPS);
-  static char parse_config(char* line, const char*& name, const char*& value);
-  void add_class_to_list(ObjArray* list, const char classname[] JVM_TRAPS);
-  void add_package_to_list(ROMVector* vector, Symbol* pkgname JVM_TRAPS);
-  void remove_packages(ROMVector* from, const Symbol* pattern);
-  void remove_packages(OopDesc* from_vector, const ROMVector* patterns);
-  bool class_list_contains(const ObjArray* list, const InstanceClass* klass);
-  void write_methods_log(ROMVector* log, const char name[],
-                                         const char prefix[]);
+  bool parse_config(char *line, const char**name, const char **value);
+  void add_class_to_list(ObjArray *list, const char *flag, const char *classname
+                         JVM_TRAPS);
+  void add_package_to_list(ROMVector *vector, const char *pkgname JVM_TRAPS);
+  bool class_list_contains(ObjArray *list, InstanceClass *klass);
+  void enable_quick_natives(const char* pattern JVM_TRAPS);
+  void write_quick_natives_log();
+
+  void enable_jni_natives(const char* pattern JVM_TRAPS);
+  void write_jni_natives_log();
   void update_jni_natives_table(JVM_SINGLE_ARG_TRAPS) {
     *jni_native_methods_table() = build_method_table(_jni_natives_log 
                                                      JVM_NO_CHECK_AT_BOTTOM);
   }
 
+  void enable_kvm_natives(const char* pattern JVM_TRAPS);
+  void write_kvm_natives_log();
   void update_kvm_natives_table(JVM_SINGLE_ARG_TRAPS) {
     *kvm_native_methods_table() = build_method_table(_kvm_natives_log 
                                                      JVM_NO_CHECK_AT_BOTTOM);
   }
   ReturnOop build_method_table(const ROMVector* methods JVM_TRAPS);
+#if USE_AOT_COMPILATION
+  void enable_precompile(const char pattern[] JVM_TRAPS);
+#endif
 
   bool dont_rename_class(InstanceClass *klass) {
     return class_list_contains(dont_rename_classes(), klass);
@@ -484,16 +412,15 @@ private:
 #endif
 
   void disable_compilation(const char* pattern JVM_TRAPS);
+  void write_disable_compilation_log();
   void allocate_empty_arrays(JVM_SINGLE_ARG_TRAPS);
   void make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS);
   void make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS);
   void make_virtual_methods_final(InstanceClass *ic, ROMVector *log_vector
                                   JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
-  static bool name_matches_pattern(const char name[], const int name_len,
-                                   const ROMVector* patterns);
-  static bool name_matches_pattern(const Symbol* s,
-                                   const ROMVector* patterns);
+  bool name_matches_patterns_list(Symbol* checking_name, 
+                                  ROMVector *patterns_list);
 #endif
 
   bool has_subclasses(InstanceClass *klass);
@@ -512,7 +439,7 @@ private:
 #endif
   void resize_class_list(JVM_SINGLE_ARG_TRAPS);
   void rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS);
-  int  rename_non_public_class(InstanceClass* klass);
+  int  rename_non_public_class(InstanceClass *klass JVM_TRAPS);
   int  rename_non_public_fields(InstanceClass *klass JVM_TRAPS);
   int  rename_non_public_methods(InstanceClass *klass JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
@@ -536,41 +463,35 @@ private:
 
   void replace_empty_arrays();
   void remove_unused_static_fields(JVM_SINGLE_ARG_TRAPS);
-
-  void mark_static_fieldrefs                      (ObjArray *directory);
-  void fix_static_fieldrefs                       (ObjArray *directory);
-  void mark_unremoveable_static_fields            (ObjArray* directory);
-  void compact_static_field_containers            (ObjArray *directory);
+  void mark_static_fieldrefs(ObjArray *directory);
+  void fix_static_fieldrefs(ObjArray *directory);
+  void mark_unremoveable_static_fields(ObjArray *directory JVM_TRAPS);
+  void compact_static_field_containers(ObjArray *directory);
   void fix_field_tables_after_static_field_removal(ObjArray *directory);
-
   void fix_one_field_table(InstanceClass *klass, TypeArray *fields, 
                            TypeArray *reloc_info);
   void compact_field_tables(JVM_SINGLE_ARG_TRAPS);
+  void compact_method_tablses(JVM_SINGLE_ARG_TRAPS);
   int compact_one_interface(InstanceClass* ic);
   void compact_interface_classes(JVM_SINGLE_ARG_TRAPS);
-  bool is_field_removable(InstanceClass *ic, int field_index, bool from_table);
+  bool is_field_removable(InstanceClass *ic, int field_index, bool from_table JVM_TRAPS);
   void compact_method_tables(JVM_SINGLE_ARG_TRAPS);
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
   bool is_method_removable_from_table(Method *method);
-  static bool is_member_reachable_by_apps(jint package_flags, 
+  bool is_member_reachable_by_apps(jint package_flags, 
                                    AccessFlags class_flags,
                                    AccessFlags member_flags);
-  static bool field_may_be_renamed(jint package_flags, AccessFlags class_flags,
-                                   AccessFlags member_flags, Symbol* name) {
-    return !is_member_reachable_by_apps(package_flags, class_flags, member_flags) &&
-           !Symbols::is_system_symbol(name);  
-  }
-
-  bool method_may_be_renamed      (InstanceClass* ic, Method* method);
-  bool is_method_reachable_by_apps(InstanceClass* ic, Method* method);
-  bool is_invocation_closure_root (InstanceClass *ic, Method *method);
-  bool is_in_public_itable        (InstanceClass* ic, Method* method);
-  bool is_in_public_vtable        (InstanceClass* ic, Method* method);
-
+  bool field_may_be_renamed(jint package_flags, AccessFlags class_flags,
+                            AccessFlags member_flags, Symbol *name);
+  bool method_may_be_renamed(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_method_reachable_by_apps(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_invocation_closure_root(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_in_public_itable(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_in_public_vtable(InstanceClass *ic, Method *method JVM_TRAPS);
   void remove_unused_symbols(JVM_SINGLE_ARG_TRAPS);
   bool is_symbol_alive(ObjArray *live_symbols, Symbol* symbol);
   ReturnOop get_live_symbols(JVM_SINGLE_ARG_TRAPS);
-  void record_live_symbol(ObjArray* live_symbols, OopDesc* symbol);
+  void record_live_symbol(ObjArray *live_symbols, Symbol* s);
   void scan_live_symbols_in_class(ObjArray *live_symbols, JavaClass *klass);
 #if ENABLE_ISOLATES
   void scan_all_symbols_in_class(ObjArray *live_symbols, JavaClass *klass);
@@ -620,26 +541,26 @@ private:
   ReturnOop get_subclass_list(jushort klass_id);
   //ENDOF SUBCLASS CACHE ZONE
 
+  jint get_package_flags(InstanceClass *ic JVM_TRAPS) {
+    bool hidden = is_in_hidden_package(ic JVM_CHECK_0);
+    if (hidden) {
+      return HIDDEN_PACKAGE;
+    } else if (is_in_restricted_package(ic)) {
+      return RESTRICTED_PACKAGE;
+    } else {
+      return UNRESTRICTED_PACKAGE;
+    }
+  }
+
   enum {
     UNRESTRICTED_PACKAGE = 0,
     RESTRICTED_PACKAGE   = 1,
     HIDDEN_PACKAGE       = 2
   };
-
   // used by ROMOptimizer::remove_unused_static_fields
   enum {
     DEAD_FIELD = 0x10000
   };
-
-  jint get_package_flags(InstanceClass* klass) {
-    if( is_in_hidden_package(klass) ) {
-      return HIDDEN_PACKAGE;
-    }
-    if( is_in_restricted_package(klass) ) {
-      return RESTRICTED_PACKAGE;
-    }
-    return UNRESTRICTED_PACKAGE;
-  }
 
   class MethodIterator : public ObjectHeapVisitor
   {
@@ -714,7 +635,33 @@ private:
   };
 
   friend class MethodIterator;
-  friend class ROMClassPatternMatcher;
+};
+
+class JavaClassPatternMatcher {
+  Symbol _class, _method, _signature;
+  bool   _as_package;
+  bool   _has_wildcards;
+private:
+  bool match(Symbol* pattern, Symbol* symbol);
+
+  void initialize(const char* pattern JVM_TRAPS);
+  void initialize_as_package(Symbol* class_name JVM_TRAPS);
+
+  bool match_class(Symbol* symbol);
+  bool match_method(Symbol* name, Symbol* signature);
+
+  void quick_match(JVM_SINGLE_ARG_TRAPS);
+  void wildcard_match(JVM_SINGLE_ARG_TRAPS);
+public:
+  /**
+   * Override this method to handle all matching methods.
+   */
+  virtual void handle_matching_method(Method* /*method*/ JVM_TRAPS) {
+    JVM_IGNORE_TRAPS;
+    SHOULD_NOT_REACH_HERE();
+  }
+
+  void run(const char *pattern JVM_TRAPS);
 };
 
 #endif // ENABLE_ROM_GENERATOR

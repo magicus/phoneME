@@ -279,25 +279,13 @@ public:
   /**
    * Adds a new element into the ROMVector.
    */
-  void add_element(const Oop* oop JVM_TRAPS);
+  void add_element(Oop *oop JVM_TRAPS);
 
   /**
    * Adds a new element into the ROMVector without expanding the internal
    * array. This must be called when the ROMVector is not completely full.
    */
   void add_no_expand(Oop *oop);
-
-  /**
-   * Remove element from the ROMVector.
-   */
-  void remove_element_at(const jint index) {
-    const int last = size()-1;
-    GUARANTEE(index <= last, "sanity");
-    ObjArray::Raw array = this->array();
-    array().obj_at_put( index, array().obj_at( last ) );
-    array().obj_at_clear(last);
-    set_size(last);
-  }
 
   /**
    * Forget about all objects that have been stored in the ROMVector

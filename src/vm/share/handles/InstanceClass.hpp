@@ -33,7 +33,7 @@ class InstanceClass: public JavaClass {
  public:
   HANDLE_DEFINITION_CHECK(InstanceClass, JavaClass);
 
-  static int next_offset(void) {
+  static int next_offset() {
     return FIELD_OFFSET(JavaClassDesc, instance._next);
   }
 
@@ -42,11 +42,14 @@ class InstanceClass: public JavaClass {
   // routines are all public.
 
    // Unimplemented stuff...
-  void set_is_synthetic(void) {
+  void set_is_synthetic() {
   }
 
+  // Returns the package Name of a Class.
+  ReturnOop package_name(JVM_SINGLE_ARG_TRAPS);
+
   // Next InstanceClass with the same hash value
-  ReturnOop next(void) const {
+  ReturnOop next() const {
     return obj_field(next_offset());
   }
 
@@ -55,30 +58,28 @@ class InstanceClass: public JavaClass {
   }
 
 
-  static int header_size(void) { return sizeof(InstanceClassDesc); }
+  static int header_size() { return sizeof(InstanceClassDesc); }
 
   // oop maps
-  size_t first_nonstatic_map_offset(void) const {
+  size_t first_nonstatic_map_offset() const {
     return embedded_oop_map_start();
   }
-  size_t first_static_map_offset(void) const;
-  jubyte oop_map_at(const size_t offset) const {
+  size_t first_static_map_offset() const;
+  jubyte oop_map_at(size_t offset) const {
     return ubyte_field(offset);
   }
-  size_t nonstatic_map_size(void) const;
-  size_t last_nonstatic_oop_offset(void) const;
-  size_t static_map_size(void) const;
+  size_t nonstatic_map_size() const;
+  size_t last_nonstatic_oop_offset() const;
+  size_t static_map_size() const;
 
   // Does this InstanceClass object embed a static field that's an oop?
   // (always false in MVM).
-  bool has_embedded_static_oops(void) const {
+  bool has_embedded_static_oops() const {
     return (oop_map_at(first_static_map_offset()) != OopMapSentinel);
   }
 
   ReturnOop lookup_method(Symbol* name, Symbol* signature,
-                          const bool non_static_only = false) const;
-  ReturnOop lookup_void_method(Symbol* name) const;
-  ReturnOop lookup_main_method(void) const;
+                          const bool non_static_only = false);
 
   // Returns the Method.
   // interface_class_id = class_id of interface that declares the method
@@ -137,10 +138,7 @@ class InstanceClass: public JavaClass {
 #endif
 
   ReturnOop find_local_method(Symbol* name, Symbol* signature,
-                              const bool non_static_only = false) const;
-  ReturnOop find_local_void_method(Symbol* name) const;
-  ReturnOop find_local_default_constructor(void) const;
-  ReturnOop find_local_class_initializer(void) const;
+                              const bool non_static_only = false);
 
   static ReturnOop find_method(ObjArray* class_methods, Symbol* name,
                      Symbol* signature, const bool non_static_only = false);
@@ -157,27 +155,23 @@ class InstanceClass: public JavaClass {
 
   void check_and_initialize_itable(JVM_SINGLE_ARG_TRAPS);
 
-  void set_verified(void) const;
-  bool is_verified (void) const;
+  void set_verified();
+  bool is_verified();
+  void set_initialized();
 
-  void set_initialized(void);
-  bool is_initialized(void) const;
+  bool is_initialized();
 
   void clinit(JVM_SINGLE_ARG_TRAPS);
 
   bool itable_contains(InstanceClass* instance_class);
 
-  void initialize_static_fields(void);
-  void initialize_static_fields(Oop * o);
-
+  void initialize_static_fields();
+void initialize_static_fields(Oop * o);
+#if ENABLE_COMPILER && ENABLE_INLINE
   // Track all the methods overridden by this class and update vtable bitmaps
   // in all super classes accordingly
-  void update_vtable_bitmaps(void) const
-#if USE_EMBEDDED_VTABLE_BITMAP
-    ;
-#else
-    {}
-#endif // USE_EMBEDDED_VTABLE_BITMAP
+  void update_vtable_bitmaps(JVM_SINGLE_ARG_TRAPS) const;
+#endif
 
   // perform class initialization
   void bootstrap_initialize(JVM_SINGLE_ARG_TRAPS);
@@ -218,16 +212,14 @@ class InstanceClass: public JavaClass {
   // renamed/removed by the romizer.
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR \
       ||ENABLE_JVMPI_PROFILE
-  ReturnOop original_name(void) const;
-  ReturnOop original_fields(void) const;
+  ReturnOop original_name();
+  ReturnOop original_fields();
 #else
-  ReturnOop original_name(void) const { return name();  }
-  ReturnOop original_fields(void) const { return fields();}
+  ReturnOop original_name()   {return name();}
+  ReturnOop original_fields() {return fields();}
 #endif
 
-  bool is_renamed(void) const {
-    return Symbols::unknown()->equals(name());
-  }
+  bool is_renamed();
 
 #if USE_EMBEDDED_VTABLE_BITMAP
  private:
@@ -296,7 +288,7 @@ class InstanceClass: public JavaClass {
   void set_is_method_overridden(int vtable_index);
 
   // Returns if the specified vtable entry is overridden in any subclass
-  bool is_method_overridden(const int vtable_index) const;
+  bool is_method_overridden(int vtable_index) const;
 #endif
 
  private:

@@ -170,6 +170,7 @@ class TypeArray: public Array {
                          jint scale);
 
   // Operations for char array
+  // Tells whether the char array includes c
   void *data() {
     return ((ArrayDesc*)obj())->data();
   }

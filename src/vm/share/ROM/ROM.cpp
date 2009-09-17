@@ -505,15 +505,33 @@ void ROM::initialize_alternate_constant_pool(JVM_SINGLE_ARG_TRAPS) {
 
 #endif //!PRODUCT || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 
-bool ROM::name_matches_patterns(const char* name, const int name_len,
-                                const char* patterns) {
-  GUARANTEE(patterns != NULL, "Sanity");
-  for( int len; (len = *(unsigned char*)patterns++) != 0; patterns += len ) {
-    if( Universe::name_matches_pattern(name, name_len, patterns, len) ) {
-      return true;
+bool ROM::is_restricted_package(const char *name, int pkg_length) {
+
+  char *rp = (char*)&_rom_restricted_packages[0];
+  char *rp2;
+
+  while (*rp) {
+    const int len = *((unsigned char*)rp); // may be up to 255;
+    rp ++;
+   
+    //Checking for the asterisk case...
+    rp2 = rp;
+    rp2 += (len - 2);
+    if(jvm_strncmp(rp2, "/" "*", 2) == 0) {
+      //If foo.bar.* has been hidden, we don't want classes in 
+      // foo.* to be hidden.
+      if(pkg_length < (len-2)) return false;
+      if(jvm_strncmp(rp, name, pkg_length) == 0) {
+        return true;
+      }
     }
+
+    if( len == pkg_length && jvm_memcmp(rp, name, pkg_length) == 0 ) {
+      return true; // we have a match. The package is restricted.
+    }
+    rp += len;
   }
-  return false;  
+  return false;
 }
 
 void ROM::relocate_data_block( void ) {
@@ -746,28 +764,30 @@ ReturnOop ROM::compiled_method_from_address(const address addr) {
 #endif // ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
 
 #if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
-ReturnOop ROM::get_original_class_name(const ClassInfo *clsinfo) {
+ReturnOop ROM::get_original_class_name(ClassInfo *clsinfo) {
   if (!GenerateROMImage && _original_class_name_list == NULL) {
     return Symbols::unknown()->obj();
   }
 
   GUARANTEE(GenerateROMImage || UseROM, "sanity");
   //  GUARANTEE(clsinfo->access_flags().is_romized(), "must be romized!");
-  const int class_id = clsinfo->class_id();
+  int class_id = clsinfo->class_id();
 
 #if ENABLE_ROM_GENERATOR
   if (ROMWriter::is_active()) {
     // try romizer first
     ReturnOop name = ROMOptimizer::original_name(class_id);
-    if( name != NULL ) {
+    if (name != NULL) {
       return name;
     }
   }
 #endif
+  if (_original_class_name_list == NULL) {
+    return Symbols::unknown()->obj();
+  }
 
-  ObjArray::Raw name_list = _original_class_name_list;
-  return name_list.is_null() ? Symbols::unknown()->obj()
-                             : name_list().obj_at( class_id );
+  ObjArray::Raw name_list = _original_class_name_list;  
+  return name_list().obj_at(class_id);
 }
 
 ReturnOop ROM::get_original_method_info(const Method *method) {
@@ -819,9 +839,9 @@ ReturnOop ROM::get_original_method_name(const Method *method) {
 
 
 // The result is NULL if this class doesn't have renamed fields.
-ReturnOop ROM::get_original_fields(const InstanceClass* ic) {
+ReturnOop ROM::get_original_fields(InstanceClass *ic) {
   ClassInfo::Raw info = ic->class_info();
-  const int class_id = info().class_id();
+  int class_id = info().class_id();
 
 #if ENABLE_ROM_GENERATOR
   if (ROMWriter::is_active()) {
@@ -832,18 +852,22 @@ ReturnOop ROM::get_original_fields(const InstanceClass* ic) {
   }
 #endif
 
-  if( !ic->access_flags().is_romized() ) {
+  if (_original_fields_list == NULL) {
+    return NULL;
+  }
+
+  if (!ic->access_flags().is_romized()) {
     return NULL;
   }
 
   ObjArray::Raw orig_list = _original_fields_list;
-  if( orig_list.is_null() || class_id >= orig_list().length() ) {
+  if (class_id >= orig_list().length()) {
     return NULL;
   }
   return orig_list().obj_at(class_id);
 }
 
-ReturnOop ROM::alternate_constant_pool(const InstanceClass* klass) {
+ReturnOop ROM::alternate_constant_pool(InstanceClass *klass) {
   Oop::Raw fields;
 
 #if ENABLE_ROM_GENERATOR
@@ -1209,19 +1233,57 @@ void ROM::ROM_print_hrticks(void print_hrticks(const char *name,
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-bool ROM::is_hidden_class_in_profile(const jushort class_id) {  
-  const int index = class_id / BitsPerByte - _rom_profile_bitmap_row_base;
-  const int shift = class_id % BitsPerByte;
-
-  if (unsigned(index) >= unsigned(_rom_profile_bitmap_row_size)) {
+bool ROM::is_restricted_package_in_profile(const char *name, int name_len) {
+  const int current_profile_id = Universe::current_profile_id();  
+  if (current_profile_id == Universe::DEFAULT_PROFILE_ID) {
     return false;
   }
 
-  const int profile_id = Universe::current_profile_id();  
-  GUARANTEE(unsigned(profile_id) < unsigned(_rom_profiles_count), "Sanity");  
+  GUARANTEE(current_profile_id >= 0 && 
+            current_profile_id < _rom_profiles_count, "Sanity");
+
+  const char** profile_wildcards = 
+    _rom_profiles_restricted_packages[current_profile_id];  
+  GUARANTEE(profile_wildcards != NULL, "Sanity");
+
+  int ind = 0;
+  const char* wildcard = profile_wildcards[ind++];
+  while (wildcard != NULL) {
+    int wildcard_len = jvm_strlen(wildcard);
+    const bool name_matches_pattern = 
+      Universe::name_matches_pattern(name, name_len,
+        wildcard, wildcard_len);
+    if (name_matches_pattern) {
+      return true;
+    }
+    wildcard = profile_wildcards[ind++];
+  }
+  return false;  
+}
+
+bool ROM::class_is_hidden_in_profile(const JavaClass* const jc) {  
+  GUARANTEE((jc != NULL) && jc->not_null(), "Sanity");
+  const int profile_id = Universe::current_profile_id();
   
-  const int i = profile_id * _rom_profile_bitmap_row_size + index;
-  return (_rom_hidden_classes_bitmaps[i] >> shift) & 1;
+  if (profile_id == Universe::DEFAULT_PROFILE_ID) {
+    return false;
+  }
+  GUARANTEE(profile_id >= 0 && 
+            profile_id < _rom_profiles_count, "Sanity");
+  
+  const jushort class_id = jc->class_id();
+  if (class_id >= _rom_profile_bitmap_row_size * BitsPerByte) {
+    return false;
+  }
+  
+  const int ind = 
+    profile_id * _rom_profile_bitmap_row_size + class_id / BitsPerByte;
+  
+  const int shift = (class_id % BitsPerByte);
+  if (((_rom_hidden_classes_bitmaps[ind] >> shift) & 1) == 1) {    
+    return true;        
+  }
+  return false;
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 

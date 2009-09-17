@@ -501,13 +501,10 @@
 //                                          used for MVM GC tracing
 //
 // ENABLE_MULTIPLE_PROFILES_SUPPORT     0,0 Add support for using multiple
-//                                          profiles that may provide mutually
+//                                          profiles that may provide multually
 //                                          exclusive APIs.  Allows the hiding
 //                                          of certain classes under
 //                                          a specific profile.
-//
-// ENABLE_MEMBER_HIDING                 0,0 Add support to hide individual class
-//                                          and interface members.
 //
 // ENABLE_JVMPI_PROFILE                 0,0 To support JVMPI profiler.
 //

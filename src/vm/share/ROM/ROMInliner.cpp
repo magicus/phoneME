@@ -634,7 +634,8 @@ bool ROMInliner::try_inline_empty_constructor(Method* caller,
     return false;
   }
 
-  if (!callee->is_default_constructor()) {
+  if (!callee->match(Symbols::object_initializer_name(),
+                     Symbols::void_signature())) {
     return false;
   }
 

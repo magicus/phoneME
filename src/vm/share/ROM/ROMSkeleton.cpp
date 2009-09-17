@@ -129,32 +129,28 @@ extern "C" {
 #endif // ENABLE_APPENDED_CALLINFO
 
 #if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
-  const int               _rom_system_symbols_src[]       = {0};
+  const int              _rom_system_symbols_src[]        = {0};
   const int               _rom_original_class_info_count  = 0;
   const OriginalClassInfo _rom_original_class_info[] = {
     {(const char*)0x0,
      0, (const OriginalMethodInfo *)0x0, 0,
      (const OriginalFieldInfo *)0x0, },
   };
-  const char* const        _rom_alternate_constant_pool_src[] = {0};
-  const int                _rom_alternate_constant_pool_count = 0;
-  const int*  const        _rom_text_klass_table[]            = {0};
-  const int                _rom_text_klass_table_size         = 0;
+  const char*             _rom_alternate_constant_pool_src[] = {0};
+  const int               _rom_alternate_constant_pool_count = 0;
+  const int*              _rom_text_klass_table[]            = {0};
+  const int               _rom_text_klass_table_size         = 0;
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  const int                _rom_profile_bitmap_row_base       = 0;
-  const int                _rom_profile_bitmap_row_size       = 0;
-  const int                _rom_profiles_count                = 1;
-  const unsigned char      _rom_hidden_classes_bitmaps[]      = {0};
-
-  const char* const        _rom_profiles_names[] = { "DEFAULT_PROFILE", 0 };
-
-  const char _rom_restricted_packages_0[] = {0}; // DEFAULT_PROFILE
-  const char* const _rom_profiles_restricted_packages[] = {
-    _rom_restricted_packages_0,
-  };
+  const int               _rom_profile_bitmap_row_size       = 0;
+  const int               _rom_profiles_count                = 0;
+  const char*             _rom_profiles_names[]              = {0};
+  const unsigned char     _rom_hidden_classes_bitmaps[]      = {0};
+  const unsigned char     _rom_profiles_hidden_packages[]    = {0};
+  const char**            _rom_profiles_restricted_packages[]= {0};
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
 
   const int _ROM_LINKCHECK_HLE  = 0;
   const int _ROM_LINKCHECK_MFFL = 0;

@@ -2812,7 +2812,7 @@ void VirtualStackFrame::dump(bool as_comment) {
           Assembler::Register reg_lo = value.lo_register();
 #if USE_COMPILER_LITERALS_MAP
 #if ENABLE_ARM_VFP
-          if( value.type() == T_DOUBLE && Assembler::is_vfp_register(reg_lo) ) {
+          if( value.type() == T_DOUBLE ) {
             Disassembler::vfp_reg_name( 'd', reg_lo - Assembler::s0, p );
           } else
 #endif
@@ -2829,7 +2829,7 @@ void VirtualStackFrame::dump(bool as_comment) {
           Assembler::Register reg = value.lo_register();
 #if USE_COMPILER_LITERALS_MAP
 #if ENABLE_ARM_VFP
-          if( value.type() == T_FLOAT && Assembler::is_vfp_register(reg) ) {
+          if( value.type() == T_FLOAT ) {
             Disassembler::vfp_reg_name( 's', reg - Assembler::s0, p );
           } else
 #endif

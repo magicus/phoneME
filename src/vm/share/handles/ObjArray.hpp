@@ -42,14 +42,14 @@ class ObjArray: public Array {
   }
 
   void obj_at_put(int index, OopDesc* value);
-  void obj_at_put(int index, const Oop* value) { 
+  void obj_at_put(int index, Oop* value) { 
     obj_at_put(index, value->obj());
   }
 
   // Do not invoke write barrier during GC
   // Please use with extreme caution
   void smart_obj_at_put(int index, OopDesc* value);
-  void smart_obj_at_put(int index, const Oop* value) { 
+  void smart_obj_at_put(int index, Oop* value) { 
     smart_obj_at_put(index, value->obj());
   }
 

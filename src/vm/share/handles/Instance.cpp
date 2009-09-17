@@ -43,7 +43,7 @@ static void iterate_fields(InstanceClass* ic, OopVisitor* visitor,
     int next_field_index = -1;
     int min_offset = 0x7fffffff;
 
-    for(int index = 0; index < fields.length(); index += Field::NUMBER_OF_SLOTS) {
+    for(int index = 0; index < fields.length(); index += 5) {
       OriginalField f(ic, index);
       if (!f.is_static() &&
           f.offset() > last_field_offset && 

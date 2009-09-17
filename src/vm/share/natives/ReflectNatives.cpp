@@ -44,7 +44,7 @@ static inline jfieldID find_instance_field(InstanceClass* ic, String* name,
   // class_list that is not the current running one.
   //  Symbol::Fast s = TypeSymbol::parse("Ljava/lang/Object" JVM_CHECK_0);
 
-  for (int index = 0; index < fields().length(); index += Field::NUMBER_OF_SLOTS) {
+  for (int index = 0; index < fields().length(); index += 5) {
     Field f(ic, index);
     if ((f.is_static() == is_static)) { // && (f.type() == bt)) {
       Symbol::Raw name = f.name();

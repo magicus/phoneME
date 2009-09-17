@@ -37,19 +37,19 @@ class Symbol: public Oop {
   HANDLE_DEFINITION_CHECK(Symbol, Oop);
   ~Symbol() {}
   static int length_offset() { return FIELD_OFFSET(SymbolDesc, _length); }
-  jushort length(void) const { return ushort_field(length_offset()); }
+  jushort length() const { return ushort_field(length_offset()); }
 
  public:
   // To avoid endless lists of friends the static offset computation
   // routines are all public.
-  static int base_offset(void) { return SymbolDesc::header_size(); }
+  static int base_offset() { return SymbolDesc::header_size(); }
 
-  utf8 utf8_data(void) const {
+  utf8 utf8_data() {
     return symbol()->utf8_data();
   }
 
   // The address of the first byte of the string held in this Symbol
-  const char* base_address(void) const {
+  char * base_address() const {
     return ((char*)obj()) + base_offset();
   }
 
@@ -75,17 +75,12 @@ class Symbol: public Oop {
   static ReturnOop copy_string_to_byte_array(OopDesc* string, bool slashify JVM_TRAPS);
 
   // Returns unbounded equality hash value
-  juint hash(void) const;
+  juint hash();
 
-  bool matches(const SymbolDesc* other_symbol) const {
-    return symbol()->matches(other_symbol);
-  }
-  bool matches(const Symbol* other_symbol) const {
-    return matches(other_symbol->symbol());
-  }
+  bool matches(Symbol *other_symbol);
 
-  int strrchr(jbyte c) const;
-  bool is_same_class_package(const Symbol* other) const;
+  int strrchr(jbyte c);
+  bool is_same_class_package(Symbol* other);
 
   void string_copy(char* buffer, int buffer_size);
 

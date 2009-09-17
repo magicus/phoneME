@@ -79,7 +79,9 @@ ReturnOop JavaClass::new_initialized_instance(InstanceClass* sender_class,
                                                  ExceptionOnFailure 
                                                  JVM_ZCHECK_0(status));
 
-  Method::Fast init = instance_class().find_local_default_constructor();
+  Method::Fast init = 
+      instance_class().find_local_method(Symbols::object_initializer_name(),
+                                         Symbols::void_signature());
   if (init.is_null()) {
     Throw::instantiation(ExceptionOnFailure JVM_THROW_0);
   }
@@ -222,7 +224,7 @@ ReturnOop JavaClass::get_array_class(jint distance JVM_TRAPS) {
 
 #if ENABLE_ISOLATES
 
-ReturnOop JavaClass::java_mirror() const {
+ReturnOop JavaClass::java_mirror() {
   TaskMirror::Raw tm = task_mirror_desc();
 
   GUARANTEE(!tm.is_null(), "cannot be null");
@@ -286,7 +288,7 @@ ReturnOop JavaClass::setup_task_mirror(int statics_size,
 
 #else
 
-ReturnOop JavaClass::java_mirror() const {
+ReturnOop JavaClass::java_mirror() {
   ReturnOop result = obj_field(java_mirror_offset());
 
   GUARANTEE(result != NULL, "cannot be null");
@@ -346,25 +348,6 @@ bool JavaClass::is_subclass_of(JavaClass* other_class) {
     }
     current = (JavaClassDesc*)current->_super;
   } while (current != NULL);
-
-  return false;
-}
-
-bool JavaClass::is_strict_subclass_of(JavaClass* other_class) {
-  // This is a hot loop, so we're using raw pointers here to help C++
-  // compiler generate better code. If a GC happens we're
-  // in deep trouble!
-
-  AllocationDisabler raw_pointers_used_in_this_function;
-
-  JavaClassDesc* current = (JavaClassDesc*)this->obj();
-  JavaClassDesc* other   = (JavaClassDesc*)other_class->obj();
-
-  while( (current = (JavaClassDesc*)current->_super) != NULL ) {
-    if (other == current) {
-      return true;
-    }
-  }
 
   return false;
 }
@@ -553,6 +536,12 @@ int JavaClass::generate_fieldmap(TypeArray* field_map) {
   return map_index;
 }
 #endif /* #if ENABLE_ROM_GENERATOR */
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+bool JavaClass::is_hidden_in_profile() const {
+  return ROM::class_is_hidden_in_profile(this);
+}
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
 #if ENABLE_COMPILER_TYPE_INFO
 // Returns true if this class doesn't have any subtypes except for itself

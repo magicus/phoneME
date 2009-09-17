@@ -165,11 +165,11 @@ void ConstantPool::check_constant_at(int index, FieldType* type JVM_TRAPS) const
 ReturnOop ConstantPool::resolve_symbol_at_offset(int offset JVM_TRAPS) {
   UsingFastOops fast_oops;
   TypeArray::Fast byte_array(obj_field(offset));
-  OopDesc* result = SymbolTable::symbol_for(&byte_array JVM_NO_CHECK);
-  if (result) {
-    obj_field_put(offset, result);
+  {
+    Symbol::Raw result= SymbolTable::symbol_for(&byte_array JVM_OZCHECK(result));
+    obj_field_put(offset, &result);
+    return result.obj();
   }
-  return result;
 }
 
 ReturnOop ConstantPool::checked_type_symbol_at(int index JVM_TRAPS) {
@@ -192,11 +192,13 @@ ReturnOop ConstantPool::checked_type_symbol_at(int index JVM_TRAPS) {
 ReturnOop ConstantPool::resolve_type_symbol_at_offset(int offset JVM_TRAPS) {
   UsingFastOops fast_oops;
   TypeArray::Fast byte_array(obj_field(offset));
-  OopDesc* type_symbol = TypeSymbol::parse(&byte_array JVM_NO_CHECK);
-  if (type_symbol) {
-    obj_field_put(offset, type_symbol);
+
+  {
+    TypeSymbol::Raw type_symbol = 
+      TypeSymbol::parse(&byte_array JVM_OZCHECK(type_symbol));
+    obj_field_put(offset, &type_symbol);
+    return type_symbol.obj();
   }
-  return type_symbol;
 }
 
 // A class name may be either a plain Symbol e.g., "java/lang/String"
@@ -219,11 +221,14 @@ ReturnOop ConstantPool::checked_class_name_at(int index JVM_TRAPS) {
 
 ReturnOop ConstantPool::string_at(int index JVM_TRAPS) {
   if (ConstantTag::is_unresolved_string(tag_value_at(index))) {
-    OopDesc* oop = unresolved_string_at(index);
-    OopDesc* string =
-      Universe::interned_string_from_utf8(oop JVM_ZCHECK_0(string));
-    string_at_put(index, string);
-    return string;
+    UsingFastOops fast_oops;
+    Oop::Fast oop = unresolved_string_at(index);
+    {
+      String::Raw string =
+        Universe::interned_string_from_utf8(&oop JVM_OZCHECK(string));
+      string_at_put(index, &string);
+      return string.obj();
+    }
   } else {
     return resolved_string_at(index);
   }
@@ -232,14 +237,16 @@ ReturnOop ConstantPool::string_at(int index JVM_TRAPS) {
 ReturnOop ConstantPool::resolve_string_at(int index JVM_TRAPS) {
   int string_index = string_index_at(index);
   cp_check_0(is_within_bounds(string_index) &&
-            ConstantTag::is_symbol(tag_value_at(string_index)));
-  OopDesc* oop = obj_field(offset_from_index(string_index));
-  OopDesc* string =
-    Universe::interned_string_from_utf8(oop JVM_NO_CHECK);
-  if (string) {
-    string_at_put(index, string);
+             ConstantTag::is_symbol(tag_value_at(string_index)));
+
+  UsingFastOops fast_oops;
+  Oop::Fast oop = obj_field(offset_from_index(string_index));
+  {
+    String::Raw string =
+      Universe::interned_string_from_utf8(&oop JVM_OZCHECK(string));
+    string_at_put(index, &string);
+    return string;
   }
-  return string;
 }
 
 ReturnOop ConstantPool::klass_at(int index JVM_TRAPS) {
@@ -253,10 +260,12 @@ ReturnOop ConstantPool::klass_at(int index JVM_TRAPS) {
     } else {
       UsingFastOops fast_oops;
       Symbol::Fast class_name = unchecked_unresolved_klass_at(index);
-      JavaClass::Raw result =
-        SystemDictionary::resolve(&class_name, ErrorOnFailure 
-                                  JVM_OZCHECK_0(result));
-      klass_at_put(index, &result);
+      {
+        JavaClass::Raw result =
+          SystemDictionary::resolve(&class_name, ErrorOnFailure 
+                                    JVM_OZCHECK(result));
+        klass_at_put(index, &result);
+      }
     }
   }
   return resolved_klass_at(index JVM_NO_CHECK_AT_BOTTOM);
@@ -276,9 +285,10 @@ ReturnOop ConstantPool::try_resolve_klass_at(int index) {
 ReturnOop ConstantPool::name_of_klass_at(int index JVM_TRAPS) {
   cp_check_0(is_within_bounds(index));
   if (ConstantTag::is_unresolved_klass(tag_value_at(index))) {
-    return unchecked_unresolved_klass_at(index);
+    Symbol::Raw class_name = unchecked_unresolved_klass_at(index);
+    return class_name;
   } else {
-    JavaClass::Raw klass = resolved_klass_at(index JVM_OZCHECK_0(klass));
+    JavaClass::Raw klass = resolved_klass_at(index JVM_OZCHECK(klass));
     return klass().name();
   }
 }
@@ -488,7 +498,7 @@ ConstantPool::resolve_invoke_static_at(InstanceClass *sender_class,
   } else {
     method = lookup_method_at(sender_class, index, &method_name,
                               &method_signature, &receiver_class 
-                              JVM_OZCHECK_0(method));
+                              JVM_OZCHECK(method));
     resolved_static_method_at_put(index, &method);
   }
 
@@ -541,7 +551,7 @@ bool ConstantPool::resolve_invoke_virtual_at(InstanceClass *sender_class,
   InstanceClass::Fast static_receiver_class;
   Method::Fast method = lookup_method_at(sender_class, index, &method_name,
                                    &method_signature, &static_receiver_class
-                                   JVM_OZCHECK_0(method));
+                                   JVM_OZCHECK(method));
 
   if (static_receiver_class().is_interface()) {
     Throw::incompatible_class_change_error(class_changed JVM_THROW_0);

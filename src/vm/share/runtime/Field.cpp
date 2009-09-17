@@ -49,6 +49,10 @@ void Field::initialize(InstanceClass* ic, Symbol* name, Symbol* signature) {
   }
 }
 
+Field::Field(InstanceClass* ic, jint index) {
+  initialize(ic, index);
+}
+
 void Field::initialize(InstanceClass* ic, jint index) {
   _ic              = ic;
   _index           = index;
@@ -61,25 +65,25 @@ void Field::initialize(InstanceClass* ic, jint index) {
   _offset          = f().ushort_at(index + OFFSET_OFFSET);
 }
 
-ReturnOop Field::name(void) const {
+ReturnOop Field::name() PRODUCT_CONST {
   ConstantPool::Raw cp = get_constants_for(_ic);
   Symbol::Raw n = cp().symbol_at(_name_index);
   return n;
 }
 
-ReturnOop Field::signature(void) const {
+ReturnOop Field::signature() PRODUCT_CONST {
   ConstantPool::Raw cp = get_constants_for(_ic);
   return cp().symbol_at(_signature_index);
 }
 
-BasicType Field::type(void) const {
+BasicType Field::type() PRODUCT_CONST {
   FieldType::Raw sig = signature();
   return sig().basic_type();
 }
 
 void Field::check_access_by(InstanceClass* sender_class,
                             InstanceClass* static_receiver_class,
-                            FailureMode fail_mode JVM_TRAPS) const {
+                            FailureMode fail_mode JVM_TRAPS) {
   InstanceClass* field_class = ic();
   if (is_public()) {
     return;
@@ -106,7 +110,7 @@ void Field::check_access_by(InstanceClass* sender_class,
 
 int Field::find_field_in_class_and_interfaces(InstanceClass* ic, 
                                               Symbol* name, 
-                                              Symbol* signature) const {
+                                              Symbol* signature) {
   AllocationDisabler shouldnt_allocate_in_this_function;
   int field_index = -1;
 
@@ -136,7 +140,7 @@ int Field::find_field_in_class_and_interfaces(InstanceClass* ic,
 }
 
 #ifndef PRODUCT
-bool OriginalField::is_renamed(void) const {
+bool OriginalField::is_renamed() {
   if (ROM::get_original_fields(_ic) == NULL) {
     return false;
   }
@@ -148,7 +152,7 @@ bool OriginalField::is_renamed(void) const {
   ConstantPool::Raw new_cp = _ic->constants();
 
   int len = new_fields().length();
-  for (int i = 0; i < len; i += Field::NUMBER_OF_SLOTS) {
+  for (int i=0; i<len; i+=5) {
     int name_index = new_fields().ushort_at(i + Field::NAME_OFFSET);
 #if ENABLE_ISOLATES
     // IMPL_NOTE: this should be removed once ConstantPoolRewriter::rewrite_index()
@@ -166,11 +170,11 @@ bool OriginalField::is_renamed(void) const {
   return true;
 }
 
-void Field::p(void) const {
+void Field::p() {
   print_on(tty);
 }
 
-void Field::print_on(Stream *st) const {
+void Field::print_on(Stream *st) {
 #if USE_DEBUG_PRINTING
   st->print_cr("Field (StackObj) = { ");
   st->print("    ic              ");
@@ -199,7 +203,7 @@ void Field::print_on(Stream *st) const {
 #endif
 }
 
-void Field::print_cp_symbol_on(Stream *st, int cp_index) const {
+void Field::print_cp_symbol_on(Stream *st, int cp_index) {
 #if USE_DEBUG_PRINTING
   if (_ic->not_null()) {
     ConstantPool::Raw cp = get_constants_for(_ic);

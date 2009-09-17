@@ -252,8 +252,8 @@ int VerifierFrame::get_stackmap_index_for_offset(int target_bci) {
 
 
 #if USE_HOT_ROUTINES
-int Field::find_field_index(InstanceClass* ic, Symbol* name,
-                                               Symbol* signature) const {
+int Field::find_field_index(InstanceClass* ic, Symbol* name, Symbol* signature)
+{
   AllocationDisabler shouldnt_allocate_in_this_function;
 
   ConstantPool::Raw cp = get_constants_for(ic);
@@ -266,15 +266,18 @@ int Field::find_field_index(InstanceClass* ic, Symbol* name,
   address field_base = fields().base_address();
   address cp_base = ((address)cp.obj()) + ConstantPool::base_offset();
 
-  for (int index = 0; index < fields_length; index += Field::NUMBER_OF_SLOTS) {
-    const int name_index      = ((jushort*)field_base)[NAME_OFFSET];
-    if (((OopDesc**)cp_base)[name_index] == name_obj) {
-      const int signature_index = ((jushort*)field_base)[SIGNATURE_OFFSET];
-      if (((OopDesc**)cp_base)[signature_index] == sig_obj) {
-        return index;
-      }
+  for (int index = 0; index < fields_length; index += 5) {
+    int name_index      = ((jushort*)field_base)[NAME_OFFSET];
+    int signature_index = ((jushort*)field_base)[SIGNATURE_OFFSET];
+
+    OopDesc *n = ((OopDesc**)cp_base)[name_index];
+    OopDesc *s = ((OopDesc**)cp_base)[signature_index];
+
+    if (n == name_obj && s == sig_obj) {
+      return index;
     }
-    field_base += Field::NUMBER_OF_SLOTS * sizeof(jushort);
+
+    field_base += 5 * sizeof(jushort);
   }
   return -1;
 }

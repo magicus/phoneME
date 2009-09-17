@@ -30,37 +30,17 @@ class MethodInvocationClosure {
 public:
   void initialize(JVM_SINGLE_ARG_TRAPS);
   
-  bool add_method           (Method* method);
-  void add_interface_method (Method* method);
-  void add_virtual_method   (Method* method);
-
-  bool contains(Method* method) const {
-    const juint len = juint(_methods.length());
-    const juint start = juint(hashcode_for_method(method)) % len;
-
-    for (juint i=start; ;) {
-      Method::Raw m = _methods.obj_at(i);
-      if (m.is_null()) {
-        break;
-      }
-      if (m.equals(method)) {
-        return true;
-      }
-
-      if (++i >= len) {
-         i = 0;
-      }
-      GUARANTEE(i != start, "Sanity");
-      // _old_methods's length is 3 times the number of methods,
-      // so we will always have space.
-    }
-
-    return false;
-  }
+  void add_method(Method* method JVM_TRAPS);
+  void add_interface_method(Method* method JVM_TRAPS);
+  bool contains(Method* method);
 
 private:
-  static int hashcode_for_method(Method* method);
-  static int hashcode_for_symbol(Symbol* symbol);
+  void add_closure(Method *method JVM_TRAPS);
+  void add_supers(InstanceClass* ci, int vindex JVM_TRAPS);
+  void add_subs(InstanceClass* ci, int vindex JVM_TRAPS);
+
+  int hashcode_for_method(Method *method);
+  int hashcode_for_symbol(Symbol *symbol);
   
   ObjArray _methods;
 };

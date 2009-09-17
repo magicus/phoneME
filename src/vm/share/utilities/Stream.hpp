@@ -68,17 +68,6 @@ class Stream: public GlobalObj {
   void print_raw(const char* s) {
     print_raw(s, jvm_strlen(s));
   }
-  void put(const jchar c) {
-    put( char(c) );
-  }
-  void print_raw(const jchar* s) {
-    for (; *s; s++) {
-      put(*s);
-    }
-  }
-  void print_path(const JvmPathChar* s) {
-    print_raw(s);
-  }
   void put(const char c) {
     print_raw (&c, 1);
   }

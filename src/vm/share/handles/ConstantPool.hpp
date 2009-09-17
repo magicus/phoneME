@@ -391,12 +391,9 @@ class ConstantPool: public Oop {
     obj_field_put(offset_from_index(index), oop);
   }
 
-  void string_at_put(int index, OopDesc* str) {
+  void string_at_put(int index, Oop* str) {
     tag_at_put(index, JVM_CONSTANT_String);
     obj_field_put(offset_from_index(index), str);
-  }
-  void string_at_put(int index, Oop* str) {
-    string_at_put(index, str->obj());
   }
 
    void string_index_at_put(int index, int string_index) {

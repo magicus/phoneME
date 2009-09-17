@@ -39,135 +39,83 @@ FileStreamState ROMWriter::_main_segment_stream_states[ROM::SEGMENTS_STREAMS_COU
 FileStreamState ROMWriter::_rom_generated_header_state;
 #endif
 
-enum { ALL_SUBTYPES = -1 };
+#define ALL_SUBTYPES -1
 
 #if USE_ROM_LOGGING
-
-MemCounter MemCounter::_data[MemCounter::number_of_memory_counters];
-
-void MemCounter::print_header(Stream *stream) {
-  print_separator(stream);
-  stream->print("               TEXT# DATA# HEAP#  TEXTb  DATAb  HEAPb");
-  stream->print(" TEXT%% DATA%% HEAP%%  ALL%%");
-  stream->cr();
-  print_separator(stream);
-}
-
-void MemCounter::print_separator(Stream *stream) {
-  stream->print("-----------------------------------------------------");
-  stream->print("------------------------");
-  stream->cr();
-}
-
-void MemCounter::print_raw(Stream* stream, const char name[]) {
-  stream->print("%-14s", name);
-  stream->print(" %5d %5d %5d", text_objects, data_objects, heap_objects);
-  stream->print(" %6d %6d %6d", text_bytes,   data_bytes,   heap_bytes);
-}
-
-void MemCounter::print(Stream* stream, const char name[]) {
-  print_raw(stream, name);
-  if (LogROMPercentages) {
-    print_percent(stream, text_bytes,  total().text_bytes);
-    print_percent(stream, data_bytes,  total().data_bytes);
-    print_percent(stream, heap_bytes,  total().heap_bytes);
-    print_percent(stream, all_bytes(), total().all_bytes());
-  }
-  stream->cr();
-}
-
-void MemCounter::print_percent(Stream *stream, int n, int total) {
-  if (total == 0) {
-    stream->print("     -");
-  } else if (n == total) {
-    stream->print("100.0%%");
-  } else {
-    double pect = /* 100.0 * (double)n / (double)total*/
-      jvm_ddiv(jvm_dmul(jvm_i2d(n), 100.0), jvm_i2d(total));
-    char buff[100];
-    jvm_sprintf(buff, "%2.1f%%", pect);
-    if (jvm_strlen(buff) == 4) {
-      stream->print(" ");
-    }
-    stream->print(" %s", buff);
-  }
-}
-
-void MemCounter::print_percent(Stream *stream, const char *name,
-                               int objs, int bytes,
-                               int all_bytes) {
-  stream->print("%-10s %7d objects = %7d bytes = ", name, objs, bytes);
-  print_percent(stream, bytes, all_bytes);
-  stream->cr();
-}
-
-inline void MemCounter::print_all(Stream* st) {
-  print_header(st);
-#define PRINT_MEM_COUNTER(n,s) n().print(st, s);
-  PRINT_MEM_COUNTER(instance_class,         "InstanceClass"  );
+MemCounter mc_instance_class         ("InstanceClass");
+MemCounter mc_inited_class           (" inited");
+MemCounter mc_renamed_class          (" renamed");
+MemCounter mc_static_fields          (" static fields");
+MemCounter mc_vtable                 (" vtables");
+MemCounter mc_itable                 (" itables");
+MemCounter mc_array_class            ("ArrayClass");
+MemCounter mc_class_info             ("ClassInfo");
+MemCounter mc_method                 ("Method");
+MemCounter mc_method_header          (" header");
+MemCounter mc_method_body            (" body");
+MemCounter mc_native_method          (" native");
+MemCounter mc_abstract_method        (" abstract");
+MemCounter mc_virtual_method         (" virtual");
+MemCounter mc_compiled_method        (" compiled");
+MemCounter mc_renamed_method         (" renamed");
+MemCounter mc_renamed_abstract_method("  abstract");
+MemCounter mc_clinit_method          (" <clinit>");
+MemCounter mc_exception_table        (" except. tab");
+MemCounter mc_constant_pool          ("Constant Pool");
+MemCounter mc_stackmap               ("Stackmaps");
+MemCounter mc_longmaps               (" longmaps");
+MemCounter mc_symbol                 ("Symbol");
+MemCounter mc_encoded_symbol         (" encoded");
+MemCounter mc_string                 ("String");
+MemCounter mc_array1                 ("Array_1");
+MemCounter mc_array2s                ("Array_2(short)");
+MemCounter mc_array2c                ("Array_2(char)");
+MemCounter mc_array4                 ("Array_4");
+MemCounter mc_array8                 ("Array_8");
+MemCounter mc_obj_array              ("Object Array");
+MemCounter mc_meta                   ("Meta objects");
+MemCounter mc_other                  ("Other objects");
+MemCounter mc_pers_handles           ("Pers. Handles");
+MemCounter mc_symbol_table           ("Symbol Table");
+MemCounter mc_string_table           ("String Table");
+MemCounter mc_variable_parts         ("Method vars");
+MemCounter mc_restricted_pkgs        ("Restricted pkg");
 #if ENABLE_ISOLATES
-  PRINT_MEM_COUNTER(task_mirror,            " task mirrors"  );
+MemCounter mc_task_mirror            (" task mirrors");
 #endif
-  PRINT_MEM_COUNTER(inited_class,           " inited"        );
-  PRINT_MEM_COUNTER(renamed_class,          " renamed"       );
-  PRINT_MEM_COUNTER(static_fields,          " static fields" );
-  PRINT_MEM_COUNTER(array_class,            "ArrayClass"     );
-  PRINT_MEM_COUNTER(class_info,             "ClassInfo"      );
-  PRINT_MEM_COUNTER(vtable,                 " vtables"       );
-  PRINT_MEM_COUNTER(itable,                 " itables"       );
-  PRINT_MEM_COUNTER(method,                 "Method"         );
-  PRINT_MEM_COUNTER(method_header,          " header"        );
-  PRINT_MEM_COUNTER(method_body,            " body"          );
-  PRINT_MEM_COUNTER(native_method,          " native"        );
-  PRINT_MEM_COUNTER(abstract_method,        " abstract"      );
-  PRINT_MEM_COUNTER(virtual_method,         " virtual"       );
-  PRINT_MEM_COUNTER(renamed_method,         " renamed"       );
-  PRINT_MEM_COUNTER(renamed_abstract_method,"  abstract"     );
-  PRINT_MEM_COUNTER(compiled_method,        " compiled"      );
-  PRINT_MEM_COUNTER(clinit_method,          " <clinit>"      );
-  PRINT_MEM_COUNTER(exception_table,        " except. tab"   );
-  PRINT_MEM_COUNTER(stackmap,               "Stackmaps"      );
-  PRINT_MEM_COUNTER(longmaps,               " longmaps"      );
-  PRINT_MEM_COUNTER(constant_pool,          "Constant Pool"  );
-  PRINT_MEM_COUNTER(symbol,                 "Symbol"         );
-  PRINT_MEM_COUNTER(encoded_symbol,         " encoded"       );
-  PRINT_MEM_COUNTER(string,                 "String"         );
-  PRINT_MEM_COUNTER(array1,                 "Array_1"        );
-  PRINT_MEM_COUNTER(array2s,                "Array_2(short)" );
-  PRINT_MEM_COUNTER(array2c,                "Array_2(char)"  );
-  PRINT_MEM_COUNTER(array4,                 "Array_4"        );
-  PRINT_MEM_COUNTER(array8,                 "Array_8"        );
-  PRINT_MEM_COUNTER(obj_array,              "Object Array"   );
-  PRINT_MEM_COUNTER(meta,                   "Meta objects"   );
-  PRINT_MEM_COUNTER(other,                  "Other objects"  );
-  PRINT_MEM_COUNTER(pers_handles,           "Pers. Handles"  );
-  PRINT_MEM_COUNTER(symbol_table,           "Symbol Table"   );
-  PRINT_MEM_COUNTER(string_table,           "String Table"   );
-  PRINT_MEM_COUNTER(restricted_pkgs,        "Restricted pkg" );
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  PRINT_MEM_COUNTER(hidden_classes,         "Hidden cls map" );
-#endif
-  PRINT_MEM_COUNTER(variable_parts,         "Method vars"    );
-  PRINT_MEM_COUNTER(line_number_tables,     "Linenum tables" );
-#undef PRINT_MEM_COUNTER
+MemCounter mc_line_number_tables     ("Linenum tables");
+MemCounter mc_total                  ("Total");
 
-  print_separator(st);
-  total().print_raw(st, "Total");
-  st->cr();
+MemCounter* MemCounter::all_counters[41];
+int MemCounter::counter_number = 0;
+
+void MemCounter::reset_counters() {
+  for (int i=0; i<counter_number; i++) {    
+    all_counters[i]->reset();
+  }
+}
+
+MemCounter::MemCounter(const char *n) {
+  name = n;
+  reset();
+  if (counter_number >= ARRAY_SIZE(all_counters)) {
+    BREAKPOINT;
+  }
+  all_counters[counter_number++] = this;  
 }
 #endif
 
 // Define all static fields of ROMWriter
 ROMWRITER_INT_FIELDS_DO(ROMWRITER_DEFINE_INT)
 OopDesc*   ROMWriter::_romwriter_oops[ROMWriter::_number_of_oop_fields];
-int        ROMWriter::_last_oop_streaming_offset;
-int        ROMWriter::_streaming_index;
-OopDesc *  ROMWriter::_streaming_oop;
-TypeArray* ROMWriter::_streaming_fieldmap;
+int        ROMWriter::_last_oop_streaming_offset = 0;
+int        ROMWriter::_streaming_index = 0;
+OopDesc *  ROMWriter::_streaming_oop = NULL;
+TypeArray* ROMWriter::_streaming_fieldmap = NULL;
 
 void ROMWriter::oops_do(void do_oop(OopDesc**)) {
   if (is_active()) {
-    for( int i = _number_of_oop_fields; --i >= 0; ) {
+    for (int i=_number_of_oop_fields-1; i>=0; i--) {
       do_oop(&_romwriter_oops[i]);
     }
     ROMOptimizer::oops_do(do_oop);
@@ -189,6 +137,7 @@ void ROMWriter::restore_file_streams() {
 }
 
 void ROMWriter::initialize() {
+
 }
 
 void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
@@ -214,7 +163,7 @@ void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
   _method_start_skip = sizeof(OopDesc)/BytesPerWord + 4;
   _starting_free_heap = ObjectHeap::free_memory();
 #if USE_ROM_LOGGING
-  MemCounter::reset();
+  MemCounter::reset_counters();
 #endif
 
   TTY_TRACE_CR(("Starting free heap = %d KB", _starting_free_heap / 1024));
@@ -478,31 +427,34 @@ void ROMWriter::add_pending_object(Oop *object JVM_TRAPS) {
   if (write_by_reference(object)) {
     return;
   }
+  UsingFastOops fast_oops;
+  PendingLink::Fast link;
 
 #ifdef AZZERT
   if (object->is_thread()) {
     BREAKPOINT;
   }
 #endif
-
-  PendingLink::Raw link = pending_links_cache()->obj();
-  if( link.not_null() ) {
+  if (pending_links_cache()->not_null()) {
+    link = pending_links_cache()->obj();
     *pending_links_cache() = pending_links_cache()->next();
     link().clear_next();
   } else {
     link = Universe::new_mixed_oop(MixedOopDesc::Type_PendingLink,
                                    PendingLink::allocation_size(), 
                                    PendingLink::pointer_count()
-                                   JVM_ZCHECK(link));
+                                   JVM_CHECK);
   }
+
   link().set_pending_obj(object);
   
   if (pending_links_head()->is_null()) {
     *pending_links_head() = link.obj();
+    *pending_links_tail() = link.obj();
   } else {
     pending_links_tail()->set_next(&link);
+    *pending_links_tail() = link.obj();
   }
-  *pending_links_tail() = link.obj();
 }
 
 ReturnOop ROMWriter::remove_pending_object() {
@@ -541,38 +493,84 @@ void ROMWriter::visit_rom_hashtable(ObjArray *table JVM_TRAPS) {
 #if USE_ROM_LOGGING
 void ROMWriter::write_report(Stream *st, jlong elapsed) {
   if (st != tty) {
-    MemCounter::print_all(st);
+    MemCounter::print_header(st);
+
+    mc_instance_class.print(st);
+#if ENABLE_ISOLATES
+    mc_task_mirror.print(st);
+#endif
+    mc_inited_class.print(st);
+    mc_renamed_class.print(st);
+    mc_static_fields.print(st);
+    mc_array_class.print(st);
+    mc_class_info.print(st);
+    mc_vtable.print(st);
+    mc_itable.print(st);
+    mc_method.print(st);
+    mc_method_header.print(st);
+    mc_method_body.print(st);
+    mc_native_method.print(st);
+    mc_abstract_method.print(st);
+    mc_virtual_method.print(st);
+    mc_renamed_method.print(st);
+    mc_renamed_abstract_method.print(st);
+    mc_compiled_method.print(st);
+    mc_clinit_method.print(st);
+    mc_exception_table.print(st);
+    mc_stackmap.print(st);
+    mc_longmaps.print(st);
+    mc_constant_pool.print(st);
+    mc_symbol.print(st);
+    mc_encoded_symbol.print(st);
+    mc_string.print(st);
+    mc_array1.print(st);
+    mc_array2s.print(st);
+    mc_array2c.print(st);
+    mc_array4.print(st);
+    mc_array8.print(st);
+    mc_obj_array.print(st);
+    mc_meta.print(st);
+    mc_other.print(st);
+    mc_pers_handles.print(st);
+    mc_symbol_table.print(st);
+    mc_string_table.print(st);
+    mc_restricted_pkgs.print(st);
+    mc_variable_parts.print(st);
+    mc_line_number_tables.print(st);
+    MemCounter::print_separator(st);
+    mc_total.print(st);
   }
   MemCounter::print_separator(st);
 
-  const MemCounter& total = MemCounter::total();
-
   MemCounter::print_percent(st, "TEXT:",
-                            total.text_objects,
-                            total.text_bytes,
-                            total.all_bytes());
+                            mc_total.text_objects,
+                            mc_total.text_bytes,
+                            mc_total.all_bytes());
   MemCounter::print_percent(st, "DATA:",
-                            total.data_objects,
-                            total.data_bytes,
-                            total.all_bytes());
+                            mc_total.data_objects,
+                            mc_total.data_bytes,
+                            mc_total.all_bytes());
   MemCounter::print_percent(st, "HEAP:",
-                            total.heap_objects,
-                            total.heap_bytes,
-                            total.all_bytes());
+                            mc_total.heap_objects,
+                            mc_total.heap_bytes,
+                            mc_total.all_bytes());
   MemCounter::print_percent(st, "DATA+HEAP:",
-                            total.dynamic_objects(),
-                            total.dynamic_bytes(),
-                            total.all_bytes());
+                            mc_total.dynamic_objects(),
+                            mc_total.dynamic_bytes(),
+                            mc_total.all_bytes());
 
-  st->print("Total:     %7d objects = %7d bytes\n", total.all_objects(),
-                                                    total.all_bytes());
+  st->print("Total:     %7d objects = %7d bytes", mc_total.all_objects(),
+                                                  mc_total.all_bytes());
+  st->cr();
+
   MemCounter::print_separator(st);
 
-  const int ielapsed = (int)elapsed;
+  int ielapsed = (int)elapsed;
 
   st->print_cr("ROM image generated in %.2f seconds",
                jvm_f2d(jvm_fdiv(jvm_i2f(ielapsed), 1000.0f))
                /* ((double)ielapsed / 1000.0) */);
+
 }
 #endif
 
@@ -1861,8 +1859,8 @@ void ROMWriter::write_symbol_table(JVM_SINGLE_ARG_TRAPS) {
                                       JVM_CHECK);
 
 #if USE_ROM_LOGGING
-  MemCounter::symbol_table().add_text_bytes(num_bytes);
-  MemCounter::total().add_text_bytes       (num_bytes);
+  mc_symbol_table.add_text_bytes(num_bytes);
+  mc_total.add_text_bytes       (num_bytes);
 #else
   (void)num_bytes;
 #endif
@@ -1878,8 +1876,8 @@ void ROMWriter::write_string_table(JVM_SINGLE_ARG_TRAPS) {
                                       &embedded_holder, embedded_offset
                                       JVM_CHECK);
 #if USE_ROM_LOGGING
-  MemCounter::string_table().add_text_bytes(num_bytes);
-  MemCounter::total().add_text_bytes       (num_bytes);
+  mc_string_table.add_text_bytes(num_bytes);
+  mc_total.add_text_bytes       (num_bytes);
 #else
   (void)num_bytes;
 #endif
@@ -1935,8 +1933,8 @@ void ROMWriter::write_persistent_handles(ObjectWriter *obj_writer JVM_TRAPS) {
 #endif
 
 #if USE_ROM_LOGGING
-  MemCounter::pers_handles().add_text_bytes(count * sizeof(int));
-  MemCounter::total().add_text_bytes(count * sizeof(int));
+  mc_pers_handles.add_text_bytes(count * sizeof(int));
+  mc_total.add_text_bytes(count * sizeof(int));
 #endif
 }
 
@@ -1952,8 +1950,8 @@ void ROMWriter::write_system_symbols(ObjectWriter *obj_writer JVM_TRAPS) {
   obj_writer->end_block(JVM_SINGLE_ARG_CHECK);
 
 #if USE_ROM_LOGGING
-  MemCounter::pers_handles().add_text_bytes(count * sizeof(int));
-  MemCounter::total().add_text_bytes(count * sizeof(int));
+  mc_pers_handles.add_text_bytes(count * sizeof(int));
+  mc_total.add_text_bytes(count * sizeof(int));
 #endif
 }
 
@@ -2321,12 +2319,12 @@ void BlockTypeFinder::find_type(Oop *owner, Oop *object JVM_TRAPS) {
       if (sym().is_valid_field_type()) {
         my_pass = PASS_FOR_FIELDTYPE_SYMBOLS;
 #if USE_ROM_LOGGING
-        MemCounter::encoded_symbol().add_text(object->object_size());
+        mc_encoded_symbol.add_text(object->object_size());
 #endif
       } else if (sym().is_valid_method_signature()) {
         my_pass = PASS_FOR_SIGNATURE_SYMBOLS;
 #if USE_ROM_LOGGING
-        MemCounter::encoded_symbol().add_text(object->object_size());
+        mc_encoded_symbol.add_text(object->object_size());
 #endif
       } else {
         my_pass = PASS_FOR_OTHER_SYMBOLS;
@@ -2687,6 +2685,61 @@ jint OffsetVector::_compare_to(Oop *obj1, Oop* obj2) {
     return 1;
   }
 }
+
+#if USE_ROM_LOGGING
+void MemCounter::print_header(Stream *stream) {
+  print_separator(stream);
+  stream->print("               TEXT# DATA# HEAP#  TEXTb  DATAb  HEAPb");
+  stream->print(" TEXT%% DATA%% HEAP%%  ALL%%");
+  stream->cr();
+  print_separator(stream);
+}
+
+void MemCounter::print_separator(Stream *stream) {
+  stream->print("-----------------------------------------------------");
+  stream->print("------------------------");
+  stream->cr();
+}
+
+void MemCounter::print(Stream* stream) {
+  stream->print("%-14s", name);
+  stream->print(" %5d %5d %5d", text_objects, data_objects, heap_objects);
+  stream->print(" %6d %6d %6d", text_bytes,   data_bytes,   heap_bytes);
+
+  if (this != &mc_total && LogROMPercentages) {
+    print_percent(stream, text_bytes,  mc_total.text_bytes);
+    print_percent(stream, data_bytes,  mc_total.data_bytes);
+    print_percent(stream, heap_bytes,  mc_total.heap_bytes);
+    print_percent(stream, all_bytes(), mc_total.all_bytes());
+  }
+  stream->cr();
+}
+
+void MemCounter::print_percent(Stream *stream, int n, int total) {
+  if (total == 0) {
+    stream->print("     -");
+  } else if (n == total) {
+    stream->print("100.0%%");
+  } else {
+    double pect = /* 100.0 * (double)n / (double)total*/
+      jvm_ddiv(jvm_dmul(jvm_i2d(n), 100.0), jvm_i2d(total));
+    char buff[100];
+    jvm_sprintf(buff, "%2.1f%%", pect);
+    if (jvm_strlen(buff) == 4) {
+      stream->print(" ");
+    }
+    stream->print(" %s", buff);
+  }
+}
+
+void MemCounter::print_percent(Stream *stream, const char *name,
+                               int objs, int bytes,
+                               int all_bytes) {
+  stream->print("%-10s %7d objects = %7d bytes = ", name, objs, bytes);
+  print_percent(stream, bytes, all_bytes);
+  stream->cr();
+}
+#endif // USE_ROM_LOGGING
 
 #ifndef PRODUCT
 /*

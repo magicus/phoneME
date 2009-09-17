@@ -35,14 +35,14 @@ ReturnOop JavaDebuggerContext::allocate(JVM_SINGLE_ARG_TRAPS) {
     Universe::new_mixed_oop(MixedOopDesc::Type_JavaDebuggerContext,
                             JavaDebuggerContext::allocation_size(),
                             JavaDebuggerContext::pointer_count()
-                            JVM_OZCHECK_0(context));
+                            JVM_CHECK_0);
 
   ObjArray::Raw array;
   array = Universe::new_obj_array(JavaDebuggerContext::HASH_SLOT_SIZE 
-                                  JVM_OZCHECK_0(array));
+                                  JVM_OZCHECK(array));
   context().set_objects_by_id_map(&array);
   array = Universe::new_obj_array(JavaDebuggerContext::HASH_SLOT_SIZE 
-                                  JVM_OZCHECK_0(array));
+                                  JVM_OZCHECK(array));
   context().set_objects_by_ref_map(&array);
   
   return context.obj();
