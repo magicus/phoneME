@@ -217,11 +217,11 @@ endif
 $(MIDP_OUTPUT_DIR)/nativeFunctionTable.cpp: $(MIDP_CLASSES_ZIP) \
 					    $(JCC_CMD)
 	@echo " ... generating $@" $(LOG)
-	@echo +++ $(JAVA_CMD) -jar $(JCC_CMD) \
+	@echo +++ $(JAVA_CMD) -Xmx128m -jar $(JCC_CMD) \
 		-writer CLDC_HI_Natives -o $@ \
 		$(MIDP_CLASSES_ZIP) $(LOG_ONLY)
 	@cd $(MIDP_OUTPUT_DIR); \
-	$(JAVA_CMD) -jar $(JCC_CMD) \
+	$(JAVA_CMD) -Xmx128m -jar $(JCC_CMD) \
 		-writer CLDC_HI_Natives -o $@ \
 		$(MIDP_CLASSES_ZIP) $(LOG)
 
