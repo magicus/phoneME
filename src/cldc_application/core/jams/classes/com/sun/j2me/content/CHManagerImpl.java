@@ -175,6 +175,11 @@ public class CHManagerImpl extends CHManagerBase {
         /** The Invocation in progress for an install. */
         private Invocation installInvoc = null;
 
+        /** installtation status. */
+        private boolean success;
+        /** installation error message. */
+        private String errorMsg;
+
         InvocationProxyImpl( MIDlet midlet ){
             try {
                 handler = Registry.getServer(midlet.getClass().getName());
@@ -204,6 +209,15 @@ public class CHManagerImpl extends CHManagerBase {
         public void installDone(boolean success, String errorMsg) {
             if( Logger.LOGGER != null ) 
                 Logger.LOGGER.println( "CHManagerImpl.installDone( " + success + ", '" + errorMsg + "' ), installInvoc = " + installInvoc );
+            this.success = success;
+            this.errorMsg = errorMsg;
+        }
+
+        /**
+         * Finalize CHAPI activity
+         * 
+         */
+        public void cleanup() {
             if (installInvoc != null) {
                 if( errorMsg != null ) installInvoc.setArgs(new String[] {errorMsg} );
                 if( success || errorMsg == null ){
