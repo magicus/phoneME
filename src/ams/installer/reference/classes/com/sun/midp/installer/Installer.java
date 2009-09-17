@@ -1900,11 +1900,6 @@ public abstract class Installer {
         }
 
         synchronized (state) {
-            // CHAPI need: handler can request midlet start
-            // before suite unlock by install thread
-            if (state.previousSuite != null) {
-                state.previousSuite.close();
-            }
             if (state.ignoreCancel) {
                 return false;
             }

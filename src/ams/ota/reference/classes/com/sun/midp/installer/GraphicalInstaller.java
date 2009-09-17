@@ -576,6 +576,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      *  <code>false</code> otherwise.
      */
     void exit(boolean success) {
+        if (null != iproxy) {
+            iproxy.cleanup();
+        }
         notifyDestroyed();
     }
 

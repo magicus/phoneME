@@ -126,6 +126,7 @@ public class CHManager {
     	return new InvocationProxy(){
 			public Object getInvocationProperty(String propName) {return null;}
 			public void installDone(boolean success, String errorMsg) {}
+            public void cleanup();
 		};
     }
     
@@ -159,6 +160,12 @@ public class CHManager {
          * @see com.sun.midp.content.CHInstallerImpl
          */
         public void installDone(boolean success, String errorMsg);
+
+        /**
+         * Finalize CHAPI activity.
+         * 
+         */
+        public void cleanup();
     }
 }
 
