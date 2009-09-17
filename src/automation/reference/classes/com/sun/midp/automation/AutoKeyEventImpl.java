@@ -158,6 +158,10 @@ final class AutoKeyEventImpl
         this.keyState = keyState;        
     }
 
+    boolean isPowerButtonEvent() {
+        return (keyCode == AutoKeyCode.POWER && keyState == AutoKeyState.RELEASED);
+    }
+
     /**
      * Creates native event (used by our MIDP implementation) 
      * corresponding to this Automation event.

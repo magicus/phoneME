@@ -27,6 +27,7 @@
 package com.sun.midp.automation;
 import com.sun.midp.events.*;
 import javax.microedition.lcdui.Image;
+import com.sun.midp.main.*;
 import java.util.*;
 
 /**
@@ -95,8 +96,13 @@ final class AutomationImpl extends Automation {
             return;
         }
 
-        // obtain native event corresponding to this AutoEvent
         AutoEventImplBase eventBase = (AutoEventImplBase)event;
+        if (eventBase.isPowerButtonEvent()) {
+            MIDletProxyList.getMIDletProxyList().shutdown();
+            return;
+        }
+
+        // obtain native event corresponding to this AutoEvent        
         NativeEvent nativeEvent = eventBase.toNativeEvent();
         if (nativeEvent == null) {
             throw new IllegalArgumentException(

@@ -45,6 +45,10 @@ abstract class AutoEventImplBase implements AutoEvent {
         return type;
     }
 
+    boolean isPowerButtonEvent() {
+        return false;
+    }
+
     /**
      * Gets native event (used by our MIDP implementation) 
      * corresponding to this Automation event.
