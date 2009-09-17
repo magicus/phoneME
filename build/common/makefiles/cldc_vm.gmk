@@ -237,14 +237,14 @@ $(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_CLASSES_ZIP) \
 		
 	@echo	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
 		-cp $(MIDP_CLASSES_ZIP) \
-		-romize =HeapCapacity96M \
+		-romize =HeapCapacity128M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
 		-romincludepath $(path)) $(LOG)		
 		
 	@cd $(MIDP_OUTPUT_DIR); \
 	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
 		-cp $(MIDP_CLASSES_ZIP) \
-		-romize =HeapCapacity96M \
+		-romize =HeapCapacity128M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
 		-romincludepath $(path)) $(LOG)
 
