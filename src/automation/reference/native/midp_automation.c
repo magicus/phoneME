@@ -38,6 +38,9 @@
 #include <midp_logging.h>
 #include <midp_foreground_id.h>
 #include <midpCommandState.h>
+#include <midpEventUtil.h>
+#include <midpServices.h>
+
 
 #include <string.h>
 
@@ -124,3 +127,13 @@ KNIDECL(com_sun_midp_automation_AutomationInitializer_isVMRestarted) {
     KNI_ReturnBoolean(state->vmRestarted);
 #endif
 }
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_automation_AutomationImpl_sendShutdownEvent) {
+    MidpEvent evt;
+
+    MIDP_EVENT_INITIALIZE(evt);
+    evt.type = SHUTDOWN_EVENT;
+    midpStoreEventAndSignalAms(evt);
+}
+

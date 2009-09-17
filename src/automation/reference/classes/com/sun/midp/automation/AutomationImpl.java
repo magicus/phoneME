@@ -98,7 +98,9 @@ final class AutomationImpl extends Automation {
 
         AutoEventImplBase eventBase = (AutoEventImplBase)event;
         if (eventBase.isPowerButtonEvent()) {
-            MIDletProxyList.getMIDletProxyList().shutdown();
+            // MIDletProxyList.getMIDletProxyList().shutdown();
+            sendShutdownEvent();
+
             return;
         }
 
@@ -464,6 +466,11 @@ final class AutomationImpl extends Automation {
      */
     private static native void getForegroundIsolateAndDisplay(
             int[] foregroundIsolateAndDisplay);
+
+    /**
+     * Sends global shutdown event
+     */
+    private static native void sendShutdownEvent();
 
     /**
      * Notifies hardware event listeners.
