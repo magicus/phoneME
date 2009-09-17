@@ -612,18 +612,20 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                  */
                 synchronized (this) {
                     if (installer.stopInstalling()) {
-                        notifyCanceled();
+                        cancelBackgroundInstall();
                         displayCancelledMessage(cancelledMessage);
+                        notifyCanceled();
                     }
                 }
             } else {
+                cancelBackgroundInstall();
                 notifyCanceled();
                 exit(false);
             }
         } else if (c == cancelCmd) {
-            notifyCanceled();
-            displayCancelledMessage(cancelledMessage);
             cancelBackgroundInstall();
+            displayCancelledMessage(cancelledMessage);
+            notifyCanceled();
         } else if (c == Alert.DISMISS_COMMAND) {
             // goto back to the manager midlet
             exit(false);
@@ -637,6 +639,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
     void notifyFailed(Exception e) {
         InstallerResultHandler.notifyRequestFailed(e);
+        try {
+            installer.state.previousSuite.close();
+        } catch( Exception x ){};
         String msg = installer.state.otaInstallMessage;
         if( msg == null ) 
             msg = OtaNotifier.INVALID_CONTENT_HANDLER;
@@ -645,6 +650,9 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
     void notifyCanceled() {
         InstallerResultHandler.notifyRequestCanceled();
+        try {
+            installer.state.previousSuite.close();
+        } catch( Exception x ){};
         iproxy.installDone(false, null);
     }
 
@@ -871,7 +879,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             backgroundInstaller = new BackgroundInstaller(this, url, name,
                 storageId, successMessage, updateFlag, noConfirmation);
 
-            new Thread(backgroundInstaller).start();
+            backgroundInstaller.start();
             
         } catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
@@ -963,6 +971,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             synchronized (backgroundInstaller) {
                 backgroundInstaller.notify();
             }
+            try {
+                int count = 50;
+                while( count-- > 0 && backgroundInstaller.isAlive() )
+                    Thread.sleep(100);
+            } catch( Exception x ){}
         }
     }
 
@@ -1634,7 +1647,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
         cancelAlert = new Alert(null, message, icon, null);
 
-        cancelAlert.setTimeout(Alert.FOREVER);
+        cancelAlert.setTimeout(/*Alert.FOREVER*/ 5000);
         cancelAlert.setCommandListener(this);
 
         // We need to prevent "flashing" on fast development platforms.
@@ -1685,7 +1698,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
 
     /** A class to install a suite in a background thread. */
-    private static class BackgroundInstaller implements Runnable, InstallListener {
+    private static class BackgroundInstaller extends Thread implements InstallListener {
         /** Parent installer. */
         private GraphicalInstaller parent;
         /** URL to install from. */
