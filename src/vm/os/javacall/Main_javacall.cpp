@@ -38,9 +38,6 @@ extern "C" {
 
 #include "../utilities/JVM_Malloc.hpp"
 
-extern "C" {
-int javacall_time_initialize();
-}
 
 void JVMSPI_PrintRaw(const char* s, int length) {
   /* Print the string to the standard output device */
@@ -60,8 +57,6 @@ int main(int argc, char **argv) {
 
   int   size = 0x00200000;
   int code;
-
-  javacall_time_initialize();
 
 #if ENABLE_PCSL
   pcsl_mem_initialize(NULL, -1);
