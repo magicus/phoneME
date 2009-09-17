@@ -50,7 +50,7 @@ SECURITY_INITIALIZER_SOURCE = \
 # Jpp files that need pre-processing
 #
 $(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java: $(SECURITY_INITIALIZER_SOURCE)
-	@$(call runjpp,$^,$@)
+	$(AT)$(call runjpp,$^,$@)
 
 #
 # Java files for the library

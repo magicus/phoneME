@@ -215,6 +215,7 @@ OPTIONVARLIST = $(sort \
   USE_VM_PROFILES \
   USE_MULTIPLE_DISPLAYS \
   USE_AUTOTESTER \
+  USE_PUBLIC_AMS_API \
   )
 
 ######################################################################
