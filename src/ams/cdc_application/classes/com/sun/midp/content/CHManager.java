@@ -126,7 +126,7 @@ public class CHManager {
     	return new InvocationProxy(){
 			public Object getInvocationProperty(String propName) {return null;}
 			public void installDone(boolean success, String errorMsg) {}
-            public void cleanup();
+            public void cleanup() {};
 		};
     }
     
