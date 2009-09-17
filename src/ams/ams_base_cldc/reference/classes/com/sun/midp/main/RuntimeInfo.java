@@ -25,6 +25,9 @@
  */
 
 package com.sun.midp.main;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * Structure containing the run time information about the midlet.
@@ -64,6 +67,23 @@ public class RuntimeInfo {
     /** Constructor */
     public RuntimeInfo() {
     }
+    
+    /** Constructor */
+    public RuntimeInfo(DataInput in) throws IOException {
+        memoryTotal    = in.readInt();
+        memoryReserved = in.readInt();
+        usedMemory     = in.readInt();
+        priority       = in.readInt();
+    }
+    
+    /** Write data into stream */
+    public void serialize(DataOutput out) throws IOException {
+        out.writeInt(memoryTotal);
+        out.writeInt(memoryReserved);
+        out.writeInt(usedMemory);
+        out.writeInt(priority);
+    }
+
 
     /**
      * Returns the string form of this object.
