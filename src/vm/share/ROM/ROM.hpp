@@ -86,7 +86,7 @@ private:
   static void relocate_pointer_to_heap(OopDesc** p);
   static void update_system_array_class(JVM_SINGLE_ARG_TRAPS);
 #if ENABLE_COMPILER && ENABLE_INLINE
-  void update_vtable_bitmaps(const int sys_class_count JVM_TRAPS) const;
+  void update_vtable_bitmaps(const int sys_class_count) const;
 #endif
 public:
   int int_at(const int index) const {
@@ -353,18 +353,18 @@ public:
 #endif
 
 #if ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
-  static ReturnOop get_original_class_name(ClassInfo* /*clsinfo*/);
-  static ReturnOop get_original_method_name(const Method* /*method*/);
-  static ReturnOop get_original_fields(InstanceClass* /*ic*/);
-  static ReturnOop alternate_constant_pool(InstanceClass* /*ic*/);
+  static ReturnOop get_original_class_name(const ClassInfo* clsinfo);
+  static ReturnOop get_original_method_name(const Method* method);
+  static ReturnOop get_original_fields(const InstanceClass* ic);
+  static ReturnOop alternate_constant_pool(const InstanceClass* ic);
 #else
-  static ReturnOop get_original_class_name(ClassInfo* /*clsinfo*/)
+  static ReturnOop get_original_class_name(const ClassInfo* /*clsinfo*/)
                PRODUCT_RETURN0;
   static ReturnOop get_original_method_name(const Method* /*method*/)
                PRODUCT_RETURN0;
-  static ReturnOop get_original_fields(InstanceClass* /*ic*/)
+  static ReturnOop get_original_fields(const InstanceClass* /*ic*/)
                PRODUCT_RETURN0;
-  static ReturnOop alternate_constant_pool(InstanceClass* /*ic*/)
+  static ReturnOop alternate_constant_pool(const InstanceClass* /*ic*/)
                PRODUCT_RETURN0;
 #endif
 
@@ -390,7 +390,9 @@ public:
 
   static bool is_valid_text_object(const OopDesc* /*obj*/) PRODUCT_RETURN0;
 
-  static bool is_restricted_package(const char* name, int len);
+  static bool is_restricted_package(const char name[], const int name_len) {
+    return name_matches_patterns(name, name_len, _rom_restricted_packages);
+  }
   static ReturnOop string_from_table(String *string, juint hash_value);
   static ReturnOop symbol_for(const utf8 s, juint hash_value, int len);
 
@@ -401,14 +403,23 @@ public:
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  static bool class_is_hidden_in_profile(const JavaClass* const jc);
-  static bool is_restricted_package_in_profile(const char *name, 
-                                               int name_len);
-  static int profiles_count() { return _rom_profiles_count; }
-  static const char **profiles_names() { return _rom_profiles_names; }
+  static bool is_hidden_class_in_profile(const jushort class_id);
+  static bool is_restricted_package_in_profile(const char name[],
+                                               const int name_len) {
+    const int current_profile_id = Universe::current_profile_id();
+    GUARANTEE(unsigned(current_profile_id) < unsigned(_rom_profiles_count),
+              "Sanity");
+    const char* packages = _rom_profiles_restricted_packages[current_profile_id];
+    return name_matches_patterns(name, name_len, packages);
+  }
+  static int profiles_count( void ) { return _rom_profiles_count; }
+  static const char* const* profiles_names(void) { return _rom_profiles_names; }
 #endif
 
 private:
+  static bool name_matches_patterns(const char* name, const int len,
+                                    const char* patterns);
+
   // Used in ROM initialization only -- is the address inside the
   // source data used to initialize the heap?
   inline static bool heap_src_block_contains(address target);

@@ -34,44 +34,16 @@
 
 HANDLE_CHECK(InstanceClass, is_instance_class())
 
-#if ENABLE_ROM_GENERATOR
-ReturnOop InstanceClass::package_name(JVM_SINGLE_ARG_TRAPS) {  
-  UsingFastOops fast_oops;
-  Symbol::Fast symbol_class_name = original_name();
-
-  int len = symbol_class_name().strrchr('/');
-  if (len <= 0) {
-    len = symbol_class_name().length();
-  }
-  TypeArray::Fast byte_array = Universe::new_byte_array(len JVM_CHECK_0);  
-
-  for (int i = 0; i < len; i++) {
-    byte_array().byte_at_put(i, symbol_class_name().byte_at(i));
-  }
-  GUARANTEE(SymbolTable::current()->not_null(), 
-    "JavaClass::package_name() requires SymbolTable");
-  return SymbolTable::symbol_for(&byte_array JVM_NO_CHECK_AT_BOTTOM_0);
-}
-#endif
-
 #if !ROMIZED_PRODUCT || ENABLE_ISOLATES
 void InstanceClass::bootstrap_initialize(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops fast_oops;
-#ifndef PRODUCT
-  Method::Fast init = find_local_method(Symbols::class_initializer_name(),
-                                        Symbols::void_signature());
-  GUARANTEE(init.is_null(), "cannot have class initializer");
-  AZZERT_ONLY_VAR(init);
-#endif
+  GUARANTEE(!find_local_class_initializer(), "cannot have class initializer");
   set_initialized();
-#if USE_EMBEDDED_VTABLE_BITMAP
-  update_vtable_bitmaps(JVM_SINGLE_ARG_CHECK);
-#endif
+  update_vtable_bitmaps();
   verify(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 }
 #endif
 
-void InstanceClass::set_verified() {
+void InstanceClass::set_verified(void) const {
   ClassInfo::Raw info = class_info();
   info().set_is_verified();
 #if !ENABLE_ISOLATES
@@ -80,7 +52,7 @@ void InstanceClass::set_verified() {
 #endif
 }
 
-bool InstanceClass::is_verified() {
+bool InstanceClass::is_verified(void) const {
   ClassInfo::Raw info = class_info();
   bool result = info().is_verified();
 
@@ -123,9 +95,8 @@ ReturnOop InstanceClass::initialize_for_task(JVM_SINGLE_ARG_TRAPS){
   return tm.obj();
 }
 
-void InstanceClass::set_initialized() {
- TaskMirror::Raw tm;
- tm = task_mirror_desc();
+void InstanceClass::set_initialized(void) {
+ TaskMirror::Raw tm = task_mirror_desc();
  GUARANTEE(tm.not_null(), "task mirror must not be null");
  if (TaskMirrorDesc::is_being_initialized_mirror((TaskMirrorDesc*)tm.obj())){
    tm = TaskMirror::clinit_list_lookup(this);
@@ -142,7 +113,7 @@ void InstanceClass::set_initialized() {
  set_task_mirror(&tm);
 }
 
-bool InstanceClass::is_initialized() {
+bool InstanceClass::is_initialized() const {
   return TaskMirrorDesc::is_initialized_mirror(task_mirror_desc());
 }
 
@@ -150,15 +121,14 @@ void InstanceClass::initialize(JVM_SINGLE_ARG_TRAPS) {
   initialize_for_task(JVM_SINGLE_ARG_CHECK);
 }
 
-#else
-// !ENABLE_ISOLATES
+#else // !ENABLE_ISOLATES
 
-void InstanceClass::set_initialized() {
+void InstanceClass::set_initialized(void) {
   JavaClassObj::Raw mirror = java_mirror();
   mirror().set_initialized();
 }
 
-bool InstanceClass::is_initialized() {
+bool InstanceClass::is_initialized(void) const {
   JavaClassObj::Raw mirror = java_mirror();
   return mirror().is_initialized();
 }
@@ -168,7 +138,7 @@ void InstanceClass::initialize(JVM_SINGLE_ARG_TRAPS) {
   if (mirror().is_initialized()) {
     return;
   }
-  initialize_internal(Thread::current(), &mirror JVM_CHECK);
+  initialize_internal(Thread::current(), &mirror JVM_NO_CHECK_AT_BOTTOM);
 }
 
 #endif //ENABLE_ISOLATES
@@ -185,12 +155,8 @@ void InstanceClass::initialize_internal(Thread *thread, Oop *m JVM_TRAPS) {
 
   UsingFastOops fast_oops;
   JavaClassObj::Fast mirror = m->obj();
-  if (mirror().in_progress()) {
-    ThreadObj::Raw initializing_thread = mirror().thread();
-    ThreadObj::Raw thread_obj = thread->thread_obj();
-    if (initializing_thread().equals(&thread_obj)) {
-      return;
-    }
+  if (mirror().in_progress() && mirror().thread() == thread->thread_obj()) {
+    return;
   }
 
 #if ENABLE_TTY_TRACE
@@ -205,8 +171,7 @@ void InstanceClass::initialize_internal(Thread *thread, Oop *m JVM_TRAPS) {
   // thread is already executing Class.initialize(), this thread would
   // be blocked until the other thread completes.
   Method::Fast method = Universe::java_lang_Class_class()
-      ->find_local_method(Symbols::initialize_name(),
-                          Symbols::void_signature());
+      ->find_local_void_method(Symbols::initialize_name());
   GUARANTEE(!method.is_null(),"We need the method java.lang.Class.initialize");
 
   {
@@ -220,9 +185,7 @@ void InstanceClass::initialize_internal(Thread *thread, Oop *m JVM_TRAPS) {
 void InstanceClass::clinit(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   // Find the method to invoke
-  Method::Fast init = find_local_method(Symbols::class_initializer_name(),
-                                        Symbols::void_signature());
-
+  Method::Fast init = find_local_class_initializer();
   if (!init.is_null()) {
     EntryActivation::Raw entry =
         Universe::new_entry_activation(&init, 0 JVM_NO_CHECK);
@@ -289,10 +252,9 @@ ReturnOop InstanceClass::new_instance(FailureMode fail_mode JVM_TRAPS) {
 
 size_t InstanceClass::first_static_map_offset() const {
   size_t map_offset = first_nonstatic_map_offset();
-  while (oop_map_at(map_offset) != OopMapSentinel) {
-    map_offset++;
+  while (oop_map_at(map_offset++) != OopMapSentinel) {
   }
-  return map_offset + 1;
+  return map_offset;
 }
 
 size_t InstanceClass::nonstatic_map_size() const {
@@ -312,60 +274,66 @@ size_t InstanceClass::last_nonstatic_oop_offset() const {
 size_t InstanceClass::static_map_size() const {
   size_t map_start = first_static_map_offset();
   size_t map_offset = map_start;
-  while (oop_map_at(map_offset) != OopMapSentinel) {
-    map_offset++;
+  while (oop_map_at(map_offset++) != OopMapSentinel) {
   }
-  return map_offset + 1 - map_start;
+  return map_offset - map_start;
 }
 
 #if USE_EMBEDDED_VTABLE_BITMAP
 void InstanceClass::set_is_method_overridden(int vtable_index) {
   GUARANTEE(0 <= vtable_index && vtable_index < vtable_length(),
             "Bound check");
-  ClassInfo::Raw info = class_info();    
-  Method::Raw method = info().vtable_method_at(vtable_index);
-  InstanceClass::Raw holder = method().holder();
-  holder().set_vtable_bitmap_bit(vtable_index);
+#ifdef AZZERT
+  {
+    ClassInfo::Raw info = class_info();    
+    Method::Raw method = info().vtable_method_at(vtable_index);
+    GUARANTEE(method.not_null(), "Sanity of dead method elimination");
+    InstanceClass::Raw holder = method().holder();
+    GUARANTEE(holder.equals(this), "Sanity");
+  }
+#endif
+  set_vtable_bitmap_bit(vtable_index);
 }
 
-bool InstanceClass::is_method_overridden(int vtable_index) const {
+bool InstanceClass::is_method_overridden(const int vtable_index) const {
   GUARANTEE(0 <= vtable_index && vtable_index < vtable_length(),
             "Bound check");
-  ClassInfo::Raw info = class_info();    
-  Method::Raw method = info().vtable_method_at(vtable_index);
-  InstanceClass::Raw holder = method().holder();
-  if (holder().is_vtable_bitmap_installed()) {
-    return holder().vtable_bitmap_bit(vtable_index);
-  } else {
-    return false;
+#ifdef AZZERT
+  {
+    ClassInfo::Raw info = class_info();    
+    Method::Raw method = info().vtable_method_at(vtable_index);
+    GUARANTEE(method.not_null(), "Sanity of dead method elimination");
+    InstanceClass::Raw holder = method().holder();
+    GUARANTEE(holder.equals(this), "Sanity");
   }
+#endif
+  return is_vtable_bitmap_installed() && vtable_bitmap_bit(vtable_index);
 }
 #endif
 
 /// Find a method with matching name and signature (regardless of access
 /// flags). We start by searching the current class, and recursively walk
 /// up the class hierarchy.
-ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature, bool non_static_only) {
-  InstanceClass::Raw ic = this->obj();
+ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature,
+                                       bool non_static_only) const {
   Method::Raw m;          // If non-null, a method with matching name+sig
   InstanceClass::Raw m_holder; // Holder of <m>
 
   // (1) Recursively search the method table (and walk up the class hierarchy)
   //     until we find a matching method.
-  while (!ic.is_null()) {
-    m = ic().find_local_method(name, signature, non_static_only);
-    if (!m.is_null()) {
-      break;
-    }
-    ic = ic().super();
-  }
-
-  if (m.not_null()) {
-    m_holder = ic.obj();
-    if (m_holder == this->obj()) {
-      // This is a common case -- method is already declared in this class. 
-      // We can't find a more suitable method in the vtable.
-      return m.obj();
+  {
+    InstanceClass::Raw ic = this->obj();
+    for (; ic.not_null(); ic = ic().super()) {
+      m = ic().find_local_method(name, signature, non_static_only);
+      if (m.not_null()) {
+        m_holder = ic.obj();
+        if (m_holder == this->obj()) {
+          // This is a common case -- method is already declared in this class.
+          // We can't find a more suitable method in the vtable.
+          return m.obj();
+        }
+        break;
+      }
     }
   }
 
@@ -373,10 +341,10 @@ ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature, bool non
   //     ROMized classes -- their virtual method are removed from the method
   //     table to save space.
   ClassInfo::Raw info = class_info();
-  int vtable_length = info().vtable_length();
+  const int vtable_length = info().vtable_length();
   for (int i = 0; i < vtable_length; i++) {
     Method::Raw m2 = info().vtable_method_at(i);
-    if (m2.not_null() && (!m2.equals(&m)) && m2().match(name, signature)) {
+    if (m2.not_null() && !m2.equals(&m) && m2().match(name, signature)) {
       InstanceClass::Raw ic2 = m2().holder();
 
       if (m.is_null()) {
@@ -384,7 +352,7 @@ ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature, bool non
         m_holder = ic2.obj();
       } else {
         // Check if ic2 is a sub-class of m_holder
-        while (ic2.not_null()) {
+        do {
           if (ic2.equals(&m_holder)) {
             // One of ic2's super class is m_holder, so m2 was declared by
             // a subclass of m_holder
@@ -393,7 +361,7 @@ ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature, bool non
             break;
           }
           ic2 = ic2().super();
-        }
+        } while (ic2.not_null());
       }
     }
   }
@@ -401,10 +369,33 @@ ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature, bool non
   return m.obj();
 }
 
-ReturnOop InstanceClass::find_local_method(Symbol* name, Symbol* signature, bool non_static_only) {
+ReturnOop InstanceClass::find_local_method(Symbol* name, Symbol* signature,
+                                           bool non_static_only) const {
   ObjArray::Raw array = methods();
   return find_method(&array, name, signature, non_static_only);
 }
+
+ReturnOop InstanceClass::find_local_void_method(Symbol* name) const {
+  return find_local_method(name, Symbols::void_signature());
+}
+
+ReturnOop InstanceClass::find_local_default_constructor(void) const {
+  return find_local_void_method(Symbols::object_initializer_name());
+}
+
+ReturnOop InstanceClass::find_local_class_initializer(void) const {
+  return find_local_void_method(Symbols::class_initializer_name());
+}
+
+ReturnOop InstanceClass::lookup_void_method(Symbol* name) const {
+  return lookup_method(name, Symbols::void_signature());
+}
+
+ReturnOop InstanceClass::lookup_main_method(void) const {
+  return lookup_method(Symbols::main_name(),
+                       Symbols::string_array_void_signature());
+}
+
 
 /// Adds miranda methods to a class's methods array. For an interface I and
 /// a class C that declares to implement I, a miranda method I.m is a method
@@ -604,23 +595,28 @@ InstanceClass::lookup_method_in_all_interfaces(Symbol* name,
                                                Symbol* signature,
                                                int& interface_class_id,
                                                int& itable_index) {
-  Method::Raw method = find_local_method(name, signature);
-  if (method.not_null()) {
-    interface_class_id = class_id();         // returns to caller
-    itable_index = method().itable_index();  // returns to caller
-    return method.obj();
+  {
+    Method::Raw method = find_local_method(name, signature);
+    if (method.not_null()) {
+      interface_class_id = class_id();         // returns to caller
+      itable_index = method().itable_index();  // returns to caller
+      return method.obj();
+    }
   }
 
-  InstanceClass::Raw interface_class;
-  TypeArray::Raw interfaces = local_interfaces();
-  int n_interfaces = interfaces().length();
+  {
+    TypeArray::Raw interfaces = local_interfaces();
+    const int n_interfaces = interfaces().length();
 
-  for (int i = 0; i < n_interfaces; ++i) {
-    interface_class = Universe::class_from_id(interfaces().ushort_at(i));
-    method = interface_class().lookup_method_in_all_interfaces(name, signature,
-                                            interface_class_id, itable_index);
-    if (method.not_null()) {
-      return method.obj();
+    for (int i = 0; i < n_interfaces; ++i) {
+      InstanceClass::Raw interface_class =
+        Universe::class_from_id(interfaces().ushort_at(i));
+      Method::Raw method =
+        interface_class().lookup_method_in_all_interfaces(name, signature,
+                                              interface_class_id, itable_index);
+      if (method.not_null()) {
+        return method.obj();
+      }
     }
   }
   return NULL;
@@ -647,11 +643,10 @@ ReturnOop InstanceClass::find_method(ObjArray* class_methods, Symbol* name,
     if (m != NULL && m->match(name_obj, sig_obj)) {
       if (!non_static_only) {
         return m;
-      } else {
-        Method::Raw method = m;
-        if (!method().is_static()) {
-          return m;
-        }
+      }
+      Method::Raw method = m;
+      if (!method().is_static()) {
+        return m;
       }
     }
   }
@@ -659,9 +654,7 @@ ReturnOop InstanceClass::find_method(ObjArray* class_methods, Symbol* name,
 }
 
 void InstanceClass::remove_clinit() {
-  ObjArray::Raw class_methods(methods());
-
-  if (ROM::in_any_loaded_readonly_bundle(class_methods.obj())) {
+  if (ROM::in_any_loaded_readonly_bundle(methods())) {
     // Can't remove clinit methods that are in ROM
     return;
   }
@@ -672,15 +665,12 @@ void InstanceClass::remove_clinit() {
     return;
   }
 
-  Symbol *name = Symbols::class_initializer_name();
-  Symbol *signature = Symbols::void_signature();
-
-  int length = class_methods().length();
-  Method::Raw m; 
+  ObjArray::Raw class_methods(methods());
+  const int length = class_methods().length();
   for (int index = 0; index < length; index++) {
-    m = class_methods().obj_at(index);
-    GUARANTEE(!m.is_null(), "no methods could have been removed yet");
-    if (m().match(name, signature)) {
+    Method::Raw m = class_methods().obj_at(index);
+    GUARANTEE(m.not_null(), "no methods could have been removed yet");
+    if (m().is_class_initializer()) {
       class_methods().obj_at_clear(index);
       return;
     }
@@ -689,7 +679,8 @@ void InstanceClass::remove_clinit() {
 
 bool InstanceClass::itable_contains(InstanceClass* instance_class) {
   ClassInfo::Raw info = class_info();
-  for (int index = 0; index < info().itable_length(); index++) {
+  const int length = info().itable_length();
+  for (int index = 0; index < length; index++) {
     InstanceClass::Raw element = info().itable_interface_at(index);
     if (element.equals(instance_class)) {
       return true;
@@ -777,8 +768,6 @@ bool InstanceClass::needs_new_vtable_entry(Method* method, InstanceClass*super,
                                            ClassInfo* info, //don't need if update_entries == false
                                            bool update_entries)
 {
-  bool allocate_new = true;
-
   if (method->is_null()) {
     // a removed <clinit> method
     return false;
@@ -789,6 +778,7 @@ bool InstanceClass::needs_new_vtable_entry(Method* method, InstanceClass*super,
     return false;
   }
 
+  bool allocate_new = true;
   if ((access_flags.is_final() || method->is_final())) {
     // a final method never needs a new entry; final methods can be statically
     // resolved and they have to be present in the vtable only if they override
@@ -807,15 +797,13 @@ bool InstanceClass::needs_new_vtable_entry(Method* method, InstanceClass*super,
   }
 
   // search through the vtable and update overridden entries
-  OopDesc *myname = method->name();
-  OopDesc *mysig  = method->signature();
-  Method::Raw match;
-  InstanceClass::Raw holder;
+  OopDesc* myname = method->name();
+  OopDesc* mysig  = method->signature();
 
   ClassInfo::Raw sinfo = super->class_info();
   int super_length = sinfo().vtable_length();
   for(int index = 0; index < super_length; index++) {
-    match = sinfo().vtable_method_at(index);
+    Method::Raw match = sinfo().vtable_method_at(index);
     
     if (match.is_null()) {
       continue;
@@ -823,12 +811,12 @@ bool InstanceClass::needs_new_vtable_entry(Method* method, InstanceClass*super,
 
     // Check if method name matches
     if (myname == match().name() && mysig == match().signature()) {
-      holder = match().holder();
+      InstanceClass::Raw holder = match().holder();
       // Check if the match_method is accessible from current class
 
       bool same_package_init = false;
       bool same_package_flag = false;
-      bool simple_match = match().is_public()  || match().is_protected();
+      bool simple_match = match().is_public() || match().is_protected();
       if (!simple_match) {
         same_package_init = true;
         same_package_flag = holder().is_same_class_package(classname);
@@ -885,7 +873,8 @@ void InstanceClass::itable_copy_down(InstanceClass* ic, int& index,
   Method::Fast interface_method;
   Method::Fast method;
 
-  for (int i = 0; i < methods().length(); i++) {
+  const int length = methods().length();
+  for (int i = 0; i < length; i++) {
     interface_method = methods().obj_at(i);
     if (interface_method.is_null()) {
       // This class implements this interface but during ROMization
@@ -1054,68 +1043,65 @@ void InstanceClass::initialize_static_fields(Oop *statics_holder) {
 }
 
 #if ENABLE_COMPILER && ENABLE_INLINE
-void InstanceClass::update_vtable_bitmaps(JVM_SINGLE_ARG_TRAPS) const {
+void InstanceClass::update_vtable_bitmaps(void) const {
   if (is_interface()) {
     return;
   }
 
-  UsingFastOops fast_oops;
-  InstanceClass::Fast super_class = this->super();
+  InstanceClass::Raw super_class = super();
+  if (super_class.is_null()) {
+    return;
+  }
 
-  if (super_class.not_null()) {
-    UsingFastOops fast_oops_2;
-    ClassInfo::Fast this_class_info = this->class_info();
-    ClassInfo::Fast super_class_info = super_class().class_info();
-    const int super_vtable_length = super_class_info().vtable_length();
+  ClassInfo::Raw this_class_info = class_info();
+  ClassInfo::Raw super_class_info = super_class().class_info();
 
-    GUARANTEE(super_vtable_length <= this_class_info().vtable_length(),
-              "Sanity");
+  const int super_vtable_length = super_class_info().vtable_length();
+  GUARANTEE(super_vtable_length <= this_class_info().vtable_length(), "Sanity");
 
-    for (int vtable_index = 0; vtable_index < super_vtable_length; 
-         vtable_index++) {
-      Method::Raw this_method = 
-        this_class_info().vtable_method_at(vtable_index);
-      if (this_method.not_null()) {
-        InstanceClass::Raw holder = this_method().holder();
-        if (holder.equals(this)) {
-          if (!super_class().is_method_overridden(vtable_index)) {
-            Method::Raw super_method = 
-              super_class_info().vtable_method_at(vtable_index);
+  for (int i = 0; i < super_vtable_length; i++) {
+    Method::Raw super_method = super_class_info().vtable_method_at(i);
+    if (super_method.is_null()) {
+      continue;
+    }
 
-            GUARANTEE(!this_method.equals(&super_method), 
-                      "Cannot be equal: must have different holders");
-            
-            if (TraceMethodInlining) {
-              tty->print("Method ");
-              this_method().print_name_on_tty();
-              tty->print(" overrides ");
-              super_method().print_name_on_tty();
-              tty->cr();
-            }
+    Method::Raw this_method = this_class_info().vtable_method_at(i);
+    GUARANTEE(this_method.not_null(), "Sanity of dead method elimination");
+    if (super_method.equals(this_method.obj())) {
+      continue;
+    }
 
-            // If the loaded class overrides this method in super_class,
-            // unlink all methods that has this method inlined and mark 
-            // the method as overriden in the inline table.
-            super_method().unlink_direct_callers();
-
-            super_class().set_is_method_overridden(vtable_index);
-          } else {
-#ifdef AZZERT
-            Method::Raw super_method = 
-              super_class_info().vtable_method_at(vtable_index);
-
-            GUARANTEE(!this_method.equals(&super_method), 
-                      "Cannot be equal: must have different holders");
-            
-            Method::DirectCallerStream reader(&super_method);
-
-            GUARANTEE(!reader.has_next(), 
-                      "Overridden method must not have direct callers");
-#endif
-          }
-        }
+    {
+      // Only methods defined in this class have to be processed
+      InstanceClass::Raw holder = this_method().holder();
+      if (!holder.equals(this)) {
+        continue;
       }
     }
+
+    InstanceClass::Raw super_holder = super_method().holder();
+    if (!super_holder().is_method_overridden(i)) {
+      // If the loaded class overrides this method in super_class,
+      // unlink and deoptimize all methods that have this method inlined
+      // and mark the method as overriden in the inline table.
+      super_method().unlink_direct_callers();
+      super_holder().set_is_method_overridden(i);
+
+      if (TraceMethodInlining) {
+        tty->print("Method ");
+        this_method().print_name_on_tty();
+        tty->print(" overrides ");
+        super_method().print_name_on_tty();
+        tty->cr();
+      }
+    }
+#ifdef AZZERT
+    else {
+      Method::DirectCallerStream reader(&super_method);
+      GUARANTEE(!reader.has_next(),
+        "Overridden method must not have direct callers");
+    }
+#endif
   }
 }
 #endif
@@ -1128,29 +1114,16 @@ bool InstanceClass::compute_is_subtype_of(JavaClass* other_class) {
   }
 }
 
-bool InstanceClass::is_renamed() {
-  Symbol::Raw n = name();
-  if (n.equals(Symbols::unknown())) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR \
      ||ENABLE_JVMPI_PROFILE
 // Returns the original set of fields before romizer has renamed them.
-ReturnOop InstanceClass::original_fields() {
+ReturnOop InstanceClass::original_fields(void) const {
   ReturnOop orig = ROM::get_original_fields(this);
-  if (orig != NULL) {
-    return orig;
-  } else {
-    return fields();
-  }
+  return orig ? orig : fields();
 }
 
 // Returns the original name that has been changed by romizer optimization
-ReturnOop InstanceClass::original_name() {
+ReturnOop InstanceClass::original_name(void) const {
   Symbol::Raw n = name();
   if (n.equals(Symbols::unknown())) {
     ClassInfo::Raw info = class_info();
@@ -1281,7 +1254,7 @@ void InstanceClass::iterate_non_static_fields(OopVisitor* visitor) {
     int next_field_index = -1;
     int min_offset = 0x7fffffff;
 
-    for (int index = 0; index < f.length(); index += 5) {
+    for (int index = 0; index < f.length(); index += Field::NUMBER_OF_SLOTS) {
       OriginalField f(this, index);
       if (!f.is_static() &&
           f.offset() > last_field_offset && 

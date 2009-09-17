@@ -196,6 +196,7 @@ public:
 #if ENABLE_JAVA_DEBUGGER
   DEFINE_ACCESSOR_OBJ(Task, JavaDebuggerContext, debugger_context);
  public:
+  inline bool is_debug_suspend() const;
 #endif
 
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
@@ -689,6 +690,11 @@ public:
 
   static int get_num_tasks() {
     return _num_tasks;
+  }
+
+  static bool more_than_one_task() {
+    // check for more than 2, as we count the system task
+    return get_num_tasks() > 2;
   }
 
   void add_thread();

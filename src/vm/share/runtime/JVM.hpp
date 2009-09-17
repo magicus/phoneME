@@ -156,5 +156,5 @@ private:
   // We put this in solely for the purpose
   // so that one can look at the executable binary
   // with a text browser and look at the copyright notice:
-  static const char *copyright;
+  static const char copyright[];
 };

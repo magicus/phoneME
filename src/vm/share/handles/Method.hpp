@@ -651,7 +651,12 @@ public:
   bool bytecode_inline_prepass(Attributes& attributes JVM_TRAPS) const;
 
   // Returns if a method can be shared between tasks
-  bool is_shared() const;
+  bool is_shared(void) const
+#if ENABLE_ISOLATES
+    ;
+#else
+  { return false; }
+#endif
 
   // Returns a this method's record in the global direct callers table
   ReturnOop find_callee_record() const;
@@ -719,12 +724,10 @@ public:
   bool is_static()          const { return access_flags().is_static();       }
   bool is_public()          const { return access_flags().is_public();       }
   bool is_protected()       const { return access_flags().is_protected();    }
-  bool is_package_private() const {
-    return access_flags().is_package_private();
-  }
+  bool is_package_private() const { return access_flags().is_package_private();}
 
   bool is_quick_native() const {
-    return ((code_size() == 0) && is_native());
+    return code_size() == 0 && is_native();
   }
 
   void check_access_by(InstanceClass* sender_class, 
@@ -736,7 +739,9 @@ public:
 
   bool match(Symbol* name, Symbol* signature) const;
   void check_bytecodes(JVM_SINGLE_ARG_TRAPS);
-  bool is_object_initializer() const;
+  bool is_object_initializer  (void) const;
+  bool is_default_constructor (void) const;
+  bool is_class_initializer   (void) const;
 
   // Computes whether this method is a vanilla constructor. 
   // Used for setting the has_vanilla_constructor flag in the class.

@@ -54,15 +54,11 @@ void Symbol::string_copy(char* buffer, int buffer_size) {
   return;
 }
 
-juint Symbol::hash() {
+juint Symbol::hash(void) const {
   return SymbolTable::hash(utf8_data(), length());
 }
 
-bool Symbol::matches(Symbol *other_symbol) {
-  return symbol()->matches(other_symbol->symbol());
-}
-
-int Symbol::strrchr(jbyte c) {
+int Symbol::strrchr(jbyte c) const {
   int len = length();
   GUARANTEE(len >= 0, "sanity check");  
   // If we ever change jbyte to jubyte, check instead that c < 128
@@ -73,7 +69,7 @@ int Symbol::strrchr(jbyte c) {
   return len;
 }
 
-bool Symbol::is_same_class_package(Symbol* other) {
+bool Symbol::is_same_class_package(const Symbol* other) const {
   // The symbolOop's are in UTF8 encoding. Since we only need to check
   // explicitly for ASCII characters ('/', 'L', '['), we can keep them
   // in UTF8 encoding.
@@ -185,9 +181,7 @@ bool Symbol::is_valid_field_type() {
 bool Symbol::is_valid_method_signature(Symbol* name) {
   OopDesc * obj = this->obj();
   if (ROM::is_rom_symbol(obj)) {
-    if (ROM::is_valid_method_signature(obj)) {
-      // continue below
-    } else {
+    if (!ROM::is_valid_method_signature(obj)) {
       return false;
     }
   } else { 
@@ -199,10 +193,9 @@ bool Symbol::is_valid_method_signature(Symbol* name) {
   if (name != NULL && name->byte_at(0) == '<') {
     // All internal methods must return void:
     Signature::Raw sig = this->obj();
-    return (sig().return_type() == T_VOID);
-  } else {
-    return true;
+    return sig().return_type() == T_VOID;
   }
+  return true;
 }
 
 bool Symbol::is_valid_field_name() {
@@ -236,13 +229,9 @@ bool Symbol::is_valid_class_name() {
 
 bool Symbol::is_valid_method_name() {
   // is_valid_field_name() is the most common case, so do it first
-  if (is_valid_field_name() ||
-      equals(Symbols::object_initializer_name()) ||
-      equals(Symbols::class_initializer_name())) {
-    return true;
-  } else {
-    return false;
-  }
+  return is_valid_field_name() ||
+         equals(Symbols::object_initializer_name()) ||
+         equals(Symbols::class_initializer_name());
 }
 
 #ifndef PRODUCT

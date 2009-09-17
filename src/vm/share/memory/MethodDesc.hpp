@@ -77,12 +77,12 @@ class MethodDesc: public OopDesc {
 
  public:
   // Returns the object size
-  size_t object_size() const {
+  size_t object_size(void) const {
     return allocation_size(_code_size);
   }
 
   // Used for computing index in profiler table
-  int profile_hash() { 
+  int profile_hash(void) const { 
       return _code_size ^ x._max_execution_stack_count
                      ^ _signature_index ^ _name_index; 
   }
@@ -106,28 +106,28 @@ class MethodDesc: public OopDesc {
     variable_part()->set_execution_entry(entry);
   }
 
-  MethodVariablePart *variable_part() {
+  MethodVariablePart* variable_part(void) const {
     return _variable_part;
   }
   void relocate_variable_part(int delta);
 
-  jushort holder_id() {
+  jushort holder_id(void) const {
     return _holder_id;
   }
 
 #if  ENABLE_JVMPI_PROFILE 
   // get the method id
-  juint method_id() {
+  juint method_id(void) const {
    return _method_id;
   }
 #endif
 
-  jushort max_locals() {
+  jushort max_locals(void) const {
     return x._max_locals;
   }
 
   // This method is called a lot during class loading.
-  bool match(OopDesc* name, OopDesc* signature) {
+  bool match(const OopDesc* name, const OopDesc* signature) const {
     AllocationDisabler raw_pointers_used_in_this_function;
 
     address cp;
@@ -136,17 +136,16 @@ class MethodDesc: public OopDesc {
     } else {
       cp = (address)_constants;
     }
-    OopDesc **cpbase = (OopDesc**)(cp + ConstantPoolDesc::header_size());
+    const OopDesc* const* const cpbase =
+      (const OopDesc* const*)(cp + ConstantPoolDesc::header_size());
 
-    OopDesc *my_name = cpbase[_name_index];
-    if (my_name != name) {
+    if( cpbase[_name_index] != name ) {
       return false;
     }
 
-    OopDesc *my_sig = cpbase[_signature_index];
-    if (my_sig != signature) {
-      // Empty signature means that any method with the same name will match
-      return signature == NULL;
+    // Empty signature means that any method with the same name will match
+    if( signature && cpbase[_signature_index] != signature ) {
+      return false;
     }
 
     return true;

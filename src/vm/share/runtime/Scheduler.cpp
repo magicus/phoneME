@@ -2185,7 +2185,7 @@ Thread *Scheduler::get_next_runnable_thread(Thread *starting_thread) {
       // Check to see if this task has used up it's quota.
       // If so go to the next task and continue the do loop.
       task_priority = Task::get_priority(tid);
-      if (Task::get_num_tasks() > 2) {
+      if (Task::more_than_one_task()) {
         if (_task_execute_counts[task_priority] >
             sched_priority[TaskPriorityScale][task_priority]) {
           // This task has used up its 'quota', try to find another
@@ -2291,7 +2291,7 @@ Thread *Scheduler::get_next_runnable_thread(Thread *starting_thread) {
           // move this thread to the head of the queue
           set_last_priority_queue(&thread, priority);
 #if ENABLE_ISOLATES
-          if (TaskFairScheduling && Task::get_num_tasks() > 2) {
+          if (TaskFairScheduling && Task::more_than_one_task()) {
             // bump execution count for this task
             _task_execute_counts[task_priority]++;
           }

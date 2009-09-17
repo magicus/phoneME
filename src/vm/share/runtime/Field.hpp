@@ -34,12 +34,14 @@ class Field : public StackObj {
   Field(InstanceClass* ic, Symbol* name, Symbol* signature) {
     initialize(ic, name, signature);
   }
-  Field(InstanceClass* ic, jint index);
+  Field(InstanceClass* ic, const jint index) {
+    initialize(ic, index);
+  }
   Field(InstanceClass* ic, jint index, TypeArray *fields);
 
   // ^Symbol
-  ReturnOop name() PRODUCT_CONST;
-  ReturnOop signature() PRODUCT_CONST;
+  ReturnOop name(void) const;
+  ReturnOop signature(void) const;
   AccessFlags access_flags() const { return _access; }
   jushort offset() const           { return _offset; }
   bool is_valid() const            { return _index >= 0; }
@@ -49,7 +51,7 @@ class Field : public StackObj {
   int  initval_index()      const { return _initval_index; }
 
   // Field signature type
-  BasicType type() PRODUCT_CONST;
+  BasicType type(void) const;
 
   // Access flags
   bool is_public() const          { return access_flags().is_public();    }
@@ -66,7 +68,7 @@ class Field : public StackObj {
 
   void check_access_by(InstanceClass* sender_class, 
                        InstanceClass* static_receiver_class,
-                       FailureMode fail_mode JVM_TRAPS);
+                       FailureMode fail_mode JVM_TRAPS) const;
 
   // Offsets of array slots in 'InstanceClass::fields()' as provided
   // by the class file parser.
@@ -80,21 +82,21 @@ class Field : public StackObj {
     NUMBER_OF_SLOTS       = 5 // per field
   } FieldAttributeArrayIndex;
 
-  InstanceClass* holder() const { return _ic; }
+  InstanceClass* holder(void) const { return _ic; }
 
-  int byte_size() PRODUCT_CONST {
+  int byte_size(void) const {
     return ::byte_size_for(type());
   }
-  void print_on(Stream *) PRODUCT_RETURN;
-  void p()  PRODUCT_RETURN;
-  void print_cp_symbol_on(Stream *, int /*cp_index*/) PRODUCT_RETURN;
+  void print_on(Stream*) const PRODUCT_RETURN;
+  void p(void) const PRODUCT_RETURN;
+  void print_cp_symbol_on(Stream *, int /*cp_index*/) const PRODUCT_RETURN;
 
 #ifndef PRODUCT
-  virtual ReturnOop get_fields_for(InstanceClass* ic) {
+  virtual ReturnOop get_fields_for(InstanceClass* ic) const {
     return ic->fields();
   }
 
-  virtual ReturnOop get_constants_for(InstanceClass* ic) {
+  virtual ReturnOop get_constants_for(InstanceClass* ic) const {
     return ic->constants();
   }
 #else
@@ -122,11 +124,11 @@ class Field : public StackObj {
   void initialize(InstanceClass* ic, Symbol* name, Symbol* signature);
   void initialize(InstanceClass* ic, jint index);
   void initialize(InstanceClass* ic, jint index, TypeArray *fields);
-  InstanceClass* ic() const { return _ic; }
-  int find_field_index(InstanceClass* ic, Symbol* name, Symbol* signature);
+  InstanceClass* ic(void) const { return _ic; }
+  int find_field_index(InstanceClass* ic, Symbol* name, Symbol* signature) const;
   int find_field_in_class_and_interfaces(InstanceClass* ic, 
                                          Symbol* name, 
-                                         Symbol* signature);
+                                         Symbol* signature) const;
   
   InstanceClass* _ic;
   jint           _index;
@@ -161,21 +163,16 @@ public:
     initialize(ic, index);
   }
 
-  virtual ReturnOop get_fields_for(InstanceClass* ic) PRODUCT_CONST {
+  virtual ReturnOop get_fields_for(InstanceClass* ic) const {
     return ic->original_fields();
   }
 
-  virtual ReturnOop get_constants_for(InstanceClass* ic) PRODUCT_CONST {
+  virtual ReturnOop get_constants_for(InstanceClass* ic) const {
     ReturnOop cp = ROM::alternate_constant_pool(ic);
-    if (cp != NULL) {
-      return cp;
-    } else {
-      return ic->constants();
-    }
+    return cp ? cp : ic->constants();
   }
 
-  bool is_renamed() PRODUCT_RETURN0;
-
+  bool is_renamed(void) const PRODUCT_RETURN0;
 };
 
 #endif

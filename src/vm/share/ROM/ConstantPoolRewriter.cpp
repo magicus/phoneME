@@ -338,7 +338,7 @@ void ConstantPoolRewriter::rewrite_class_object(InstanceClass *klass JVM_TRAPS) 
   ConstantPool::Fast orig_cp = klass->constants();
   int i;
 
-  for (i = 0; i < fields().length(); i += 5) {
+  for (i = 0; i < fields().length(); i += Field::NUMBER_OF_SLOTS) {
     //5-tuples of shorts [access, name index, sig index, initval index, offset]
     rewrite_index(&orig_cp, &fields, i + Field::NAME_OFFSET JVM_CHECK);
     rewrite_index(&orig_cp, &fields, i + Field::SIGNATURE_OFFSET JVM_CHECK);

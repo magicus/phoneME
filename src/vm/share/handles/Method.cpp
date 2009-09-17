@@ -556,29 +556,23 @@ bool Method::bytecode_inline_prepass(Attributes& attributes
     return false; // must not be synchronized!
   }
 
-  if (is_object_initializer()) return false;
-
-  if (match(Symbols::object_initializer_name(), Symbols::void_signature())) {
+  if (is_object_initializer() || is_default_constructor()) {
     return false;
   }
 
-  TypeArray::Raw my_exception_table = exception_table();
-  if (my_exception_table().length() != 0) {
-    return false;
+  {
+    TypeArray::Raw my_exception_table = exception_table();
+    if (my_exception_table().length() != 0) {
+      return false;
+    }
   }
 
-  UsingFastOops fast_oops;
-  InstanceClass::Fast holder_class = holder();
-  if ((&holder_class)->is_subclass_of(Universe::throwable_class())) {
-    return false;
+  {
+    InstanceClass::Raw holder_class = holder();
+    if (holder_class().is_subclass_of(Universe::throwable_class())) {
+      return false;
+    }
   }
-
-  if ((&holder_class)->equals(Universe::throwable_class())) {
-    return false;
-  }
-
-  bool has_field_get = false;
-  int index = 0;
 
   compute_attributes(attributes JVM_CHECK_0);
 
@@ -601,17 +595,19 @@ bool Method::bytecode_inline_prepass(Attributes& attributes
 #endif
 
 #if ENABLE_COMPILER && ENABLE_INLINE
+#if ENABLE_ISOLATES
 // Returns if a method can be shared between tasks
-bool Method::is_shared() const {
-#if ENABLE_ISOLATES && USE_BINARY_IMAGE_LOADER
+bool Method::is_shared( void ) const {
+#if USE_BINARY_IMAGE_LOADER
   FOREACH_BINARY_IMAGE_IN_CURRENT_TASK(bundle)
     if (bundle->text_contains(obj())) {
       return bundle->is_sharable();
     }
   ENDEACH_BINARY_IMAGE_IN_CURRENT_TASK;
 #endif
-  return ENABLE_ISOLATES && ROM::is_rom_method(obj());
+  return ROM::is_rom_method(obj());
 }
+#endif // ENABLE_ISOLATES
 
 ReturnOop Method::find_callee_record() const {
   AllocationDisabler raw_pointers_used_in_this_function;
@@ -882,7 +878,15 @@ int Method::itable_index() const {
   return -1;
 }
 
-bool Method::is_vanilla_constructor() const {
+bool Method::is_default_constructor(void) const {
+  return match(Symbols::object_initializer_name(), Symbols::void_signature());
+}
+
+bool Method::is_class_initializer(void) const {
+  return match(Symbols::class_initializer_name(), Symbols::void_signature());
+}
+
+bool Method::is_vanilla_constructor(void) const {
   AllocationDisabler raw_pointers_used_in_this_function;
 
   // Returns true if this is a vanilla constructor, i.e. an "<init>" "()V"
@@ -905,7 +909,7 @@ bool Method::is_vanilla_constructor() const {
   // followed by:
   //
   //   return
-  GUARANTEE(match(Symbols::object_initializer_name(), Symbols::void_signature()),  "Should only be called for default constructors");
+  GUARANTEE(is_default_constructor(),  "Should only be called for default constructors");
 
   int size = code_size();
   // Check if size match
@@ -2433,7 +2437,7 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
 OopDesc* Method::compute_entry_counts(JVM_SINGLE_ARG_TRAPS) const {
   const int codesize = code_size();
   TypeArray::Raw entry_count_array =
-    Universe::new_byte_array(codesize JVM_OZCHECK(entry_count_array));
+    Universe::new_byte_array(codesize JVM_OZCHECK_0(entry_count_array));
 
   AllocationDisabler raw_pointers_used_in_this_function;
   jubyte* entry_counts = entry_count_array().base_address();

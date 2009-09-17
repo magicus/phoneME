@@ -48,11 +48,8 @@ void BytecodeCompileClosure::initialize(Method* method) {
 #if ENABLE_ISOLATES
   set_has_clinit(false);
   {
-    for (InstanceClass::Raw k = method->holder(); k.not_null(); k = k().super()){
-      Method::Raw init =
-        k().find_local_method(Symbols::class_initializer_name(), 
-                              Symbols::void_signature());
-      if (!init.is_null()) {
+    for (InstanceClass::Raw k = method->holder(); k.not_null(); k = k().super()) {
+      if (k().find_local_class_initializer()) {
         _has_clinit = true;
         break;
       }
@@ -1306,7 +1303,7 @@ void BytecodeCompileClosure::set_field_class_id(Value& field_value,
     ENABLE_ROM_GENERATOR ? ic->original_fields() : ic->fields();
   const int fields_count = fields().length();
 
-  for (int index = 0; index < fields_count; index += 5) {
+  for (int index = 0; index < fields_count; index += Field::NUMBER_OF_SLOTS) {
 #if ENABLE_ROM_GENERATOR
     OriginalField field(ic, index);
 #else
@@ -1749,8 +1746,7 @@ void BytecodeCompileClosure::direct_invoke(int index, bool must_do_null_check
   }
 #endif
 
-  if (callee().match(Symbols::object_initializer_name(),
-                     Symbols::void_signature())) {
+  if (callee().is_default_constructor()) {
     InstanceClass::Raw c = callee().holder();
     if (c().has_vanilla_constructor()) {
       // Pop the receiver.
@@ -1935,31 +1931,28 @@ void BytecodeCompileClosure::fast_invoke_virtual(int index JVM_TRAPS) {
 #endif
 
 #if ENABLE_INLINE
-  GUARANTEE(klass().is_instance_class(), "Sanity");
-  InstanceClass::Fast ic = klass.obj();
-  // Can devirtualize call only if 
-  //  - callee is not overridden and
-  //  - caller is not precompiled and
-  //  - caller cannot be shared between tasks
-  if (!ic().is_method_overridden(vtable_index) &&
-      !GenerateROMImage && !method()->is_shared()) {
-    if (TraceMethodInlining) {
-      tty->print("Method ");
-      callee().print_name_on_tty();
-      tty->print(" devirtualized in ");
-      method()->print_name_on_tty();
-      tty->cr();
+  if (!GenerateROMImage) {
+    InstanceClass::Raw holder = callee().holder();
+    // Can devirtualize call only if 
+    //  - callee is not overridden and
+    //  - caller is not precompiled and
+    //  - caller cannot be shared between tasks
+    if (!holder().is_method_overridden(vtable_index) && !method()->is_shared()){
+      if (TraceMethodInlining) {
+        tty->print("Method ");
+        callee().print_name_on_tty();
+        tty->print(" devirtualized in ");
+        method()->print_name_on_tty();
+        tty->cr();
+      }
+      do_direct_invoke(&callee, true/*need null check*/ JVM_CHECK);
+      callee().add_direct_caller(method() JVM_NO_CHECK_AT_BOTTOM);
+      return;
     }
-
-    do_direct_invoke(&callee, true/*need null check*/ JVM_CHECK);
-    callee().add_direct_caller(method() JVM_NO_CHECK_AT_BOTTOM);
-  } else
-#endif
-  {
-    // Call the method.
-    __ invoke_virtual(&callee, vtable_index, return_type 
-                      JVM_NO_CHECK_AT_BOTTOM);
   }
+#endif
+  // Call the method.
+  __ invoke_virtual(&callee, vtable_index, return_type JVM_NO_CHECK_AT_BOTTOM);
 }
 
 void BytecodeCompileClosure::fast_invoke_special(int index JVM_TRAPS) {
@@ -2315,11 +2308,10 @@ bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
       // If the bytecode does not consume stack items, we should start a new snippet
       // to guarantee that each calculates only one value
       VirtualStackFrame::abort_tracking_of_current_snippet();
-      if (is_following_codes_can_be_eliminated(bci_after_elimination)) {
-  
+      if (is_following_codes_can_be_eliminated(bci_after_elimination)) {  
 	GUARANTEE(bci_after_elimination != not_found, "cse match error")
-	  //next bci to be compiled, cse will skip some byte code here.
-	  set_default_next_bytecode_index(bci_after_elimination);
+	//next bci to be compiled, cse will skip some byte code here.
+	set_default_next_bytecode_index(bci_after_elimination);
 	compiler()->set_bci(next_bytecode_index());
 	//skip the compilation of current bci
 	return true;
