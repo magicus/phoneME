@@ -175,6 +175,8 @@ public class CHManagerImpl extends CHManagerBase {
         /** The Invocation in progress for an install. */
         private Invocation installInvoc = null;
 
+        /** Indicate postinstall  cleanup need.  */
+        private boolean needCleanup;
         /** installtation status. */
         private boolean success;
         /** installation error message. */
@@ -211,6 +213,7 @@ public class CHManagerImpl extends CHManagerBase {
                 Logger.LOGGER.println( "CHManagerImpl.installDone( " + success + ", '" + errorMsg + "' ), installInvoc = " + installInvoc );
             this.success = success;
             this.errorMsg = errorMsg;
+            needCleanup = true;
         }
 
         /**
@@ -218,7 +221,7 @@ public class CHManagerImpl extends CHManagerBase {
          * 
          */
         public void cleanup() {
-            if (installInvoc != null) {
+            if (needCleanup && installInvoc != null) {
                 if( errorMsg != null ) installInvoc.setArgs(new String[] {errorMsg} );
                 if( success || errorMsg == null ){
                     handler.finish(installInvoc,
