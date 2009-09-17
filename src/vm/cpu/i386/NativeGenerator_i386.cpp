@@ -290,7 +290,7 @@ void NativeGenerator::generate_native_math_entries() {
   // 16 byte alignment
   pushl(ebp);
   movl(ebp, esp);
-  subl(esp, Constant(2 * BytesPerWord));
+  subl(esp, Constant(4 * BytesPerWord));
   andl(esp, Constant(-16));
 
   movl(Address(esp), eax);
