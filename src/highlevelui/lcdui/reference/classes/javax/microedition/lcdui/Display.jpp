@@ -962,19 +962,32 @@ public class Display {
             if (dd.getReverseOrientation()) {
                 screenDimensions[LANDSCAPE_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
+System.out.println("*** screen landscape w = " +
+screenDimensions[LANDSCAPE_DIMENSION_ID].width + " h = " +
+screenDimensions[LANDSCAPE_DIMENSION_ID].height + " ***");
 
                 dd.setFullScreen(0, true);
 
                 screenDimensions[LANDSCAPE_FULLSCREEN_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
+                dd.setFullScreen(0, false);
+System.out.println("*** screen landscape fullscreen w = " +
+screenDimensions[LANDSCAPE_FULLSCREEN_DIMENSION_ID].width + " h = " +
+screenDimensions[LANDSCAPE_FULLSCREEN_DIMENSION_ID].height + " ***");
             } else {
                 screenDimensions[PORTRAIT_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
+System.out.println("*** screen portrait w = " +
+screenDimensions[PORTRAIT_DIMENSION_ID].width + " h = " +
+screenDimensions[PORTRAIT_DIMENSION_ID].height + " ***");
 
                 dd.setFullScreen(0, true);
 
                 screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
+System.out.println("*** screen portrait fullscreen w = " +
+screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].width + " h = " +
+screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
             }
             dd.setFullScreen(0, false);
             dd.reverseOrientation();

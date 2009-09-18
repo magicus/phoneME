@@ -69,6 +69,7 @@ public class GameCanvasLFImpl {
      * @param c GameCanvas instance to create the implementation for
      */ 
     public GameCanvasLFImpl(GameCanvas c) {
+System.err.println("*** new GameCanvasImpl: " + this );
         owner = c;
         graphicsAccess = GameMap.getGraphicsAccess();
 
@@ -96,9 +97,11 @@ public class GameCanvasLFImpl {
      * @param h new screen height
      */
     public void lCallSizeChanged(int w, int h) {
+new Exception("*** " + this + ".lCallSizeChanged h = " + h + " ***").printStackTrace();
         // Resize off-screen buffer in the case it is not big enough only
         if (w > offscreenBuffer.getWidth() ||
                 h > offscreenBuffer.getHeight()) {
+System.err.println("*** GameCanvasLFImpl size changed resize screen ***");
 
             // OutOfMemoryError can be thrown
             graphicsAccess.resizeImage(
@@ -146,7 +149,10 @@ public class GameCanvasLFImpl {
         if (offscreenBuffer != null) {
             int w = owner.getWidth();
             int h = owner.getHeight();
-            
+
+if (h != 480) {
+new Exception("*** " + this + ".getGraphics h = " + h + " not 480 ***").printStackTrace();
+}
             Graphics g = ((w <= 0) || (h <= 0)) ?
                 offscreenBuffer.getGraphics() :
                 graphicsAccess.getImageGraphics(offscreenBuffer, w, h);
@@ -188,6 +194,9 @@ public class GameCanvasLFImpl {
     public void drawBuffer(Graphics g) {
         // NullPointerException will be thrown in drawImage if g == null
        if (offscreenBuffer != null) {
+if (g.getClipHeight() != 480) {
+new Exception("*** " + this + ".drawBuffer h = " + g.getClipHeight() + " not 480 ***").printStackTrace();
+}
             g.drawImage(offscreenBuffer, 0, 0,
                 Graphics.TOP | Graphics.LEFT);
        }
@@ -200,6 +209,12 @@ public class GameCanvasLFImpl {
     public void flushGraphics() {
         DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
         if (displayAccess != null && offscreenBuffer != null) {
+if (owner.getHeight() != 480) {
+new Exception("*** " + this + ".flushGraphics flushing owner h = " + owner.getHeight() + " not 480 ***").printStackTrace();
+}
+if (offscreenBuffer.getHeight() < 480) {
+new Exception("*** " + this + ".flushGraphics osb h = " + offscreenBuffer.getHeight() + " not 480 ***").printStackTrace();
+}
 	        displayAccess.flush(owner, offscreenBuffer,
 			      0, 0, owner.getWidth(), owner.getHeight());
         }
