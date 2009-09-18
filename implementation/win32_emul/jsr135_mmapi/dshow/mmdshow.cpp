@@ -141,6 +141,8 @@ public:
     BYTE*                 dwr_pdata;
     bool                  dwr_cancel;
 
+    HANDLE                out_queue_event;
+
     long                  target_mt;
 };
 
@@ -276,13 +278,16 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 {
     EnterCriticalSection( &cs );
 
-    if( out_queue_n + nbytes > OUT_QUEUE_SIZE )
+    while( out_queue_n + nbytes > OUT_QUEUE_SIZE && !dwr_cancel )
     {
-        DEBUG_ONLY( PRINTF( "### overflow ###\n" ); )
-        nbytes = (nat32)(OUT_QUEUE_SIZE - out_queue_n);
+        DEBUG_ONLY( PRINTF( "### sample_ready: waiting ###\n" ); )
+        //nbytes = (nat32)(OUT_QUEUE_SIZE - out_queue_n);
+        LeaveCriticalSection( &cs );
+        WaitForSingleObject( out_queue_event, 500 );
+        EnterCriticalSection( &cs );
     }
 
-    if( 0 != nbytes )
+    if( 0 != nbytes && !dwr_cancel )
     {
         size_t n1 = nbytes;
         size_t n2 = 0;
@@ -369,6 +374,8 @@ long dshow_player::read(short* buffer, int samples)
     }
 
     LeaveCriticalSection( &cs );
+
+    SetEvent( out_queue_event );
 
     return MQ234_ERROR_NO_ERROR;
 }
@@ -503,6 +510,8 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
     p->dwr_cancel       = false;
+
+    p->out_queue_event  = CreateEvent( NULL, FALSE, FALSE, NULL );
 
     outer_player->mediaHandle = (javacall_handle)p;
 
@@ -667,6 +676,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
     DeleteCriticalSection( &(p->cs) );
 
     CloseHandle( p->dwr_event );
+    CloseHandle( p->out_queue_event );
 
     int appId    = p->appId;
     int playerId = p->playerId;
