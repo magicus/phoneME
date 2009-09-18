@@ -25,7 +25,7 @@
 #include <vfwmsgs.h>
 #include "filter_in.hpp"
 
-#define write_level 0
+#define write_level 1
 
 #if write_level > 0
 #include "writer.hpp"
@@ -1214,7 +1214,7 @@ HRESULT __stdcall filter_in_filter::QueryVendorInfo(LPWSTR *pVendorInfo)
 ULONG __stdcall filter_in_filter::GetMiscFlags()
 {
 #if write_level > 0
-    print("filter_in_filter::GetMiscFlags called...\n");
+    print("filter_in_filter::GetMiscFlags called, returns AM_FILTER_MISC_FLAGS_IS_SOURCE.\n");
 #endif
     return AM_FILTER_MISC_FLAGS_IS_SOURCE;
 }
