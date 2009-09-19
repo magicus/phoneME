@@ -85,8 +85,8 @@ System.err.println("*** new GameCanvasImpl: " + this );
          *   initial allocation.
          */
         offscreenBuffer = Image.createImage(
-            graphicsAccess.getScreenWidth(),
-            graphicsAccess.getScreenHeight());
+            graphicsAccess.getFullScreenWidth(),
+            graphicsAccess.getFullScreenHeight());
     }
 
     /**

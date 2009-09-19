@@ -2987,6 +2987,38 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
         return screenDims.height;
     }
 
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    static int getFullScreenWidth() {
+        int dim = midletScreens.getCurrentMIDletScreen().dimensionId;
+
+        if (dim == PORTRAIT_DIMENSION_ID) {
+            dim = PORTRAIT_FULLSCREEN_DIMENSION_ID;
+        } else if (dim == LANDSCAPE_DIMENSION_ID) {
+            dim = LANDSCAPE_FULLSCREEN_DIMENSION_ID;
+        }
+
+        return screenDimensions[dim].width;
+    }
+
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    static int getFullScreenHeight() {
+        int dim = midletScreens.getCurrentMIDletScreen().dimensionId;
+
+        if (dim == PORTRAIT_DIMENSION_ID) {
+            dim = PORTRAIT_FULLSCREEN_DIMENSION_ID;
+        } else if (dim == LANDSCAPE_DIMENSION_ID) {
+            dim = LANDSCAPE_FULLSCREEN_DIMENSION_ID;
+        }
+
+        return screenDimensions[dim].height;
+    }
+
 // #ifdef ENABLE_CDC
     /**
      * Play an Alert sound.
