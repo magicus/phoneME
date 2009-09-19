@@ -253,8 +253,10 @@ class BytecodeCompileClosure: public BytecodeClosure {
   void set_next_bytecode_index(const int bci) { _next_bytecode_index = bci; }
 
   bool is_compilation_done()   const { return next_bytecode_index() == -1;  }
+protected:
   void terminate_compilation()       { set_next_bytecode_index(-1);         }
 
+private:
   // Accessor for the stack frame.
   inline VirtualStackFrame* frame     ( void ) const;
 
@@ -272,7 +274,6 @@ class BytecodeCompileClosure: public BytecodeClosure {
   void frame_push(Value &value);
   void frame_pop(Value& value);
 
-private:
   // If next bytecode can be read ahead, returns its index, otherwise -1
   int get_next_bci( void ) const;
 

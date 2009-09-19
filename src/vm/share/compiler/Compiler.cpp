@@ -87,26 +87,30 @@ Compiler::Compiler() {
 
 Compiler::~Compiler() {
   GUARANTEE(is_active(), "Sanity check");
-  Compiler * parent_compiler = parent();
-
-  GUARANTEE(parent_compiler == NULL || ENABLE_INLINE, 
-            "Only one compiler if not inlining");
-
+  Compiler* parent_compiler = parent();
+#if ENABLE_INLINE
   if (parent_compiler != NULL) {
-#ifdef AZZERT
     if (!CURRENT_HAS_PENDING_EXCEPTION) {
-      Signature::Raw signature = method()->signature();
-      const BasicType return_type = signature().return_type(true);
-      GUARANTEE(frame()->virtual_stack_pointer() == 
-                local_base() - 1 + word_size_for(return_type), "Sanity");
-    }
+      const VirtualStackFrame* frame = this->frame();
+      if (frame) {
+#ifdef AZZERT
+        Signature::Raw signature = method()->signature();
+        const BasicType return_type = signature().return_type(true);
+        GUARANTEE(frame->virtual_stack_pointer() ==
+                  local_base() - 1 + word_size_for(return_type), "Sanity");
 #endif
-
+      } else {
+        parent_compiler->terminate_compilation();
+      }
+    }
     code_generator()->set_method( parent_compiler->method() );
     _num_stack_lock_words = parent_compiler->saved_num_stack_lock_words();
   } else {
     set_root(NULL);
   }
+#else
+  GUARANTEE(parent_compiler == NULL, "Only one compiler when not inlining");
+#endif
   set_current(parent_compiler);
 }
 

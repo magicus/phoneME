@@ -1279,7 +1279,7 @@ void Method::set_impossible_to_compile() {
 
 void Method::iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS) {
   int bci = begin;
-  for(; bci < end; bci = next_bci(bci) ) {
+  for(; unsigned(bci) < unsigned(end); bci = next_bci(bci) ) {
     // Note: we may potentially iterate a bytecode whose end is past <end>,
     // but this would be caught by the illegal_code() check below. That
     // should make the bytecode verifier happy.
