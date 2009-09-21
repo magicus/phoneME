@@ -24,6 +24,12 @@
  * information or have any questions.
  */
 
+#if ENABLE_STACK_ALIGNMENT
+
+#if (STACK_ALIGNMENT_VALUE != 16)
+#error "Only 16 byte stack alignment supported currently"
+#endif
+
 /**
  * Calculates, how many bytes to subtract from the stack pointer to make it 
  * properly aligned at the next call.
@@ -122,4 +128,35 @@
     movl(esp, ebp);                                         \
     popl(ebp);                                              \
   } while (0)
+
+#else // ENABLE_STACK_ALIGNMENT
+
+#define APPLY_STACK_ALIGNMENT_FIX(OFFSET, RESERVE)
+
+#define REVERT_STACK_ALIGNMENT_FIX(OFFSET, RESERVE)                     \
+  do {                                                                  \
+    if ((RESERVE) > 0) {                                                \
+      addl(esp, Constant((RESERVE)));                                   \
+    }                                                                   \
+  } while (0);
+
+#define ALIGNED_CALL_2(FN_NAME, PAR1, PAR2)                 \
+  do {                                                      \
+    pushl(PAR2);                                            \
+    pushl(PAR1);                                            \
+    call(Constant(FN_NAME));                                \
+    addl(esp, Constant(2 * BytesPerWord));                  \
+  } while (0)
+
+#define ALIGNED_CALL_4(FN_NAME, PAR1, PAR2, PAR3, PAR4)     \
+  do {                                                      \
+    pushl(PAR4);                                            \
+    pushl(PAR3);                                            \
+    pushl(PAR2);                                            \
+    pushl(PAR1);                                            \
+    call(Constant(FN_NAME));                                \
+    addl(esp, Constant(4 * BytesPerWord));                  \
+  } while (0)
+
+#endif // ENABLE_STACK_ALIGNMENT
 
