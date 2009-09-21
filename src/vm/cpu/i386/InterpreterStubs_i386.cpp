@@ -55,8 +55,15 @@ void InterpreterStubs::generate() {
 
 void InterpreterStubs::generate_primordial_to_current_thread() {
   entry("primordial_to_current_thread");
+
+  // 1 = return address
+  // 8 = pushal
+  // 1 = pushl(ebp)
+  APPLY_STACK_ALIGNMENT_FIX((1 + 8 + 1) * BytesPerWord, 0);
+
   pushal();
   pushl(ebp);
+  
   movl(Address(Constant("_primordial_sp")), esp);
   get_thread(ecx);
   movl(esp, Address(ecx, Constant(Thread::stack_pointer_offset())));
@@ -78,8 +85,15 @@ void InterpreterStubs::generate_current_thread_to_primordial() {
   // get_thread(ecx);
   // movl(Address(ecx, Constant(Thread::stack_pointer_offset())), esp);
   movl(esp, Address(Constant("_primordial_sp")));
+
   popl(ebp);
   popal();
+
+  // 1 = return address
+  // 8 = pushal
+  // 1 = pushl(ebp)
+  REVERT_STACK_ALIGNMENT_FIX((1 + 8 + 1) * BytesPerWord, 0);
+
   ret();
   entry_end(); // current_thread_to_primordial
 }

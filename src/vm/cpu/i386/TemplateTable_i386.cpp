@@ -871,10 +871,9 @@ void bc_lrem::generate() {
   orl(eax, ecx);
   jcc(zero, Constant("interpreter_throw_ArithmeticException"));
   pop_long(eax, edx);    // low, high   dividend
-  pushl(ecx); pushl(ebx);
-  pushl(edx); pushl(eax);
-  call(Constant("jvm_lrem"));
-  addl(esp, Constant(4 * BytesPerWord));
+
+  ALIGNED_CALL_4("jvm_lrem", eax, edx, ebx, ecx);
+
   push_long(eax, edx);
 }
 
@@ -901,20 +900,17 @@ void bc_ldiv::generate() {
   jcc(zero, Constant("interpreter_throw_ArithmeticException"));
   pop_long(eax, edx);    // low, high   dividend
 
-  pushl(ecx); pushl(ebx);
-  pushl(edx); pushl(eax);
-  call(Constant("jvm_ldiv"));
-  addl(esp, Constant(4 * BytesPerWord));
+  ALIGNED_CALL_4("jvm_ldiv", eax, edx, ebx, ecx);
+
   push_long(eax, edx);
 }
 
 void bc_lmul::generate() {
   pop_long(ebx, ecx);    // low, high   second argument
   pop_long(eax, edx);    // low, high   first  argument
-  pushl(ecx); pushl(ebx);
-  pushl(edx); pushl(eax);
-  call(Constant("jvm_lmul"));
-  addl(esp, Constant(4 * BytesPerWord));
+
+  ALIGNED_CALL_4("jvm_lmul", eax, edx, ebx, ecx);
+
   push_long(eax, edx);
 }
 
