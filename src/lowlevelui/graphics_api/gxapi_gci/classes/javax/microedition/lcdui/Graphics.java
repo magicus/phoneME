@@ -1478,6 +1478,7 @@ public class Graphics {
             throw new IllegalArgumentException();
         }
 
+
         render(image, point[0] + transX, point[1]+ transY, anchor);
     }
 
@@ -2166,6 +2167,11 @@ public class Graphics {
         // it is being processed in the caller
 
         ImageData imgData = image.getImageData();
+	System.err.println("gciImageRenderer.drawImage"
+			   +  imgData.getWidth() + " " 
+			   + imgData.getHeight() + " " 
+			   + x + " " 
+			   +  y);
 	gciImageRenderer.drawImage(imgData.gciDrawingSurface,
 				   0, 0, 
 				   imgData.getWidth(), 

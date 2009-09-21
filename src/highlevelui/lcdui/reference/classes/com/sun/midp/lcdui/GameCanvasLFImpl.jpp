@@ -69,7 +69,6 @@ public class GameCanvasLFImpl {
      * @param c GameCanvas instance to create the implementation for
      */ 
     public GameCanvasLFImpl(GameCanvas c) {
-System.err.println("*** new GameCanvasImpl: " + this );
         owner = c;
         graphicsAccess = GameMap.getGraphicsAccess();
 
@@ -97,11 +96,10 @@ System.err.println("*** new GameCanvasImpl: " + this );
      * @param h new screen height
      */
     public void lCallSizeChanged(int w, int h) {
-new Exception("*** " + this + ".lCallSizeChanged h = " + h + " ***").printStackTrace();
+System.err.println("GameCanvasLFImpl size changed " + w + " " + h);
         // Resize off-screen buffer in the case it is not big enough only
         if (w > offscreenBuffer.getWidth() ||
                 h > offscreenBuffer.getHeight()) {
-System.err.println("*** GameCanvasLFImpl size changed resize screen ***");
 
             // OutOfMemoryError can be thrown
             graphicsAccess.resizeImage(
@@ -149,10 +147,8 @@ System.err.println("*** GameCanvasLFImpl size changed resize screen ***");
         if (offscreenBuffer != null) {
             int w = owner.getWidth();
             int h = owner.getHeight();
-
-if (h != 480) {
-new Exception("*** " + this + ".getGraphics h = " + h + " not 480 ***").printStackTrace();
-}
+System.err.println("GameCanvasLFImpl get graphics " + w + " " + h);
+          
             Graphics g = ((w <= 0) || (h <= 0)) ?
                 offscreenBuffer.getGraphics() :
                 graphicsAccess.getImageGraphics(offscreenBuffer, w, h);
@@ -194,9 +190,6 @@ new Exception("*** " + this + ".getGraphics h = " + h + " not 480 ***").printSta
     public void drawBuffer(Graphics g) {
         // NullPointerException will be thrown in drawImage if g == null
        if (offscreenBuffer != null) {
-if (g.getClipHeight() != 480) {
-new Exception("*** " + this + ".drawBuffer h = " + g.getClipHeight() + " not 480 ***").printStackTrace();
-}
             g.drawImage(offscreenBuffer, 0, 0,
                 Graphics.TOP | Graphics.LEFT);
        }
@@ -206,15 +199,21 @@ new Exception("*** " + this + ".drawBuffer h = " + g.getClipHeight() + " not 480
      * Flushes the off-screen buffer to the display. The size
      * of the flushed area is equal to the size of the GameCanvas.
      */
+static int flushcounter = 0 ;
     public void flushGraphics() {
         DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
         if (displayAccess != null && offscreenBuffer != null) {
-if (owner.getHeight() != 480) {
-new Exception("*** " + this + ".flushGraphics flushing owner h = " + owner.getHeight() + " not 480 ***").printStackTrace();
+if  (offscreenBuffer.getHeight() != owner.getHeight()) {
+  System.err.println("GameCanvasLFImpl flush graphics " 
+	+ offscreenBuffer.getWidth() + " " 
+	+ offscreenBuffer.getHeight() + " "
+	+ owner.getWidth() + " " 
+	+ owner.getHeight() + " " +flushcounter
+  );
+} else {
+flushcounter += 1;
 }
-if (offscreenBuffer.getHeight() < 480) {
-new Exception("*** " + this + ".flushGraphics osb h = " + offscreenBuffer.getHeight() + " not 480 ***").printStackTrace();
-}
+
 	        displayAccess.flush(owner, offscreenBuffer,
 			      0, 0, owner.getWidth(), owner.getHeight());
         }
@@ -229,6 +228,13 @@ new Exception("*** " + this + ".flushGraphics osb h = " + offscreenBuffer.getHei
      */
     public void flushGraphics(int x, int y, int width, int height) {
         // check the region bounds 
+  System.err.println("GameCanvasLFImpl flush graphics2 " 
+	+ x + " " 
+	+ y + " "
+	+ width + " " 
+	+ height + " "
+  );
+
         int diff = 0;
         if (x < 0) x = 0;
         if (y < 0) y = 0;
@@ -268,7 +274,8 @@ new Exception("*** " + this + ".flushGraphics osb h = " + offscreenBuffer.getHei
      * @param m MIDPWindow display mode
     */
     public void setMode(int m) {
-        DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
+   System.err.println("GameCanvasLFImpl set mode " + m);
+       DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
         if (displayAccess != null && offscreenBuffer != null) {
 	    displayAccess.setMode(m);
         }

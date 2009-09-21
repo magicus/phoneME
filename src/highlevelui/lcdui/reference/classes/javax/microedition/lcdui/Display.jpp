@@ -644,7 +644,6 @@ public class Display {
       * default
      */
     private boolean useOpenGL = false;
-    private static boolean lastUsed32Bit = false;
     private boolean use32Bit = false;
     private boolean useVirtualKeyboard = true;
 
@@ -788,6 +787,26 @@ public class Display {
     }
 
     private int orientation;
+    
+    private static int getStaticMidletOrientation(MIDlet midlet) {
+        String prop = midlet.getAppProperty("Sprint-Auto-Rotate");
+
+        int orientation = ORIENTATION_PORTRAIT;
+        if (prop != null) {
+            prop = prop.toLowerCase();
+
+            if ("on".equals(prop)) {
+// #ifdef ENABLE_DEVICE_ROTATION
+                orientation = ORIENTATION_AUTO;
+// #endif ENABLE_DEVICE_ROTATION
+            } else if ("portrait".equals(prop)) {
+                orientation = ORIENTATION_PORTRAIT;
+            } else if ("landscape".equals(prop)) {
+                orientation = ORIENTATION_LANDSCAPE;
+            }
+        }
+        return orientation;
+    }
 
     /**
      * Release any resources, such as threads, which migth refer
@@ -824,7 +843,7 @@ public class Display {
         displayDevice = dd;
 
         if (owner instanceof MIDlet) {
-            orientation = ORIENTATION_PORTRAIT;
+            orientation = getStaticMidletOrientation((MIDlet)owner);
         } else {
             orientation = ORIENTATION_AUTO;
         }
@@ -887,16 +906,9 @@ public class Display {
             String propval = handler.getMIDletSuite().getProperty("Sprint-3D");
             if (String.valueOf("YES").equalsIgnoreCase(propval)) {
                 accessor.enableOpenGL();
-            } else {
-                lastUsed32Bit = false;
             }
         }
-        else {
-            if (lastUsed32Bit) {
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().lowerOpenGL();
-                com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(0);
-            }
-        }
+
         // #endif ENABLE_DYNAMIC_PIXEL_FORMAT
 
         /**
@@ -915,7 +927,7 @@ public class Display {
 
         if (owner instanceof MIDlet) {
             String vk = ((MIDlet)owner).getAppProperty("Sprint-Canvas-Keypad");
-            if ("no".equals(vk)) {
+            if (vk != null && "no".equals(vk.toLowerCase())) {
                 showVirtualKeyboard = false;
             }
         } else {
@@ -962,32 +974,19 @@ public class Display {
             if (dd.getReverseOrientation()) {
                 screenDimensions[LANDSCAPE_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
-System.out.println("*** screen landscape w = " +
-screenDimensions[LANDSCAPE_DIMENSION_ID].width + " h = " +
-screenDimensions[LANDSCAPE_DIMENSION_ID].height + " ***");
 
                 dd.setFullScreen(0, true);
 
                 screenDimensions[LANDSCAPE_FULLSCREEN_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
-                dd.setFullScreen(0, false);
-System.out.println("*** screen landscape fullscreen w = " +
-screenDimensions[LANDSCAPE_FULLSCREEN_DIMENSION_ID].width + " h = " +
-screenDimensions[LANDSCAPE_FULLSCREEN_DIMENSION_ID].height + " ***");
             } else {
                 screenDimensions[PORTRAIT_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
-System.out.println("*** screen portrait w = " +
-screenDimensions[PORTRAIT_DIMENSION_ID].width + " h = " +
-screenDimensions[PORTRAIT_DIMENSION_ID].height + " ***");
 
                 dd.setFullScreen(0, true);
 
                 screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID] =
                         new Dimension(dd.getWidth(), dd.getHeight());
-System.out.println("*** screen portrait fullscreen w = " +
-screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].width + " h = " +
-screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
             }
             dd.setFullScreen(0, false);
             dd.reverseOrientation();
@@ -3391,7 +3390,6 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
         public void enableOpenGL() {
             // #ifdef ENABLE_DYNAMIC_PIXEL_FORMAT
             use32Bit = true;
-            lastUsed32Bit = true;
             useOpenGL = true;
             com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().
                 enableOpenGL(width, height);
@@ -3493,6 +3491,12 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
         private void doFlush(Displayable d, Image offscreen_buffer,
                    int x, int y, int width, int height) {
 
+System.err.println("Display.doFlush() " + x + " " + y + " " + width + " " + height
++ Display.this.width + " "
++ Display.this.height  + " "
++ offscreen_buffer.getWidth() + " "
++ offscreen_buffer.getHeight() + " ");
+
             try {
                 // #ifdef ENABLE_GCI
                 gciScreenWidget.getDrawingSurface().renderingBegin();
@@ -3537,6 +3541,18 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
 
                            // #ifdef ENABLE_DIRECT_DRAW
                             if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
+System.err.println("Display.doFlush() dd"
++ x + "==0"
++ x2 =="
++ Display.this.width + " " 
++ y + "==0" 
++ offscreen_buffer.getWidth() + "=="
++ Display.this.width + " "
++ offscreen_buffer.getHeight() + "=="
++  Display.this.height  + " "
++ anchorX + "== 0" 
++ anchorY + "== 0");
+
                                 if (x == 0 && x2 == Display.this.width && y == 0 &&
                                     offscreen_buffer.getWidth() == Display.this.width &&
                                     offscreen_buffer.getHeight() == Display.this.height &&
@@ -3557,6 +3573,7 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
                             screenGraphics.translate(-tranX, -tranY);
                             screenGraphics.setClip(x1, y1, width, height);
 
+System.err.println("Display.doflush() set clip " + tranX + " " + tranY + " " +x1 + " " + y1 + " " + width + "  " + height); 
                             // #ifdef ENABLE_OPENGL
                             if (useOpenGL) {
                                 // flush the offscreen buffer to the backing
@@ -3568,6 +3585,9 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
                             }
                             else {
                             // #endif ENABLE_OPENGL
+System.err.println("Display.doflush() graw image  " + anchorX + " " +anchorY+ " " 
+	 + offscreen_buffer.getWidth() + "  " + offscreen_buffer.getHeight()); 
+
                                 screenGraphics.drawImage(offscreen_buffer,
                                     anchorX, anchorY,
                                     Graphics.TOP | Graphics.LEFT);
@@ -3585,16 +3605,17 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
                         // #else
                             displayDevice.refresh(displayId, x1, y1, x2, y2);
                         // #endif
+                
+                        // #ifdef ENABLE_OPENGL
+                            if (useOpenGL) {
+                                // This call to refresh a "zero" region is inserted to
+                                // trigger display update on some platforms
+                                displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
+                            }
+                        // #endif ENABLE_OPENGL
                     }
             }
             finally {
-                // #ifdef ENABLE_OPENGL
-                if (useOpenGL) {
-                    // This call to refresh a "zero" region is inserted to
-                    // trigger display update on some platforms
-                    displayDevice.refresh(displayId, 0, 0, 0, 0, useOpenGL);
-                }
-                // #endif ENABLE_OPENGL
                 // #ifdef ENABLE_GCI
                 int[] bounds = {x,y,x+width,y+height};
                 gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
@@ -4047,27 +4068,46 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
 
 
         /**
-         * Called by event delivery when size of screen was changed.
+         * Called by event delivery when device orientation changes.
+         *
+         * @param setPortrait If <code>true<code/> then device orientation is changed 
+         * to portrait, otherwise to landscape
+         */
+        public void handleDeviceRotationEvent(boolean setPortrait) {
+// #ifdef ENABLE_DEVICE_ROTATION
+            boolean isPortrait =
+                !Display.this.displayDevice.getReverseOrientation();
+            if (isPortrait == setPortrait 
+            || orientation != ORIENTATION_AUTO
+            || !hasForeground) {
+                return;
+            }
+
+            handleRotationEventInternal();
+// #endif ENABLE_DEVICE_ROTATION
+        }
+        
+        /**
+         * Called by event delivery when display orientation change is requested.
          *
          * @param setPortrait If <code>true<code/> then display should be set
          *  to portrait orientation, otherwise should be set to
          *  landscape orientation
          */
-        public void handleRotationEvent(boolean setPortrait) {
+        public void handleDisplayRotationEvent(boolean setPortrait) {
             boolean isPortrait =
                 !Display.this.displayDevice.getReverseOrientation();
-            if (isPortrait == setPortrait) {
-                return;
-            }
 
             try {
-                handleRotationEventInternal();
+                if (isPortrait != setPortrait) {
+                    handleRotationEventInternal();
+                }
             } finally {
                 if (owner instanceof MIDlet) {
-                    if (displayDevice.getReverseOrientation()) {
-                        orientation = ORIENTATION_LANDSCAPE;
-                    } else {
+                    if (!displayDevice.getReverseOrientation()) {
                         orientation = ORIENTATION_PORTRAIT;
+                    } else {
+                        orientation = ORIENTATION_LANDSCAPE;
                     }
                 }
             }
@@ -4117,6 +4157,9 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
                 // #else
                 // TBD: not implemented for GCI yet
                 // #endif ENABLE_GCI
+
+System.err.println("Display.handleRotation() " +Display.this.width + " " + Display.this.height);
+
                 screenGraphics.setDimensions(Display.this.width, Display.this.height);
             }
 
@@ -4253,7 +4296,6 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
                 if (useOpenGL) {
                     com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().raiseOpenGL();
                     if (use32Bit) {
-                        lastUsed32Bit = true;
                         com.sun.midp.lcdui.OpenGLEnvironmentProxy.getInstance().switchColorDepth(1);
                     }
                 }
@@ -4275,9 +4317,14 @@ screenDimensions[PORTRAIT_FULLSCREEN_DIMENSION_ID].height + " ***");
                 if (screenOrientation != orientation) {
                     consumer.handleRotationEventInternal();
                 }
+// #ifdef ENABLE_DEVICE_ROTATION
+            } else if (DisplayDevice.isDeviceLandscapeOrientation() != 
+                    displayDevice.getReverseOrientation()) {
+// #else
             } else if (!hasForegroundDisplay
                     && displayDevice.getReverseOrientation()) {
                 // rotate to portrait mode
+// #endif ENABLE_DEVICE_ROTATION
                 consumer.handleRotationEventInternal();
             } else if (updateScreenDimensions()) {
                 consumer.handleResize();
