@@ -255,7 +255,7 @@ void ROMOptimizer::write_methods_log(ROMVector* log, const char name[],
                                                      const char prefix[]) {
   log->sort();
 
-  const int size = _jni_natives_log->size();
+  const int size = log->size();
   _log_stream->print_cr("\n[%s (%d)]\n", name, size);
 
   for (int i = 0; i < size; i++) {
