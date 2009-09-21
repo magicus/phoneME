@@ -256,14 +256,16 @@ public class AmsUtil {
                          String.valueOf(debugMode)};
         String[] classpath = midletSuiteStorage.getMidletSuiteClassPath(id);
 
-        if (classpath[0] == null && id == MIDletSuite.INTERNAL_SUITE_ID) {
-            /*
-             * Avoid a null pointer exception, rommized midlets don't need
-             * a classpath.
-             */
-            classpath[0] = "";
-        } else {
-            throw new IllegalArgumentException("Suite " + id + " not found");
+        if (classpath[0] == null) {
+            if (id == MIDletSuite.INTERNAL_SUITE_ID) {
+                /*
+                 * Avoid a null pointer exception, rommized midlets don't need
+                 * a classpath.
+                 */
+                classpath[0] = "";
+            } else {
+                throw new IllegalArgumentException("Suite " + id + " not found");
+            }
         }
 
         Vector cpExtElements = new Vector();
