@@ -563,6 +563,9 @@ SharedStubs_<iarch>.cpp          MethodTrap.hpp
 SharedStubs_<iarch>.cpp          TaskDesc.hpp
 SharedStubs_<iarch>.cpp          TaskMirrorDesc.hpp
 #endif
+#ifeq iarch i386
+SharedStubs_<iarch>.cpp          StackAlignment_<iarch>.hpp
+#endif
 
 InterpreterStubs.hpp             SourceMacros_<iarch>.hpp
 
@@ -575,6 +578,9 @@ InterpreterStubs_<iarch>.cpp     CallInfo.hpp
 InterpreterStubs_<iarch>.cpp     ObjectHeap_<iarch>.hpp
 #if ENABLE_JAVA_DEBUGGER
 InterpreterStubs_<iarch>.cpp     JavaDebugger.hpp
+#endif
+#ifeq iarch i386
+InterpreterStubs_<iarch>.cpp     StackAlignment_<iarch>.hpp
 #endif
 
 CompilerStubs.hpp                SourceMacros_<iarch>.hpp
@@ -605,6 +611,9 @@ NativeGenerator_<iarch>.cpp      String.hpp
 NativeGenerator_<iarch>.cpp      FarClass.hpp
 NativeGenerator_<iarch>.cpp      JavaNear.hpp
 NativeGenerator_<iarch>.cpp      ObjectHeap_<iarch>.hpp
+#endif
+#ifeq iarch i386
+NativeGenerator_<iarch>.cpp      StackAlignment_<iarch>.hpp
 #endif
 
 #if ENABLE_INTERPRETER_GENERATOR
@@ -1570,6 +1579,9 @@ TemplateTable_<iarch>.cpp        TaskMirror.hpp
 #endif
 #if ENABLE_JAVA_DEBUGGER
 TemplateTable_<iarch>.cpp        JavaDebugger.hpp
+#endif
+#ifeq iarch i386
+TemplateTable_<iarch>.cpp        StackAlignment_<iarch>.hpp
 #endif
 
 FloatSupport.hpp                 SourceMacros_<iarch>.hpp

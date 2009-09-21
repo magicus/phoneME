@@ -75,8 +75,8 @@ void SharedStubs::generate_call_on_primordial_stack() {
   movl(esp, Address(Constant("_primordial_sp")));
   movl(ebp, Address(esp));
 
-  // 16 byte alignment
-  subl(esp, Constant(16 - BytesPerWord));
+  // 1 = pushl(ecx)
+  APPLY_STACK_ALIGNMENT_FIX(0, 1 * BytesPerWord);
 
   get_thread_handle(ecx);
   pushl(ecx);
@@ -131,8 +131,8 @@ bind(trap_function);
   movl(esp, Address(Constant("_primordial_sp")));
   movl(ebp, Address(esp));
 
-  // 16 byte alignment
-  subl(esp, Constant(16 - BytesPerWord));
+  // 1 = pushl(eax)
+  APPLY_STACK_ALIGNMENT_FIX(0, 1 * BytesPerWord);
   
   comment("Pass MethodTrapDesc argument and call test function");
   pushl(eax);
@@ -554,8 +554,9 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   movl(esp, Address(Constant("_primordial_sp")));
   movl(ebp, Address(esp));
 
-  // 16 byte alignment
-  subl(esp, Constant(16 - 2 * BytesPerWord));
+  // 1 = pushl(edx)
+  // 1 = pushl(ecx)
+  APPLY_STACK_ALIGNMENT_FIX(0, (1 + 1) * BytesPerWord);
 
   comment("Push optional argument");
   pushl(edx);
@@ -587,7 +588,9 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   }
   */
   comment("Remove the thread and the optional argument from the stack");
-  addl(esp, Constant(16));
+  // 1 = pushl(edx)
+  // 1 = pushl(ecx)
+  REVERT_STACK_ALIGNMENT_FIX(0, (1 + 1) * BytesPerWord);
   
   comment("save the return values in the thread");
   get_thread(ecx);
@@ -642,8 +645,9 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   jcc(above_equal, Constant(no_entries));
   comment("would run out of stack, so we must expand it before calling the entry");
 
-  // 16 byte alignment
-  subl(esp, Constant(16 - 2 * BytesPerWord));
+  // 1 = pushl(esi)
+  // 1 = pushl(ecx)
+  APPLY_STACK_ALIGNMENT_FIX(0, (1 + 1) * BytesPerWord);
 
   comment("Push optional argument");
   pushl(esi);
@@ -657,21 +661,24 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   call(eax);
 
   comment("Remove the thread and the optional argument from the stack");
-  addl(esp, Constant(16));
+  // 1 = pushl(esi)
+  // 1 = pushl(ecx)
+  REVERT_STACK_ALIGNMENT_FIX(0, (1 + 1) * BytesPerWord);
 
   bind(no_entries);
 
   comment("Call switch_thread(JVM_TRAPS)");
 
-  // 16 byte alignment
-  subl(esp, Constant(16 - BytesPerWord));
+  // 1 = pushl(ecx)
+  APPLY_STACK_ALIGNMENT_FIX(0, 1 * BytesPerWord);
 
   get_thread_handle(ecx); 
   pushl(ecx);
   call(Constant("switch_thread"));
 
   // not necessary if no call on the c stack follows
-  // addl(esp, Constant(16));
+  // 1 = pushl(ecx)
+  REVERT_STACK_ALIGNMENT_FIX(0, 1 * BytesPerWord);
 
   comment("Switch back to the java stack");
   get_thread(ebx);
