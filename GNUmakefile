@@ -50,7 +50,8 @@ dep_output_lib_dir:=$(OUTPUT_LIB_DIR)/.dep_output_lib_dir
 dep_output_bin_dir:=$(OUTPUT_BIN_DIR)/.dep_output_bin_dir
 dep_output_gen_dir:=$(OUTPUT_GEN_DIR)/.dep_output_gen_dir
 
-$(dep_output_inc_dir) $(dep_output_obj_dir) $(dep_output_lib_dir) $(dep_output_gen_dir):
+$(dep_output_inc_dir) $(dep_output_obj_dir) $(dep_output_lib_dir) \
+$(dep_output_bin_dir) $(dep_output_gen_dir):
 	@mkdir -p $(dir $@); touch $@
 
 all: verify \
@@ -98,7 +99,8 @@ include $(PCSL_DIR)/makefiles/share/release.gmk
 # donuts
 #
 
-donuts: verify $(DONUTS_DIR)
+donuts: verify $(DONUTS_DIR) $(dep_output_inc_dir) $(dep_output_obj_dir) \
+$(dep_output_lib_dir) $(dep_output_bin_dir) $(dep_output_gen_dir)
 	cd $(DONUTS_DIR) ; $(MAKE) all
 
 PCSL_CONFIG_FILENAME = $(OUTPUT_INC_DIR)/pcsl_config.h

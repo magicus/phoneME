@@ -37,9 +37,7 @@ include $(PCSL_DIR)/makefiles/top.gmk
 endif
 
 #
-all: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) $(OUTPUT_BIN_DIR) $(OUTPUT_GEN_DIR) $(OUTPUT_BIN_DIR)/donuts$(EXE)
-
-include $(PCSL_DIR)/makefiles/verify.gmk
+all:  $(OUTPUT_BIN_DIR)/donuts$(EXE)
 
 ifndef DONUTS_FILES
 DONUTS_FILES := $(shell ls \
@@ -90,9 +88,6 @@ $(OUTPUT_OBJ_DIR)/donuts_generated.o: $(OUTPUT_GEN_DIR)/donuts_generated.c
 $(OUTPUT_OBJ_DIR)/donuts.o: donuts.c
 	@$(CC) -I. $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
-$(OUTPUT_BIN_DIR) $(OUTPUT_GEN_DIR) $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
-
 #$(OUTPUT_OBJ_DIR)/testFile.o: $(FILE_DIR)/testFile.c
 #	@$(CC) -I$(DONUTS_SELECT_DIR) -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
@@ -109,4 +104,4 @@ clean: verify_for_clean
 	rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
 	rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
 
-.PHONY: all clean verify
+.PHONY: all clean
