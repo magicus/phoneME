@@ -30,6 +30,10 @@ import java.util.Vector;
 import java.util.Hashtable;
 
 import com.sun.midp.security.Permissions;
+import com.sun.ams.AmsFactory;
+import com.sun.ams.TaskInfo;
+import com.sun.ams.TaskManager;
+import com.sun.ams.UnsupportedServiceException;
 import com.sun.j2me.security.Token;
 import com.sun.midp.security.SecurityToken;
 
@@ -608,26 +612,32 @@ class CLDCAppProxyAgent extends AppProxyAgent {
         EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
+    /* */
 
     /* *
      * The stronger variant for request the transition of
      * the foreground to this application.
-     * @param targetSuiteId the target suiteId
-     * @param targetClassname the target classname
+     * 
+     * REMOTE_AMS_CFG: this method must be called on 'AMS side'
+     * 
+     * @param fromApp the invoking application
+     * @param toApp the target application
      * /
-    static void requestForeground(int targetSuiteId,
-                                  String targetClassname)
+    public void requestForeground(ApplicationID fromApp, ApplicationID toApp)
     {
+        if( Logger.LOGGER != null ) Logger.LOGGER.println(
+                "requestForeground: force " + toApp);
+        
         NativeEvent event =
             new NativeEvent(EventTypes.SET_FOREGROUND_BY_NAME_REQUEST);
-        event.intParam1 = targetSuiteId;
-        event.stringParam1 = targetClassname;
+        event.intParam1 = CLDCAppID.from(toApp).suiteID;
+        event.stringParam1 = CLDCAppID.from(toApp).className;
 
         int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
         EventQueue eventQueue = EventQueue.getEventQueue(classSecurityToken);
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
-    /**/
+    /* */
     
     /**
      * Launch this application.
@@ -649,13 +659,13 @@ class CLDCAppProxyAgent extends AppProxyAgent {
     static boolean launch(CLDCAppID appID, String displayName) {
         if( Logger.LOGGER != null )
             Logger.LOGGER.println("AppProxy.launch( " + appID +  ", '" + displayName + "' )");
-        if( isMidletRunning(appID.suiteID, appID.className) )
+        if( _isMidletRunning(appID.suiteID, appID.className) )
             return true;
         if( Logger.LOGGER != null ) 
             Logger.LOGGER.println("AppProxy.launch(): " + (MIDletSuiteUtils.isAmsIsolate()?"":"NOT ") + "isAmsIsolate()");
         if( isInSvmMode && !MIDletSuiteUtils.isAmsIsolate() )
             return false;
-        if( appID.suiteID != MIDletSuite.INTERNAL_SUITE_ID && isSuiteRunning(appID.suiteID) )
+        if( appID.suiteID != MIDletSuite.INTERNAL_SUITE_ID && _isSuiteRunning(appID.suiteID) )
             return false;
         if( Logger.LOGGER != null )
             Logger.LOGGER.println("AppProxy.launch(): send 'launch' request {" + appID.suiteID + ", '" + appID.className + "'}");
@@ -664,6 +674,34 @@ class CLDCAppProxyAgent extends AppProxyAgent {
                                     appID.suiteID, appID.className, displayName);
     }
 
+    static TaskManager tm;
+    static {
+        try {
+            tm = AmsFactory.getTaskManager();
+        } catch (UnsupportedServiceException e) {
+            e.printStackTrace();
+        } 
+    }
+    private static boolean _isSuiteRunning(int suiteID) {
+        String suiteIDStr = "" + suiteID;
+        TaskInfo[] ti = tm.getTaskList(true);
+        for( int i = 0; i < ti.length; i++){
+            if( ti[i].getExecuteSuite().equals(suiteIDStr) )
+                return true;
+        }
+        return false;
+    }
+
+    private static boolean _isMidletRunning(int suiteID, String className) {
+        String suiteIDStr = "" + suiteID;
+        TaskInfo[] ti = tm.getTaskList(true);
+        for( int i = 0; i < ti.length; i++){
+            if( ti[i].getExecuteSuite().equals(suiteIDStr) && ti[i].getExecuteClass().equals(className) )
+                return true;
+        }
+        return false;
+    }
+    
     static native void midletIsAdded( int suiteId, String className );
     static native void midletIsRemoved( int suiteId, String className );
     
