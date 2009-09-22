@@ -38,7 +38,7 @@ endif
 # What to build
 #
 
-all doc donuts : verify $(PRINT_SELECT_DIR)
+all doc donuts : $(PRINT_SELECT_DIR)
 	@echo "building print module..."
 	@cd $(PRINT_SELECT_DIR); $(MAKE) $@
 

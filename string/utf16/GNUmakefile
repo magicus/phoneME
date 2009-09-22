@@ -1,7 +1,5 @@
 #
-#  
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -45,23 +43,16 @@ endif
 OBJS = $(OUTPUT_OBJ_DIR)/pcsl_string.o \
        $(OUTPUT_OBJ_DIR)/utf.o
 
-all: verify memory $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) \
-     $(OUTPUT_INC_DIR)/pcsl_string_md.h $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
-	@cp -f ./pcsl_string_md.h $(OUTPUT_INC_DIR)
+all: $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
 
-$(OUTPUT_INC_DIR)/pcsl_string_md.h:
-	@cp -f pcsl_string_md.h $(OUTPUT_INC_DIR)
-
-include $(PCSL_DIR)/makefiles/verify.gmk
+$(OUTPUT_INC_DIR)/pcsl_string_md.h : pcsl_string_md.h
+	@cp -f $< $@
 
 $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT): $(OBJS)
 	@$(AR) $(AR_OUTPUT)$@ `$(call fixcygpath, $^)`
 
-$(OUTPUT_OBJ_DIR)/pcsl_string.o: pcsl_string.c
+$(OUTPUT_OBJ_DIR)/pcsl_string.o: pcsl_string.c $(OUTPUT_INC_DIR)/pcsl_string_md.h
 	@$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
-
-$(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force

@@ -1,6 +1,5 @@
-#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -38,7 +37,7 @@ endif
 # What to build
 #
 
-all doc donuts : verify $(NETWORK_SELECT_DIR)
+all doc donuts : $(NETWORK_SELECT_DIR)
 	@echo "building network module..."
 	@cd $(NETWORK_SELECT_DIR); $(MAKE) $@
 

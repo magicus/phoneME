@@ -1,6 +1,5 @@
-#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -40,18 +39,18 @@ endif
 # What to build
 #
 
-all : verify types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR) \
-     $(OUTPUT_INC_DIR) $(OUTPUT_INC_DIR)/pcsl_string_status.h $(OUTPUT_INC_DIR)/pcsl_string.h
+all : $(STRING_UTIL_DIR) $(STRING_SELECT_DIR) \
+     $(OUTPUT_INC_DIR)/pcsl_string_status.h $(OUTPUT_INC_DIR)/pcsl_string.h
 	@echo "building string util..."
 	@cd $(STRING_UTIL_DIR); $(MAKE) $@
 	@echo "building string module..."
 	@cd $(STRING_SELECT_DIR); $(MAKE) $@
 
-$(OUTPUT_INC_DIR)/pcsl_string_status.h:
-	@cp -f pcsl_string_status.h $(OUTPUT_INC_DIR)
+$(OUTPUT_INC_DIR)/pcsl_string_status.h: pcsl_string_status.h
+	@cp -f $< $@
 
-$(OUTPUT_INC_DIR)/pcsl_string.h:
-	@cp -f pcsl_string.h $(OUTPUT_INC_DIR)
+$(OUTPUT_INC_DIR)/pcsl_string.h: pcsl_string.h
+	@cp -f $< $@
 
 clean : verify_for_clean types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR)
 	@cd $(STRING_UTIL_DIR); $(MAKE) $@

@@ -1,7 +1,5 @@
 #
-#  
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -42,15 +40,12 @@ endif
 
 OBJS = $(OUTPUT_OBJ_DIR)/utf.o
 
-all: verify types $(OUTPUT_OBJ_DIR) $(OBJS)
+all: $(OBJS)
 
 include $(PCSL_DIR)/makefiles/verify.gmk
 
 $(OUTPUT_OBJ_DIR)/utf.o: utf.c
 	@$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
-
-$(OUTPUT_OBJ_DIR):
-	@mkdir -p $@
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force

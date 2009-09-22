@@ -1,7 +1,5 @@
 #
-#  
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -46,24 +44,24 @@ OBJS = $(OUTPUT_OBJ_DIR)/pcsl_memory.o \
        $(OUTPUT_OBJ_DIR)/pcsl_memory_port.o \
        $(OUTPUT_OBJ_DIR)/pcsl_chunkheap.o
 
-all: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) \
-     $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT)
-	@cp -f ../pcsl_memory.h $(OUTPUT_INC_DIR)/
-	@cp -f pcsl_memory_impl.h $(OUTPUT_INC_DIR)/
+INCS = $(OUTPUT_INC_DIR)/pcsl_memory.h $(OUTPUT_INC_DIR)/pcsl_memory_impl.h
 
-include $(PCSL_DIR)/makefiles/verify.gmk
+all: $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT)
+
+$(OUTPUT_INC_DIR)/pcsl_memory.h: ../pcsl_memory.h
+	@cp -f $< $@
+
+$(OUTPUT_INC_DIR)/pcsl_memory_impl.h: pcsl_memory_impl.h
+	@cp -f $< $@
 
 $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT): $(OBJS)
 	@$(AR) $(AR_OUTPUT)$@ `$(call fixcygpath, $^)`
 
-$(OUTPUT_OBJ_DIR)/pcsl_memory.o: pcsl_memory.c
+$(OUTPUT_OBJ_DIR)/pcsl_memory.o: pcsl_memory.c $(INCS)
 	@$(CC) -I. -I./.. -I./../../print -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
-$(OUTPUT_OBJ_DIR)/pcsl_chunkheap.o: pcsl_chunkheap.c
+$(OUTPUT_OBJ_DIR)/pcsl_chunkheap.o: pcsl_chunkheap.c $(INCS)
 	@$(CC) -I. -I./.. -I./../../print -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
-
-$(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force

@@ -1,6 +1,5 @@
 #
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -40,20 +39,16 @@ endif
 # define 'all' target and all dependencies
 # 'all' is the default target
 
-all: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) \
-    $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
-	@cp -f ../pcsl_print.h $(OUTPUT_INC_DIR)/
+all: $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
 
-include $(PCSL_DIR)/makefiles/verify.gmk
+$(OUTPUT_INC_DIR)/pcsl_print.h: ../pcsl_print.h
+	@cp -f $< $@
 
 $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT): $(OUTPUT_OBJ_DIR)/pcsl_print.o
 	@$(AR) $(AR_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $^)`
 
-$(OUTPUT_OBJ_DIR)/pcsl_print.o: pcsl_print.c
+$(OUTPUT_OBJ_DIR)/pcsl_print.o: pcsl_print.c $(OUTPUT_INC_DIR)/pcsl_print.h
 	@$(CC) $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath, $@)` $<
-
-$(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force

@@ -49,22 +49,16 @@ OBJS = \
 	$(OUTPUT_OBJ_DIR)/pcsl_network.o \
 	$(OUTPUT_OBJ_DIR)/pcsl_datagram.o
 
-all: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) \
-     $(NET_LIB) $(NET_INTERFACE)
-
-include $(PCSL_DIR)/makefiles/verify.gmk
-
-$(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
+all: $(NET_LIB) $(NET_INTERFACE)
 
 $(NET_LIB): $(OBJS)
 	@$(AR) $(AR_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $^)`
 
 $(OUTPUT_INC_DIR)/pcsl_network_md.h : $(NETWORK_SELECT_DIR)/pcsl_network_md.h
-	cp -f $< $@
+	@cp -f $< $@
 
 $(OUTPUT_INC_DIR)/%.h : $(NETWORK_DIR)/%.h
-	cp -f $< $@
+	@cp -f $< $@
 
 $(OUTPUT_OBJ_DIR)/pcsl_socket.o: $(NETWORK_SELECT_DIR)/pcsl_socket.c \
  $(NETWORK_DIR)/pcsl_network.h $(MEMORY_DIR)/pcsl_memory.h \
