@@ -23,8 +23,8 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 #include <stdio.h>
+
 #include <midpError.h>
 #include <midpEventUtil.h>
 
@@ -43,10 +43,10 @@ extern void fast_rect_8x8(void*first_pixel, int ypitch, int pixel);
 /**
  * Get a C structure representing the given <tt>ImageData</tt> class.
  */
-#define GET_IMAGEDATA_PTR_FROM_GRAPHICS(handle)             \
-    GXAPI_GET_GRAPHICS_PTR(handle)->img != NULL ?           \
-        GXAPI_GET_GRAPHICS_PTR(handle)->img->imageData :    \
-        (java_imagedata*)NULL
+#define GET_IMAGEDATA_PTR_FROM_GRAPHICS(handle) \
+  GXAPI_GET_GRAPHICS_PTR(handle)->img != NULL ? \
+  GXAPI_GET_GRAPHICS_PTR(handle)->img->imageData : \
+  (java_imagedata*)NULL
 
 /**
  * Gets the clipping region of the given graphics object.
@@ -54,11 +54,11 @@ extern void fast_rect_8x8(void*first_pixel, int ypitch, int pixel);
  * @param G handle to the <tt>Graphics</tt> object
  * @param ARRAY native <tt>jshort</tt> array to save the clip data
  */
-#define GET_CLIP(G, ARRAY)                              \
-    ARRAY[0] = GXAPI_GET_GRAPHICS_PTR(G)->clipX1,       \
-        ARRAY[1] = GXAPI_GET_GRAPHICS_PTR(G)->clipY1,   \
-        ARRAY[2] = GXAPI_GET_GRAPHICS_PTR(G)->clipX2,   \
-        ARRAY[3] = GXAPI_GET_GRAPHICS_PTR(G)->clipY2
+#define GET_CLIP(G, ARRAY) \
+    ARRAY[0] = GXAPI_GET_GRAPHICS_PTR(G)->clipX1, \
+    ARRAY[1] = GXAPI_GET_GRAPHICS_PTR(G)->clipY1, \
+    ARRAY[2] = GXAPI_GET_GRAPHICS_PTR(G)->clipX2, \
+    ARRAY[3] = GXAPI_GET_GRAPHICS_PTR(G)->clipY2
 
 
 /**
@@ -71,9 +71,9 @@ extern void fast_rect_8x8(void*first_pixel, int ypitch, int pixel);
  * @param Y variable representing the <tt>y</tt> coordinate to be translated;
  *        this macro sets the value of Y
  */
-#define TRANSLATE(G, X, Y)                          \
-    (X) += GXAPI_GET_GRAPHICS_PTR((G))->transX,     \
-        (Y) += GXAPI_GET_GRAPHICS_PTR((G))->transY
+#define TRANSLATE(G, X, Y)  \
+    (X) += GXAPI_GET_GRAPHICS_PTR((G))->transX, \
+    (Y) += GXAPI_GET_GRAPHICS_PTR((G))->transY
 
 /**
  * @file
@@ -213,10 +213,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
 
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
+	    printf("Graphics_render before TRANSLATE x=%d y=%d\n.", x, y);
 
             TRANSLATE(thisObject, x, y);
 
             GET_CLIP(thisObject, clip);
+	    printf("Graphics_render x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+		   clip[0], clip[1], clip[2], clip[3]);
 
             gx_fill_rect(GET_PIXEL(thisObject),
                          clip,
@@ -900,9 +903,9 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
                     GET_CLIP(thisObject, clip);
             
                     gx_draw_rgb(clip,
-                                GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject), 
-                                rgbBuffer, offset, scanlen, x, y, width, 
-                                height, processAlpha);
+                        GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject), 
+                        rgbBuffer, offset, scanlen, x, y, width, 
+                        height, processAlpha);
                 }
 
             }
@@ -1066,38 +1069,28 @@ KNIDECL(javax_microedition_lcdui_Graphics_render) {
         if (KNI_IsNullHandle(img)) {
             success = KNI_FALSE; //KNI_ThrowNew(midpNullPointerException, NULL);
         } else {
-            const java_imagedata * srcImageDataPtr =
-                IMGAPI_GET_IMAGE_PTR(img)->imageData;
+  	    const java_imagedata * srcImageDataPtr =
+	      IMGAPI_GET_IMAGE_PTR(img)->imageData;
 
             IMGAPI_GET_IMAGE_PTR(gImg) =
-                (struct Java_javax_microedition_lcdui_Image *)
-                (GXAPI_GET_GRAPHICS_PTR(g)->img);
+	      (struct Java_javax_microedition_lcdui_Image *)
+	      (GXAPI_GET_GRAPHICS_PTR(g)->img);
             if (KNI_IsSameObject(gImg, img) || !check_anchor(anchor,0)) {
                 success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
             } else if (!normalize_anchor(&x, &y, srcImageDataPtr->width, 
-                                         srcImageDataPtr->height, 
-                                         anchor)) {
+					       srcImageDataPtr->height, 
+					       anchor)) {
                 success = KNI_FALSE;//KNI_ThrowNew(midpIllegalArgumentException, NULL);
             } else {
-                jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
-                const java_imagedata * dstMutableImageDataPtr = 
-                    GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
-
-                printf("Graphics_render before TRANSLATE x = %n\n.", x);
-                printf("Graphics_render before TRANSLATE y = %n\n.", y);
+	        jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
+	        const java_imagedata * dstMutableImageDataPtr = 
+		  GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
                 TRANSLATE(g, x, y);
-                GET_CLIP(g, clip);
+		GET_CLIP(g, clip);
 
-                printf("Graphics_render x = %n\n.", x);
-                printf("Graphics_render y = %n\n.", y);
-                printf("Graphics_render clip[0] = %n\n.", clip[0]);
-                printf("Graphics_render clip[1] = %n\n.", clip[1]);
-                printf("Graphics_render clip[2] = %n\n.", clip[2]);
-                printf("Graphics_render clip[3] = %n\n.", clip[3]);
-
-                gx_render_image(srcImageDataPtr, dstMutableImageDataPtr,
-                                clip, x, y);
+		gx_render_image(srcImageDataPtr, dstMutableImageDataPtr,
+				clip, x, y);
 
             }
         }
@@ -1150,44 +1143,44 @@ KNIDECL(javax_microedition_lcdui_Graphics_renderRegion) {
     KNI_GetThisPointer(g);
     
     if (GRAPHICS_OP_IS_ALLOWED(g)) {
-        if (KNI_IsNullHandle(img)) {
-            /* null checking is performed in the Java code, but check just in case */
-            success = KNI_FALSE; //KNI_ThrowNew(midpNullPointerException, NULL);
-        } else if ((transform < 0) || (transform > 7)) {
-            success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
-        } else if (!normalize_anchor(&x_dest, &y_dest, width, height, anchor)) {
-            success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
+      if (KNI_IsNullHandle(img)) {
+        /* null checking is performed in the Java code, but check just in case */
+        success = KNI_FALSE; //KNI_ThrowNew(midpNullPointerException, NULL);
+      } else if ((transform < 0) || (transform > 7)) {
+        success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
+      } else if (!normalize_anchor(&x_dest, &y_dest, width, height, anchor)) {
+        success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
+      } else {
+	const java_imagedata * srcImageDataPtr = 
+	  IMGAPI_GET_IMAGE_PTR(img)->imageData;
+        jint img_width = srcImageDataPtr->width;
+        jint img_height = srcImageDataPtr->height;
+
+        IMGAPI_GET_IMAGE_PTR(gImg) = 
+	  (struct Java_javax_microedition_lcdui_Image *)
+	                      (GXAPI_GET_GRAPHICS_PTR(g)->img);
+        if (KNI_IsSameObject(gImg, img) || 
+           (height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
+           ((x_src + width) > img_width) || 
+           ((y_src + height) > img_height)) {
+          success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else {
-            const java_imagedata * srcImageDataPtr = 
-                IMGAPI_GET_IMAGE_PTR(img)->imageData;
-            jint img_width = srcImageDataPtr->width;
-            jint img_height = srcImageDataPtr->height;
+	  jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            IMGAPI_GET_IMAGE_PTR(gImg) = 
-                (struct Java_javax_microedition_lcdui_Image *)
-                (GXAPI_GET_GRAPHICS_PTR(g)->img);
-            if (KNI_IsSameObject(gImg, img) || 
-                (height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
-                ((x_src + width) > img_width) || 
-                ((y_src + height) > img_height)) {
-                success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
-            } else {
-                jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
+	  const java_imagedata * dstMutableImageDataPtr = 
+	    GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
-                const java_imagedata * dstMutableImageDataPtr = 
-                    GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
+	  TRANSLATE(g, x_dest, y_dest);
+	  GET_CLIP(g, clip);
 
-                TRANSLATE(g, x_dest, y_dest);
-                GET_CLIP(g, clip);
-
-                gx_render_imageregion(srcImageDataPtr, dstMutableImageDataPtr,
-                                      clip, 
-                                      x_src, y_src, 
-                                      width, height,
-                                      x_dest, y_dest, 
-                                      transform);
-            }
+	  gx_render_imageregion(srcImageDataPtr, dstMutableImageDataPtr,
+				clip, 
+				x_src, y_src, 
+				width, height,
+				x_dest, y_dest, 
+				transform);
         }
+      }
     }
 
     KNI_EndHandles();
