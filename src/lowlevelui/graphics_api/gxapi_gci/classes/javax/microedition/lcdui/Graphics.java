@@ -1129,6 +1129,8 @@ public class Graphics {
      * @see #drawRect(int, int, int, int)
      */
     public void fillRect(int x, int y, int width, int height) {
+	if( height ==457)
+	    new Exception("Graphics.fillRect()").printStackTrace();
         gciShapeRenderer.fillRect(x + transX, y + transY, width, height);
     }
  

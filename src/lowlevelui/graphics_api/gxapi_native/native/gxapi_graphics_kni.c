@@ -167,8 +167,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
           
             GET_CLIP(thisObject, clip);
 
-	    fprintf(stderr,"Graphics_drawRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
-		   clip[0], clip[1], clip[2], clip[3]);
+	    /*	    fprintf(stderr,"Graphics_drawRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+	      clip[0], clip[1], clip[2], clip[3]);*/
             gx_draw_rect(GET_PIXEL(thisObject),
                          clip,
                          GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
