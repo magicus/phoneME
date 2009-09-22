@@ -177,7 +177,7 @@ public class CHManagerImpl extends CHManagerBase {
 
         /** Indicate postinstall  cleanup need.  */
         private boolean needCleanup;
-        /** installtation status. */
+        /** installation status. */
         private boolean success;
         /** installation error message. */
         private String errorMsg;
@@ -228,6 +228,7 @@ public class CHManagerImpl extends CHManagerBase {
                            success ? Invocation.OK : Invocation.CANCELLED);
                 }
                 installInvoc = null;
+                needCleanup = false;
             }
         }
     }
