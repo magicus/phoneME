@@ -1030,10 +1030,16 @@ public class MIDletProxyList
     public void handleSetForegroundByNameRequestEvent(
         int suiteId,
         String className) {
+        setForegroundByName(suiteId,className);
+    }
 
+    public boolean setForegroundByName(int suiteId, String className) {
         MIDletProxy midletProxy = findMIDletProxy(suiteId, className);
         if (midletProxy != null) {
             setForegroundMIDlet(midletProxy);
+            return true;
+        } else {
+            return false;
         }
     }
 

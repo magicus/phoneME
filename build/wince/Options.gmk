@@ -89,6 +89,7 @@ USE_MULTIPLE_DISPLAYS   = false
 USE_JAVA_VIRTUAL_KEYBOARD   = false
 USE_NATIVE_VIRTUAL_KEYBOARD = true
 USE_FINGER_TOUCH        = false
+USE_PUBLIC_AMS_API	= false
 
 # DEBUG
 USE_DEBUG               = false

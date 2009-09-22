@@ -25,45 +25,64 @@
  */
 
 package com.sun.midp.main;
-
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 /**
  * Structure containing the run time information about the midlet.
  */
-class RuntimeInfo {
+public class RuntimeInfo {
     /**
      * The minimum amount of memory guaranteed to be available to the isolate
      * at any time. Used to pass a parameter to midlet_create_start(),
      * < 0 if not used.
      */
-    int memoryReserved;
+    public int memoryReserved;
 
     /**
      * The total amount of memory that the isolate can reserve.
      * Used to pass a parameter to midlet_create_start(), < 0 if not used.
      */
-    int memoryTotal;
+    public int memoryTotal;
 
     /**
      * The approximate amount of object heap memory currently
      * used by the isolate.
      */
-    int usedMemory;
+    public int usedMemory;
 
     /**
      * Priority of the isolate (< 0 if not set).
      */
-    int priority;
+    public int priority;
 
     /**
      * Name of the VM profile that should be used for the new isolate.
      * Used (1) to pass a parameter to midlet_create_start();
      * (2) to get a profile's name of the given isolate in run time.
      */
-    String profileName;
+    public String profileName;
 
     /** Constructor */
-    RuntimeInfo() {
+    public RuntimeInfo() {
     }
+
+    /** Constructor */
+    public RuntimeInfo(DataInput in) throws IOException {
+        memoryTotal    = in.readInt();
+        memoryReserved = in.readInt();
+        usedMemory     = in.readInt();
+        priority       = in.readInt();
+    }
+    
+    /** Write data into stream */
+    public void serialize(DataOutput out) throws IOException {
+        out.writeInt(memoryTotal);
+        out.writeInt(memoryReserved);
+        out.writeInt(usedMemory);
+        out.writeInt(priority);
+    }
+
 
     /**
      * Returns the string form of this object.
