@@ -114,8 +114,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawLine) {
 
         GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_drawLine  (%d,%d, %d,%d)\n.",
-		   clip[0], clip[1], clip[2], clip[3]);
+	/*	    fprintf(stderr,"Graphics_drawLine  (%d,%d, %d,%d)\n.",
+	  clip[0], clip[1], clip[2], clip[3]); */
         gx_draw_line(GET_PIXEL(thisObject), 
                      clip, 
                      GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
@@ -167,7 +167,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
           
             GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_drawRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+	    fprintf(stderr,"Graphics_drawRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
 		   clip[0], clip[1], clip[2], clip[3]);
             gx_draw_rect(GET_PIXEL(thisObject),
                          clip,
@@ -217,12 +217,12 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
 
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
-	    printf("Graphics_render before TRANSLATE x=%d y=%d\n.", x, y);
+	    /*	    fprintf(stderr,"Graphics_render before TRANSLATE x=%d y=%d\n.", x, y); */
 
             TRANSLATE(thisObject, x, y);
 
             GET_CLIP(thisObject, clip);
-	    printf("Graphics_fillRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+	    fprintf(stderr,"Graphics_fillRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
 		   clip[0], clip[1], clip[2], clip[3]);
 
             gx_fill_rect(GET_PIXEL(thisObject),
@@ -282,8 +282,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRoundRect) {
 
             GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_drawRoundRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
-		   clip[0], clip[1], clip[2], clip[3]);
+	    /*	    fprintf(stderr,"Graphics_drawRoundRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+	      clip[0], clip[1], clip[2], clip[3]); */
             gx_draw_roundrect(GET_PIXEL(thisObject),
                               clip,
                               GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
@@ -340,8 +340,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRoundRect) {
 
             GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_fillRoundRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
-		   clip[0], clip[1], clip[2], clip[3]);
+	    /*	    fprintf(stderr,"Graphics_fillRoundRect x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+	      clip[0], clip[1], clip[2], clip[3]);*/
             gx_fill_roundrect(GET_PIXEL(thisObject),
                               clip,
                               GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
@@ -417,8 +417,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawArc) {
 
             GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_drawArc (%d,%d, %d,%d)\n.",
-		   clip[0], clip[1], clip[2], clip[3]);
+	    /*	    fprintf(stderr,"Graphics_drawArc (%d,%d, %d,%d)\n.",
+	      clip[0], clip[1], clip[2], clip[3]);*/
             gx_draw_arc(GET_PIXEL(thisObject),
                         clip,
                         GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
@@ -488,8 +488,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillArc) {
 
             GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_fillArc (%d,%d, %d,%d)\n.",
-		   clip[0], clip[1], clip[2], clip[3]);
+	    /*	    fprintf(stderr,"Graphics_fillArc (%d,%d, %d,%d)\n.",
+	      clip[0], clip[1], clip[2], clip[3]); */
             gx_fill_arc(GET_PIXEL(thisObject),
                         clip,
                         GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
@@ -542,8 +542,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillTriangle) {
       
         GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_fillTriangle  (%d,%d, %d,%d)\n.",
-		   clip[0], clip[1], clip[2], clip[3]);
+	/*	    fprintf(stderr,"Graphics_fillTriangle  (%d,%d, %d,%d)\n.",
+	  clip[0], clip[1], clip[2], clip[3]);*/
         gx_fill_triangle(GET_PIXEL(thisObject),
                          clip,
                          GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
@@ -916,8 +916,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
 
                     GET_CLIP(thisObject, clip);
             
-	    printf("Graphics_drawRGB x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
-		   clip[0], clip[1], clip[2], clip[3]);
+		    /*	    fprintf(stderr,"Graphics_drawRGB x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+		      clip[0], clip[1], clip[2], clip[3]); */
                     gx_draw_rgb(clip,
                         GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject), 
                         rgbBuffer, offset, scanlen, x, y, width, 
@@ -988,8 +988,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_doCopyArea) {
                 jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
                 GET_CLIP(thisObject, clip);
 
-	    printf("Graphics_copyArea (%d,%d, %d,%d)\n.",
-		   clip[0], clip[1], clip[2], clip[3]);
+		/*	    fprintf(stderr,"Graphics_copyArea (%d,%d, %d,%d)\n.",
+		  clip[0], clip[1], clip[2], clip[3]); */
                 gx_copy_area(clip,
                              GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                              x_src, y_src, width, height, 
@@ -1107,7 +1107,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_render) {
                 TRANSLATE(g, x, y);
 		GET_CLIP(g, clip);
 
-	    printf("Graphics_render x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
+	    fprintf(stderr,"Graphics_render x = %d y = %d (%d,%d, %d,%d)\n.", x,y,
 		   clip[0], clip[1], clip[2], clip[3]);
 
 		gx_render_image(srcImageDataPtr, dstMutableImageDataPtr,
@@ -1194,7 +1194,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_renderRegion) {
 	  TRANSLATE(g, x_dest, y_dest);
 	  GET_CLIP(g, clip);
 
-	    printf("Graphics_renderRegion (%d,%d, %d,%d)\n.",
+	    fprintf(stderr,"Graphics_renderRegion (%d,%d, %d,%d)\n.",
 		   clip[0], clip[1], clip[2], clip[3]);
 	  gx_render_imageregion(srcImageDataPtr, dstMutableImageDataPtr,
 				clip, 
