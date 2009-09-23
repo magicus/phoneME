@@ -2661,7 +2661,8 @@ public class Display {
      *        False - otherwise
      */
     void lSetFullScreen(boolean wantFullScnMode) {
-
+System.err.println("Display.lSetFullSCreen " + wantFullScnMode + " " +lastFullScnMode);
+new Exception ("lSetFullScreen").printStackTrace();
         if (!screenModeKnown) {
             screenModeKnown = true;
         } else if (lastFullScnMode == wantFullScnMode) {
@@ -2700,7 +2701,7 @@ public class Display {
         // #else
         // TBD: not implemented for GCI yet
         // #endif ENABLE_GCI
-
+System.err.println("set Dimensions " + width + " " + height);
         screenGraphics.setDimensions(width, height);
         screenGraphics.reset();
 
@@ -2983,6 +2984,10 @@ public class Display {
         Dimension screenDims =
             screenDimensions[
                 midletScreens.getCurrentMIDletScreen().dimensionId];
+new Exception("getPrimaryDisplayHeight " + midletScreens + " " 
++ midletScreens.getCurrentMIDletScreen() + " " 
++ midletScreens.getCurrentMIDletScreen().dimensionId + " " 
++ screenDims.height).printStackTrace();
         return screenDims.height;
     }
 
@@ -3173,6 +3178,7 @@ public class Display {
                 CanvasLFImpl canvasLF = (CanvasLFImpl)currentCopy;
                 try {
                     synchronized (Display.calloutLock) {
+System.err.println("Display show notify " + canvasLF + " " + canvasLF.canvas);
                         canvasLF.canvas.showNotify();
                     }
                 } catch (Throwable thr) {

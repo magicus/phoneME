@@ -163,6 +163,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
         // SYNC NOTE: Call into app code. So do it outside LUICDLock
         synchronized (Display.calloutLock) {
             try {
+		System.err.println("Canvas,shownotify " + canvas);
                 canvas.showNotify();
                 /* For MMAPI VideoControl in a Canvas */
                 if (mmHelper != null) {
