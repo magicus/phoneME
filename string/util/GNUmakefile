@@ -42,8 +42,6 @@ OBJS = $(OUTPUT_OBJ_DIR)/utf.o
 
 all: $(OBJS)
 
-include $(PCSL_DIR)/makefiles/verify.gmk
-
 $(OUTPUT_OBJ_DIR)/utf.o: utf.c
 	@$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
@@ -57,7 +55,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify_for_clean
+clean:
 	rm -rf $(OUTPUT_OBJ_DIR)/utf.o
 
-.PHONY: all clean donuts doc verify
+.PHONY: all clean

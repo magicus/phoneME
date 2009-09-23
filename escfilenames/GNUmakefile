@@ -62,4 +62,4 @@ $(OUTPUT_OBJ_DIR)/testEsc.o: $(ESCFILENAMES_DIR)/testEsc.c
 
 include $(PCSL_DIR)/makefiles/verify.gmk
 
-.PHONY : all doc clean donuts verify
+.PHONY : all doc clean donuts

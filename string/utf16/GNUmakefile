@@ -45,6 +45,8 @@ OBJS = $(OUTPUT_OBJ_DIR)/pcsl_string.o \
 
 all: $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
 
+include $(PCSL_DIR)/makefiles/verify.gmk
+
 $(OUTPUT_INC_DIR)/pcsl_string_md.h : pcsl_string_md.h
 	@cp -f $< $@
 
@@ -69,4 +71,4 @@ clean: verify_for_clean
 	rm -rf $(OUTPUT_INC_DIR)/pcsl_string_md.h
 	rm -rf $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
 
-.PHONY: all clean donuts doc verify
+.PHONY: all clean

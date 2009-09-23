@@ -1,7 +1,5 @@
 #
-#  
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -38,6 +36,8 @@ endif
 
 #
 all:  $(OUTPUT_BIN_DIR)/donuts$(EXE)
+
+include $(PCSL_DIR)/makefiles/verify.gmk
 
 ifndef DONUTS_FILES
 DONUTS_FILES := $(shell ls \

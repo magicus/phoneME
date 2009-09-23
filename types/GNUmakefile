@@ -34,8 +34,6 @@ ifdef PCSL_PLATFORM
 include $(PCSL_DIR)/makefiles/top.gmk
 endif
 
-include $(PCSL_DIR)/makefiles/verify.gmk
-
 # What to build
 #
 
@@ -57,8 +55,8 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify_for_clean
+clean:
 	@rm -rf $(OUTPUT_INC_DIR)/java_types.h
 	@rm -rf $(OUTPUT_INC_DIR)/java_types_md.h
 
-.PHONY : all doc clean donuts verify
+.PHONY : all clean
