@@ -3543,7 +3543,7 @@ System.err.println("Display.doFlush() " + x + " " + y + " " + width + " " + heig
                             if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
 System.err.println("Display.doFlush() dd"
 + x + "==0"
-+ x2 =="
++ x2+ " =="
 + Display.this.width + " " 
 + y + "==0" 
 + offscreen_buffer.getWidth() + "=="

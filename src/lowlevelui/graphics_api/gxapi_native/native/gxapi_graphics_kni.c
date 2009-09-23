@@ -199,7 +199,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
  * @param height The height of the rectangle to be drawn
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
+KNIDECL(javax_microedition_lcdui_Graphics_fillRect0) {
     int h = KNI_GetParameterAsInt(4);
     int w = KNI_GetParameterAsInt(3);
     int y = KNI_GetParameterAsInt(2);

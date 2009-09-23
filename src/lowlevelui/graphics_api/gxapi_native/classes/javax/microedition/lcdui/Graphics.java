@@ -1049,7 +1049,6 @@ public class Graphics {
          */
 
     }
-
     /**
      * Draws a line between the coordinates <code>(x1,y1)</code> and
      * <code>(x2,y2)</code> using
@@ -1071,8 +1070,14 @@ public class Graphics {
      * @param height the height of the rectangle to be filled
      * @see #drawRect(int, int, int, int)
      */
-    public native void fillRect(int x, int y, int width, int height);
- 
+     public  void fillRect(int x, int y, int width, int height) {
+	if (height ==457)
+	    new Exception("fillRect").printStackTrace();
+	fillRect0( x,  y,  width,  height);
+    }
+
+    public native void fillRect0(int x, int y, int width, int height);
+
     /**
      * Draws the outline of the specified rectangle using the current
      * color and stroke style.
@@ -1341,6 +1346,8 @@ public class Graphics {
             throw new NullPointerException();
         }
 
+        image.checkPixelFormat();
+
         if (!render(image, x, y, anchor)) {
             throw new IllegalArgumentException("");
         }
@@ -1451,6 +1458,9 @@ public class Graphics {
         if (src == null) {
             throw new NullPointerException();
         }
+
+        src.checkPixelFormat();
+
         if (!renderRegion(src, x_src, y_src, width, height,
                           transform, x_dest, y_dest, anchor)) {
             throw new IllegalArgumentException("");
