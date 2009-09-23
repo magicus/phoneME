@@ -1569,7 +1569,9 @@ HRESULT __stdcall filter_out_pin::NewSegment(REFERENCE_TIME /*tStart*/, REFERENC
 #if write_level > 0
     print("filter_out_pin::NewSegment called...\n");
 #endif
-    return E_UNEXPECTED;
+    EnterCriticalSection(&cs_receive);
+    LeaveCriticalSection(&cs_receive);
+    return S_OK;
 }
 
 HRESULT __stdcall filter_out_pin::GetAllocator(IMemAllocator **ppAllocator)
@@ -1612,28 +1614,35 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #if write_level > 0
     print("filter_out_pin::Receive called...\n");
 #endif
-    if(!pSample) return E_POINTER;
-
+    if(!pSample)
+    {
+#if write_level > 0
+        print("filter_out_pin::Receive returns E_POINTER.\n");
+#endif
+        return E_POINTER;
+    }
 #if write_level > 0
     print("Actual data length=%i\n", pSample->GetActualDataLength());
 #endif
-
     int64 tstart;
     int64 tend;
-    if(FAILED(pSample->GetTime(&tstart, &tend)))
+    HRESULT r = pSample->GetTime(&tstart, &tend);
+    if(r != S_OK && r != VFW_S_NO_STOP_TIME)
     {
 #if write_level > 0
         print("filter_out_pin::Receive returns VFW_E_RUNTIME_ERROR.\n");
 #endif
         return VFW_E_RUNTIME_ERROR;
     }
-
+    bool delivered = false;
     EnterCriticalSection(&cs_receive);
     EnterCriticalSection(&cs_pin);
+    EnterCriticalSection(&pfilter->cs_filter);
     for(;;)
     {
         if(flushing)
         {
+            LeaveCriticalSection(&pfilter->cs_filter);
             LeaveCriticalSection(&cs_pin);
             LeaveCriticalSection(&cs_receive);
 #if write_level > 0
@@ -1641,7 +1650,6 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
             return S_FALSE;
         }
-        EnterCriticalSection(&pfilter->cs_filter);
         if(pfilter->state == State_Stopped)
         {
             if(pfilter->state2 == State_Stopped)
@@ -1659,43 +1667,48 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
                 pfilter->state = State_Paused;
                 SetEvent(pfilter->event_state_set);
                 ResetEvent(pfilter->event_not_paused);
-                if(amt.majortype == MEDIATYPE_Video)
-                {
-                    bits8 *pb;
-                    if(pSample->GetPointer(&pb) != S_OK)
-                    {
-                        LeaveCriticalSection(&pfilter->cs_filter);
-                        LeaveCriticalSection(&cs_pin);
-                        LeaveCriticalSection(&cs_receive);
-#if write_level > 0
-                        print("filter_out_pin::Receive returns VFW_E_RUNTIME_ERROR.\n");
-#endif
-                        return VFW_E_RUNTIME_ERROR;
-                    }
-                    pfilter->pcallback->frame_ready((bits16 *)pb);
-                    LeaveCriticalSection(&pfilter->cs_filter);
-                    LeaveCriticalSection(&cs_pin);
-                    LeaveCriticalSection(&cs_receive);
-#if write_level > 0
-                    print("filter_out_pin::Receive returns S_OK.\n");
-#endif
-                    return S_OK;
-                }
-                LeaveCriticalSection(&pfilter->cs_filter);
             }
         }
         else if(pfilter->state == State_Paused)
         {
+            if(!delivered && amt.majortype == MEDIATYPE_Video)
+            {
+                bits8 *pb;
+                if(pSample->GetPointer(&pb) != S_OK)
+                {
+                    LeaveCriticalSection(&pfilter->cs_filter);
+                    LeaveCriticalSection(&cs_pin);
+                    LeaveCriticalSection(&cs_receive);
+#if write_level > 0
+                    print("filter_out_pin::Receive returns VFW_E_RUNTIME_ERROR.\n");
+#endif
+                    return VFW_E_RUNTIME_ERROR;
+                }
+                pfilter->pcallback->frame_ready((bits16 *)pb);
+                delivered = true;
+            }
             HANDLE events[2] = { pfilter->event_not_paused, event_flushing };
             LeaveCriticalSection(&pfilter->cs_filter);
             LeaveCriticalSection(&cs_pin);
             WaitForMultipleObjects(2, events, false, INFINITE);
             EnterCriticalSection(&cs_pin);
+            EnterCriticalSection(&pfilter->cs_filter);
         }
         else if(pfilter->state == State_Running)
         {
+            if(delivered)
+            {
+                LeaveCriticalSection(&pfilter->cs_filter);
+                LeaveCriticalSection(&cs_pin);
+                LeaveCriticalSection(&cs_receive);
+#if write_level > 0
+                print("filter_out_pin::Receive returns returns S_OK.\n");
+#endif
+                return S_OK;
+            }
             int64 t;
-            if(FAILED(pfilter->pclock->GetTime(&t)))
+            HRESULT r = pfilter->pclock->GetTime(&t);
+            if(r != S_OK && r != S_FALSE)
             {
                 LeaveCriticalSection(&pfilter->cs_filter);
                 LeaveCriticalSection(&cs_pin);
@@ -1711,6 +1724,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
                 LeaveCriticalSection(&cs_pin);
                 Sleep(1);
                 EnterCriticalSection(&cs_pin);
+                EnterCriticalSection(&pfilter->cs_filter);
             }
             else
             {
