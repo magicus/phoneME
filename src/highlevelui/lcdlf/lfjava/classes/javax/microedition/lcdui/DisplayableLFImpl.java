@@ -190,6 +190,8 @@ class DisplayableLFImpl implements DisplayableLF {
     public void uSetFullScreenMode(boolean mode) {
         boolean requestRepaint = false;
         
+	System.err.println("DisplayableLFImpl.uSetFullScreen " + mode + " " 
+			   +lIsShown() );
         synchronized (Display.LCDUILock) {
             if (lIsShown()) {
                 // IMPL_NOTE: Notify MainWindow of screen mode change
@@ -310,6 +312,8 @@ class DisplayableLFImpl implements DisplayableLF {
             defferedSizeChange = false;
         }
 
+	System.err.println("DisplayableLFImpl.uCallShow " + copyDefferedSizeChange
+			   + " " + viewport[WIDTH] +  viewport[HEIGHT]);
         if (copyDefferedSizeChange) {
             synchronized (Display.calloutLock) {
                 try {
@@ -322,6 +326,9 @@ class DisplayableLFImpl implements DisplayableLF {
         synchronized (Display.LCDUILock) {
             // Do the internal show preparation
             lCallShow();
+	System.err.println("DisplayableLFImpl.uCallShow2 " + pendingInvalidate 
+			   + " "  + copyDefferedSizeChange);
+
             if (pendingInvalidate || copyDefferedSizeChange) {
                 lRequestInvalidate();
             }
@@ -516,12 +523,16 @@ class DisplayableLFImpl implements DisplayableLF {
         boolean copyDefferedSizeChange;
 
         synchronized (Display.LCDUILock) {
+	    System.err.println("DisplayableLFImpl.uCallSizeChanged " 
+			      +  (owner instanceof GameCanvas));
             if (owner instanceof GameCanvas) {
                 GameCanvasLFImpl gameCanvasLF =
                     GameMap.getGameCanvasImpl((GameCanvas)owner);
                 if (gameCanvasLF != null) {
                     gameCanvasLF.lCallSizeChanged(w, h);
                 }
+	    System.err.println("DisplayableLFImpl.uCallSizeChanged " 
+			       + gameCanvasLF + " " + w + " " + h + " " + state);
             }
   
             // If there is no Display, or if this Displayable is not
@@ -544,6 +555,8 @@ class DisplayableLFImpl implements DisplayableLF {
             }
 
         }
+	System.err.println("DisplayableLFImpl" + copyDefferedSizeChange 
+			   + owner );
         if (!copyDefferedSizeChange) {
             synchronized (Display.calloutLock) {
                 try {
@@ -1019,6 +1032,15 @@ class DisplayableLFImpl implements DisplayableLF {
      * @return the height a displayable would occupy 
      */
     public int getDisplayableHeight() {
+	System.err.println ("DisplayableLFImpl.getDisplayableHeight " + 
+			    currentDisplay + " " +
+			    (currentDisplay != null ?
+			     currentDisplay.getDisplayableHeight() :
+		Display.getDefaultDisplayableHeight(owner.isInFullScreenMode, 
+						    owner.getTitle() != null, 
+						    owner.getTicker() != null, 
+						    owner.numCommands > 0)));
+			    
         return (currentDisplay != null ?
 		currentDisplay.getDisplayableHeight() :
 		Display.getDefaultDisplayableHeight(owner.isInFullScreenMode, 

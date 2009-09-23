@@ -2288,6 +2288,8 @@ public class Display {
                 isRotatedKnown = true;
             }
 
+System.err.println("Display.callScreenChange " + wantRotation 
++ " " + width + " " +  height);
             // Postponed notification of screen rotation
             if (newCurrent.uSetRotatedStatus(wantRotation)) {
                 newCurrent.uCallSizeChanged(width, height);
@@ -3138,6 +3140,8 @@ new Exception("getPrimaryDisplayHeight " + midletScreens + " "
          * @param h the new height
          */
         public void callSizeChanged(int w, int h) {
+System.err.println ("Display.callSizeChanged " + Display.this.current
++	" " + w + " " + h);
             DisplayableLF currentCopy = Display.this.current;
             if (currentCopy != null) {
                 currentCopy.uCallSizeChanged(w, h);
@@ -4127,7 +4131,8 @@ System.err.println("Display.doflush() graw image  " + anchorX + " " +anchorY+ " 
                 windowCopy = window;
                 currentCopy = Display.this.current;
             }
-
+System.err.println("Display.handleResize " + currentCopy 
++ " " + Display.this.width + " " +  Display.this.height);
             windowCopy.setVerticalScroll(0,100);
             windowCopy.resize();
             if (currentCopy != null) {
@@ -4147,6 +4152,9 @@ System.err.println("Display.doflush() graw image  " + anchorX + " " +anchorY+ " 
 
             // #else
             DisplayableLF currentCopy = getCurrent().displayableLF;
+
+System.err.println("Display.handleResize " + currentCopy 
++ " " + Display.this.width + " " +  Display.this.height);
             if (currentCopy != null) {
                 currentCopy.uCallSizeChanged(Display.this.width, Display.this.height);
             }
