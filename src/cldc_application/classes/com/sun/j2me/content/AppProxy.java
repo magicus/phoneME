@@ -665,8 +665,8 @@ class CLDCAppProxyAgent extends AppProxyAgent {
             Logger.LOGGER.println("AppProxy.launch(): " + (MIDletSuiteUtils.isAmsIsolate()?"":"NOT ") + "isAmsIsolate()");
         if( isInSvmMode && !MIDletSuiteUtils.isAmsIsolate() )
             return false;
-        if( appID.suiteID != MIDletSuite.INTERNAL_SUITE_ID && _isSuiteRunning(appID.suiteID) )
-            return false;
+//        if( appID.suiteID != MIDletSuite.INTERNAL_SUITE_ID && _isSuiteRunning(appID.suiteID) )
+//            return false;
         if( Logger.LOGGER != null )
             Logger.LOGGER.println("AppProxy.launch(): send 'launch' request {" + appID.suiteID + ", '" + appID.className + "'}");
         // always launch an application in background mode
