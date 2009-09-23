@@ -28,7 +28,7 @@
 #include <vfwmsgs.h>
 #include "filter_out.hpp"
 
-#define write_level 1
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
@@ -1455,9 +1455,9 @@ HRESULT __stdcall filter_out_pin::QueryId(LPWSTR *Id)
     print("filter_out_pin::QueryId called...\n");
 #endif
     if(!Id) return E_POINTER;
-    *Id = (WCHAR *)CoTaskMemAlloc(sizeof(WCHAR) * 7);
+    *Id = (WCHAR *)CoTaskMemAlloc(sizeof(WCHAR) * 6);
     if(!*Id) return E_OUTOFMEMORY;
-    memcpy(*Id, L"Output", sizeof(WCHAR) * 7);
+    memcpy(*Id, L"Input", sizeof(WCHAR) * 6);
     return S_OK;
 }
 
@@ -1564,10 +1564,13 @@ HRESULT __stdcall filter_out_pin::EndFlush()
     return S_OK;
 }
 
+#if write_level > 0
+HRESULT __stdcall filter_out_pin::NewSegment(REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
+{
+    print("filter_out_pin::NewSegment(%I64i, %I64i, %f) called...\n", tStart, tStop, dRate);
+#else
 HRESULT __stdcall filter_out_pin::NewSegment(REFERENCE_TIME /*tStart*/, REFERENCE_TIME /*tStop*/, double /*dRate*/)
 {
-#if write_level > 0
-    print("filter_out_pin::NewSegment called...\n");
 #endif
     EnterCriticalSection(&cs_receive);
     LeaveCriticalSection(&cs_receive);
@@ -2071,18 +2074,30 @@ HRESULT __stdcall filter_out_filter::Pause()
     print("filter_out_filter::Pause called...\n");
 #endif
     HRESULT r;
+    EnterCriticalSection(&pin.cs_pin);
     EnterCriticalSection(&cs_filter);
     if(state == State_Stopped)
     {
         if(state2 == State_Stopped)
         {
-            state2 = State_Paused;
-            ResetEvent(event_state_set);
+            if(pin.pconnected)
+            {
+                state2 = State_Paused;
+                ResetEvent(event_state_set);
+                r = S_FALSE;
+            }
+            else
+            {
+                state = State_Paused;
+                state2 = State_Paused;
+                ResetEvent(event_not_paused);
+                r = S_OK;
+            }
         }
         else
         {
+            r = S_FALSE;
         }
-        r = S_FALSE;
     }
     else if(state == State_Paused)
     {
@@ -2096,6 +2111,7 @@ HRESULT __stdcall filter_out_filter::Pause()
         r = S_OK;
     }
     LeaveCriticalSection(&cs_filter);
+    LeaveCriticalSection(&pin.cs_pin);
     return r;
 }
 
@@ -2236,7 +2252,7 @@ HRESULT __stdcall filter_out_filter::FindPin(LPCWSTR Id, IPin **ppPin)
 #endif
     if(!ppPin) return E_POINTER;
     EnterCriticalSection(&cs_filter);
-    if(!wcscmp(Id, L"Output"))
+    if(!wcscmp(Id, L"Input"))
     {
         *ppPin = &pin;
         LeaveCriticalSection(&cs_filter);

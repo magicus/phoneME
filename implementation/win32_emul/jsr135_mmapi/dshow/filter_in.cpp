@@ -25,7 +25,7 @@
 #include <vfwmsgs.h>
 #include "filter_in.hpp"
 
-#define write_level 1
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
@@ -138,7 +138,7 @@ class filter_in_filter : public filter_in, IAMFilterMiscFlags
 
     nat32 reference_count;
     player_callback *pcallback;
-    filter_in_pin *ppin;
+    filter_in_pin pin;
     IFilterGraph *pgraph;
     IReferenceClock *pclock;
     char16 name[MAX_FILTER_NAME];
@@ -683,31 +683,70 @@ HRESULT __stdcall filter_in_pin::WaitForNext(DWORD dwTimeout, IMediaSample **ppS
 #if write_level > 0
     print("filter_in_pin::WaitForNext called...\n");
 #endif
-    if(!ppSample) return E_POINTER;
-    *ppSample = null;
-
-    for(;;)
+    if(!ppSample)
     {
-        // if(pfilter->state != State_Running || flushing) return VFW_E_WRONG_STATE;
-        if(flushing) return VFW_E_WRONG_STATE;
+#if write_level > 0
+        print("filter_in_pin::WaitForNext returns E_POINTER.\n");
+#endif
+        return E_POINTER;
+    }
 
-        if(requests) break;
+    for(; !requests; )
+    {
+        if(flushing)
+        {
+            *ppSample = null;
+#if write_level > 0
+            print("filter_in_pin::WaitForNext returns VFW_E_WRONG_STATE.\n");
+#endif
+            return VFW_E_WRONG_STATE;
+        }
 
-        if(!dwTimeout) return S_OK;
+        if(!dwTimeout)
+        {
+            *ppSample = null;
+#if write_level > 0
+            print("filter_in_pin::WaitForNext returns VFW_E_TIMEOUT.\n");
+#endif
+            return VFW_E_TIMEOUT;
+        }
 
         Sleep(1);
 
         if(dwTimeout != INFINITE) dwTimeout--;
     }
 
+    IMediaSample *p_sample = req_pms[0];
+    *ppSample = p_sample;
+    *pdwUser = req_user[0];
+    for(nat32 i = 0; i < requests - 1; i++)
+    {
+        req_pms[i] = req_pms[i + 1];
+        req_user[i] = req_user[i + 1];
+    }
     requests--;
-
-    HRESULT r = SyncReadAligned(req_pms[requests]);
-    if(r != S_OK) return r;
-    *ppSample = req_pms[requests];
-    *pdwUser = req_user[requests];
-
-    return S_OK;
+    if(flushing)
+    {
+#if write_level > 0
+        print("filter_in_pin::WaitForNext returns VFW_E_WRONG_STATE.\n");
+#endif
+        return VFW_E_WRONG_STATE;
+    }
+    else
+    {
+        HRESULT r = SyncReadAligned(p_sample);
+        if(r != S_OK)
+        {
+#if write_level > 0
+            print("filter_in_pin::WaitForNext returns 0x%x.\n", r);
+#endif
+            return r;
+        }
+#if write_level > 0
+        print("filter_in_pin::WaitForNext returns S_OK.\n");
+#endif
+        return S_OK;
+    }
 }
 
 HRESULT __stdcall filter_in_pin::SyncReadAligned(IMediaSample *pSample)
@@ -1065,11 +1104,10 @@ ULONG __stdcall filter_in_filter::Release()
     if(reference_count == 1)
     {
         if(pclock) pclock->Release();
-        if(ppin->pconnected) ppin->pconnected->Release();
-        DeleteCriticalSection(&ppin->data_cs);
-        if(ppin->amt.pUnk) ppin->amt.pUnk->Release();
-        if(ppin->amt.cbFormat) delete[] (bits8 *)ppin->amt.pbFormat;
-        delete ppin;
+        if(pin.pconnected) pin.pconnected->Release();
+        DeleteCriticalSection(&pin.data_cs);
+        if(pin.amt.pUnk) pin.amt.pUnk->Release();
+        if(pin.amt.cbFormat) delete[] (bits8 *)pin.amt.pbFormat;
         delete this;
         return 0;
     }
@@ -1114,11 +1152,10 @@ HRESULT __stdcall filter_in_filter::Run(REFERENCE_TIME /*tStart*/)
 HRESULT __stdcall filter_in_filter::GetState(DWORD /*dwMilliSecsTimeout*/, FILTER_STATE *State)
 {
 #if write_level > 0
-    print("filter_in_filter::GetState called...\n");
+    print("filter_in_filter::GetState called, state is %u...\n", state);
 #endif
     if(!State) return E_POINTER;
     *State = state;
-    if(state == State_Paused) return VFW_S_CANT_CUE;
     return S_OK;
 }
 
@@ -1156,7 +1193,7 @@ HRESULT __stdcall filter_in_filter::EnumPins(IEnumPins **ppEnum)
     filter_in_enum_pins *penum_pins = new filter_in_enum_pins;
     if(!penum_pins) return E_OUTOFMEMORY;
     penum_pins->reference_count = 1;
-    penum_pins->ppin = ppin;
+    penum_pins->ppin = &pin;
     penum_pins->ppin->AddRef();
     penum_pins->index = 0;
     *ppEnum = penum_pins;
@@ -1171,7 +1208,7 @@ HRESULT __stdcall filter_in_filter::FindPin(LPCWSTR Id, IPin **ppPin)
     if(!ppPin) return E_POINTER;
     if(!wcscmp(Id, L"Output"))
     {
-        *ppPin = ppin;
+        *ppPin = &pin;
         (*ppPin)->AddRef();
         return S_OK;
     }
@@ -1221,7 +1258,7 @@ ULONG __stdcall filter_in_filter::GetMiscFlags()
 
 bool filter_in_filter::set_stream_length(int64 length)
 {
-    ppin->stream_len = length;
+    pin.stream_len = length;
     return true;
 }
 
@@ -1233,47 +1270,40 @@ bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallb
     if(!pamt || !pcallback || !ppfilter) return false;
     filter_in_filter *pfilter = new filter_in_filter;
     if(!pfilter) return false;
-    pfilter->ppin = new filter_in_pin;
-    if(!pfilter->ppin)
+
+    if(!InitializeCriticalSectionAndSpinCount(&pfilter->pin.data_cs, 0x80000000))
     {
-        delete pfilter;
-        return false;
-    }
-    if(!InitializeCriticalSectionAndSpinCount(&pfilter->ppin->data_cs, 0x80000000))
-    {
-        delete pfilter->ppin;
         delete pfilter;
         return false;
     }
     if(pamt->cbFormat)
     {
-        pfilter->ppin->amt.pbFormat = new bits8[pamt->cbFormat];
-        if(!pfilter->ppin->amt.pbFormat)
+        pfilter->pin.amt.pbFormat = new bits8[pamt->cbFormat];
+        if(!pfilter->pin.amt.pbFormat)
         {
-            DeleteCriticalSection(&pfilter->ppin->data_cs);
-            delete pfilter->ppin;
+            DeleteCriticalSection(&pfilter->pin.data_cs);
             delete pfilter;
             return false;
         }
-        memcpy(pfilter->ppin->amt.pbFormat, pamt->pbFormat, pamt->cbFormat);
+        memcpy(pfilter->pin.amt.pbFormat, pamt->pbFormat, pamt->cbFormat);
     }
-    else pfilter->ppin->amt.pbFormat = null;
+    else pfilter->pin.amt.pbFormat = null;
     pfilter->reference_count = 1;
     pfilter->pcallback = pcallback;
-    pfilter->ppin->pfilter = pfilter;
-    pfilter->ppin->amt.majortype = pamt->majortype;
-    pfilter->ppin->amt.subtype = pamt->subtype;
-    pfilter->ppin->amt.bFixedSizeSamples = pamt->bFixedSizeSamples;
-    pfilter->ppin->amt.bTemporalCompression = pamt->bTemporalCompression;
-    pfilter->ppin->amt.lSampleSize = pamt->lSampleSize;
-    pfilter->ppin->amt.formattype = pamt->formattype;
-    pfilter->ppin->amt.pUnk = pamt->pUnk;
-    if(pfilter->ppin->amt.pUnk) pfilter->ppin->amt.pUnk->AddRef();
-    pfilter->ppin->amt.cbFormat = pamt->cbFormat;
-    pfilter->ppin->stream_len = 0;
-    pfilter->ppin->requests = 0;
-    pfilter->ppin->pconnected = null;
-    pfilter->ppin->flushing = false;
+    pfilter->pin.pfilter = pfilter;
+    pfilter->pin.amt.majortype = pamt->majortype;
+    pfilter->pin.amt.subtype = pamt->subtype;
+    pfilter->pin.amt.bFixedSizeSamples = pamt->bFixedSizeSamples;
+    pfilter->pin.amt.bTemporalCompression = pamt->bTemporalCompression;
+    pfilter->pin.amt.lSampleSize = pamt->lSampleSize;
+    pfilter->pin.amt.formattype = pamt->formattype;
+    pfilter->pin.amt.pUnk = pamt->pUnk;
+    if(pfilter->pin.amt.pUnk) pfilter->pin.amt.pUnk->AddRef();
+    pfilter->pin.amt.cbFormat = pamt->cbFormat;
+    pfilter->pin.stream_len = 0;
+    pfilter->pin.requests = 0;
+    pfilter->pin.pconnected = null;
+    pfilter->pin.flushing = false;
     pfilter->pgraph = null;
     pfilter->pclock = null;
     wcscpy_s(pfilter->name, MAX_FILTER_NAME, L"");
