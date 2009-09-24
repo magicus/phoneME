@@ -1,0 +1,155 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Automation API Library. 
+#
+# A note about directories structure:
+# - classes/   
+#       API interfaces that are present both in SVM and MVM 
+#       (MVM/SVM-independent part of Automation API)
+# - reference/ 
+#       Implementation of MVM/SVM-independent part of Automation API
+# - mvm/
+#       All MVM-specific files
+# - mvm/classes/
+#       API interfaces that are only present in MVM
+#       (MVM part of Automation API)
+# - mvm/example/
+#       Some examples of Automation API usage which work only
+#       in MVM
+# - mvm/reference/
+#       Implementation of MVM part of Automation API
+# - svm/ 
+#       All SVM-specific files
+# - svm/classes/
+#       API interfaces that are only present in MVM
+#       (SVM part of Automation API)
+# - svm/reference/
+#      Implementation of SVM part of Automation API 
+#
+######################################################################
+
+# Add to global SUBSYSTEMS list
+#
+SUBSYSTEMS += automation
+SUBSYSTEM_AUTOMATION_DIR = $(SUBSYSTEM_DIR)/automation
+
+
+# Javadoc source path
+SUBSYSTEM_AUTOMATION_SOURCEPATH += $(SUBSYSTEM_AUTOMATION_DIR)/classes
+
+SUBSYSTEM_AUTOMATION_PACKAGES = \
+	com.sun.midp.automation
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_AUTOMATION_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_AUTOMATION_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "Automation API" \
+	$(shell echo $(SUBSYSTEM_AUTOMATION_PACKAGES) | tr ' ' $(PATHSEP))
+
+
+# Subsystem's Java files
+
+# If Automation API isn't included, use stub version of AutomationInitializer
+ifneq ($(USE_AUTOMATION), true) 
+SUBSYSTEM_AUTOMATION_JAVA_FILES = \
+	$(SUBSYSTEM_AUTOMATION_DIR)/stubs/classes/com/sun/midp/automation/AutomationInitializer.java
+endif
+
+ifeq ($(USE_AUTOMATION), true) 
+
+# If ROMUL isn't included, use stub version of ROMULInitializer
+ifneq ($(USE_ROMUL), true)
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(SUBSYSTEM_AUTOMATION_DIR)/stubs/classes/com/sun/midp/automation/romul/ROMULInitializer.java
+endif
+ 
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/Automation.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventType.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventListener.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyCode.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyState.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoKeyEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoPenState.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoPenEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoDelayEvent.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/classes/com/sun/midp/automation/AutoEventSequence.java \
+	\
+    $(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationInitializer.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutomationImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFactoryImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventSequenceImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventFromArgsFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventImplBase.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventImpl.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoEventStringParser.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoKeyEventFromArgsFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoDelayEventFromArgsFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoPenEventFromArgsFactory.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/AutoScreenshotTaker.java \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/classes/com/sun/midp/automation/BMPEncoder.java
+
+vpath % $(SUBSYSTEM_AUTOMATION_DIR)/reference/native
+SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
+    midp_automation.c
+
+# Taking screenshot is implemented only for putpixel
+ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_putpixel) 
+SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
+    midp_automation_screenshot.c
+else
+vpath % $(SUBSYSTEM_AUTOMATION_DIR)/stubs/native
+SUBSYSTEM_AUTOMATION_NATIVE_FILES += \
+    midp_automation_screenshot.c
+endif
+
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+include $(SUBSYSTEM_DIR)/automation/mvm/lib.gmk
+else
+include $(SUBSYSTEM_DIR)/automation/svm/lib.gmk
+endif
+
+ifeq ($(USE_I3_TEST), true)
+#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
+SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
+	$(SUBSYSTEM_AUTOMATION_DIR)/reference/i3test/com/sun/midp/automation/TestEventFromStringCreation.java
+endif
+
+endif
+
+$(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_AUTOMATION_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_AUTOMATION_NATIVE_FILES)
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES) 
