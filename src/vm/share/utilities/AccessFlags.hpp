@@ -320,13 +320,15 @@ class AccessFlags {
     atomic_clear_bits(JVM_ACC_NATIVE);
   }
 
-  /// This structure is used in non-product mode to print out the
-  /// definitions of the access-flags bits.
+#if USE_DEBUG_PRINTING
+  // This structure is used in non-product mode to print out the
+  // definitions of the access-flags bits.
   struct FlagInfo {
-    const juint flag;
-    const juint type;
-    const char* const name;
+    juint flag;
+    juint type;
+    const char* name;
   };
 
   static const FlagInfo flag_info[];
+#endif
 };
