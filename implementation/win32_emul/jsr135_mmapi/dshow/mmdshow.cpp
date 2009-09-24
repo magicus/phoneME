@@ -226,9 +226,9 @@ void dshow_player::playback_finished()
         javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                                           appId, playerId, JAVACALL_OK, (void*)(size_t)t );
 
-        DEBUG_ONLY( PRINTF( "*** stopping...\n" ); )
-        player::result r = ppl->stop();
-        DEBUG_ONLY( PRINTF( "*** player::stop = %i\n", r ); )
+        DEBUG_ONLY( PRINTF( "*** pausing...\n" ); )
+        player::result r = ppl->pause();
+        DEBUG_ONLY( PRINTF( "*** player::pause = %i\n", r ); )
     }
 }
 
@@ -389,8 +389,8 @@ long dshow_player::get_media_time()
     }
     else
     {
-        player::result r;
-        int64 time = ppl->get_media_time( &r );
+        int64 time;
+        player::result r = ppl->get_media_time( &time );
 
         if( player::time_unknown != time ) time /= 1000;
 
@@ -686,29 +686,22 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     if( p->is_managed )
     {
-        ok = create_player_dshow_managed( wcslen( (const wchar_t*)outer_player->uri), 
+        ok = create_locator_player_dshow( wcslen( (const wchar_t*)outer_player->uri), 
                                           (const wchar_t*)outer_player->uri, p, &(p->ppl));
     }
     else
     {
-        ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
+        if(p->whole_content_size == -1)
+        {
+            ok = create_stream_player_dshow(p->mimeLength, (const char16 *)p->mime, false, 0, p, &p->ppl);
+        }
+        else
+        {
+            ok = create_stream_player_dshow(p->mimeLength, (const char16 *)p->mime, true, p->whole_content_size, p, &p->ppl);
+        }
     }
 
     DEBUG_ONLY( PRINTF( "*** dshow player creation finished (%s) ***\n",
-            (ok ? "success" : "fail") ); )
-
-    if( !p->is_managed && ok && -1 != p->whole_content_size )
-    {
-        p->ppl->set_stream_length(p->whole_content_size);
-    }
-
-    if( ok )
-    {
-        DEBUG_ONLY( PRINTF( "*** realizing dshow player... ***\n" ); )
-        ok = ( player::result_success == p->ppl->realize() );
-    }
-
-    DEBUG_ONLY( PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
             (ok ? "success" : "fail") ); )
 
     if( ok )
@@ -735,13 +728,13 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     lcd_output_video_frame( NULL );
 
-    if( NULL != p->ppl ) p->ppl->close();
+    if( NULL != p->ppl ) p->ppl->destroy();
 
     remove_from_qsound( p );
 
     if( NULL != p->video_frame ) delete p->video_frame;
     if( NULL != p->out_frame ) delete p->out_frame;
-    if( NULL != p->ppl ) delete p->ppl;
+    // if( NULL != p->ppl ) delete p->ppl;
 
     if( NULL != p->snapshot )
         javacall_media_release_data( p->snapshot, p->snapshot_len );
@@ -794,135 +787,110 @@ static javacall_result dshow_get_player_controls(javacall_handle handle,
 
 //=============================================================================
 
-static void stop_thread( void* param )
+static void stop_thread(void *param)
 {
-    dshow_player*  p = (dshow_player*)param;
-    bool           ok = true;
+    dshow_player *p = (dshow_player *)param;
     player::result r;
 
-    DEBUG_ONLY( PRINTF( "   >> stop...\n" ); )
+    DEBUG_ONLY(PRINTF("   >> stop...\n");)
 
-    if( player::started == p->ppl->get_state() )
+    r = p->ppl->stop();
+    if(r == player::result_success)
     {
-        DEBUG_ONLY( PRINTF( "   >> stop : stop...\n" ); )
-        ok = ( player::result_success == ( r = p->ppl->stop() ) );
-        if( ok ) p->playing = false;
+        p->playing = false;
     }
-
-    if( ok && player::prefetched == p->ppl->get_state() )
-    {
-        DEBUG_ONLY( PRINTF( "   >> stop : deallocate...\n" ); )
-        ok = ( player::result_success == ( r = p->ppl->deallocate() ) );
-    }
-
-    assert( player::realized == p->ppl->get_state() );
 
     lcd_output_video_frame( NULL );
 
-    DEBUG_ONLY( PRINTF( "   >> stop : done.\n" ); )
+    DEBUG_ONLY(PRINTF("   >> stop : done.\n");)
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
                                      p->appId,
                                      p->playerId,
-                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
-                                     NULL );
+                                     r == player::result_success ? JAVACALL_OK : JAVACALL_FAIL,
+                                     NULL);
 }
 
 static javacall_result dshow_stop(javacall_handle handle)
 {
-    dshow_player* p = (dshow_player*)handle;
-    player::result r;
-    DEBUG_ONLY( PRINTF( "*** stop, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) ); )
+    dshow_player *p = (dshow_player *)handle;
+    int64 time;
+    player::result r = p->ppl->get_media_time(&time);
+    DEBUG_ONLY(PRINTF("*** stop, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
 
-    _beginthread( stop_thread, 0, p );
+    _beginthread(stop_thread, 0, p);
 
     return JAVACALL_OK;
 }
 
-static void pause_thread( void* param )
+static void pause_thread(void *param)
 {
-    dshow_player*  p = (dshow_player*)param;
-    bool           ok = true;
+    dshow_player *p = (dshow_player *)param;
     player::result r;
 
-    DEBUG_ONLY( PRINTF( "   >> pausing...\n" ); )
+    DEBUG_ONLY(PRINTF("   >> pause...\n");)
 
-    if( player::started == p->ppl->get_state() )
+    p->get_media_time();
+
+    r = p->ppl->pause();
+    if(r == player::result_success)
     {
-        p->get_media_time();
-        DEBUG_ONLY( PRINTF( "   >> pausing : stop...\n" ); )
-        ok = ( player::result_success == ( r = p->ppl->stop() ) );
-        if( ok ) p->playing = false;
-    } 
-    else if( player::realized == p->ppl->get_state() )
-    {
-        DEBUG_ONLY( PRINTF( "   >> pausing : prefetch...\n" ); )
-        ok = ( player::result_success == ( r = p->ppl->prefetch() ) );
+        p->playing = false;
     }
 
-    assert( player::prefetched == p->ppl->get_state() );
-
-    DEBUG_ONLY( PRINTF( "   >> pausing : done.\n" ); )
+    DEBUG_ONLY(PRINTF("   >> pause : done.\n");)
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
                                      p->appId,
                                      p->playerId,
-                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
-                                     NULL );
+                                     r == player::result_success ? JAVACALL_OK : JAVACALL_FAIL,
+                                     NULL);
 }
 
 static javacall_result dshow_pause(javacall_handle handle)
 {
-    dshow_player* p = (dshow_player*)handle;
-    player::result r;
-    DEBUG_ONLY( PRINTF( "*** pause, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) ); )
+    dshow_player *p = (dshow_player *)handle;
+    int64 time;
+    player::result r = p->ppl->get_media_time(&time);
+    DEBUG_ONLY(PRINTF("*** pause, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
 
-    _beginthread( pause_thread, 0, p );
+    _beginthread(pause_thread, 0, p);
 
     return JAVACALL_OK;
 }
 
-static void run_thread( void* param )
+static void run_thread(void *param)
 {
-    dshow_player*  p = (dshow_player*)param;
-    bool           ok = true;
+    dshow_player *p = (dshow_player *)param;
     player::result r;
 
-    DEBUG_ONLY( PRINTF( "   >> run...\n" ); )
+    DEBUG_ONLY(PRINTF("   >> run...\n");)
 
-    if( player::realized == p->ppl->get_state() )
+    p->eom_sent = false;
+
+    r = p->ppl->run();
+    if(r == player::result_success)
     {
-        DEBUG_ONLY( PRINTF( "   >> run : prefetch...\n" ); )
-        ok = ( player::result_success == ( r = p->ppl->prefetch() ) );
+        p->playing = true;
     }
 
-    if( ok && player::prefetched == p->ppl->get_state() )
-    {
-        p->eom_sent = false;
-
-        DEBUG_ONLY( PRINTF( "   >> run : start...\n" ); )
-        ok = ( player::result_success == ( r = p->ppl->start() ) );
-        if( ok ) p->playing = true;
-    }
-
-    assert( player::started == p->ppl->get_state() );
-
-    DEBUG_ONLY( PRINTF( "   >> run : done.\n" ); )
+    DEBUG_ONLY(PRINTF("   >> run : done.\n");)
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
                                      p->appId,
                                      p->playerId,
-                                     (ok ? JAVACALL_OK : JAVACALL_FAIL),
-                                     NULL );
+                                     r == player::result_success ? JAVACALL_OK : JAVACALL_FAIL,
+                                     NULL);
 }
 
 static javacall_result dshow_run(javacall_handle handle)
 {
-    dshow_player* p = (dshow_player*)handle;
-    player::result r;
-    DEBUG_ONLY( PRINTF( "*** run, mt=%ld/%ld... ***\n", p->get_media_time(),long(p->ppl->get_media_time(&r)/1000) ); )
+    dshow_player *p = (dshow_player *)handle;
+    int64 time;
+    player::result r = p->ppl->get_media_time(&time);
+    DEBUG_ONLY(PRINTF("*** run, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
 
-    _beginthread( run_thread, 0, p );
+    _beginthread(run_thread, 0, p);
 
     return JAVACALL_OK;
 }
@@ -933,7 +901,7 @@ javacall_result dshow_stream_length(javacall_handle handle,
                                     javacall_bool stream_len_known, 
                                     javacall_int64 length)
 {
-    dshow_player* p = (dshow_player*)handle;
+    /*dshow_player* p = (dshow_player*)handle;
 
     DEBUG_ONLY( PRINTF( "*** stream_length %s (%I64d) ***\n", 
             (stream_len_known ? "known" : "unknown"), length ); )
@@ -955,7 +923,8 @@ javacall_result dshow_stream_length(javacall_handle handle,
     else
     {
         return JAVACALL_FAIL;
-    }
+    }*/
+    return JAVACALL_FAIL;
 }
 
 javacall_result dshow_get_data_request(javacall_handle handle,
@@ -1013,8 +982,10 @@ static void time_set_thread( void* param )
     player::result r;
 
     int64 mt = int64( 1000 ) * int64( p->target_mt );
+    int64 time_actual;
 
-    p->media_time = long( p->ppl->set_media_time( mt, &r ) / 1000 );
+    r = p->ppl->set_media_time(mt, &time_actual);
+    p->media_time = long(time_actual / 1000);
 
     DEBUG_ONLY( PRINTF( "*** set_time(%ld) finished: %ld", p->target_mt, p->media_time ); )
 
@@ -1043,7 +1014,8 @@ static javacall_result dshow_get_duration(javacall_handle handle, javacall_int32
 
     player::result res;
 
-    int64 d = p->ppl->get_duration( &res );
+    int64 d;
+    res = p->ppl->get_duration(&d);
 
     DEBUG_ONLY( PRINTF( "----------- get_duration: %i, %ld, (%i)\n", res, long( d / 1000 ), p->duration ); )
 

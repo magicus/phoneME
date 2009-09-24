@@ -38,30 +38,24 @@ public:
         result_security         = 4
     };
 
-    static const int32 unrealized = 100;
-    static const int32 realized   = 200;
-    static const int32 prefetched = 300;
-    static const int32 started    = 400;
-    static const int32 closed     =   0;
+    enum state
+    {
+        stopped = 0,
+        paused  = 1,
+        running = 2,
+    };
+
     static const int64 time_unknown = -1;
 
-    virtual ~player() = 0 {}
-    virtual result realize() = 0;
-    virtual result prefetch() = 0;
-    virtual result start() = 0;
+    virtual result get_state(state *p_state) = 0;
     virtual result stop() = 0;
-    virtual result deallocate() = 0;
-    virtual void close() = 0;
-    //virtual result set_time_base(time_base *master) = 0;
-    //virtual time_base *get_time_base(result *presult = 0) = 0;
-    virtual int64 set_media_time(int64 now, result *presult = 0) = 0;
-    virtual int64 get_media_time(result *presult = 0) = 0;
-    virtual int32 get_state() = 0;
-    virtual int64 get_duration(result *presult = 0) = 0;
-    //virtual string16c get_content_type(result *presult = 0) = 0;
-    virtual result set_loop_count(int32 count) = 0;
-    //virtual result add_player_listener(player_listener *pplayer_listener) = 0;
-    //virtual result remove_player_listener(player_listener *pplayer_listener) = 0;
+    virtual result pause() = 0;
+    virtual result run() = 0;
+    virtual result destroy() = 0;
+    virtual result get_media_time(int64 *p_time) = 0;
+    virtual result set_media_time(int64 time_requested, int64 *p_time_actual) = 0;
+    virtual result get_duration(int64 *p_duration) = 0;
+    // virtual result set_loop_count(int32 count) = 0;
 
-    virtual result set_stream_length(int64 length) = 0;
+    // virtual result set_stream_length(int64 length) = 0;
 };

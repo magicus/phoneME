@@ -27,5 +27,5 @@
 #include "player.hpp"
 #include "player_callback.hpp"
 
-bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer);
-bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer);
+bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer);
+bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_length_known, int64 stream_length, player_callback *pcallback, player **ppplayer);

@@ -94,7 +94,7 @@ class player_dshow : public player
     nat32 locator_len;
     char16 *plocator;
     player_callback *pcallback;
-    int32 state;
+    player::state state;
     int64 media_time;
     IGraphBuilder *pgb;
     IMediaControl *pmc;
@@ -120,296 +120,137 @@ class player_dshow : public player
 
     ~player_dshow()
     {
-        close();
     }
 
-    result realize()
+    result get_state(player::state *p_state)
     {
-        if(state == unrealized)
-        {
-        }
-        else if(state == realized || state == prefetched || state == started)
-        {
-            return result_success;
-        }
-        else
-        {
-            print("illegal state %i\n", state);
-            return result_illegal_state;
-        }
-
-        HRESULT hr;
-        if(locator_len)
-        {
-            hr = pgb->RenderFile(plocator, null);
-        }
-        else
-        {
-            hr = pgb->Render(pp);
-        }
-        if(hr != S_OK)
-        {
-            error("IGraphBuilder::Render", hr);
-            return result_media;
-        }
-
-        // dump_filter_graph(pgb);
-
-        // int64 tc = 40200000;
-        // pms->SetPositions(&tc, AM_SEEKING_AbsolutePositioning, null, 0);
-
-        hr = pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
-        if(hr != S_OK)
-        {
-            return result_media;
-        }
-
-        state = realized;
-
-        return result_success;
-    }
-
-    result prefetch()
-    {
-        if(state == unrealized)
-        {
-            result r = realize();
-            if(r != result_success) return r;
-        }
-        else if(state == realized)
-        {
-        }
-        else if(state == prefetched || state == started)
-        {
-            return result_success;
-        }
-        else
-        {
-            return result_illegal_state;
-        }
-
-        HRESULT hr = pmc->Pause();
-        if(FAILED(hr))
-        {
-            error("IMediaControl::Pause", hr);
-            return result_media;
-        }
-
-        state = prefetched;
-
-        return result_success;
-    }
-
-    result start()
-    {
-        if(state == unrealized || state == realized)
-        {
-            result r = prefetch();
-            if(r != result_success) return r;
-        }
-        else if(state == prefetched)
-        {
-        }
-        else if(state == started)
-        {
-            return result_success;
-        }
-        else
-        {
-            return result_illegal_state;
-        }
-
-        HRESULT hr = pmc->Run();
-        if(FAILED(hr)) return result_media;
-
-        state = started;
+        *p_state = state;
 
         return result_success;
     }
 
     result stop()
     {
-        if(state == unrealized || state == realized || state == prefetched)
-        {
-            return result_success;
-        }
-        else if(state == started)
-        {
-        }
-        else
-        {
-            return result_illegal_state;
-        }
-
-        HRESULT hr = pmc->Pause();
-        if(FAILED(hr)) return result_media;
-
-        state = prefetched;
-
-        return result_success;
-    }
-
-    result deallocate()
-    {
-        if(state == unrealized || state == realized)
-        {
-            return result_success;
-        }
-        else if(state == prefetched)
-        {
-        }
-        else if(state == started)
-        {
-            stop();
-        }
-        else
-        {
-            return result_illegal_state;
-        }
-
         HRESULT hr = pmc->Stop();
-        if(FAILED(hr)) return result_media;
+        if(hr != S_OK && hr != S_FALSE)
+        {
+            error("IMediaControl::Stop", hr);
+            return result_media;
+        }
 
-        state = realized;
+        state = running;
 
         return result_success;
     }
 
-    void close()
+    result pause()
     {
-        if(state == unrealized)
+        HRESULT hr = pmc->Pause();
+        if(hr != S_OK && hr != S_FALSE)
         {
-            state = closed;
+            error("IMediaControl::Pause", hr);
+            return result_media;
         }
-        else if(state == realized || state == prefetched || state == started)
+
+        state = paused;
+
+        return result_success;
+    }
+
+    result run()
+    {
+        HRESULT hr = pmc->Run();
+        if(hr != S_OK && hr != S_FALSE)
         {
+            error("IMediaControl::Run", hr);
+            return result_media;
+        }
+
+        state = running;
+
+        return result_success;
+    }
+
+    result destroy()
+    {
 #ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
-                pbf_flv_dec->Release();
+        pbf_flv_dec->Release();
 #endif
 #ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
-                pbf_flv_split->Release();
+        pbf_flv_split->Release();
 #endif
-            if(!locator_len) pp->Release();
+        if(!locator_len) pp->Release();
 #ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
-                pfo_v->Release();
+            pfo_v->Release();
 #endif
 #ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
-                pfo_a->Release();
+            pfo_a->Release();
 #endif
-            if(!locator_len) pfi->Release();
-            pms->Release();
-            pmc->Release();
-            pgb->Release();
-            CoUninitialize();
-            state = closed;
-            if(locator_len) delete[] plocator;
-        }
-        else
-        {
-        }
+        if(!locator_len) pfi->Release();
+        pms->Release();
+        pmc->Release();
+        pgb->Release();
+        CoUninitialize();
+        if(locator_len) delete[] plocator;
+        delete this;
+
+        return result_success;
     }
 
-    // result set_time_base(time_base *master)
-    // time_base *get_time_base(result *presult = 0)
-
-    int64 set_media_time(int64 now, result *presult)
+    result get_media_time(int64 *p_time)
     {
-        if(state == realized || state == prefetched || state == started)
-        {
-        }
-        else
-        {
-            *presult = result_illegal_state;
-            return media_time;
-        }
-
-        LONGLONG cur = now * 10;
-        HRESULT hr = pms->SetPositions(&cur, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning);
-        if(hr != S_OK)
-        {
-            *presult = result_media;
-            return media_time;
-        }
-
-        media_time = now;
-        *presult = result_success;
-        return media_time;
-    }
-
-    int64 get_media_time(result *presult)
-    {
-        if(state == unrealized || state == realized || state == prefetched ||
-            state == started)
-        {
-        }
-        else
-        {
-            *presult = result_illegal_state;
-            return media_time;
-        }
-
         LONGLONG cur;
         HRESULT hr = pms->GetCurrentPosition(&cur);
         if(hr != S_OK)
         {
-            *presult = result_media;
-            return media_time;
+            error("IMediaSeeking::GetCurrentPosition", hr);
+            *p_time = media_time;
+            return result_media;
         }
 
         cur /= 10;
         media_time = cur;
-        *presult = result_success;
-        return media_time;
-    }
-
-    int32 get_state()
-    {
-        return state;
-    }
-
-    int64 get_duration(result *presult)
-    {
-        if(state == unrealized || state == realized || state == prefetched ||
-            state == started)
-        {
-        }
-        else
-        {
-            *presult = result_illegal_state;
-            return time_unknown;
-        }
-
-        LONGLONG cur;
-        HRESULT hr = pms->GetDuration(&cur);
-        if(hr != S_OK)
-        {
-            *presult = result_media;
-            return media_time;
-        }
-
-        *presult = result_success;
-        return cur / 10;
-    }
-
-    // string16c get_content_type(result *presult = 0)
-
-    result set_loop_count(int32 count)
-    {
-        if(!count) return result_illegal_argument;
-
-        if(state == unrealized || state == realized || state == prefetched)
-        {
-        }
-        else
-        {
-            return result_illegal_state;
-        }
+        *p_time = cur;
 
         return result_success;
     }
 
-    // result add_player_listener(player_listener *pplayer_listener)
-    // result remove_player_listener(player_listener *pplayer_listener)
+    result set_media_time(int64 time_requested, int64 *p_time_actual)
+    {
+        LONGLONG cur = time_requested * 10;
+        HRESULT hr = pms->SetPositions(&cur, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning);
+        if(hr != S_OK)
+        {
+            error("IMediaSeeking::SetPositions", hr);
+            *p_time_actual = media_time;
+            return result_media;
+        }
+
+        media_time = time_requested;
+        *p_time_actual = time_requested;
+
+        return result_success;
+    }
+
+    result get_duration(int64 *p_duration)
+    {
+        LONGLONG duration;
+        HRESULT hr = pms->GetDuration(&duration);
+        if(hr != S_OK)
+        {
+            error("IMediaSeeking::GetDuration", hr);
+            return result_media;
+        }
+
+        *p_duration = duration / 10;
+
+        return result_success;
+    }
+
+    result set_loop_count(int32 count)
+    {
+        return result_media;
+    }
 
     result set_stream_length(int64 length)
     {
@@ -418,25 +259,11 @@ class player_dshow : public player
         return result_media;
     }
 
-    /*bool data(nat32 len, const void *pdata)
-    {
-        if(state == unrealized || state == realized || state == prefetched ||
-            state == started)
-        {
-        }
-        else
-        {
-            return false;
-        }
-
-        return pfi->data(len, pdata);
-    }*/
-
-    friend bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer);
-    friend bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer);
+    friend bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer);
+    friend bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_length_known, int64 stream_length, player_callback *pcallback, player **ppplayer);
 };
 
-bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer)
+bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer)
 {
     player_dshow *pplayer;
     if(len > 0x7fffffff || !plocator || !pcallback || !ppplayer)
@@ -458,7 +285,7 @@ bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callb
     pplayer->plocator[len] = 0;
 
     pplayer->pcallback = pcallback;
-    pplayer->state = player::unrealized;
+    pplayer->state = player::stopped;
     pplayer->media_time = player::time_unknown;
 
     bool r = false;
@@ -584,7 +411,23 @@ bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callb
                                                 else
 #endif
                                                 {
-                                                    r = true;
+                                                    hr = pplayer->pgb->RenderFile(plocator, null);
+                                                    if(hr != S_OK)
+                                                    {
+                                                        error("IGraphBuilder::RenderFile", hr);
+                                                    }
+                                                    else
+                                                    {
+                                                        hr = pplayer->pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
+                                                        if(hr != S_OK)
+                                                        {
+                                                            error("IMediaSeeking::SetTimeFormat", hr);
+                                                        }
+                                                        else
+                                                        {
+                                                            r = true;
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -622,7 +465,7 @@ bool create_player_dshow_managed(nat32 len, const char16 *plocator, player_callb
     return true;
 }
 
-bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcallback, player **ppplayer)
+bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_length_known, int64 stream_length, player_callback *pcallback, player **ppplayer)
 {
     player_dshow *pplayer;
     AM_MEDIA_TYPE amt;
@@ -790,7 +633,7 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
 
     pplayer->locator_len = 0;
     pplayer->pcallback = pcallback;
-    pplayer->state = player::unrealized;
+    pplayer->state = player::stopped;
     pplayer->media_time = player::time_unknown;
 
     bool r = false;
@@ -936,7 +779,29 @@ bool create_player_dshow(nat32 len, const char16 *pformat, player_callback *pcal
                                                             else
 #endif
                                                             {
-                                                                r = true;
+                                                                if(stream_length_known && !pplayer->pfi->set_stream_length(stream_length))
+                                                                {
+                                                                }
+                                                                else
+                                                                {
+                                                                    hr = pplayer->pgb->Render(pplayer->pp);
+                                                                    if(hr != S_OK)
+                                                                    {
+                                                                        error("IGraphBuilder::Render", hr);
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        hr = pplayer->pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
+                                                                        if(hr != S_OK)
+                                                                        {
+                                                                            error("IMediaSeeking::SetTimeFormat", hr);
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            r = true;
+                                                                        }
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
