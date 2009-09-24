@@ -248,6 +248,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     
     void doOnDirectInputError( final String msg )
     {
+        //System.out.println( "HighLevelPlayer: doOnDirectInputError()" );
         if( CLOSED != getState() )
         {
             new Thread( new Runnable() {
@@ -1108,11 +1109,14 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             directInputThread.close();
 
             // This will cause IOException in case of pending read() or seek()
-//            if( null != source ) {
-//                source.disconnect();
-//            }
+            if( null != source ) {
+                source.disconnect();
+                //System.out.println( "HighLevelPlayer: disconnected in close()" );
+            }
             try {
+                //System.out.println( "HighLevelPlayer: waiting for directInputThread to die" );
                 directInputThread.join();
+                //System.out.println( "HighLevelPlayer: directInputThread is dead" );
             } catch (InterruptedException ex) {}
         }
 
@@ -1123,7 +1127,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
                         public boolean run() throws MediaException {
                             lowLevelPlayer.doClose();
-                            //System.out.println("HighLevelPlayer: doClose() returned");
+                            //System.out.println("HighLevelPlayer: async doClose() returned");
                             return true;
                         }
                     });
@@ -1131,6 +1135,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 //System.out.println("HighLevelPlayer: close() resumed");
             } else {
                 lowLevelPlayer.doClose();
+                //System.out.println("HighLevelPlayer: sync doClose() returned");
             }
         }
 
@@ -1139,7 +1144,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         setState( CLOSED );
 
         if (source != null) {
-            source.disconnect();
+            source.disconnect(); //multiple disconnect() is okay
         }
 
         /* close native part of unrealized player */

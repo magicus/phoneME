@@ -134,6 +134,7 @@ mainloop:
                 
                 if( -1 == read ) {
                     nNotifyEndOfStream( owner.getNativeHandle(), posToRead );
+                    streamLen = posToRead;
                     continue mainloop;
                 }
                 else {

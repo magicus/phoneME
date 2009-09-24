@@ -55,7 +55,7 @@ public class CommonDS extends BasicDS implements SourceStream {
      *
      * @param  is  The new inputStream value
      */
-    public void setInputStream(InputStream is) {
+    public synchronized void setInputStream(InputStream is) {
         connected = true;
         try {
             super.setLocator(null);
@@ -79,7 +79,7 @@ public class CommonDS extends BasicDS implements SourceStream {
         // #endif ]
     }
 
-    public void connect() throws IOException {
+    public synchronized void connect() throws IOException {
         if (connected) {
             return;
         }
@@ -92,7 +92,7 @@ public class CommonDS extends BasicDS implements SourceStream {
      *
      * @exception  IOException  Description of the Exception
      */
-    void getConnection() throws IOException {
+    private void getConnection() throws IOException {
         boolean goodurl = false;
 
         if (locator == null) {
@@ -117,6 +117,7 @@ public class CommonDS extends BasicDS implements SourceStream {
                     httpCon.close();
                     goodurl = false;
                 } else {
+//                    System.out.println("CommonDS: HTTP connection is open");
                     String ct = httpCon.getType();
                     if (ct != null) {
                         int idx;
@@ -130,8 +131,10 @@ public class CommonDS extends BasicDS implements SourceStream {
                         contentDescriptor = new ContentDescriptor(ct);
                     }
                     inputStream = httpCon.openInputStream();
+//                    System.out.println("CommonDS: HTTP stream is open");
                     contentLength = httpCon.getLength();
                     httpCon.close();
+//                    System.out.println("CommonDS: HTTP connection is closed");
                     goodurl = true;
                 }
             } else if (locator.startsWith("file:")) {
@@ -175,6 +178,8 @@ public class CommonDS extends BasicDS implements SourceStream {
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception ex) {
+//            System.out.println( "CommonDS: an Exception is caught" );
+//            ex.printStackTrace();
             throw new IOException("failed to connect to " + 
                             locator + " : " + ex.getMessage());
         }
@@ -288,7 +293,7 @@ public class CommonDS extends BasicDS implements SourceStream {
         long skipped = 0;
 
         if (where < oldLocation) { // seek backward
-            reopenStream();
+            seekToStart();
             location = skip(inputStream, where);
         } else {
             skipped = skip(inputStream, (where - oldLocation));
@@ -304,7 +309,7 @@ public class CommonDS extends BasicDS implements SourceStream {
      *
      * @exception  IOException  Description of the Exception
      */
-    public void reopenStream() throws IOException {
+    public void seekToStart() throws IOException {
         if (inputStream == null) {
             return;
         }
@@ -319,11 +324,19 @@ public class CommonDS extends BasicDS implements SourceStream {
             }
         }
 
-        if (inputStream != null) {
-            inputStream.close();
-            inputStream = null;
+        synchronized( this ) {
+            if( connected ) {
+//                if (null != locator && locator.toLowerCase().startsWith("http:")) {
+//                    System.out.println("CommonDS: closing the HTTP stream to reopen it");
+//                }
+                inputStream.close();
+                connected = false;
+                getConnection(); // may throw an Exception
+                connected = true;
+            } else {
+                throw new IOException( "Couldn't seek in the stream, not connected" );
+            }
         }
-        getConnection();
     }
 
     /**
@@ -341,15 +354,20 @@ public class CommonDS extends BasicDS implements SourceStream {
      *
      * @exception  if an I/O error occurs
      */
-    public synchronized void close() {
+    private synchronized void close() {
         if (inputStream == null) {
             return;
         }
 
+//        if( null != locator && locator.toLowerCase().startsWith("http:"))
+//        {
+//            System.out.println("CommonDS: closing the HTTP stream");
+//        }
         try {
             inputStream.close();
-            inputStream = null;
         } catch (Exception e) {
+//            System.out.println( "CommonDS: an Exception while closing the stream" );
+//            e.printStackTrace();
         }
     }
 
