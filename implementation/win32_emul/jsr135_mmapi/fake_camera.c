@@ -148,7 +148,7 @@ static javacall_result fake_camera_create(javacall_impl_player* outer_player)
 {
     fake_camera* c = (fake_camera*)MALLOC( sizeof(fake_camera) );
 
-    PRINTF( "*** fake_camera_create: 0x%08X->0x%08X ***\n", outer_player, c );
+    DEBUG_ONLY( PRINTF( "*** fake_camera_create: 0x%08X->0x%08X ***\n", outer_player, c ); )
 
     c->appId       = outer_player->appId;
     c->playerId    = outer_player->playerId;
