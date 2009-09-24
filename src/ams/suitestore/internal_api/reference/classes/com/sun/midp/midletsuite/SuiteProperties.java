@@ -44,7 +44,7 @@ public class SuiteProperties {
      *
      * @param id of the suite for these settings
      */
-    SuiteProperties(int id) {
+    public SuiteProperties(int id) {
         suiteId = id;
     }
 
