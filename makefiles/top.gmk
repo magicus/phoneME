@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -39,6 +37,11 @@
 #                  Default provided here)
 #
 ######################################################################
+
+ifneq ($(USE_VERBOSE_MAKE), true)
+	AT=@
+	MAKE_NO_PRINT_DIRECTORY=--no-print-directory
+endif
 
 include $(PCSL_DIR)/makefiles/platforms/$(PCSL_PLATFORM).gmk
 

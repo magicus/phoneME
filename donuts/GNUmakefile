@@ -34,7 +34,6 @@ ifdef PCSL_PLATFORM
 include $(PCSL_DIR)/makefiles/top.gmk
 endif
 
-#
 all:  $(OUTPUT_BIN_DIR)/donuts$(EXE)
 
 include $(PCSL_DIR)/makefiles/verify.gmk
@@ -59,7 +58,7 @@ DONUTS_LIBS = $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT) \
 	      $(OUTPUT_LIB_DIR)/libpcsl_network$(LIB_EXT)
 
 $(DONUTS_LIBS):
-	@cd $(PCSL_DIR); $(MAKE) all
+	$(AT)cd $(PCSL_DIR); $(MAKE) all
 endif
 
 ifndef DONUTS_OBJS
@@ -70,7 +69,7 @@ DONUTS_DIRS=$(sort $(dir $(DONUTS_FILES)))
 vpath %.c $(DONUTS_DIRS)
 
 $(DONUTS_OBJS): $(OUTPUT_OBJ_DIR)/%.o : %.c
-	@$(CC) -I$(OUTPUT_INC_DIR) -I$(DONUTS_DIR) \
+	$(AT)$(CC) -I$(OUTPUT_INC_DIR) -I$(DONUTS_DIR) \
         $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 endif
@@ -80,13 +79,13 @@ endif
 DONUTS_NAME := $(foreach f,$(DONUTS_FILES),$(basename $(notdir $(f))))
 
 $(OUTPUT_GEN_DIR)/donuts_generated.c: $(DONUTS_FILES)
-	@sh donuts.sh $(DONUTS_NAME) > $@
+	$(AT)sh donuts.sh $(DONUTS_NAME) > $@
 
 $(OUTPUT_OBJ_DIR)/donuts_generated.o: $(OUTPUT_GEN_DIR)/donuts_generated.c
-	@$(CC) -I. $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 $(OUTPUT_OBJ_DIR)/donuts.o: donuts.c
-	@$(CC) -I. $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 #$(OUTPUT_OBJ_DIR)/testFile.o: $(FILE_DIR)/testFile.c
 #	@$(CC) -I$(DONUTS_SELECT_DIR) -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
@@ -97,7 +96,7 @@ $(OUTPUT_OBJ_DIR)/donuts.o: donuts.c
 $(OUTPUT_BIN_DIR)/donuts$(EXE): $(OUTPUT_OBJ_DIR)/donuts.o $(OUTPUT_OBJ_DIR)/donuts_generated.o \
                                 $(DONUTS_LIBS) $(DONUTS_OBJS)
 
-	@$(LD) $(LD_FLAGS) `$(call fixcygpath, $(OUTPUT_OBJ_DIR)/donuts.o $(OUTPUT_OBJ_DIR)/donuts_generated.o $(DONUTS_OBJS))` $(LD_OUTPUT)$@ `$(call fixcygpath, $(DONUTS_LIBS))` $(LIBS)
+	$(AT)$(LD) $(LD_FLAGS) `$(call fixcygpath, $(OUTPUT_OBJ_DIR)/donuts.o $(OUTPUT_OBJ_DIR)/donuts_generated.o $(DONUTS_OBJS))` $(LD_OUTPUT)$@ `$(call fixcygpath, $(DONUTS_LIBS))` $(LIBS)
 
 clean: verify_for_clean
 	rm -rf $(OUTPUT_OBJ_DIR)/test*.o

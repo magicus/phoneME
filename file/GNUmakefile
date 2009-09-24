@@ -38,12 +38,12 @@ endif
 #
 
 all doc donuts : $(FILE_SELECT_DIR)
-	@echo "building file module..."
-	@cd $(FILE_SELECT_DIR); $(MAKE) $@
+	$(AT)echo "building file module..."
+	$(AT)cd $(FILE_SELECT_DIR); $(MAKE) $@
 
 clean: verify_for_clean $(FILE_SELECT_DIR)
-	@echo "cleaning file module..."
-	@cd $(FILE_SELECT_DIR); $(MAKE) $@
+	$(AT)echo "cleaning file module..."
+	$(AT)cd $(FILE_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk
 

@@ -39,11 +39,11 @@ endif
 
 all doc donuts : $(ESCFILENAMES_SELECT_DIR)
 	@echo "building ESCFILENAMES module..."
-	@cd $(ESCFILENAMES_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(ESCFILENAMES_SELECT_DIR); $(MAKE) $@
 
 clean: verify_for_clean $(ESCFILENAMES_SELECT_DIR)
 	@echo "cleaning ESCFILENAMES module..."
-	@cd $(ESCFILENAMES_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(ESCFILENAMES_SELECT_DIR); $(MAKE) $@
 
 # define 'donuts' and all dependencies
 #
@@ -53,11 +53,11 @@ DONUTS_OBJS += $(OUTPUT_OBJ_DIR)/testEsc.o
 DONUTS_LIBS += $(OUTPUT_LIB_DIR)/libpcsl_escfilenames$(LIB_EXT)
 
 donuts: all $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(DONUTS_LIBS) $(DONUTS_OBJS)
-	@cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
+	$(AT)cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
                             DONUTS_LIBS="$(DONUTS_LIBS)" all
 
 $(OUTPUT_OBJ_DIR)/testEsc.o: $(ESCFILENAMES_DIR)/testEsc.c
-	@$(CC) -I$(DONUTS_DIR) $(OUTPUT_INC_DIR) \
+	$(AT)$(CC) -I$(DONUTS_DIR) $(OUTPUT_INC_DIR) \
 	$(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 include $(PCSL_DIR)/makefiles/verify.gmk

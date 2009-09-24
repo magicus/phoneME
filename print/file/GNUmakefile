@@ -40,15 +40,15 @@ endif
 # 'all' is the default target
 
 $(OUTPUT_INC_DIR)/pcsl_print.h: ../pcsl_print.h
-	cp -f $< $@
+	$(AT)cp -f $< $@
 
 all: file $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
 
 $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT): $(OUTPUT_OBJ_DIR)/pcsl_print.o
-	@$(AR) $(AR_OUTPUT)$@ `$(call fixcygpath, $^)`
+	$(AT)$(AR) $(AR_OUTPUT)$@ `$(call fixcygpath, $^)`
 
 $(OUTPUT_OBJ_DIR)/pcsl_print.o: pcsl_print.c $(OUTPUT_INC_DIR)/pcsl_print.h
-	@$(CC) -I. -I $(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. -I $(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -68,28 +68,28 @@ DONUTS_LIBS += $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT) \
                $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT)
 
 donuts: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(DONUTS_OBJS) $(DONUTS_LIBS)
-	@cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
+	$(AT)cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
                             DONUTS_LIBS="$(DONUTS_LIBS)" all
 
 $(OUTPUT_OBJ_DIR)/testPrint.o: $(PRINT_DIR)/testPrint.c
-	@$(CC) -I$(DONUTS_DIR) -I$(PRINT_DIR) -I$(FILE_DIR) $(CFLAGS) $(CC_OUTPUT)$@ \
+	$(AT)$(CC) -I$(DONUTS_DIR) -I$(PRINT_DIR) -I$(FILE_DIR) $(CFLAGS) $(CC_OUTPUT)$@ \
         `$(call fixcygpath, $<)`
 
 $(OUTPUT_LIB_DIR)/libpcsl_file$(LIB_EXT) :
-	cd $(FILE_SELECT_DIR) ; $(MAKE) all
+	$(AT)cd $(FILE_SELECT_DIR) ; $(MAKE) all
 
 $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT) :
-	cd $(MEMORY_SELECT_DIR) ; $(MAKE) all
+	$(AT)cd $(MEMORY_SELECT_DIR) ; $(MAKE) all
 
 # define ''clean' target
 
 clean: verify_for_clean
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_print.o
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_print.h
-	rm -rf $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
-	rm -rf $(OUTPUT_OBJ_DIR)/testPrint.o
-	rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
-	rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
-	rm -rf $(DOC_DIR)
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_print.o
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_print.h
+	$(AT)rm -rf $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/testPrint.o
+	$(AT)rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
+	$(AT)rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
+	$(AT)rm -rf $(DOC_DIR)
 
 .PHONY: all clean donuts doc verify

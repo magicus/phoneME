@@ -38,10 +38,10 @@ endif
 #
 
 $(OUTPUT_INC_DIR)/java_types.h : $(TYPES_DIR)/java_types.h
-	@cp -f $< $@
+	$(AT)cp -f $< $@
 
 $(OUTPUT_INC_DIR)/java_types_md.h : $(TYPES_MD_DIR)/java_types_md.h
-	@cp -f $< $@
+	$(AT)cp -f $< $@
 
 all : $(OUTPUT_INC_DIR)/java_types.h $(OUTPUT_INC_DIR)/java_types_md.h
 
@@ -56,7 +56,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 # define ''clean' target
 
 clean:
-	@rm -rf $(OUTPUT_INC_DIR)/java_types.h
-	@rm -rf $(OUTPUT_INC_DIR)/java_types_md.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/java_types.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/java_types_md.h
 
 .PHONY : all clean

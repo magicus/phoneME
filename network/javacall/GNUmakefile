@@ -52,33 +52,33 @@ OBJS = \
 all: $(NET_LIB) $(NET_INTERFACE)
 
 $(NET_LIB): $(OBJS)
-	@$(AR) $(AR_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $^)`
+	$(AT)$(AR) $(AR_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $^)`
 
 $(OUTPUT_INC_DIR)/pcsl_network_md.h : $(NETWORK_SELECT_DIR)/pcsl_network_md.h
-	@cp -f $< $@
+	$(AT)cp -f $< $@
 
 $(OUTPUT_INC_DIR)/%.h : $(NETWORK_DIR)/%.h
-	@cp -f $< $@
+	$(AT)cp -f $< $@
 
 $(OUTPUT_OBJ_DIR)/pcsl_socket.o: $(NETWORK_SELECT_DIR)/pcsl_socket.c \
  $(NETWORK_DIR)/pcsl_network.h $(MEMORY_DIR)/pcsl_memory.h \
  $(NETWORK_SELECT_DIR)/GNUmakefile GNUmakefile
-	@$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
 
 $(OUTPUT_OBJ_DIR)/pcsl_serversocket.o: $(NETWORK_SELECT_DIR)/pcsl_serversocket.c \
  $(NETWORK_DIR)/pcsl_network.h $(MEMORY_DIR)/pcsl_memory.h \
  $(NETWORK_SELECT_DIR)/GNUmakefile GNUmakefile
-	@$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
 
 $(OUTPUT_OBJ_DIR)/pcsl_network.o: $(NETWORK_SELECT_DIR)/pcsl_network.c \
  $(NETWORK_DIR)/pcsl_network.h $(MEMORY_DIR)/pcsl_memory.h \
  $(NETWORK_SELECT_DIR)/GNUmakefile GNUmakefile
-	@$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
 
 $(OUTPUT_OBJ_DIR)/pcsl_datagram.o: $(NETWORK_SELECT_DIR)/pcsl_datagram.c \
  $(NETWORK_DIR)/pcsl_network.h $(MEMORY_DIR)/pcsl_memory.h \
  $(NETWORK_SELECT_DIR)/GNUmakefile GNUmakefile
-	@$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -91,12 +91,12 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 # define ''clean' target
 
 clean: verify_for_clean
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_socket.o
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_network.h
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_socket.h
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_datagram.h
-	rm -rf $(OUTPUT_LIB_DIR)/libpcsl_network$(LIB_EXT)
-	rm -rf $(DOC_DIR)
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_socket.o
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_network.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_socket.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_datagram.h
+	$(AT)rm -rf $(OUTPUT_LIB_DIR)/libpcsl_network$(LIB_EXT)
+	$(AT)rm -rf $(DOC_DIR)
 
 .PHONY: all clean donuts doc verify
 

@@ -43,7 +43,7 @@ OBJS = $(OUTPUT_OBJ_DIR)/utf.o
 all: $(OBJS)
 
 $(OUTPUT_OBJ_DIR)/utf.o: utf.c
-	@$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -56,6 +56,6 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 # define ''clean' target
 
 clean:
-	rm -rf $(OUTPUT_OBJ_DIR)/utf.o
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/utf.o
 
 .PHONY: all clean

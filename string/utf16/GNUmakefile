@@ -48,13 +48,13 @@ all: $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
 include $(PCSL_DIR)/makefiles/verify.gmk
 
 $(OUTPUT_INC_DIR)/pcsl_string_md.h : pcsl_string_md.h
-	@cp -f $< $@
+	$(AT)cp -f $< $@
 
 $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT): $(OBJS)
-	@$(AR) $(AR_OUTPUT)$@ `$(call fixcygpath, $^)`
+	$(AT)$(AR) $(AR_OUTPUT)$@ `$(call fixcygpath, $^)`
 
 $(OUTPUT_OBJ_DIR)/pcsl_string.o: pcsl_string.c $(OUTPUT_INC_DIR)/pcsl_string_md.h
-	@$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -67,8 +67,8 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 # define ''clean' target
 
 clean: verify_for_clean
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_string.o
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_string_md.h
-	rm -rf $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_string.o
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_string_md.h
+	$(AT)rm -rf $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
 
 .PHONY: all clean

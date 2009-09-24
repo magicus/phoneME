@@ -1,6 +1,5 @@
-#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -40,11 +39,11 @@ endif
 
 all doc donuts : $(PRINT_SELECT_DIR)
 	@echo "building print module..."
-	@cd $(PRINT_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(PRINT_SELECT_DIR); $(MAKE) $@
 
 clean : verify_for_clean $(PRINT_SELECT_DIR)
 	@echo "cleaning print module..."
-	@cd $(PRINT_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(PRINT_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk
 

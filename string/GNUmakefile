@@ -42,31 +42,31 @@ endif
 all : $(STRING_UTIL_DIR) $(STRING_SELECT_DIR) \
      $(OUTPUT_INC_DIR)/pcsl_string_status.h $(OUTPUT_INC_DIR)/pcsl_string.h
 	@echo "building string util..."
-	@cd $(STRING_UTIL_DIR); $(MAKE) $@
+	$(AT)cd $(STRING_UTIL_DIR); $(MAKE) $@
 	@echo "building string module..."
-	@cd $(STRING_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(STRING_SELECT_DIR); $(MAKE) $@
 
 $(OUTPUT_INC_DIR)/pcsl_string_status.h: pcsl_string_status.h
-	@cp -f $< $@
+	$(AT)cp -f $< $@
 
 $(OUTPUT_INC_DIR)/pcsl_string.h: pcsl_string.h
-	@cp -f $< $@
+	$(AT)cp -f $< $@
 
 clean : verify_for_clean types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR)
-	@cd $(STRING_UTIL_DIR); $(MAKE) $@
-	@cd $(STRING_SELECT_DIR); $(MAKE) $@
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_string_status.h
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_string.h
-	rm -rf $(OUTPUT_OBJ_DIR)/testString.o
-	rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
-	rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
-	rm -rf $(DOC_DIR)
+	$(AT)cd $(STRING_UTIL_DIR); $(MAKE) $@
+	$(AT)cd $(STRING_SELECT_DIR); $(MAKE) $@
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_string_status.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_string.h
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/testString.o
+	$(AT)rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
+	$(AT)rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
+	$(AT)rm -rf $(DOC_DIR)
 
 doc : verify types $(STRING_UTIL_DIR) $(STRING_SELECT_DIR)
 	@echo "building string util..."
-	@cd $(STRING_UTIL_DIR); $(MAKE) $@
+	$(AT)cd $(STRING_UTIL_DIR); $(MAKE) $@
 	@echo "building string module..."
-	@cd $(STRING_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(STRING_SELECT_DIR); $(MAKE) $@
 
 # define 'donuts' and all dependencies
 #
@@ -76,11 +76,11 @@ DONUTS_OBJS += $(OUTPUT_OBJ_DIR)/testString.o
 DONUTS_LIBS += $(OUTPUT_LIB_DIR)/libpcsl_string$(LIB_EXT)
 
 donuts: all $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(DONUTS_LIBS) $(DONUTS_OBJS)
-	@cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
+	$(AT)cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
                             DONUTS_LIBS="$(DONUTS_LIBS)" all
 
 $(OUTPUT_OBJ_DIR)/testString.o: $(STRING_DIR)/testString.c
-	@$(CC) -I$(DONUTS_DIR) $(OUTPUT_INC_DIR) \
+	$(AT)$(CC) -I$(DONUTS_DIR) $(OUTPUT_INC_DIR) \
 	$(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 include $(PCSL_DIR)/makefiles/verify.gmk

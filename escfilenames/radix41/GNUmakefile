@@ -48,22 +48,20 @@ HS = $(OUTPUT_INC_DIR)/pcsl_esc_md.h $(OUTPUT_INC_DIR)/pcsl_esc.h
 all: $(LIBNAME) $(HS)
 
 $(OUTPUT_INC_DIR)/pcsl_esc_md.h: pcsl_esc_md.h
-	@cp -f pcsl_esc_md.h $(OUTPUT_INC_DIR)
+	$(AT)cp -f pcsl_esc_md.h $(OUTPUT_INC_DIR)
 
 $(OUTPUT_INC_DIR)/pcsl_esc.h: ../pcsl_esc.h
-	@cp -f ../pcsl_esc.h $(OUTPUT_INC_DIR)
+	$(AT)cp -f ../pcsl_esc.h $(OUTPUT_INC_DIR)
 
 $(LIBNAME): $(OBJS)
-	@$(AR) $(AR_OUTPUT)$(LIBNAME) `$(call fixcygpath, $^)`
-#	ranlib breaks the Leto WinMobile/ARM build
-#	@ranlib $(LIBNAME)
+	$(AT)$(AR) $(AR_OUTPUT)$(LIBNAME) `$(call fixcygpath, $^)`
 
 $(OUTPUT_OBJ_DIR)/pcsl_esc_md.o: pcsl_esc_md.c $(HS)
-	@$(CC) -I$(OUTPUT_INC_DIR) \
+	$(AT)$(CC) -I$(OUTPUT_INC_DIR) \
         $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 $(OUTPUT_OBJ_DIR)/pcsl_esc.o: ../pcsl_esc.c $(HS)
-	@$(CC) -I$(OUTPUT_INC_DIR) \
+	$(AT)$(CC) -I$(OUTPUT_INC_DIR) \
         $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
@@ -76,11 +74,11 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define 'clean' target
 clean: verify_for_clean
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_esc_md.o
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_esc.o
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_esc_md.h
-	rm -rf $(OUTPUT_INC_DIR)/pcsl_esc.h
-	rm -rf $(LIBNAME)
-	rm -rf $(DOC_DIR)
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_esc_md.o
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_esc.o
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_esc_md.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_esc.h
+	$(AT)rm -rf $(LIBNAME)
+	$(AT)rm -rf $(DOC_DIR)
 
 .PHONY: verify all clean donuts doc
