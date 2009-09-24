@@ -2758,6 +2758,7 @@ OopDesc.cpp                      OopDesc.inline.hpp
 
 SymbolDesc.hpp                   OopDesc.hpp
 SymbolDesc.cpp                   SymbolDesc.hpp
+SymbolDesc.cpp                   Universe.hpp
 
 Symbols.hpp                      Universe.hpp
 Symbols.hpp                      Symbol.hpp
