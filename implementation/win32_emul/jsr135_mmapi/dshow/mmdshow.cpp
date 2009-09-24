@@ -47,7 +47,7 @@ extern "C" {
 
 // ===========================================================================
 
-#define DEBUG_ONLY(x) x
+#define DEBUG_ONLY(x)
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -506,9 +506,9 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 {
     dshow_player* p = new dshow_player;
 
-    PRINTF( "\n\n*** create('%S','%S') ***\n", 
+    DEBUG_ONLY( PRINTF( "\n\n*** create('%S','%S') ***\n", 
         ( NULL == outer_player->uri ) ? L"" : (const wchar_t*)outer_player->uri, 
-        ( NULL == outer_player->mime ) ? L"" : (const wchar_t*)outer_player->mime );
+        ( NULL == outer_player->mime ) ? L"" : (const wchar_t*)outer_player->mime ); )
 
     javacall_const_utf16_string mime     = outer_player->mime;
     int                         mime_len = ( NULL == mime ) ? 0 : (long)wcslen( (const wchar_t*)mime );
@@ -694,8 +694,8 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
         ok = create_player_dshow( p->mimeLength, (const char16*)p->mime, p, &(p->ppl) );
     }
 
-    PRINTF( "*** dshow player creation finished (%s) ***\n",
-            (ok ? "success" : "fail") );
+    DEBUG_ONLY( PRINTF( "*** dshow player creation finished (%s) ***\n",
+            (ok ? "success" : "fail") ); )
 
     if( !p->is_managed && ok && -1 != p->whole_content_size )
     {
@@ -708,8 +708,8 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
         ok = ( player::result_success == p->ppl->realize() );
     }
 
-    PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
-            (ok ? "success" : "fail") );
+    DEBUG_ONLY( PRINTF( "*** dshow player realize finished (%s), realize complete ***\n",
+            (ok ? "success" : "fail") ); )
 
     if( ok )
     {
@@ -935,8 +935,8 @@ javacall_result dshow_stream_length(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
 
-    PRINTF( "*** stream_length %s (%I64d) ***\n", 
-            (stream_len_known ? "known" : "unknown"), length );
+    DEBUG_ONLY( PRINTF( "*** stream_length %s (%I64d) ***\n", 
+            (stream_len_known ? "known" : "unknown"), length ); )
 
     if( JAVACALL_TRUE == stream_len_known )
     {
