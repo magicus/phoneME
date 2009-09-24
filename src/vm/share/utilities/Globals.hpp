@@ -155,6 +155,9 @@ private:
   develop(bool, GenerateInlineAsm, false,                                   \
           "Generate assembly code output as C with inline assembler")       \
                                                                             \
+  develop(bool, GenerateMacCode, false,                                     \
+          "Generate assembly code output for Mac OS assembler")             \
+                                                                            \
   develop(bool, AddExternCUnderscore, false,                                \
           "Add a _ prefix to extern C symbols in assembly code output")     \
                                                                             \
