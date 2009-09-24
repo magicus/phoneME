@@ -720,7 +720,7 @@ javacall_result javacall_media_create_managed_player(
         {
             pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
             fmt = fmt_str2enum( pPlayer->mediaType );
-            if( JC_FMT_MPEG_1 == fmt || JC_FMT_MS_PCM == fmt )
+            if( JC_FMT_AMR == fmt )
             {
                 pPlayer->mediaItfPtr = &g_dshow_itf;
             }
