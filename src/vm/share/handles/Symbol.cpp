@@ -147,7 +147,7 @@ void Symbol::print_symbol_on(Stream* st, bool dottified) {
 
 }
 
-bool Symbol::is_valid_field_type() {
+bool Symbol::is_valid_field_type(void) {
   OopDesc *obj = this->obj();
   if (ROM::is_valid_field_type(obj)) {
     return true;
@@ -178,7 +178,7 @@ bool Symbol::is_valid_field_type() {
   return false;
 }
 
-bool Symbol::is_valid_method_signature(Symbol* name) {
+bool Symbol::is_valid_method_signature(const Symbol* name) const {
   OopDesc * obj = this->obj();
   if (ROM::is_rom_symbol(obj)) {
     if (!ROM::is_valid_method_signature(obj)) {
@@ -198,7 +198,7 @@ bool Symbol::is_valid_method_signature(Symbol* name) {
   return true;
 }
 
-bool Symbol::is_valid_field_name() {
+bool Symbol::is_valid_field_name(void) {
   int position = 0;
   if (!Signature::skip_simple_identifier(this, position)) {
     return false;
@@ -206,7 +206,7 @@ bool Symbol::is_valid_field_name() {
   return position == length();
 }
 
-bool Symbol::is_valid_class_name() {
+bool Symbol::is_valid_class_name(void) {
   if (Signature::is_class_identifier_quick(this)) {
     return true;
   }
@@ -227,7 +227,7 @@ bool Symbol::is_valid_class_name() {
   return position == length();
 }
 
-bool Symbol::is_valid_method_name() {
+bool Symbol::is_valid_method_name(void) {
   // is_valid_field_name() is the most common case, so do it first
   return is_valid_field_name() ||
          equals(Symbols::object_initializer_name()) ||
@@ -399,7 +399,7 @@ bool Symbol::eq(const char str[]) const {
 
 #if ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS
 // 1 if s1 > s2; 0 if the same; -1 if s1 < s2
-jint Symbol::compare_to(Symbol *s1, Symbol *s2) {
+jint Symbol::compare_to(const Symbol* s1, const Symbol* s2) {
   int len1 = s1->length();
   int len2 = s2->length();
   int len = (len1 < len2) ? len1 : len2;

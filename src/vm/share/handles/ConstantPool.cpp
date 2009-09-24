@@ -334,7 +334,7 @@ BasicType ConstantPool::field_type_at(int index, int& offset, bool is_static,
     // is defined -- this may be in an interface implemented by 
     // static_receiver_class, or a superclass of static_receiver_class.
 
-    if (!f.is_valid()) {
+    if (!f.is_valid_in_current_profile()) {
       Throw::no_such_field_error(JVM_SINGLE_ARG_THROW_(T_ILLEGAL));
     }
 
@@ -382,7 +382,7 @@ ConstantPool::lookup_method_at(InstanceClass *sender_class, int index,
   resolve_helper(index, name, signature, static_receiver_class JVM_CHECK_0);
 
   Method::Fast m = static_receiver_class->lookup_method(name, signature);
-  if (m.is_null()) {
+  if (m.is_null() || m().is_hidden()) {
     trace_no_such_method_error(sender_class, static_receiver_class, name,
                                signature);
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
@@ -608,7 +608,7 @@ void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
     is_uncommon = true;
   }
 
-  if (named_method.is_null()) {
+  if (named_method.is_null() || named_method().is_hidden()) {
     trace_no_such_method_error(sender_class, &interface_class, &method_name,
       &method_signature);
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW);
@@ -1074,15 +1074,14 @@ void ConstantPool::print_field_ref_on(Stream* st, int index JVM_TRAPS) {
 void ConstantPool::print_verbose_field_on(Stream* st, InstanceClass *klass, 
                                           int offset, bool is_static) {
 #if USE_DEBUG_PRINTING
-  Symbol::Raw name;
   InstanceClass::Raw ic = klass->obj();
   while (ic.not_null()) {
     TypeArray::Raw f = ic().original_fields();
     for (int index = 0; index < f().length(); index += 5) {
-      OriginalField field(&ic, index);
+      OriginalField field(&ic, index, &f);
       if (field.is_static() == is_static && field.offset() == offset) {
         st->print(".");
-        name = field.name();
+        Symbol::Raw name = field.name();
         name().print_symbol_on(st);
         return;
       }
@@ -1202,8 +1201,7 @@ void ConstantPool::check_quickened_field_access(int index,
 
   InstanceClass::Raw klass = Universe::class_from_id(class_id);
   TypeArray::Raw fields = klass().fields();
-  AccessFlags af;
-  af.set_flags(0);
+  AccessFlags af(0);
 
   jint flags = -1;
 

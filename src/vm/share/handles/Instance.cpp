@@ -31,67 +31,72 @@
 
 static void iterate_fields(InstanceClass* ic, OopVisitor* visitor, 
                            bool visit_value) {
-  InstanceClass s = ic->super();
-  // Print fields defined by super class
-  if (!s.is_null()) {
-    iterate_fields(&s, visitor, visit_value);
+  {
+    InstanceClass::Raw s = ic->super();
+    // Print fields defined by super class
+    if (!s.is_null()) {
+      iterate_fields(&s, visitor, visit_value);
+    }
   }
-  // Print fields define by local class
-  TypeArray fields = ic->original_fields(); 
-  int last_field_offset = -1;
-  for (;;) {
-    int next_field_index = -1;
-    int min_offset = 0x7fffffff;
+  {
+    // Print fields define by local class
+    const TypeArray::Raw fields = ic->original_fields();
+    const int length = fields().length();
+    int last_field_offset = -1;
+    for (;;) {
+      int next_field_index = -1;
+      int min_offset = 0x7fffffff;
 
-    for(int index = 0; index < fields.length(); index += Field::NUMBER_OF_SLOTS) {
-      OriginalField f(ic, index);
-      if (!f.is_static() &&
-          f.offset() > last_field_offset && 
-          f.offset() < min_offset) {
-        next_field_index = index;
-        min_offset = f.offset();
+      for(int index = 0; index < length; index += Field::NUMBER_OF_SLOTS) {
+        const OriginalField f(ic, index, &fields);
+        if (!f.is_static() &&
+            f.offset() > last_field_offset && 
+            f.offset() < min_offset) {
+          next_field_index = index;
+          min_offset = f.offset();
+        }
       }
-    }
 
-    last_field_offset = min_offset;
-    if (next_field_index < 0) {
-      break;
-    }
+      last_field_offset = min_offset;
+      if (next_field_index < 0) {
+        break;
+      }
 
-    OriginalField f(ic, next_field_index);
-    Symbol name = f.name();
-    SymbolField field(&name, false);
-    switch(f.type()) {
-    case T_BOOLEAN:
-      visitor->do_bool(&field, f.offset(), visit_value);
-      break;
-    case T_CHAR:
-      visitor->do_char(&field, f.offset(), visit_value);
-      break;
-    case T_FLOAT :
-      visitor->do_float(&field, f.offset(), visit_value);
-      break;
-    case T_DOUBLE:
-      visitor->do_double(&field, f.offset(), visit_value);
-      break;
-    case T_BYTE:
-      visitor->do_byte(&field, f.offset(), visit_value);
-      break;
-    case T_SHORT:
-      visitor->do_short(&field, f.offset(), visit_value);
-      break;
-    case T_INT:
-      visitor->do_int(&field, f.offset(), visit_value);
-      break;
-    case T_LONG:
-      visitor->do_long(&field, f.offset(), visit_value);
-      break;
-    case T_OBJECT:
-      visitor->do_oop(&field, f.offset(), visit_value);
-      break;
-    case T_ARRAY:
-      visitor->do_oop(&field, f.offset(), visit_value);
-      break;
+      const OriginalField f(ic, next_field_index, &fields);
+      Symbol::Raw name = f.name();
+      SymbolField field(&name, false);
+      switch(f.type()) {
+      case T_BOOLEAN:
+        visitor->do_bool(&field, f.offset(), visit_value);
+        break;
+      case T_CHAR:
+        visitor->do_char(&field, f.offset(), visit_value);
+        break;
+      case T_FLOAT :
+        visitor->do_float(&field, f.offset(), visit_value);
+        break;
+      case T_DOUBLE:
+        visitor->do_double(&field, f.offset(), visit_value);
+        break;
+      case T_BYTE:
+        visitor->do_byte(&field, f.offset(), visit_value);
+        break;
+      case T_SHORT:
+        visitor->do_short(&field, f.offset(), visit_value);
+        break;
+      case T_INT:
+        visitor->do_int(&field, f.offset(), visit_value);
+        break;
+      case T_LONG:
+        visitor->do_long(&field, f.offset(), visit_value);
+        break;
+      case T_OBJECT:
+        visitor->do_oop(&field, f.offset(), visit_value);
+        break;
+      case T_ARRAY:
+        visitor->do_oop(&field, f.offset(), visit_value);
+        break;
+      }
     }
   }
 }

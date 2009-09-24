@@ -207,8 +207,8 @@ public:
   ReturnOop get_array_class(jint distance JVM_TRAPS);
 
   // sub class check
-  bool is_subclass_of(JavaClass* other_class);
-  bool is_strict_subclass_of(JavaClass* other_class);
+  bool is_subclass_of(const JavaClass* other_class) const;
+  bool is_strict_subclass_of(const JavaClass* other_class) const;
   bool is_subtype_of(JavaClass* other_class);
 
   bool compute_and_set_is_subtype_of(JavaClass* other_class);
@@ -265,10 +265,10 @@ public:
     ClassInfo::Raw info = class_info();
     info().set_name(value);
   }
-  AccessFlags access_flags() const {
+  const AccessFlags access_flags(void) const {
     return raw_class_info()->_access_flags;
   }
-  void set_access_flags(AccessFlags access_flags) {
+  void set_access_flags(const AccessFlags access_flags) const {
     ClassInfo::Raw info = class_info();
     info().set_access_flags(access_flags);
   }

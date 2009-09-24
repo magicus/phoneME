@@ -30,8 +30,6 @@
    
 #if USE_SOURCE_IMAGE_GENERATOR
 
-#define ALL_SUBTYPES -1
-
 // This method is called for 1 time after JVM_Start() is called.
 void SourceROMWriter::initialize() {
   ROMWriter::initialize();
@@ -734,6 +732,13 @@ void SourceROMWriter::write_stuff_body(SourceObjectWriter* obj_writer
   // (12) Compiled method table
   print_separator("Compiled Method Table");
   write_compiled_method_table(JVM_SINGLE_ARG_CHECK);
+#endif
+
+#if ENABLE_MEMBER_HIDING
+  print_separator("Member hiding tables");
+  main_stream()->print_cr("#if ENABLE_MEMBER_HIDING");
+  write_hidden_members(JVM_SINGLE_ARG_CHECK);
+  main_stream()->print_cr("#endif // ENABLE_MEMBER_HIDING\n");
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
@@ -1578,6 +1583,264 @@ void SourceROMWriter::write_hidden_classes(void) {
   MemCounter::total().add_text(total_size);
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_MEMBER_HIDING
+inline bool SourceROMWriter::is_hidden_field (const InstanceClass* ic,
+                                              const OopDesc* field) {
+  return ROMOptimizer::is_hidden_field(ic, field);
+}
+inline bool SourceROMWriter::is_hidden_method(const InstanceClass* ic,
+                                              const Method* method) {
+  return ROMOptimizer::is_hidden_method(ic, method);
+}
+
+inline int SourceROMWriter::field_count (const InstanceClass* ic) {
+  return ic->field_count();
+}
+inline int SourceROMWriter::method_count(const InstanceClass* ic) {
+  return ic->method_count();
+}
+
+
+bool SourceROMWriter::has_hidden_fields (const InstanceClass* ic) {
+  ConstantPool::Raw cp = ic->constants();
+  const TypeArray::Raw fields = ic->fields();
+  const int fields_length = fields().length();
+
+  for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
+    const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
+    const OopDesc* field_name = cp().symbol_at(name_index);
+    if (is_hidden_field(ic, field_name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool SourceROMWriter::has_hidden_methods (const InstanceClass* ic) {
+  {
+    const ObjArray::Raw methods = ic->methods();
+    const int methods_length = methods().length();
+
+    for (int i = 0; i < methods_length; i++) {
+      const Method::Raw method = methods().obj_at(i);
+      if (is_hidden_method(ic, &method)) {
+        return true;
+      }
+    }
+  }
+  {
+    const jushort holder_id = ic->class_id();
+    const ClassInfo::Raw info = ic->class_info();
+    const int vtable_length = info().vtable_length();
+    for (int i = 0; i < vtable_length; i++) {
+      const Method::Raw method = info().vtable_method_at(i);
+      if (method.not_null() && method().holder_id() == holder_id
+                            && is_hidden_method(ic, &method)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+inline void
+SourceROMWriter::write_modified_class_index(const int min, const int max) {
+  int modified_class_index = 0;
+  for (SystemClassStream st; st.has_next();) {
+    InstanceClass::Raw klass = st.next();
+    const int class_id = klass().class_id();
+    if (class_id > max) break;
+    if (class_id < min || klass().access_flags().is_hidden()) {
+      continue;
+    }
+
+    const int n = has_hidden_fields(&klass) || has_hidden_methods(&klass)
+                  ? modified_class_index++
+                  : -1;
+    main_stream()->print("  %5d, // ", n);
+    klass().print_name_on(main_stream());
+    main_stream()->cr();
+  }
+}
+
+inline int
+SourceROMWriter::write_modified_class_attributes(const int min, const int max) {
+  int bit_count = 0;
+  for (SystemClassStream st; st.has_next();) {
+    InstanceClass::Raw klass = st.next();
+    {
+      const int class_id = klass().class_id();
+      if (class_id > max) break;
+      if (class_id < min || klass().access_flags().is_hidden()) {
+        continue;
+      }
+    }
+    const bool hidden_fields = has_hidden_fields(&klass);
+    const bool hidden_methods = has_hidden_methods(&klass);
+    if (hidden_fields || hidden_methods) {
+      int attr = bit_count;
+      if (hidden_fields) {
+        attr |= ROM::CLASS_HAS_HIDDEN_FIELDS;
+        bit_count += field_count(&klass);
+      }
+      if (hidden_methods) {
+        attr |= ROM::CLASS_HAS_HIDDEN_METHODS;
+        bit_count += method_count(&klass);
+      }
+      main_stream()->print("  0x%08x, // ", attr);
+      klass().print_name_on(main_stream());
+      main_stream()->cr();
+    }
+  }
+  return bit_count;
+}
+
+inline void
+SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
+                                             jbyte bitmap[]) {
+  int bit_count = 0;
+  for (SystemClassStream st; st.has_next();) {
+    InstanceClass::Raw klass = st.next();
+    const int class_id = klass().class_id();
+    if (class_id > max) break;
+    if (class_id < min || klass().access_flags().is_hidden()) {
+      continue;
+    }
+    const bool hidden_fields = has_hidden_fields(&klass);
+    const bool hidden_methods = has_hidden_methods(&klass);
+    if (hidden_fields || hidden_methods) {
+      main_stream()->print("/*\n  ");
+      klass().print_name_on(main_stream());
+      main_stream()->cr();
+
+      if (hidden_fields) {
+        main_stream()->print_cr("    Hidden fields:");
+        ConstantPool::Raw cp = klass().constants();
+        const TypeArray::Raw fields = klass().fields();
+        const int fields_length = fields().length();
+        for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
+          const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
+          OopDesc* field_name = cp().symbol_at(name_index);
+          if (is_hidden_field(&klass, field_name)) {
+            main_stream()->print("      ");
+            Symbol::Raw name = field_name;
+            name().print_symbol_on(main_stream());
+            main_stream()->cr();
+
+            bitmap[bit_count >> LogBitsPerByte] |=
+             1 << (bit_count & (BitsPerByte-1));
+          }
+          bit_count++;
+        }
+      } else {
+        main_stream()->print_cr("    No hidden fields");
+      }
+
+      if (hidden_methods) {
+        main_stream()->print_cr("    Hidden methods:");
+        { // Static methods first
+          const ObjArray::Raw methods = klass().methods();
+          const int methods_length = methods().length();
+
+          for (int i = 0; i < methods_length; i++) {
+            const Method::Raw method = methods().obj_at(i);
+            if (is_hidden_method(&klass, &method)) {
+              main_stream()->print("      ");
+              Symbol::Raw name = method().name();
+              name().print_symbol_on(main_stream());
+              main_stream()->cr();
+
+              bitmap[bit_count >> LogBitsPerByte] |=
+               1 << (bit_count & (BitsPerByte-1));
+            }
+            bit_count++;
+          }
+        }
+        { // Virtual methods next
+          const ClassInfo::Raw info = klass().class_info();
+          const int vtable_length = info().vtable_length();
+          for (int i = 0; i < vtable_length; i++) {
+            const Method::Raw method = info().vtable_method_at(i);
+            if (method.not_null() && method().holder_id() == class_id) {
+              if (is_hidden_method(&klass, &method)) {
+                main_stream()->print("      ");
+                Symbol::Raw name = method().name();
+                name().print_symbol_on(main_stream());
+                main_stream()->cr();
+
+                bitmap[bit_count >> LogBitsPerByte] |=
+                 1 << (bit_count & (BitsPerByte-1));
+              }
+              bit_count++;
+            }
+          }
+        }
+      } else {
+        main_stream()->print_cr("    No hidden methods");
+      }
+    }
+  }
+  main_stream()->print("*/\n ");
+}
+
+void SourceROMWriter::write_hidden_members(JVM_SINGLE_ARG_TRAPS) {
+  int min = -1;
+  int max = -2;
+  {
+    for (SystemClassStream st; st.has_next();) {
+      const InstanceClass::Raw klass = st.next();
+      if (klass().access_flags().is_hidden()) {
+        continue;
+      }
+      if (has_hidden_fields(&klass) || has_hidden_methods(&klass)) {
+        max = klass().class_id();
+        if (min < 0) {
+          min = max;
+        }
+      }
+    }
+  }
+  const int size = max - min + 1;
+  main_stream()->print_cr(
+    "const unsigned short _rom_modified_class_index_base = %d;\n"
+    "const unsigned short _rom_modified_class_index_size = %d;\n",
+    min, size);
+
+  main_stream()->print_cr("const short _rom_modified_class_index[] = {" );
+  if (size) {
+    write_modified_class_index(min, max);
+  } else {
+    main_stream()->print_cr( "  -1 // No modified classes" );
+  }
+  main_stream()->print_cr( "}; // _rom_modified_class_index\n" );   
+
+  int bit_count;
+  main_stream()->print_cr( "const int _rom_modified_class_attributes[] = {" );
+  if (size) {
+    bit_count = write_modified_class_attributes(min, max);
+  } else {
+    main_stream()->print_cr( "  0 // No modified classes" );
+    bit_count = 0;
+  }
+  main_stream()->print_cr( "}; // _rom_modified_class_attributes\n" );   
+
+  main_stream()->print_cr( "const char _rom_modified_class_bitmap[] = {" );
+  const int bit_scale_byte_size = (bit_count+(BitsPerByte-1)) >> LogBitsPerByte;
+  if (bit_scale_byte_size) {
+    TypeArray::Raw bit_scale =
+      Universe::new_byte_array(bit_scale_byte_size JVM_OZCHECK(bit_scale));
+    jbyte* bitmap = bit_scale().byte_base_address();
+    write_modified_class_bitmap(min, max, bitmap);
+    for (int i = 0; i < bit_scale_byte_size; i++) {
+      main_stream()->print (" 0x%02x,", bitmap[i]);
+    }
+  } else {
+    main_stream()->print( "  0 // No modified classes" );
+  }
+  main_stream()->print_cr( "\n}; // _rom_modified_class_bitmap\n" );   
+}
+#endif // ENABLE_MEMBER_HIDING
 
 // write references to global singletons
 void SourceROMWriter::write_global_singletons(JVM_SINGLE_ARG_TRAPS) {

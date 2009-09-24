@@ -163,6 +163,26 @@ public:
   virtual void write_restricted_in_profiles();
   void print_profile_name( const int profile_id );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_MEMBER_HIDING
+private:
+  static bool is_hidden_field (const InstanceClass* ic, const OopDesc* field);
+  static bool is_hidden_method(const InstanceClass* ic, const Method* method);
+
+  static bool has_hidden_fields (const InstanceClass* ic);
+  static bool has_hidden_methods(const InstanceClass* ic);
+
+  static int  field_count (const InstanceClass* ic);
+  static int  method_count(const InstanceClass* ic);
+
+  void write_modified_class_index     (const int min, const int max);
+  int  write_modified_class_attributes(const int min, const int max);
+  void write_modified_class_bitmap    (const int min, const int max,
+                                       jbyte bitmap[]);
+  void write_hidden_members(JVM_SINGLE_ARG_TRAPS);
+public:
+#endif // ENABLE_MEMBER_HIDING
+
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS);
   virtual void write_link_checks();
 #if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES         

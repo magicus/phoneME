@@ -115,8 +115,20 @@ class ROMOptimizer {
     #define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)
   #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
+  #if ENABLE_MEMBER_HIDING
+    #define MEMBER_HIDING_ROMOPTIMIZER_OOP_FIELDS_DO(template)  \
+      template(ROMVector, hidden_field_classes,     "") \
+      template(ROMVector, hidden_field_names,       "") \
+      template(ROMVector, hidden_method_classes,    "") \
+      template(ROMVector, hidden_method_names,      "") \
+      template(ROMVector, hidden_method_signatures, "")
+  #else
+    #define MEMBER_HIDING_ROMOPTIMIZER_OOP_FIELDS_DO(template)
+  #endif // ENABLE_MEMBER_HIDING
+
   #define SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
     MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)          \
+    MEMBER_HIDING_ROMOPTIMIZER_OOP_FIELDS_DO(template)\
     template(ROMVector, hidden_classes, "")           \
     template(ROMVector, hidden_packages, "")          \
     template(ROMVector, restricted_packages, "")
@@ -350,18 +362,18 @@ public:
   bool may_be_initialized(InstanceClass *klass);
 
 #if USE_SOURCE_IMAGE_GENERATOR
-  bool is_in_restricted_package (InstanceClass* klass) const;
-  bool is_in_hidden_package     (InstanceClass* klass) const;
-  bool is_hidden                (InstanceClass* klass) const;
+  bool is_in_restricted_package (const InstanceClass* klass) const;
+  bool is_in_hidden_package     (const InstanceClass* klass) const;
+  bool is_hidden                (const InstanceClass* klass) const;
 #else
-  bool is_in_restricted_package (InstanceClass* ) const {
+  bool is_in_restricted_package (const InstanceClass* ) const {
     // IMPL_NOTE: Monet: all classes can be considered as restricted
     return false;
   }
-  bool is_in_hidden_package(InstanceClass* ) const {
+  bool is_in_hidden_package(const InstanceClass* ) const {
     return false;
   }
-  bool is_hidden(InstanceClass* ) const {
+  bool is_hidden(const InstanceClass* ) const {
     // IMPL_NOTE: Monet: all classes can be considered as restricted
     return false;
   }
@@ -451,7 +463,8 @@ private:
   void add_package_to_list(ROMVector* vector, Symbol* pkgname JVM_TRAPS);
   void remove_packages(ROMVector* from, const Symbol* pattern);
   void remove_packages(OopDesc* from_vector, const ROMVector* patterns);
-  bool class_list_contains(const ObjArray* list, const InstanceClass* klass);
+  static bool class_list_contains(const ObjArray* list,
+                                  const InstanceClass* klass);
   void write_methods_log(ROMVector* log, const char name[],
                                          const char prefix[]);
   void update_jni_natives_table(JVM_SINGLE_ARG_TRAPS) {
@@ -465,13 +478,13 @@ private:
   }
   ReturnOop build_method_table(const ROMVector* methods JVM_TRAPS);
 
-  bool dont_rename_class(InstanceClass *klass) {
+  bool dont_rename_class(const InstanceClass* klass) const {
     return class_list_contains(dont_rename_classes(), klass);
   }
-  bool dont_rename_fields_in_class(InstanceClass *klass) {
+  bool dont_rename_fields_in_class(const InstanceClass* klass) const {
     return class_list_contains(dont_rename_fields_classes(), klass);
   }
-  bool dont_rename_methods_in_class(InstanceClass *klass) {
+  bool dont_rename_methods_in_class(const InstanceClass* klass) const {
     return class_list_contains(dont_rename_methods_classes(), klass);
   }  
 
@@ -511,23 +524,14 @@ private:
                             jchar *match, jint num_chars);
 #endif
   void resize_class_list(JVM_SINGLE_ARG_TRAPS);
-  void rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS);
-  int  rename_non_public_class(InstanceClass* klass);
-  int  rename_non_public_fields(InstanceClass *klass JVM_TRAPS);
-  int  rename_non_public_methods(InstanceClass *klass JVM_TRAPS);
+
 #if USE_SOURCE_IMAGE_GENERATOR
-  void record_original_class_info(InstanceClass *klass, Symbol *name);
-  void record_original_method_info(Method *method JVM_TRAPS);
   void record_original_field_info(InstanceClass *klass, int name_index 
                                   JVM_TRAPS);
   void record_original_fields(InstanceClass *klass JVM_TRAPS);
   jushort get_index_from_alternate_constant_pool(InstanceClass *klass,
                                                  jushort symbol_index);
 #else
-  void record_original_class_info(InstanceClass* /*klass*/, Symbol* /*name*/)
-       {}
-  void record_original_method_info(Method* /*method*/ JVM_TRAPS)
-       {JVM_IGNORE_TRAPS;}
   void record_original_field_info(InstanceClass* /*klass*/, int /*name_index*/
                                   JVM_TRAPS) {JVM_IGNORE_TRAPS;}
   void record_original_fields(InstanceClass* /*klass*/ JVM_TRAPS) 
@@ -552,20 +556,17 @@ private:
   void compact_method_tables(JVM_SINGLE_ARG_TRAPS);
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
   bool is_method_removable_from_table(Method *method);
-  static bool is_member_reachable_by_apps(jint package_flags, 
-                                   AccessFlags class_flags,
-                                   AccessFlags member_flags);
-  static bool field_may_be_renamed(jint package_flags, AccessFlags class_flags,
-                                   AccessFlags member_flags, Symbol* name) {
-    return !is_member_reachable_by_apps(package_flags, class_flags, member_flags) &&
-           !Symbols::is_system_symbol(name);  
-  }
-
-  bool method_may_be_renamed      (InstanceClass* ic, Method* method);
-  bool is_method_reachable_by_apps(InstanceClass* ic, Method* method);
-  bool is_invocation_closure_root (InstanceClass *ic, Method *method);
-  bool is_in_public_itable        (InstanceClass* ic, Method* method);
-  bool is_in_public_vtable        (InstanceClass* ic, Method* method);
+  static bool is_member_reachable_by_apps(const jint package_flags, 
+                                          const AccessFlags class_flags,
+                                          const AccessFlags member_flags);
+  bool is_method_reachable_by_apps(const InstanceClass* ic,
+                                   const Method* method) const;
+  bool is_invocation_closure_root (const InstanceClass* ic,
+                                   const Method* method) const;
+  bool is_in_public_itable        (const InstanceClass* ic,
+                                   const Method* method) const;
+  bool is_in_public_vtable        (const InstanceClass* ic,
+                                   const Method* method) const;
 
   void remove_unused_symbols(JVM_SINGLE_ARG_TRAPS);
   bool is_symbol_alive(ObjArray *live_symbols, Symbol* symbol);
@@ -584,7 +585,7 @@ private:
   void inline_exception_constructors();
   void inline_short_methods(JVM_SINGLE_ARG_TRAPS);
   bool is_inlineable_exception_constructor(Method *method);
-  bool is_special_method(Method* method);
+  static bool is_special_method(const Method* method);
   void clean_vtables(InstanceClass* klass, Method* method, int vindex);
   void clean_itables(InstanceClass* klass, int iindex);
   void remove_duplicated_objects(JVM_SINGLE_ARG_TRAPS);
@@ -608,7 +609,18 @@ private:
 #else
   void precompile_methods(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
 #endif
+
+#if USE_SOURCE_IMAGE_GENERATOR
+  void record_original_class_info(const InstanceClass* klass,
+                                  Symbol* name) const;
+  void record_original_method_info(const Method* method JVM_TRAPS) const;
+  void rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS);
   void mark_hidden_classes(JVM_SINGLE_ARG_TRAPS);
+#if ENABLE_MEMBER_HIDING
+  static bool is_hidden_field (const InstanceClass* ic, const OopDesc* field);
+  static bool is_hidden_method(const InstanceClass* ic, const Method* method);
+#endif // ENABLE_MEMBER_HIDING
+#endif // USE_SOURCE_IMAGE_GENERATOR
 
   //SUBCLASS CACHE ZONE
   enum {
@@ -631,7 +643,7 @@ private:
     DEAD_FIELD = 0x10000
   };
 
-  jint get_package_flags(InstanceClass* klass) {
+  jint get_package_flags(const InstanceClass* klass) const {
     if( is_in_hidden_package(klass) ) {
       return HIDDEN_PACKAGE;
     }
@@ -715,6 +727,7 @@ private:
 
   friend class MethodIterator;
   friend class ROMClassPatternMatcher;
+  friend class SourceROMWriter;
 };
 
 #endif // ENABLE_ROM_GENERATOR

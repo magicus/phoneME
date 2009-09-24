@@ -56,10 +56,11 @@ protected:
     _match_found = true;
   }
 
+  static void error(const char msg[]);
+  static void invalid_pattern(void);
+  static void not_found(const char name[]);
 public:
   static bool validate(const char pattern[], const int length);
-  static void error(const char msg[]);
-  static void not_found(const char name[]);
 
   bool is_match_found(void) const {
     return _match_found;

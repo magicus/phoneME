@@ -29,14 +29,14 @@
 
 #if !ROMIZED_PRODUCT
 
-int system_symbols[Symbols::__number_of_system_symbols];
+int system_symbols[Symbols::_number_of_system_symbols];
 
 #define VM_SYMBOL_REGULAR(name, string)    {string, false},
 #define VM_SYMBOL_SIGNATURE(name, string)  {string, true},
 
 struct SymbolDefinition {
-  const char * string;
-  bool   is_signature;
+  const char* string;
+  const bool  is_signature;
 };
 
 static const SymbolDefinition definitions[] = {
@@ -44,31 +44,33 @@ static const SymbolDefinition definitions[] = {
 };
 
 void Symbols::initialize(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops fast_oops;
-  Symbol::Fast sym;
-  for (int i = 0; i < number_of_system_symbols(); i++) {
-    char* string = (char*)definitions[i].string;
+  for (int i = 0; i < _number_of_system_symbols; i++) {
+    OopDesc* p;
+    const char* string = (const char*)definitions[i].string;
     if (definitions[i].is_signature) {
-      sym = TypeSymbol::parse(string JVM_CHECK);
+      p = TypeSymbol::parse(string JVM_NO_CHECK);
     } else {
-      sym = SymbolTable::symbol_for(string JVM_CHECK);
+      p = SymbolTable::symbol_for(string JVM_NO_CHECK);
     }
-    *at(i) = sym;
+    if (p == NULL) {
+      break;
+    }
+    system_symbols[i] = (int)p;
   }
 }
 
 void Symbols::oops_do(void do_oop(OopDesc**)) {
-  for (int index = 0; index < number_of_system_symbols(); index++) {
-    do_oop((OopDesc**)(&system_symbols[index]));
+  for (int index = 0; index < _number_of_system_symbols; index++) {
+    do_oop((OopDesc**)(system_symbols+index));
   }
 }
 #endif
 
 #ifndef PRODUCT
 
-bool Symbols::is_system_symbol(Symbol* symbol) {
-  for (int i = 0; i < number_of_system_symbols(); i++) {
-    if (symbol->equals(at(i))) {
+bool Symbols::is_system_symbol(const OopDesc* symbol) {
+  for (int i = 0; i < _number_of_system_symbols; i++) {
+    if (system_symbols[i] == (int)symbol) {
       return true;
     }
   }

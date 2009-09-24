@@ -2446,16 +2446,22 @@ ROMTools.cpp                     String.hpp
 ROMTools.cpp                     ObjectHeap_<iarch>.hpp
 ROMTools.cpp                     OopDesc.inline.hpp
 
-ROMClassPatternMatcher.hpp       Universe.hpp
+ROMClassPatternMatcher.hpp       InstanceClass.hpp
 ROMClassPatternMatcher.hpp       Symbol.hpp
 ROMClassPatternMatcher.cpp       ROMOptimizer.hpp
 
-ROMMethodPatternMatcher.hpp      ROMClassPatternMatcher.hpp
-ROMClassPatternMatcher.hpp       Method.hpp
+ROMMemberPatternMatcher.hpp      ROMClassPatternMatcher.hpp
+ROMMemberPatternMatcher.cpp      ROMOptimizer.hpp
+
+ROMFieldPatternMatcher.hpp       ROMMemberPatternMatcher.hpp
+ROMFieldPatternMatcher.cpp       ROMOptimizer.hpp
+
+ROMMethodPatternMatcher.hpp      ROMMemberPatternMatcher.hpp
 ROMMethodPatternMatcher.cpp      ROMOptimizer.hpp
 
 ROMOptimizer.hpp                 ObjectHeap_<iarch>.hpp
 ROMOptimizer.hpp                 ROMTools.hpp
+ROMOptimizer.hpp                 ROMFieldPatternMatcher.hpp
 ROMOptimizer.hpp                 ROMMethodPatternMatcher.hpp
 ROMOptimizer.hpp                 TypeArray.hpp
 ROMOptimizer.hpp                 ObjArray.hpp

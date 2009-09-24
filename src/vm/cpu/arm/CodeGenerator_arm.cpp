@@ -1700,15 +1700,6 @@ void CodeGenerator::idiv_rem(Value& result, Value& op1, Value& op2,
     RegisterAllocator::reference(result_register);
     result.set_register(result_register);
   } else if (divisor == 0) {
-#if ENABLE_INLINE
-    if (Compiler::is_inlining()) {
-      // Abort the current compilation discarding any generated code.
-      // The current method is marked as impossible to compile to prevent
-      // inlining on the next compilation attempt for the caller
-      Compiler::abort_active_compilation(true JVM_THROW);
-    }
-#endif
-
     ZeroDivisorCheckStub* zero =
       ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(zero));
     b(zero);

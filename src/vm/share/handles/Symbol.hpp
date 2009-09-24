@@ -78,10 +78,17 @@ class Symbol: public Oop {
   juint hash(void) const;
 
   bool matches(const SymbolDesc* other_symbol) const {
-    return symbol()->matches(other_symbol);
+    return symbol() == other_symbol;
   }
   bool matches(const Symbol* other_symbol) const {
     return matches(other_symbol->symbol());
+  }
+
+  bool matches_pattern(const SymbolDesc* other_symbol) const {
+    return symbol()->matches_pattern(other_symbol);
+  }
+  bool matches_pattern(const Symbol* other_symbol) const {
+    return matches_pattern(other_symbol->symbol());
   }
 
   int strrchr(jbyte c) const;
@@ -91,13 +98,13 @@ class Symbol: public Oop {
 
   void print_symbol_on(Stream* st, bool dottified = false);
 
-  bool is_valid_class_name();
+  bool is_valid_class_name(void);
 
-  bool is_valid_field_name();
-  bool is_valid_field_type();
+  bool is_valid_field_name(void);
+  bool is_valid_field_type(void);
 
-  bool is_valid_method_name();
-  bool is_valid_method_signature(Symbol *name=NULL);
+  bool is_valid_method_name(void);
+  bool is_valid_method_signature(const Symbol* name=NULL) const;
 
 #ifndef PRODUCT
   void iterate(OopVisitor* visitor);
@@ -118,7 +125,7 @@ class Symbol: public Oop {
 
 #if ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS
   // 1 if s1 > s2; 0 if the same; -1 if s1 < s2
-  static jint compare_to(Symbol *s1, Symbol *s2);
+  static jint compare_to(const Symbol* s1, const Symbol* s2);
 #endif
 
   friend class SymbolTable;

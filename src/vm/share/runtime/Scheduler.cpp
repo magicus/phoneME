@@ -1557,16 +1557,14 @@ void Scheduler::unblock_thread(Thread *thread) {
 }
 
 void *Scheduler::allocate_blocked_thread_data(int data_size JVM_TRAPS) {
-  UsingFastOops fast_oops;
   Thread* thread = Thread::current();
-  TypeArray::Fast oop;
 
   // IMPL_NOTE: there's potential problem with size returned by
   // get_blocked_thread_data() as it could differ from what was passed
   // before. I think in long run we should get rid of int* size
   // parameter completely.
   if (data_size <= (int)CachedAsyncDataSize) {
-    oop = thread->cached_async_info();
+    TypeArray::Raw oop = thread->cached_async_info();
     if (oop.is_null()) {
       oop = Universe::new_byte_array(CachedAsyncDataSize JVM_NO_CHECK);
       if (oop.is_null()) {
@@ -1583,7 +1581,7 @@ void *Scheduler::allocate_blocked_thread_data(int data_size JVM_TRAPS) {
     return oop().base_address();
   }
 
-  TypeArray::Fast byte_array = 
+  TypeArray::Raw byte_array = 
     Universe::new_byte_array(data_size JVM_NO_CHECK);
   if (byte_array.is_null()) {
     // we don't need OOME, return value should be checked

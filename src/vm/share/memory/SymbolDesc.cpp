@@ -27,9 +27,8 @@
 # include "incls/_precompiled.incl"
 # include "incls/_SymbolDesc.cpp.incl"
 
-bool SymbolDesc::matches(const SymbolDesc* other_symbol) const {
-  if (_length != other_symbol->_length) {
-    return false;
-  }
-  return jvm_memcmp(utf8_data(), other_symbol->utf8_data(), _length) == 0;
+bool SymbolDesc::matches_pattern(const SymbolDesc* other_symbol) const {
+  return Universe::name_matches_pattern(utf8_data(), _length,
+                                        other_symbol->utf8_data(),
+                                        other_symbol->_length);
 }

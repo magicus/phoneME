@@ -40,15 +40,6 @@ class SymbolDesc: public OopDesc {
   }
 
  private:
-  bool matches(const SymbolDesc* other_symbol) const;
-  bool matches(utf8 s, const int len) const {
-    if (len != _length) {
-      return false;
-    } else {
-      return jvm_memcmp(s, utf8_data(), len) == 0;
-    }
-  }
-
   // Returns the size of a symbol with the given length.
   static size_t allocation_size(const int length) { 
     GUARANTEE(length >= 0, "Cannot allocate symbol of negative length");
@@ -62,6 +53,12 @@ class SymbolDesc: public OopDesc {
   juint utf8_length( void ) const { 
     return _length;
   };
+
+  bool matches(utf8 s, const int len) const {
+    return len == _length &&
+           jvm_memcmp(s, utf8_data(), len) == 0;
+  }
+  bool matches_pattern(const SymbolDesc* other_symbol) const;
 
  private:
   // Initializes the object after allocation

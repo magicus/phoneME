@@ -31,7 +31,7 @@
 
 #if USE_DEBUG_PRINTING
 
-AccessFlags::FlagInfo AccessFlags::flag_info[] = {
+const AccessFlags::FlagInfo AccessFlags::flag_info[] = {
  {JVM_ACC_PUBLIC,                 AccessFlags::CMF, "public"},
  {JVM_ACC_PRIVATE,                AccessFlags::MF,  "private"},
  {JVM_ACC_PROTECTED,              AccessFlags::MF,  "protected"},

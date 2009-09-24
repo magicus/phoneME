@@ -29,7 +29,7 @@
 
  */
 
-class Field : public StackObj {
+class Field: public StackObj {
  public:
   Field(InstanceClass* ic, Symbol* name, Symbol* signature) {
     initialize(ic, name, signature);
@@ -37,34 +37,41 @@ class Field : public StackObj {
   Field(InstanceClass* ic, const jint index) {
     initialize(ic, index);
   }
-  Field(InstanceClass* ic, jint index, TypeArray *fields);
+  Field(InstanceClass* ic, const jint index, TypeArray* fields) {
+    initialize(ic, index, fields);
+  }
 
   // ^Symbol
-  ReturnOop name(void) const;
-  ReturnOop signature(void) const;
-  AccessFlags access_flags() const { return _access; }
-  jushort offset() const           { return _offset; }
-  bool is_valid() const            { return _index >= 0; }
+  ReturnOop name                  (void) const;
+  ReturnOop signature             (void) const;
+  const AccessFlags access_flags  (void) const { return _access; }
+  jushort offset                  (void) const { return _offset; }
+  bool is_valid                   (void) const { return _index >= 0; }
+  bool is_valid_in_current_profile(void) const {
+#if ENABLE_MEMBER_HIDING
+    return is_valid() && !ROM::is_hidden_field(_ic->class_id(), _index);
+#else
+    return is_valid();
+#endif
+  }
 
   // Initial field value
-  bool has_initial_value()  const { return _initval_index != 0; }
-  int  initval_index()      const { return _initval_index; }
+  bool has_initial_value  (void) const { return _initval_index != 0; }
+  int  initval_index      (void) const { return _initval_index; }
 
   // Field signature type
   BasicType type(void) const;
 
   // Access flags
-  bool is_public() const          { return access_flags().is_public();    }
-  bool is_private() const         { return access_flags().is_private();   }
-  bool is_protected() const       { return access_flags().is_protected(); }
-  bool is_static() const          { return access_flags().is_static();    }
-  bool is_final() const           { return access_flags().is_final();     }
-  bool is_volatile() const        { return access_flags().is_volatile();  }
-  bool is_transient() const       { return access_flags().is_transient(); }
-  bool is_synthetic() const       { return access_flags().is_synthetic(); }
-  bool is_package_private() const {
-    return access_flags().is_package_private();
-  }
+  bool is_public          (void) const { return access_flags().is_public();    }
+  bool is_private         (void) const { return access_flags().is_private();   }
+  bool is_protected       (void) const { return access_flags().is_protected(); }
+  bool is_static          (void) const { return access_flags().is_static();    }
+  bool is_final           (void) const { return access_flags().is_final();     }
+  bool is_volatile        (void) const { return access_flags().is_volatile();  }
+  bool is_transient       (void) const { return access_flags().is_transient(); }
+  bool is_synthetic       (void) const { return access_flags().is_synthetic(); }
+  bool is_package_private (void) const { return access_flags().is_package_private(); }
 
   void check_access_by(InstanceClass* sender_class, 
                        InstanceClass* static_receiver_class,
@@ -92,28 +99,28 @@ class Field : public StackObj {
   void print_cp_symbol_on(Stream *, int /*cp_index*/) const PRODUCT_RETURN;
 
 #ifndef PRODUCT
-  virtual ReturnOop get_fields_for(InstanceClass* ic) const {
+  virtual ReturnOop get_fields_for(const InstanceClass* ic) const {
     return ic->fields();
   }
 
-  virtual ReturnOop get_constants_for(InstanceClass* ic) const {
+  virtual ReturnOop get_constants_for(const InstanceClass* ic) const {
     return ic->constants();
   }
 #else
 #if USE_PRODUCT_BINARY_IMAGE_GENERATOR
-  virtual ReturnOop get_fields_for(InstanceClass* ic) const {
+  virtual ReturnOop get_fields_for(const InstanceClass* ic) const {
     return ic->fields();
   }
 
-  virtual ReturnOop get_constants_for(InstanceClass* ic) const {
+  virtual ReturnOop get_constants_for(const InstanceClass* ic) const {
     return ic->constants();
   }
 #else
-  ReturnOop get_fields_for(InstanceClass* ic) const  {
+  ReturnOop get_fields_for(const InstanceClass* ic) const  {
     return ic->fields();
   }
 
-  ReturnOop get_constants_for(InstanceClass* ic) const {
+  ReturnOop get_constants_for(const InstanceClass* ic) const {
     return ic->constants();
   }
 #endif
@@ -122,8 +129,8 @@ class Field : public StackObj {
  protected:
   Field() {}
   void initialize(InstanceClass* ic, Symbol* name, Symbol* signature);
-  void initialize(InstanceClass* ic, jint index);
-  void initialize(InstanceClass* ic, jint index, TypeArray *fields);
+  void initialize(InstanceClass* ic, const jint index);
+  void initialize(InstanceClass* ic, const jint index, const TypeArray* fields);
   InstanceClass* ic(void) const { return _ic; }
   int find_field_index(InstanceClass* ic, Symbol* name, Symbol* signature) const;
   int find_field_in_class_and_interfaces(InstanceClass* ic, 
@@ -151,25 +158,27 @@ class Field : public StackObj {
     for more information.
  */
 
-class OriginalField : public Field {
-public:
-  OriginalField(InstanceClass* ic, Symbol* name, Symbol* signature)
-    : Field()
-  {
-    initialize(ic, name, signature);
-  }
-  OriginalField(InstanceClass* ic, jint index) : Field()
-  {
-    initialize(ic, index);
-  }
-
-  virtual ReturnOop get_fields_for(InstanceClass* ic) const {
+class OriginalField: public Field {
+protected:
+  virtual ReturnOop get_fields_for(const InstanceClass* ic) const {
     return ic->original_fields();
   }
 
-  virtual ReturnOop get_constants_for(InstanceClass* ic) const {
+  virtual ReturnOop get_constants_for(const InstanceClass* ic) const {
     ReturnOop cp = ROM::alternate_constant_pool(ic);
     return cp ? cp : ic->constants();
+  }
+
+public:
+  OriginalField(InstanceClass* ic, Symbol* name, Symbol* signature): Field() {
+    initialize(ic, name, signature);
+  }
+  OriginalField(InstanceClass* ic, const jint index): Field() {
+    initialize(ic, index);
+  }
+  OriginalField(InstanceClass* ic, const jint index, const TypeArray* fields):
+  Field() {
+    initialize(ic, index, fields);
   }
 
   bool is_renamed(void) const PRODUCT_RETURN0;

@@ -203,7 +203,7 @@ inline void ROMOptimizer::optimize_package_lists(JVM_SINGLE_ARG_TRAPS) {
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
-bool ROMOptimizer::is_in_restricted_package( InstanceClass* klass ) const {
+bool ROMOptimizer::is_in_restricted_package( const InstanceClass* klass ) const {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   if( !class_matches_packages_list(klass, restricted_packages()) ) {
     ROMVector* rom_profiles = profiles_vector();
@@ -222,7 +222,7 @@ bool ROMOptimizer::is_in_restricted_package( InstanceClass* klass ) const {
 #endif  
 }
 
-bool ROMOptimizer::is_in_hidden_package( InstanceClass* klass ) const {
+bool ROMOptimizer::is_in_hidden_package( const InstanceClass* klass ) const {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   if( !class_matches_classes_list(klass, hidden_classes()) &&
       !class_matches_packages_list(klass, hidden_packages()) ) {
@@ -245,7 +245,7 @@ bool ROMOptimizer::is_in_hidden_package( InstanceClass* klass ) const {
 #endif
 }
 
-bool ROMOptimizer::is_hidden( InstanceClass* klass ) const {
+bool ROMOptimizer::is_hidden( const InstanceClass* klass ) const {
   return is_in_hidden_package(klass) ||
          ( !klass->is_public() && is_in_restricted_package(klass) );
 }
@@ -502,6 +502,7 @@ void ROMOptimizer::config_error( const char msg[] ) {
   abort();
 }
 
+
 inline bool ROMOptimizer::validate_class_pattern( const char pattern[] ) const {
   return ROMClassPatternMatcher::validate(pattern, jvm_strlen(pattern));
 }
@@ -741,7 +742,22 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
   }
 #if ENABLE_MEMBER_HIDING       
   if (jvm_strcmp(name, "HiddenField") == 0) {
-    // hide_field(value JVM_NO_CHECK_AT_BOTTOM);
+    ROMFieldPatternMatcher matcher;
+    matcher.run(value JVM_CHECK);
+    if (matcher.is_match_found()) {
+      hidden_field_classes()->add_element(matcher.class_pattern() JVM_CHECK);
+      hidden_field_names()->add_element(matcher.name() JVM_NO_CHECK_AT_BOTTOM);
+    }
+    return;
+  }
+  if (jvm_strcmp(name, "HiddenMethod") == 0) {
+    ROMMethodPatternMatcher matcher;
+    matcher.run(value JVM_CHECK);
+    if (matcher.is_match_found()) {
+      hidden_method_classes()->add_element(matcher.class_pattern() JVM_CHECK);
+      hidden_method_names()->add_element(matcher.name() JVM_CHECK);
+      hidden_method_signatures()->add_element(matcher.signature() JVM_NO_CHECK);
+    }
     return;
   }
 #endif
@@ -1097,8 +1113,9 @@ void ROMOptimizer::replace_string_bodies(ROMVector *all_strings,
   }
 }
 
-void ROMOptimizer::record_original_class_info(InstanceClass *klass,
-                                              Symbol *name) {
+inline
+void ROMOptimizer::record_original_class_info(const InstanceClass *klass,
+                                              Symbol* name) const {
   const int class_id = klass->class_id();
   romizer_original_class_name_list()->obj_at_put(class_id, name);
 
@@ -1199,7 +1216,8 @@ ROMOptimizer::get_index_from_alternate_constant_pool(InstanceClass *klass,
 }
 
 
-void ROMOptimizer::record_original_method_info(Method *method JVM_TRAPS) {
+inline void ROMOptimizer::record_original_method_info(const Method* method
+                                                      JVM_TRAPS) const {
   ObjArray::Raw info = Universe::new_obj_array(3 JVM_ZCHECK(info));
   const int class_id = method->holder_id();
 
@@ -1475,8 +1493,7 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
           TypeArray::Raw ofields = original_fields(&klass, is_orig);
 
           for (int i=0; i<ofields().length(); i+= 5) {
-            AccessFlags f;
-            f.set_flags(ofields().ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
+            AccessFlags f(ofields().ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
             int offset = ofields().ushort_at(i + Field::OFFSET_OFFSET);
             if (f.is_static() && offset == srcoffset) {
               jushort name_index = ofields().ushort_at(i + Field::NAME_OFFSET);
@@ -1687,11 +1704,10 @@ void ROMOptimizer::fix_one_field_table(InstanceClass *klass, TypeArray *fields,
   const int static_field_start = JavaClass::static_field_start();
   int i, j;
 
-  for (i=j=0; i<fields->length(); i+= 5) {
+  for (i=j=0; i<fields->length(); i+= Field::NUMBER_OF_SLOTS) {
     bool copyit = true;
 
-    AccessFlags flags;
-    flags.set_flags(fields->ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
+    const AccessFlags flags(fields->ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
     if (flags.is_static()) {
       int offset = fields->ushort_at(i + Field::OFFSET_OFFSET);
       int idx = (offset - static_field_start) / BytesPerWord;
@@ -1712,7 +1728,7 @@ void ROMOptimizer::fix_one_field_table(InstanceClass *klass, TypeArray *fields,
         fields->ushort_at_put(j + 3, fields->ushort_at(i + 3));
         fields->ushort_at_put(j + 4, fields->ushort_at(i + 4));
       }
-      j += 5;
+      j += Field::NUMBER_OF_SLOTS;
     }
   }
   if (i != j) {
@@ -1727,4 +1743,296 @@ void ROMOptimizer::fix_one_field_table(InstanceClass *klass, TypeArray *fields,
   }
 }
 
+#if ENABLE_MEMBER_HIDING
+bool
+ROMOptimizer::is_hidden_field(const InstanceClass* ic, const OopDesc* field) {
+  const Symbol::Raw class_name = ic->name();
+
+  const ROMVector* class_patterns = hidden_field_classes();
+  const ROMVector* name_patterns = hidden_field_names();
+
+  const int number_of_patterns = class_patterns->size();
+  GUARANTEE(name_patterns->size() == number_of_patterns, "Sanity");
+
+  for (int i = 0; i < number_of_patterns; i++) {
+    const SymbolDesc* class_pattern =
+      (const SymbolDesc*) class_patterns->element_at(i);
+    if (class_name().matches_pattern(class_pattern)) {
+      const SymbolDesc* name_pattern =
+        (const SymbolDesc*) name_patterns->element_at(i);
+      if (((const SymbolDesc*)field)->matches_pattern(name_pattern)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool
+ROMOptimizer::is_hidden_method(const InstanceClass* ic, const Method* method) {
+  const Symbol::Raw class_name = ic->name();
+  const Symbol::Raw method_name = method->name();
+  const OopDesc* method_signature = method->signature();
+
+  const ROMVector* class_patterns = hidden_method_classes();
+  const ROMVector* name_patterns = hidden_method_names();
+  const ROMVector* signatures = hidden_method_signatures();
+
+  const int number_of_patterns = class_patterns->size();
+  GUARANTEE(name_patterns->size() == number_of_patterns, "Sanity");
+  GUARANTEE(signatures->size() == number_of_patterns, "Sanity");
+
+  for (int i = 0; i < number_of_patterns; i++) {
+    const SymbolDesc* class_pattern =
+      (const SymbolDesc*) class_patterns->element_at(i);
+    if (class_name().matches_pattern(class_pattern)) {
+      const SymbolDesc* name_pattern =
+        (const SymbolDesc*) name_patterns->element_at(i);
+      if (method_name().matches_pattern(name_pattern)) {
+        const OopDesc* signature = signatures->element_at(i);
+        if (!signature || signature == method_signature) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+#endif
+
+void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
+  int class_count = 0;
+  int field_count = 0;
+  int method_count = 0;
+
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
+  ConstantPool::Fast cp;
+
+  for (SystemClassStream st; st.has_next();) {
+    // Note: we just have to go over the InstanceClasses. There are no
+    // fields/methods in the array classes.
+    klass = st.next();
+    cp = klass().constants();
+
+    // ClassParser should have saved an invalid entry at the end
+    // of the CP, which we use temporarily to store the .unknown.
+    // symbol.
+    enum { unknown_symbol_index = 0 };
+    AZZERT_ONLY(ConstantTag tag = cp().tag_at(unknown_symbol_index));
+    GUARANTEE(tag.is_invalid(), "must be invalid!");
+    cp().symbol_at_put(unknown_symbol_index, Symbols::unknown());
+
+    // (1) Rename the fields in this class
+    // Don't rename fields if KNI code may use them by name.
+    if (!dont_rename_fields_in_class(&klass)){
+      const jint package_flags = get_package_flags(&klass);
+      const AccessFlags class_flags = klass().access_flags();
+
+      UsingFastOops fast_oops1;
+#if ENABLE_MEMBER_HIDING
+      const Symbol::Fast class_name = klass().name();
+#endif
+      TypeArray::Fast fields = klass().fields();
+      const int fields_length = fields().length();
+      for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
+        //5-tuples of shorts [access, name index, sig index, initval index, offset]
+        const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
+        const OopDesc* field_name = cp().symbol_at(name_index);
+#if ENABLE_MEMBER_HIDING
+        if (!is_hidden_field(&klass, field_name))
+#endif
+        {
+          AccessFlags field_flags(fields().ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
+          if (is_member_reachable_by_apps(package_flags, class_flags,
+                                                         field_flags)) {
+            continue;
+          }
+        }
+        if (Symbols::is_system_symbol(field_name)) {
+          continue;
+        }
+
+        record_original_field_info(&klass, name_index JVM_CHECK);
+        fields().ushort_at_put(i + Field::NAME_OFFSET, unknown_symbol_index);
+        field_count++;
+      }
+    }
+
+    // (2) Rename the methods in this class
+    // Don't rename methods if the VM-specific native code uses EntryActivation
+    // to invoke Java methods by name.
+    if (!dont_rename_methods_in_class(&klass)) {
+      UsingFastOops fast_oops1;
+      Method::Fast method;
+      ObjArray::Fast methods = klass().methods();
+
+      const int methods_length = methods().length();
+      for (int i=0; i < methods_length; i++) {
+        method = methods().obj_at(i);
+        if (method.is_null()) {
+          // A nulled-out <clinit> method
+          continue;
+        }
+
+#if ENABLE_MEMBER_HIDING
+        if (!is_hidden_method(&klass, &method))
+#endif
+        if (is_method_reachable_by_apps(&klass, &method)) {
+          continue;
+        }
+        if (Symbols::is_system_symbol(method().name())) {
+          continue;
+        }
+        record_original_method_info(&method JVM_CHECK);
+        method().set_name_index(unknown_symbol_index);
+        method_count++;
+      }
+    }
+    // (3) Rename the class itself
+    // The following types of classes may be renamed:
+    // [1] all classes in hidden packages
+    // [2] package-private classes in restricted packages
+    if (RenameNonPublicROMClasses && is_hidden(&klass)) {
+      if (!dont_rename_class(&klass)) {
+        Symbol::Raw name = klass().name();
+        record_original_class_info(&klass, &name);
+        klass().set_name(Symbols::unknown());
+        class_count++;
+      }
+    }
+  }
+
+#if USE_ROM_LOGGING
+  _log_stream->cr();
+  _log_stream->print_cr("Renamed non-public classes: %d", class_count);
+  _log_stream->print_cr("Renamed non-public fields:  %d", field_count);
+  _log_stream->print_cr("Renamed non-public methods: %d", method_count);
+  _log_stream->cr();
+#endif
+}
+
+void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
+#if USE_ROM_LOGGING
+  ROMVector log_vector;
+  log_vector.initialize(JVM_SINGLE_ARG_CHECK);
+#endif
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  const int number_of_romized_java_classes =
+    ROMWriter::number_of_romized_java_classes();
+
+  if( number_of_romized_java_classes == 0 ) {
+    return;
+  }
+
+  ROMBitSet::initialize( number_of_romized_java_classes );
+
+  const int profiles_count = profiles_vector()->size();
+  GUARANTEE( profiles_count > 0, "Sanity" );
+
+  {
+    for( int profile_id = 0; profile_id < profiles_count; profile_id++ ) {
+      UsingFastOops fast_oops;
+      ROMProfile::Fast profile = profiles_vector()->element_at(profile_id);
+      profile().allocate_hidden_set(JVM_SINGLE_ARG_CHECK);
+      profile().fill_hidden_set();
+    }
+  }
+
+  UsingFastOops fast_oops;
+  ROMBitSet::Fast min_set =
+    global_profile()->allocate_hidden_set(JVM_SINGLE_ARG_ZCHECK(min_set));
+  ROMBitSet::Fast max_set =
+    ROMBitSet::create(JVM_SINGLE_ARG_ZCHECK(max_set));
+
+  {
+    int profile_id = 0;
+    ROMProfile::Raw profile = profiles_vector()->element_at(profile_id);
+    {
+      OopDesc* hidden_set = profile().hidden_set();
+      min_set().copy( hidden_set );
+      max_set().copy( hidden_set );
+    }
+
+    while( ++profile_id < profiles_count ) {
+      profile = profiles_vector()->element_at(profile_id);
+      OopDesc* hidden_set = profile().hidden_set();
+      min_set().and( hidden_set );
+      max_set().or ( hidden_set );
+    }
+  }
+
+#if USE_ROM_LOGGING
+  if( min_set().not_empty() ) {
+    _log_stream->cr();
+    _log_stream->print_cr("[Common hidden classes moved from profiles to global scope]");
+    min_set().print_class_names(tty, "");
+  }
+#endif // USE_ROM_LOGGING
+
+  global_profile()->fill_hidden_set();
+
+  {
+    for( int profile_id = 0; profile_id < profiles_count; profile_id++ ) {
+      ROMProfile::Raw profile = profiles_vector()->element_at(profile_id);
+      ROMBitSet::Raw hidden_set = profile().hidden_set();
+      hidden_set().sub( min_set.obj() );
+    }
+  }
+  max_set().sub( min_set.obj() );
+  max_set().compute_range();
+
+  {
+    UsingFastOops fast_oops;
+    InstanceClass::Fast klass;
+    for (SystemClassStream st; st.has_next();) {
+      klass = st.next();
+      if( min_set().get_bit( klass().class_id() ) ) {
+        AccessFlags flags = klass().access_flags();
+        flags.set_is_hidden();
+        klass().set_access_flags(flags);
+#if USE_ROM_LOGGING
+        log_vector.add_element(&klass JVM_CHECK);
+#endif // USE_ROM_LOGGING
+      }
+    }
+  }
+#else // !ENABLE_MULTIPLE_PROFILES_SUPPORT
+  UsingFastOops fast_oops;
+  InstanceClass::Fast klass;
+  for (SystemClassStream st; st.has_next();) {
+    klass = st.next();
+    if (class_matches_classes_list(&klass, hidden_classes())
+        || is_in_hidden_package(&klass)) {
+      AccessFlags flags = klass().access_flags() ;
+      flags.set_is_hidden();
+      klass().set_access_flags(flags);
+#if USE_ROM_LOGGING
+      log_vector.add_element(&klass JVM_CHECK);
+#endif // USE_ROM_LOGGING
+    }
+  }
+#endif // !ENABLE_MULTIPLE_PROFILES_SUPPORT
+  
+#if USE_ROM_LOGGING
+  _log_stream->cr();
+  _log_stream->print_cr("[Classes marked as 'hidden']");
+
+  // Print the results
+  log_vector.sort();
+  for (int i=0; i<log_vector.size(); i++) {
+    InstanceClass::Raw klass = log_vector.element_at(i);
+    klass().print_name_on(_log_stream);
+    _log_stream->cr();
+  }
+  _log_stream->cr();
+#endif
+}
+
+#if ENABLE_MEMBER_HIDING && ENABLE_MULTIPLE_PROFILES_SUPPORT
+void ROMOptimizer::mark_hidden_members(JVM_SINGLE_ARG_TRAPS) {
+}
+#endif // ENABLE_MEMBER_HIDING && ENABLE_MULTIPLE_PROFILES_SUPPORT
 #endif

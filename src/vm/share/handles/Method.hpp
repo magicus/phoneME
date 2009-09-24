@@ -253,12 +253,11 @@ class Method: public Oop {
 #endif
 
   // access flag
-  AccessFlags access_flags() const {
-    AccessFlags af;
-    af.set_flags(ushort_field(access_flags_offset()));
+  const AccessFlags access_flags(void) const {
+    const AccessFlags af(ushort_field(access_flags_offset()));
     return af;
   }
-  void set_access_flags(AccessFlags flags) {
+  void set_access_flags(const AccessFlags flags) {
     GUARANTEE((flags.as_int() & 0xffff0000) == 0, "16-bit flags only!");
     short_field_put(access_flags_offset(), flags.as_short());
   }
@@ -678,14 +677,14 @@ public:
         _cons = record().next();
       }
     }
-    bool has_next() const {
+    bool has_next(void) const {
       return _cons.not_null();
     }
-    ReturnOop next() {
+    ReturnOop next(void) {
       GUARANTEE(has_next(), "No next");
-      Method::Raw method = _cons().oop();
+      OopDesc* method = _cons().oop();
       _cons = _cons().next();
-      return method.obj();
+      return method;
     }
   };
 #endif
@@ -712,22 +711,30 @@ public:
   }
 
   // Returns the name of the method
-  ReturnOop name() const;
+  ReturnOop name(void) const;
 
   // Returns the name of the method
-  ReturnOop signature() const;
+  ReturnOop signature(void) const;
 
-  bool is_abstract()        const { return access_flags().is_abstract();     }
-  bool is_native()          const { return access_flags().is_native();       }
-  bool is_private()         const { return access_flags().is_private();      }
-  bool is_final()           const { return access_flags().is_final();        }
-  bool is_static()          const { return access_flags().is_static();       }
-  bool is_public()          const { return access_flags().is_public();       }
-  bool is_protected()       const { return access_flags().is_protected();    }
-  bool is_package_private() const { return access_flags().is_package_private();}
+  bool is_abstract        (void) const { return access_flags().is_abstract();       }
+  bool is_native          (void) const { return access_flags().is_native();         }
+  bool is_private         (void) const { return access_flags().is_private();        }
+  bool is_final           (void) const { return access_flags().is_final();          }
+  bool is_static          (void) const { return access_flags().is_static();         }
+  bool is_public          (void) const { return access_flags().is_public();         }
+  bool is_protected       (void) const { return access_flags().is_protected();      }
+  bool is_package_private (void) const { return access_flags().is_package_private();}
 
-  bool is_quick_native() const {
+  bool is_quick_native(void) const {
     return code_size() == 0 && is_native();
+  }
+
+  bool is_hidden(void) const {
+#if ENABLE_MEMBER_HIDING
+    return ROM::is_hidden_method(this);
+#else
+    return false;
+#endif
   }
 
   void check_access_by(InstanceClass* sender_class, 
@@ -745,7 +752,7 @@ public:
 
   // Computes whether this method is a vanilla constructor. 
   // Used for setting the has_vanilla_constructor flag in the class.
-  bool is_vanilla_constructor() const;
+  bool is_vanilla_constructor(void) const;
 
   // Iterators for invoking the BytecodeClosure
   void iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS);

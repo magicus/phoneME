@@ -24,45 +24,17 @@
  * information or have any questions.
  */
 
-#if ENABLE_ROM_GENERATOR
+#if ENABLE_ROM_GENERATOR && ENABLE_MEMBER_HIDING
 
-class MethodInvocationClosure {
-public:
-  void initialize(JVM_SINGLE_ARG_TRAPS);
-  
-  bool add_method           (Method* method);
-  void add_interface_method (Method* method);
-  void add_virtual_method   (Method* method);
+class ROMFieldPatternMatcher: public ROMMemberPatternMatcher {
+protected:
+  virtual bool initialize(const char* pattern, const int length JVM_TRAPS);
+  virtual void handle_class(const InstanceClass* klass JVM_TRAPS);
 
-  bool contains(const Method* method) const {
-    const juint len = juint(_methods.length());
-    const juint start = juint(hashcode_for_method(method)) % len;
+  // Override this method to handle all matching fields
+  virtual void handle_matching_field(const Field* field);
 
-    for (juint i=start; ;) {
-      const Method::Raw m = _methods.obj_at(i);
-      if (m.is_null()) {
-        break;
-      }
-      if (m.equals(method)) {
-        return true;
-      }
-
-      if (++i >= len) {
-         i = 0;
-      }
-      GUARANTEE(i != start, "Sanity");
-      // _old_methods's length is 3 times the number of methods,
-      // so we will always have space.
-    }
-
-    return false;
-  }
-
-private:
-  static int hashcode_for_method(const Method* method);
-  static int hashcode_for_symbol(const Symbol* symbol);
-  
-  ObjArray _methods;
+  bool match_field(const Field* field) const;
 };
 
-#endif
+#endif // ENABLE_ROM_GENERATOR && ENABLE_MEMBER_HIDING

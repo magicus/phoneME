@@ -170,6 +170,15 @@ extern const char* const        _rom_profiles_names[];
 extern const unsigned char      _rom_hidden_classes_bitmaps[];
 extern const char* const        _rom_profiles_restricted_packages[];
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_MEMBER_HIDING
+extern const unsigned short _rom_modified_class_index_base;
+extern const unsigned short _rom_modified_class_index_size;
+extern const short          _rom_modified_class_index[];
+extern const int            _rom_modified_class_attributes[];
+extern const char           _rom_modified_class_bitmap[];
+#endif // ENABLE_MEMBER_HIDING
+
 /*
  * Flags that describes the options used by this the ROM image.
  */

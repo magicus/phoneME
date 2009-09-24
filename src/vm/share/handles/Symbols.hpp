@@ -209,26 +209,26 @@
 
 // Mapping function names to values. New entries should be added below.
 #define VM_SYMBOL_ACCESS(name, string) \
-  static Symbol* name() { return at(name##_index); }
+  static Symbol* name(void) { return at(name##_index); }
 
 // Exception classes that are not defined in CLDC:
 #define NON_CLDC_EXCEPTION(name) \
-  static Symbol* name() { return java_lang_Error(); }
+  static Symbol* name(void) { return java_lang_Error(); }
 
 class Symbols: public AllStatic {
  private:
   static Symbol* at(int index) {
-    return (Symbol*) &system_symbols[index];
+    return (Symbol*) (system_symbols+index);
   }
 
  public:
   enum {
    VM_SYMBOLS_DO(UNIVERSE_HANDLES_DECLARE, UNIVERSE_HANDLES_DECLARE)
-   __number_of_system_symbols
+   _number_of_system_symbols
   };
 
-  static int number_of_system_symbols() {
-    return __number_of_system_symbols;
+  static int number_of_system_symbols(void) {
+    return _number_of_system_symbols;
   }
 
 #if !ROMIZED_PRODUCT
@@ -252,7 +252,10 @@ class Symbols: public AllStatic {
   NON_CLDC_EXCEPTION(java_lang_NoClassDefFoundError)
 #endif
 
-  static bool is_system_symbol(Symbol* /*symbol*/) PRODUCT_RETURN0;
+#ifndef PRODUCT
+  static bool is_system_symbol(const OopDesc* symbol) PRODUCT_RETURN0;
+#endif
+
 };
 
 #undef VM_SYMBOL_ACCESS

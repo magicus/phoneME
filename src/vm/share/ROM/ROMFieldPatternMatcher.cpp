@@ -25,32 +25,42 @@
  */
 
 #include "incls/_precompiled.incl"
-#include "incls/_ROMMethodPatternMatcher.cpp.incl"
+#include "incls/_ROMFieldPatternMatcher.cpp.incl"
 
-#if ENABLE_ROM_GENERATOR
+#if ENABLE_ROM_GENERATOR && ENABLE_MEMBER_HIDING
 
-inline bool ROMMethodPatternMatcher::match_method(const Method* method) const {
-  return name_matches_pattern((SymbolDesc*)method->name(), &_name) &&
-         (_signature.is_null() || _signature.obj() == method->signature());
+inline
+bool ROMFieldPatternMatcher::match_field(const Field* field) const {
+  return name_matches_pattern((SymbolDesc*)field->name(), &_name);
+}
+
+bool ROMFieldPatternMatcher::initialize(const char* pattern, const int len
+                                         JVM_TRAPS) {
+  const bool pattern_is_valid = 
+    ROMMemberPatternMatcher::initialize(pattern, len JVM_NO_CHECK_AT_BOTTOM);
+  if (pattern_is_valid) {
+    if (_signature.is_null()) {
+      return true;
+    }
+    invalid_pattern();
+  }
+  return false;
 }
 
 void
-ROMMethodPatternMatcher::handle_class(const InstanceClass* klass JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  ObjArray::Fast methods = klass->methods();
-  Method::Fast m;
-  const int length = methods().length();
-  for (int i = 0; i < length; i++) {
-    m = methods().obj_at(i);
-    if (m.not_null() && match_method(&m)) {
+ROMFieldPatternMatcher::handle_class(const InstanceClass* klass JVM_TRAPS) {
+  TypeArray::Raw fields = klass->fields();
+  const int length = fields().length();
+  for (int i = 0; i < length; i += Field::NUMBER_OF_SLOTS) {
+    const Field field((InstanceClass*) klass, i, &fields);
+    if (match_field(&field)) {
       set_match_found();
-      handle_matching_method(&m JVM_CHECK);
+      handle_matching_field(&field);
     }
   }
 }
 
-void ROMMethodPatternMatcher::handle_matching_method(Method* m JVM_TRAPS) {
+void ROMFieldPatternMatcher::handle_matching_field(const Field* field) {
   // Do nothing
 }
-
-#endif // ENABLE_ROM_GENERATOR
+#endif // ENABLE_ROM_GENERATOR && ENABLE_MEMBER_HIDING

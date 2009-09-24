@@ -156,6 +156,14 @@ extern "C" {
   };
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
+#if ENABLE_MEMBER_HIDING
+  const unsigned short _rom_modified_class_index_base   = 0;
+  const unsigned short _rom_modified_class_index_size   = 0;
+  const short          _rom_modified_class_index[]      = {0};
+  const int            _rom_modified_class_attributes[] = {0};
+  const char           _rom_modified_class_bitmap[]     = {0};
+#endif // ENABLE_MEMBER_HIDING
+
   const int _ROM_LINKCHECK_HLE  = 0;
   const int _ROM_LINKCHECK_MFFL = 0;
   const int _ROM_LINKCHECK_MFFD = 0;

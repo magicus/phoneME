@@ -40,7 +40,7 @@ public:
   ReturnOop return_type_symbol();
 
   static bool skip_simple_identifier(Symbol* signature, int& position);
-  static bool is_class_identifier_quick(Symbol* signature);
+  static bool is_class_identifier_quick(const Symbol* signature);
   static bool skip_class_identifier(Symbol* signature, int& position);
 
   static BasicType parse_type(Symbol* signature, int& position);

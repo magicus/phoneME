@@ -41,19 +41,19 @@ ReturnOop Natives::get_native_function_name(Method *method JVM_TRAPS) {
 
   ObjArray methods = ic.methods();
   for (int i=0; i<methods.length(); i++) {
-    Method other_method = methods.obj_at(i);
+   const  Method::Raw other_method = methods.obj_at(i);
     if (other_method.is_null()) {
       // removed <clinit>
       continue;
     }
-    if (!other_method.is_native()) {
+    if (!other_method().is_native()) {
       continue;
     }
     if (method->equals(&other_method)) {
       continue;
     }
-    Symbol other_name = other_method.get_original_name(dummy);
-    if (method_name.matches(&other_name)) {
+    const Symbol::Raw other_name = other_method().get_original_name(dummy);
+    if (method_name.equals(&other_name)) {
       // Overloaded native method - need signature
       signature = method->signature();
       break;

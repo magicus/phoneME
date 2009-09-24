@@ -95,7 +95,7 @@ ReturnOop SystemDictionary::find_class_in_dictionary(ObjArray *dictionary,
         return cl;
       } 
     } else { 
-      GUARANTEE(!loader_ctx->class_name()->matches(&name), "symbols misuse!");
+      GUARANTEE(!loader_ctx->class_name()->equals(&name), "symbols misuse!");
       // no match found
       continue;
     }

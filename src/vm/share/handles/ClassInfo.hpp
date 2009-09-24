@@ -87,10 +87,8 @@ class ClassInfo: public Oop {
   //
   // Accessors to access flags
   //
-  AccessFlags access_flags() const { 
-    AccessFlags access_flags; 
-    jint flags = int_field(access_flags_offset());
-    access_flags.set_flags(flags);
+  const AccessFlags access_flags(void) const { 
+    const AccessFlags access_flags(int_field(access_flags_offset()));
     return access_flags; 
   }
 
@@ -236,7 +234,7 @@ class ClassInfo: public Oop {
   }
 
   // Returns the Method at index
-  ReturnOop vtable_method_at(int index) {
+  ReturnOop vtable_method_at(int index) const {
     return obj_field(vtable_offset_from_index(index));
   }
 
@@ -244,10 +242,10 @@ class ClassInfo: public Oop {
   // Interface dispatch table access
   //
 
-  int itable_offset_from_index(int index) {
+  int itable_offset_from_index(int index) const {
     int itable_start = vtable_offset_from_index(vtable_length());
     return itable_start
-         + (index *  (sizeof(int) + sizeof(int)));
+         + (index * (sizeof(int) + sizeof(int)));
   }
 
   // Returns the number of interfaces in the table
@@ -256,15 +254,15 @@ class ClassInfo: public Oop {
   }
 
   // Returns the class_id of the interface at index
-  int itable_interface_class_id_at(int index) {
+  int itable_interface_class_id_at(int index) const {
     return int_field(itable_offset_from_index(index));
   }
-  ReturnOop itable_interface_at(int index) {
+  ReturnOop itable_interface_at(int index) const {
     int class_id = int_field(itable_offset_from_index(index));
     return Universe::class_from_id(class_id);
   }
   // Returns the interface at index
-  int itable_offset_at(int index) {
+  int itable_offset_at(int index) const {
     return int_field(itable_offset_from_index(index) + sizeof(int));
   }
 

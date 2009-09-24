@@ -619,9 +619,9 @@ ReturnOop ClassFileParser::parse_fields(ConstantPool* cp,
   
   int field_index = 0;
   for (int n = 0; n < length; n++) {
-    AccessFlags access_flags;
-    jushort flags = get_u2(JVM_SINGLE_ARG_CHECK_0);
-    access_flags.set_flags(flags & JVM_RECOGNIZED_FIELD_MODIFIERS);
+    const jushort flags = get_u2(JVM_SINGLE_ARG_CHECK_0);
+    AccessFlags access_flags(flags & JVM_RECOGNIZED_FIELD_MODIFIERS);
+
     cpf_check_0(are_valid_field_access_flags(access_flags, class_access_flags),
             invalid_field_access_flags);
 
@@ -1551,11 +1551,10 @@ inline bool ClassFileParser::parse_class_0(ClassParserState *stack JVM_TRAPS) {
   state().set_cp(&cp);
 
   // Access flags
-  AccessFlags access_flags;
-  jint flags = get_u2(JVM_SINGLE_ARG_CHECK_0);
+  const jint flags = get_u2(JVM_SINGLE_ARG_CHECK_0);
   //preloaded flag might be already set!
   state().set_access_flags(state().access_flags() | flags);
-  access_flags.set_flags(flags & JVM_RECOGNIZED_CLASS_MODIFIERS);
+  AccessFlags access_flags(flags & JVM_RECOGNIZED_CLASS_MODIFIERS);
   if (access_flags.is_interface()) {
     cpf_check_0(access_flags.is_abstract() && !access_flags.is_final(), 
             bad_class_flags);
@@ -1568,13 +1567,13 @@ inline bool ClassFileParser::parse_class_0(ClassParserState *stack JVM_TRAPS) {
   InstanceClass::Fast super_class;
   bool super_class_resolved = true;
   int this_class_index = get_u2(JVM_SINGLE_ARG_CHECK_0);
-  Symbol::Fast class_name = cp().unresolved_klass_at(this_class_index 
-                                                     JVM_CHECK_0);
+  Symbol::Fast class_name =
+    cp().unresolved_klass_at(this_class_index JVM_CHECK_0);
   Symbol::Fast super_class_name;
 
   // Checks if name in class file matches requested name
   cpf_check_0(!class_name.is_null(), wrong_class_name);
-  if (!class_name().matches(name())) {
+  if (!class_name().equals(name())) {
     Throw::class_not_found(name(), ErrorOnFailure JVM_THROW_0);
   }
 
@@ -1777,9 +1776,8 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
 
   ConstantPool::Fast cp = state().cp();
   set_buffer_position(state().buffer_pos());
-  AccessFlags access_flags;
-  access_flags.set_flags(state().access_flags() & 
-                         (JVM_RECOGNIZED_CLASS_MODIFIERS | JVM_ACC_PRELOADED));
+  AccessFlags access_flags(state().access_flags() & 
+                           (JVM_RECOGNIZED_CLASS_MODIFIERS | JVM_ACC_PRELOADED));
 
   Symbol::Fast class_name = name();
   Symbol::Fast super_class_name;
@@ -2104,8 +2102,7 @@ void ClassFileParser::update_fields(ConstantPool* cp, TypeArray* fields,
         continue;
       }
       // Get flags
-      AccessFlags access_flags;
-      access_flags.set_flags(field[Field::ACCESS_FLAGS_OFFSET]);
+      AccessFlags access_flags(field[Field::ACCESS_FLAGS_OFFSET]);
       // Do we have the right "staticness"?
       if (access_flags.is_static() != is_static) {
         continue;
