@@ -715,8 +715,7 @@ javacall_result javacall_media_create_managed_player(
             pPlayer->mediaType        = JAVACALL_MEDIA_FORMAT_DEVICE_MIDI;
             pPlayer->mediaItfPtr      = &g_qsound_itf;
         }
-        else if( 0 == _wcsnicmp( locator, HTTP_PROTOCOL_PREFIX, 
-                                 min( wcslen( HTTP_PROTOCOL_PREFIX ), (size_t)locator_len ) ) )
+        else
         {
             pPlayer->mediaType   = fmt_guess_from_url( locator, locator_len );
             fmt = fmt_str2enum( pPlayer->mediaType );

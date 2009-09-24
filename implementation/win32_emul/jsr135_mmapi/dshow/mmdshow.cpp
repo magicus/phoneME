@@ -30,6 +30,7 @@
 
 #include "mm_qsound_audio.h"
 #include "mmdshow.h"
+#include "javacall_fileconnection.h"
 
 //=============================================================================
 
@@ -46,7 +47,7 @@ extern "C" {
 
 // ===========================================================================
 
-#define DEBUG_ONLY(x)
+#define DEBUG_ONLY(x) x
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -442,6 +443,60 @@ static void remove_from_qsound( dshow_player* p )
 
 //=============================================================================
 
+static BOOL is_uri_local_file(const javacall_utf16* URI, javacall_utf16 /*OUT*/ **ret_URI)
+{
+    static javacall_utf16 file_prefix[] = {'f','i','l','e',':','/','/','/'};
+    const int pref_len = sizeof file_prefix / sizeof file_prefix[0];
+    const int uri_len = wcslen((const wchar_t*)URI);
+    static javacall_utf16 root_name[MAX_PATH + 1];
+    static javacall_utf16 path[MAX_PATH];
+
+    char fileName[MAX_PATH];
+
+    if (URI == NULL)
+    {
+        return FALSE;
+    }
+
+    if (uri_len > pref_len && wcsncmp((const wchar_t*)URI, (const wchar_t*)file_prefix, pref_len) == 0)
+    {
+        const javacall_utf16 *s = URI + pref_len;
+        javacall_utf16 *p = root_name;
+        int root_len;
+
+        while (*s != '/' && (p - root_name) < MAX_PATH)
+        {
+            *p++ = *s++;
+        }
+
+        *p++ = '/';
+        *p = '\0';
+        root_len = p - root_name;
+
+        if (javacall_fileconnection_get_path_for_root(root_name, path, MAX_PATH) == JAVACALL_OK)
+        {
+            int path_len = wcslen((const wchar_t*)path);
+            int tail_len = uri_len - root_len - pref_len;
+            *ret_URI = p = new javacall_utf16[ path_len + tail_len + 1 ];
+
+            if (p == NULL)
+            {
+                JC_MM_DEBUG_ERROR_PRINT("no memory for local path");
+                return TRUE;
+            }
+
+            memcpy(p, path, path_len * sizeof (javacall_utf16));
+            p += path_len;
+            memcpy(p, URI + root_len + pref_len, tail_len * sizeof (javacall_utf16));
+            p += tail_len;
+            *p = '\0';
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const wchar_t* v )
 {
     return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
@@ -604,10 +659,28 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 
     DEBUG_ONLY( PRINTF( "*** creating dshow player... ***\n" ); )
 
-    p->is_managed = ( JC_FMT_AMR == p->mediaType ) &&
-                    ( NULL != outer_player->uri ) &&
-                    ( 0 == _wcsnicmp( (const wchar_t*)outer_player->uri, HTTP_PROTOCOL_PREFIX, 
-                                 min( wcslen( HTTP_PROTOCOL_PREFIX ), wcslen( (const wchar_t*)outer_player->uri ) ) ) );
+    p->is_managed = FALSE;
+
+    if( JC_FMT_AMR == p->mediaType && NULL != outer_player->uri )
+    {
+        if( 0 == _wcsnicmp( (const wchar_t*)outer_player->uri, HTTP_PROTOCOL_PREFIX, 
+                            min( wcslen( HTTP_PROTOCOL_PREFIX ), wcslen( (const wchar_t*)outer_player->uri ) ) ) )
+        {
+            p->is_managed = TRUE;
+        }
+        else
+        {
+            javacall_utf16_string local_uri;
+
+            p->is_managed = is_uri_local_file( outer_player->uri, &local_uri );
+
+            if( p->is_managed )
+            {
+                FREE( outer_player->uri );
+                outer_player->uri = local_uri;
+            }
+        }
+    }
 
     bool ok;
 
@@ -727,20 +800,26 @@ static void stop_thread( void* param )
     bool           ok = true;
     player::result r;
 
+    DEBUG_ONLY( PRINTF( "   >> stop...\n" ); )
+
     if( player::started == p->ppl->get_state() )
     {
+        DEBUG_ONLY( PRINTF( "   >> stop : stop...\n" ); )
         ok = ( player::result_success == ( r = p->ppl->stop() ) );
         if( ok ) p->playing = false;
     }
 
     if( ok && player::prefetched == p->ppl->get_state() )
     {
+        DEBUG_ONLY( PRINTF( "   >> stop : deallocate...\n" ); )
         ok = ( player::result_success == ( r = p->ppl->deallocate() ) );
     }
 
     assert( player::realized == p->ppl->get_state() );
 
     lcd_output_video_frame( NULL );
+
+    DEBUG_ONLY( PRINTF( "   >> stop : done.\n" ); )
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
                                      p->appId,
@@ -766,18 +845,24 @@ static void pause_thread( void* param )
     bool           ok = true;
     player::result r;
 
+    DEBUG_ONLY( PRINTF( "   >> pausing...\n" ); )
+
     if( player::started == p->ppl->get_state() )
     {
         p->get_media_time();
+        DEBUG_ONLY( PRINTF( "   >> pausing : stop...\n" ); )
         ok = ( player::result_success == ( r = p->ppl->stop() ) );
         if( ok ) p->playing = false;
     } 
     else if( player::realized == p->ppl->get_state() )
     {
+        DEBUG_ONLY( PRINTF( "   >> pausing : prefetch...\n" ); )
         ok = ( player::result_success == ( r = p->ppl->prefetch() ) );
     }
 
     assert( player::prefetched == p->ppl->get_state() );
+
+    DEBUG_ONLY( PRINTF( "   >> pausing : done.\n" ); )
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
                                      p->appId,
@@ -803,8 +888,11 @@ static void run_thread( void* param )
     bool           ok = true;
     player::result r;
 
+    DEBUG_ONLY( PRINTF( "   >> run...\n" ); )
+
     if( player::realized == p->ppl->get_state() )
     {
+        DEBUG_ONLY( PRINTF( "   >> run : prefetch...\n" ); )
         ok = ( player::result_success == ( r = p->ppl->prefetch() ) );
     }
 
@@ -812,11 +900,14 @@ static void run_thread( void* param )
     {
         p->eom_sent = false;
 
+        DEBUG_ONLY( PRINTF( "   >> run : start...\n" ); )
         ok = ( player::result_success == ( r = p->ppl->start() ) );
         if( ok ) p->playing = true;
     }
 
     assert( player::started == p->ppl->get_state() );
+
+    DEBUG_ONLY( PRINTF( "   >> run : done.\n" ); )
 
     javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
                                      p->appId,
