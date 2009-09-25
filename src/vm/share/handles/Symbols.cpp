@@ -36,7 +36,7 @@ int system_symbols[Symbols::_number_of_system_symbols];
 
 struct SymbolDefinition {
   const char* string;
-  const bool  is_signature;
+  bool  is_signature;
 };
 
 static const SymbolDefinition definitions[] = {
