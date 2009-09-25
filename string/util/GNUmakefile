@@ -1,7 +1,5 @@
 #
-#  
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -42,15 +40,10 @@ endif
 
 OBJS = $(OUTPUT_OBJ_DIR)/utf.o
 
-all: verify types $(OUTPUT_OBJ_DIR) $(OBJS)
-
-include $(PCSL_DIR)/makefiles/verify.gmk
+all: $(OBJS)
 
 $(OUTPUT_OBJ_DIR)/utf.o: utf.c
-	@$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
-
-$(OUTPUT_OBJ_DIR):
-	@mkdir -p $@
+	$(AT)$(CC) -I. -I.. -I$(OUTPUT_INC_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -62,7 +55,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify_for_clean
-	rm -rf $(OUTPUT_OBJ_DIR)/utf.o
+clean:
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/utf.o
 
-.PHONY: all clean donuts doc verify
+.PHONY: all clean

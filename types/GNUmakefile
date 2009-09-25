@@ -1,6 +1,5 @@
-#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -35,17 +34,16 @@ ifdef PCSL_PLATFORM
 include $(PCSL_DIR)/makefiles/top.gmk
 endif
 
-include $(PCSL_DIR)/makefiles/verify.gmk
-
 # What to build
 #
 
-all : verify $(OUTPUT_INC_DIR)
-	@cp -f $(TYPES_DIR)/java_types.h $(OUTPUT_INC_DIR)
-	@cp -f $(TYPES_MD_DIR)/java_types_md.h $(OUTPUT_INC_DIR)
+$(OUTPUT_INC_DIR)/java_types.h : $(TYPES_DIR)/java_types.h
+	$(AT)cp -f $< $@
 
-$(OUTPUT_INC_DIR):
-	@mkdir -p $@
+$(OUTPUT_INC_DIR)/java_types_md.h : $(TYPES_MD_DIR)/java_types_md.h
+	$(AT)cp -f $< $@
+
+all : $(OUTPUT_INC_DIR)/java_types.h $(OUTPUT_INC_DIR)/java_types_md.h
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -57,8 +55,8 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 
 # define ''clean' target
 
-clean: verify_for_clean
-	@rm -rf $(OUTPUT_INC_DIR)/java_types.h
-	@rm -rf $(OUTPUT_INC_DIR)/java_types_md.h
+clean:
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/java_types.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/java_types_md.h
 
-.PHONY : all doc clean donuts verify
+.PHONY : all clean

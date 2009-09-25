@@ -1,6 +1,5 @@
-#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -38,17 +37,17 @@ endif
 # What to build
 #
 
-all doc donuts : verify $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
+all doc donuts : $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
 	@echo "building memory port module..."
-	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
+	$(AT)$(MAKE) -C $(MEMORY_PORT_DIR) $@
 	@echo "building memory module..."
-	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(MEMORY_SELECT_DIR); $(MAKE) $@
 
 clean: verify_for_clean $(MEMORY_PORT_DIR) $(MEMORY_SELECT_DIR)
 	@echo "clean memory port module..."
-	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
+	$(AT)$(MAKE) -C $(MEMORY_PORT_DIR) $@
 	@echo "clean memory module..."
-	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
+	$(AT)cd $(MEMORY_SELECT_DIR); $(MAKE) $@
 
 include $(PCSL_DIR)/makefiles/verify.gmk
 

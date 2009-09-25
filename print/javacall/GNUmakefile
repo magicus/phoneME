@@ -1,6 +1,5 @@
 #
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -40,20 +39,16 @@ endif
 # define 'all' target and all dependencies
 # 'all' is the default target
 
-all: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) \
-    $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
-	@cp -f ../pcsl_print.h $(OUTPUT_INC_DIR)/
+all: $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
 
-include $(PCSL_DIR)/makefiles/verify.gmk
+$(OUTPUT_INC_DIR)/pcsl_print.h: ../pcsl_print.h
+	$(AT)cp -f $< $@
 
 $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT): $(OUTPUT_OBJ_DIR)/pcsl_print.o
-	@$(AR) $(AR_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $^)`
+	$(AT)$(AR) $(AR_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $^)`
 
-$(OUTPUT_OBJ_DIR)/pcsl_print.o: pcsl_print.c
-	@$(CC) $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath, $@)` $<
-
-$(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
+$(OUTPUT_OBJ_DIR)/pcsl_print.o: pcsl_print.c $(OUTPUT_INC_DIR)/pcsl_print.h
+	$(AT)$(CC) $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath, $@)` $<
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -72,21 +67,21 @@ DONUTS_LIBS += $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
 
 donuts: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_OBJ_DIR)/testPrint.o \
         $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
-	@cd $(DONUTS_DIR) ; $(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
+	$(AT)cd $(DONUTS_DIR) ; $(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
                              DONUTS_LIBS="$(DONUTS_LIBS)" all
 
 $(OUTPUT_OBJ_DIR)/testPrint.o: $(PRINT_DIR)/testPrint.c
-	@$(CC) -I$(DONUTS_DIR) -I$(PRINT_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
+	$(AT)$(CC) -I$(DONUTS_DIR) -I$(PRINT_DIR) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 # define ''clean' target
 
 clean: verify_for_clean
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_print.o
-	rm -rf $(OUTPUT_OBJ_DIR)/testPrint.o
-	rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
-	rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
-	rm -rf $(OUTPUT_INC_DIR)/porting_logging.h
-	rm -rf $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
-	rm -rf $(DOC_DIR)
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_print.o
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/testPrint.o
+	$(AT)rm -rf $(OUTPUT_BIN_DIR)/donuts$(EXE)
+	$(AT)rm -rf $(OUTPUT_GEN_DIR)/donuts_generated.c
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/porting_logging.h
+	$(AT)rm -rf $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT)
+	$(AT)rm -rf $(DOC_DIR)
 
 .PHONY: all clean donuts doc verify

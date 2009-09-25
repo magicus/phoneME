@@ -1,6 +1,5 @@
-#  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -35,20 +34,20 @@ ifdef PCSL_PLATFORM
 include $(PCSL_DIR)/makefiles/top.gmk
 endif
 
-include $(PCSL_DIR)/makefiles/verify.gmk
-
 # What to build
 #
 
-all : verify $(OUTPUT_INC_DIR) $(OUTPUT_OBJ_DIR) $(OUTPUT_OBJ_DIR)/pcsl_memory_port.o
-	@cp -f $(MEMORY_PORT_DIR)/pcsl_memory_port.h $(OUTPUT_INC_DIR)
-	@cp -f $(MEMORY_PORT_SELECT_DIR)/pcsl_memory_port_impl.h $(OUTPUT_INC_DIR)
+all : $(OUTPUT_OBJ_DIR)/pcsl_memory_port.o
 
-$(OUTPUT_OBJ_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
+$(OUTPUT_INC_DIR)/pcsl_memory_port.h: $(dep_output_inc_dir) $(MEMORY_PORT_DIR)/pcsl_memory_port.h
+	$(AT)cp -f $< $@
 
-$(OUTPUT_OBJ_DIR)/pcsl_memory_port.o: $(MEMORY_PORT_SELECT_DIR)/pcsl_memory_port.c
-	@$(CC) -I. -I.. -I$(MEMORY_PORT_SELECT_DIR) -I$(OUTPUT_INC_DIR) \
+$(OUTPUT_INC_DIR)/pcsl_memory_port_impl.h: $(dep_output_inc_dir) $(MEMORY_PORT_SELECT_DIR)/pcsl_memory_port_impl.h
+	$(AT)cp -f $< $@
+
+$(OUTPUT_OBJ_DIR)/pcsl_memory_port.o: $(dep_output_obj_dir) $(MEMORY_PORT_SELECT_DIR)/pcsl_memory_port.c \
+    $(OUTPUT_INC_DIR)/pcsl_memory_port.h $(OUTPUT_INC_DIR)/pcsl_memory_port_impl.h
+	$(AT)$(CC) -I. -I.. -I$(MEMORY_PORT_SELECT_DIR) -I$(OUTPUT_INC_DIR) \
 		$(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
@@ -62,7 +61,7 @@ include $(PCSL_DIR)/makefiles/share/Docs.gmk
 # define ''clean' target
 
 clean: verify_for_clean
-	@rm -rf $(OUTPUT_INC_DIR)/pcsl_memory_port.h
-	@rm -rf $(OUTPUT_INC_DIR)/pcsl_memory_port_impl.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_memory_port.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/pcsl_memory_port_impl.h
 
 .PHONY : all doc clean donuts verify

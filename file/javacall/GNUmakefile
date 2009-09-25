@@ -1,6 +1,5 @@
 #
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -44,26 +43,24 @@ endif
 LIBNAME	=	$(OUTPUT_LIB_DIR)/libpcsl_file$(LIB_EXT)
 OBJS		= $(OUTPUT_OBJ_DIR)/pcsl_file.o \
                   $(OUTPUT_OBJ_DIR)/pcsl_dir.o
+INCS = $(OUTPUT_INC_DIR)/pcsl_file.h $(OUTPUT_INC_DIR)/pcsl_directory.h
 
-all: verify memory $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR) \
-     $(LIBNAME)
-	@cp -f ../pcsl_file.h $(OUTPUT_INC_DIR)
-	@cp -f ../pcsl_directory.h $(OUTPUT_INC_DIR)
-
-include $(PCSL_DIR)/makefiles/verify.gmk
+all: $(LIBNAME)
 
 $(LIBNAME): $(OBJS)
-	@$(AR) $(AR_OUTPUT)`$(call fixcygpath,$(LIBNAME))` `$(call fixcygpath, $^)`
+	$(AT)$(AR) $(AR_OUTPUT)`$(call fixcygpath,$(LIBNAME))` `$(call fixcygpath, $^)`
 
-$(OUTPUT_OBJ_DIR)/pcsl_file.o: pcsl_file.c
-	@$(CC) $(CFLAGS) -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
+$(OUTPUT_INC_DIR)/pcsl_file.h: ../pcsl_file.h
+	$(AT)cp -f $< $@
 
-$(OUTPUT_OBJ_DIR)/pcsl_dir.o: pcsl_dir.c
-	@$(CC) $(CFLAGS) -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
+$(OUTPUT_INC_DIR)/pcsl_directory.h: ../pcsl_directory.h
+	$(AT)cp -f $< $@
 
+$(OUTPUT_OBJ_DIR)/pcsl_file.o: pcsl_file.c $(INCS)
+	$(AT)$(CC) $(CFLAGS) -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
 
-$(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(OUTPUT_INC_DIR):
-	@mkdir -p $@
+$(OUTPUT_OBJ_DIR)/pcsl_dir.o: pcsl_dir.c $(INCS)
+	$(AT)$(CC) $(CFLAGS) -I.. -I`$(call fixcygpath,$(OUTPUT_INC_DIR))` $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
 
 # doc stuff. The 'doc' target is defined in Docs.gmk.
 # Just have to define DOXYGEN_INPUT_LIST and force
@@ -83,30 +80,30 @@ DONUTS_LIBS 	+= $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT) \
 									$(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT)
 
 donuts: verify $(OUTPUT_OBJ_DIR) $(OUTPUT_LIB_DIR) $(DONUTS_LIBS) $(DONUTS_OBJS)
-	@cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
+	$(AT)cd $(DONUTS_DIR);$(MAKE) DONUTS_FILES="$(DONUTS_FILES)" DONUTS_OBJS="$(DONUTS_OBJS)" \
                             DONUTS_LIBS="$(DONUTS_LIBS)" all
 
 $(OUTPUT_OBJ_DIR)/testFile.o: $(FILE_DIR)/testFile.c
-	@$(CC) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
+	$(AT)$(CC) $(CFLAGS) $(CC_OUTPUT)$@ `$(call fixcygpath, $<)`
 
 $(OUTPUT_LIB_DIR)/libpcsl_memory$(LIB_EXT) :
-	cd $(MEMORY_DIR) ; $(MAKE) all
+	$(AT)cd $(MEMORY_DIR) ; $(MAKE) all
 
 $(OUTPUT_LIB_DIR)/libpcsl_print$(LIB_EXT) :
-	cd $(PRINT_DIR) ; $(MAKE) all
+	$(AT)cd $(PRINT_DIR) ; $(MAKE) all
 
 $(OUTPUT_OBJ_DIR)/pcsl_util_UTF.o: $(UTIL_DIR)/pcsl_util_UTF.c
-	@$(CC) -I `$(call fixcygpath,$(MEMORY_SELECT_DIR))` -I `$(call fixcygpath, $(MEMORY_DIR))` -I../util \
+	$(AT)$(CC) -I `$(call fixcygpath,$(MEMORY_SELECT_DIR))` -I `$(call fixcygpath, $(MEMORY_DIR))` -I../util \
         $(CFLAGS) $(CC_OUTPUT)`$(call fixcygpath,$@)` `$(call fixcygpath, $<)`
 
 # define ''clean' target
 
 clean: verify_for_clean
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_file.o
-	rm -rf $(OUTPUT_OBJ_DIR)/pcsl_dir.o
-	rm -rf $(OUTPUT_INC_DIR)/porting_file.h
-	rm -rf $(OUTPUT_INC_DIR)/porting_dir.h
-	rm -rf $(OUTPUT_LIB_DIR)/libpcsl_file$(LIB_EXT)
-	rm -rf $(DOC_DIR)
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_file.o
+	$(AT)rm -rf $(OUTPUT_OBJ_DIR)/pcsl_dir.o
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/porting_file.h
+	$(AT)rm -rf $(OUTPUT_INC_DIR)/porting_dir.h
+	$(AT)rm -rf $(OUTPUT_LIB_DIR)/libpcsl_file$(LIB_EXT)
+	$(AT)rm -rf $(DOC_DIR)
 
 .PHONY: all clean donuts doc verify
