@@ -514,27 +514,30 @@ ROMOptimizer::validate_package_pattern( const char pattern[] JVM_TRAPS ) const {
     config_error("Restricted or hidden package name may not exceed 255 bytes");
   }
   if (ROMClassPatternMatcher::validate(pattern, pattern_length)) {
-    Symbol::Raw symbol =
-      SymbolTable::slashified_symbol_for((utf8)pattern JVM_NO_CHECK);
-    if (symbol.not_null()) {
-      const char* sym = symbol().utf8_data();
-      for (SystemClassStream st; st.has_next();) {
-        const InstanceClass::Raw klass = st.next();
-        const Symbol::Raw name = klass().original_name();
-        int name_length = name().strrchr('/');
-        if( name_length <= 0 ) {
-          name_length = name().length();
-        }
-        if (Universe::name_matches_pattern(name().utf8_data(), name_length,
-                                           sym, pattern_length)) {
-          return symbol.obj();
-        }
-      }
-    }
+    OopDesc* p = SymbolTable::slashified_symbol_for((utf8)pattern JVM_NO_CHECK);
+    return p;
   }
   return NULL;
 } 
 
+inline bool
+ROMOptimizer::validate_package_not_empty( const Symbol* package_name ) const {
+  const char* package = package_name->utf8_data();
+  const int package_length = package_name->length();
+  for (SystemClassStream st; st.has_next();) {
+    const InstanceClass::Raw klass = st.next();
+    const Symbol::Raw name = klass().original_name();
+    int name_length = name().strrchr('/');
+    if( name_length <= 0 ) {
+      name_length = name().length();
+    }
+    if (Universe::name_matches_pattern(name().utf8_data(), name_length,
+                                       package, package_length)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 class NativesMatcher: public ROMMethodPatternMatcher {
 private:
@@ -718,7 +721,9 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
     Symbol::Fast package = validate_package_pattern(value JVM_NO_CHECK);
     if (package.not_null() ) {
       // Hidden packages are also restricted.
-      add_package_to_list(hidden_packages(), &package JVM_CHECK);
+      if (validate_package_not_empty(&package)) {
+        add_package_to_list(hidden_packages(), &package JVM_CHECK);
+      }
       add_package_to_list(restricted_packages(), &package JVM_NO_CHECK);
     }
     return;

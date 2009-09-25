@@ -456,6 +456,7 @@ private:
   static void config_error( const char msg[] );
   bool validate_class_pattern( const char pattern[] ) const;
   ReturnOop validate_package_pattern( const char pattern[] JVM_TRAPS ) const;
+  bool validate_package_not_empty( const Symbol* package_name ) const;
   void process_config_line(char* config_line JVM_TRAPS);
   void include_config_file(const char* config_file JVM_TRAPS);
   static char parse_config(char* line, const char*& name, const char*& value);
