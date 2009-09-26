@@ -659,12 +659,13 @@ void InstanceClass::remove_clinit() {
     return;
   }
 
+#if 0
   if (is_interface()) {
     // IMPL_NOTE: itable calculations assumes that this->methods()
     // contains no NULL pointers
     return;
   }
-
+#endif
   ObjArray::Raw class_methods(methods());
   const int length = class_methods().length();
   for (int index = 0; index < length; index++) {
@@ -1118,16 +1119,30 @@ bool InstanceClass::compute_is_subtype_of(JavaClass* other_class) {
 
 #if ENABLE_MEMBER_HIDING
 int InstanceClass::method_count(void) const {
-  const ObjArray::Raw methods = this->methods();
-  int n = methods().length();
+  int n;
+  {
+    const ObjArray::Raw methods = this->methods();
+    const int methods_length = methods().length();
+    n = methods_length;
 
-  const jushort holder_id = class_id();
-  const ClassInfo::Raw info = class_info();
-  const int vtable_length = info().vtable_length();
-  for (int i = 0; i < vtable_length; i++) {
-    const Method::Raw method = info().vtable_method_at(i);
-    if (method.not_null() && method().holder_id() == holder_id) {
-      n++;
+    if (is_interface()) {
+      for (int i = 0; i < methods_length; i++) {
+        if (methods().obj_at(i) == NULL) {
+          n--;
+        }
+      }
+    }
+  }
+
+  {
+    const jushort holder_id = class_id();
+    const ClassInfo::Raw info = class_info();
+    const int vtable_length = info().vtable_length();
+    for (int i = 0; i < vtable_length; i++) {
+      const Method::Raw method = info().vtable_method_at(i);
+      if (method.not_null() && method().holder_id() == holder_id) {
+        n++;
+      }
     }
   }
   return n;
@@ -1135,14 +1150,18 @@ int InstanceClass::method_count(void) const {
 
 int InstanceClass::method_index(const Method* method) const {
   const OopDesc* p = method->obj();
-  int n;
+  int n = 0;
   {
     const ObjArray::Raw methods = this->methods();
     const int methods_length = methods().length();
 
-    for (n = 0; n < methods_length; n++) {
-      if (methods().obj_at(n) == p) {
+    for (int i = 0; i < methods_length; i++) {
+      const OopDesc* m = methods().obj_at(i);
+      if (m == p) {
         return n;
+      }
+      if (m) {
+        n++;
       }
     }
   }

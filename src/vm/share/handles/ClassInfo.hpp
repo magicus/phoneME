@@ -266,8 +266,11 @@ class ClassInfo: public Oop {
     return int_field(itable_offset_from_index(index) + sizeof(int));
   }
 
-  jint itable_size();
-  static jint itable_size(int nof_interfaces, int nof_methods);
+  jint itable_size(void) const;
+  static jint itable_size(const int nof_interfaces, const int nof_methods) {
+    return nof_interfaces * (sizeof(jint) + sizeof(int))
+         + nof_methods    * sizeof(jobject);
+  }
 
   void vtable_at_put(int index, Oop* value) {
     obj_field_put(vtable_offset_from_index(index), value);
@@ -332,4 +335,6 @@ class ClassInfo: public Oop {
 
   static void iterate_oopmaps(oopmaps_doer do_map, void* param);
 #endif
+
+private:
 };

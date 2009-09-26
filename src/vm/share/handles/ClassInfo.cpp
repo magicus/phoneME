@@ -31,19 +31,15 @@ int ClassInfo::itable_methods_offset() {
   return itable_offset_from_index(itable_length());
 }
 
-jint ClassInfo::itable_size() {
+jint ClassInfo::itable_size(void) const {
+  const int itable_length = this->itable_length();
   int nof_methods = 0;
-  for (int index = 0; index < itable_length(); index++) {
-    InstanceClass::Raw ic = itable_interface_at(index);
-    ObjArray::Raw methods = ic().methods();
+  for (int index = 0; index < itable_length; index++) {
+    const InstanceClass::Raw ic = itable_interface_at(index);
+    const ObjArray::Raw methods = ic().methods();
     nof_methods += methods().length();
   }
-  return itable_size(itable_length(), nof_methods);
-}
-
-jint ClassInfo::itable_size(int nof_interfaces, int nof_methods) {
-  return nof_interfaces * (sizeof(jint) + sizeof(int))
-       + nof_methods    * sizeof(jobject);
+  return itable_size(itable_length, nof_methods);
 }
 
 #if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS \

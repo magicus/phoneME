@@ -556,7 +556,8 @@ private:
   bool is_field_removable(InstanceClass *ic, int field_index, bool from_table);
   void compact_method_tables(JVM_SINGLE_ARG_TRAPS);
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
-  bool is_method_removable_from_table(Method *method);
+  bool is_method_removable_from_table(const InstanceClass* klass,
+                                      const Method* method);
   static bool is_member_reachable_by_apps(const jint package_flags, 
                                           const AccessFlags class_flags,
                                           const AccessFlags member_flags);
@@ -589,15 +590,6 @@ private:
   static bool is_special_method(const Method* method);
   void clean_vtables(InstanceClass* klass, Method* method, int vindex);
   void clean_itables(InstanceClass* klass, int iindex);
-  void remove_duplicated_objects(JVM_SINGLE_ARG_TRAPS);
-  void remove_duplicated_short_arrays(JVM_SINGLE_ARG_TRAPS);
-  void remove_duplicated_short_arrays(Method *method, void *param JVM_TRAPS);
-  void remove_duplicated_stackmaps(JVM_SINGLE_ARG_TRAPS);
-  void remove_duplicated_stackmaps(Method *method, void *param JVM_TRAPS);
-  void remove_redundant_stackmaps(JVM_SINGLE_ARG_TRAPS);
-  void remove_redundant_stackmaps(Method *method, void *param JVM_TRAPS);
-  void use_unique_object_at(Oop *owner, int offset, ROMLookupTable *table
-                            JVM_TRAPS);
 
 #if USE_REFLECTION
   void resolve_constant_pool(JVM_SINGLE_ARG_TRAPS);
@@ -612,6 +604,15 @@ private:
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR
+  void remove_duplicated_short_arrays(JVM_SINGLE_ARG_TRAPS);
+  void remove_duplicated_stackmaps(JVM_SINGLE_ARG_TRAPS);
+  void remove_duplicated_objects(JVM_SINGLE_ARG_TRAPS);
+  void remove_duplicated_short_arrays(Method *method, void *param JVM_TRAPS);
+  void remove_duplicated_stackmaps(Method *method, void *param JVM_TRAPS);
+  void remove_redundant_stackmaps(JVM_SINGLE_ARG_TRAPS);
+  void remove_redundant_stackmaps(Method *method, void *param JVM_TRAPS);
+  void use_unique_object_at(Oop *owner, int offset, ROMLookupTable *table
+                            JVM_TRAPS);
   void record_original_class_info(const InstanceClass* klass,
                                   Symbol* name) const;
   void record_original_method_info(const Method* method JVM_TRAPS) const;
@@ -621,41 +622,9 @@ private:
   static bool is_hidden_field (const InstanceClass* ic, const OopDesc* field);
   static bool is_hidden_method(const InstanceClass* ic, const Method* method);
 #endif // ENABLE_MEMBER_HIDING
-#endif // USE_SOURCE_IMAGE_GENERATOR
 
-  //SUBCLASS CACHE ZONE
-  enum {
-    NEXT = 0,
-    CLASS, 
-    SIZE
-  };
-  void initialize_subclasses_cache(JVM_SINGLE_ARG_TRAPS);
-  ReturnOop get_subclass_list(jushort klass_id);
-  //ENDOF SUBCLASS CACHE ZONE
 
-  enum {
-    UNRESTRICTED_PACKAGE = 0,
-    RESTRICTED_PACKAGE   = 1,
-    HIDDEN_PACKAGE       = 2
-  };
-
-  // used by ROMOptimizer::remove_unused_static_fields
-  enum {
-    DEAD_FIELD = 0x10000
-  };
-
-  jint get_package_flags(const InstanceClass* klass) const {
-    if( is_in_hidden_package(klass) ) {
-      return HIDDEN_PACKAGE;
-    }
-    if( is_in_restricted_package(klass) ) {
-      return RESTRICTED_PACKAGE;
-    }
-    return UNRESTRICTED_PACKAGE;
-  }
-
-  class MethodIterator : public ObjectHeapVisitor
-  {
+  class MethodIterator : public ObjectHeapVisitor {
     ROMOptimizer *_optimizer;
     int _mode;
     void *_param;
@@ -725,6 +694,38 @@ private:
       REMOVE_REDUNDANT_STACKMAPS     = 3
     };
   };
+#endif // USE_SOURCE_IMAGE_GENERATOR
+
+  //SUBCLASS CACHE ZONE
+  enum {
+    NEXT = 0,
+    CLASS, 
+    SIZE
+  };
+  void initialize_subclasses_cache(JVM_SINGLE_ARG_TRAPS);
+  ReturnOop get_subclass_list(jushort klass_id);
+  //ENDOF SUBCLASS CACHE ZONE
+
+  enum {
+    UNRESTRICTED_PACKAGE = 0,
+    RESTRICTED_PACKAGE   = 1,
+    HIDDEN_PACKAGE       = 2
+  };
+
+  // used by ROMOptimizer::remove_unused_static_fields
+  enum {
+    DEAD_FIELD = 0x10000
+  };
+
+  jint get_package_flags(const InstanceClass* klass) const {
+    if( is_in_hidden_package(klass) ) {
+      return HIDDEN_PACKAGE;
+    }
+    if( is_in_restricted_package(klass) ) {
+      return RESTRICTED_PACKAGE;
+    }
+    return UNRESTRICTED_PACKAGE;
+  }
 
   friend class MethodIterator;
   friend class ROMClassPatternMatcher;

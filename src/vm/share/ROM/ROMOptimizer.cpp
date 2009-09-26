@@ -276,13 +276,13 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
       break;
 
     case STATE_REMOVE_DUPLICATED_OBJECTS:
+#if USE_SOURCE_IMAGE_GENERATOR
       // Remove duplicated arrays and StackmapList's that have the exact 
       // same contents.
-      if (USE_SOURCE_IMAGE_GENERATOR) {
-        // Can't iterate through heap since objects may be owned by 
-        // different tasks
-        remove_duplicated_objects(JVM_SINGLE_ARG_CHECK);
-      }
+      // Can't iterate through heap since objects may be owned by 
+      // different tasks
+      remove_duplicated_objects(JVM_SINGLE_ARG_CHECK);
+#endif // USE_SOURCE_IMAGE_GENERATOR
       set_next_state();
       break;
 
@@ -1260,7 +1260,7 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
           // put nulls to method table and vtable if needed
           if (vindex > -1) {
             clean_vtables(&klass, &method, vindex);
-            ClassInfo::Raw ci = klass().class_info();
+            const ClassInfo::Raw ci = klass().class_info();
             if (ci().is_interface()) {
               clean_itables(&klass, vindex - JavaVTable::base_vtable_size());
             }
@@ -1976,19 +1976,56 @@ bool ROMOptimizer::is_field_removable(InstanceClass *ic, int field_index,
                                       flags);
 }
 
+bool ROMOptimizer::is_method_removable_from_table(const InstanceClass* klass,
+                                                  const Method* method) {
+#if ENABLE_JVMPI_PROFILE
+  // Should not remove the method from the method table. JVMPI interface need
+  // the method info.
+  return false;
+#endif
+  
+  if (method->is_native() && method->is_overloaded()) {
+    // See CR 4969018. If we remove it from the table ROMWriter
+    // will fail to generate an overloaded signature for the
+    // native "C" function that implements this method.
+    return false;
+  }
+  if (Symbols::unknown()->equals(method->name())) {
+    // Renamed methods are always safe to remove
+    return true;
+  }
+
+  if (method->vtable_index() >= 0) {
+    // This method is in the vtable, so it can be discovered by the second
+    // part of InstanceClass::lookup_method(). Remove it from the method
+    // table to save space.a
+    return true;
+  }
+
+  if (Symbols::unknown()->equals(klass->name()) && !is_special_method(method)) {
+    // This method can be accessed only by romized classes, but romized
+    // classes are already fully resolved, so this method will never
+    // be looked up by name again.
+    return true;
+  } 
+
+  return false;
+}
+
 inline int ROMOptimizer::compact_method_table(InstanceClass *klass JVM_TRAPS) {
   UsingFastOops fast_oops;
-  ObjArray::Fast old_methods = klass->methods();
-  int num_old_methods = old_methods().length();
+  const ObjArray::Fast old_methods = klass->methods();
+  const int num_old_methods = old_methods().length();
 
   int num_removed_methods = 0;
-  int i;
 
   // (1) Determine how many method entries can be removed.
-  for( i = 0; i < num_old_methods; i++ ) {
-    Method::Raw m = old_methods().obj_at(i);
-    if( m.is_null() || is_method_removable_from_table(&m) ) {
-      num_removed_methods ++;
+  {
+    for( int i = 0; i < num_old_methods; i++ ) {
+      const Method::Raw m = old_methods().obj_at(i);
+      if( m.is_null() || is_method_removable_from_table(klass, &m) ) {
+        num_removed_methods ++;
+      }
     }
   }
 
@@ -2004,17 +2041,18 @@ inline int ROMOptimizer::compact_method_table(InstanceClass *klass JVM_TRAPS) {
   // (2) Allocate a new method table and replace klass->methods();
   const int num_new_methods = num_old_methods - num_removed_methods;
   ObjArray::Raw new_methods =
-      Universe::new_obj_array(num_new_methods JVM_CHECK_0);
-
-  int num_methods_added = 0;
-  for( i = 0; i < num_old_methods; i++ ) {
-    Method::Raw m = old_methods().obj_at(i);
-    if( m.not_null() && !is_method_removable_from_table(&m) ) {
-      new_methods().obj_at_put(num_methods_added, &m);
-      num_methods_added ++;
+      Universe::new_obj_array(num_new_methods JVM_OZCHECK_0(new_methods));
+  {
+    int num_methods_added = 0;
+    for( int i = 0; i < num_old_methods; i++ ) {
+      const Method::Raw m = old_methods().obj_at(i);
+      if( m.not_null() && !is_method_removable_from_table(klass, &m) ) {
+        new_methods().obj_at_put(num_methods_added, &m);
+        num_methods_added ++;
+      }
     }
+    GUARANTEE(num_methods_added == num_new_methods, "sanity");
   }
-  GUARANTEE(num_methods_added == num_new_methods, "sanity");
 
   klass->set_methods(&new_methods);
   return num_removed_methods;
@@ -2038,15 +2076,12 @@ void ROMOptimizer::compact_method_tables(JVM_SINGLE_ARG_TRAPS) {
   InstanceClass::Fast klass;
   for (SystemClassStream st; st.has_next();) {
     klass = st.next();
-    if (klass().is_interface()) {
-      // Can't remove *any* method entries from an interface's method table --
-      // even a NULL-ed out <clinit>.
-      // See InstanceClass::lookup_method_in_all_interfaces(),
-      // and InstanceClass::interface_method_at().
-      continue;
+    // IMPL_NOTE: Method tables of interfaces are not easy to compact:
+    // itable size of a class depends on methods sizes of implemented interfaces
+    // See ClassInfo::itable_size, JavaITable::compute_interface_size
+    if (!klass().is_interface()) {
+      total_removed += compact_method_table(&klass JVM_CHECK);
     }
-
-    total_removed += compact_method_table(&klass JVM_CHECK);
   }
 
 #if USE_ROM_LOGGING
@@ -2054,44 +2089,6 @@ void ROMOptimizer::compact_method_tables(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->print_cr("\tTotal removed method table entries(s) = %d "
                         "(%d bytes)", total_removed, total_removed*4);
 #endif
-}
-
-bool ROMOptimizer::is_method_removable_from_table(Method *method) {
-#if ENABLE_JVMPI_PROFILE
-  // Should not remove the method from the method table. JVMPI interface need
-  // the method info.
-  return false;
-#endif
-  
-  if (method->is_native() && method->is_overloaded()) {
-    // See CR 4969018. If we remove it from the table ROMWriter
-    // will fail to generate an overloaded signature for the
-    // native "C" function that implements this method.
-    return false;
-  }
-  Symbol::Raw method_name = method->name();
-  if (method_name.equals(Symbols::unknown())) {
-    // Renamed methods are always safe to remove
-    return true;
-  }
-
-  if (method->vtable_index() >= 0) {
-    // This method is in the vtable, so it can be discovered by the second
-    // part of InstanceClass::lookup_method(). Remove it from the method
-    // table to save space.a
-    return true;
-  }
-
-  InstanceClass::Raw klass = method->holder();
-  Symbol::Raw class_name = klass().name();
-  if (class_name.equals(Symbols::unknown()) && !is_special_method(method)) {
-    // This method can be accessed only by romized classes, but romized
-    // classes are already fully resolved, so this method will never
-    // be looked up by name again.
-    return true;
-  } 
-
-  return false;
 }
 
 void ROMOptimizer::remove_unused_symbols(JVM_SINGLE_ARG_TRAPS) {
@@ -2311,53 +2308,8 @@ ReturnOop ROMOptimizer::get_live_symbols(JVM_SINGLE_ARG_TRAPS) {
     }
   }
 
-#if 0  // IMPL_NOTE: why are we scanning symbols that belong to another task!
-#if ENABLE_ISOLATES
-  TaskList::Raw task_list = Universe::task_list();
-  int len = task_list().length();
-  int idx;
-  for (idx = Task::FIRST_TASK; idx < len; idx++) {
-    if (idx == TaskContext::current_task_id()) {
-      continue; //we have already added such symbols
-    }    
-    Task::Raw processed_task = task_list().obj_at(idx);
-    if (processed_task.is_null()) {
-      continue;
-    }    
-    ObjArray::Raw class_list = processed_task().class_list();
-    for (int class_id = ROM::number_of_system_classes(); 
-         class_id < class_list().length(); class_id++) {
-      JavaClass::Raw klass = class_list().obj_at(class_id);
-      if (klass().not_null()) {
-        scan_all_symbols_in_class(&live_symbols, &klass);
-      }
-    }
-  }    
-#endif
-#endif
-
   return live_symbols;
 }
-
-#if ENABLE_ISOLATES && 0
-// No need for this anymore: app-defined symbols are not shared across
-// isolates.
-void ROMOptimizer::scan_all_symbols_in_class(ObjArray *live_symbols,
-                                              JavaClass *klass) {
-  ClassInfo::Raw class_info = klass->class_info();
-  record_live_symbol(live_symbols, class_info().name());  
-  if (klass->is_instance_class()) {    
-    InstanceClass::Raw ic = klass->obj();
-    ConstantPool::Raw cp = ic().constants();    
-    for (int i = 0; i < cp().length(); i++) {
-      const unsigned char tag_value = cp().tag_value_at(i);            
-      if (tag_value == JVM_CONSTANT_Utf8) {
-        record_live_symbol(live_symbols, cp().symbol_at(i));
-      }
-    }
-  }
-}
-#endif
 
 inline void ROMOptimizer::scan_live_symbols_in_fields(ObjArray *live_symbols,
                                                       InstanceClass *klass) {
@@ -2686,291 +2638,6 @@ bool ROMOptimizer::is_special_method(const Method* method) {
   }
 #endif
   return false;
-}
-
-class ROMUniqueObjectTable: public ROMLookupTable {
-public:
-  HANDLE_DEFINITION(ROMUniqueObjectTable, ROMLookupTable);
-
-  void initialize(int num_buckets, int num_attributes JVM_TRAPS) {
-    ROMLookupTable::initialize(num_buckets, num_attributes JVM_CHECK);
-    set_hashcode_func((hashcode_func_type)&ROMUniqueObjectTable::_hashcode);
-    set_equals_func(  (equals_func_type)  &ROMUniqueObjectTable::_equals);
-  }
-
-  juint _hashcode(Oop *oop) {
-    if (oop->is_short_array()) {
-      TypeArray::Raw array = oop->obj();
-      return hashcode_for_short_array(&array);
-    }
-    else if (oop->is_stackmap_list()) {
-      StackmapList::Raw entry = oop->obj();
-      juint hashcode = 0;
-      juint n;
-      for (int i=0; i<entry().entry_count(); i++) {
-        if (entry().is_short_map(i)) {
-          n = entry().uint_field(StackmapList::entry_stat_offset(i));
-        } else {
-          TypeArray::Raw long_map = entry().get_long_map(i);
-          n = hashcode_for_short_array(&long_map);
-        }
-        hashcode *= 37;
-        hashcode += n;
-      }
-    }
-
-    return 0;
-  }
-
-  bool _equals(Oop *oop1, Oop *oop2) {
-    if (oop1->obj() == oop2->obj()) {
-      return true;
-    }
-
-    if (oop1->is_short_array() && oop2->is_short_array()) {
-      TypeArray::Raw array1 = oop1->obj();
-      TypeArray::Raw array2 = oop2->obj();
-
-      return short_arrays_equal(&array1, &array2);
-    }
-    else if (oop1->is_stackmap_list() && oop2->is_stackmap_list()) {
-      StackmapList::Raw entry1 = oop1->obj();
-      StackmapList::Raw entry2 = oop2->obj();
-
-      if (entry1().entry_count() != entry2().entry_count()) {
-        return false;
-      }
-      int count = entry1().entry_count();
-      for (int i=0; i<count; i++) {
-        if (entry1().is_short_map(i) != entry2().is_short_map(i)) {
-          return false;
-        }
-        if (entry1().is_short_map(i)) {
-          juint n1 = entry1().uint_field(StackmapList::entry_stat_offset(i));
-          juint n2 = entry2().uint_field(StackmapList::entry_stat_offset(i));
-          if (n1 != n2) {
-            return false;
-          }
-        } else {
-          TypeArray::Raw long_map1 = entry1().get_long_map(i);
-          TypeArray::Raw long_map2 = entry2().get_long_map(i);
-
-          if (!short_arrays_equal(&long_map1, &long_map2)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-
-    return false;
-  } 
-
-private:
-  static juint hashcode_for_short_array(TypeArray *array) {
-    juint hashcode = 0;
-    for (int i=0; i<array->length(); i++) {
-      jushort s = array->short_at(i);
-      hashcode *= 37;
-      hashcode += (juint)s;
-    }
-    return hashcode;
-  }
-
-  static bool short_arrays_equal(TypeArray *array1, TypeArray *array2) {
-    if (array1->length() != array2->length()) {
-      return false;
-    }
-    int len = array1->length();
-    for (int i=0; i<len; i++) {
-      jshort s1 = array1->short_at(i);
-      jshort s2 = array2->short_at(i);
-      if (s1 != s2) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-};
-
-void ROMOptimizer::remove_duplicated_objects(JVM_SINGLE_ARG_TRAPS) {
-  remove_duplicated_short_arrays(JVM_SINGLE_ARG_CHECK);
-  remove_duplicated_stackmaps(JVM_SINGLE_ARG_CHECK);
-}
-
-void ROMOptimizer::use_unique_object_at(Oop *owner, int offset, 
-                                        ROMLookupTable *table JVM_TRAPS)
-{
-  UsingFastOops fast_oops;
-  Oop::Fast key = owner->obj_field(offset);
-  if (key.is_null() || ROMWriter::write_by_reference(key)) {
-    return; // nothing to do
-  }
-
-  if (!table->exists(&key)) {
-    table->put(&key, &key JVM_CHECK);
-  } else {
-    Oop::Raw uniq = table->get(&key);
-    GUARANTEE(uniq.not_null(), "sanity");
-    owner->obj_field_put(offset, &uniq);
-  }
-}
-
-void ROMOptimizer::remove_duplicated_short_arrays(JVM_SINGLE_ARG_TRAPS) {
-  ROMUniqueObjectTable table;
-  table.initialize(128, 1 JVM_CHECK);
-  table.put(empty_short_array(), empty_short_array() JVM_CHECK);
-
-  for (SystemClassStream st; st.has_next();) {
-    UsingFastOops fast_oops;
-    InstanceClass::Fast klass = st.next();
-    ClassInfo::Fast info = klass().class_info();
-
-    // Make ClassInfo::local_interfaces unique
-    use_unique_object_at(&info, ClassInfo::local_interfaces_offset(), &table
-                         JVM_CHECK);
-
-    ObjArray::Fast methods = klass().methods();
-
-    if (methods.is_null() || methods().length() == 0) {
-      klass().set_methods(empty_obj_array());
-    }
-  }
-  
-  MethodIterator method_iterator(this);
-  method_iterator.iterate(MethodIterator::REMOVE_DUPLICATED_SHORT_ARRAYS,
-                          &table JVM_CHECK);
-}
-
-void ROMOptimizer::remove_duplicated_short_arrays(Method *method, void *param
-                                                  JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  StackmapList::Fast maps;
-  ROMUniqueObjectTable *table = (ROMUniqueObjectTable*)param;
-
-  // (1) Make Method::exception_table unique
-  use_unique_object_at(method, Method::exception_table_offset(), table JVM_CHECK);
-
-#if USE_REFLECTION
-  // IMPL_NOTE: Shall we do that?? ConstantPoolRewriter may rewrite these arrays
-  // use_unique_object_at(method, Method::thrown_exceptions_offset(), table JVM_CHECK);
-#endif
-
-  // (2) Make long maps in StackmapList unique
-  maps = method->stackmaps();
-  if (maps.not_null()) {
-    for (int i=0; i<maps().entry_count(); i++) {
-      if (!maps().is_short_map(i)) {
-        int offset = StackmapList::entry_stat_offset(i);
-        use_unique_object_at(&maps, offset, table JVM_CHECK);
-      }
-    }
-  }
-}
-
-// Remove long entries in StackmapLists that are duplicated -- bit-by-bit the
-// same as another entry, which may be in the same StackmapList or another
-// StackmapList.
-void ROMOptimizer::remove_duplicated_stackmaps(JVM_SINGLE_ARG_TRAPS) {
-  ROMUniqueObjectTable table;
-  table.initialize(128, 1 JVM_CHECK);
-
-  MethodIterator method_iterator(this);
-  method_iterator.iterate(MethodIterator::REMOVE_DUPLICATED_STACKMAPS,
-                          &table JVM_CHECK);
-}
-
-void ROMOptimizer::remove_duplicated_stackmaps(Method *method, void *param
-                                               JVM_TRAPS)
-{
-  ROMUniqueObjectTable *table = (ROMUniqueObjectTable*)param;
-  use_unique_object_at(method, Method::stackmaps_offset(), table JVM_CHECK);
-}
-
-// Remove (long or short) entries in StackmapLists that are redundant --
-// i.e., if the entry may be computed via abstract interpretation.
-void ROMOptimizer::remove_redundant_stackmaps(JVM_SINGLE_ARG_TRAPS) {
-  _redundant_stackmap_count = 0;
-  _redundant_stackmap_bytes = 0;
-
-  MethodIterator method_iterator(this);
-  method_iterator.iterate(MethodIterator::REMOVE_REDUNDANT_STACKMAPS,
-                          NULL JVM_CHECK);
-
-#if USE_ROM_LOGGING
-  _log_stream->print_cr("Redundant maps removed = %d (%d bytes)",
-                _redundant_stackmap_count,
-                _redundant_stackmap_bytes);
-#endif
-}
-
-void ROMOptimizer::remove_redundant_stackmaps(Method *method, void* /*dummy*/
-                                              JVM_TRAPS)
-{
-  UsingFastOops fast_oops;
-  StackmapList::Fast old_maps = method->stackmaps();
-  StackmapList::Fast new_maps;
-  TypeArray::Fast long_map;
- 
-  int num_to_copy = 0;
-  int num_copied = 0;
-
-  if (old_maps.is_null()) {
-    return;
-  }
-
-  for (int pass=0; pass<2; pass++) {
-    int count = old_maps().entry_count();
-    for (int i=0; i<count; i++) {
-      bool redundant = StackmapChecker::is_redundant(method, i JVM_CHECK);
-      if (redundant) {
-        if (pass == 0) {
-          // Do some accounting here
-          _redundant_stackmap_count ++;
-          if (old_maps().is_short_map(i)) {
-            _redundant_stackmap_bytes += sizeof(juint);
-          } else {
-            long_map = old_maps().get_long_map(i);
-            _redundant_stackmap_bytes += long_map().object_size() - 4;
-          }
-        }
-      } else {
-        if (pass == 0) {
-          num_to_copy ++;
-        } else {
-          // Copy the old map entry to new_maps.
-          int src = i;
-          int dst = num_copied;
-
-          if (old_maps().is_short_map(src)) {
-            juint val;
-            val  = old_maps().uint_field(old_maps().entry_stat_offset(src));
-            new_maps().uint_field_put(new_maps().entry_stat_offset(dst), val);
-          } else {
-            long_map = old_maps().get_long_map(src);
-            new_maps().set_long_map(dst, &long_map);
-          }
-          num_copied ++;
-        }
-      }
-    }
-
-    if (pass == 0) {
-      if (count == num_to_copy) {
-        // no redundant copies found. No need to copy
-        return;
-      } else if (num_to_copy == 0) {
-        // This method doesn't need stackmaps. Everything can be computed.
-        method->clear_stackmaps();
-        return;
-      } else {
-        new_maps = Universe::new_stackmap_list(num_to_copy JVM_CHECK);
-      }
-    } else {
-      method->set_stackmaps(&new_maps);
-    }
-  }
 }
 
 #if USE_REFLECTION

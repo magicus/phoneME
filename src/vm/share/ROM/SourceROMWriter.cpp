@@ -1745,16 +1745,18 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
 
           for (int i = 0; i < methods_length; i++) {
             const Method::Raw method = methods().obj_at(i);
-            if (is_hidden_method(&klass, &method)) {
-              main_stream()->print("      ");
-              Symbol::Raw name = method().name();
-              name().print_symbol_on(main_stream());
-              main_stream()->cr();
+            if (method.not_null()) {
+              if (is_hidden_method(&klass, &method)) {
+                main_stream()->print("      ");
+                Symbol::Raw name = method().name();
+                name().print_symbol_on(main_stream());
+                main_stream()->cr();
 
-              bitmap[bit_count >> LogBitsPerByte] |=
-               1 << (bit_count & (BitsPerByte-1));
+                bitmap[bit_count >> LogBitsPerByte] |=
+                 1 << (bit_count & (BitsPerByte-1));
+              }
+              bit_count++;
             }
-            bit_count++;
           }
         }
         { // Virtual methods next

@@ -1919,6 +1919,290 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
+class ROMUniqueObjectTable: public ROMLookupTable {
+public:
+  HANDLE_DEFINITION(ROMUniqueObjectTable, ROMLookupTable);
+
+  void initialize(int num_buckets, int num_attributes JVM_TRAPS) {
+    ROMLookupTable::initialize(num_buckets, num_attributes JVM_CHECK);
+    set_hashcode_func((hashcode_func_type)&ROMUniqueObjectTable::_hashcode);
+    set_equals_func(  (equals_func_type)  &ROMUniqueObjectTable::_equals);
+  }
+
+  juint _hashcode(Oop *oop) {
+    if (oop->is_short_array()) {
+      TypeArray::Raw array = oop->obj();
+      return hashcode_for_short_array(&array);
+    }
+    else if (oop->is_stackmap_list()) {
+      StackmapList::Raw entry = oop->obj();
+      juint hashcode = 0;
+      juint n;
+      for (int i=0; i<entry().entry_count(); i++) {
+        if (entry().is_short_map(i)) {
+          n = entry().uint_field(StackmapList::entry_stat_offset(i));
+        } else {
+          TypeArray::Raw long_map = entry().get_long_map(i);
+          n = hashcode_for_short_array(&long_map);
+        }
+        hashcode *= 37;
+        hashcode += n;
+      }
+    }
+
+    return 0;
+  }
+
+  bool _equals(Oop *oop1, Oop *oop2) {
+    if (oop1->obj() == oop2->obj()) {
+      return true;
+    }
+
+    if (oop1->is_short_array() && oop2->is_short_array()) {
+      TypeArray::Raw array1 = oop1->obj();
+      TypeArray::Raw array2 = oop2->obj();
+
+      return short_arrays_equal(&array1, &array2);
+    }
+    else if (oop1->is_stackmap_list() && oop2->is_stackmap_list()) {
+      StackmapList::Raw entry1 = oop1->obj();
+      StackmapList::Raw entry2 = oop2->obj();
+
+      if (entry1().entry_count() != entry2().entry_count()) {
+        return false;
+      }
+      int count = entry1().entry_count();
+      for (int i=0; i<count; i++) {
+        if (entry1().is_short_map(i) != entry2().is_short_map(i)) {
+          return false;
+        }
+        if (entry1().is_short_map(i)) {
+          juint n1 = entry1().uint_field(StackmapList::entry_stat_offset(i));
+          juint n2 = entry2().uint_field(StackmapList::entry_stat_offset(i));
+          if (n1 != n2) {
+            return false;
+          }
+        } else {
+          TypeArray::Raw long_map1 = entry1().get_long_map(i);
+          TypeArray::Raw long_map2 = entry2().get_long_map(i);
+
+          if (!short_arrays_equal(&long_map1, &long_map2)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    return false;
+  } 
+
+private:
+  static juint hashcode_for_short_array(TypeArray *array) {
+    juint hashcode = 0;
+    for (int i=0; i<array->length(); i++) {
+      jushort s = array->short_at(i);
+      hashcode *= 37;
+      hashcode += (juint)s;
+    }
+    return hashcode;
+  }
+
+  static bool short_arrays_equal(TypeArray *array1, TypeArray *array2) {
+    if (array1->length() != array2->length()) {
+      return false;
+    }
+    int len = array1->length();
+    for (int i=0; i<len; i++) {
+      jshort s1 = array1->short_at(i);
+      jshort s2 = array2->short_at(i);
+      if (s1 != s2) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+void ROMOptimizer::use_unique_object_at(Oop *owner, int offset, 
+                                        ROMLookupTable *table JVM_TRAPS)
+{
+  UsingFastOops fast_oops;
+  Oop::Fast key = owner->obj_field(offset);
+  if (key.is_null() || ROMWriter::write_by_reference(key)) {
+    return; // nothing to do
+  }
+
+  if (!table->exists(&key)) {
+    table->put(&key, &key JVM_CHECK);
+  } else {
+    Oop::Raw uniq = table->get(&key);
+    GUARANTEE(uniq.not_null(), "sanity");
+    owner->obj_field_put(offset, &uniq);
+  }
+}
+
+void ROMOptimizer::remove_duplicated_short_arrays(Method *method, void *param
+                                                  JVM_TRAPS) {
+  UsingFastOops fast_oops;
+  StackmapList::Fast maps;
+  ROMUniqueObjectTable *table = (ROMUniqueObjectTable*)param;
+
+  // (1) Make Method::exception_table unique
+  use_unique_object_at(method, Method::exception_table_offset(), table JVM_CHECK);
+
+#if USE_REFLECTION
+  // IMPL_NOTE: Shall we do that?? ConstantPoolRewriter may rewrite these arrays
+  // use_unique_object_at(method, Method::thrown_exceptions_offset(), table JVM_CHECK);
+#endif
+
+  // (2) Make long maps in StackmapList unique
+  maps = method->stackmaps();
+  if (maps.not_null()) {
+    for (int i=0; i<maps().entry_count(); i++) {
+      if (!maps().is_short_map(i)) {
+        int offset = StackmapList::entry_stat_offset(i);
+        use_unique_object_at(&maps, offset, table JVM_CHECK);
+      }
+    }
+  }
+}
+
+void ROMOptimizer::remove_duplicated_stackmaps(Method *method, void *param
+                                               JVM_TRAPS)
+{
+  ROMUniqueObjectTable *table = (ROMUniqueObjectTable*)param;
+  use_unique_object_at(method, Method::stackmaps_offset(), table JVM_CHECK);
+}
+
+void ROMOptimizer::remove_redundant_stackmaps(Method *method, void* /*dummy*/
+                                              JVM_TRAPS)
+{
+  UsingFastOops fast_oops;
+  StackmapList::Fast old_maps = method->stackmaps();
+  StackmapList::Fast new_maps;
+  TypeArray::Fast long_map;
+ 
+  int num_to_copy = 0;
+  int num_copied = 0;
+
+  if (old_maps.is_null()) {
+    return;
+  }
+
+  for (int pass=0; pass<2; pass++) {
+    int count = old_maps().entry_count();
+    for (int i=0; i<count; i++) {
+      bool redundant = StackmapChecker::is_redundant(method, i JVM_CHECK);
+      if (redundant) {
+        if (pass == 0) {
+          // Do some accounting here
+          _redundant_stackmap_count ++;
+          if (old_maps().is_short_map(i)) {
+            _redundant_stackmap_bytes += sizeof(juint);
+          } else {
+            long_map = old_maps().get_long_map(i);
+            _redundant_stackmap_bytes += long_map().object_size() - 4;
+          }
+        }
+      } else {
+        if (pass == 0) {
+          num_to_copy ++;
+        } else {
+          // Copy the old map entry to new_maps.
+          int src = i;
+          int dst = num_copied;
+
+          if (old_maps().is_short_map(src)) {
+            juint val;
+            val  = old_maps().uint_field(old_maps().entry_stat_offset(src));
+            new_maps().uint_field_put(new_maps().entry_stat_offset(dst), val);
+          } else {
+            long_map = old_maps().get_long_map(src);
+            new_maps().set_long_map(dst, &long_map);
+          }
+          num_copied ++;
+        }
+      }
+    }
+
+    if (pass == 0) {
+      if (count == num_to_copy) {
+        // no redundant copies found. No need to copy
+        return;
+      } else if (num_to_copy == 0) {
+        // This method doesn't need stackmaps. Everything can be computed.
+        method->clear_stackmaps();
+        return;
+      } else {
+        new_maps = Universe::new_stackmap_list(num_to_copy JVM_CHECK);
+      }
+    } else {
+      method->set_stackmaps(&new_maps);
+    }
+  }
+}
+
+inline void ROMOptimizer::remove_duplicated_short_arrays(JVM_SINGLE_ARG_TRAPS) {
+  ROMUniqueObjectTable table;
+  table.initialize(128, 1 JVM_CHECK);
+  table.put(empty_short_array(), empty_short_array() JVM_CHECK);
+
+  for (SystemClassStream st; st.has_next();) {
+    UsingFastOops fast_oops;
+    InstanceClass::Fast klass = st.next();
+    ClassInfo::Fast info = klass().class_info();
+
+    // Make ClassInfo::local_interfaces unique
+    use_unique_object_at(&info, ClassInfo::local_interfaces_offset(), &table
+                         JVM_CHECK);
+
+    ObjArray::Fast methods = klass().methods();
+
+    if (methods.is_null() || methods().length() == 0) {
+      klass().set_methods(empty_obj_array());
+    }
+  }
+  
+  MethodIterator method_iterator(this);
+  method_iterator.iterate(MethodIterator::REMOVE_DUPLICATED_SHORT_ARRAYS,
+                          &table JVM_CHECK);
+}
+
+// Remove long entries in StackmapLists that are duplicated -- bit-by-bit the
+// same as another entry, which may be in the same StackmapList or another
+// StackmapList.
+inline void ROMOptimizer::remove_duplicated_stackmaps(JVM_SINGLE_ARG_TRAPS) {
+  ROMUniqueObjectTable table;
+  table.initialize(128, 1 JVM_CHECK);
+
+  MethodIterator method_iterator(this);
+  method_iterator.iterate(MethodIterator::REMOVE_DUPLICATED_STACKMAPS,
+                          &table JVM_CHECK);
+}
+
+// Remove (long or short) entries in StackmapLists that are redundant --
+// i.e., if the entry may be computed via abstract interpretation.
+void ROMOptimizer::remove_redundant_stackmaps(JVM_SINGLE_ARG_TRAPS) {
+  _redundant_stackmap_count = 0;
+  _redundant_stackmap_bytes = 0;
+
+  MethodIterator method_iterator(this);
+  method_iterator.iterate(MethodIterator::REMOVE_REDUNDANT_STACKMAPS,
+                          NULL JVM_CHECK);
+
+#if USE_ROM_LOGGING
+  _log_stream->print_cr("Redundant maps removed = %d (%d bytes)",
+                _redundant_stackmap_count,
+                _redundant_stackmap_bytes);
+#endif
+}
+
+void ROMOptimizer::remove_duplicated_objects(JVM_SINGLE_ARG_TRAPS) {
+  remove_duplicated_short_arrays(JVM_SINGLE_ARG_CHECK);
+  remove_duplicated_stackmaps(JVM_SINGLE_ARG_CHECK);
+}
+
 void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
 #if USE_ROM_LOGGING
   ROMVector log_vector;
