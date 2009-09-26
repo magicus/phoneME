@@ -1624,7 +1624,7 @@ bool SourceROMWriter::has_hidden_methods (const InstanceClass* ic) {
 
     for (int i = 0; i < methods_length; i++) {
       const Method::Raw method = methods().obj_at(i);
-      if (is_hidden_method(ic, &method)) {
+      if (method.not_null() && is_hidden_method(ic, &method)) {
         return true;
       }
     }

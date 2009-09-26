@@ -720,10 +720,10 @@ void ROMOptimizer::process_config_line(char* s JVM_TRAPS) {
     UsingFastOops fast_oops;
     Symbol::Fast package = validate_package_pattern(value JVM_NO_CHECK);
     if (package.not_null() ) {
-      // Hidden packages are also restricted.
       if (validate_package_not_empty(&package)) {
         add_package_to_list(hidden_packages(), &package JVM_CHECK);
       }
+      // Hidden packages are also restricted
       add_package_to_list(restricted_packages(), &package JVM_NO_CHECK);
     }
     return;
@@ -1777,6 +1777,7 @@ bool
 ROMOptimizer::is_hidden_method(const InstanceClass* ic, const Method* method) {
   const Symbol::Raw class_name = ic->name();
   const Symbol::Raw method_name = method->name();
+
   const OopDesc* method_signature = method->signature();
 
   const ROMVector* class_patterns = hidden_method_classes();
