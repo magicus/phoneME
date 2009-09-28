@@ -132,10 +132,22 @@ static javacall_result recorder_destroy(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result recorder_stop(javacall_handle handle)
+static javacall_result recorder_prefetch(javacall_handle handle)
 {
     recorder* h = (recorder*)handle;
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
+                                     h->appId,
+                                     h->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
+
+    return JAVACALL_OK;
+}
+
+static javacall_result recorder_run(javacall_handle handle)
+{
+    recorder* h = (recorder*)handle;
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
@@ -156,10 +168,10 @@ static javacall_result recorder_pause(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result recorder_run(javacall_handle handle)
+static javacall_result recorder_deallocate(javacall_handle handle)
 {
     recorder* h = (recorder*)handle;
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
                                      h->appId,
                                      h->playerId, 
                                      JAVACALL_OK, 
@@ -394,9 +406,10 @@ static media_basic_interface _recorder_basic_itf = {
     recorder_destroy,
     NULL,
     NULL,
-    recorder_stop,
-    recorder_pause,
+    recorder_prefetch,
     recorder_run,
+    recorder_pause,
+    recorder_deallocate,
     NULL,
     NULL,
     NULL,

@@ -787,38 +787,65 @@ static javacall_result dshow_get_player_controls(javacall_handle handle,
 
 //=============================================================================
 
-static void stop_thread(void *param)
+static void prefetch_thread(void *param)
 {
     dshow_player *p = (dshow_player *)param;
     player::result r;
 
-    DEBUG_ONLY(PRINTF("   >> stop...\n");)
+    DEBUG_ONLY(PRINTF("   >> pause...\n");)
+    r = p->ppl->pause();
+    DEBUG_ONLY(PRINTF("   >> pause : done.\n");)
 
-    r = p->ppl->stop();
-    if(r == player::result_success)
-    {
-        p->playing = false;
-    }
-
-    lcd_output_video_frame( NULL );
-
-    DEBUG_ONLY(PRINTF("   >> stop : done.\n");)
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
                                      p->appId,
                                      p->playerId,
                                      r == player::result_success ? JAVACALL_OK : JAVACALL_FAIL,
                                      NULL);
 }
 
-static javacall_result dshow_stop(javacall_handle handle)
+static javacall_result dshow_prefetch(javacall_handle handle)
+{
+    dshow_player *p = (dshow_player *)handle;
+    int64 time;
+    DEBUG_ONLY(PRINTF("*** prefetch ***\n");)
+
+    _beginthread(prefetch_thread, 0, p);
+
+    return JAVACALL_OK;
+}
+
+static void run_thread(void *param)
+{
+    dshow_player *p = (dshow_player *)param;
+    player::result r;
+
+    DEBUG_ONLY(PRINTF("   >> run...\n");)
+
+    p->eom_sent = false;
+
+    r = p->ppl->run();
+    if(r == player::result_success)
+    {
+        p->playing = true;
+    }
+
+    DEBUG_ONLY(PRINTF("   >> run : done.\n");)
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+                                     p->appId,
+                                     p->playerId,
+                                     r == player::result_success ? JAVACALL_OK : JAVACALL_FAIL,
+                                     NULL);
+}
+
+static javacall_result dshow_run(javacall_handle handle)
 {
     dshow_player *p = (dshow_player *)handle;
     int64 time;
     player::result r = p->ppl->get_media_time(&time);
-    DEBUG_ONLY(PRINTF("*** stop, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
+    DEBUG_ONLY(PRINTF("*** run, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
 
-    _beginthread(stop_thread, 0, p);
+    _beginthread(run_thread, 0, p);
 
     return JAVACALL_OK;
 }
@@ -859,38 +886,31 @@ static javacall_result dshow_pause(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static void run_thread(void *param)
+static void deallocate_thread(void *param)
 {
     dshow_player *p = (dshow_player *)param;
     player::result r;
 
-    DEBUG_ONLY(PRINTF("   >> run...\n");)
+    DEBUG_ONLY(PRINTF("   >> stop...\n");)
+    r = p->ppl->stop();
+    lcd_output_video_frame( NULL );
+    DEBUG_ONLY(PRINTF("   >> stop : done.\n");)
 
-    p->eom_sent = false;
-
-    r = p->ppl->run();
-    if(r == player::result_success)
-    {
-        p->playing = true;
-    }
-
-    DEBUG_ONLY(PRINTF("   >> run : done.\n");)
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
                                      p->appId,
                                      p->playerId,
                                      r == player::result_success ? JAVACALL_OK : JAVACALL_FAIL,
                                      NULL);
 }
 
-static javacall_result dshow_run(javacall_handle handle)
+static javacall_result dshow_deallocate(javacall_handle handle)
 {
     dshow_player *p = (dshow_player *)handle;
     int64 time;
     player::result r = p->ppl->get_media_time(&time);
-    DEBUG_ONLY(PRINTF("*** run, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
+    DEBUG_ONLY(PRINTF("*** stop, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
 
-    _beginthread(run_thread, 0, p);
+    _beginthread(deallocate_thread, 0, p);
 
     return JAVACALL_OK;
 }
@@ -1283,9 +1303,10 @@ static media_basic_interface _dshow_basic_itf =
     dshow_get_format,
     dshow_get_player_controls,
 
-    dshow_stop,
-    dshow_pause,
+    dshow_prefetch,
     dshow_run,
+    dshow_pause,
+    dshow_deallocate,
 
     dshow_stream_length,
     dshow_get_data_request,

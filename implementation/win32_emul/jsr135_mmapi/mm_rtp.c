@@ -531,9 +531,10 @@ static media_basic_interface _rtp_basic_itf =
     NULL, //rtp_get_format,
     NULL, //rtp_get_player_controls,
 
-    NULL, //rtp_stop,
-    NULL, //rtp_pause,
+    NULL, //rtp_prefetch,
     NULL, //rtp_run,
+    NULL, //rtp_pause,
+    NULL, //rtp_deallocate,
 
     NULL,
     NULL,

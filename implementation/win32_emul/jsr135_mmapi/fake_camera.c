@@ -237,14 +237,28 @@ static void fake_camera_do_stop(fake_camera* c)
 
 //=============================================================================
 
-static javacall_result fake_camera_stop(javacall_handle handle)
+static javacall_result fake_camera_prefetch(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    DEBUG_ONLY( PRINTF( "*** fake_camera_stop ***\n" ); )
+    DEBUG_ONLY( PRINTF( "*** fake_camera_prefetch ***\n" ); )
 
-    if( c->playing ) fake_camera_do_stop( c );
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
+                                     c->appId,
+                                     c->playerId, 
+                                     JAVACALL_OK, 
+                                     NULL );
 
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_STOP_FINISHED,
+    return JAVACALL_OK;
+}
+
+static javacall_result fake_camera_run(javacall_handle handle)
+{
+    fake_camera* c = (fake_camera*)handle;
+    DEBUG_ONLY( PRINTF( "*** fake_camera_run ***\n" ); )
+
+    if( !c->playing ) fake_camera_do_start( c );
+
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
@@ -269,14 +283,12 @@ static javacall_result fake_camera_pause(javacall_handle handle)
     return JAVACALL_OK;
 }
 
-static javacall_result fake_camera_run(javacall_handle handle)
+static javacall_result fake_camera_deallocate(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
-    DEBUG_ONLY( PRINTF( "*** fake_camera_run ***\n" ); )
+    DEBUG_ONLY( PRINTF( "*** fake_camera_deallocate ***\n" ); )
 
-    if( !c->playing ) fake_camera_do_start( c );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
+    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
                                      c->appId,
                                      c->playerId, 
                                      JAVACALL_OK, 
@@ -460,9 +472,10 @@ static media_basic_interface _fake_camera_basic_itf =
     NULL, // get_format
     fake_camera_get_player_controls,
 
-    fake_camera_stop,
-    fake_camera_pause,
+    fake_camera_prefetch,
     fake_camera_run,
+    fake_camera_pause,
+    fake_camera_deallocate,
 
     NULL,
     NULL,

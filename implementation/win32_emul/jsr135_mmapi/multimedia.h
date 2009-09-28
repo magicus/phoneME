@@ -232,9 +232,10 @@ typedef struct {
     javacall_result (*get_format)(javacall_handle handle, jc_fmt* fmt);
     javacall_result (*get_player_controls)(javacall_handle handle, int* controls);
 
-    javacall_result (*stop)(javacall_handle handle);
-    javacall_result (*pause)(javacall_handle handle);
+    javacall_result (*prefetch)(javacall_handle handle);
     javacall_result (*run)(javacall_handle handle);
+    javacall_result (*pause)(javacall_handle handle);
+    javacall_result (*deallocate)(javacall_handle handle);
 
     javacall_result (*stream_length)(javacall_handle handle, javacall_bool stream_len_known, javacall_int64 length);
     javacall_result (*get_data_request)(javacall_handle handle, javacall_int64 *offset, javacall_int32 *length);

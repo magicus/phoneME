@@ -913,14 +913,27 @@ javacall_result javacall_media_get_player_controls(javacall_handle handle,
 
 /* State management *****************************************************************/
 
-javacall_result javacall_media_stop(javacall_handle handle)
+javacall_result javacall_media_prefetch(javacall_handle handle)
 {
     javacall_result ret = JAVACALL_FAIL;
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
 
-    if (QUERY_BASIC_ITF(pItf, stop)) {
-        ret = pItf->vptrBasic->stop(pPlayer->mediaHandle);
+    if (QUERY_BASIC_ITF(pItf, prefetch)) {
+        ret = pItf->vptrBasic->prefetch(pPlayer->mediaHandle);
+    }
+
+    return ret;
+}
+
+javacall_result javacall_media_run(javacall_handle handle)
+{
+    javacall_result ret = JAVACALL_FAIL;
+    javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
+    media_interface* pItf = pPlayer->mediaItfPtr;
+
+    if (QUERY_BASIC_ITF(pItf, run)) {
+        ret = pItf->vptrBasic->run(pPlayer->mediaHandle);
     }
 
     return ret;
@@ -939,14 +952,14 @@ javacall_result javacall_media_pause(javacall_handle handle)
     return ret;
 }
 
-javacall_result javacall_media_run(javacall_handle handle)
+javacall_result javacall_media_deallocate(javacall_handle handle)
 {
     javacall_result ret = JAVACALL_FAIL;
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
 
-    if (QUERY_BASIC_ITF(pItf, run)) {
-        ret = pItf->vptrBasic->run(pPlayer->mediaHandle);
+    if (QUERY_BASIC_ITF(pItf, deallocate)) {
+        ret = pItf->vptrBasic->deallocate(pPlayer->mediaHandle);
     }
 
     return ret;
