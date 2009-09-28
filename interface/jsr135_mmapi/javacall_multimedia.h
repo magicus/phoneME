@@ -419,7 +419,7 @@ javacall_result javacall_media_get_configuration(
 /**
  * Create the native player with the native data flow management.
  * 
- * This procedure is asynchronous, an event
+ * If this procedure is asynchronous, an event
  * JAVACALL_EVENT_MEDIA_CREATE_FINISHED will be posted on completion.
  *
  * @param app_id       Unique application ID.
@@ -428,7 +428,7 @@ javacall_result javacall_media_get_configuration(
  * @param locator      Locator unicode string.
  * @param handle       Out - handle to the native player.
  *
- * @retval JAVACALL_OK                    Success.
+ * @retval JAVACALL_OK                    Procedure succeded synchronously.
  * @retval JAVACALL_CONNECTION_NOT_FOUND  Could not connect to the URL.
  * @retval JAVACALL_IO_ERROR              IO error occurred while connecting
  *                                        the URL or getting data.
@@ -448,6 +448,9 @@ javacall_result javacall_media_get_configuration(
  *                                        reason. For example, if you do not
  *                                        want media from some pre-defined
  *                                        "bad" Internet site.
+ * @retval JAVACALL_WOULD_BLOCK           Procedure will continue in
+ *                                        background, completion will be flagged with an event
+ *                                        JAVACALL_EVENT_MEDIA_CREATE_FINISHED.
  */
 javacall_result javacall_media_create_managed_player(
     javacall_int32 app_id,
@@ -459,7 +462,7 @@ javacall_result javacall_media_create_managed_player(
 /**
  * Create the native player which data flow is managed by Java.
  * 
- * This procedure is asynchronous, an event
+ * If this procedure is asynchronous, an event
  * JAVACALL_EVENT_MEDIA_CREATE_FINISHED will be posted on completion.
  *
  * @param app_id            Unique application ID.
@@ -475,7 +478,7 @@ javacall_result javacall_media_create_managed_player(
  *                          strean_len_known is JAVACALL_FALSE.
  * @param handle            Out - handle to the native player.
  *
- * @retval JAVACALL_OK                    Success.
+ * @retval JAVACALL_OK                    Procedure succeded synchronously.
  * @retval JAVACALL_CONNECTION_NOT_FOUND  Could not connect to the URL.
  * @retval JAVACALL_IO_ERROR              IO error occurred while connecting
  *                                        the URL or getting data.
@@ -495,6 +498,9 @@ javacall_result javacall_media_create_managed_player(
  *                                        reason. For example, if you do not
  *                                        want media from some pre-defined
  *                                        "bad" Internet site.
+ * @retval JAVACALL_WOULD_BLOCK           Procedure will continue in
+ *                                        background, completion will be flagged with an event
+ *                                        JAVACALL_EVENT_MEDIA_CREATE_FINISHED.
  */
 javacall_result javacall_media_create_unmanaged_player(
     javacall_int32 app_id,
@@ -514,7 +520,7 @@ javacall_result javacall_media_create_unmanaged_player(
  * invalid and must not be further used, data processing must be aborted,
  * possible pending data request event must be ignored.
  *
- * This procedure is asynchronous, an event
+ * If this procedure is asynchronous, an event
  * JAVACALL_EVENT_MEDIA_DESTROY_FINISHED will be posted on completion.
  *
  * After an event JAVACALL_EVENT_MEDIA_DESTROY_FINISHED has been posted, the
@@ -522,9 +528,10 @@ javacall_result javacall_media_create_unmanaged_player(
  *
  * @param handle  Handle to the native player.
  *
- * @retval JAVACALL_OK  Always succeeds, procedure will continue in
- *                      background, completion will be flagged with an event
- *                      JAVACALL_EVENT_MEDIA_DESTROY_FINISHED.
+ * @retval JAVACALL_OK          Procedure succeded synchronously.
+ * @retval JAVACALL_WOULD_BLOCK Procedure will continue in
+ *                              background, completion will be flagged with an event
+ *                              JAVACALL_EVENT_MEDIA_DESTROY_FINISHED.
  */
 javacall_result javacall_media_destroy(javacall_handle handle);
 
@@ -754,11 +761,12 @@ javacall_result javacall_media_get_media_time(
  * @param handle  Handle to the native player.
  * @param time    Media time in milliseconds.
  *
- * @retval JAVACALL_OK    Procedure will continue in background, completion
- *                        will be flagged with an event
- *                        JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED.
- * @retval JAVACALL_FAIL  Procedure failed, the media time cannot be set, Java
- *                        will throw MediaException.
+ * @retval JAVACALL_OK          Procedure succeeded synchronously
+ * @retval JAVACALL_FAIL        Procedure failed, the media time cannot be set, Java
+ *                              will throw MediaException.
+ * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
+ *                              will be flagged with an event
+ *                              JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED.
  */
 javacall_result javacall_media_set_media_time(
     javacall_handle handle,
