@@ -32,7 +32,7 @@
 /*
    Exported function:
 
-   jboolean 
+   jint
    VerifyClass(CVMExecEnv*, CVMClassBlock *cb, char *message_buffer,
                jint buffer_length)
 
@@ -352,6 +352,8 @@ struct context_type {
 
     /* Class file version we are checking against */
     int major_version;
+
+    jint err_code;
 };
 
 /*
@@ -536,7 +538,12 @@ static char signature_to_fieldtype(context_type *context,
 				   CVMFieldTypeID fieldID,
 				   fullinfo_type *info);
 
+#define CV_OK        1
+#define CV_VERIFYERR -1
+#define CV_FORMATERR -2
+
 static void CCerror (context_type *, char *format, ...);
+static void CCFerror (context_type *context, char *format, ...);
 static void CCout_of_memory (context_type *);
 
 #ifdef CVM_TRACE
@@ -764,12 +771,12 @@ make_class_info_from_name(context_type *context, CVMClassTypeID name)
  * Called by CVMclassVerify.  Verify the code of each of the methods
  * in a class.
  */
-jboolean
+jint
 VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len,
             CVMBool isRedefine)
 {
     context_type *context = (context_type *)malloc(sizeof(context_type)); 
-    jboolean result = JNI_TRUE;
+    jint result = CV_OK;
     int i;
 
     if (context == NULL) {
@@ -876,9 +883,10 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len,
 #endif
 	for (i = CVMcbMethodCount(cb); --i >= 0;) 
 	    verify_method(context, cb, CVMcbMethodSlot(cb, i));
-	result = JNI_TRUE;
+	result = CV_OK;
     } else {
-	result = JNI_FALSE;
+        CVMassert(context->err_code < 0);
+	result = context->err_code;
     }
 
     /* Cleanup: free fields in context */
@@ -1567,11 +1575,19 @@ initialize_exception_table(context_type *context)
 	      isLegalTarget(context, einfo->startpc) &&
 	      (einfo->endpc ==  code_length || 
 	       isLegalTarget(context, einfo->endpc)))) {
+#if (JAVASE == 14)
 	    CCerror(context, "Illegal exception table range");
+#else
+	    CCFerror(context, "Illegal exception table range");
+#endif
 	}
 	if (!((einfo->handlerpc > 0) && 
 	      isLegalTarget(context, einfo->handlerpc))) {
+#if (JAVASE == 14)
 	    CCerror(context, "Illegal exception table handler");
+#else
+            CCFerror(context, "Illegal exception table handler");
+#endif
 	}
 
 	handler_info->start = code_data[einfo->startpc];
@@ -3468,7 +3484,6 @@ cp_index_to_class_fullinfo(context_type *context, int cp_index, int kind)
     return result;
 }
 
-
 static void 
 CCerror (context_type *context, char *format, ...)
 {
@@ -3500,6 +3515,34 @@ CCerror (context_type *context, char *format, ...)
 	va_end(args);
     }
 
+    context->err_code = CV_VERIFYERR;
+    longjmp(context->jump_buffer, 1);
+}
+
+static void 
+CCFerror (context_type *context, char *format, ...)
+{
+    va_list args;
+    CVMClassBlock *cb = context->class;
+    CVMClassTypeID classname = CVMcbClassName(cb);
+    int n = 0;
+    if (context->mb != 0) {
+	CVMMethodTypeID methodname = CVMmbNameAndTypeID(context->mb);
+	n += jio_snprintf(context->message, context->message_buf_len,
+			  "(class: %!C, method: %!M)", 
+			  classname, methodname);
+    } else {
+        n += jio_snprintf(context->message, context->message_buf_len,
+			  "(class: %!C) ", classname);
+    }
+    if (n >= 0) {
+        va_start(args, format);
+	jio_vsnprintf(context->message + n, context->message_buf_len - n,
+		      format, args);        
+	va_end(args);
+    }
+
+    context->err_code = CV_FORMATERR;
     longjmp(context->jump_buffer, 1);
 }
 

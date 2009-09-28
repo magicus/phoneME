@@ -61,7 +61,7 @@ typedef struct {
  * Returns JNI_FALSE if verification fails. A detailed error message
  * will be places in msg_buf, whose length is specified by buf_len.
  */
-jboolean 
+jint
 VerifyClass(CVMExecEnv *ee, 
 	    CVMClassBlock *cb,
 	    char * msg_buf, 
