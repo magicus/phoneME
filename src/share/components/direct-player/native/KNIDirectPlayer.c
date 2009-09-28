@@ -114,7 +114,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseDevice) {
 
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle ) {
-        result = javacall_media_stop( pKniInfo->pNativeHandle );
+        result = javacall_media_deallocate( pKniInfo->pNativeHandle );
     }
 UnlockAudioMutex();            
 
@@ -416,7 +416,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
-        if (JAVACALL_OK == javacall_media_pause(pKniInfo->pNativeHandle)) {
+        if (JAVACALL_OK == javacall_media_prefetch(pKniInfo->pNativeHandle)) {
             returnValue = KNI_TRUE;
         }
 UnlockAudioMutex();

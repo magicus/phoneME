@@ -152,9 +152,10 @@ class MMEventListener implements EventListener {
 
             case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
             case EVENT_MEDIA_CREATE_FINISHED:
-            case EVENT_MEDIA_PAUSE_FINISHED:
+            case EVENT_MEDIA_PREFETCH_FINISHED:
             case EVENT_MEDIA_RUN_FINISHED:
-            case EVENT_MEDIA_STOP_FINISHED:
+            case EVENT_MEDIA_PAUSE_FINISHED:
+            case EVENT_MEDIA_DEALLOCATE_FINISHED:
             case EVENT_MEDIA_DESTROY_FINISHED:
                 AsyncExecutor ae = null;
                 ae = p.getAsyncExecutor();
