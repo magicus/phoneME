@@ -117,7 +117,7 @@ public abstract class XElm
 		//		Set attributes from last to first. This order ensures the 
 		//		default attributes will be in the beginning of the list.
 		boolean nsaware = ((element.id & Parser.FLAG_NSAWARE) != 0);
-		Pair    attr    = element.list;
+		Pair attr = element.list;
 		for (int idx = element.num - 1; idx >= 0; idx--) {
 			int base = idx << 2;
 			attlst[base] = ownerDocument._intern(attr.qname());
@@ -342,9 +342,8 @@ public abstract class XElm
 	public void setAttribute(String name, String value)
 		throws DOMException
 	{
-		if (value == null)
-			throw new NullPointerException("");
-
+		value.length(); // NullPointerCheck
+		
 		if (name.equals("#text")) {
 			setTextContent(value);  // uDOM #text attribute support
 		} else {
@@ -395,8 +394,7 @@ public abstract class XElm
 			String namespaceURI, String qualifiedName, String value)
 		throws DOMException
 	{
-		if (value == null)
-			throw new NullPointerException("");
+		value.length(); // NullPointerCheck
 
 		XNode._checkNameNS(namespaceURI, qualifiedName);
 		_updateAttr(_setAttr(namespaceURI, qualifiedName, value));
@@ -783,6 +781,8 @@ public abstract class XElm
 	 */
 	/* pkg */ final int _getAttrIdx(String namespace, String name)
 	{
+		if( name == null )
+			return -1;
 		if (namespace == null || namespace.length() == 0) {
 			for (int i = 0; i < attnum; i++) {
 				if (name.equals(attlst[i << 2]))
@@ -790,8 +790,7 @@ public abstract class XElm
 			}
 		} else {
 			for (int i = 0; i < attnum; i++) {
-				if (name.equals(attlst[(i << 2) + 1]) == true && 
-					namespace.equals(attlst[(i << 2) + 2]) == true)
+				if (name.equals(attlst[(i << 2) + 1]) && namespace.equals(attlst[(i << 2) + 2]))
 					return i;
 			}
 		}
@@ -871,9 +870,9 @@ public abstract class XElm
 		} else {
 			if (idx < (attnum - 1)) {
 				System.arraycopy(
-					attlst, (idx + 1) << 2, attlst, idx << 2, (attnum - idx) << 2);
+					attlst, (idx + 1) << 2, attlst, idx << 2, (attnum - (idx+1)) << 2);
 				if (attobj != null)
-					System.arraycopy(attobj, idx + 1, attobj, idx, attnum - idx);
+					System.arraycopy(attobj, idx + 1, attobj, idx, attnum - (idx+1));
 			}
 			attnum -= 1;
 			_attrRemoved(attName, attValue);
@@ -958,9 +957,7 @@ public abstract class XElm
 	 */
 	/* pkg */ final void __setAttrV(int idx, String value)
 	{
-		if (idx < 0 || idx >= attnum)
-			throw new IndexOutOfBoundsException();
-
+		if (idx < 0 || idx >= attnum) throw new IndexOutOfBoundsException();
 		attlst[(idx << 2) + 3] = value;
 	}
 
@@ -970,9 +967,7 @@ public abstract class XElm
 	 */
 	/* pkg */ final void __setAttrNS(int idx, String namespace)
 	{
-		if (idx < 0 || idx >= attnum)
-			throw new IndexOutOfBoundsException();
-
+		if (idx < 0 || idx >= attnum) throw new IndexOutOfBoundsException();
 		attlst[(idx << 2) + 2] = _getDoc()._intern(namespace);
 	}
 
@@ -982,9 +977,7 @@ public abstract class XElm
 	 */
 	/* pkg */ final void __setAttrQN(int idx, String qname)
 	{
-		if (idx < 0 || idx >= attnum)
-			throw new IndexOutOfBoundsException();
-
+		if (idx < 0 || idx >= attnum) throw new IndexOutOfBoundsException();
 		attlst[idx << 2] = qname;
 	}
 
