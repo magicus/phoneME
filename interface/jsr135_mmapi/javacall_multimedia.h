@@ -558,12 +558,33 @@ javacall_result javacall_media_get_player_controls(
     /*OUT*/ javacall_int32 *controls);
 
 /**
- * Move the native player to the stopped state.
+ * Move the native player from STOPPED to PAUSED state.
  *
- * In the stopped state, the native player does not hold any scarce or
- * exclusive resources.
+ * In the paused state, the native player is ready to move to the running
+ * state as soon as possible, holding scarce or exclusive resources if
+ * necessary.
  *
- * This procedure is asynchronous, an event JAVACALL_EVENT_MEDIA_STOP_FINISHED
+ * If this procedure is asynchronous, an event
+ * JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED will be posted on completion.
+ *
+ * The player may need to process stream data before it completes the
+ * procedure.
+ * 
+ * @param handle  Handle to the native player.
+ * 
+ * @retval JAVACALL_OK          Procedure succeded synchronously.
+ * @retval JAVACALL_FAIL        Procedure failed, player cannot be paused, Java will
+ *                              throw MediaException.
+ * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
+ *                              will be flagged with an event
+ *                              JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED.
+ */
+javacall_result javacall_media_prefetch(javacall_handle handle);
+
+/**
+ * Move the native player from PAUSED to RUNNING state.
+ *
+ * If this procedure is asynchronous, an event JAVACALL_EVENT_MEDIA_RUN_FINISHED
  * will be posted on completion.
  *
  * The player may need to process stream data before it completes the
@@ -571,20 +592,23 @@ javacall_result javacall_media_get_player_controls(
  * 
  * @param handle  Handle to the native player.
  * 
- * @retval JAVACALL_OK  Always succeeds, procedure will continue in
- *                      background, completion will be flagged with an event
- *                      JAVACALL_EVENT_MEDIA_STOP_FINISHED.
+ * @retval JAVACALL_OK          Procedure succeded synchronously.
+ * @retval JAVACALL_FAIL        Procedure failed, player cannot be started, Java
+ *                              will throw MediaException.
+ * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
+ *                              will be flagged with an event
+ *                              JAVACALL_EVENT_MEDIA_RUN_FINISHED.
  */
-javacall_result javacall_media_stop(javacall_handle handle);
+javacall_result javacall_media_run(javacall_handle handle);
 
 /**
- * Move the native player to the paused state.
+ * Move the native player from RUNNING to PAUSED state.
  *
  * In the paused state, the native player is ready to move to the running
  * state as soon as possible, holding scarce or exclusive resources if
  * necessary.
  *
- * This procedure is asynchronous, an event
+ * If this procedure is asynchronous, an event
  * JAVACALL_EVENT_MEDIA_PAUSE_FINISHED will be posted on completion.
  *
  * The player may need to process stream data before it completes the
@@ -592,18 +616,22 @@ javacall_result javacall_media_stop(javacall_handle handle);
  * 
  * @param handle  Handle to the native player.
  * 
- * @retval JAVACALL_OK    Procedure will continue in background, completion
- *                        will be flagged with an event
- *                        JAVACALL_EVENT_MEDIA_PAUSE_FINISHED.
- * @retval JAVACALL_FAIL  Procedure failed, player cannot be paused, Java will
- *                        throw MediaException.
+ * @retval JAVACALL_OK          Procedure succeded synchronously.
+ * @retval JAVACALL_FAIL        Procedure failed, player cannot be paused, Java will
+ *                              throw MediaException.
+ * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
+ *                              will be flagged with an event
+ *                              JAVACALL_EVENT_MEDIA_PAUSE_FINISHED.
  */
 javacall_result javacall_media_pause(javacall_handle handle);
 
 /**
- * Move the native player to the running state.
+ * Move the native player from PAUSED to STOPPED state.
  *
- * This procedure is asynchronous, an event JAVACALL_EVENT_MEDIA_RUN_FINISHED
+ * In the stopped state, the native player does not hold any scarce or
+ * exclusive resources.
+ *
+ * If this procedure is asynchronous, an event JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED
  * will be posted on completion.
  *
  * The player may need to process stream data before it completes the
@@ -611,13 +639,12 @@ javacall_result javacall_media_pause(javacall_handle handle);
  * 
  * @param handle  Handle to the native player.
  * 
- * @retval JAVACALL_OK    Procedure will continue in background, completion
- *                        will be flagged with an event
- *                        JAVACALL_EVENT_MEDIA_RUN_FINISHED.
- * @retval JAVACALL_FAIL  Procedure failed, player cannot be started, Java
- *                        will throw MediaException.
+ * @retval JAVACALL_OK           Procedure succeded synchronously.
+ * @retval JAVACALL_WOULD_BLOCK  Procedure will continue in background, 
+ *                               completion will be flagged with an event
+ *                               JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED.
  */
-javacall_result javacall_media_run(javacall_handle handle);
+javacall_result javacall_media_deallocate(javacall_handle handle);
 
 /**
  * Notify the native player about stream length. This function is called if
