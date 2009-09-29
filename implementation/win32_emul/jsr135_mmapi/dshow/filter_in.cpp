@@ -607,14 +607,8 @@ HRESULT __stdcall filter_in_pin::QueryDirection(PIN_DIRECTION *pPinDir)
 #if write_level > 0
     print("filter_in_pin::QueryDirection called...\n");
 #endif
-    EnterCriticalSection(&pfilter->cs_filter);
-    if(!pPinDir)
-    {
-        LeaveCriticalSection(&pfilter->cs_filter);
-        return E_POINTER;
-    }
+    if(!pPinDir) return E_POINTER;
     *pPinDir = PINDIR_OUTPUT;
-    LeaveCriticalSection(&pfilter->cs_filter);
     return S_OK;
 }
 
@@ -623,20 +617,10 @@ HRESULT __stdcall filter_in_pin::QueryId(LPWSTR *Id)
 #if write_level > 0
     print("filter_in_pin::QueryId called...\n");
 #endif
-    EnterCriticalSection(&pfilter->cs_filter);
-    if(!Id)
-    {
-        LeaveCriticalSection(&pfilter->cs_filter);
-        return E_POINTER;
-    }
+    if(!Id) return E_POINTER;
     *Id = (char16 *)CoTaskMemAlloc(sizeof(char16) * 7);
-    if(!*Id)
-    {
-        LeaveCriticalSection(&pfilter->cs_filter);
-        return E_OUTOFMEMORY;
-    }
+    if(!*Id) return E_OUTOFMEMORY;
     memcpy(*Id, L"Output", sizeof(char16) * 7);
-    LeaveCriticalSection(&pfilter->cs_filter);
     return S_OK;
 }
 
@@ -645,8 +629,6 @@ HRESULT __stdcall filter_in_pin::QueryAccept(const AM_MEDIA_TYPE * /*pmt*/)
 #if write_level > 0
     print("filter_in_pin::QueryAccept called...\n");
 #endif
-    EnterCriticalSection(&pfilter->cs_filter);
-    LeaveCriticalSection(&pfilter->cs_filter);
     return S_OK;
 }
 
@@ -700,13 +682,7 @@ HRESULT __stdcall filter_in_pin::QueryInternalConnections(IPin **apPin, ULONG *n
 #if write_level > 0
     print("filter_in_pin::QueryInternalConnections called...\n");
 #endif
-    EnterCriticalSection(&pfilter->cs_filter);
-    if(!apPin || !nPin)
-    {
-        LeaveCriticalSection(&pfilter->cs_filter);
-        return E_POINTER;
-    }
-    LeaveCriticalSection(&pfilter->cs_filter);
+    if(!apPin || !nPin) return E_POINTER;
     return E_NOTIMPL;
 }
 
@@ -715,8 +691,6 @@ HRESULT __stdcall filter_in_pin::EndOfStream()
 #if write_level > 0
     print("filter_in_pin::EndOfStream called...\n");
 #endif
-    EnterCriticalSection(&pfilter->cs_filter);
-    LeaveCriticalSection(&pfilter->cs_filter);
     return E_UNEXPECTED;
 }
 
@@ -757,8 +731,6 @@ HRESULT __stdcall filter_in_pin::NewSegment(REFERENCE_TIME /*tStart*/, REFERENCE
 #if write_level > 0
     print("filter_in_pin::NewSegment called...\n");
 #endif
-    EnterCriticalSection(&pfilter->cs_filter);
-    LeaveCriticalSection(&pfilter->cs_filter);
     return S_OK;
 }
 
@@ -1297,17 +1269,11 @@ HRESULT __stdcall filter_in_filter::GetClassID(CLSID *pClassID)
 #if write_level > 0
     print("filter_in_filter::GetClassID called...\n");
 #endif
-    EnterCriticalSection(&cs_filter);
-    if(!pClassID)
-    {
-        LeaveCriticalSection(&cs_filter);
-        return E_POINTER;
-    }
+    if(!pClassID) return E_POINTER;
     // {6D6DE50C-5029-41E8-AB0D-7995C726ED37}
     static const GUID guid =
     { 0x6d6de50c, 0x5029, 0x41e8, { 0xab, 0x0d, 0x79, 0x95, 0xc7, 0x26, 0xed, 0x37 } };
     *pClassID = guid;
-    LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
 
@@ -1478,13 +1444,7 @@ HRESULT __stdcall filter_in_filter::QueryVendorInfo(LPWSTR *pVendorInfo)
 #if write_level > 0
     print("filter_in_filter::QueryVendorInfo called...\n");
 #endif
-    EnterCriticalSection(&cs_filter);
-    if(!pVendorInfo)
-    {
-        LeaveCriticalSection(&cs_filter);
-        return E_POINTER;
-    }
-    LeaveCriticalSection(&cs_filter);
+    if(!pVendorInfo) return E_POINTER;
     return E_NOTIMPL;
 }
 
@@ -1493,8 +1453,6 @@ ULONG __stdcall filter_in_filter::GetMiscFlags()
 #if write_level > 0
     print("filter_in_filter::GetMiscFlags called, returns AM_FILTER_MISC_FLAGS_IS_SOURCE.\n");
 #endif
-    EnterCriticalSection(&cs_filter);
-    LeaveCriticalSection(&cs_filter);
     return AM_FILTER_MISC_FLAGS_IS_SOURCE;
 }
 
