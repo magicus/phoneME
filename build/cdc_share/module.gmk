@@ -24,7 +24,8 @@
 
 JSR_CONFIGURATION_INPUT_FILES += \
     $(ABSTRACTIONS_DIR)/src/share/config/i18n_constants_abstractions.xml \
-    $(ABSTRACTIONS_DIR)/src/share/config/l10n/en-US_abstractions.xml
+    $(ABSTRACTIONS_DIR)/src/share/config/l10n/en-US_abstractions.xml \
+    $(ABSTRACTIONS_DIR)/src/share/config/l10n/es_abstractions.xml
 
 # start dirs for java source trees
 ABSTRACTIONS_CDC_JAVASRCDIRS = \
@@ -155,7 +156,9 @@ ABSTRACTIONS_WRAPPER_CLASSES += \
         com.sun.midp.i18n.ResourceBundle \
      -package com.sun.j2me.proxy.l10n \
         com.sun.midp.l10n.LocalizedStrings \
-        com.sun.midp.l10n.LocalizedStringsBase
+        com.sun.midp.l10n.LocalizedStrings_es \
+        com.sun.midp.l10n.LocalizedStringsBase \
+        com.sun.midp.l10n.LocalizedStringsBase_es
 
 #####################################################
 ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))

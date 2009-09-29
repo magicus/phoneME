@@ -118,7 +118,8 @@ endif
 
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
     $(JSROP_ABSTRACTS_DIR)/src/share/config/i18n_constants_abstractions.xml \
-    $(JSROP_ABSTRACTS_DIR)/src/share/config/l10n/en-US_abstractions.xml
+    $(JSROP_ABSTRACTS_DIR)/src/share/config/l10n/en-US_abstractions.xml \
+    $(JSROP_ABSTRACTS_DIR)/src/share/config/l10n/es_abstractions.xml
 
 # Specify romizer configuration file for the jsr
 # and path where the file is located
