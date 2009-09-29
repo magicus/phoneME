@@ -2030,7 +2030,7 @@ HRESULT __stdcall filter_out_filter::GetClassID(CLSID *pClassID)
 #endif
     if(!pClassID) return E_POINTER;
     // {681B4202-3E20-4955-9C0A-CA4EB274E431}
-    const GUID guid =
+    static const GUID guid =
     { 0x681b4202, 0x3e20, 0x4955, { 0x9c, 0x0a, 0xca, 0x4e, 0xb2, 0x74, 0xe4, 0x31 } };
     *pClassID = guid;
     return S_OK;
