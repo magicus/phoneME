@@ -61,7 +61,7 @@ CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
     const char c = (pnamelen > 0) ? pname[pnamelen-1] : 0;
     char *suffix;
 
-#ifdef DEBUG
+#if defined(CVM_DEBUG) && (!defined(JAVASE) || JAVASE < 16)
     suffix = "_g";
 #else
     suffix = "";
