@@ -52,9 +52,6 @@ public:
 };
 
 class MacDialect: public SourceAssembler::Dialect {
-private:
-    static int log_base_2(int x);
-
 public:
     MacDialect(Stream* output) : SourceAssembler::Dialect(output) { };
 
@@ -1151,32 +1148,6 @@ SourceAssembler::Dialect * WinDialect::clone() {
   return new WinDialect(*this);
 }
 
-int MacDialect::log_base_2(int x) {
-  int i = 0;
-
-  if (x >= 65536) {
-    x >>= 16;
-    i += 16;
-  }
-  if (x >= 256) {
-    x >>=  8; 
-    i +=  8; 
-  }
-  if (x >= 16) { 
-    x >>= 4; 
-    i += 4; 
-  }
-  if (x >= 4) { 
-    x >>= 2; 
-    i += 2; 
-  }
-  if (x >= 2) {
-    ++i; 
-  }
-
-  return i;
-}
-
 void MacDialect::emit_global(const char* name) {
   emit("\t.globl %s%s\n", SourceAssembler::extern_c_prefix(), name);
 }
@@ -1188,7 +1159,7 @@ void MacDialect::emit_extern(const char* name, bool is_proc) {
 }
 
 void MacDialect::emit_align(int alignment) {
-  emit("\t.align %d\n", log_base_2(alignment));
+  emit("\t.align %d\n", jvm_log2(alignment));
 }
 
 SourceAssembler::Dialect * MacDialect::clone() {
