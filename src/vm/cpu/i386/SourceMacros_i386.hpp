@@ -321,7 +321,22 @@ class SourceMacros: public SourceAssembler {
   void call_shared_call_vm(BasicType return_value_type);
   void goto_shared_call_vm(BasicType return_value_type);
 
-  void redo_if_needed(Label& label);
+  void redo_if_needed(Label& label);  
+
+  void push_native_stack_padding(int offset, int reserve);
+  
+  void pop_native_stack_padding(int offset, int reserve);
+  
+  void aligned_call(const char *fn_name, 
+                    const Register& r1,
+                    const Register& r2);
+
+  void aligned_call(const char *fn_name, 
+                    const Register& r1, const Register& r2,
+                    const Register& r3, const Register& r4);
+                    
+ private:
+  static int stack_alignment(int offset, int reserve); 
 };
 
 #endif // PRODUCT
