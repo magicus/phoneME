@@ -30,17 +30,12 @@
     Name="LocalizedStringsBase_es"
     KeysClass="com.sun.midp.i18n.ResourceConstants" >
 
-    <localized_string
-        Key="ABSTRACTIONS_PIM_CONTACTS"
-        Value="es_PIM contact list"/>
-
-    <localized_string
-        Key="ABSTRACTIONS_PIM_EVENTS"
-        Value="es_PIM event list"/>
-
-    <localized_string
-        Key="ABSTRACTIONS_PIM_TODO"
-        Value="es_PIM to-do list"/>
+<localized_string Key="ABSTRACTIONS_PIM_CONTACTS"
+                  Value="Lista de contactos de PIM"/>
+<localized_string Key="ABSTRACTIONS_PIM_EVENTS"
+                  Value="Lista de eventos de PIM"/>
+<localized_string Key="ABSTRACTIONS_PIM_TODO"
+                  Value="Lista de tareas de PIM"/>
 
 </localized_strings>
 </configuration>
