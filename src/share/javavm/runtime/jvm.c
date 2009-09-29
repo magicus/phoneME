@@ -2211,6 +2211,7 @@ JNIEXPORT void JNICALL
 JVM_StopThread(JNIEnv* env, jobject jthread, jobject throwable)
 {
     CVMconsolePrintf("unimplemented function JVM_StopThread called!");
+    CVMassert(CVM_FALSE);
 }
 #endif
 
