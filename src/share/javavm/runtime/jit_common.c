@@ -1836,6 +1836,8 @@ typedef struct {
 } CVMJITSimpleSyncMethodName;
 
 static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
+/* FIXME - for now, don't include any simple sync methods */
+#ifndef JAVASE
     {
 	/* java.util.Random.next(I)I */
 	CVMsystemClass(java_util_Random),
@@ -1843,8 +1845,7 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	"nextSimpleSync",
         0
     },
-/* Java 5 doesn't sync these methods anymore */
-#ifndef JAVASE
+
     {
 	/* java.util.Hashtable.size()I */
 	CVMsystemClass(java_util_Hashtable),
@@ -1895,7 +1896,6 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	"appendSimpleSync",
         0
     },
-#endif /* !JAVASE */
     {
 	/* java.util.Vector.capacity()I */
 	CVMsystemClass(java_util_Vector),
@@ -1978,6 +1978,7 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	"nextElementSimpleSync",
         0
     },
+#endif /* !JAVASE */
 };
 
 #define CVM_JIT_NUM_SIMPLESYNC_METHODS  \
