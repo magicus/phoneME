@@ -531,20 +531,24 @@ static javacall_result audio_qs_create(javacall_impl_player* outer_player)
     h->state = PL135_STOPPED;
     outer_player->mediaHandle = (javacall_handle)h;
 
-    h->hRealizedEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if( JC_FMT_DEVICE_MIDI != h->mediaType &&
+        JC_FMT_DEVICE_TONE != h->mediaType )
+    {
+        h->hRealizedEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-    javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
-                                      h->appId,
-                                      h->playerId, 
-                                      JAVACALL_OK,
-                                      NULL );
+        javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_DATA_REQUEST,
+                                          h->appId,
+                                          h->playerId, 
+                                          JAVACALL_OK,
+                                          NULL );
 
-    res = ( WAIT_OBJECT_0 == WaitForSingleObject( h->hRealizedEvent, 10000 ) )
-        ? JAVACALL_OK
-        : JAVACALL_FAIL;
+         res = ( WAIT_OBJECT_0 == WaitForSingleObject( h->hRealizedEvent, 10000 ) )
+               ? JAVACALL_OK
+               : JAVACALL_FAIL;
 
-    CloseHandle( h->hRealizedEvent );
-    h->hRealizedEvent = NULL;
+         CloseHandle( h->hRealizedEvent );
+         h->hRealizedEvent = NULL;
+    }
 
     return res;
 }
