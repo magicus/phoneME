@@ -25,6 +25,12 @@
  *
  */
 
+/*
+ * In SE6, the implementations of these methods have all moved out of
+ * StringBuffer and into its superclass AbstractStringBuilder.
+ */
+#ifndef JAVASE
+
 #include "javavm/export/jvm.h"
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/common_exceptions.h"
@@ -334,3 +340,5 @@ CNIjava_lang_StringBuffer_expandCapacity(
     
     return CNI_VOID;
 }
+
+#endif /* !JAVASE */

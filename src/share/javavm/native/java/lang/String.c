@@ -371,6 +371,12 @@ CNIjava_lang_String_hashCode(CVMExecEnv* ee, CVMStackVal32 *arguments,
 }
 
 /*
+ * SE6 has a newer version of indexOf(int, int) that does some extra
+ * handling not currently done in stringIndexOfHelper1.
+*/
+#ifndef JAVASE
+
+/*
  * Helper function for indexOf(I)I and indexOf(II)I.
  */
 static CVMJavaInt
@@ -446,6 +452,8 @@ CNIjava_lang_String_indexOf__II(CVMExecEnv* ee, CVMStackVal32 *arguments,
     arguments[0].j.i = stringIndexOfHelper1(ee, thisICell, ch, fromIndex);
     return CNI_SINGLE;
 }
+
+#endif /* !JAVASE */
 
 /*
  * Helper function for indexOf(Ljava/lang/String;)I
