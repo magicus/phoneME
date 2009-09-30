@@ -45,9 +45,6 @@ SUBSYSTEM_LCDLF_RESOURCES_DIR=$(LCDLF_J_DIR)/resource
 # Path to skin resources dir
 SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR=$(LCDLF_J_DIR)/resource/skin
 
-# Path to themes file
-THEMES_FILE=$(LCDLF_J_DIR)/resource/themes.xml
-
 # Source code path for the library
 #
 vpath % $(LCDLF_J_DIR)/native
@@ -265,6 +262,10 @@ endif
 
 # Copy themes storage file to /lib
 ifeq ($(USE_JSR_258), true)
+
+# Path to themes file
+THEMES_FILE=$(GENERATED_DIR)/appearance.bin
+
 define copy_themes
 	@cp -f $(THEMES_FILE) $(LIBDIR) $(LOG)
 endef
