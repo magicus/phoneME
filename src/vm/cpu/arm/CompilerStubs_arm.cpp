@@ -1092,7 +1092,7 @@ void CompilerStubs::generate_vfp_double_redo(void) {
 
     comment("Instruction table");
     for (int i = 0; i < number_of_float_registers; i+=2) {
-      fmrrd(load_value_lo, load_value_hi, Register(d0 + i));
+      fmrrs(load_value_lo, load_value_hi, Register(s0 + i));
       mov_reg(pc, lr);
     }
   }
@@ -1105,7 +1105,7 @@ void CompilerStubs::generate_vfp_double_redo(void) {
 
     comment("Instruction table");
     for (int i = 0; i < number_of_float_registers; i+=2) {
-      fmdrr(Register(d0 + i), store_value_lo, store_value_hi);
+      fmsrr(Register(s0 + i), store_value_lo, store_value_hi);
       mov_reg(pc, lr);
     }
   }

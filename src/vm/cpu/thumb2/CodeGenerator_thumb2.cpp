@@ -554,7 +554,7 @@ CodeGenerator::move_double_immediate(const Register dst,
       if (is_vfp_register(zero_reg)) {
         fcvtds(dst_lo, zero_reg);
       } else {
-        fmdrr(dst_lo, zero_reg, zero_reg);
+        fmsrr(dst_lo, zero_reg, zero_reg);
       }
       return;
     }
@@ -569,14 +569,14 @@ CodeGenerator::move_double_immediate(const Register dst,
         fsubs(dst_lo, non_nan_reg, non_nan_reg);
         fcpys(dst_hi, dst_lo);
       } else {
-        fmdrr(dst_lo, non_nan_reg, non_nan_reg);
+        fmsrr(dst_lo, non_nan_reg, non_nan_reg);
         fsubd(dst_lo, dst_lo, dst_lo);
       }
       return;
     }
     const TempRegister tmp;
     mov(tmp, 0);
-    fmdrr(dst_lo, tmp, tmp);
+    fmsrr(dst_lo, tmp, tmp);
     set_has_literal_value(tmp, 0);
     return;
   }
@@ -592,7 +592,7 @@ CodeGenerator::move_double_immediate(const Register dst,
     const Register reg_lo = cla.has_vfp_literal(src_lo);
     const Register reg_hi = cla.has_vfp_literal(src_hi);
     if (is_arm_register(reg_lo) && is_arm_register(reg_hi)) {
-      fmdrr(dst_lo, reg_lo, reg_hi);
+      fmsrr(dst_lo, reg_lo, reg_hi);
       return;
     }
     if (is_vfp_register(reg_hi)) {
@@ -1370,7 +1370,7 @@ void CodeGenerator::ensure_in_float_register(Value& value) {
     Register hi = value.hi_register();
     if (is_arm_register(lo) && is_arm_register(hi)) {
       value.set_vfp_double_register(RegisterAllocator::allocate_double_register());
-      fmdrr(value.lo_register(), lo, hi);
+      fmsrr(value.lo_register(), lo, hi);
     }
   }
 }
@@ -1389,7 +1389,7 @@ void CodeGenerator::ensure_not_in_float_register(Value& value) {
       Register lo = RegisterAllocator::allocate();
       Register hi = RegisterAllocator::allocate();
       value.set_registers(lo, hi);
-      fmrrd(value.lo_register(), value.hi_register(), l);
+      fmrrs(value.lo_register(), value.hi_register(), l);
     }
   }
 }
@@ -1794,7 +1794,7 @@ void CodeGenerator::vcall_simple_c_runtime(Value& result,
     if (result.type() == T_FLOAT) {
       fmsr(lo, r0);
     } else {
-      fmdrr(lo, r0, r1);
+      fmsrr(lo, r0, r1);
     }
     return;
   }
@@ -3631,7 +3631,7 @@ void CodeGenerator::vsetup_c_args(va_list ap) {
       if( floatMask & 1 ) {
         const Register dst = as_register( floatMap[i] );
         if( floatMask & 2 ) {
-          fmrrd( dst, Register(floatMap[i+1]), Register(s0 + i) );
+          fmrrs( dst, Register(floatMap[i+1]), Register(s0 + i) );
           floatMask >>= 1;
           i++;
         } else {
