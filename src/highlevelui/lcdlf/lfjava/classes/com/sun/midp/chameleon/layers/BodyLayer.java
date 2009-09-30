@@ -32,6 +32,7 @@ import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 import com.sun.midp.lcdui.EventConstants;
+import com.sun.midp.chameleon.skins.TickerSkin;
 
 /**
  * Basic layer containing the application area of the display. This layer
@@ -346,6 +347,9 @@ public class BodyLayer extends CLayer
         l = layers[MIDPWindow.TICKER_LAYER];
         if (l != null && l.isVisible()) {
             bounds[H] -= l.bounds[H];
+            if (TickerSkin.ALIGN == Graphics.TOP) {
+                bounds[Y] += l.bounds[H];
+            }
         }
         l = layers[MIDPWindow.BTN_LAYER];
         if (l != null && l.isVisible()) {

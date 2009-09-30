@@ -189,8 +189,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
             if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
                 if (TickerSkin.ALIGN == Graphics.BOTTOM) {
                     screenBounds -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
-                } else {
-                    bounds[Y] += layers[MIDPWindow.TITLE_LAYER].bounds[H];
                 }
             }
             if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
