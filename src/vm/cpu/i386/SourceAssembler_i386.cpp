@@ -29,6 +29,39 @@
 #ifndef PRODUCT
 #include "incls/_SourceAssembler_i386.cpp.incl"
 
+class GnuDialect: public SourceAssembler::Dialect {
+public:
+    GnuDialect(Stream* output) : SourceAssembler::Dialect(output) { };
+
+    virtual void emit_global(const char* name);
+    virtual void emit_extern(const char* name, bool is_proc);
+    virtual void emit_align(int alignment);
+
+    virtual SourceAssembler::Dialect* clone();
+};
+
+class WinDialect: public SourceAssembler::Dialect {
+public:
+    WinDialect(Stream* output) : SourceAssembler::Dialect(output) { };
+
+    virtual void emit_global(const char* name);
+    virtual void emit_extern(const char* name, bool is_proc);
+    virtual void emit_align(int alignment);
+
+    virtual SourceAssembler::Dialect* clone();
+};
+
+class MacDialect: public SourceAssembler::Dialect {
+public:
+    MacDialect(Stream* output) : SourceAssembler::Dialect(output) { };
+
+    virtual void emit_global(const char* name);
+    virtual void emit_extern(const char* name, bool is_proc);
+    virtual void emit_align(int alignment);
+
+    virtual SourceAssembler::Dialect* clone();
+};
+
 int SourceAssembler::Label::_next_id = 0;
 
 SourceAssembler::SourceAssembler(Stream* output) {
@@ -36,10 +69,19 @@ SourceAssembler::SourceAssembler(Stream* output) {
   _output = output;
   _inside_entry = false;
   _current_segment = CODE_SEGMENT;
+
+  if (GenerateMacCode) {
+    // must check this first, because GenerateGNUCode is also true
+    _dialect = new MacDialect(output);
+  } else if (GenerateGNUCode) {
+    _dialect = new GnuDialect(output);
+  } else {
+    _dialect = new WinDialect(output);
+  }
 }
 
 SourceAssembler::~SourceAssembler() {
-  // Do nothing.
+  delete _dialect;
 }
 
 void SourceAssembler::start() {
@@ -167,13 +209,11 @@ void SourceAssembler::stop_data_segment() {
 
 void SourceAssembler::jcc(Condition condition, const Constant& cst) {
   if (cst.is_reference()) {
-    if (!GenerateGNUCode)
-      if (!GenerateInlineAsm)
-        emit("\tEXTERNDEF %s%s:PROC\n", extern_c_prefix(), cst.reference());
-      else
-        emit("\t{\n\textern void %s();\n", cst.reference());
-    else
-      emit("\t.extern %s%s\n", extern_c_prefix(), cst.reference());
+    if (GenerateInlineAsm) {
+      emit("\t{\n\textern void %s();\n", cst.reference());
+    } else {
+      _dialect->emit_extern(cst.reference(), true);
+    }
   }
   if (!GenerateInlineAsm)
     emit("\tj");
@@ -204,16 +244,14 @@ void SourceAssembler::define_call_info() {
 
 void SourceAssembler::align(int alignment) {
   if (alignment > 0) {
-    if (GenerateGNUCode) {
-      emit("\t.align %d\n", alignment);
-    } else if (!GenerateInlineAsm) {
-      emit("\tALIGN %d\n", alignment);
-    } else {
+    if (GenerateInlineAsm) {
       if (_inside_entry) {
         emit("\t__asm ALIGN %d\n", alignment);
       } else {
         emit("__DECLSPEC_ALIGN(%d) ", alignment);
       }
+    } else {
+      _dialect->emit_align(alignment);
     }
   }
 }
@@ -230,10 +268,7 @@ void SourceAssembler::entry(const char* name, int alignment) {
   emit("\n");
   if (!GenerateInlineAsm) {
     align(alignment);
-    if (!GenerateGNUCode)
-      emit("\tPUBLIC %s%s\n", extern_c_prefix(), name);
-    else
-      emit("\t.global %s%s\n", extern_c_prefix(), name);
+    _dialect->emit_global(name);
     emit("%s%s:\n", extern_c_prefix(), name);
   } else {
     emit("extern __declspec(naked)");
@@ -264,7 +299,7 @@ void SourceAssembler::rom_linkable_entry(const char* name, int alignment) {
     emit("\n");
     if (!GenerateInlineAsm) {
       align(alignment);
-      emit("\tPUBLIC %s%s\n", extern_c_prefix(), name);
+      _dialect->emit_global(name);
       emit("%s%s:\n", extern_c_prefix(), name);
     }
     else {
@@ -347,13 +382,15 @@ void SourceAssembler::emit_data_name(const char* c_type, const char* name) {
 
   if (GenerateInlineAsm) {
     emit("\n%s %s", c_type, name);
-  } else if (GenerateGNUCode) {
-    emit("\n\t.global %s%s\n", extern_c_prefix(), name);
-    emit("%s%s:\n", extern_c_prefix(), name);
   } else {
-    emit("\n\tPUBLIC %s%s\n", extern_c_prefix(), name);
-    // no newline so that Dx is on the same line
-    emit("%s%s ", extern_c_prefix(), name);
+    emit("\n");
+    _dialect->emit_global(name);
+    if (GenerateGNUCode) {
+      emit("%s%s:\n", extern_c_prefix(), name);
+    } else {
+      // no newline so that Dx is on the same line
+      emit("%s%s ", extern_c_prefix(), name);
+    }
   }
 }
 
@@ -452,13 +489,16 @@ void SourceAssembler::emit_data(OperandSize size, const Constant& cst,
                                 int dups, const char* name) {
   GUARANTEE(!GenerateInlineAsm, "No inline data in inline asm");
 
-if (!GenerateGNUCode) { 
   if (name != 0) {
-    emit("\n\tPUBLIC %s%s\n", extern_c_prefix(), name);
+    emit("\n");
+    _dialect->emit_global(name);
   }
+
   if (cst.is_reference()) {
-    emit("\tEXTERNDEF %s%s:PROC\n", extern_c_prefix(), cst.reference());
+    _dialect->emit_extern(cst.reference(), true);
   }
+
+if (!GenerateGNUCode) { 
   if (name != 0) {
     emit("%s%s ", extern_c_prefix(), name);
   }
@@ -479,12 +519,6 @@ if (!GenerateGNUCode) {
   }
   emit("\n");
 } else {
-  if (name != 0) {
-    emit("\n\t.global %s%s\n", extern_c_prefix(), name);
-  }
-  if (cst.is_reference()) {
-    emit("\t.extern %s%s\n", extern_c_prefix(), cst.reference());
-  }
   if (name != 0) {
     emit("%s%s: ", extern_c_prefix(), name);
   }
@@ -680,8 +714,7 @@ if (!GenerateGNUCode) {
             emit("\t{\n");
           emited = true;
           if (!GenerateInlineAsm)
-            emit("\tEXTERNDEF %s%s:%s\n", extern_c_prefix(), reference,
-                 (jump_or_call || cst->is_proc()) ? "PROC" : "DWORD");
+            _dialect->emit_extern(reference, jump_or_call || cst->is_proc());
           else if (jump_or_call || cst->is_proc())
             emit("\textern void %s();\n", reference);
           else if (!is_jvm_fast_global(reference)) {
@@ -701,8 +734,7 @@ if (!GenerateGNUCode) {
             emit("\t{\n");
           emited = true;
           if (!GenerateInlineAsm)
-            emit("\tEXTERNDEF %s%s:%s\n", extern_c_prefix(), reference,
-                 (adr->displacement().is_proc()) ? "PROC" : "DWORD");
+            _dialect->emit_extern(reference, adr->displacement().is_proc());
           else {
             // IMPL_NOTE: we need to special case this, b/c compiler will be
             // unhappy after it has seen the definition of this array.
@@ -739,15 +771,16 @@ if (!GenerateGNUCode) {
       case 'c' : { // Constant.
         const Constant* cst = va_arg(arguments, const Constant*);
         if (cst->is_reference()) {
-          emit("\t.extern %s%s\n", extern_c_prefix(), cst->reference());
+          _dialect->emit_extern(cst->reference(), 
+                                jump_or_call || cst->is_proc());
         }
         break;
       }
       case 'a' : { // Address.
         const Address* adr = va_arg(arguments, const Address*);
         if (adr->displacement().is_reference()) {
-          emit("\t.extern %s%s\n", extern_c_prefix(), 
-               adr->displacement().reference());
+          _dialect->emit_extern(adr->displacement().reference(), 
+                                adr->displacement().is_proc());
         }
         break;
       }
@@ -1070,6 +1103,67 @@ bool SourceAssembler::is_jvm_fast_global(const char * const reference) {
   }
 
   return false;
+}
+
+void SourceAssembler::Dialect::emit(const char* format, ...) {
+  va_list arguments;
+  va_start(arguments, format);
+  _output->vprint(format, arguments);
+  va_end(arguments);
+}
+
+void GnuDialect::emit_global(const char* name) {
+  emit("\t.global %s%s\n", SourceAssembler::extern_c_prefix(), name);
+}
+
+void GnuDialect::emit_extern(const char* name, bool is_proc) {
+  (void) is_proc;
+  
+  emit("\t.extern %s%s\n", SourceAssembler::extern_c_prefix(), name);
+}
+
+void GnuDialect::emit_align(int alignment) {
+  emit("\t.align %d\n", alignment);
+}
+
+SourceAssembler::Dialect * GnuDialect::clone() {
+  return new GnuDialect(*this);
+}
+
+void WinDialect::emit_global(const char* name) {
+  emit("\tPUBLIC %s%s\n", SourceAssembler::extern_c_prefix(), name);
+}
+
+void WinDialect::emit_extern(const char* name, bool is_proc) {
+  emit("\tEXTERNDEF %s%s:%s\n", SourceAssembler::extern_c_prefix(), 
+                                name,
+                                is_proc ? "PROC" : "DWORD");
+}
+
+void WinDialect::emit_align(int alignment) {
+  emit("\tALIGN %d\n", alignment);
+}
+
+SourceAssembler::Dialect * WinDialect::clone() {
+  return new WinDialect(*this);
+}
+
+void MacDialect::emit_global(const char* name) {
+  emit("\t.globl %s%s\n", SourceAssembler::extern_c_prefix(), name);
+}
+
+void MacDialect::emit_extern(const char* name, bool is_proc) {
+  (void) is_proc;
+  
+  emit("\t.reference %s%s\n", SourceAssembler::extern_c_prefix(), name);
+}
+
+void MacDialect::emit_align(int alignment) {
+  emit("\t.align %d\n", jvm_log2(alignment));
+}
+
+SourceAssembler::Dialect * MacDialect::clone() {
+  return new MacDialect(*this);
 }
 
 #endif

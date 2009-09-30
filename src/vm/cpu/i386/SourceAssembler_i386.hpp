@@ -32,6 +32,23 @@
 
 class SourceAssembler: public Assembler {
  public:
+  class Dialect {
+   public:
+    Dialect(Stream* output) : _output(output) { }
+
+    virtual void emit_global(const char* name) = 0;
+    virtual void emit_extern(const char* name, bool is_proc) = 0;
+    virtual void emit_align(int alignment) = 0;
+    
+    virtual Dialect* clone() = 0;
+
+   protected:
+    void emit(const char* format, ...);
+    
+   private:
+    Stream* _output;
+  };
+  
   class Label
   {
    public:
@@ -169,8 +186,27 @@ class SourceAssembler: public Assembler {
  public:
   // Constructor and deconstructor for the source assembler.
   SourceAssembler (Stream* output);
- ~SourceAssembler ();
+  SourceAssembler (const SourceAssembler& o) : _output(o._output), 
+                                               _dialect(o._dialect->clone()),
+                                               _inside_entry(o._inside_entry) { 
+  }
 
+  virtual ~SourceAssembler ();
+
+  SourceAssembler& operator= (const SourceAssembler& o) {
+    if (this != &o) {
+      Dialect* dialect = o._dialect->clone();
+
+      _output = o._output;
+      delete _dialect;
+      _dialect = dialect;
+      _inside_entry = o._inside_entry;
+      
+    }
+
+    return *this;
+  }
+     
   // Start and stop the assembler.
   void start();
   void stop ();
@@ -748,13 +784,16 @@ class SourceAssembler: public Assembler {
 
   // A reference to an extern "C" global function --> some compilers (Cygwin)
   // requires a "_" prefix. See the +AddExternCUnderscore flag
-  const char * extern_c_prefix();
+  static const char * extern_c_prefix();
 
   void emit_data_name(const char* c_type, const char* name);
 
  private:
   // The output stream.
   Stream* _output;
+
+  // The assembler dialect.
+  Dialect* _dialect;
 
   // Are we generating code inside a function or not
   bool _inside_entry;
