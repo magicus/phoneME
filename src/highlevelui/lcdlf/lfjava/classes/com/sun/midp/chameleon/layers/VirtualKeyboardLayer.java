@@ -28,6 +28,7 @@ package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.lcdui.*;
 import com.sun.midp.chameleon.skins.VirtualKeyboardSkin;
+import com.sun.midp.chameleon.skins.TickerSkin;
 import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
 import javax.microedition.lcdui.*;
@@ -186,7 +187,11 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
                 screenBounds -= layers[MIDPWindow.TITLE_LAYER].bounds[H];
             }
             if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
-                screenBounds -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
+                if (TickerSkin.ALIGN == Graphics.BOTTOM) {
+                    screenBounds -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
+                } else {
+                    bounds[Y] += layers[MIDPWindow.TITLE_LAYER].bounds[H];
+                }
             }
             if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
                 screenBounds -= layers[MIDPWindow.BTN_LAYER].bounds[H];

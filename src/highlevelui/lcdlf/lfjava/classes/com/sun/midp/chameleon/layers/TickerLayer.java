@@ -87,7 +87,7 @@ public class TickerLayer extends CLayer {
 	case(Graphics.TOP):
 	    bounds[Y] = 0;
 	    break;
-            case(Graphics.BOTTOM):
+        case(Graphics.BOTTOM):
 	default:
 	    bounds[Y] = owner.bounds[H];
 	    bounds[Y] -= SoftButtonSkin.HEIGHT + bounds[H];
