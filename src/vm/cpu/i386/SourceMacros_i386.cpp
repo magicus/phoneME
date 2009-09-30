@@ -1239,7 +1239,7 @@ void SourceMacros::pop_native_stack_padding(int offset, int reserve) {
 #if ENABLE_STACK_ALIGNMENT
   const int stack_alignment_value = stack_alignment(offset, reserve);
   if ((stack_alignment_value + reserve) > 0) {
-    addl(esp, Constant(stack_alignment_value + reserve);
+    addl(esp, Constant(stack_alignment_value + reserve));
   }
 #else
   (void) offset;
