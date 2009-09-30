@@ -532,6 +532,9 @@
 // ENABLE_ANNOTATED_LAST_REG_ALLOCATION 1,1 Force register allocator to allocate
 //                                          annotated registers last.
 //
+// ENABLE_STACK_ALIGNMENT               0,0 Enable aligned stack pointer for 
+//                                          native calls
+//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================
@@ -1098,6 +1101,14 @@
 #  define USE_VERBOSE_ERROR_MSG 0
 #else
 #  define USE_VERBOSE_ERROR_MSG 1
+#endif
+
+// STACK_ALIGNMENT_VALUE              The value to which to align the stack
+//                                    pointer before a native call
+#if ENABLE_STACK_ALIGNMENT
+#  ifndef STACK_ALIGNMENT_VALUE
+#    define STACK_ALIGNMENT_VALUE 16
+#  endif
 #endif
 
 /*

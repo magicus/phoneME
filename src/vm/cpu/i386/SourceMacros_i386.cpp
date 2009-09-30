@@ -1184,4 +1184,140 @@ void SourceMacros::update_interpretation_log() {
 }
 #endif
 
+#if ENABLE_STACK_ALIGNMENT
+#if (STACK_ALIGNMENT_VALUE != 16)
+#error "Only 16 byte stack alignment supported currently"
+#endif
+#endif
+
+/**
+ * Calculates, how many bytes to subtract from the stack pointer to make it 
+ * properly aligned at the next call.
+ *
+ * @param offset the number of bytes pushed on the stack from the last known
+ *      aligned SP value
+ * @param reserve the number of bytes which will be pushed on the stack before 
+ *      the call (parameters)
+ */
+inline int SourceMacros::stack_alignment(int offset, int reserve) {
+    return ((offset + reserve + 15) & ~15) - offset - reserve;
+}
+
+/**
+ * Subtracts from the stack pointer the minimal number of bytes to make it 
+ * aligned at the next call.
+ *
+ * @param offset the number of bytes pushed on the stack from the last known
+ *      aligned SP value
+ * @param reserve the number of bytes which will be pushed on the stack before 
+ *      the call (parameters)
+ */
+void SourceMacros::push_native_stack_padding(int offset, int reserve) {
+#if ENABLE_STACK_ALIGNMENT
+  const int stack_alignment_value = stack_alignment(offset, reserve);
+  if (stack_alignment_value > 0) {
+    subl(esp, Constant(stack_alignment_value));
+  }
+#else
+  (void) offset;
+  (void) reserve;
+#endif
+}
+  
+/**
+ * Reverts the stack alignment padding applied to SP. When called after the call
+ * for which <code>push_native_stack_padding</code> was used, it will put the
+ * stack to the state in which it was before applying the padding (removes the 
+ * padding and the <code>reserve</code> bytes).
+ *
+ * @param offset the number of bytes pushed on the stack from the last known
+ *      aligned SP value
+ * @param reserve the number of bytes which will be pushed on the stack before 
+ *      the call (parameters)
+ */
+void SourceMacros::pop_native_stack_padding(int offset, int reserve) {
+#if ENABLE_STACK_ALIGNMENT
+  const int stack_alignment_value = stack_alignment(offset, reserve);
+  if ((stack_alignment_value + reserve) > 0) {
+    addl(esp, Constant(stack_alignment_value + reserve);
+  }
+#else
+  (void) offset;
+
+  if (reserve > 0) {
+    addl(esp, Constant(reserve));
+  }
+#endif
+}
+  
+/**
+ * Generates native 2-parameter call with properly aligned stack. Used
+ * when the last known aligned stack point is unknown and so the
+ * <code>push_native_stack_padding</code> method can't be used.
+ *
+ * @param fn_name the name of the function to call
+ * @param r1 the first parameter of the call
+ * @param r2 the second parameter of the call
+ */ 
+void SourceMacros::aligned_call(const char *fn_name, 
+                                const Register& r1,
+                                const Register& r2) {
+#if ENABLE_STACK_ALIGNMENT
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(2 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), r1);
+  movl(Address(esp, Constant(BytesPerWord)), r2);
+  call(Constant(fn_name));
+
+  movl(esp, ebp);
+  popl(ebp);
+#else
+  pushl(r2);
+  pushl(r1);
+  call(Constant(fn_name));
+  addl(esp, Constant(2 * BytesPerWord));
+#endif
+}
+
+/**
+ * Generates native 4-parameter call with properly aligned stack. Used
+ * when the last known aligned stack point is unknown and so the
+ * <code>push_native_stack_padding</code> method can't be used.
+ *
+ * @param fn_name the name of the function to call
+ * @param r1 the first parameter of the call
+ * @param r2 the second parameter of the call
+ * @param r3 the third parameter of the call
+ * @param r4 the fourth parameter of the call
+ */ 
+void SourceMacros::aligned_call(const char *fn_name, 
+                                const Register& r1, const Register& r2,
+                                const Register& r3, const Register& r4) {
+#if ENABLE_STACK_ALIGNMENT
+  pushl(ebp);
+  movl(ebp, esp);
+  subl(esp, Constant(4 * BytesPerWord));
+  andl(esp, Constant(-16));
+
+  movl(Address(esp), r1);
+  movl(Address(esp, Constant(BytesPerWord)), r2);
+  movl(Address(esp, Constant(2 * BytesPerWord)), r3);
+  movl(Address(esp, Constant(3 * BytesPerWord)), r4);
+  call(Constant(fn_name));
+
+  movl(esp, ebp);
+  popl(ebp);
+#else
+  pushl(r4);
+  pushl(r3);
+  pushl(r2);
+  pushl(r1);
+  call(Constant(fn_name));
+  addl(esp, Constant(4 * BytesPerWord));
+#endif
+}
+
 #endif

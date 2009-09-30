@@ -75,6 +75,9 @@ void SharedStubs::generate_call_on_primordial_stack() {
   movl(esp, Address(Constant("_primordial_sp")));
   movl(ebp, Address(esp));
 
+  // 1 = pushl(ecx)
+  push_native_stack_padding(0, 1 * BytesPerWord);
+
   get_thread_handle(ecx);
   pushl(ecx);
   call(eax);
@@ -128,6 +131,9 @@ bind(trap_function);
   movl(esp, Address(Constant("_primordial_sp")));
   movl(ebp, Address(esp));
 
+  // 1 = pushl(eax)
+  push_native_stack_padding(0, 1 * BytesPerWord);
+  
   comment("Pass MethodTrapDesc argument and call test function");
   pushl(eax);
   call(Constant("interrupt_or_invoke"));
@@ -548,6 +554,10 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   movl(esp, Address(Constant("_primordial_sp")));
   movl(ebp, Address(esp));
 
+  // 1 = pushl(edx)
+  // 1 = pushl(ecx)
+  push_native_stack_padding(0, (1 + 1) * BytesPerWord);
+
   comment("Push optional argument");
   pushl(edx);
   
@@ -578,7 +588,9 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   }
   */
   comment("Remove the thread and the optional argument from the stack");
-  addl(esp, Constant(8));
+  // 1 = pushl(edx)
+  // 1 = pushl(ecx)
+  pop_native_stack_padding(0, (1 + 1) * BytesPerWord);
   
   comment("save the return values in the thread");
   get_thread(ecx);
@@ -632,6 +644,11 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   cmpl(esi, Address(Constant("_current_stack_limit")));
   jcc(above_equal, Constant(no_entries));
   comment("would run out of stack, so we must expand it before calling the entry");
+
+  // 1 = pushl(esi)
+  // 1 = pushl(ecx)
+  push_native_stack_padding(0, (1 + 1) * BytesPerWord);
+
   comment("Push optional argument");
   pushl(esi);
   
@@ -644,15 +661,24 @@ void SharedStubs::generate_shared_call_vm(Label& shared_entry_return_point,
   call(eax);
 
   comment("Remove the thread and the optional argument from the stack");
-  addl(esp, Constant(8));
+  // 1 = pushl(esi)
+  // 1 = pushl(ecx)
+  pop_native_stack_padding(0, (1 + 1) * BytesPerWord);
 
   bind(no_entries);
 
   comment("Call switch_thread(JVM_TRAPS)");
+
+  // 1 = pushl(ecx)
+  push_native_stack_padding(0, 1 * BytesPerWord);
+
   get_thread_handle(ecx); 
   pushl(ecx);
   call(Constant("switch_thread"));
-  addl(esp, Constant(BytesPerWord));
+
+  // not necessary if no call on the c stack follows
+  // 1 = pushl(ecx)
+  pop_native_stack_padding(0, 1 * BytesPerWord);
 
   comment("Switch back to the java stack");
   get_thread(ebx);
@@ -1051,6 +1077,8 @@ void SharedStubs::generate_shared_monitor_exit() {
 
 #if ENABLE_JNI
 void SharedStubs::generate_invoke_entry() {
+  GUARANTEE(!ENABLE_STACK_ALIGNMENT, "Stack alignment not implemented for JNI");
+
   if (TaggedJavaStack) {
     comment("TaggedJavaStack not supported with ENABLE_JNI");
     int3();
