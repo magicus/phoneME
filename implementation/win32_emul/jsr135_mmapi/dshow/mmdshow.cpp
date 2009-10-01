@@ -238,9 +238,6 @@ void dshow_player::playback_finished()
         javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                                           appId, playerId, JAVACALL_OK, (void*)(size_t)t );
 
-        DEBUG_ONLY( PRINTF( "*** pausing...\n" ); )
-        player::result r = ppl->pause();
-        DEBUG_ONLY( PRINTF( "*** player::pause = %i\n", r ); )
     }
 }
 
