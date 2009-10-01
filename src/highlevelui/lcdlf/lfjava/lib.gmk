@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -264,7 +262,7 @@ endif
 ifeq ($(USE_JSR_258), true)
 
 # Path to themes file
-THEMES_FILE=$(GENERATED_DIR)/appearance.bin
+THEMES_FILE=$(GENERATED_DIR)/appearances.bin
 
 define copy_themes
 	@cp -f $(THEMES_FILE) $(LIBDIR) $(LOG)
