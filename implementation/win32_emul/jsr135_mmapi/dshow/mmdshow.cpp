@@ -148,7 +148,7 @@ public:
     HANDLE                hOperThread;
     HANDLE                hOperEvent;
 
-    enum
+    enum OPER
     {
         OPER_PREFETCH, 
         OPER_DEALLOCATE, 
@@ -156,7 +156,8 @@ public:
         OPER_PAUSE, 
         OPER_SET_MT, 
         OPER_DESTROY
-    }                     pending_operation;
+    };
+    volatile OPER         pending_operation;
 };
 
 dshow_player* dshow_player::players[ MAX_DSHOW_PLAYERS ];
@@ -835,11 +836,13 @@ static void oper_thread(void *param)
     void*                            evt_data = NULL;
     int64                            mt;
     int64                            time_actual;
+    dshow_player::OPER               op;
 
     do
     {
         WaitForSingleObject( p->hOperEvent, INFINITE );
-        switch( p->pending_operation )
+        op = p->pending_operation;
+        switch( op )
         {
         case dshow_player::OPER_PREFETCH:
             DEBUG_ONLY(PRINTF("   >> pause...\n");)
@@ -892,10 +895,11 @@ static void oper_thread(void *param)
 
         default:
             DEBUG_ONLY( PRINTF( "   >> unknown oper=%i.\n", p->pending_operation ); )
+            __asm int 3;
             break;
         }
 
-        if( dshow_player::OPER_DESTROY != p->pending_operation )
+        if( dshow_player::OPER_DESTROY != op )
         {
             javanotify_on_media_notification(evt_type,
                                              p->appId,
@@ -904,7 +908,7 @@ static void oper_thread(void *param)
                                              evt_data);
         }
 
-    } while( dshow_player::OPER_DESTROY != p->pending_operation );
+    } while( dshow_player::OPER_DESTROY != op );
 
     DEBUG_ONLY( PRINTF( "   >> oper thread finished\n" ); )
 }
