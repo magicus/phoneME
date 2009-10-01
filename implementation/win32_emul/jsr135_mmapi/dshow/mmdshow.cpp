@@ -840,6 +840,7 @@ static void oper_thread(void *param)
             if(r == player::result_success) p->playing = false;
             DEBUG_ONLY(PRINTF("   >> pause : done, r=%i.\n",r);)
             evt_type = JAVACALL_EVENT_MEDIA_PAUSE_FINISHED;
+            r == player::result_success; // only JAVACALL_OK retval is allowed by API
             break;
 
         case dshow_player::OPER_DEALLOCATE:
@@ -848,6 +849,7 @@ static void oper_thread(void *param)
             lcd_output_video_frame( NULL );
             DEBUG_ONLY(PRINTF("   >> stop : done, r=%i.\n",r);)
             evt_type = JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED;
+            r == player::result_success; // only JAVACALL_OK retval is allowed by API
             break;
 
         case dshow_player::OPER_SET_MT:

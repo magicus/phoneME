@@ -624,8 +624,6 @@ javacall_result javacall_media_run(javacall_handle handle);
  * @param handle  Handle to the native player.
  * 
  * @retval JAVACALL_OK          Procedure succeded synchronously.
- * @retval JAVACALL_FAIL        Procedure failed, player cannot be paused, Java will
- *                              throw MediaException.
  * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
  *                              will be flagged with an event
  *                              JAVACALL_EVENT_MEDIA_PAUSE_FINISHED.
