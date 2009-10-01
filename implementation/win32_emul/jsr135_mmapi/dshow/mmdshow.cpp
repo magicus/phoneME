@@ -733,18 +733,41 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
 static javacall_result dshow_destroy(javacall_handle handle)
 {
     dshow_player* p = (dshow_player*)handle;
-    DEBUG_ONLY( PRINTF( "*** destroy ***\n" ); )
+    DEBUG_ONLY( PRINTF( "*** destroying... ***\n" ); )
 
     p->dwr_cancel = true;
     SetEvent( p->dwr_event );
 
     p->pending_operation = dshow_player::OPER_DESTROY;
     SetEvent( p->hOperEvent );
+    WaitForSingleObject( p->hOperThread, INFINITE );
+    DEBUG_ONLY( PRINTF( "   *** destroying: oper thread finished ***\n" ); )
+
+    if( NULL != p->ppl )
+    {
+        player::state s;
+        if( player::result_success == p->ppl->get_state( &s ) )
+        {
+            if( player::running == s )
+            {
+                DEBUG_ONLY( PRINTF( "   *** destroying: pausing ppl... ***\n" ); )
+                p->ppl->pause();
+                DEBUG_ONLY( PRINTF( "   *** destroying: stopping ppl... ***\n" ); )
+                p->ppl->stop();
+            }
+            else if( player::paused == s )
+            {
+                DEBUG_ONLY( PRINTF( "   *** destroying: stopping ppl... ***\n" ); )
+                p->ppl->stop();
+            }
+        }
+        DEBUG_ONLY( PRINTF( "   *** destroying: destroying ppl... ***\n" ); )
+        p->ppl->destroy();
+    }
+
+    DEBUG_ONLY( PRINTF( "   *** destroying: ppl destroyed ***\n" ); )
 
     lcd_output_video_frame( NULL );
-
-    if( NULL != p->ppl ) p->ppl->destroy();
-
     remove_from_qsound( p );
 
     if( NULL != p->video_frame ) delete p->video_frame;
@@ -777,6 +800,8 @@ static javacall_result dshow_destroy(javacall_handle handle)
                                      playerId, 
                                      JAVACALL_OK, NULL );
 
+    DEBUG_ONLY( PRINTF( "   *** destroyed ***\n" ); )
+
     return JAVACALL_OK;
 }
 
@@ -808,6 +833,8 @@ static void oper_thread(void *param)
     player::result                   r;
     javacall_media_notification_type evt_type;
     void*                            evt_data = NULL;
+    int64                            mt;
+    int64                            time_actual;
 
     do
     {
@@ -837,7 +864,7 @@ static void oper_thread(void *param)
             if(r == player::result_success) p->playing = false;
             DEBUG_ONLY(PRINTF("   >> pause : done, r=%i.\n",r);)
             evt_type = JAVACALL_EVENT_MEDIA_PAUSE_FINISHED;
-            r == player::result_success; // only JAVACALL_OK retval is allowed by API
+            r = player::result_success; // only JAVACALL_OK retval is allowed by API
             break;
 
         case dshow_player::OPER_DEALLOCATE:
@@ -846,18 +873,25 @@ static void oper_thread(void *param)
             lcd_output_video_frame( NULL );
             DEBUG_ONLY(PRINTF("   >> stop : done, r=%i.\n",r);)
             evt_type = JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED;
-            r == player::result_success; // only JAVACALL_OK retval is allowed by API
+            r = player::result_success; // only JAVACALL_OK retval is allowed by API
             break;
 
         case dshow_player::OPER_SET_MT:
             DEBUG_ONLY( PRINTF( "   >> set_time...\n" ); )
-            int64 mt = int64( 1000 ) * int64( p->target_mt );
-            int64 time_actual;
+            mt = int64( 1000 ) * int64( p->target_mt );
             r = p->ppl->set_media_time(mt, &time_actual);
             p->media_time = long(time_actual / 1000);
             DEBUG_ONLY( PRINTF( "   >> set_time(%ld) finished: %ld\n", p->target_mt, p->media_time ); )
             evt_type = JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED;
             evt_data = (void*)(p->media_time);
+            break;
+
+        case dshow_player::OPER_DESTROY:
+            DEBUG_ONLY( PRINTF( "   >> destroy...\n" ); )
+            break;
+
+        default:
+            DEBUG_ONLY( PRINTF( "   >> unknown oper=%i.\n", p->pending_operation ); )
             break;
         }
 
