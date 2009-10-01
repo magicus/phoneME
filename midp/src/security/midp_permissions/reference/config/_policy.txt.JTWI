@@ -1,0 +1,100 @@
+alias: net_access
+  javax.microedition.io.Connector.http,
+  javax.microedition.io.Connector.socket,
+  javax.microedition.io.Connector.https,
+  javax.microedition.io.Connector.ssl,
+  javax.microedition.io.Connector.datagram,
+  javax.microedition.io.Connector.serversocket,
+  javax.microedition.io.Connector.datagramreceiver,
+  javax.microedition.io.Connector.obex.client.tcp,
+  javax.microedition.io.Connector.obex.server.tcp,
+  javax.microedition.io.Connector.sip,
+  javax.microedition.io.Connector.sips
+
+alias: messaging
+  javax.wireless.messaging.sms.send,
+  javax.wireless.messaging.mms.send,
+  javax.microedition.io.Connector.sms,
+  javax.microedition.io.Connector.cbs,
+  javax.wireless.messaging.sms.receive,
+  javax.wireless.messaging.cbs.receive,
+  javax.microedition.io.Connector.mms,
+  javax.wireless.messaging.mms.receive
+
+alias: application_auto_invocation
+  javax.microedition.io.PushRegistry,
+  javax.microedition.content.ContentHandler
+
+alias: local_connectivity
+  javax.microedition.io.Connector.comm,
+  javax.microedition.io.Connector.obex.client,
+  javax.microedition.io.Connector.obex.server,
+  javax.microedition.io.Connector.bluetooth.client,
+  javax.microedition.io.Connector.bluetooth.server
+
+alias: all_satsa
+  javax.microedition.apdu.aid,
+  javax.microedition.apdu.sat,
+  javax.microedition.jcrmi,
+  javax.microedition.securityservice.CMSMessageSignatureService
+
+alias: multimedia_recording
+  javax.microedition.media.control.RecordControl,
+  javax.microedition.media.control.VideoControl.getSnapshot
+
+alias: read_user_data_access
+  javax.microedition.pim.ContactList.read,
+  javax.microedition.pim.EventList.read,
+  javax.microedition.pim.ToDoList.read,
+  javax.microedition.io.Connector.file.read
+
+alias: write_user_data_access
+  javax.microedition.pim.ContactList.write,
+  javax.microedition.pim.EventList.write,
+  javax.microedition.pim.ToDoList.write,
+  javax.microedition.io.Connector.file.write
+
+alias: location
+  javax.microedition.location.Location,
+  javax.microedition.location.Orientation,
+  javax.microedition.location.ProximityListener,
+  javax.microedition.location.LandmarkStore.read,
+  javax.microedition.location.LandmarkStore.write,
+  javax.microedition.location.LandmarkStore.category,
+  javax.microedition.location.LandmarkStore.management
+
+domain: minimum,unsecured
+
+domain: maximum,unsecured
+allow: net_access
+allow: application_auto_invocation
+allow: local_connectivity
+allow: messaging
+allow: multimedia_recording
+allow: read_user_data_access
+allow: write_user_data_access
+allow: location
+allow: all_satsa
+
+domain: trusted
+allow: net_access
+allow: application_auto_invocation
+allow: local_connectivity
+allow: messaging
+allow: multimedia_recording
+allow: read_user_data_access
+allow: write_user_data_access
+allow: location
+allow: all_satsa
+
+domain: untrusted,unsecured
+session(session): net_access
+session(session): application_auto_invocation
+blanket(session): local_connectivity
+blanket(oneshot): messaging
+session(oneshot): multimedia_recording
+blanket(session): read_user_data_access
+blanket(session): write_user_data_access
+blanket(session): location
+blanket(session): all_satsa
+
