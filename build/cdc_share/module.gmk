@@ -85,6 +85,7 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/l10n/LocalizedStrings.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/l10n/LocalizedStrings_es.java \
 
 ifeq ($(USE_JSR_177), true)
 # names of native source files (like 'file.c')
