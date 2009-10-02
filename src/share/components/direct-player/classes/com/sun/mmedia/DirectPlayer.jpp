@@ -722,11 +722,11 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
                 c = recordControl;
             }
         } else if (shortType.equals(HighLevelPlayer.stcName)) {
+            if (nIsStopTimeControlSupported(hNative)) {
             if (!getOwner().isCapturePlayer()) {
                 c = getOwner();
             }
-//            if (nIsStopTimeControlSupported(hNative)) {
-//            }
+            }
         } else if (shortType.equals(HighLevelPlayer.tecName)) {
             if (nIsTempoControlSupported(hNative)) {
                 if (midiControl == null) 
