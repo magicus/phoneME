@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -31,21 +31,22 @@ import java.util.Vector;
 import java.util.Enumeration;
 
 import  com.sun.midp.configurator.Constants;
+import com.sun.midp.lcdui.VirtualKeyboardManagerMap;
 
 /**
- * Look and feel implementation of <code>Canvas</code> based on 
+ * Look and feel implementation of <code>Canvas</code> based on
  * platform widget.
  */
-class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
+class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyboardManager {
 
     /**
      * LF implementation of <code>Canvas</code>.
-     * @param canvas the <code>Canvas</code> associated with this 
+     * @param canvas the <code>Canvas</code> associated with this
      *               <code>CanvasLFImpl</code>
      */
     CanvasLFImpl(Canvas canvas) {
         super(canvas);
-    
+
         this.canvas = canvas;
     }
 
@@ -66,13 +67,13 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      * @param target an optional paint target to receive the paint request
      *               when it returns via callPaint()
      */
-    public void lRepaint(int x, int y, int width, int height, 
+    public void lRepaint(int x, int y, int width, int height,
                             Object target) {
         lRequestPaint(x, y, width, height, target);
     }
-    
+
     /**
-     * Notifies that repaint of the entire <code>Canvas</code> look&amp;feel 
+     * Notifies that repaint of the entire <code>Canvas</code> look&amp;feel
      * is needed.
      * Repaints the viewport area.
      *
@@ -99,7 +100,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
     }
 
     /**
-     * Notify this <code>Canvas</code> that it is being shown on the 
+     * Notify this <code>Canvas</code> that it is being shown on the
      * given <code>Display</code>.
      */
     public void uCallShow() {
@@ -111,13 +112,13 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
         synchronized (Display.calloutLock) {
             try {
                 canvas.showNotify();
-		        /* For MMAPI VideoControl in a Canvas */
-		        if (mmHelper != null) {
-		            for (Enumeration e = embeddedVideos.elements();
+                /* For MMAPI VideoControl in a Canvas */
+                if (mmHelper != null) {
+                    for (Enumeration e = embeddedVideos.elements();
                                                     e.hasMoreElements();) {
-			        mmHelper.showVideo(e.nextElement());
-		            }
-		        }
+                    mmHelper.showVideo(e.nextElement());
+                    }
+                }
             } catch (Throwable t) {
                 Display.handleThrowable(t);
             }
@@ -126,11 +127,11 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
     }
 
     /**
-     * Notify this <code>Canvas</code> that it is being hidden on the 
+     * Notify this <code>Canvas</code> that it is being hidden on the
      * given <code>Display</code>.
      */
     public void uCallHide() {
-        
+
         int oldState = state;
 
         // Delete native resources including title and ticker
@@ -141,7 +142,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
             if (oldState == SHOWN) {
                 try {
                     canvas.hideNotify();
-        		    /* For MMAPI VideoControl in a Canvas */
+                    /* For MMAPI VideoControl in a Canvas */
                     if (mmHelper != null) {
                         for (Enumeration e = embeddedVideos.elements();
                                                   e.hasMoreElements();) {
@@ -161,18 +162,18 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
       */
 
      public void uCallFreeze() {
- 
+
          int oldState = state;
- 
+
          // Delete native resources including title and ticker
          super.uCallFreeze();
- 
+
          // Notify canvas subclass after hiding the native resource
          synchronized (Display.calloutLock) {
              if (oldState == SHOWN) {
                  try {
                      canvas.hideNotify();
-                    // For MMAPI VideoControl in a Canvas 
+                    // For MMAPI VideoControl in a Canvas
                     if (mmHelper != null) {
                         for (Enumeration e = embeddedVideos.elements();
                                                   e.hasMoreElements();) {
@@ -201,8 +202,8 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
         // We also need to preserve the original translation.
 //        g.preserveMIDPRuntimeGC(x, y, WIDTH, HEIGHT);
 
-        // Reset the graphics context according to the spec. requirement. 
-        // This is a must before we call canvas's paint(g) since the 
+        // Reset the graphics context according to the spec. requirement.
+        // This is a must before we call canvas's paint(g) since the
         // title or ticker drawing routines may change the GC before.
         g.resetGC();
 
@@ -216,13 +217,13 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
 
         // If there are any video players in this canvas,
         // let the helper class invoke video rendering
-	// Update frames of any video players displayed on this Canvas
-	if (mmHelper != null) {
+    // Update frames of any video players displayed on this Canvas
+    if (mmHelper != null) {
             for (Enumeration e = embeddedVideos.elements();
                                             e.hasMoreElements();) {
-		mmHelper.paintVideo(e.nextElement(), g);
+        mmHelper.paintVideo(e.nextElement(), g);
             }
-	}
+    }
 //        g.restoreMIDPRuntimeGC();
     }
 
@@ -331,24 +332,24 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
 
     /**
      * Add embedded video player.
-     * This is called by <code>MMHelperImpl</code>, whenever a video 
+     * This is called by <code>MMHelperImpl</code>, whenever a video
      * player joins this canvas.
      *
      * @param video The player joining this canvas.
      */
      void addEmbeddedVideo(Object video) {
-	 embeddedVideos.addElement(video);
+     embeddedVideos.addElement(video);
      }
 
     /**
      * Remove embedded video player.
-     * This is called by <code>MMHelperImpl</code>, whenever a video 
+     * This is called by <code>MMHelperImpl</code>, whenever a video
      * player leaves this canvas.
      *
      * @param video The player leaving this canvas.
      */
      void removeEmbeddedVideo(Object video) {
-	 embeddedVideos.removeElement(video);
+     embeddedVideos.removeElement(video);
      }
 
 
@@ -420,5 +421,41 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      * The <code>MMHelperImpl</code> instance.
      */
     private static MMHelperImpl mmHelper = MMHelperImpl.getInstance();
+
+
+    // ----------- VirtualKeyboardManager --------------
+
+    /**
+     * Changes virtual keyboard type
+     *
+     *
+     * @param type new type
+     */
+    public void setKeyboardType(String type) {
+    }
+
+    /**
+     * Checks if VirtualKeyboardLayer is vivible on the screen
+     *
+     *
+     * @return true if it is visible
+     */
+    public boolean isVirtualKeyboardVisible() {
+        return false;
+    }
+
+    /**
+     * Hides VirtualKeyboardLayer
+     *
+     */
+    public void hideVirtualKeyboard() {
+    }
+
+    /**
+     * Shows VirtualKeyboardLayer
+     *
+     */
+    public void showVirtualKeyboard() {
+    }
 
 }

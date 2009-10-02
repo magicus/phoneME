@@ -27,17 +27,19 @@
 package javax.microedition.lcdui;
 
 /* import  javax.microedition.lcdui.KeyConverter; */
-import com.sun.midp.chameleon.layers.VirtualKeyListener;
-
-import com.sun.midp.i18n.ResourceConstants;
-
-import java.util.Vector;
 import java.util.Enumeration;
+import java.util.Vector;
+
+import com.sun.midp.chameleon.layers.VirtualKeyListener;
+import com.sun.midp.chameleon.layers.VirtualKeyboardLayer;
+import com.sun.midp.i18n.ResourceConstants;
+import com.sun.lcdui.VirtualKeyboardManager;
+import com.sun.midp.lcdui.VirtualKeyboardManagerMap;
 
 /**
 * This is the look amps; feel implementation for Canvas.
 */
-class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyListener {
+class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyListener, VirtualKeyboardManager {
 
 
     /**
@@ -50,6 +52,10 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
         if (currentDisplay != null) {
             isDisplayRotated = currentDisplay.wantRotation;
         }
+
+        /* Cross domain access tunnel.
+           We need this for virtual keyboard public API */
+        VirtualKeyboardManagerMap.registerManager(canvas, this);
     }
 
     // ************************************************************
@@ -106,6 +112,11 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
 
         // Check full screen mode and call lCallShow below
         super.uCallShow();
+        
+        if (isVirtualKeyboardVisible()) {
+            // display associated virtual keyboard
+            currentDisplay.showPopup(vkLayer);
+        }
 
         // SYNC NOTE: Call into app code. So do it outside LUICDLock
         synchronized (Display.calloutLock) {
@@ -137,7 +148,10 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
     }
 
     /**
-     * Notify this Canvas it is being hidden on the given Display
+     * Notify this Canvas it is being hidden on the given Display 
+     *  
+     * Associated virtual keyboard popup is dismissed automatically 
+     * by MIDPWindow->hideDisplayable()->clearPopups()
      */
     public void uCallHide() {
 
@@ -456,6 +470,8 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
      */
     private static MMHelperImpl mmHelper = MMHelperImpl.getInstance();
 
+
+    // -----------  VirtualKeyListener  ---------------
     public void processKeyPressed(int keyCode) {
         uCallKeyPressed(keyCode);
     }
@@ -463,4 +479,68 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF, VirtualKeyList
     public void processKeyReleased(int keyCode) {
         uCallKeyReleased(keyCode);
     }
+
+    // ----------- VirtualKeyboardManager --------------
+    /**
+     * VirtualKeyboardLayer associated with given canvas
+     * 
+     */
+    VirtualKeyboardLayer vkLayer;
+    
+    /**
+     * Creates VirtualKeyboardLayer instance
+     * 
+     */
+    private void createKeyboard() {
+        if (null == vkLayer) {
+            vkLayer = VirtualKeyboardLayer.getInstance();
+            vkLayer.setVirtualKeyboardLayerListener(this);
+        }
+    }
+
+    /**
+     * Changes virtual keyboard type
+     * 
+     * 
+     * @param type new type
+     */
+    public void setKeyboardType(String type) {
+        createKeyboard();
+        vkLayer.setKeyboardType(type);
+    }
+
+    /**
+     * Checks if VirtualKeyboardLayer is vivible on the screen 
+     * 
+     * 
+     * @return true if it is visible
+     */
+    public boolean isVirtualKeyboardVisible() {
+        if (null != vkLayer && currentDisplay != null) {
+            return vkLayer.isVisible();
+        }
+        return false;
+    }
+
+    /**
+     * Hides VirtualKeyboardLayer
+     * 
+     */
+    public void hideVirtualKeyboard() {
+        if (null != vkLayer && null != currentDisplay) {
+            currentDisplay.hidePopup(vkLayer);
+        }
+    }
+
+    /**
+     * Shows VirtualKeyboardLayer
+     * 
+     */
+    public void showVirtualKeyboard() {
+        createKeyboard();
+        if (null != currentDisplay) {
+            currentDisplay.showPopup(vkLayer);
+        }
+    }
+
 }

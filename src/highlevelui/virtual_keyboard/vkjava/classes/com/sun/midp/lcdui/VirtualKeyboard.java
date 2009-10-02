@@ -98,16 +98,14 @@ public class VirtualKeyboard {
     }
 
     /**
-     * Return instance of virtual keyboard
+     * Return instance of VirtualKeyboard class
      * @param listener - listener for handling virtual keyboard events
-     * @return instance of VirtualKeyboard class
+     * @return null
      */
     public static VirtualKeyboard getVirtualKeyboard(VirtualKeyboardListener listener) {
-        if (virtualKeyboard == null) {
-            virtualKeyboard = new VirtualKeyboard(listener);
-        }
-        return virtualKeyboard;
+        return new VirtualKeyboard(listener);
     }
+
 
     /**
      * Handle input from a keyboard
@@ -133,22 +131,22 @@ public class VirtualKeyboard {
                             case Key.CAPS_KEY:
                                 if (type == EventConstants.PRESSED) break;
                                 if (currentKeyboardType.equals(LOWER_ALPHABETIC_KEYBOARD)) {
-                                    changeKeyboad(UPPER_ALPHABETIC_KEYBOARD);
+                                    changeKeyboard(UPPER_ALPHABETIC_KEYBOARD);
                                 } else if (currentKeyboardType.equals(UPPER_ALPHABETIC_KEYBOARD)) {
-                                    changeKeyboad(LOWER_ALPHABETIC_KEYBOARD);
+                                    changeKeyboard(LOWER_ALPHABETIC_KEYBOARD);
                                 }
                                 break;
                             case Key.SYMBOL_MODE_KEY:
                                 if (type == EventConstants.PRESSED) break;
-                                changeKeyboad(SYBOLIC_KEYBOARD);
+                                changeKeyboard(SYBOLIC_KEYBOARD);
                                 break;
                             case Key.NUMERIC_MODE_KEY:
                                 if (type == EventConstants.PRESSED) break;
-                                changeKeyboad(NUMERIC_KEYBOARD);
+                                changeKeyboard(NUMERIC_KEYBOARD);
                                 break;
                             case Key.ALPHA_MODE_KEY:
                                 if (type == EventConstants.PRESSED) break;
-                                changeKeyboad(LOWER_ALPHABETIC_KEYBOARD);
+                                changeKeyboard(LOWER_ALPHABETIC_KEYBOARD);
                                 break;
                             case Key.BACKSPACE_KEY:
                                 if (type == EventConstants.RELEASED) break;
@@ -279,7 +277,7 @@ public class VirtualKeyboard {
      * Change type of keyboard
      * @param newType type of new shown keyboard
      */
-    public void changeKeyboad(String newType) {
+    public void changeKeyboard(String newType) {
         if (keyboardsMap.containsKey(newType)) {
             currentKeyboardType = newType;
             currentKeyboard = (Key[][]) keyboardsMap.get(newType);

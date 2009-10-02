@@ -32,6 +32,7 @@ import com.sun.midp.chameleon.skins.TickerSkin;
 import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
 import javax.microedition.lcdui.*;
+import com.sun.midp.chameleon.skins.resources.VirtualKeyboardResources;
 
 /**
  * This is a popup layer 
@@ -57,8 +58,24 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     /**
      * Create an instance of KeyboardLayer
      */
-    public VirtualKeyboardLayer() {
+    private VirtualKeyboardLayer() {
         super(VirtualKeyboardSkin.BG, VirtualKeyboardSkin.COLOR_BG);
+        if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
+            vk = VirtualKeyboard.getVirtualKeyboard(this);
+         }
+    }
+
+    /**
+     * Creates layer instance. 
+     * <p> 
+     * Constructor is hidden to let resources be initialized first.
+     * 
+     * 
+     * @return new VirtualKeyboardLayer instance
+     */
+    public static VirtualKeyboardLayer getInstance() {
+        VirtualKeyboardResources.load();
+        return new VirtualKeyboardLayer();
     }
 
     /**
@@ -67,17 +84,6 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      */
     public static boolean isSupportJavaKeyboard() {
         return VirtualKeyboard.isSupportJavaKeyboard();
-    }
-
-    /**
-     * Return standalone instance of VirtualKeyboardLayer
-     * @return
-     */
-    public void init() {
-
-        if (VirtualKeyboard.isSupportJavaKeyboard() && vk == null) {
-            vk = VirtualKeyboard.getVirtualKeyboard(this);
-         }
     }
 
     /**
@@ -93,7 +99,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      * @param keyboard
      */
     public void setKeyboardType(String keyboard) {
-        vk.changeKeyboad(keyboard);
+        vk.changeKeyboard(keyboard);
     }
 
     /**
@@ -105,11 +111,7 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
      *                supports input.
      */
     public void setVisible(boolean visible) {
-        if (vk != null && vk.isSupportJavaKeyboard()) {
-            this.visible = visible;
-        } else {
-            this.setVisible(false);
-        }
+        this.visible = visible;
     }
 
     /**
@@ -245,13 +247,4 @@ public class VirtualKeyboardLayer extends PopupLayer implements VirtualKeyboardL
     public void repaintVirtualKeyboard() {
         requestRepaint();
     }
-
-    public boolean isVirtualKeyboardVisible() {
-        return virtualKeyboardVisible;
-    }
-
-    public void setVirtualKeyboardVisible(boolean visible) {
-        virtualKeyboardVisible = visible;
-    }
-
 }

@@ -80,6 +80,9 @@ import com.sun.me.gci.windowsystem.GCIScreenWidget;
 
 import com.sun.midp.orientation.OrientationListener;
 
+import com.sun.lcdui.VirtualKeyboardManager;
+
+
 /**
  * <code>Display</code> represents the manager of the display and
  * input devices of the
@@ -472,9 +475,6 @@ public class Display {
 
     /** The PopupLayer that represents open state of predicitve text input popup. */
     PTILayer pt_popup;
-
-    /** The PopupLayer that represents java virtual keyboard */
-    VirtualKeyboardLayer keyboardLayer;
 
     // #endif ENABLE_CHAMELEON
 
@@ -1755,24 +1755,6 @@ public class Display {
                 getInputSession());
         }
         return pt_popup;
-    }
-
-    /**
-     * Create popup layer that represents java virtual keyboard popup
-     *   associated with this Display
-     * @return VirtualKeyboard layer instance connected to the current input session
-     *   associated with this Display
-     **/
-    VirtualKeyboardLayer getVirtualKeyboardPopup() {
-        if (!VirtualKeyboardLayer.isSupportJavaKeyboard()) {
-            return null;
-        }
-        if (keyboardLayer == null) {
-          VirtualKeyboardResources.load();
-          keyboardLayer = new VirtualKeyboardLayer();
-          keyboardLayer.init();
-        }
-        return keyboardLayer;
     }
 
     // #endif ENABLE_CHAMELEON
@@ -3805,29 +3787,19 @@ public class Display {
          * Called by event delivery when need to show or hide virtual keyboard
          */
         public void handleVirtualKeyboardEvent() {
-
-            // #ifdef ENABLE_CHAMELEON
-
             if (!(Display.this.current instanceof CanvasLFImpl)) {
+                // this checks for null as well
                 return;
             }
 
-            VirtualKeyListener listener = (VirtualKeyListener)Display.this.current;
-
-            keyboardLayer = Display.this.getVirtualKeyboardPopup();
-
-            if (keyboardLayer != null && listener != null) {
-                keyboardLayer.setVirtualKeyboardLayerListener(listener);
-                keyboardLayer.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
-                if (keyboardLayer.isVirtualKeyboardVisible()) {
-                    Display.this.hidePopup(keyboardLayer);
-                    keyboardLayer.setVirtualKeyboardVisible(false);
-                } else {
-                    Display.this.showPopup(keyboardLayer);
-                    keyboardLayer.setVirtualKeyboardVisible(true);
-                }
+            VirtualKeyboardManager mng = (VirtualKeyboardManager)Display.this.current;
+            if (mng.isVirtualKeyboardVisible()) {
+                mng.hideVirtualKeyboard();
+            } else {
+                // override default type
+                mng.setKeyboardType(VirtualKeyboard.GAME_KEYBOARD);
+                mng.showVirtualKeyboard();
             }
-            // #endif ENABLE_CHAMELEON
         }
 
         /*

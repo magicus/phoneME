@@ -45,6 +45,9 @@ LIB_SET += $(VIRTUAL_KEYBOARD_NAME)
 # Source code path for the library
 # vpath $(VIRTUAL_KEYBOARD_DIR)/native
 
+# API
+VIRTUAL_KEYBOARD_SHARED_DIR = $(VIRTUAL_KEYBOARD_DIR)/shared
+include $(VIRTUAL_KEYBOARD_SHARED_DIR)/lib.gmk
 
 # IMPL NOTE: Use library configuration file to select switch library
 #

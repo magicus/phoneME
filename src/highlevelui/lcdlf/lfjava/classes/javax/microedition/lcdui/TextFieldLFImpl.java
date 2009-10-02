@@ -153,6 +153,13 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     private Display oldDisplay = null;
 
+
+    /**
+     * Associated virtual keyboard
+     * 
+     */
+    private VirtualKeyboardLayer keyboardPopup;
+
     /**
      * Creates TextFieldLF for the passed in TextField.
      * @param tf The TextField associated with this TextFieldLF
@@ -1951,21 +1958,22 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (d != null) {
             if (!vkb_popupOpen) {
                if (d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
-                    if (keyboardPopup != null ) {
+                    if (keyboardPopup == null ) {
+                        keyboardPopup = VirtualKeyboardLayer.getInstance();
                         keyboardPopup.setVirtualKeyboardLayerListener(this);
                         keyboardPopup.setKeyboardType(VirtualKeyboard.LOWER_ALPHABETIC_KEYBOARD);
-                        d.showPopup(keyboardPopup);
-                        vkb_popupOpen = true;
-                        lRequestInvalidate(true, true);
                     }
+                    d.showPopup(keyboardPopup);
+                    vkb_popupOpen = true;
+                    lRequestInvalidate(true, true);
                 }
             } else {
                 if (!(d.getInputSession().getCurrentInputMode() instanceof VirtualKeyboardInputMode)) {
-                    VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
                     if (keyboardPopup != null ) {
                         keyboardPopup.setVirtualKeyboardLayerListener(null);
                         d.hidePopup(keyboardPopup);
+                        // get ready for GC
+                        keyboardPopup = null;
                         vkb_popupOpen = false;
                         lRequestInvalidate(true, true);
                     }
@@ -1998,9 +2006,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         Display d = getCurrentDisplay();
         if (vkb_popupOpen && d != null) {
-            VirtualKeyboardLayer keyboardPopup = d.getVirtualKeyboardPopup();
             if (keyboardPopup != null ) {
-                keyboardPopup.setVirtualKeyboardLayerListener(null);
                 d.hidePopup(keyboardPopup);
                 vkb_popupOpen = false;
                 lRequestInvalidate(true, true);

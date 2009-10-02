@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -25,37 +25,22 @@
 #
 ######################################################################
 #
-# VIRTUAL_KEYBOARD Virtual keyboard Library
+# VIRTUAL_KEYBOARD Virtual keyboard exports
 #
 ######################################################################
 
 # Name of the library
-VIRTUAL_KEYBOARD_J_NAME = virtual_keyboard/vkjava
-VIRTUAL_KEYBOARD_J_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(VIRTUAL_KEYBOARD_J_NAME)
+VIRTUAL_KEYBOARD_SHARED_NAME = virtual_keyboard/shared
+VIRTUAL_KEYBOARD_SHARED_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(VIRTUAL_KEYBOARD_SHARED_NAME)
 
 # Add to library set for this build
-LIB_SET += $(VIRTUAL_KEYBOARD_J_NAME)
-                    
-# Export include files
-#SUBSYSTEM_VIRTUAL_KEYBOARD_EXTRA_INCLUDES += -I$(VIRTUAL_KEYBOARD_J_DIR)/include
+LIB_SET += $(VIRTUAL_KEYBOARD_SHARED_NAME)
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(VIRTUAL_KEYBOARD_J_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(VIRTUAL_KEYBOARD_SHARED_NAME)/classes
 
 # Java files for the library
 #
-
 SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES += \
-    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java \
-    $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/chameleon/input/VirtualKeyboardInputMode.java \
-    $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/Key.java \
-    $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboard.java \
-    $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardListener.java \
-    $(VIRTUAL_KEYBOARD_J_DIR)/classes/com/sun/midp/lcdui/VirtualKeyboardManagerMap.java
-    
-# I3test files for the library
-#
-#ifeq ($(USE_I3_TEST), true)
-#SUBSYSTEM_VIRTUAL_KEYBOARD_I3TEST_JAVA_FILES += \
-#$(VIRTUAL_KEYBOARD_J_DIR)/i3test/javax/microedition/lcdui/TestStringItemSizing.java
-#endif
+    $(VIRTUAL_KEYBOARD_SHARED_DIR)/classes/com/sun/lcdui/VirtualKeyboardManager.java \
+    $(VIRTUAL_KEYBOARD_SHARED_DIR)/classes/com/sun/lcdui/VirtualKeyboardFactory.java    
