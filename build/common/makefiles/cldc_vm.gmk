@@ -1,24 +1,22 @@
 #
-# 	
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
 # 2 only, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
 # included at /legal/license.txt).
-# 
+#
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
-# 
+#
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
@@ -69,42 +67,42 @@ define verify_cldc
     fi; \
     if [ "$(USE_MONET)" = "true" ] && \
         grep "^\#define ENABLE_MONET[[:space:]]\+0" \
-    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: VM MONET setting mismatches.'; \
         exit -1; \
     fi; \
     if [ "$(USE_VERIFY_ONCE)" = "true" ] && \
         grep "^\#define ENABLE_VERIFY_ONLY[[:space:]]\+0" \
-    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: VM VERIFY ONCE setting mismatches.'; \
         exit -1; \
     fi; \
     if [ "$(USE_VM_PROFILES)" = "true" ] && \
         grep "^\#define ENABLE_MULTIPLE_PROFILES_SUPPORT[[:space:]]\+0" \
-    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: ENABLE_MULTIPLE_PROFILES_SUPPORT setting mismatches.'; \
         exit -1; \
     fi; \
     if [ "$(USE_JAVA_PROFILER)" = "true" ] && \
         grep "^\#define ENABLE_WTK_PROFILER[[:space:]]\+0" \
-    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: VM WTK_PROFILER setting mismatches.'; \
         exit -1; \
     fi; \
     if [ "$(USE_JAVA_DEBUGGER)" = "true" ] && \
         grep "^\#define ENABLE_JAVA_DEBUGGER[[:space:]]\+0" \
-    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: VM JAVA_DEBUGGER setting mismatches.'; \
         exit -1; \
     fi; \
     if grep "^\#define ENABLE_PCSL[[:space:]]\+0" \
-    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: VM PCSL not enabled.'; \
         exit -1; \
     fi; \
     if [ "$(USE_MULTIPLE_ISOLATES)" = "true" ] && \
         grep "^\#define ENABLE_ISOLATES[[:space:]]\+0" \
-    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: VM ISOLATES setting mismatches.'; \
         exit -1; \
     fi; \
@@ -234,13 +232,13 @@ $(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_CLASSES_ZIP) \
 	@for f in $(ROMGEN_CFG_FILES); do \
 		echo "Include $$f" >> $(ROMGEN_CFG_LST); \
 	 done
-		
+
 	@echo	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
 		-cp $(MIDP_CLASSES_ZIP) \
 		-romize =HeapCapacity128M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
-		-romincludepath $(path)) $(LOG)		
-		
+		-romincludepath $(path)) $(LOG)
+
 	@cd $(MIDP_OUTPUT_DIR); \
 	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
 		-cp $(MIDP_CLASSES_ZIP) \
@@ -267,14 +265,14 @@ $(CLDC_JAVA_LANG_OBJECT_CLASS): $(CLDC_CLASSES_ZIP)
 		mkdir -p $(CLASSBINDIR); \
 	fi
 	@echo " ... uncompressing CLDC classes" $(LOG)
-	@(cd $(CLASSBINDIR); $(JAR_CMD) xf $(CLDC_CLASSES_ZIP)) $(LOG)
+	$(AT)(cd $(CLASSBINDIR); $(JAR_CMD) xf $(CLDC_CLASSES_ZIP); touch -r $< $@) $(LOG)
 
 $(CLDC_TEST_REFLECT_CLASS): $(CLDCTEST_CLASSES_ZIP)
 	@if [ '!' -d $(CLASSBINDIR) ]; then \
 		mkdir -p $(CLASSBINDIR); \
 	fi
 	@echo " ... uncompressing CLDC test classes" $(LOG)
-	@(cd $(CLASSBINDIR); $(JAR_CMD) xf $(CLDCTEST_CLASSES_ZIP)) $(LOG)
+	$(AT)(cd $(CLASSBINDIR); $(JAR_CMD) xf $(CLDCTEST_CLASSES_ZIP); touch -r $< $@) $(LOG)
 
 # Include C and LD flags exported by the VM build process. This is
 # important in configuring the word ordering of double precision floating point
