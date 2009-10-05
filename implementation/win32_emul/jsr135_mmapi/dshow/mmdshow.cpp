@@ -34,9 +34,11 @@
 
 extern "C" {
     // following functions are defined in lcd.c (MIDP-related javacall):
-    void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color );
-    void lcd_set_video_rect( int x, int y, int w, int h );
-    void lcd_output_video_frame( javacall_pixel* video );
+    int  lcd_open_overlay();
+    void lcd_close_overlay( int ovl_n );
+    void lcd_set_color_key( int ovl_n, javacall_bool use_keying, javacall_pixel key_color );
+    void lcd_set_video_rect( int ovl_n, int x, int y, int w, int h );
+    void lcd_output_video_frame( int ovl_n, javacall_pixel* video );
 
     extern globalMan g_QSoundGM[];
 }
@@ -97,6 +99,8 @@ public:
     int                   out_width;
     int                   out_height;
     javacall_pixel*       out_frame;
+
+    int                   ovl;
 
     BYTE                  buf[ XFER_BUFFER_SIZE ];
 
@@ -175,7 +179,7 @@ void dshow_player::frame_ready( bits16 const* pFrame )
     if( visible )
     {
         prepare_scaled_frame();
-        lcd_output_video_frame( out_frame );
+        lcd_output_video_frame( ovl, out_frame );
     }
 
     LeaveCriticalSection( &cs );
@@ -369,6 +373,20 @@ static javacall_result dshow_create(int appId,
     p->uri              = NULL;
     p->is_video         = ( JC_FMT_FLV == mediaType || JC_FMT_VIDEO_3GPP == mediaType || JC_FMT_MPEG_4_SVP == mediaType || JC_FMT_MPEG_1 == mediaType );
 
+    if( p->is_video )
+    {
+        p->ovl = lcd_open_overlay();
+        if( -1 == p->ovl )
+        {
+            delete p;
+            return JAVACALL_FAIL;
+        }
+    }
+    else
+    {
+        p->ovl = -1;
+    }
+
     p->realizing        = false;
     p->prefetching      = false;
     p->prefetched       = false;
@@ -402,8 +420,6 @@ static javacall_result dshow_create(int appId,
 
     *pHandle =(javacall_handle)p;
 
-    lcd_set_color_key( JAVACALL_FALSE, 0 );
-
     dshow_player::players[ dshow_player::num_players++ ] = p;
 
     return JAVACALL_OK;
@@ -422,7 +438,11 @@ static javacall_result dshow_destroy(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** destroy ***\n" );
 
-    lcd_output_video_frame( NULL );
+    if( p->is_video )
+    {
+        lcd_output_video_frame( p->ovl, NULL );
+        lcd_close_overlay( p->ovl );
+    }
 
     if( NULL != p->pModule )
     {
@@ -466,7 +486,7 @@ static javacall_result dshow_close(javacall_handle handle)
 
     if( NULL != p->ppl ) p->ppl->close();
 
-    lcd_output_video_frame( NULL );
+    if( p->is_video ) lcd_output_video_frame( p->ovl, NULL );
 
     return JAVACALL_OK;
 }
@@ -511,7 +531,7 @@ static javacall_result dshow_release_device(javacall_handle handle)
     dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** release device ***\n" );
 
-    lcd_output_video_frame( NULL );
+    if( p->is_video ) lcd_output_video_frame( p->ovl, NULL );
 
     if( NULL != p->pModule )
     {
@@ -967,11 +987,11 @@ static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_
     p->visible = ( JAVACALL_TRUE == visible );
     if( visible )
     {
-        if( NULL != p->out_frame ) lcd_output_video_frame( p->out_frame );
+        if( NULL != p->out_frame ) lcd_output_video_frame( p->ovl, p->out_frame );
     }
     else
     {
-        lcd_output_video_frame( NULL );
+        lcd_output_video_frame( p->ovl, NULL );
     }
     LeaveCriticalSection( &(p->cs) );
 
@@ -994,14 +1014,14 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
 
         if( NULL != p->video_frame ) p->prepare_scaled_frame();
 
-        lcd_set_video_rect( x, y, w, h );
-        lcd_output_video_frame( p->out_frame );
+        lcd_set_video_rect( p->ovl, x, y, w, h );
+        lcd_output_video_frame( p->ovl, p->out_frame );
 
         if( NULL != old_frame ) delete old_frame;
     }
     else
     {
-        lcd_set_video_rect( x, y, w, h );
+        lcd_set_video_rect( p->ovl, x, y, w, h );
     }
 
     LeaveCriticalSection( &(p->cs) );
@@ -1011,7 +1031,7 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
 
 static javacall_result dshow_set_video_alpha(javacall_handle handle, javacall_bool on, javacall_pixel color)
 {
-    lcd_set_color_key( on, color );
+    lcd_set_color_key( p->ovl, on, color );
     return JAVACALL_OK;
 }
 
