@@ -84,6 +84,7 @@ public class SkinLoader {
      * @param loadAll if true, load all resources. Otherwise,
      * load only selected resources. The rest will be loaded
      * lazily.
+     * @param reload if true, ignore previously loaded resources and reload
      */
     private static void loadResources(boolean loadAll, boolean reload) {
         // load selected resources
