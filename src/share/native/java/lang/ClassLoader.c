@@ -103,7 +103,6 @@ Java_java_lang_ClassLoader_InitializeLoaderGlobalRoot(JNIEnv *env,
 #endif
 }
 
-
 JNIEXPORT jclass JNICALL
 Java_java_lang_ClassLoader_defineClass0(JNIEnv *env,
 					jobject loader,
@@ -170,6 +169,37 @@ Java_java_lang_ClassLoader_defineClass0(JNIEnv *env,
     free(body);
     return result;
 }
+
+#ifdef JAVASE
+JNIEXPORT jclass JNICALL
+Java_java_lang_ClassLoader_defineClass1(JNIEnv *env,
+					jobject loader,
+					jstring name,
+					jbyteArray data,
+					jint offset,
+					jint length,
+					jobject pd,
+                                        jstring source)
+{
+    /* FIXME: currently we ignore the "source" argument" */
+    return Java_java_lang_ClassLoader_defineClass0(env, loader, name, data, offset, length, pd);
+}
+
+JNIEXPORT jclass JNICALL
+Java_java_lang_ClassLoader_defineClass2(JNIEnv *env,
+					jobject loader,
+					jstring name,
+					jobject data,
+					jint offset,
+					jint length,
+					jobject pd,
+					jstring source)
+{
+    /* FIXME: not implemented yet */
+    CVMassert(CVM_FALSE);
+    return NULL;
+}
+#endif
 
 JNIEXPORT void JNICALL
 Java_java_lang_ClassLoader_resolveClass0(JNIEnv *env, jobject thisObj,

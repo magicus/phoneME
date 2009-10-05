@@ -33,7 +33,11 @@
 
 
 JNIEXPORT void JNICALL
+#if JAVASE > 15
+Java_java_lang_Shutdown_halt0(JNIEnv *env, jclass ignored, jint code)
+#else
 Java_java_lang_Shutdown_halt(JNIEnv *env, jclass ignored, jint code)
+#endif
 {
     JVM_Halt(code);
 }

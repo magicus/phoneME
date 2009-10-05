@@ -25,9 +25,17 @@
  *
  */
 
+/*
+ * Don't remap when building for JAVASE, because not all SE JNI .c
+ * files will pull in this header.
+ */
+#ifndef JAVASE
+
 #define readSingle   CVMioutilReadSingle
 #define readBytes    CVMioutilReadBytes
 #define writeSingle  CVMioutilWriteSingle
 #define writeBytes   CVMioutilWriteBytes
 #define fileOpen     CVMioutilFileOpen
 #define deleteOnExit CVMioutilDeleteOnExit
+
+#endif

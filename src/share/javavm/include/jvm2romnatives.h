@@ -38,7 +38,11 @@
 #define JVM_MonitorNotifyAll	 Java_java_lang_Object_notifyAll
 #define JVM_MonitorWait		 Java_java_lang_Object_wait
 
+#if JAVASE > 15
+#define JVM_GetClassName	 Java_java_lang_Class_getName0
+#else
 #define JVM_GetClassName	 Java_java_lang_Class_getName
+#endif
 #define JVM_GetClassInterfaces	 Java_java_lang_Class_getInterfaces
 #define JVM_GetClassLoader	 Java_java_lang_Class_getClassLoader0
 #define JVM_GetClassSigners	 Java_java_lang_Class_getSigners

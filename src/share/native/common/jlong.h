@@ -48,6 +48,10 @@
 #define jlong_low(l)            CVMlong2Int(l)
 #define jlong_high(l)           CVMlong2Int(CVMlongShr(l, 32))
 
+#ifdef JAVASE
+#define long_to_jlong           CVMint2Long
+#endif
+
 /* 
  * Useful on machines where jlong and jdouble have different endianness.
  */

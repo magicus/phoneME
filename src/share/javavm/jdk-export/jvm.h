@@ -1027,6 +1027,7 @@ JNIEXPORT void JNICALL
 JVM_RawMonitorExit(void *mon);
 
 #ifdef JAVASE
+
 /*
  * java.lang.management support
  */
@@ -1046,6 +1047,98 @@ JVM_GetManagement(jint version);
  */
 JNIEXPORT jobjectArray JNICALL
 JVM_GetEnclosingMethodInfo(JNIEnv* env, jclass ofClass);
+
+/* =========================================================================
+ * The following defines a private JVM interface that the JDK can query
+ * for the JVM version and capabilities.  sun.misc.Version defines 
+ * the methods for getting the VM version and its capabilities.
+ *
+ * When a new bit is added, the following should be updated to provide
+ * access to the new capability:
+ *    HS:   JVM_GetVersionInfo and Abstract_VM_Version class
+ *    SDK:  Version class
+ *
+ * Similary, a private JDK interface JDK_GetVersionInfo0 is defined for 
+ * JVM to query for the JDK version and capabilities.
+ *
+ * When a new bit is added, the following should be updated to provide
+ * access to the new capability:
+ *    HS:   JDK_Version class
+ *    SDK:  JDK_GetVersionInfo0
+ *
+ * ==========================================================================
+ */
+typedef struct {
+    /* Naming convention of RE build version string: n.n.n[_uu[c]][-<identifier>]-bxx */
+    unsigned int jvm_version;   /* Consists of major, minor, micro (n.n.n) */
+                                /* and build number (xx) */
+    unsigned int update_version : 8;         /* Update release version (uu) */
+    unsigned int special_update_version : 8; /* Special update release version (c)*/
+    unsigned int reserved1 : 16; 
+    unsigned int reserved2; 
+
+    /* The following bits represents JVM supports that JDK has dependency on.
+     * JDK can use these bits to determine which JVM version
+     * and support it has to maintain runtime compatibility.
+     *
+     * When a new bit is added in a minor or update release, make sure
+     * the new bit is also added in the main/baseline.
+     */
+    unsigned int is_attach_supported : 1;
+    unsigned int is_kernel_jvm : 1;
+    unsigned int : 30;
+    unsigned int : 32;
+    unsigned int : 32;
+} jvm_version_info;
+
+#define JVM_VERSION_MAJOR(version) ((version & 0xFF000000) >> 24)
+#define JVM_VERSION_MINOR(version) ((version & 0x00FF0000) >> 16)
+#define JVM_VERSION_MICRO(version) ((version & 0x0000FF00) >> 8)
+
+/* Build number is available only for RE builds.
+ * It will be zero for internal builds.
+ */
+#define JVM_VERSION_BUILD(version) ((version & 0x000000FF))
+
+JNIEXPORT void JNICALL
+JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t info_size);
+
+typedef struct {
+    // Naming convention of RE build version string: n.n.n[_uu[c]][-<identifier>]-bxx
+    unsigned int jdk_version;   /* Consists of major, minor, micro (n.n.n) */
+                                /* and build number (xx) */
+    unsigned int update_version : 8;         /* Update release version (uu) */
+    unsigned int special_update_version : 8; /* Special update release version (c)*/
+    unsigned int reserved1 : 16; 
+    unsigned int reserved2; 
+
+    /* The following bits represents new JDK supports that VM has dependency on.
+     * VM implementation can use these bits to determine which JDK version
+     * and support it has to maintain runtime compatibility.
+     *
+     * When a new bit is added in a minor or update release, make sure
+     * the new bit is also added in the main/baseline.
+     */
+    unsigned int thread_park_blocker : 1;
+    unsigned int : 31;
+    unsigned int : 32;
+    unsigned int : 32;
+} jdk_version_info;
+
+#define JDK_VERSION_MAJOR(version) ((version & 0xFF000000) >> 24)
+#define JDK_VERSION_MINOR(version) ((version & 0x00FF0000) >> 16)
+#define JDK_VERSION_MICRO(version) ((version & 0x0000FF00) >> 8)
+
+/* Build number is available only for RE build (i.e. JDK_BUILD_NUMBER is set to bNN)
+ * It will be zero for internal builds.
+ */
+#define JDK_VERSION_BUILD(version) ((version & 0x000000FF))
+
+/* 
+ * This is the function JDK_GetVersionInfo0 defined in libjava.so 
+ * that is dynamically looked up by JVM.  
+ */
+typedef void (*jdk_version_info_fn_t)(jdk_version_info* info, size_t info_size);
 
 #endif /* JAVASE */
 
