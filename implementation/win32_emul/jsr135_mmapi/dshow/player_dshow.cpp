@@ -101,10 +101,10 @@ class player_dshow : public player
     IMediaSeeking *pms;
     filter_in *pfi;
 #ifdef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
-    filter_out *pfo_a;
+    IBaseFilter *pfo_a;
 #endif
 #ifdef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
-    filter_out *pfo_v;
+    IBaseFilter *pfo_v;
 #endif
     IPin *pp;
 #ifdef ENABLE_JSR_135_CONT_FLV_DSHOW_INT
@@ -330,7 +330,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                     amt_a.pUnk = null;
                     amt_a.cbFormat = 0;
                     amt_a.pbFormat = null;
-                    if(!filter_out::create(&amt_a, pcallback, &pplayer->pfo_a))
+                    if(!create_filter_out(&amt_a, pcallback, &pplayer->pfo_a))
                     {
                         error("filter_out::create(Audio)", 0);
                     }
@@ -348,7 +348,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                         amt_v.pUnk = null;
                         amt_v.cbFormat = 0;
                         amt_v.pbFormat = null;
-                        if(!filter_out::create(&amt_v, pcallback, &pplayer->pfo_v))
+                        if(!create_filter_out(&amt_v, pcallback, &pplayer->pfo_v))
                         {
                             error("filter_out::create", 0);
                         }
@@ -667,7 +667,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                 }
                 else
                 {
-                    if(!filter_in::create(&amt, pcallback, &pplayer->pfi))
+                    if(!create_filter_in(&amt, pcallback, &pplayer->pfi))
                     {
                         error("filter_in::create", 0);
                     }
@@ -684,7 +684,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                         amt_a.pUnk = null;
                         amt_a.cbFormat = 0;
                         amt_a.pbFormat = null;
-                        if(!filter_out::create(&amt_a, pcallback, &pplayer->pfo_a))
+                        if(!create_filter_out(&amt_a, pcallback, &pplayer->pfo_a))
                         {
                             error("filter_out::create(Audio)", 0);
                         }
@@ -702,7 +702,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                             amt_v.pUnk = null;
                             amt_v.cbFormat = 0;
                             amt_v.pbFormat = null;
-                            if(!filter_out::create(&amt_v, pcallback, &pplayer->pfo_v))
+                            if(!create_filter_out(&amt_v, pcallback, &pplayer->pfo_v))
                             {
                                 error("filter_out::create", 0);
                             }

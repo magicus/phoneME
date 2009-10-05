@@ -245,7 +245,7 @@ public:
     virtual HRESULT __stdcall Clone(IEnumPins **ppEnum);
 };
 
-class filter_out_filter : public filter_out, IAMFilterMiscFlags, IMediaSeeking
+class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking
 {
     friend filter_out_pin;
 
@@ -2923,7 +2923,7 @@ bool filter_out_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcall
 // filter_out
 //----------------------------------------------------------------------------
 
-bool filter_out::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out **ppfilter)
+bool create_filter_out(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, IBaseFilter **ppfilter)
 {
     if(!pamt || !pcallback || !ppfilter) return false;
     filter_out_filter *pfilter;

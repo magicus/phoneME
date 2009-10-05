@@ -1525,7 +1525,7 @@ bool filter_in_filter::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallb
 // filter_in
 //----------------------------------------------------------------------------
 
-bool filter_in::create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_in **ppfilter)
+bool create_filter_in(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_in **ppfilter)
 {
     if(!pamt || !pcallback || !ppfilter) return false;
     filter_in_filter *pfilter;

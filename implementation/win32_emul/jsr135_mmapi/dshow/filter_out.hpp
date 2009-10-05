@@ -27,8 +27,4 @@
 #include <strmif.h>
 #include "player_callback.hpp"
 
-class filter_out : public IBaseFilter
-{
-public:
-    static bool create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_out **ppfilter);
-};
+bool create_filter_out(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, IBaseFilter **ppfilter);

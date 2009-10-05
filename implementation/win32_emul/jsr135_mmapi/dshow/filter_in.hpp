@@ -31,5 +31,6 @@ class filter_in : public IBaseFilter
 {
 public:
     virtual bool set_stream_length(int64 length) = 0;
-    static bool create(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_in **ppfilter);
 };
+
+bool create_filter_in(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, filter_in **ppfilter);
