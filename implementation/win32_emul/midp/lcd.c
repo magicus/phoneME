@@ -39,18 +39,36 @@ extern "C" {
 #define LIME_PACKAGE "com.sun.kvem.midp"
 #define LIME_GRAPHICS_CLASS "GraphicsBridge"
 
+#define MAX_OVERLAYS          16
+
+/* if keying is used, video overrides only pixels of this color  */
+/* note that one single key color is shared by all overlays      */
+static javacall_pixel lcd_key_color; 
+
+/* Single overlay channel information. */
+typedef struct _OVERLAY
+{
+    BOOL             in_use;      /* TRUE if overlay is in use                                                   */
+    javacall_pixel*  video;       /* pointer to current video frame or NULL if no video is being output          */
+    BOOL             use_keying;  /* if TRUE, video is output only to those pixels where color matches key_color */
+    int              x;           /* video rectangle left side (not clipped)                                     */
+    int              y;           /* video rectangle top side (not clipped)                                      */
+    int              w;           /* video rectangle width (not clipped)                                         */
+    int              h;           /* video rectangle height (not clipped)                                        */
+} OVERLAY;
+
 /* This is logical LCDUI putpixel screen buffer. */
 static struct {
     javacall_pixel*  hdc;         /* main offsreen buffer */
     javacall_pixel*  hdc_rotated; /* temporary buffer, used if emulator is rotated and/or updside down */
     char*            mask;        /* if video is output with keying, holds mask derived from hdc contents and key color */
-    javacall_pixel*  video;       /* pointer to current video frame or NULL if no video is being output */
     javacall_pixel*  composite;   /* temporary buffer for video compositing */
     int              width;
     int              height;
     int              full_height; /* screen height in full screen mode */
     int              num_pixels;
     CRITICAL_SECTION cs;          /* used to synchronize video output with UI output */
+    OVERLAY          overlay[ MAX_OVERLAYS ];
 } VRAM;
 
 static javacall_bool inFullScreenMode;
@@ -85,7 +103,7 @@ static struct {
 javacall_result javacall_lcd_init(void) {
 	static LimeFunction *f = NULL;
 
-	int *res, resLen;
+	int *res, resLen, i;
 
 	if (isLCDActive) {
 		javautil_debug_print(JAVACALL_LOG_WARNING, "lcd", "javacall_lcd_init called more than once. Ignored\n");
@@ -149,9 +167,15 @@ javacall_result javacall_lcd_init(void) {
     VRAM.hdc_rotated = (javacall_pixel*)malloc(VRAM.num_pixels * sizeof(javacall_pixel));
     memset(VRAM.hdc_rotated, 0x11, VRAM.num_pixels * sizeof(javacall_pixel));
 
-    VRAM.video     = NULL;
-    VRAM.mask      = NULL;
-    VRAM.composite = NULL;
+    for( i = 0; i < MAX_OVERLAYS; i++ )
+    {
+        VRAM.overlay[ i ].in_use     = FALSE;
+        VRAM.overlay[ i ].video      = NULL;
+        VRAM.overlay[ i ].use_keying = FALSE;
+    }
+
+    VRAM.mask      = malloc(VRAM.num_pixels);
+    VRAM.composite = (javacall_pixel*)malloc(VRAM.num_pixels * sizeof(javacall_pixel));
 
     InitializeCriticalSection( &VRAM.cs );
 
@@ -184,7 +208,6 @@ javacall_result javacall_lcd_finalize(void){
             free(VRAM.composite);
             VRAM.composite = NULL;
         }
-        VRAM.video = NULL;
         isLCDActive = JAVACALL_FALSE;
         DeleteCriticalSection( &VRAM.cs );
     }
@@ -240,35 +263,22 @@ javacall_pixel* javacall_lcd_get_screen(int hardwareId,
     return VRAM.hdc;
 }
 
-/** 
- * The following set of vaiables is used for video output to offscreen buffer
- */
-
-/* if true, video is output only to those pixels where color matches lcd_key_color */
-static volatile javacall_bool  lcd_use_keying = JAVACALL_FALSE; 
-/* when lcd_use_keying is true, video overrides only pixels of this color */
-static volatile javacall_pixel lcd_key_color;
-
-static volatile int            lcd_video_x; /* video rectangle left side (not clipped) */
-static volatile int            lcd_video_y; /* video rectangle top side (not clipped)  */
-static volatile int            lcd_video_w; /* video rectangle width (not clipped)     */
-static volatile int            lcd_video_h; /* video rectangle height (not clipped)    */
-
 /**
- * Blends video frame from VRAM.video into offscreen buffer
- * if lcd_use_keying is true, uses VRAM.mask to determine visible video pixels
+ * Blends video frame from overlay channel into offscreen buffer
+ * if keying is used, uses VRAM.mask to determine visible video pixels
  * VRAM.mask is generated in javacall_lcd_flush.
+ * @param ovl_n         overlay channel number
  * @param buffer target offscreen buffer
  */
-static void blend_video_into_buffer( javacall_pixel* buffer ) {
+static void blend_video_into_buffer( int ovl_n, javacall_pixel* buffer ) {
     int x, y;
 
-    int dst_x0 = lcd_video_x;
-    int dst_y0 = lcd_video_y;
+    int dst_x0 = VRAM.overlay[ ovl_n ].x;
+    int dst_y0 = VRAM.overlay[ ovl_n ].y;
     int src_x0 = 0;
     int src_y0 = 0;
-    int nx     = lcd_video_w;
-    int ny     = lcd_video_h;
+    int nx     = VRAM.overlay[ ovl_n ].w;
+    int ny     = VRAM.overlay[ ovl_n ].h;
     int dstw   = (isLCDRotated ? VRAM.full_height : VRAM.width );
     int dsth   = (isLCDRotated ? VRAM.width : VRAM.full_height );
 
@@ -296,9 +306,11 @@ static void blend_video_into_buffer( javacall_pixel* buffer ) {
         for( x = 0; x < nx; x++ ) {
             int dst_idx = dstw * ( dst_y0 + y ) + dst_x0 + x;
 
-            if( !lcd_use_keying || VRAM.mask[ dst_idx ] ) {
+            if( !VRAM.overlay[ ovl_n ].use_keying || VRAM.mask[ dst_idx ] ) {
                 buffer[ dst_idx ] =
-                    VRAM.video[ lcd_video_w * ( src_y0 + y ) + src_x0 + x ];
+                    VRAM.overlay[ ovl_n ].video[ 
+                              VRAM.overlay[ ovl_n ].w * ( src_y0 + y ) 
+                            + src_x0 + x ];
             }
         }
     }
@@ -394,35 +406,58 @@ static void send_buffer_to_device( int hardwareId, javacall_pixel* buffer ) {
 }
 
 /**
+ * Used internally by MMAPI to allocate overlay channel.
+ * @return number of allcoated channel for use in subsequent calls 
+ *         or -1 if no channel is available
+ */
+int lcd_open_overlay()
+{
+    int i;
+    EnterCriticalSection( &VRAM.cs );
+
+    for( i = 0; i < MAX_OVERLAYS; i++ )
+    {
+        if( !VRAM.overlay[ i ].in_use )
+        {
+            VRAM.overlay[ i ].in_use = TRUE;
+            LeaveCriticalSection( &VRAM.cs );
+            return i;
+        }
+    }
+
+    LeaveCriticalSection( &VRAM.cs );
+    return -1;
+}
+
+/**
+ * Used internally by MMAPI to close overlay channel.
+ * @param ovl_n         overlay channel number
+ */
+void lcd_close_overlay( int ovl_n )
+{
+    EnterCriticalSection( &VRAM.cs );
+    VRAM.overlay[ ovl_n ].video      = NULL;
+    VRAM.overlay[ ovl_n ].in_use     = FALSE;
+    VRAM.overlay[ ovl_n ].use_keying = FALSE;
+    LeaveCriticalSection( &VRAM.cs );
+}
+
+/**
  * Used internally by win32_emul MMAPI. Sets "keying color" -- if keying 
  * is enabled, only pixels of that color will be overwritten by video.
+ * IMPL_NOTE: one single key color is shared by all overlays
+ * @param ovl_n      overlay channel number
  * @param use_keying indicates whether keying is enabled
  * @param key_color  color used to indicate overwritable pixels
  */
-void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color )
+void lcd_set_color_key( int ovl_n, javacall_bool use_keying, javacall_pixel key_color )
 {
     EnterCriticalSection( &VRAM.cs );
-    lcd_use_keying = use_keying;
-    lcd_key_color  = key_color;
+    VRAM.overlay[ ovl_n ].use_keying = ( JAVACALL_TRUE == use_keying );
 
-    if( lcd_use_keying ) {
-        if( NULL == VRAM.mask ) {
-            VRAM.mask = malloc(VRAM.num_pixels);
-        }
-        if( NULL == VRAM.composite ) {
-            VRAM.composite = (javacall_pixel*)malloc(VRAM.num_pixels * sizeof(javacall_pixel));
-        }
-        prepare_video_mask_and_composite();
-    } else {
-        if( NULL != VRAM.mask ) {
-            free(VRAM.mask);
-            VRAM.mask = NULL;
-        }
-        if( NULL != VRAM.composite ) {
-            free(VRAM.composite);
-            VRAM.composite = NULL;
-        }
-    }
+    if( VRAM.overlay[ ovl_n ].use_keying ) lcd_key_color  = key_color;
+
+    prepare_video_mask_and_composite();
 
     LeaveCriticalSection( &VRAM.cs );
 }
@@ -430,39 +465,45 @@ void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color )
 /**
  * Used internally by MMAPI to set rectangle to output video to.
  * Rectangle here is unclipped. clipping occurs later in blend_video_into_buffer()
- * @param x left rectangle side
- * @param y top rectangle side
- * @param w rectangle width
- * @param h rectangle height
+ * @param ovl_n  overlay channel number
+ * @param x      left rectangle side
+ * @param y      top rectangle side
+ * @param w      rectangle width
+ * @param h      rectangle height
  */
-void lcd_set_video_rect( int x, int y, int w, int h )
+void lcd_set_video_rect( int ovl_n, int x, int y, int w, int h )
 {
     EnterCriticalSection( &VRAM.cs );
-    lcd_video_x    = x;
-    lcd_video_y    = y;
-    lcd_video_w    = w;
-    lcd_video_h    = h;
+    VRAM.overlay[ ovl_n ].x = x;
+    VRAM.overlay[ ovl_n ].y = y;
+    VRAM.overlay[ ovl_n ].w = w;
+    VRAM.overlay[ ovl_n ].h = h;
     LeaveCriticalSection( &VRAM.cs );
 }
 
 /**
  * Used internally by MMAPI to composite decoded video into offscreen buffer.
+ * @param ovl_n overlay channel number
  * @param video pointer to video frame buffer. buffer contents are NOT copied,
  *              so calling party must call this function with another value
  *              (next frame address or NULL) before releasing refernced memory.
  *              if video is NULL, video output is disabled.
  */
-void lcd_output_video_frame( javacall_pixel* video ) {
+void lcd_output_video_frame( int ovl_n, javacall_pixel* video ) {
+
+    int i;
 
     EnterCriticalSection( &VRAM.cs );
 
-    VRAM.video = video;
+    VRAM.overlay[ ovl_n ].video = video;
 
-    if( NULL != VRAM.video ) {
-        javacall_pixel* hdc = ( lcd_use_keying ? VRAM.composite : VRAM.hdc );
-        blend_video_into_buffer( hdc );
-        send_buffer_to_device( javacall_lcd_get_current_hardwareId(), hdc );
+    for( i = 0; i < MAX_OVERLAYS; i++ ) {
+        if( NULL != VRAM.overlay[ i ].video ) {
+            blend_video_into_buffer( i, VRAM.composite );
+        }
     }
+
+    send_buffer_to_device( javacall_lcd_get_current_hardwareId(), VRAM.composite );
 
     LeaveCriticalSection( &VRAM.cs );
 }
@@ -480,24 +521,22 @@ void lcd_output_video_frame( javacall_pixel* video ) {
 javacall_result javacall_lcd_flush(int hardwareId) {
 
     javacall_pixel* hdc;
+    int             i;
 
     EnterCriticalSection( &VRAM.cs );
 	 
-    if( lcd_use_keying ) {
-        // javacall_lcd_flush() may be called again without VRAM.hdc being updated.
-        // if we blend video directly into VRAM.hdc, second call with unchanged
-        // VRAM.hdc will erase video mask. Hence separate VRAM.composite buffer.
-        prepare_video_mask_and_composite();
-        hdc = VRAM.composite;
-    } else {
-        hdc = VRAM.hdc;
+    // javacall_lcd_flush() may be called again without VRAM.hdc being updated.
+    // if we blend video directly into VRAM.hdc, second call with unchanged
+    // VRAM.hdc will erase video mask. Hence separate VRAM.composite buffer.
+    prepare_video_mask_and_composite();
+
+    for( i = 0; i < MAX_OVERLAYS; i++ ) {
+        if( NULL != VRAM.overlay[ i ].video ) {
+            blend_video_into_buffer( i, VRAM.composite );
+        }
     }
 
-    if( NULL != VRAM.video ) {
-        blend_video_into_buffer( hdc );
-    }
-
-    send_buffer_to_device( hardwareId, hdc );
+    send_buffer_to_device( hardwareId, VRAM.composite );
 
     LeaveCriticalSection( &VRAM.cs );
 

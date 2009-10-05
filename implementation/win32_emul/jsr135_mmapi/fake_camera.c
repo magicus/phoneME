@@ -31,9 +31,11 @@
 //=============================================================================
 
 // following functions are defined in lcd.c (MIDP-related javacall):
-void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color );
-void lcd_set_video_rect( int x, int y, int w, int h );
-void lcd_output_video_frame( javacall_pixel* video );
+int  lcd_open_overlay();
+void lcd_close_overlay( int ovl_n );
+void lcd_set_color_key( int ovl_n, javacall_bool use_keying, javacall_pixel key_color );
+void lcd_set_video_rect( int ovl_n, int x, int y, int w, int h );
+void lcd_output_video_frame( int ovl_n, javacall_pixel* video );
 
 // ===========================================================================
 
@@ -62,6 +64,8 @@ typedef struct _fake_camera
     int                   out_width;
     int                   out_height;
     javacall_pixel*       out_frame;
+
+    int                   ovl;
 
     javacall_uint8*       snapshot;
     javacall_uint32       snapshot_len;
@@ -111,7 +115,7 @@ static void fake_camera_frame_ready( fake_camera* c )
     if( c->visible )
     {
         fake_camera_prepare_scaled_frame( c );
-        lcd_output_video_frame( c->out_frame );
+        lcd_output_video_frame( c->ovl, c->out_frame );
     }
 }
 
@@ -149,6 +153,14 @@ static javacall_result fake_camera_create(javacall_impl_player* outer_player)
     fake_camera* c = (fake_camera*)MALLOC( sizeof(fake_camera) );
 
     DEBUG_ONLY( PRINTF( "*** fake_camera_create: 0x%08X->0x%08X ***\n", outer_player, c ); )
+
+    c->ovl         = lcd_open_overlay();
+
+    if( -1 == c->ovl )
+    {
+        FREE( c );
+        return JAVACALL_OUT_OF_MEMORY;
+    }
 
     c->appId       = outer_player->appId;
     c->playerId    = outer_player->playerId;
@@ -194,8 +206,9 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
 
     if( NULL != c->out_frame )
     {
-        lcd_output_video_frame( NULL );
+        lcd_output_video_frame( c->ovl, NULL );
         FREE( c->out_frame );
+        lcd_close_overlay( c->ovl );
     }
 
     if( NULL != c->snapshot ) javacall_media_release_data( c->snapshot, c->snapshot_len );
@@ -350,11 +363,11 @@ static javacall_result fake_camera_set_video_visible(javacall_handle handle, jav
     c->visible = ( JAVACALL_TRUE == visible );
     if( visible )
     {
-        if( NULL != c->out_frame ) lcd_output_video_frame( c->out_frame );
+        if( NULL != c->out_frame ) lcd_output_video_frame( c->ovl, c->out_frame );
     }
     else
     {
-        lcd_output_video_frame( NULL );
+        lcd_output_video_frame( c->ovl, NULL );
     }
     LeaveCriticalSection( &(c->cs) );
 
@@ -378,14 +391,14 @@ static javacall_result fake_camera_set_video_location(javacall_handle handle, lo
 
         if( NULL != c->video_frame ) fake_camera_prepare_scaled_frame( c );
 
-        lcd_set_video_rect( x, y, w, h );
-        lcd_output_video_frame( c->out_frame );
+        lcd_set_video_rect( c->ovl, x, y, w, h );
+        lcd_output_video_frame( c->ovl, c->out_frame );
 
         if( NULL != old_frame ) FREE( old_frame );
     }
     else
     {
-        lcd_set_video_rect( x, y, w, h );
+        lcd_set_video_rect( c->ovl, x, y, w, h );
     }
 
     LeaveCriticalSection( &(c->cs) );
@@ -395,7 +408,8 @@ static javacall_result fake_camera_set_video_location(javacall_handle handle, lo
 
 static javacall_result fake_camera_set_video_alpha(javacall_handle handle, javacall_bool on, javacall_pixel color)
 {
-    lcd_set_color_key( on, color );
+    fake_camera* c = (fake_camera*)handle;
+    lcd_set_color_key( c->ovl, on, color );
     return JAVACALL_OK;
 }
 

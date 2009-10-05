@@ -36,9 +36,11 @@
 
 extern "C" {
     // following functions are defined in lcd.c (MIDP-related javacall):
-    void lcd_set_color_key( javacall_bool use_keying, javacall_pixel key_color );
-    void lcd_set_video_rect( int x, int y, int w, int h );
-    void lcd_output_video_frame( javacall_pixel* video );
+    int  lcd_open_overlay();
+    void lcd_close_overlay( int ovl_n );
+    void lcd_set_color_key( int ovl_n, javacall_bool use_keying, javacall_pixel key_color );
+    void lcd_set_video_rect( int ovl_n, int x, int y, int w, int h );
+    void lcd_output_video_frame( int ovl_n, javacall_pixel* video );
 
     extern globalMan g_QSoundGM[];
 }
@@ -47,7 +49,7 @@ extern "C" {
 
 // ===========================================================================
 
-#define DEBUG_ONLY(x) x
+#define DEBUG_ONLY(x)
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -107,6 +109,8 @@ public:
     int                   out_width;
     int                   out_height;
     javacall_pixel*       out_frame;
+
+    int                   ovl; // LCD overlay channel
 
     javacall_uint8*       snapshot;
     javacall_uint32       snapshot_len;
@@ -206,7 +210,7 @@ void dshow_player::frame_ready( bits16 const* pFrame )
     if( visible )
     {
         prepare_scaled_frame();
-        lcd_output_video_frame( out_frame );
+        lcd_output_video_frame( ovl, out_frame );
     }
 
     LeaveCriticalSection( &cs );
@@ -561,6 +565,8 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     p->out_height       = -1;
     p->out_frame        = NULL;
 
+    p->ovl              = -1;
+
     p->snapshot         = NULL;
     p->snapshot_len     = NULL;
 
@@ -665,7 +671,14 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
                             JC_FMT_MPEG_4_SVP == p->mediaType || 
                             JC_FMT_MPEG_1     == p->mediaType );
 
-    lcd_set_color_key( JAVACALL_FALSE, 0 );
+    if( p->is_video )
+    {
+        p->ovl = lcd_open_overlay();
+        if( -1 == p->ovl )
+        {
+            return JAVACALL_OUT_OF_MEMORY;
+        }
+    }
 
     DEBUG_ONLY( PRINTF( "*** creating dshow player... ***\n" ); )
 
@@ -768,7 +781,12 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     DEBUG_ONLY( PRINTF( "   *** destroying: ppl destroyed ***\n" ); )
 
-    lcd_output_video_frame( NULL );
+    if( p->is_video )
+    {
+        lcd_output_video_frame( p->ovl, NULL );
+        lcd_close_overlay( p->ovl );
+    }
+
     remove_from_qsound( p );
 
     if( NULL != p->video_frame ) delete p->video_frame;
@@ -873,7 +891,7 @@ static void oper_thread(void *param)
         case dshow_player::OPER_DEALLOCATE:
             DEBUG_ONLY(PRINTF("   >> stop...\n");)
             r = p->ppl->stop();
-            lcd_output_video_frame( NULL );
+            if( p->is_video ) lcd_output_video_frame( p->ovl, NULL );
             DEBUG_ONLY(PRINTF("   >> stop : done, r=%i.\n",r);)
             evt_type = JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED;
             r = player::result_success; // only JAVACALL_OK retval is allowed by API
@@ -1175,11 +1193,11 @@ static javacall_result dshow_set_video_visible(javacall_handle handle, javacall_
     p->visible = ( JAVACALL_TRUE == visible );
     if( visible )
     {
-        if( NULL != p->out_frame ) lcd_output_video_frame( p->out_frame );
+        if( NULL != p->out_frame ) lcd_output_video_frame( p->ovl, p->out_frame );
     }
     else
     {
-        lcd_output_video_frame( NULL );
+        lcd_output_video_frame( p->ovl, NULL );
     }
     LeaveCriticalSection( &(p->cs) );
 
@@ -1202,14 +1220,14 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
 
         if( NULL != p->video_frame ) p->prepare_scaled_frame();
 
-        lcd_set_video_rect( x, y, w, h );
-        lcd_output_video_frame( p->out_frame );
+        lcd_set_video_rect( p->ovl, x, y, w, h );
+        lcd_output_video_frame( p->ovl, p->out_frame );
 
         if( NULL != old_frame ) delete old_frame;
     }
     else
     {
-        lcd_set_video_rect( x, y, w, h );
+        lcd_set_video_rect( p->ovl, x, y, w, h );
     }
 
     LeaveCriticalSection( &(p->cs) );
@@ -1217,9 +1235,10 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_set_video_alpha(javacall_handle /*handle*/, javacall_bool on, javacall_pixel color)
+static javacall_result dshow_set_video_alpha(javacall_handle handle, javacall_bool on, javacall_pixel color)
 {
-    lcd_set_color_key( on, color );
+    dshow_player* p = (dshow_player*)handle;
+    lcd_set_color_key( p->ovl, on, color );
     return JAVACALL_OK;
 }
 
