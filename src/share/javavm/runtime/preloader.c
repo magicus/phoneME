@@ -727,7 +727,7 @@ CVMpreloaderInit()
 	    }
     	}
     }
-#endif //CVM_JIT_PATCHED_METHOD_INVOCATIONS
+#endif /* CVM_JIT_PATCHED_METHOD_INVOCATIONS */
 }
 
 CVMBool
