@@ -53,8 +53,7 @@ SUBSYSTEM_LCDLF_NATIVE_FILES += \
     lfj_export.c \
     lfj_cskin.c \
     lfj_native_input_mode.c \
-    lfj_SoftButtonLayer_kni.c \
-    lfj_image_rom.c	
+    lfj_SoftButtonLayer_kni.c
 
 
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.jpp
@@ -162,7 +161,6 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/PTIResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/InputModeResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/VirtualKeyboardResources.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinLoader.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
@@ -188,10 +186,28 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/GestureAnimator.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/GestureAnimatorListener.java \
 
+
 ifeq ($(USE_JSR_258), true)
+
 SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ThemeResourcesImpl.java 
-endif
+
+# Path to themes file
+THEMES_FILE=$(GENERATED_DIR)/appearances.bin
+
+# Copy themes storage file to /lib
+define copy_themes
+	@cp -f $(THEMES_FILE) $(LIBDIR) $(LOG)
+endef
+
+# USE_JSR_258
+else
+
+SUBSYSTEM_LCDLF_JAVA_FILES += \
+    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java
+
+SUBSYSTEM_LCDLF_NATIVE_FILES += \
+    lfj_image_rom.c	
 
 # generated skin files 
 SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin 
@@ -219,7 +235,22 @@ define romize_skin
 		-outbin `$(call fixcygpath, $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE))` \
 		-outc `$(call fixcygpath, $(GENERATED_DIR)/lfj_image_rom.c)`
 endef
-    
+
+define copy_themes
+	@rm -f $(CHAM_ROMIZED_IMAGE_FILES) $(LOG)
+	@cp -f $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE) $(LIBDIR) $(LOG)
+endef
+
+$(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
+		$(LOG_ONLY)
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+
+# USE_JSR_258
+endif
+
+
 # I3test files for the library
 #
 ifeq ($(USE_I3_TEST), true)
@@ -257,32 +288,12 @@ else
 	endif
 endif
 
-
-# Copy themes storage file to /lib
-ifeq ($(USE_JSR_258), true)
-
-# Path to themes file
-THEMES_FILE=$(GENERATED_DIR)/appearances.bin
-
-define copy_themes
-	@cp -f $(THEMES_FILE) $(LIBDIR) $(LOG)
-endef
-
-else	
-
-define copy_themes
-	@rm -f $(CHAM_ROMIZED_IMAGE_FILES) $(LOG)
-endef
-
-endif
-
 # Copy images to /lib
 ifeq ($(USE_FILE_SYSTEM), true)
 define copy_lcdlf_resources
 	@mkdir -p $(LIBDIR)
 	@cp -f $(SUBSYSTEM_LCDLF_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
 	@cp -f $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
-	@cp -f $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE) $(LIBDIR) $(LOG)
 	$(copy_themes)
 endef
 
@@ -293,12 +304,6 @@ endef
 
 endif
 
-
-$(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c
-	@echo " ... $@" $(LOG)
-	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
-		$(LOG_ONLY)
-	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
 
 # Define Jpp
 JPP_DEFS += -DENABLE_CHAMELEON
