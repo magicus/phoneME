@@ -1048,7 +1048,7 @@ static javacall_result dshow_get_time(javacall_handle handle, javacall_int32* ms
 {
     dshow_player* p = (dshow_player*)handle;
     *ms = p->get_media_time();
-    DEBUG_ONLY( PRINTF( "--- get_time: %ld",*ms ); )
+    DEBUG_ONLY( PRINTF( "--- get_time: %ld\n",*ms ); )
     // if( p->duration != -1 && *ms > p->duration ) *ms = p->duration;
     return JAVACALL_OK;
 }
