@@ -87,6 +87,14 @@ public class CommonDS extends BasicDS implements SourceStream {
         connected = true;
     }
 
+    private void markTheStream() {
+        if (inputStream.markSupported() &&
+            contentLength > 0 &&
+            contentLength <= Integer.MAX_VALUE) {
+            inputStream.mark((int) contentLength);
+        }
+    }
+
     /**
      *  Gets the connection attribute of the CommonDS object
      *
@@ -147,6 +155,7 @@ public class CommonDS extends BasicDS implements SourceStream {
                     contentLength = fileCon.fileSize();
                     fileCon.close();
                     goodurl = true;
+                    markTheStream();
                 } else {
                     fileCon.close();
                     goodurl = false;
