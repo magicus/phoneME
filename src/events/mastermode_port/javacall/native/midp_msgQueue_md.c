@@ -494,6 +494,24 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         }
         javacall_free(event->data.jsr290FluidEvent.text1);
     	break;
+    case JSR290_JC_EVENT_FLUID_LAYOUT_CHANGED:
+        pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewSignal->pResult      = event->data.jsr290FluidEvent.app_id;
+        pNewMidpEvent->type      = FLUID_EVENT;
+        pNewMidpEvent->intParam1 = JSR290_LAYOUT_CHANGED;
+        pNewMidpEvent->intParam2 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image) >> 32);
+        break;
+    case JSR290_JC_EVENT_FLUID_FOCUS_CHANGED:
+        pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
+        pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
+        pNewSignal->pResult      = event->data.jsr290FluidEvent.app_id;
+        pNewMidpEvent->type      = FLUID_EVENT;
+        pNewMidpEvent->intParam1 = JSR290_FOCUS_CHANGED;
+        pNewMidpEvent->intParam2 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image));
+        pNewMidpEvent->intParam3 = (int)(((jlong)event->data.jsr290FluidEvent.fluid_image) >> 32);
+        break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177
