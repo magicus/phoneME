@@ -1031,6 +1031,7 @@ static javacall_result dshow_set_video_location(javacall_handle handle, long x, 
 
 static javacall_result dshow_set_video_alpha(javacall_handle handle, javacall_bool on, javacall_pixel color)
 {
+    dshow_player* p = (dshow_player*)handle;
     lcd_set_color_key( p->ovl, on, color );
     return JAVACALL_OK;
 }
