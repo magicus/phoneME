@@ -49,7 +49,7 @@ extern "C" {
 
 // ===========================================================================
 
-#define DEBUG_ONLY(x)
+#define DEBUG_ONLY(x) x
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -754,72 +754,6 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
     p->pending_operation = dshow_player::OPER_DESTROY;
     SetEvent( p->hOperEvent );
-    WaitForSingleObject( p->hOperThread, INFINITE );
-    DEBUG_ONLY( PRINTF( "   *** destroying: oper thread finished ***\n" ); )
-
-    if( NULL != p->ppl )
-    {
-        player::state s;
-        if( player::result_success == p->ppl->get_state( &s ) )
-        {
-            if( player::running == s )
-            {
-                DEBUG_ONLY( PRINTF( "   *** destroying: pausing ppl... ***\n" ); )
-                p->ppl->pause();
-                DEBUG_ONLY( PRINTF( "   *** destroying: stopping ppl... ***\n" ); )
-                p->ppl->stop();
-            }
-            else if( player::paused == s )
-            {
-                DEBUG_ONLY( PRINTF( "   *** destroying: stopping ppl... ***\n" ); )
-                p->ppl->stop();
-            }
-        }
-        DEBUG_ONLY( PRINTF( "   *** destroying: destroying ppl... ***\n" ); )
-        p->ppl->destroy();
-    }
-
-    DEBUG_ONLY( PRINTF( "   *** destroying: ppl destroyed ***\n" ); )
-
-    if( p->is_video )
-    {
-        lcd_output_video_frame( p->ovl, NULL );
-        lcd_close_overlay( p->ovl );
-    }
-
-    remove_from_qsound( p );
-
-    if( NULL != p->video_frame ) delete p->video_frame;
-    if( NULL != p->out_frame ) delete p->out_frame;
-    // if( NULL != p->ppl ) delete p->ppl;
-
-    if( NULL != p->snapshot )
-        javacall_media_release_data( p->snapshot, p->snapshot_len );
-
-    DeleteCriticalSection( &(p->cs) );
-
-    CloseHandle( p->dwr_event );
-    CloseHandle( p->out_queue_event );
-
-    int appId    = p->appId;
-    int playerId = p->playerId;
-
-    delete p;
-
-    bool found = false;
-    for( int i = 0; i < dshow_player::num_players-1; i++ )
-    {
-        if( dshow_player::players[i] == p ) found = true;
-        if( found ) dshow_player::players[i] = dshow_player::players[i+1];
-    }
-    dshow_player::num_players--;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
-                                     appId,
-                                     playerId, 
-                                     JAVACALL_OK, NULL );
-
-    DEBUG_ONLY( PRINTF( "   *** destroyed ***\n" ); )
 
     return JAVACALL_OK;
 }
@@ -909,6 +843,72 @@ static void oper_thread(void *param)
 
         case dshow_player::OPER_DESTROY:
             DEBUG_ONLY( PRINTF( "   >> destroy...\n" ); )
+            {
+                if( NULL != p->ppl )
+                {
+                    /*
+                    player::state s;
+                    if( player::result_success == p->ppl->get_state( &s ) )
+                    {
+                        if( player::running == s )
+                        {
+                            DEBUG_ONLY( PRINTF( "   *** destroying: pausing ppl... ***\n" ); )
+                            p->ppl->pause();
+                            DEBUG_ONLY( PRINTF( "   *** destroying: stopping ppl... ***\n" ); )
+                            p->ppl->stop();
+                        }
+                        else if( player::paused == s )
+                        {
+                            DEBUG_ONLY( PRINTF( "   *** destroying: stopping ppl... ***\n" ); )
+                            p->ppl->stop();
+                        }
+                    }
+                    */
+                    DEBUG_ONLY( PRINTF( "   *** destroying: destroying ppl... ***\n" ); )
+                    p->ppl->destroy();
+                }
+
+                DEBUG_ONLY( PRINTF( "   *** destroying: ppl destroyed ***\n" ); )
+
+                if( p->is_video )
+                {
+                    lcd_output_video_frame( p->ovl, NULL );
+                    lcd_close_overlay( p->ovl );
+                }
+
+                remove_from_qsound( p );
+
+                if( NULL != p->video_frame ) delete p->video_frame;
+                if( NULL != p->out_frame ) delete p->out_frame;
+
+                if( NULL != p->snapshot )
+                    javacall_media_release_data( p->snapshot, p->snapshot_len );
+
+                DeleteCriticalSection( &(p->cs) );
+
+                CloseHandle( p->dwr_event );
+                CloseHandle( p->out_queue_event );
+
+                int appId    = p->appId;
+                int playerId = p->playerId;
+
+                delete p;
+
+                bool found = false;
+                for( int i = 0; i < dshow_player::num_players-1; i++ )
+                {
+                    if( dshow_player::players[i] == p ) found = true;
+                    if( found ) dshow_player::players[i] = dshow_player::players[i+1];
+                }
+                dshow_player::num_players--;
+
+                javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
+                                                 appId,
+                                                 playerId, 
+                                                 JAVACALL_OK, NULL );
+
+                DEBUG_ONLY( PRINTF( "   *** destroyed ***\n" ); )
+            }
             break;
 
         default:
