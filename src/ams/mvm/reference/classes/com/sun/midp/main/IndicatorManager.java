@@ -30,7 +30,7 @@ package com.sun.midp.main;
  * IndicatorManager is a singleton class that controls the home icon
  * status in status bar.
  */
-public class IndicatorManager implements MIDletProxyListListener {
+public class IndicatorManager implements MIDletProxyListListener, NoticeManagerUI {
 
     /** singleton variable */
     private static IndicatorManager singleton;
@@ -65,6 +65,7 @@ public class IndicatorManager implements MIDletProxyListListener {
             midletProxyList = theMidletProxyList;
             singleton = new IndicatorManager();
             midletProxyList.addListener(singleton);
+            NoticeManager.getInstance().addListener(singleton);
         }
     }
 
@@ -130,5 +131,28 @@ public class IndicatorManager implements MIDletProxyListListener {
     public void midletStartError(int externalAppId, int suiteId,
                                  String className, int errorCode,
                                  String errorDetails) {}
+
+    /**
+     * Informs about new information note.
+     * 
+     * @param notice new information note
+     */
+    void notifyNotice(Notice notice) {
+        setHomeIconState(true);
+    }
+
+    /**
+     * Informs that the notice was updated
+     * 
+     * @param notice the notice was updated
+     */
+    void updateNotice(Notice notice);
+
+    /**
+     * Informs about given information note need to be discarded
+     * 
+     * @param notice information note
+     */
+    void removeNotice(Notice notice);
 
 }
