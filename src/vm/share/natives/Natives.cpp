@@ -824,7 +824,7 @@ ReturnOop Java_java_lang_Class_forName(JVM_SINGLE_ARG_TRAPS) {
                                                  JVM_CHECK_0);
 
   AZZERT_ONLY(Symbol::Raw actual_name = cl().name());
-  GUARANTEE(class_name().matches(&class_name),
+  GUARANTEE(class_name().matches(&actual_name),
             "Inconsistent class name lookup result");
 
   // For hidden classes we throw ClassNotFoundException if lookup
