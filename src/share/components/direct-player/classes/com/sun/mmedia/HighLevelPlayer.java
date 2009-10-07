@@ -686,7 +686,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             } else if( url.startsWith( "https://" ) ) {
                 checkPermission( ConnectorPermission.HTTPS );
             } else if( url.startsWith( "rtsp://" ) ) {
-                checkPermission( ConnectorPermission.RTSP );
+                checkPermission( ConnectorPermission.HTTP );
             }
         }
     }
