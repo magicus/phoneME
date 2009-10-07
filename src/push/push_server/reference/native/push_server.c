@@ -1935,17 +1935,26 @@ char *pushfindsuite(char *store, int available){
     char *ptr;
     int len=0;
     char *connlist = NULL;
+    int connlistlen = 0;
 
     /* Find the entry to pass off the open file descriptor. */
     for (p = pushlist; p != NULL ; p = p->next){
         if (strcmp(store, p->storagename) == 0){
-            ret = midpStrdup(p->value);
-            for (ptr = ret, len=0; *ptr; ptr++, len++){
+            for (ptr = p->value, len=0; *ptr; ptr++, len++){
                 if (*ptr == ','){
                     *ptr = '\0';
                     break;
                 }
             }
+
+            ret = midpMalloc(len + 1);
+            if (ret == NULL) {
+                REPORT_ERROR(LC_PUSH, "Out of memory in pushfindsuite");
+                return NULL;
+            }
+
+            strncpy(ret, p->value, len);
+            ret[len] = '\0';
 
             /*
              * Check if there is pending I/O on the
@@ -1969,11 +1978,28 @@ char *pushfindsuite(char *store, int available){
             /*
              * Append the entries together in a single list.
              */
-            if (connlist == NULL){
-                connlist= ret;
-            } else{
+            if (connlist == NULL) {
+                connlistlen = len;
+                connlist = ret;
+            } else {
+                /* new length is old length plus ret length plus "," length */
+                int newconnlistlen = connlistlen + len + 1;
+                char *newconnlist = midpRealloc(connlist, newconnlistlen + 1);
+                
+                if (newconnlist == NULL) {
+                    midpFree(ret);
+                    midpFree(connlist);
+
+                    REPORT_ERROR(LC_PUSH, "Out of memory in pushfindsuite");
+                    return NULL;
+                }
+
+                connlistlen = newconnlistlen;
+                connlist = newconnlist;
+                
                 strcat(connlist, ",");
                 strcat(connlist, ret);
+
                 midpFree(ret);
             }
 
