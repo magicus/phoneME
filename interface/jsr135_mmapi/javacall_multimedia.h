@@ -479,9 +479,6 @@ javacall_result javacall_media_create_managed_player(
  * @param handle            Out - handle to the native player.
  *
  * @retval JAVACALL_OK                    Procedure succeded synchronously.
- * @retval JAVACALL_CONNECTION_NOT_FOUND  Could not connect to the URL.
- * @retval JAVACALL_IO_ERROR              IO error occurred while connecting
- *                                        the URL or getting data.
  * @retval JAVACALL_INVALID_ARGUMENT      Invalid URL or other parameter.
  * @retval JAVACALL_NO_AUDIO_DEVICE       No audio device found and therefore
  *                                        playback is impossible. JVM will
