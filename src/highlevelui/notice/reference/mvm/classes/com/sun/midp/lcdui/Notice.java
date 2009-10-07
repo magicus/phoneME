@@ -108,7 +108,7 @@ public class Notice extends NoticeBase {
             out.writeInt(h);
             if (w > 0 && h > 0) {
                 byte[] buf = new byte[image.getWidth() * image.getHeight() * 4];
-                image.getRGB(buf, 0, 0, image.getWidth(), image.getWidth(), image.getHeight()
+                image.getRGB(buf, 0, 0, image.getWidth(), image.getWidth(), image.getHeight());
                 out.write(buf);
             }
         } else {

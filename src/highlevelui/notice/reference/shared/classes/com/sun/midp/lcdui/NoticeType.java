@@ -63,7 +63,7 @@ public class NoticeType {
     public boolean equals(Object obj) {
         if (obj instanceof NotificationTypeImpl) {
             if ((type < USER_TYPE && type == ((NotificationTypeImpl)obj).type) ||
-                (uid == ((NotificationTypeImpl)obj).uid) {
+                (uid == ((NotificationTypeImpl)obj).uid)) {
                 return true;
             }
         }

@@ -92,7 +92,7 @@ public class NoticeWatcher implements NoticeManagerListener {
     void removeNotice(Notice notice) {
         TimerTask task = map.get(notice);
         if (null != task) {
-            task.cancel()
+            task.cancel();
             map.remove(notice);
         }
     }

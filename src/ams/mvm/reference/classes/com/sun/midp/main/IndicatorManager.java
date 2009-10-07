@@ -26,11 +26,13 @@
 
 package com.sun.midp.main;
 
+import com.sun.midp.lcdui.Notice;
+
 /**
  * IndicatorManager is a singleton class that controls the home icon
  * status in status bar.
  */
-public class IndicatorManager implements MIDletProxyListListener, NoticeManagerUI {
+public class IndicatorManager implements MIDletProxyListListener, NoticeManagerListener {
 
     /** singleton variable */
     private static IndicatorManager singleton;
@@ -137,7 +139,7 @@ public class IndicatorManager implements MIDletProxyListListener, NoticeManagerU
      * 
      * @param notice new information note
      */
-    void notifyNotice(Notice notice) {
+    public void notifyNotice(Notice notice) {
         setHomeIconState(true);
     }
 
@@ -146,13 +148,15 @@ public class IndicatorManager implements MIDletProxyListListener, NoticeManagerU
      * 
      * @param notice the notice was updated
      */
-    void updateNotice(Notice notice);
+    public void updateNotice(Notice notice) {
+    }
 
     /**
      * Informs about given information note need to be discarded
      * 
      * @param notice information note
      */
-    void removeNotice(Notice notice);
+    public void removeNotice(Notice notice) {
+    }
 
 }
