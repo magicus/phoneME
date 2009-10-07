@@ -26,11 +26,13 @@
 
 package com.sun.midp.appmanager;
 
+import com.sun.midp.lcdui.Notice;
+
 /**
- * Displays a small unobtrusive informational note
+ * Notify about a small unobtrusive informational note status
  * 
  */
-interface NoticeManagerUI {
+interface NoticeManagerListener {
 
     /**
      * Informs about new information note.

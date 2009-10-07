@@ -127,7 +127,7 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         RmsEnvironment.init(internalSecurityToken, msc);
 
         /* Listens for incoming notices */
-        NoticeManager.init(eventQueue);
+        NoticeManager.initCommon(eventQueue);
     }
 
     /** Final actions to finish a MIDlet suite loader */
