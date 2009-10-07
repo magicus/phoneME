@@ -66,7 +66,7 @@ public class RtspSS implements SourceStream {
     }
 
     public long getContentLength() {
-        return 0;
+        return -1;
     }
 
     public int getSeekType() {
