@@ -78,7 +78,7 @@ class Symbol: public Oop {
   juint hash(void) const;
 
   bool matches(const SymbolDesc* other_symbol) const {
-    return symbol() == other_symbol;
+    return symbol()->matches(other_symbol);
   }
   bool matches(const Symbol* other_symbol) const {
     return matches(other_symbol->symbol());

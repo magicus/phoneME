@@ -58,6 +58,9 @@ class SymbolDesc: public OopDesc {
     return len == _length &&
            jvm_memcmp(s, utf8_data(), len) == 0;
   }
+  bool matches(const SymbolDesc* other_symbol) const {
+    return matches(other_symbol->utf8_data(), other_symbol->utf8_length());
+  }
   bool matches_pattern(const SymbolDesc* other_symbol) const;
 
  private:
