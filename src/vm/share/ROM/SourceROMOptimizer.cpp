@@ -313,7 +313,7 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
 #if USE_ROM_LOGGING
   write_methods_log(_disable_compilation_log, "Disabled compilation",
                                               "disabled compilation");
-  write_methods_log(_kvm_natives_log, "Quick native methods", "quick native");
+  write_methods_log(_quick_natives_log, "Quick native methods", "quick native");
   write_methods_log(_kvm_natives_log, "Kvm native methods", "kvm native");
   write_methods_log(_jni_natives_log, "Jni native methods", "jni native");
 #endif
