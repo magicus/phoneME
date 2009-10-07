@@ -208,8 +208,9 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
     {
         lcd_output_video_frame( c->ovl, NULL );
         FREE( c->out_frame );
-        lcd_close_overlay( c->ovl );
     }
+
+    lcd_close_overlay( c->ovl );
 
     if( NULL != c->snapshot ) javacall_media_release_data( c->snapshot, c->snapshot_len );
 
