@@ -94,7 +94,7 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nRejectStreamLengthRequest) {
 }
 
 /* private native int nCreateAndRealizeJavaFedPlayerAsync( int appId, int pID,
-String URI, String contentType, long streamLen ) throws MediaException; */
+String URI, String contentType, long streamLen ) throws IOException, MediaException; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_HighLevelPlayer_nCreateAndRealizeJavaFedPlayerAsync) {
     jint  appId = KNI_GetParameterAsInt(1);
@@ -145,7 +145,7 @@ UnlockAudioMutex();
 
 
 /* private native int nCreateAndRealizeURLBasedPlayerAsync( int appId, int pID,
- String URI) throws MediaException; */
+ String URI) throws IOException, MediaException; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_HighLevelPlayer_nCreateAndRealizeURLBasedPlayerAsync) {
     jint  appId = KNI_GetParameterAsInt(1);
@@ -181,7 +181,8 @@ UnlockAudioMutex();
 
     KNI_ReturnInt(returnValue);
 }
-/* private native void nDoOnRealizeResult( int result ) throws MediaException; */
+
+/* private native void nDoOnRealizeResult( int result ) throws IOException, MediaException; */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_HighLevelPlayer_nDoOnRealizeResult) {
     KNIPlayerInfo* pKniInfo;
@@ -214,7 +215,9 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nDoOnRealizeResult) {
 
 static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **ppKniInfo, int result ) {
     const char strMediaEx[] = "javax/microedition/media/MediaException";
-    if( JAVACALL_OK != result )
+    const char strIOEx[] = "java/io/IOException";
+    
+    if( JAVACALL_OK != result && JAVACALL_WOULD_BLOCK != result )
     {
         MMP_FREE( *ppKniInfo );
         *ppKniInfo = NULL;
@@ -223,7 +226,7 @@ static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **
     switch( result )
     {
         case JAVACALL_IO_ERROR:
-            KNI_ThrowNew( strMediaEx,
+            KNI_ThrowNew( strIOEx,
                 "\nUnable to create native player, IO error\n" );
             break;
         case JAVACALL_NO_AUDIO_DEVICE:
@@ -231,7 +234,7 @@ static void doOnCreateAndRealizeResult( KNIDECLARGS /* INOUT */ KNIPlayerInfo **
 "\nNo audio device found. Please check your audio driver settings\n" );
             break;
         case JAVACALL_CONNECTION_NOT_FOUND:
-            KNI_ThrowNew( strMediaEx,
+            KNI_ThrowNew( strIOEx,
 "\nUnable to create native player, failed to connect to the URI\n" );
             break;
         case JAVACALL_INVALID_ARGUMENT:

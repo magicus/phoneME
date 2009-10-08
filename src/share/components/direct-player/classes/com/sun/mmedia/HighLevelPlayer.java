@@ -233,13 +233,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     // Init native library
     private native int nCreateAndRealizeURLBasedPlayerAsync( int appId,
-            int pID, String URI) throws MediaException;
+            int pID, String URI) throws IOException, MediaException;
 
-    private native void nDoOnRealizeResult( int result ) throws MediaException;
+    private native void nDoOnRealizeResult( int result ) throws IOException, MediaException;
 
     private native int nCreateAndRealizeJavaFedPlayerAsync( int appId,
             int pID, String URI, String contentType, long streamLen )
-            throws MediaException;
+            throws IOException, MediaException;
 
     // Get Media Format
     private native String nGetMediaFormat(int handle);
@@ -290,6 +290,24 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         new MMEventListener();
         state = UNREALIZED;
         //System.out.println( "HighLevelPlayer: construction complete");
+        
+        asyncExecutor = new AsyncExecutor();
+
+        int result = -1;
+        if( asyncExecutor.runAsync( new AsyncExecutor.TaskWithIO() {
+            public boolean run() throws MediaException, IOException {
+                hNative = nCreateAndRealizeURLBasedPlayerAsync(appId,
+                        pID, locator);
+                return ( 0 != hNative );
+            }
+        } ) ) {
+            result = asyncExecutor.getResult();
+            nDoOnRealizeResult(result);
+        }
+        //System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
+
+        handledByDevice = ( 0 == result );
+
     }
 
     void receiveRSL()
@@ -524,6 +542,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
     }
 
+    // Get current application ID to support MVM
+    final private int appId = AppIsolate.getIsolateId();
+
+
     /**
      * Constructs portions of the <code>Player</code> without
      * acquiring the scarce and exclusive resources.
@@ -555,25 +577,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         //System.out.println( "HighLevelPlayer: realize() entered" );
-        // Get current application ID to support MVM
-        final int appId = AppIsolate.getIsolateId();
-
-        asyncExecutor = new AsyncExecutor();
-
         int result = -1;
-        if( asyncExecutor.runAsync( new AsyncTask() {
-            public boolean run() throws MediaException {
-                hNative = nCreateAndRealizeURLBasedPlayerAsync(appId,
-                        pID, locator);
-                return ( 0 != hNative );
-            }
-        } ) ) {
-            result = asyncExecutor.getResult();
-            nDoOnRealizeResult(result);
-        }
-        //System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
-
-        handledByDevice = ( 0 == result );
 
         if( !handledByDevice ) {
             try {
@@ -612,15 +616,23 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
             final String contentType = type;
 
-            if( asyncExecutor.runAsync( new AsyncTask() {
+            if( asyncExecutor.runAsync( new AsyncExecutor.Task() {
                 public boolean run() throws MediaException {
-                    hNative = nCreateAndRealizeJavaFedPlayerAsync(appId, pID,
-                            locator, contentType, len );
+                    try {
+                        hNative = nCreateAndRealizeJavaFedPlayerAsync(appId,
+                                pID, locator, contentType, len);
+                    } catch (IOException ex) {
+                        throw new MediaException( ex.getMessage() );
+                    }
                     return ( 0 != hNative );
                 }
             }) ) {
                 result = asyncExecutor.getResult();
-                nDoOnRealizeResult( result );
+                try {
+                    nDoOnRealizeResult(result);
+                } catch (IOException ex) {
+                    throw new MediaException(ex.getMessage());
+                }
             }
             //System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
         }
@@ -776,7 +788,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         /* prefetch native player */
         /* predownload media data to fill native buffers */
         if( null != asyncExecutor ) {
-            asyncExecutor.runAsync( new AsyncTask() {
+            asyncExecutor.runAsync( new AsyncExecutor.Task() {
                 public boolean run() throws MediaException {
                     lowLevelPlayer.doPrefetch();
                     return true;
@@ -902,7 +914,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         if( null != asyncExecutor ) {
-            asyncExecutor.runAsync(new AsyncTask() {
+            asyncExecutor.runAsync(new AsyncExecutor.Task() {
                 public boolean run() throws MediaException {
                     if (!lowLevelPlayer.doStart()) {
                         throw new MediaException("start");
@@ -974,7 +986,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if( null != asyncExecutor )
         {
-            asyncExecutor.runAsync( new AsyncTask() {
+            asyncExecutor.runAsync( new AsyncExecutor.Task() {
                 public boolean run() throws MediaException {
                     lowLevelPlayer.doStop();
                     return true;
@@ -1041,7 +1053,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         if( null != asyncExecutor ) {
             try {
-                asyncExecutor.runAsync(new AsyncTask() {
+                asyncExecutor.runAsync(new AsyncExecutor.Task() {
                     public boolean run() throws MediaException {
                         lowLevelPlayer.doDeallocate();
                         return true;
@@ -1123,7 +1135,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         if( null != lowLevelPlayer ) {
             if( null != asyncExecutor ) {
                 try {
-                    asyncExecutor.runAsync(new AsyncTask() {
+                    asyncExecutor.runAsync(new AsyncExecutor.Task() {
 
                         public boolean run() throws MediaException {
                             lowLevelPlayer.doClose();
@@ -1250,7 +1262,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         long rtn = TIME_UNKNOWN;
         if( null != asyncExecutor ) {
             final long timeToSet = now;
-            asyncExecutor.runAsync( new AsyncTask() {
+            asyncExecutor.runAsync( new AsyncExecutor.Task() {
                 public boolean run() throws MediaException {
                     lowLevelPlayer.doSetMediaTime(timeToSet);
                     return true;
@@ -1991,18 +2003,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     }
 }
 
-interface AsyncTask {
-
-    public boolean run() throws MediaException;
-}
-
 class AsyncExecutor {
 
     private boolean isBlockedUntilEvent = false;
     private int asyncExecResult = 0;
     private int asyncExecOutputParam = 0;
 
-    synchronized boolean runAsync(AsyncTask task) throws MediaException {
+    synchronized boolean runAsync(Task task) throws MediaException {
         boolean res = task.run();
         if( res ) {
             isBlockedUntilEvent = true;
@@ -2015,6 +2022,19 @@ class AsyncExecutor {
             //System.out.println( "HighLevelPlayer: runAsync() unblocked");
         } else {
             //System.out.println( "HighLevelPlayer: runAsync() didn't block" );
+        }
+        return res;
+    }
+
+    synchronized boolean runAsync( TaskWithIO task ) throws MediaException, IOException {
+        boolean res = task.run();
+        if( res ) {
+            isBlockedUntilEvent = true;
+            while( isBlockedUntilEvent ) {
+                try {
+                    wait();
+                } catch( InterruptedException ex ) {}
+            }
         }
         return res;
     }
@@ -2034,4 +2054,12 @@ class AsyncExecutor {
         notify();
     }
 
+    static interface Task {
+
+        public boolean run() throws MediaException;
+    }
+
+    static interface TaskWithIO {
+        public boolean run() throws IOException, MediaException;
+    }
 }
