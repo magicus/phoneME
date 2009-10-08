@@ -91,6 +91,9 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         midletEventProducer = new MIDletEventProducer(eventQueue);
         foregroundEventProducer = new ForegroundEventProducer(eventQueue);
         midletProxyList = new MIDletProxyList(eventQueue);
+
+        /* Cleanups all ntoification belongs to destroyed app */
+        NoticeManager.initWithAMS(midletProxyList);
     }
 
     /**

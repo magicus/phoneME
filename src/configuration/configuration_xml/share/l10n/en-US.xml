@@ -5,29 +5,29 @@
 
   Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-  
+
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License version
   2 only, as published by the Free Software Foundation.
-  
+
   This program is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
   General Public License version 2 for more details (a copy is
   included at /legal/license.txt).
-  
+
   You should have received a copy of the GNU General Public License
   version 2 along with this work; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   02110-1301 USA
-  
+
   Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
   Clara, CA 95054 or visit www.sun.com if you need additional
   information or have any questions.
 -->
 <configuration>
-<localized_strings Package="com.sun.midp.l10n" 
-    Name="LocalizedStringsBase" 
+<localized_strings Package="com.sun.midp.l10n"
+    Name="LocalizedStringsBase"
     KeysClass="com.sun.midp.i18n.ResourceConstants" >
 <localized_string Key="DONE"
                 Value="Done"/>
@@ -109,6 +109,8 @@
                 Value="Open"/>
 <localized_string Key="VIEW_COMP"
                 Value="View Components"/>
+<localized_string Key="SHOW_MSG"
+                Value="Show Notifications"/>
 
 <localized_string Key="MANUFACTURER"
                 Value="Manufacturer"/>
@@ -819,6 +821,20 @@
 <localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
                 Value="Loading the application file..."/>
 <localized_string Key="AMS_GRA_INTLR_FILE_NOT_FOUND"
-                Value="File not found in the current path"/>       
+                Value="File not found in the current path"/>
+<localized_string Key="NOTICE_POPUP_TITLE"
+                Value="A message from "/>
+<localized_string Key="NOTIFICATION_SMS_LABEL"
+                Value="New SMS message received."/>
+<localized_string Key="NOTIFICATION_EMAIL_LABEL"
+                Value="New EMAIL received."/>
+<localized_string Key="NOTIFICATION_CALL_LABEL"
+                Value="Incoming CALL received "/>
+<localized_string Key="NOTIFICATION_IM_LABEL"
+                Value="New IM message received "/>
+<localized_string Key="NOTIFICATION_MMS_LABEL"
+                Value="New MMS message received "/>
+<localized_string Key="NOTIFICATION_REMINDER_LABEL"
+                Value="New REMINDER message received "/>
 </localized_strings>
 </configuration>

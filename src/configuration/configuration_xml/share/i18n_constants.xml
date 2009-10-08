@@ -147,9 +147,12 @@
   <constant Type="int"
             Name="OPEN"
             Comment="Abstract Commands and other general strings"/>
-    <constant Type="int"
-              Name="VIEW_COMP"
-              Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="VIEW_COMP"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
+            Name="SHOW_MSG"
+            Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
             Name="MANUFACTURER"
             Comment="General strings"/>
@@ -1219,7 +1222,29 @@
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_FILE_NOT_FOUND"
-            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/> 
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
+  <constant Type="int"
+            Name="NOTICE_POPUP_TITLE"
+            Comment="Notice: com.sun.midp.appmanager.NoticeManagerUIImpl"/>
+  <constant Type="int"
+            Name="NOTIFICATION_SMS_LABEL"
+            Comment="Default SMS notification label"/>
+  <constant Type="int"
+            Name="NOTIFICATION_EMAIL_LABEL"
+            Comment="Default EMAIL notification label"/>
+  <constant Type="int"
+            Name="NOTIFICATION_CALL_LABEL"
+            Comment="Default CALL notification label"/>
+  <constant Type="int"
+            Name="NOTIFICATION_IM_LABEL"
+            Comment="Default IM notification label"/>
+  <constant Type="int"
+            Name="NOTIFICATION_MMS_LABEL"
+            Comment="Default MMS notification label"/>
+  <constant Type="int"
+            Name="NOTIFICATION_REMINDER_LABEL"
+            Comment="Default REMINDER notification label"/>
+
 </constant_class>
 </constants>
 </configuration>
