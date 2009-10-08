@@ -142,7 +142,7 @@ jsr211_result jsr211_finalize(void){
  * @return JSR211_OK if content handler registered successfully
  */
 jsr211_result jsr211_register_handler(const jsr211_content_handler* ch) {
-
+    javacall_utf16 JAVA_APPLICATION[] = {'J','a','v','a',' ','A','p','p','l','i','c','a','t','i','o','n', 0};
     jsr211_result status = JSR211_FAILED;
     javacall_utf16_string *types = NULL;
     javacall_utf16_string *suffixes = NULL;
@@ -154,7 +154,7 @@ jsr211_result jsr211_register_handler(const jsr211_content_handler* ch) {
 
     status = javacall_chapi_register_handler(
                         (javacall_const_utf16_string)ch->id,
-                        (javacall_const_utf16_string)L"Java Appliation",
+                        (javacall_const_utf16_string)JAVA_APPLICATION,
                         (javacall_const_utf16_string)ch->suite_id, 
                         (javacall_const_utf16_string)ch->class_name,
                         (javacall_chapi_handler_registration_type)ch->flag, 

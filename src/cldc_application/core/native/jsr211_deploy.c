@@ -68,19 +68,18 @@ static char** rowHandlers = 0;
 
 static int nHandlers = 1;
 
-static const jchar* handlerIds[] = { 
-    L"GraphicalInstaller" // The ID of the GraphicalInstaller handler
+static const jchar handlerIds[1][100] = {
+    {'G','r','a','p','h','i','c','a','l','I','n','s','t','a','l','l','e','r', 0} // The ID of the GraphicalInstaller handler
 };
 
-static jchar* rowHandlers[] = {
-    L"com.sun.midp.installer.GraphicalInstaller\0"
-    L"text/vnd.sun.j2me.app-descriptor\0application/java-archive\0\0"    
-    L".jad\0.jar\0\0"
-    L"install\0install_only\0open\0\0"
-    L"en\0\0"
-    L"Install\0Install Only\0Open\0" // en
-    L"\0" // end of action names
-    L"\0" // empty access list
+static jchar rowHandlers[1][512] = {
+    {'c','o','m','.','s','u','n','.','m','i','d','p','.','i','n','s','t','a','l','l','e','r','.','G','r','a','p','h','i','c','a','l','I','n','s','t','a','l','l','e','r', 0,
+    't','e','x','t','/','v','n','d','.','s','u','n','.','j','2','m','e','.','a','p','p','-','d','e','s','c','r','i','p','t','o','r', 0,'a','p','p','l','i','c','a','t','i','o','n','/','j','a','v','a','-','a','r','c','h','i','v','e', 0, 0,
+    '.','j','a','d', 0,'.','j','a','r', 0, 0,
+    'i','n','s','t','a','l','l', 0,'i','n','s','t','a','l','l','_','o','n','l','y', 0,'o','p','e','n', 0, 0,
+    'e','n', 0, 0,
+    'I','n','s','t','a','l','l', 0,'I','n','s','t','a','l','l',' ','O','n','l','y', 0,'O','p','e','n', 0, 0, // en end of action names
+     0, 0} // empty access list
 };
 
 #endif
