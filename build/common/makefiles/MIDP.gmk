@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -151,10 +151,7 @@ $(MIDP_CLASSES_ZIP)::$(GENERATED_JAVA_FILES) \
 	$(remove_genfilelist)
 	$(split_midpclasses_zip)
 
-try_build_classes:: $(MIDP_CLASSES_ZIP)
-
-build_classes:
-	$(A)$(MAKE) try_build_classes
+build_classes: $(MIDP_CLASSES_ZIP)
 
 # Main rule
 #

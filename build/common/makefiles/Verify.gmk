@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -709,7 +709,7 @@ verify: MIDP_OUTPUT_DIR CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_
 # Rules to display Makefile variables.
 #
 ######################################################################
-tmplogfile = $(MIDP_OUTPUT_DIR)/tmplogfile
+tmplogfile = /tmp/tmplogfile.$$
 display:
 	@echo   "" $(LOG)
 	@echo   "========================" $(LOG)
@@ -720,7 +720,7 @@ display:
 	@echo   "" $(LOG)
 	@$(shell rm -f $(tmplogfile))
 	@$(foreach v, $(BOOLEAN_OPTIONS), \
-		$(shell printf "%-21s = %s\n" "$(v)" "$($(v))" >> $(tmplogfile))) cat $(tmplogfile) $(LOG)
+		$(shell printf "%-21s = %s\n" "$(v)" "$($(v))" >> $(tmplogfile))) cat $(tmplogfile); rm -f $(tmplogfile) $(LOG)
 	@echo   "" $(LOG)
 	@echo   "CFLAGS                = ""$(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(CMDLINE_CFLAGS)" $(LOG)
 	@echo   "" $(LOG)

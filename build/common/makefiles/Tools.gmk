@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -93,8 +93,8 @@ endif
 
 # Targets
 #
-all_tools:: keystore $(KEYTOOL_JAR_FILE) $(JADTOOL_JAR_FILE) \
-            $(CONFIGURATOR_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
+all_tools:: $(STORAGEDIR) $(CA_KEYSTORE) $(BINDIR)/j2se_test_keystore.bin \
+            $(JADTOOL_JAR_FILE) $(CONFIGURATOR_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
 	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(ROMIZER_JAR_FILE)
 
 $(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
@@ -120,8 +120,6 @@ $(KEYTOOL_MANIFEST_FILE):
 	@echo " ... $@ " $(LOG)
 	@$(verify_tools_class_directory) $(LOG)
 	@(echo "Main-Class: com.sun.midp.mekeytool.MEKeyTool" > $@) $(LOG)
-
-keystore: $(KEYTOOL_JAR_FILE) $(STORAGEDIR) $(CA_KEYSTORE) $(BINDIR)/j2se_test_keystore.bin
 
 $(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
 	@echo " ... $@ " $(LOG)

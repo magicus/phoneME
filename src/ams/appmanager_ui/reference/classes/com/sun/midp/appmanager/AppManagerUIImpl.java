@@ -205,11 +205,6 @@ class AppManagerUIImpl extends Form
                                            (ResourceConstants.AMS_CHANGE_FOLDER),
                                            Command.ITEM, 1);
 
-    /** Command object for "Show messgae" command */
-    private Command showMessageCmd =
-        new Command(Resource.getString(ResourceConstants.SHOW_MSG),
-                    Command.ITEM, 1);
-
     /** Display for the Manager MIDlet. */
     ApplicationManager manager;
 
@@ -321,7 +316,6 @@ class AppManagerUIImpl extends Form
         } else {
             display.setCurrent(new SplashScreen(display, this));
         }
-
     }
 
 
@@ -588,8 +582,6 @@ class AppManagerUIImpl extends Form
                 display.setCurrent(folderList);
                 return;
             }
-        } else if (c == showMessageCmd) {
-            display.setCurrent(new NoticeManagerUIImpl(display, this, lastSelectedMsi));
         } else {
             return;
         }
@@ -1564,15 +1556,6 @@ class AppManagerUIImpl extends Form
          */
         protected boolean traverse(
                 int dir, int viewportWidth, int viewportHeight, int visRect_inout[]) {
-            MIDletProxy proxy = msi.getProxyAt(0);
-            if (null != proxy) {
-                if (null != NoticeManager.getInstance().pop(proxy.getIsolateId())) {
-                    addCommand(showMessageCmd);
-                } else {
-                    removeCommand(showMessageCmd);
-                }
-            }
-
             lastSelectedMsi = this.msi;
             return super.traverse(
                 dir, viewportWidth, viewportHeight, visRect_inout);

@@ -97,9 +97,9 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
             midletControllerEventProducer);
 
         // creates display container, needs foregroundController
-        lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
-                                                eventQueue, isolateId, 
-                                                foregroundController);
+	lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
+						eventQueue, isolateId, 
+						foregroundController);
 
         super.createSuiteEnvironment();
 
@@ -125,9 +125,6 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         MidletSuiteContainer msc = 
                 new MidletSuiteContainer(MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken));
         RmsEnvironment.init(internalSecurityToken, msc);
-
-        /* Listens for incoming notices */
-        NoticeManager.initCommon(eventQueue);
     }
 
     /** Final actions to finish a MIDlet suite loader */
