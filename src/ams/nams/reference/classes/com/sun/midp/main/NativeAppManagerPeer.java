@@ -153,7 +153,14 @@ public class NativeAppManagerPeer
         ForegroundEventProducer foregroundEventProducer =
             new ForegroundEventProducer(eventQueue);
 
+        /** Listens for incoming notification. Updates notification
+         *  listeners */
+        NoticeManager.initCommon(eventQueue);
+
         midletProxyList = new MIDletProxyList(eventQueue);
+
+        /** Cleanups Notice array in case of MIDlet crash */
+        NoticeManager.initWithAMS(midletProxyList);
 
         // do all initialization for already created event-related objects ...
         MIDletProxy.initClass(foregroundEventProducer, midletEventProducer);
@@ -192,6 +199,9 @@ public class NativeAppManagerPeer
             EventTypes.MIDP_OUT_OF_MEMORY_HANDLED, this);
 
         IndicatorManager.init(midletProxyList);
+
+        /** Notification forwarder */
+        NativeNoticeListener.init();
 
         AccessController.setAccessControlContext(new MyAccessControlContext());
     }
