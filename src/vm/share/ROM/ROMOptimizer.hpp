@@ -379,7 +379,7 @@ public:
   }
 #endif // USE_SOURCE_IMAGE_GENERATOR
 
-  ReturnOop original_fields(InstanceClass *klass, bool &is_orig);
+  ReturnOop original_fields(const InstanceClass* klass, bool &is_orig);
   void set_classes_as_romized();
   bool is_overridden(InstanceClass *ic, Method *method);
 #if USE_SOURCE_IMAGE_GENERATOR
@@ -489,7 +489,7 @@ private:
     return class_list_contains(dont_rename_methods_classes(), klass);
   }  
 
-  bool is_init_at_build(InstanceClass *klass);
+  bool is_init_at_build(const InstanceClass* klass) const;
 
 #else
   bool dont_rename_class(InstanceClass* /*klass*/)            {return false;}
@@ -548,12 +548,8 @@ private:
   void compact_static_field_containers            (ObjArray *directory);
   void fix_field_tables_after_static_field_removal(ObjArray *directory);
 
-  void fix_one_field_table(InstanceClass *klass, TypeArray *fields, 
-                           TypeArray *reloc_info);
-  void compact_field_tables(JVM_SINGLE_ARG_TRAPS);
   int compact_one_interface(InstanceClass* ic);
   void compact_interface_classes(JVM_SINGLE_ARG_TRAPS);
-  bool is_field_removable(InstanceClass *ic, int field_index, bool from_table);
   void compact_method_tables(JVM_SINGLE_ARG_TRAPS);
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
   bool is_method_removable_from_table(const InstanceClass* klass,
@@ -561,16 +557,6 @@ private:
   static bool is_member_reachable_by_apps(const jint package_flags, 
                                           const AccessFlags class_flags,
                                           const AccessFlags member_flags);
-  bool is_method_reachable_by_apps(const InstanceClass* ic,
-                                   const Method* method) const;
-  bool is_invocation_closure_root (const InstanceClass* ic,
-                                   const Method* method) const;
-  bool is_in_public_itable        (const InstanceClass* ic,
-                                   const Method* method) const;
-  bool is_in_public_vtable        (const InstanceClass* ic,
-                                   const Method* method) const;
-
-  void remove_unused_symbols(JVM_SINGLE_ARG_TRAPS);
   bool is_symbol_alive(ObjArray *live_symbols, Symbol* symbol);
   ReturnOop get_live_symbols(JVM_SINGLE_ARG_TRAPS);
   void record_live_symbol(ObjArray* live_symbols, OopDesc* symbol);
@@ -583,7 +569,6 @@ private:
   void scan_live_symbols_in_methods(ObjArray *live_symbols, 
                                     InstanceClass *klass);
 
-  void remove_dead_methods(JVM_SINGLE_ARG_TRAPS);
   void inline_exception_constructors();
   void inline_short_methods(JVM_SINGLE_ARG_TRAPS);
   bool is_inlineable_exception_constructor(Method *method);
@@ -604,6 +589,21 @@ private:
 #endif
 
 #if USE_SOURCE_IMAGE_GENERATOR
+  bool is_in_public_itable        (const InstanceClass* ic,
+                                   const Method* method) const;
+  bool is_in_public_vtable        (const InstanceClass* ic,
+                                   const Method* method) const;
+  bool is_method_reachable_by_apps(const InstanceClass* ic,
+                                   const Method* method) const;
+  bool is_invocation_closure_root (const InstanceClass* ic,
+                                   const Method* method) const;
+  void remove_dead_methods(JVM_SINGLE_ARG_TRAPS);
+  bool is_field_removable(const InstanceClass* ic,
+                          const int field_index, const bool from_table) const;
+  void fix_one_field_table(const InstanceClass* klass, TypeArray* fields, 
+                           const TypeArray* reloc_info) const;
+  void compact_field_tables(JVM_SINGLE_ARG_TRAPS);
+  void remove_unused_symbols(JVM_SINGLE_ARG_TRAPS);
   void remove_duplicated_short_arrays(JVM_SINGLE_ARG_TRAPS);
   void remove_duplicated_stackmaps(JVM_SINGLE_ARG_TRAPS);
   void remove_duplicated_objects(JVM_SINGLE_ARG_TRAPS);
