@@ -50,18 +50,7 @@ static javacall_result fake_radio_create(javacall_impl_player* outer_player)
 static javacall_result fake_radio_destroy(javacall_handle handle)
 {
     fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    int appId    = h->appId;
-    int playerId = h->playerId;
-
     FREE( h );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
-                                     appId,
-                                     playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -82,53 +71,25 @@ static javacall_result fake_radio_get_player_controls(javacall_handle handle,
 
 static javacall_result fake_radio_prefetch(javacall_handle handle){
 
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
+    //fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
     return JAVACALL_OK;
 }
 
 static javacall_result fake_radio_run(javacall_handle handle){
 
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
+    //fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
     return JAVACALL_OK;
 }
 
 static javacall_result fake_radio_pause(javacall_handle handle){
 
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
+    //fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
     return JAVACALL_OK;
 }
 
 static javacall_result fake_radio_deallocate(javacall_handle handle){
 
-    fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
+    //fake_radio_instance_t *h = ( fake_radio_instance_t* )handle;
     return JAVACALL_OK;
 }
 

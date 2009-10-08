@@ -49,7 +49,7 @@ extern "C" {
 
 // ===========================================================================
 
-#define DEBUG_ONLY(x) x
+#define DEBUG_ONLY(x)
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -755,7 +755,7 @@ static javacall_result dshow_destroy(javacall_handle handle)
     p->pending_operation = dshow_player::OPER_DESTROY;
     SetEvent( p->hOperEvent );
 
-    return JAVACALL_OK;
+    return JAVACALL_WOULD_BLOCK;
 }
 
 //=============================================================================
@@ -939,7 +939,7 @@ static javacall_result dshow_prefetch(javacall_handle handle)
     DEBUG_ONLY(PRINTF("*** prefetch ***\n");)
     p->pending_operation = dshow_player::OPER_PREFETCH;
     SetEvent( p->hOperEvent );
-    return JAVACALL_OK;
+    return JAVACALL_WOULD_BLOCK;
 }
 
 static javacall_result dshow_run(javacall_handle handle)
@@ -950,7 +950,7 @@ static javacall_result dshow_run(javacall_handle handle)
     DEBUG_ONLY(PRINTF("*** run, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
     p->pending_operation = dshow_player::OPER_RUN;
     SetEvent( p->hOperEvent );
-    return JAVACALL_OK;
+    return JAVACALL_WOULD_BLOCK;
 }
 
 static javacall_result dshow_pause(javacall_handle handle)
@@ -961,7 +961,7 @@ static javacall_result dshow_pause(javacall_handle handle)
     DEBUG_ONLY(PRINTF("*** pause, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
     p->pending_operation = dshow_player::OPER_PAUSE;
     SetEvent( p->hOperEvent );
-    return JAVACALL_OK;
+    return JAVACALL_WOULD_BLOCK;
 }
 
 static javacall_result dshow_deallocate(javacall_handle handle)
@@ -972,7 +972,7 @@ static javacall_result dshow_deallocate(javacall_handle handle)
     DEBUG_ONLY(PRINTF("*** deallcoate, mt=%ld/%ld... ***\n", p->get_media_time(), long(time / 1000));)
     p->pending_operation = dshow_player::OPER_DEALLOCATE;
     SetEvent( p->hOperEvent );
-    return JAVACALL_OK;
+    return JAVACALL_WOULD_BLOCK;
 }
 
 //=============================================================================
@@ -1060,7 +1060,7 @@ static javacall_result dshow_set_time(javacall_handle handle, javacall_int32 ms)
     p->pending_operation = dshow_player::OPER_SET_MT;
     DEBUG_ONLY( PRINTF( "*** setting media time ***\n" ); )
     SetEvent( p->hOperEvent );
-    return JAVACALL_OK;
+    return JAVACALL_WOULD_BLOCK;
 }
 
 static javacall_result dshow_get_duration(javacall_handle handle, javacall_int32* ms)

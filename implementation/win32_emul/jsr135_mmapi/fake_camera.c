@@ -190,9 +190,6 @@ static javacall_result fake_camera_create(javacall_impl_player* outer_player)
 static javacall_result fake_camera_destroy(javacall_handle handle)
 {
     fake_camera* c        = (fake_camera*)handle;
-    int          appId    = c->appId;
-    int          playerId = c->playerId;
-
     DEBUG_ONLY( PRINTF( "*** fake_camera_destroy 0x%08X ***\n", handle ); )
 
     if( c->playing )
@@ -216,13 +213,6 @@ static javacall_result fake_camera_destroy(javacall_handle handle)
 
     DeleteCriticalSection( &(c->cs) );
     FREE( c );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
-                                     appId,
-                                     playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -255,13 +245,6 @@ static javacall_result fake_camera_prefetch(javacall_handle handle)
 {
     fake_camera* c = (fake_camera*)handle;
     DEBUG_ONLY( PRINTF( "*** fake_camera_prefetch ***\n" ); )
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     c->appId,
-                                     c->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -271,13 +254,6 @@ static javacall_result fake_camera_run(javacall_handle handle)
     DEBUG_ONLY( PRINTF( "*** fake_camera_run ***\n" ); )
 
     if( !c->playing ) fake_camera_do_start( c );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
-                                     c->appId,
-                                     c->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -287,13 +263,6 @@ static javacall_result fake_camera_pause(javacall_handle handle)
     DEBUG_ONLY( PRINTF( "*** fake_camera_pause ***\n" ); )
 
     if( c->playing ) fake_camera_do_stop( c );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
-                                     c->appId,
-                                     c->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -442,13 +411,6 @@ static javacall_result fake_camera_start_video_snapshot( javacall_handle handle,
                                        NULL );
 
     LeaveCriticalSection( &(c->cs) );
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
-                                     c->appId,
-                                     c->playerId,
-                                     res,
-                                     NULL );
-
     return res;
 }
 

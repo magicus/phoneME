@@ -556,8 +556,6 @@ static javacall_result audio_qs_create(javacall_impl_player* outer_player)
 static javacall_result audio_qs_destroy(javacall_handle handle)
 {
     ah *h             = (ah*)handle;
-    int appId         = h->appId;
-    int playerId      = h->playerId;
     javacall_result r = JAVACALL_FAIL;
     int gmIdx         = h->gmIdx;
 
@@ -610,12 +608,6 @@ static javacall_result audio_qs_destroy(javacall_handle handle)
 
     FREE(h);
     gmDetach(gmIdx);
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DESTROY_FINISHED,
-                                     appId,
-                                     playerId, 
-                                     JAVACALL_OK, NULL );
-
     return JAVACALL_OK;
 }
 
@@ -794,12 +786,6 @@ static javacall_result audio_qs_prefetch(javacall_handle handle){
 
     assert( PL135_STOPPED == h->state );
     audio_qs_do_prefetch( handle );
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PREFETCH_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -810,12 +796,6 @@ static javacall_result audio_qs_run(javacall_handle handle){
 
     assert( PL135_PAUSED == h->state );
     audio_qs_do_start( handle );
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_RUN_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -826,12 +806,6 @@ static javacall_result audio_qs_pause(javacall_handle handle){
 
     assert( PL135_RUNNING == h->state );
     audio_qs_do_stop( handle );
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_PAUSE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -842,12 +816,6 @@ static javacall_result audio_qs_deallocate(javacall_handle handle){
 
     assert( PL135_PAUSED == h->state );
     audio_qs_do_deallocate( handle );
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DEALLOCATE_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, 
-                                     NULL );
-
     return JAVACALL_OK;
 }
 
@@ -990,12 +958,6 @@ static javacall_result audio_qs_set_time(javacall_handle handle, javacall_int32 
     }
 
     JC_MM_DEBUG_PRINT3("audio_set_time: h=0x%08X ms:%ld ct:%ld\n", (int)handle, ms, currtime);
-
-    javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED,
-                                     h->appId,
-                                     h->playerId, 
-                                     JAVACALL_OK, (void*)currtime );
-
     return JAVACALL_OK;
 }
 
