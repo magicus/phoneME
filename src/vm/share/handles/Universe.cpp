@@ -94,9 +94,11 @@ bool Universe::name_matches_pattern(const char name[],    int name_len,
       name_len = pattern_len;
     }
   }
-  // memcmp returns 0 when length is 0
-  return name_len == pattern_len &&
-         jvm_memcmp(pattern, name, pattern_len) == 0;
+  switch( pattern_len - name_len ) {
+    case 1: if( pattern[name_len] == '/' ) --pattern_len;
+    case 0: return jvm_memcmp(pattern, name, pattern_len) == 0;
+  }
+  return false;
 }
 
 

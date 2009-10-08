@@ -549,11 +549,11 @@ void ROMOptimizer::make_virtual_methods_final(InstanceClass *ic,
   }
 }
 
-bool ROMOptimizer::has_subclasses(InstanceClass *klass) {
+bool ROMOptimizer::has_subclasses(const InstanceClass* klass) {
+  const OopDesc* ic = klass->obj();
   for (SystemClassStream st; st.has_next();) {
-    InstanceClass::Raw ic = st.next();
-    InstanceClass::Raw super = ic().super();
-    if( super.equals(klass) ) {
+    const InstanceClass::Raw ic = st.next();
+    if (ic().super() == ic) {
       // klass has at least one subclass
       return true;
     }

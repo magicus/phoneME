@@ -510,7 +510,7 @@ private:
                                    const ROMVector* patterns);
 #endif
 
-  bool has_subclasses(InstanceClass *klass);
+  static bool has_subclasses(const InstanceClass* klass) ;
   void log_non_restricted_packages();
   void initialize_classes(JVM_SINGLE_ARG_TRAPS);
   void print_class_initialization_log(JVM_SINGLE_ARG_TRAPS);
