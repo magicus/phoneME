@@ -111,6 +111,9 @@ public abstract class NoticeBase {
         NoticeWatcher.init();
     }
 
+    protected NoticeBase() {
+    }
+
 
     public long getTimestamp() {
         return timestamp;

@@ -141,6 +141,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
                         Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
                                        "Can't deserialize " + ev.stringParam1);
                     }
+                    Logging.trace(e, "NoticeManager:process");
                     return;
                 }
                 notifyNew(notice);

@@ -1559,23 +1559,30 @@ class AppManagerUIImpl extends Form
         }
 
         /**
-         * Overrides #MIDletCustomItem.traverse() to remember
-         * last selected item of the form 
+         * Overrides {@link MIDletCustomItem#traverse} to remember last
+         * selected item of the form 
          */
         protected boolean traverse(
                 int dir, int viewportWidth, int viewportHeight, int visRect_inout[]) {
-            MIDletProxy proxy = msi.getProxyAt(0);
+            MIDletProxy proxy = msi.getFirstProxy();
             if (null != proxy) {
                 if (null != NoticeManager.getInstance().pop(proxy.getIsolateId())) {
                     addCommand(showMessageCmd);
-                } else {
-                    removeCommand(showMessageCmd);
                 }
             }
 
             lastSelectedMsi = this.msi;
             return super.traverse(
                 dir, viewportWidth, viewportHeight, visRect_inout);
+        }
+
+        /**
+         * Overrides {@link MIDletCustomItem#traverseOut} to remove 
+         * unused command 
+         */
+        protected void traverseOut() {
+            removeCommand(showMessageCmd);
+            super.traverseOut();
         }
     }
 }

@@ -36,6 +36,7 @@ import java.io.IOException;
 import javax.microedition.lcdui.Image;
 
 import com.sun.cldc.isolate.Isolate;
+import com.sun.midp.ams.VMUtils;
 import com.sun.midp.events.NativeEvent;
 import com.sun.midp.main.NoticeManager;
 import com.sun.midp.midlet.MIDletStateHandler;
@@ -54,7 +55,14 @@ public class Notice extends NoticeBase {
      */
     public Notice(NoticeType newType, String newLabel, Image newImage){
         super(newType, newLabel, newImage);
-        origID = Isolate.currentIsolate().id();
+        origID = VMUtils.getIsolateId();
+    }
+
+    /**
+     * Default constructor for serialization
+     * 
+     */
+    public Notice() {
     }
 
     public int getOriginatorID() {
