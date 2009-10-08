@@ -145,6 +145,8 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_VIDEO_LOCATION_SET,        
     /** Posted when the blocked set video visibility finished */
     JAVACALL_EVENT_MEDIA_VIDEO_VISIBILITY_SET,
+    /** Posted when the blocked set video full screen mode finished */
+    JAVACALL_EVENT_MEDIA_VIDEO_FULLSCREEN_MODE_SET,
     /** Posted when finished a short MIDI event */
     JAVACALL_EVENT_MEDIA_SHORT_MIDI_EVENT_FINISHED,
     /** Posted when finished a long MIDI event */
