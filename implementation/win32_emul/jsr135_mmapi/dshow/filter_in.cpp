@@ -819,6 +819,7 @@ HRESULT __stdcall filter_in_pin::WaitForNext(DWORD dwTimeout, IMediaSample **ppS
 #if write_level > 0
             print("filter_in_pin::WaitForNext returns VFW_E_WRONG_STATE.\n");
 #endif
+            LeaveCriticalSection(&pfilter->cs_filter);
             return VFW_E_WRONG_STATE;
         }
 
@@ -828,6 +829,7 @@ HRESULT __stdcall filter_in_pin::WaitForNext(DWORD dwTimeout, IMediaSample **ppS
 #if write_level > 0
             print("filter_in_pin::WaitForNext returns VFW_E_TIMEOUT.\n");
 #endif
+            LeaveCriticalSection(&pfilter->cs_filter);
             return VFW_E_TIMEOUT;
         }
 
