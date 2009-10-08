@@ -168,6 +168,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
  
         // Turn off color key
         source.setColorKey( false, COLOR_KEY);
+System.out.println(this.getClass().getName()+"."+"prepareVideoSurface"+" x="+x+" y="+y+" w="+w+" h="+h);
         locationControl.setTranslatedVideoLocation(g, x, y, w, h);
 
         source.setVideoVisible( !hidden);
@@ -325,6 +326,13 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Set display location 
      */
     public void setDisplayLocation(int x, int y) {
+{
+    try {
+        throw new Exception("setDisplayLocation("+x+","+y+") from there");
+    } catch (Exception ex) {
+        //ex.printStackTrace();
+    }
+}
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                            "setDisplayLocation x=" + x + ",y=" + y); 
@@ -341,6 +349,13 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
      * Set display size
      */
     public void setDisplaySize(int width, int height) throws MediaException {
+{
+    try {
+        throw new Exception("setDisplaySize("+width+","+height+") from there");
+    } catch (Exception ex) {
+        //ex.printStackTrace();
+    }
+}
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                 "setDisplaySize w=" + width + ",h=" + height); 
@@ -443,7 +458,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
         checkState();
 
-        synchronized( boundLock ) {
+        //synchronized( boundLock ) {
             if( locationControl.isFullScreen() != fullScreenMode ) {
                 if( !source.setVideoFullScreen(fullScreenMode) )
                 {
@@ -459,7 +474,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
 
                 locationControl.activate();
             }
-        }
+        //}
     }
 
     public byte[] getSnapshot( String imageType ) throws MediaException
@@ -524,6 +539,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             w = dw;
             h = dh;
         }
+System.out.println(this.getClass().getName()+"."+"paintVideo"+" x="+x+" y="+y+" w="+w+" h="+h);
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
@@ -590,11 +606,12 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
         
         void forcePaint() {
-            repaint();
+            this.repaint();
         }
         
         public void paint(Graphics g, int w, int h) {
 
+System.out.println(this.getClass().getName()+"."+"paint"+" w="+w+" h="+h);
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
                     "DVItem.paint visible=" + visible); 
@@ -624,14 +641,21 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
         
         public int getPrefContentWidth(int height) {
+System.out.println(this.getClass().getName()+".getPrefContentWidth: new=("+dw+","+height+")");
             return dw;
         }
         
         public int getPrefContentHeight(int width) {
+System.out.println(this.getClass().getName()+".getPrefContentHeight: new=("+width+","+dh+")");
             return dh;
         }
 
         public void sizeChanged(int w, int h) {
+System.out.println(this.getClass().getName()+".sizeChanged: old=("+dw+","+dh+")");
+System.out.println(this.getClass().getName()+".sizeChanged: new=("+w+","+h+")");
+if (dw != w || dh != h) {
+    System.out.println(this.getClass().getName()+".sizeChanged: ***DIFFER***");
+}
             synchronized(boundLock) {
                 dw = w;
                 dh = h;
@@ -683,11 +707,13 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private final VideoLocationControl fullScreenLocationControl = new VideoLocationControl() {
 
         public void setDisplayLocation(int x, int y) {
+System.out.println(this.getClass().getName()+"."+"setDisplayLocation(F)"+" x="+x+" y="+y);
             tmp_dx = x;
             tmp_dy = y;
         }
 
         public void setDisplaySize(int width, int height) {
+System.out.println(this.getClass().getName()+"."+"setDisplaySize(F)"+" width="+width+" height="+height);
             tmp_dw = width;
             tmp_dh = height;
         }
@@ -702,37 +728,43 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         public void activate() {
+System.out.println(this.getClass().getName()+"."+"activate(F)");
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "fullScreenLocationControl.activate"); 
             }        
 
-            // Save normal mode settings
-            tmp_dx = dx;
-            tmp_dy = dy;
-            tmp_dw = dw;
-            tmp_dh = dh;
+            synchronized (boundLock) {
 
-            // Apply full screen dimensions and position settings
-            dx = 0;
-            dy = 0;
-
-            /*
-             * Revisit: these can swap when device screen orientation changes or
-             * UI object got moved to another Display.
-             */
-            Display myDisplay;
-            switch (displayMode) {
-            case USE_DIRECT_VIDEO:
-                myDisplay = mmh.getDisplayFor(canvas);
-                break;
-            case USE_GUI_PRIMITIVE:
-                myDisplay = mmh.getDisplayFor(item);
-                break;
-            default:
-                myDisplay = null;
+                // Save normal mode settings
+                tmp_dx = dx;
+                tmp_dy = dy;
+                tmp_dw = dw;
+                tmp_dh = dh;
+    
+                // Apply full screen dimensions and position settings
+                dx = 0;
+                dy = 0;
+    
+                /*
+                 * Revisit: these can swap when device screen orientation changes or
+                 * UI object got moved to another Display.
+                 */
+                Display myDisplay;
+                switch (displayMode) {
+                case USE_DIRECT_VIDEO:
+                    myDisplay = mmh.getDisplayFor(canvas);
+                    break;
+                case USE_GUI_PRIMITIVE:
+                    myDisplay = mmh.getDisplayFor(item);
+                    break;
+                default:
+                    myDisplay = null;
+                }
+                dw = mmh.getDisplayWidth(myDisplay);
+                dh = mmh.getDisplayHeight(myDisplay);
+                waitingForPaint = true;
+                DirectVideo.this.repaint();
             }
-            dw = mmh.getDisplayWidth(myDisplay);
-            dh = mmh.getDisplayHeight(myDisplay);
         }
     };
 
@@ -743,6 +775,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
     private final VideoLocationControl normalScreenLocationControl = new VideoLocationControl() {
 
         public void setDisplayLocation(int x, int y) {
+System.out.println(this.getClass().getName()+"."+"setDisplayLocation(N)"+" x="+x+" y="+y);
             synchronized(boundLock) {
                 dx = x;
                 dy = y;
@@ -757,6 +790,7 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         public void setDisplaySize(int width, int height) {
+System.out.println(this.getClass().getName()+"."+"setDisplaySize(N)"+" width="+width+" height="+height);
             synchronized(boundLock) {
 
                 boolean sizeChanged = ( dw != width || dh != height );
@@ -774,12 +808,15 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             int diffy = g.getTranslateY();
             int px, py, pw, ph;
 
+System.out.println(this.getClass().getName()+"."+"setTranslatedVideoLocation"+" x="+x+" y="+y+" w="+w+" h="+h);
+System.out.println(this.getClass().getName()+"."+"setTranslatedVideoLocation"+" diffx="+diffx+" diffy="+diffy);
             // Calculate positions
             px = x + diffx;
             py = y + diffy;
             pw = dw;
             ph = dh;
 
+System.out.println(this.getClass().getName()+"."+"setTranslatedVideoLocation"+" px="+px+" py="+py+" pw="+pw+" ph="+ph);
             /*
              * Revisit: these can swap when device screen orientation changes or
              * UI object got moved to another Display.
@@ -809,17 +846,25 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
         }
 
         public void activate() {
+System.out.println(this.getClass().getName()+"."+"activate(N)");
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, "normalScreenLocationControl.activate"); 
             }        
 
             // Apply previously saved normal mode position and dimensions
-            if( tmp_dx != dx || tmp_dy != dy ) {
+System.out.println(this.getClass().getName()+"."+"activate(N):"+
+    " tmp_dx="+tmp_dx+
+    " tmp_dy="+tmp_dy+
+    " tmp_dw="+tmp_dw+
+    " tmp_dh="+tmp_dh);
+            //if( tmp_dx != dx || tmp_dy != dy ) {
                 setDisplayLocation( tmp_dx, tmp_dy );
-            }
-            if( tmp_dw != dw || tmp_dh != dh ) {
+            //}
+            //if( tmp_dw != dw || tmp_dh != dh ) {
                 setDisplaySize( tmp_dw, tmp_dh );
-            }
+            //}
+            waitingForPaint = true;
+            DirectVideo.this.repaint();
         }
     };
 
