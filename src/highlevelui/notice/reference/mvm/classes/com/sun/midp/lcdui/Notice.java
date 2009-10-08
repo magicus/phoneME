@@ -31,13 +31,14 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import java.io.IOException;
 
 import javax.microedition.lcdui.Image;
 
 import com.sun.cldc.isolate.Isolate;
 import com.sun.midp.events.NativeEvent;
+import com.sun.midp.main.NoticeManager;
 import com.sun.midp.midlet.MIDletStateHandler;
-
 
 public class Notice extends NoticeBase {
 
@@ -60,12 +61,12 @@ public class Notice extends NoticeBase {
         return origID;
     }
 
-    public void post(boolean selectable, int duration) {
+    public synchronized void post(boolean selectable, int duration) throws IOException {
         super.post(selectable, duration);
-        NotificationQueue.getInstance().post(this);
+        NoticeManager.getInstance().post(this);
     }
 
-    public void remove() {
+    public synchronized void remove() {
         super.remove();
         // this will cause removed() callback, but it is OK
         // because DELETED reason is being filtered out
@@ -91,7 +92,7 @@ public class Notice extends NoticeBase {
         NoticeManager.getInstance().remove(this, TIMEOUT);
     }
 
-    public void serialize(DataOutputStream out) {
+    public void serialize(DataOutputStream out) throws IOException {
         out.writeInt(origID);
         out.writeInt(type.getType());
         out.writeBoolean(selectable);
@@ -107,9 +108,12 @@ public class Notice extends NoticeBase {
             out.writeInt(w);
             out.writeInt(h);
             if (w > 0 && h > 0) {
-                byte[] buf = new byte[image.getWidth() * image.getHeight() * 4];
-                image.getRGB(buf, 0, 0, image.getWidth(), image.getWidth(), image.getHeight());
-                out.write(buf);
+                int[] buf = new int[image.getWidth() * image.getHeight()];
+                image.getRGB(buf, 0, 0, 0, image.getWidth(), image.getWidth(), image.getHeight());
+                int i = 0;
+                while (i++<buf.length) {
+                    out.writeInt(buf[i]);
+                }
             }
         } else {
             out.writeInt(0);
@@ -117,7 +121,7 @@ public class Notice extends NoticeBase {
         }
     }
 
-    public void deserialize(DataInputStream in) {
+    public void deserialize(DataInputStream in) throws IOException {
         origID = in.readInt();
         int typeUID = in.readInt();
         if (null == type || typeUID != type.getType()) {
@@ -135,8 +139,11 @@ public class Notice extends NoticeBase {
         int w = in.readInt();
         int h = in.readInt();
         if (w > 0 && h > 0) {
-            byte[] buf = new byte[image.getWidth() * image.getHeight() * 4];
-            in.read(buf);
+            int[] buf = new int[image.getWidth() * image.getHeight()];
+            int i = 0;
+            while (i++<buf.length) {
+                buf[i] = in.readInt();
+            }
             image = Image.createRGBImage(buf, w, h, true);
         } else {
             image = null;

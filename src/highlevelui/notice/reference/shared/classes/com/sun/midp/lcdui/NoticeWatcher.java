@@ -25,17 +25,20 @@
  */
 
 package com.sun.midp.lcdui;
+
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
+import com.sun.midp.main.NoticeManagerListener;
+import com.sun.midp.main.NoticeManager;
 
 public class NoticeWatcher implements NoticeManagerListener {
 
     Timer timer;
     Hashtable map;
-    
+
     private static NoticeWatcher singleton;
 
 
@@ -56,7 +59,7 @@ public class NoticeWatcher implements NoticeManagerListener {
      * 
      * @param notice new information note
      */
-    void notifyNotice(Notice notice) {
+    public void notifyNotice(Notice notice) {
         long timeout = notice.getTimeout();
         if (timeout == 0) {
             // 0 means no time limit
@@ -70,8 +73,8 @@ public class NoticeWatcher implements NoticeManagerListener {
      * 
      * @param notice the notice was updated
      */
-    void updateNotice(Notice notice) {
-        TimerTask task = map.get(notice);
+    public void updateNotice(Notice notice) {
+        TimerTask task = (TimerTask)map.get(notice);
         if (null != task) {
             if (task.scheduledExecutionTime() == notice.getTimeout()) {
                 return;
@@ -80,7 +83,7 @@ public class NoticeWatcher implements NoticeManagerListener {
                 task.cancel();
                 map.remove(notice);
             }
-        } 
+        }
         schedule(notice);
     }
 
@@ -89,8 +92,8 @@ public class NoticeWatcher implements NoticeManagerListener {
      * 
      * @param notice information note
      */
-    void removeNotice(Notice notice) {
-        TimerTask task = map.get(notice);
+    public void removeNotice(Notice notice) {
+        TimerTask task = (TimerTask)map.get(notice);
         if (null != task) {
             task.cancel();
             map.remove(notice);
@@ -99,21 +102,30 @@ public class NoticeWatcher implements NoticeManagerListener {
 
 
     private void schedule(Notice notice) {
-        int duration = timeout - System.currentTimeMillis();
+        int duration = (int)(notice.getTimeout() - System.currentTimeMillis());
         if (duration < 0) {
             // remove notice at separate thread
-            duraion  = 1;
+            duration  = 1;
         }
-        synchronized (lock) {
-            TimerTask task = new TimerTask() {
-                public void run() {
-                        // causes removeNotice call
-                        notice.timeout();
-                }
-            };
-            map.put(notice, task);
-            timer.schedule(task, duration);
-        }
+				NoticeCanceler task = new NoticeCanceler(notice);
+        map.put(notice, task);
+        timer.schedule(task, duration);
+
     }
 
+    private class NoticeCanceler extends TimerTask {
+        private Notice note;
+        NoticeCanceler(Notice notice) {
+            note = notice;
+        }
+        /**
+         * The action to be performed by this timer task.
+         */
+        public void run() {
+                // causes removeNotice call
+                note.timeout();
+        }
+    }
 }
+
+    

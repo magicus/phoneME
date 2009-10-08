@@ -25,21 +25,30 @@
  */
 
 package com.sun.midp.main;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
 
+import com.sun.midp.ams.VMUtils;
+import com.sun.midp.events.Event;
 import com.sun.midp.events.EventListener;
 import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.NativeEvent;
+import com.sun.midp.lcdui.Notice;
+import com.sun.midp.log.LogChannels;
 import com.sun.midp.log.Logging;
 
 public class NoticeManager implements EventListener, MIDletProxyListListener {
 
     private static final String errorMsg = 
-        "Incorrect usage: NoticeManager must be initialized first";
+    "Incorrect usage: NoticeManager must be initialized first";
 
     private static NoticeManager singleton;
 
@@ -70,8 +79,8 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
     private NoticeManager(EventQueue queue) {
         queue.registerEventListener(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT, this);
         // home indicator and notice visualizer
-        listener = new Vector(2);
-        
+        listeners = new Vector(2);
+
         notices = new Vector();
         this.queue = queue;
     }
@@ -114,15 +123,43 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         Notice notice = findNotice(ev.intParam1);
         if (null == notice) {
             if (ev.intParam2 != Notice.REMOVED) {
-                notice = (Notice)Class.forName(ev.stringParam1).newInstance();
-                notice.deserialize(ev.stringParam2);
+                try {
+                    notice = (Notice)Class.forName(ev.stringParam1).newInstance();
+                } catch (Exception ee) {
+                    if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                        Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
+                                       "Can't instantate " + ev.stringParam1);
+                    }
+                    return;
+                }
+                ByteArrayInputStream byteStream = new ByteArrayInputStream(ev.stringParam2.getBytes());
+                DataInputStream inData = new DataInputStream(byteStream);
+                try {
+                    notice.deserialize(inData);
+                } catch (IOException e) {
+                    if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                        Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
+                                       "Can't deserialize " + ev.stringParam1);
+                    }
+                    return;
+                }
                 notifyNew(notice);
             }
         } else if (Notice.REMOVED == ev.intParam2) {
             notifyRemoved(notice, ev.intParam3);
         } else {
-            notice.deserialize(ev.stringParam2);
-            notityUpdated(notice);
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(ev.stringParam2.getBytes());
+            DataInputStream inData = new DataInputStream(byteStream);
+            try {
+                notice.deserialize(inData);
+            } catch (IOException e) {
+                if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                    Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
+                                   "Can't deserialize " + notice.getClass().getName());
+                }
+                return;
+            }
+            notifyUpdated(notice);
         }
 
     }
@@ -151,8 +188,8 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         while (enm.hasMoreElements()) {
             Notice notice = (Notice)enm.nextElement();
             if (notice.getOriginatorID() == is) {
-                notices.remove(notice);
-                notifyRemoved(notice);
+                notices.removeElement(notice);
+                notifyRemoved(notice, Notice.DELETED);
             }
         }
     }
@@ -208,7 +245,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         if (listeners.size() > 0) {
             Enumeration enm = listeners.elements();
             while (enm.hasMoreElements()) {
-                NoticeManagerUI l = (NoticeManagerUI)enm.nextElement();
+                NoticeManagerListener l = (NoticeManagerListener)enm.nextElement();
                 l.notifyNotice(notice);
             }
         }
@@ -218,7 +255,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         if (listeners.size() > 0) {
             Enumeration enm = listeners.elements();
             while (enm.hasMoreElements()) {
-                NoticeManagerUI l = (NoticeManagerUI)enm.nextElement();
+                NoticeManagerListener l = (NoticeManagerListener)enm.nextElement();
                 l.updateNotice(notice);
             }
         }
@@ -230,7 +267,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         if (listeners.size() > 0) {
             Enumeration enm = listeners.elements();
             while (enm.hasMoreElements()) {
-                NoticeManagerUI l = (NoticeManagerUI)enm.nextElement();
+                NoticeManagerListener l = (NoticeManagerListener)enm.nextElement();
                 l.removeNotice(notice);
             }
         }
@@ -246,19 +283,27 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
      * 
      * @param notice 
      */
-    public void post(Notice notice) {
+    public void post(Notice notice) throws IOException {
         NativeEvent event = new NativeEvent(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT);
-        event.intParam1 = notice.uid;
+        event.intParam1 = notice.getUID();
         event.intParam2 = Notice.AVAILABLE;
         event.stringParam1 = notice.getClass().getName();
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         DataOutputStream dataOut = new DataOutputStream(byteStream);
-        notice.serialize(dataOut);
-        dataOut.close();// closes byteStream also
-        // IMPL_NOTE: will be redesigned when new NativeEvent is arrived
-        event.stringParam2 = new String(byteStream.toByteArray());
-        // IMPL_NOTE: replace to broadcast address
-        queue.sendNativeEventToIsolate(event, VMUtils.getAmsIsolateId());
+        try {
+            notice.serialize(dataOut);
+            dataOut.close();// closes byteStream also
+            // IMPL_NOTE: will be redesigned when new NativeEvent is arrived
+            event.stringParam2 = new String(byteStream.toByteArray());
+            // IMPL_NOTE: replace to broadcast address
+            queue.sendNativeEventToIsolate(event, VMUtils.getAmsIsolateId());
+        } catch (IOException e) {
+            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
+                               "Can't serialize " + notice.getClass().getName());
+            }
+            throw e;
+        }
         // repost (if broadcast doesn't include current task)
         notifyNew(notice);
     }
@@ -270,7 +315,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
             return;
         }
         NativeEvent event = new NativeEvent(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT);
-        event.intParam1 = notice.uid;
+        event.intParam1 = notice.getUID();
         event.intParam2 = Notice.REMOVED;
         event.intParam3 = reason;
         // no need to send whole data, the result will notice discarding
@@ -288,8 +333,23 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         return null;
     }
 
-    public int getNoticeCount() {
-        return notices.size();
+    public synchronized Notice[] getNotices() {
+        Notice[] n = new Notice[notices.size()];
+        notices.copyInto(n);
+        return n;
+    }
+
+    public Notice pop(int origID) {
+        if (notices.size() > 0) {
+            Enumeration enm = notices.elements();
+            while (enm.hasMoreElements()) {
+                Notice n = (Notice)enm.nextElement();
+                if (n.getOriginatorID() == origID) {
+                    return n;
+                }
+            }
+        }
+        return null;
     }
 
 }

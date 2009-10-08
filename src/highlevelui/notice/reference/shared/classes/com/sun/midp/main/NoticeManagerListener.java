@@ -3,47 +3,55 @@
  *
  * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
- */
+ */                         
 
-#include <kni.h>
-#include <midpUtilKni.h>
+package com.sun.midp.main;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+import com.sun.midp.lcdui.Notice;
 
 /**
- * Get unique ID across task instances.
- *
- * @return unique ID
- *
- * @note CLDC specific: mark as quick native
+ * Notify about a small unobtrusive informational note status
+ * 
  */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_lcdui_NoticeType_getUID0) {
-  static jint uid = 0;
-  KNI_ReturnInt(uid++);
+public interface NoticeManagerListener {
+
+    /**
+     * Informs about new information note.
+     * 
+     * @param notice new information note
+     */
+    public void notifyNotice(Notice notice);
+
+    /**
+     * Informs that the notice was updated
+     * 
+     * @param notice the notice was updated
+     */
+    public void updateNotice(Notice notice);
+
+    /**
+     * Informs about given information note need to be discarded
+     * 
+     * @param notice information note
+     */
+    public void removeNotice(Notice notice);
 }
-#ifdef __cplusplus
-}
-#endif

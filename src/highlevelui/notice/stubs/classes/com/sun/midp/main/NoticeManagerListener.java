@@ -32,26 +32,26 @@ import com.sun.midp.lcdui.Notice;
  * Notify about a small unobtrusive informational note status
  * 
  */
-interface NoticeManagerListener {
+public interface NoticeManagerListener {
 
     /**
      * Informs about new information note.
      * 
      * @param notice new information note
      */
-    void notifyNotice(Notice notice);
+    public void notifyNotice(Notice notice);
 
     /**
      * Informs that the notice was updated
      * 
      * @param notice the notice was updated
      */
-    void updateNotice(Notice notice);
+    public void updateNotice(Notice notice);
 
     /**
      * Informs about given information note need to be discarded
      * 
      * @param notice information note
      */
-    void removeNotice(Notice notice);
+    public void removeNotice(Notice notice);
 }

@@ -38,7 +38,7 @@ SUBSYSTEM_NOTICE_JAVA_FILES += \
 	$(NOTICE_SHARED_IMPL_DIR)/classes/com/sun/midp/lcdui/NoticeListener.java \
 	$(NOTICE_SHARED_IMPL_DIR)/classes/com/sun/midp/lcdui/NoticeType.java \
 	$(NOTICE_SHARED_IMPL_DIR)/classes/com/sun/midp/lcdui/NoticeWatcher.java \
-	$(NOTICE_SHARED_IMPL_DIR)/classes/com/sun/midp/main/NoticeManagerLisneter.java
+	$(NOTICE_SHARED_IMPL_DIR)/classes/com/sun/midp/main/NoticeManagerListener.java
 
 # vpath for subsystem
 #

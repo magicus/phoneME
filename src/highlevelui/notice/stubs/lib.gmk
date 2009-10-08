@@ -33,6 +33,6 @@ NOTICE_STUBS_CLASSES_DIR = $(NOTICE_IMPL_DIR)/classes/com/sun/midp
 
 # Java files
 SUBSYSTEM_NOTICE_JAVA_FILES += \
-	$(NOTICE_STUBS_CLASSES_DIR)/main/NoticeManagerLisneter.java \
+	$(NOTICE_STUBS_CLASSES_DIR)/main/NoticeManagerListener.java \
 	$(NOTICE_STUBS_CLASSES_DIR)/main/NoticeManager.java \
 	$(NOTICE_STUBS_CLASSES_DIR)/lcdui/Notice.java

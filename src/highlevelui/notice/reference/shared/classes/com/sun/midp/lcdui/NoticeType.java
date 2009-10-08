@@ -29,17 +29,17 @@ package com.sun.midp.lcdui;
 import javax.microedition.lcdui.Image;
 
 import com.sun.midp.i18n.Resource;
-import com.sun.midp.i18n.Resource.ResourceConstants;
+import com.sun.midp.i18n.ResourceConstants;
 
 public class NoticeType {
 
-    protected static final int CALL_TYPE = 0;
-    protected static final int EMAIL_TYPE = 1;
-    protected static final int IM_TYPE = 2;
-    protected static final int MMS_TYPE = 3;
-    protected static final int REMINDER_TYPE = 4;
-    protected static final int SMS_TYPE = 5;
-    protected static final int USER_TYPE = 6;
+    public static final int CALL_TYPE = 0;
+    public static final int EMAIL_TYPE = 1;
+    public static final int IM_TYPE = 2;
+    public static final int MMS_TYPE = 3;
+    public static final int REMINDER_TYPE = 4;
+    public static final int SMS_TYPE = 5;
+    public static final int USER_TYPE = 6;
 
     String label;
     Image image;
@@ -61,9 +61,8 @@ public class NoticeType {
     }
 
     public boolean equals(Object obj) {
-        if (obj instanceof NotificationTypeImpl) {
-            if ((type < USER_TYPE && type == ((NotificationTypeImpl)obj).type) ||
-                (uid == ((NotificationTypeImpl)obj).uid)) {
+        if (obj instanceof NoticeType) {
+            if (type == ((NoticeType)obj).type) {
                 return true;
             }
         }

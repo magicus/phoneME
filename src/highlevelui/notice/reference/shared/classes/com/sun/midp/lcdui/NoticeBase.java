@@ -30,22 +30,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import java.io.IOException;
 
 import javax.microedition.lcdui.Image;
 
 import com.sun.midp.events.NativeEvent;
 import com.sun.midp.main.Configuration;
 import com.sun.midp.midlet.MIDletStateHandler;
+import com.sun.midp.midlet.MIDletSuite;
 
 
 public abstract class NoticeBase {
 
-    static final int AVAILABLE = 0;
-    static final int REMOVED = 1;
+    public static final int AVAILABLE = 0;
+    public static final int REMOVED = 1;
 
-    static final int DISMISSED = 1;
-    static final int SELECTED  = 2;
-    static final int DELETED   = 3;
+    public static final int DISMISSED = 1;
+    public static final int SELECTED  = 2;
+    public static final int DELETED   = 3;
+    public static final int TIMEOUT   = 4;
 
     protected long timestamp;
 
@@ -113,7 +116,7 @@ public abstract class NoticeBase {
         return timestamp;
     }
 
-    public NotificationTypeBase getType() {
+    public NoticeType getType() {
         return type;
     }
 
@@ -125,7 +128,7 @@ public abstract class NoticeBase {
         label = newLabel;
     }
 
-    public synchronized void post(boolean selectable, int duration) {
+    public synchronized void post(boolean selectable, int duration) throws IOException {
         int minDuration = 
             Configuration.getIntProperty("NOTIFICATION.MIN_DURATION", duration);
         if (duration < minDuration) {
@@ -148,11 +151,14 @@ public abstract class NoticeBase {
      * 
      * @return int 
      */
-    public synchronized int getTimeout() {
+    public synchronized long getTimeout() {
         return timeout;
     }
 
     public void remove() {
+        if (REMOVED == status) {
+            throw new IllegalStateException("Already removed");
+        }
         status = REMOVED;
     }
 
@@ -193,14 +199,14 @@ public abstract class NoticeBase {
         status = REMOVED;
         if (null != listener) {
             if (SELECTED == reason) {
-                listener.noticeSelected(this);
+                listener.noticeSelected((Notice)this);
             } else if (DISMISSED == reason) {
-                listener.noticeDismissed(this);
+                listener.noticeDismissed((Notice)this);
             } else if (TIMEOUT == reason) {
-                listener.noticeTimeout(this);
+                listener.noticeTimeout((Notice)this);
             }
         }
     }
 
-    private int getUID0();
+    private native int getUID0();
 }
