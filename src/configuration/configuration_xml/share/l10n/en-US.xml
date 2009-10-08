@@ -109,6 +109,8 @@
                 Value="Open"/>
 <localized_string Key="VIEW_COMP"
                 Value="View Components"/>
+<localized_string Key="SHOW_MSG"
+                Value="Show Notifications"/>
 
 <localized_string Key="MANUFACTURER"
                 Value="Manufacturer"/>
@@ -819,6 +821,20 @@
 <localized_string Key="AMS_GRA_INTLR_DOWNLOADING_JAR_GAUGE_LABEL_STORAGE"
                 Value="Loading the application file..."/>
 <localized_string Key="AMS_GRA_INTLR_FILE_NOT_FOUND"
-                Value="File not found in the current path"/>       
+                Value="File not found in the current path"/>
+<localized_string Key="NOTICE_POPUP_TITLE"
+                Value="A message from "/>
+<localized_string Key="NOTIFICATION_SMS_LABEL"
+                Value="New SMS message received."/>
+<localized_string Key="NOTIFICATION_EMAIL_LABEL"
+                Value="New EMAIL received."/>
+<localized_string Key="NOTIFICATION_CALL_LABEL"
+                Value="Incoming CALL received "/>
+<localized_string Key="NOTIFICATION_IM_LABEL"
+                Value="New IM message received "/>
+<localized_string Key="NOTIFICATION_MMS_LABEL"
+                Value="New MMS message received "/>
+<localized_string Key="NOTIFICATION_REMINDER_LABEL"
+                Value="New REMINDER message received "/>
 </localized_strings>
 </configuration>

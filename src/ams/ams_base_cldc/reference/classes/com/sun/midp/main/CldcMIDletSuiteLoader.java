@@ -125,6 +125,9 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         MidletSuiteContainer msc = 
                 new MidletSuiteContainer(MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken));
         RmsEnvironment.init(internalSecurityToken, msc);
+
+        /* Listens for incoming notices */
+        NoticeManager.initCommon(eventQueue);
     }
 
     /** Final actions to finish a MIDlet suite loader */

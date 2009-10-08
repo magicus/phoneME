@@ -205,6 +205,11 @@ class AppManagerUIImpl extends Form
                                            (ResourceConstants.AMS_CHANGE_FOLDER),
                                            Command.ITEM, 1);
 
+    /** Command object for "Show messgae" command */
+    private Command showMessageCmd =
+        new Command(Resource.getString(ResourceConstants.SHOW_MSG),
+                    Command.ITEM, 1);
+
     /** Display for the Manager MIDlet. */
     ApplicationManager manager;
 
@@ -582,6 +587,8 @@ class AppManagerUIImpl extends Form
                 display.setCurrent(folderList);
                 return;
             }
+        } else if (c == showMessageCmd) {
+            display.setCurrent(new NoticeManagerUIImpl(display, this, lastSelectedMsi));
         } else {
             return;
         }
@@ -1551,14 +1558,30 @@ class AppManagerUIImpl extends Form
         }
 
         /**
-         * Overrides #MIDletCustomItem.traverse() to remember
-         * last selected item of the form 
+         * Overrides {@link MIDletCustomItem#traverse} to remember last
+         * selected item of the form 
          */
         protected boolean traverse(
                 int dir, int viewportWidth, int viewportHeight, int visRect_inout[]) {
+            MIDletProxy proxy = msi.getFirstProxy();
+            if (null != proxy) {
+                if (null != NoticeManager.getInstance().pop(proxy.getIsolateId())) {
+                    addCommand(showMessageCmd);
+                }
+            }
+
             lastSelectedMsi = this.msi;
             return super.traverse(
                 dir, viewportWidth, viewportHeight, visRect_inout);
+        }
+
+        /**
+         * Overrides {@link MIDletCustomItem#traverseOut} to remove 
+         * unused command 
+         */
+        protected void traverseOut() {
+            removeCommand(showMessageCmd);
+            super.traverseOut();
         }
     }
 }

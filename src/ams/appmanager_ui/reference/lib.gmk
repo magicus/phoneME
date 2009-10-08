@@ -36,5 +36,13 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/MIDletCustomItem.java \
     $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java
 
+ifeq ($(USE_NOTIFICATION), true)
+SUBSYSTEM_LCDUI_JAVA_FILES += \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/NoticeManagerUIImpl.java
+else 
+SUBSYSTEM_LCDUI_JAVA_FILES += \
+    $(AMS_APPMANAGER_UI_IMPL_DIR)/classes/com/sun/midp/appmanager/NoticeManagerUIStub.java
+endif
+
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(AMS_APPMANAGER_UI_IMPL_DIR)/classes

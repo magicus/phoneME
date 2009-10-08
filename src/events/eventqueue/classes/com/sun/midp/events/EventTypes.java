@@ -490,4 +490,10 @@ public final class EventTypes {
      * out of memory was received.  
      */
     public static final int MIDP_OUT_OF_MEMORY_HANDLED = 80;
+
+
+    /**
+     * Notification announcement event 
+     */
+    public static final int NOTIFICATION_ANNOUNCEMENT_EVENT = 81;
 }
