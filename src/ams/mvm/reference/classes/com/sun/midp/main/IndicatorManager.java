@@ -43,6 +43,9 @@ public class IndicatorManager implements MIDletProxyListListener, NoticeManagerL
     /** Internal midletProxyList that is used to add listener */
     private static MIDletProxyList midletProxyList;
 
+    /** Home icon request counter. */
+    private static int homeIconCountRequest;
+
     /**
      * Native method to toggle the home icon
      *
@@ -78,6 +81,17 @@ public class IndicatorManager implements MIDletProxyListListener, NoticeManagerL
      * @param newHomeIconState boolean flag to indicate status of home icon
      */
     private static void setHomeIconState(boolean newHomeIconState) {
+        if (newHomeIconState) {
+            homeIconCountRequest++;
+        } else {
+            homeIconCountRequest--;
+            if (0 > homeIconCountRequest) {
+                homeIconCountRequest = 0;
+            }
+        }
+        if (0 == homeIconCountRequest) {
+            newHomeIconState = false;
+        }
         if (homeIconState != newHomeIconState) {
             homeIconState = newHomeIconState;
             toggleHomeIcon0(homeIconState);
@@ -157,6 +171,7 @@ public class IndicatorManager implements MIDletProxyListListener, NoticeManagerL
      * @param notice information note
      */
     public void removeNotice(Notice notice) {
+        setHomeIconState(false);
     }
 
 }

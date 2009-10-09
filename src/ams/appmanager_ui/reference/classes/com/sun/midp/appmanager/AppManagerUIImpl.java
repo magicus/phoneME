@@ -499,6 +499,7 @@ class AppManagerUIImpl extends Form
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
+System.out.println(c.getLabel());
         if (c == exitCmd) {
             if ((s == this) || s == folderList) {
                 manager.shutDown();
@@ -587,8 +588,6 @@ class AppManagerUIImpl extends Form
                 display.setCurrent(folderList);
                 return;
             }
-        } else if (c == showMessageCmd) {
-            display.setCurrent(new NoticeManagerUIImpl(display, this, lastSelectedMsi));
         } else {
             return;
         }
@@ -718,7 +717,12 @@ class AppManagerUIImpl extends Form
                 folderList.setSelectedFolder(currentFolderId);
                 display.setCurrent(folderList);
             }
+        } else if (c == showMessageCmd) {
+            System.out.println("showMessageCmd");
+            display.setCurrent(NoticeManagerUIImpl.getNoticeManagerFor(lastSelectedMsi, display, this));
+            return;
         }
+
     }
 
     /**
@@ -1566,6 +1570,7 @@ class AppManagerUIImpl extends Form
             MIDletProxy proxy = msi.getFirstProxy();
             if (null != proxy) {
                 if (null != NoticeManager.getInstance().pop(proxy.getIsolateId())) {
+            System.out.println("added showMessageCmd");
                     addCommand(showMessageCmd);
                 }
             }
@@ -1580,6 +1585,7 @@ class AppManagerUIImpl extends Form
          * unused command 
          */
         protected void traverseOut() {
+            System.out.println("removed showMessageCmd");
             removeCommand(showMessageCmd);
             super.traverseOut();
         }

@@ -112,6 +112,7 @@ public abstract class NoticeBase {
     }
 
     protected NoticeBase() {
+        NoticeWatcher.init();
     }
 
 

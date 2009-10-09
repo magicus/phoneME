@@ -101,19 +101,28 @@ public class Notice extends NoticeBase {
     }
 
     public void serialize(DataOutputStream out) throws IOException {
+System.out.println("1");
         out.writeInt(origID);
+System.out.println("2");
         out.writeInt(type.getType());
+System.out.println("3");
         out.writeBoolean(selectable);
+System.out.println("4");
         out.writeLong(timeout);
+System.out.println("5");
         out.writeUTF(originator);
+System.out.println("6");
         out.writeBoolean(null != label);
         if (null != label) {
+System.out.println("7");
             out.writeUTF(label);
         }
         if (null != image) {
             int w = image.getWidth();
             int h = image.getHeight();
+System.out.println("8:" + w);
             out.writeInt(w);
+System.out.println("9:" + h);
             out.writeInt(h);
             if (w > 0 && h > 0) {
                 int[] buf = new int[image.getWidth() * image.getHeight()];
@@ -124,29 +133,42 @@ public class Notice extends NoticeBase {
                 }
             }
         } else {
-            out.writeInt(0);
-            out.writeInt(0);
+System.out.println("8");
+            out.writeInt(1);
+System.out.println("9");
+            out.writeInt(1);
         }
     }
 
     public void deserialize(DataInputStream in) throws IOException {
+System.out.println("11");
         origID = in.readInt();
+System.out.println("21");
         int typeUID = in.readInt();
         if (null == type || typeUID != type.getType()) {
             type = new NoticeType(typeUID);
         }
+System.out.println("31");
         selectable = in.readBoolean();
+System.out.println("41");
         timeout = in.readLong();
+System.out.println("51");
         originator = in.readUTF();
+System.out.println("61");
         boolean hasLabel = in.readBoolean();
         if (hasLabel) {
+System.out.println("71");
             label = in.readUTF();
         } else {
             label = null;
         }
+System.out.println("81");
         int w = in.readInt();
+System.out.println("81:" + w);
+System.out.println("91");
         int h = in.readInt();
-        if (w > 0 && h > 0) {
+System.out.println("91:"+h);
+        if (w > 1 && h > 1) {
             int[] buf = new int[image.getWidth() * image.getHeight()];
             int i = 0;
             while (i++<buf.length) {

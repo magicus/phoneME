@@ -27,6 +27,7 @@
 package com.sun.midp.appmanager;
 
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import javax.microedition.lcdui.*;
@@ -34,9 +35,9 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.lcdui.Notice;
+import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.NoticeManager;
 import com.sun.midp.main.NoticeManagerListener;
-import com.sun.midp.main.MIDletProxy;
 
 
 /**
@@ -46,29 +47,47 @@ import com.sun.midp.main.MIDletProxy;
  * to the user without taking screen control.
  *
  */
-class NoticeManagerUIImpl extends Form implements CommandListener {
+class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandListener, NoticeManagerListener  {
     Alert alert;
     Command dismiss;
     Command select;
     Vector notices;
     Display display;
     NoticeManager manager;
-    MIDletProxy[] proxies;
+    RunningMIDletSuiteInfo rmi;
     Command exit;
     Command show;
     Displayable parent;
+    static Hashtable actionCenter;
 
-    NoticeManagerUIImpl(Display d, Displayable p, RunningMIDletSuiteInfo s) {
+    private NoticeManagerUIImpl(Display d, Displayable p, RunningMIDletSuiteInfo s) {
         super(Resource.getString(ResourceConstants.NOTICE_POPUP_TITLE)
                   + s.displayName);
         manager = NoticeManager.getInstance();
+        manager.addListener(this);
         display = d;
         parent = p;
+        setupForm();
+    }
 
-        proxies = s.getProxies();
+    static Form getNoticeManagerFor(RunningMIDletSuiteInfo s, Display d, Displayable p) {
+        if (null == actionCenter) {
+            actionCenter = new Hashtable();
+        }
+        Form form = (Form)actionCenter.get(s);
+        if (null == form) {
+            form  = new NoticeManagerUIImpl(d, p, s);
+            actionCenter.put(s, form);
+        }
+
+        return form;
+    }
+
+    private void setupForm() {
         Notice[] n = manager.getNotices();
         if (null != n) {
             notices = new Vector();
+            MIDletProxy[] proxies = rmi.getProxies();
             for (int i = 0; i < n.length; i++) {
                 for (int j = 0; j < proxies.length; j++) {
                     if (n[i].getOriginatorID() == proxies[j].getIsolateId()) {
@@ -77,16 +96,13 @@ class NoticeManagerUIImpl extends Form implements CommandListener {
                 }
             }
         }
-        setCommandListener(this);
         exit = new Command(Resource.getString(ResourceConstants.EXIT), Command.EXIT, 1);
-        setupForm();
-    }
-
-    private void setupForm() {
+        addCommand(exit);
+        setCommandListener(this);
         Enumeration enm = notices.elements();
         while (enm.hasMoreElements()) {
-            Notice n = (Notice)enm.nextElement();
-            addItem(n);
+            Notice note = (Notice)enm.nextElement();
+            addItem(note);
         }
     }
 
@@ -94,6 +110,11 @@ class NoticeManagerUIImpl extends Form implements CommandListener {
         ImageItem item = new ImageItem(n.getLabel(), n.getImage(), 
                                        ImageItem.LAYOUT_LEFT, 
                                        null, ImageItem.PLAIN);
+        if (null == show) {
+            show = new Command(Resource.getString(ResourceConstants.SHOW_MSG), Command.ITEM, 1);
+        }
+        item.addCommand(show);
+        item.setItemCommandListener(this);
         append(item);
     }
 
@@ -103,6 +124,7 @@ class NoticeManagerUIImpl extends Form implements CommandListener {
      * @param notice new information note
      */
     public void notifyNotice(Notice note) {
+        MIDletProxy[] proxies = rmi.getProxies();
         for (int j = 0; j < proxies.length; j++) {
             if (note.getOriginatorID() == proxies[j].getIsolateId()) {
                 notices.addElement(note);
@@ -121,6 +143,11 @@ class NoticeManagerUIImpl extends Form implements CommandListener {
             int i = notices.indexOf(note);
             delete(i);
             notices.removeElement(note);
+            if (0 == notices.size() && display.getCurrent() != this) {
+                // ready for GC
+                manager.removeListener(this);
+                actionCenter.remove(rmi);
+            }
         }
     }
 
@@ -158,4 +185,19 @@ class NoticeManagerUIImpl extends Form implements CommandListener {
         }
     }
 
+    /**
+     * Called by the system to indicate that a command has been invoked on a 
+     * particular item.
+     * 
+     * @param c the <code>Command</code> that was invoked
+     * @param item the <code>Item</code> on which the command was invoked
+     */
+    public void commandAction(Command c, Item item) {
+        if (show == c) {
+            Alert alert = new Alert("Message:", item.getLabel(), 
+                                    ((ImageItem)item).getImage(),
+                                    null);
+            display.setCurrent(alert, this);
+        }
+    }
 }
