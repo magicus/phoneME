@@ -1940,11 +1940,7 @@ char *pushfindsuite(char *store, int available){
     /* Find the entry to pass off the open file descriptor. */
     for (p = pushlist; p != NULL ; p = p->next){
         if (strcmp(store, p->storagename) == 0){
-            for (ptr = p->value, len=0; *ptr; ptr++, len++){
-                if (*ptr == ','){
-                    *ptr = '\0';
-                    break;
-                }
+            for (ptr = p->value, len=0; *ptr && (*ptr != ','); ptr++, len++) {
             }
 
             ret = midpMalloc(len + 1);
