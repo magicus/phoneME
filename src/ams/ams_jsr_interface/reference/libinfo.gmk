@@ -44,6 +44,12 @@ ifneq ($(USE_JSR_229), true)
         com/sun/midp/payment/PAPICleanUp.java
 endif
 
+ifneq ($(USE_JSR_258), true)
+# Include stub implementation of JSR 258 class
+    LIB_JAVA_FILES += \
+        com/sun/midp/theme/ThemeConnectionTunnel.java
+endif
+
 #
 # IMPL_NOTE: revome when decoupling is complete
 #

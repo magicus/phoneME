@@ -620,48 +620,47 @@ public class Display {
  * ************* Static initializer, constructor
  */
     static {
+            // #ifdef ENABLE_GCI
+            java.security.AccessController.doPrivileged(
+                     new sun.security.action.LoadLibraryAction("gci"));
 
-        // #ifdef ENABLE_GCI
-        java.security.AccessController.doPrivileged(
-                 new sun.security.action.LoadLibraryAction("gci"));
+            GCIDisplay gciDisplay =
+                    GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
+            WIDTH = gciDisplay.getWidth();
+            HEIGHT = gciDisplay.getHeight();
+            // #endif ENABLE_GCI
 
-        GCIDisplay gciDisplay =
-                GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
-        WIDTH               = gciDisplay.getWidth();
-        HEIGHT              = gciDisplay.getHeight();
-        // #endif ENABLE_GCI
+            graphicsAccessor = new GraphicsAccessImpl();
+            GameMap.registerGraphicsAccess(graphicsAccessor);
 
-        graphicsAccessor = new GraphicsAccessImpl();
-        GameMap.registerGraphicsAccess(graphicsAccessor);
+            // #ifdef ENABLE_CHAMELEON
 
-        // #ifdef ENABLE_CHAMELEON
+            SkinLoader.initGraphicsAccess(graphicsAccessor);
 
-        SkinLoader.initGraphicsAccess(graphicsAccessor);
+            // IMPL_NOTE: In the MVM mode it's important to do the first
+            //   skin resources loading from the AMS isolate, since they
+            //   are shared between all working isolates.
+            try {
+                SkinLoader.loadSkin(false);
+            } catch (IOException e) {
+                if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
+                    Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
+                            "IOException while loading skin: " + e.getMessage());
+                }
 
-        // IMPL_NOTE: In the MVM mode it's important to do the first
-        //   skin resources loading from the AMS isolate, since they
-        //   are shared between all working isolates.
-        try {
-            SkinLoader.loadSkin(false);
-        } catch (IOException e) {
-            if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
-                Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
-                        "IOException while loading skin: " + e.getMessage());
+                throw new RuntimeException("IOException while loading skin");
             }
 
-            throw new RuntimeException("IOException while loading skin");
-        }
+            // #endif ENABLE_CHAMELEON
 
-        // #endif ENABLE_CHAMELEON
+            /* Let com.sun.midp classes call in to this class. */
+            displayEventHandlerImpl = new DisplayEventHandlerImpl();
+            DisplayEventHandlerFactory.SetDisplayEventHandlerImpl(
+                                       displayEventHandlerImpl);
+            deviceAccess = new DisplayDeviceAccess();
 
-        /* Let com.sun.midp classes call in to this class. */
-        displayEventHandlerImpl = new DisplayEventHandlerImpl();
-        DisplayEventHandlerFactory.SetDisplayEventHandlerImpl(
-                                   displayEventHandlerImpl);
-        deviceAccess = new DisplayDeviceAccess();
-
-        DisplayStaticAccess displayStaticAccess = 
-            new DisplayStaticAccess () {
+            DisplayStaticAccess displayStaticAccess =
+            new DisplayStaticAccess() {
                 public Display getDisplay(Object owner) {
                     return Display.getDisplay(owner);
                 }
@@ -670,8 +669,8 @@ public class Display {
                 }
             };
 
-        DisplayFactory.setStaticDisplayAccess(classSecurityToken, 
-                                              displayStaticAccess);
+            DisplayFactory.setStaticDisplayAccess(classSecurityToken,
+                                                  displayStaticAccess);
     }
 
 
@@ -729,6 +728,10 @@ public class Display {
          * DisplayAcccess.setDisplayId() method.
          */
         displayContainer.addDisplay(accessor);
+
+    // #ifdef ENABLE_JSR_258
+        SkinLoader.initDisplayAccess(accessor);
+    // #endif ENABLE_JSR_258
 
         Displayable temp = foregroundController.registerDisplay(displayId,
                            owner.getClass().getName());
@@ -3273,6 +3276,16 @@ public class Display {
             Display.this.lSetMode(m);
             }
         }
+
+        /**
+         * Posts an event to repaint the screen.
+         */
+        public void requestScreenRepaint() {
+        // #ifdef ENABLE_JSR_258
+            Display.this.requestScreenRepaint();
+        // #endif ENABLE_JSR_258
+       }
+
     } // END DisplayAccessImpl Class
 
 

@@ -169,6 +169,12 @@ public final class SecurityInitializer {
         "com.sun.midp.chameleon.skins.resources.SkinResourcesImpl$SecurityTrusted",
         // #endif ENABLE_CHAMELEON
 
+        // #ifdef ENABLE_JSR_258
+        "com.sun.midp.chameleon.skins.resources.ThemeResourcesImpl$SecurityTrusted",
+        "com.sun.theme.MediaElementImpl$SecurityTrusted",
+        "com.sun.theme.ThemeStorage$SecurityTrusted",
+        // #endif ENABLE_JSR_258
+
         // #ifndef ENABLE_CHAMELEON
         "javax.microedition.lcdui.AlertLFImpl$SecurityTrusted",
         // #endif ENABLE_CHAMELEON

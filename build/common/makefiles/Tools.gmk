@@ -67,6 +67,9 @@ L10N_GENERATOR_MAIN_CLASS    = com.sun.midp.l10n.generator.LocalizedStringsGener
 L10N_GENERATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/l10nGenerator.manifest
 L10N_GENERATOR_JAR_FILE      = $(TOOLS_CLASS_DIR)/l10nGenerator.jar
 
+
+ifneq ($(USE_JSR_258), true)
+
 # Skin romization tool jar and manifest file names
 #
 SKINROMIZATION_MAIN_CLASS    = com.sun.midp.skinromization.SkinRomizer
@@ -78,6 +81,9 @@ SKINROMIZATION_JAR_FILE = $(BINDIR)/SkinRomizationTool.jar
 IMAGE2RAW_MAIN_CLASS    = com.sun.midp.imageutil.ImageToRawTool
 IMAGE2RAW_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/ImageToRawTool.manifest
 IMAGE2RAW_JAR_FILE = $(BINDIR)/ImageToRawTool.jar
+
+endif
+
 
 # Romizer jar and manifest file names
 #
@@ -197,6 +203,8 @@ $(L10N_GENERATOR_MANIFEST_FILE):
 	@(echo "Main-Class: $(L10N_GENERATOR_MAIN_CLASS)" > $@) $(LOG)
 
 
+ifneq ($(USE_JSR_258), true)
+
 # Skin romization tool (jar rules)
 #
 $(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(SKINROMIZATION_MANIFEST_FILE)
@@ -257,6 +265,8 @@ define convert_images_to_raw
 		-format $(GENERATED_DIR)/merged.xml \
 		-out $(STORAGEDIR)) $(LOG)
 endef									    
+
+endif
 
 
 # Romizer tool (jar rules)

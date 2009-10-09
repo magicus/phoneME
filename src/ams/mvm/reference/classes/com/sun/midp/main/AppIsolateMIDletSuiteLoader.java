@@ -116,10 +116,12 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
         AmsUtil.initClassInAppIsolate(
             midletExecuteEventProducer);
-        
+
         initLinks();
 
         com.sun.midp.io.j2me.pipe.Protocol.initUserContext();
+
+        com.sun.midp.theme.ThemeConnectionTunnel.init();
     }
 
     /** Restricts suite access to internal API */
@@ -175,7 +177,7 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
             if (inUse) {
                 throw new IllegalStateException();
             }
-            
+           
             inUse = true;
             new AppIsolateMIDletSuiteLoader(args).runMIDletSuite();
         } catch (Throwable t) {

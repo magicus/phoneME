@@ -58,6 +58,7 @@ USE_JSR_239             = false
 USE_JSR_280             = false
 USE_JSR_256             = false
 USE_JSR_257             = false
+USE_JSR_258             = false
 USE_JSR_281             = false
 USE_JSR_290             = false
 USE_JSR_293             = false

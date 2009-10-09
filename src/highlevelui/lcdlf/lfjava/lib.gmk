@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -55,13 +53,15 @@ SUBSYSTEM_LCDLF_NATIVE_FILES += \
     lfj_export.c \
     lfj_cskin.c \
     lfj_native_input_mode.c \
-    lfj_SoftButtonLayer_kni.c \
-    lfj_image_rom.c	
+    lfj_SoftButtonLayer_kni.c
 
 
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.jpp
 	@$(call runjpp,$^,$@)
 
+$(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinLoader.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinLoader.jpp
+	@$(call runjpp,$^,$@)
+	
 $(GENERATED_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.java : $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.jpp
 	@$(call runjpp,$^,$@)
 
@@ -161,9 +161,8 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/PTIResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/InputModeResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/VirtualKeyboardResources.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
-    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinLoader.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinLoader.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/AlertLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/TitleLayer.java \
@@ -185,7 +184,30 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/VirtualKeyListener.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/GestureAnimator.java \
-    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/GestureAnimatorListener.java
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/GestureAnimatorListener.java \
+
+
+ifeq ($(USE_JSR_258), true)
+
+SUBSYSTEM_LCDLF_JAVA_FILES += \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ThemeResourcesImpl.java 
+
+# Path to themes file
+THEMES_FILE=$(GENERATED_DIR)/appearances.bin
+
+# Copy themes storage file to /lib
+define copy_themes
+	@cp -f $(THEMES_FILE) $(LIBDIR) $(LOG)
+endef
+
+# USE_JSR_258
+else
+
+SUBSYSTEM_LCDLF_JAVA_FILES += \
+    $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesImpl.java
+
+SUBSYSTEM_LCDLF_NATIVE_FILES += \
+    lfj_image_rom.c	
 
 # generated skin files 
 SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin 
@@ -213,7 +235,22 @@ define romize_skin
 		-outbin `$(call fixcygpath, $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE))` \
 		-outc `$(call fixcygpath, $(GENERATED_DIR)/lfj_image_rom.c)`
 endef
-    
+
+define copy_themes
+	@rm -f $(CHAM_ROMIZED_IMAGE_FILES) $(LOG)
+	@cp -f $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE) $(LIBDIR) $(LOG)
+endef
+
+$(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
+		$(LOG_ONLY)
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+
+# USE_JSR_258
+endif
+
+
 # I3test files for the library
 #
 ifeq ($(USE_I3_TEST), true)
@@ -239,8 +276,8 @@ endif
 
 # File names of romized Chameleon images
 ifndef CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE
-	# Normal case: the list of romized images comes from skin XML file
-	CHAM_ROMIZED_IMAGE_FILES = $(addprefix $(LIBDIR)/,$(shell cat $(SUBSYSTEM_CONFIGURATION_CHAMROM_LIST_FILE)))
+# Normal case: the list of romized images comes from skin XML file
+CHAM_ROMIZED_IMAGE_FILES = $(addprefix $(LIBDIR)/,$(shell cat $(SUBSYSTEM_CONFIGURATION_CHAMROM_LIST_FILE)))
 else
 	# QA hack case
 	ifeq ($(CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE),all)
@@ -257,8 +294,7 @@ define copy_lcdlf_resources
 	@mkdir -p $(LIBDIR)
 	@cp -f $(SUBSYSTEM_LCDLF_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
 	@cp -f $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
-	@rm -f $(CHAM_ROMIZED_IMAGE_FILES) $(LOG)
-	@cp -f $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE) $(LIBDIR) $(LOG)
+	$(copy_themes)
 endef
 
 else	
@@ -268,12 +304,6 @@ endef
 
 endif
 
-
-$(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c
-	@echo " ... $@" $(LOG)
-	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
-		$(LOG_ONLY)
-	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
 
 # Define Jpp
 JPP_DEFS += -DENABLE_CHAMELEON

@@ -348,6 +348,16 @@ include $(JSR_257_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
  
 #####################################################################
+# (Extra) Mobile User Interface Customization
+# Description: JSR 258
+#####################################################################
+ifeq ($(USE_JSR_258), true)
+JPP_DEFS += -DENABLE_JSR_258
+EXTRA_CFLAGS += -DENABLE_JSR_258=1
+include $(JSR_258_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+ 
+#####################################################################
 # (Extra) IMS
 # Description: JSR 281
 #####################################################################

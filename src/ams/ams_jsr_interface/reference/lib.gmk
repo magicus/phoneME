@@ -67,4 +67,10 @@ ifneq ($(USE_JSR_229), true)
         $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/payment/PAPICleanUp.java
 endif
 
+ifneq ($(USE_JSR_258), true)
+# Include stub implementation of JSR 258 class
+    SUBSYSTEM_AMS_JAVA_FILES += \
+        $(AMS_JSR_INTERFACE_IMPL_DIR)/classes/com/sun/midp/theme/ThemeConnectionTunnel.java
+endif
+
 endif

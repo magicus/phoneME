@@ -163,6 +163,8 @@ int get_allowed_severity_c(int channelID) {
             return(getInternalPropertyInt("JSR290"));
         case LC_JSR257:
             return(getInternalPropertyInt("JSR257"));
+        case LC_JSR258:
+            return(getInternalPropertyInt("JSR258"));
         case LC_EVENTS:
             return(getInternalPropertyInt("EVENTS"));
 
