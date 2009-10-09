@@ -709,7 +709,7 @@ verify: MIDP_OUTPUT_DIR CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_
 # Rules to display Makefile variables.
 #
 ######################################################################
-tmplogfile = $(MIDP_OUTPUT_DIR)/tmplogfile
+tmplogfile = /tmp/tmplogfile.$$
 display:
 	@echo   "" $(LOG)
 	@echo   "========================" $(LOG)
