@@ -39,4 +39,12 @@ public class Protocol {
     public static void registerService(SecurityToken token) {
         // Need to add support for SVM mode.
     }
+
+    /**
+     * Initializes pipe service in context of user MIDlet (e.g. Isolate user MIDlet
+     * is about to start in).
+     */
+    public static void initUserContext() {
+        // Need to add support for SVM mode.
+    } 
 }
