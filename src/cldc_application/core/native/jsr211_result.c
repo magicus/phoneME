@@ -245,13 +245,13 @@ jsr211_result jsr211_appendString( const jchar* str, size_t str_size, /*OUT*/ JS
 jsr211_boolean jsr211_isUniqueString(const jchar *str, size_t sz, int casesens, JSR211_RESULT_STRARRAY array) {
     JSR211_BUFFER_DATA bd = jsr211_get_result_data(*array);
     JSR211_ENUM_HANDLE eh = jsr211_get_enum_handle( bd );
-    jsr211_boolean result = JSR211_FALSE;
+    jsr211_boolean result = JSR211_TRUE;
     while( (bd = jsr211_get_next( &eh )) != NULL ){
         const void * data; size_t length;
         jsr211_get_data( bd, &data, &length );
         if ( length == sz * sizeof(jchar) ) {
             if (casesens == JSR211_TRUE) {
-                if( wcsncmp(str, (const jchar *)data, sz) == 0 ) {
+                if( javautil_str_wcsncmp(str, (const jchar *)data, sz) == 0 ) {
                     result = JSR211_FALSE;
                     break;
                 }
