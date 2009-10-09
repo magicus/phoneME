@@ -40,16 +40,68 @@ import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 
+/**
+ * <code>Notice</code> is a small information note that can be
+ * shown to the user from a headless application or a background
+ * application. 
+ * <p> 
+ * <code>NoticeBase</code> contains a code shared between all 
+ * target specific implementations. 
+ * 
+ */
 public abstract class NoticeBase {
 
+    /* --------- Notice state codes --------------*/
+    /**
+     * . A Notice becomes available it was posted.
+     * 
+     */
     public static final int AVAILABLE = 0;
+
+    /**
+     * Notice state. A Notice becomes removed after one of the 
+     * follwoing actions: 
+     * <ul> 
+     * <li>a Notice was dismissed or selected by the user</li> 
+     * <li>a Notice was removed by the originator</li> 
+     * <li>a Notice was fired by timer</li> 
+     * </ul>
+     * 
+     */
     public static final int REMOVED = 1;
 
+
+    /* --------- Notice removal reason codes -------- */
+
+    /**
+     * A notice was dismissed.
+     * 
+     */
     public static final int DISMISSED = 1;
+
+    /**
+     * A notice was selected.
+     * 
+     */
     public static final int SELECTED  = 2;
+
+    /**
+     * A notice was removed by originator.
+     * 
+     */
     public static final int DELETED   = 3;
+
+    /**
+     * A notice was expired.
+     * 
+     */
     public static final int TIMEOUT   = 4;
 
+
+    /**
+     * 
+     * 
+     */
     protected long timestamp;
 
     protected Image image;

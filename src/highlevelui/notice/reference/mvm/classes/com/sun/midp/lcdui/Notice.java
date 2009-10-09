@@ -41,8 +41,16 @@ import com.sun.midp.events.NativeEvent;
 import com.sun.midp.main.NoticeManager;
 import com.sun.midp.midlet.MIDletStateHandler;
 
+/**
+ * MVM specific extension of {@link NoticeBase}
+ * 
+ */
 public class Notice extends NoticeBase {
 
+    /**
+     * The notice originator identifier.
+     * 
+     */
     int origID;
 
     /**
@@ -59,21 +67,31 @@ public class Notice extends NoticeBase {
     }
 
     /**
-     * Default constructor for serialization
+     * Returns notice originator ID. 
+     * <p> 
+     * So far the ID equals to isolate ID of originator application.
      * 
+     * @return originator ID. 
      */
-    public Notice() {
-    }
-
     public int getOriginatorID() {
         return origID;
     }
 
+    /**
+     * Posts the notice.
+     * 
+     * @param selectable if the notice can selected by the user.
+     * @param duration 
+     */
     public synchronized void post(boolean selectable, int duration) throws IOException {
         super.post(selectable, duration);
         NoticeManager.getInstance().post(this);
     }
 
+    /**
+     * Removes the notice. Called by originator application.
+     * 
+     */
     public synchronized void remove() {
         super.remove();
         // this will cause removed() callback, but it is OK
@@ -82,47 +100,71 @@ public class Notice extends NoticeBase {
     }
 
 
+    /* --- Notice control functions are not available for the application.--- */
+
+    /**
+     * Called by Notice visualizer when the user dismisses the 
+     * notice. 
+     * 
+     */
     public void dismiss() {
         // this will cause removed() callback, 
         // but caller instance has no listeners so nothing happens
         NoticeManager.getInstance().remove(this, DISMISSED);
     }
 
+    /**
+     * Called by Notice visualizer when the user selects the notice.
+     * 
+     */
     public void select() {
         // this will cause removed() callback, 
         // but caller instance has no listeners so nothing happens
         NoticeManager.getInstance().remove(this, SELECTED);
     }
 
+    /**
+     * Called by Notice watcher when notice duration exceeded.
+     * 
+     */
     public void timeout() {
         // this will cause removed() callback, 
         // but caller instance has no listeners so nothing happens
         NoticeManager.getInstance().remove(this, TIMEOUT);
     }
 
+    /* ------------------  SERIALIZATION section ----------------- */
+
+    /**
+     * Default constructor for serialization
+     * 
+     */
+    public Notice() {
+    }
+
+    /**
+     * Serializes internal datas into given stream. 
+     * <p> 
+     * Used to transfer <code>Notice</code> between tasks
+     * 
+     * @param out output stream 
+     * @throw IOException if one of the field can be written into 
+     *        the stream
+     */
     public void serialize(DataOutputStream out) throws IOException {
-System.out.println("1");
         out.writeInt(origID);
-System.out.println("2");
         out.writeInt(type.getType());
-System.out.println("3");
         out.writeBoolean(selectable);
-System.out.println("4");
         out.writeLong(timeout);
-System.out.println("5");
         out.writeUTF(originator);
-System.out.println("6");
         out.writeBoolean(null != label);
         if (null != label) {
-System.out.println("7");
             out.writeUTF(label);
         }
         if (null != image) {
             int w = image.getWidth();
             int h = image.getHeight();
-System.out.println("8:" + w);
             out.writeInt(w);
-System.out.println("9:" + h);
             out.writeInt(h);
             if (w > 0 && h > 0) {
                 int[] buf = new int[image.getWidth() * image.getHeight()];
@@ -133,41 +175,39 @@ System.out.println("9:" + h);
                 }
             }
         } else {
-System.out.println("8");
+            /* Workaround: nulls at the end of serialized bytearray are skipped during converting to a string.
+               Shell be restored to original values when byte array be introduced as Event field. */
             out.writeInt(1);
-System.out.println("9");
             out.writeInt(1);
         }
     }
 
+    /**
+     * Restores internal fields from given stream.
+     * <p> 
+     * Used to transfer <code>Notice</code> between tasks 
+     * @param in input stream 
+     * @throw IOException if one of the field can be restored
+     */
     public void deserialize(DataInputStream in) throws IOException {
-System.out.println("11");
         origID = in.readInt();
-System.out.println("21");
         int typeUID = in.readInt();
         if (null == type || typeUID != type.getType()) {
             type = new NoticeType(typeUID);
         }
-System.out.println("31");
         selectable = in.readBoolean();
-System.out.println("41");
         timeout = in.readLong();
-System.out.println("51");
         originator = in.readUTF();
-System.out.println("61");
         boolean hasLabel = in.readBoolean();
         if (hasLabel) {
-System.out.println("71");
             label = in.readUTF();
         } else {
             label = null;
         }
-System.out.println("81");
         int w = in.readInt();
-System.out.println("81:" + w);
-System.out.println("91");
         int h = in.readInt();
-System.out.println("91:"+h);
+        /* Workaround: nulls at the end of serialized bytearray are skipped during converting to a string.
+           Shell be restored to original values when byte array be introduced as Event field. */
         if (w > 1 && h > 1) {
             int[] buf = new int[image.getWidth() * image.getHeight()];
             int i = 0;
