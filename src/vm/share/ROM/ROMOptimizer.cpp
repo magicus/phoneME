@@ -75,6 +75,7 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
 
     switch (state()) {
     case STATE_MAKE_RESTRICTED_PACKAGES_FINAL:
+      create_extended_class_attributes(JVM_SINGLE_ARG_CHECK);
       if (MakeRestrictedPackagesFinal) {
         // Optimize classes in restricted packages (no new classes
         // will be defined in the restricted packages at run-time).
@@ -407,6 +408,87 @@ void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
   initialize_subclasses_cache(JVM_SINGLE_ARG_CHECK);
 }
 
+void ROMOptimizer::create_extended_class_attributes(JVM_SINGLE_ARG_TRAPS) {
+  *extended_class_attributes() = 
+    Universe::new_byte_array(Universe::number_of_java_classes() JVM_CHECK);
+
+  for (SystemClassStream st; st.has_next();) {
+    const InstanceClass::Raw klass = st.next();
+    if (is_in_hidden_package(&klass)) {
+      continue;
+    }
+    if (!klass().is_public() && AggressiveROMSymbolRenaming) {
+      continue;
+    }
+#if 0
+    {
+      const jbyte new_level = klass().is_final() ? PUBLIC_MEMBERS_ACCESSIBLE
+                                                 : PROTECTED_MEMBERS_ACCESSIBLE;
+      InstanceClass::Raw super = klass;
+      do {
+        const jbyte old_level = get_class_access_level(&super);
+        if (old_level >= new_level) {
+          break;
+        }
+        set_class_access_level(&super, new_level);
+        super = super().super();
+      } while (super.not_null());
+    }
+    if (!is_in_restricted_package(&klass)) {
+      set_class_access_level(&klass, PACKAGE_PRIVATE_MEMBERS_ACCESSIBLE);
+    }
+#else
+    jbyte access_level;
+    if (is_in_restricted_package(&klass)) {
+      if (!klass().is_public()) {
+        continue;
+      }
+      if (klass().is_final()) {
+        access_level = PUBLIC_MEMBERS_ACCESSIBLE;
+      } else {
+        access_level = PROTECTED_MEMBERS_ACCESSIBLE;
+      }
+    } else {
+      access_level = PACKAGE_PRIVATE_MEMBERS_ACCESSIBLE;
+    }
+    set_class_access_level(&klass, access_level);
+#endif
+  }
+}
+
+bool
+ROMOptimizer::is_member_reachable_by_apps(const jbyte class_access_level,
+                                          const AccessFlags member_flags) const {
+  if (member_flags.is_public()) {
+    return class_access_level >= PUBLIC_MEMBERS_ACCESSIBLE;
+  }
+  if (member_flags.is_protected()) {
+    return class_access_level >= PROTECTED_MEMBERS_ACCESSIBLE;
+  }
+  if (member_flags.is_package_private()) {
+    return class_access_level >= PACKAGE_PRIVATE_MEMBERS_ACCESSIBLE;
+  }
+  return false;
+}
+
+bool
+ROMOptimizer::is_member_reachable_by_apps(const InstanceClass* klass,
+                                          const AccessFlags member_flags) const {
+  return is_member_reachable_by_apps(get_class_access_level(klass), member_flags);
+}
+
+inline bool ROMOptimizer::has_subclasses(const InstanceClass* klass) {
+  const OopDesc* klass_obj = klass->obj();
+  for (SystemClassStream st; st.has_next();) {
+    const InstanceClass::Raw ic = st.next();
+    if (ic().super() == klass_obj) {
+      // klass has at least one subclass
+      return true;
+    }
+  }
+  return false;
+}
+
 // If a non-public class is in a restricted package, and it has no
 // subclasses, make this class 'final'. This makes it possible to
 // switch some invokevirtual bytecodes to the faster
@@ -447,7 +529,71 @@ void ROMOptimizer::make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
-void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) {
+// Is the given method overridden in any subclass of ic?
+bool ROMOptimizer::is_overridden(const InstanceClass* ic,
+                                 const Method* method) const {
+  const OopDesc* method_obj = method->obj();
+  const int vtable_index = method->vtable_index();
+  if (vtable_index < 0) {
+    // This is a final method, so it's not overridden (and is not
+    // stored in the vtable).
+    //
+    // We shouldn't come to here, but just in case ...
+    return true;
+  }
+
+  const TypeArray::Raw subclass_id_array = get_subclass_list(ic->class_id());
+  const int subclass_id_array_len = subclass_id_array().length();
+  for (int i = 0; i < subclass_id_array_len; i++) {
+    const InstanceClass::Raw klass =
+      Universe::class_from_id(subclass_id_array().short_at(i));
+    const ClassInfo::Raw info = klass().class_info();    
+    if (info().vtable_method_at(vtable_index) != method_obj) {
+      return true; // This method has been overridden in a subclass
+    }    
+  }
+  
+  return false;
+}
+
+inline void ROMOptimizer::make_virtual_methods_final(const InstanceClass* ic,
+                                                     ROMVector* log_vector
+                                                     JVM_TRAPS) const {
+  UsingFastOops fast_oops;
+  const ObjArray::Fast methods = ic->methods();
+  Method::Fast method;
+
+  const jbyte class_access_level = get_class_access_level(ic);
+  const int len = methods().length();
+
+  for( int i = 0; i < len; i++ ) {
+    method = methods().obj_at(i);
+    if( method.is_null() ||
+        method().is_object_initializer() ||
+        method().is_static() ||
+        method().is_final() ) {
+      continue;
+    }
+
+    if (is_member_reachable_by_apps(class_access_level, method().access_flags())
+        && !is_hidden_method(ic, &method)) {
+      // This method may be overridden by application classes. Don't mark it
+      // final
+      continue;
+    }
+
+    if (!is_overridden(ic, &method)) {
+      method().set_is_final();
+#if USE_ROM_LOGGING
+      log_vector->add_element(&method JVM_CHECK);
+#else
+      (void)log_vector;
+#endif
+    }
+  }
+}
+
+void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) const {
   ROMVector log_vector;
 #if USE_ROM_LOGGING
   log_vector.initialize(JVM_SINGLE_ARG_CHECK);
@@ -480,85 +626,49 @@ void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
-
-// Is the given method overridden in any subclass of ic?
-bool ROMOptimizer::is_overridden(InstanceClass* ic, Method* method) {
-  const int vtable_index = method->vtable_index();
-  if (vtable_index < 0) {
-    // This is a final method, so it's not overridden (and is not
-    // stored in the vtable).
-    //
-    // We shouldn't come to here, but just in case ...
-    return true;
+inline bool ROMOptimizer::may_be_initialized(const InstanceClass* klass) const {
+  if (klass->is_initialized()) {
+    return false;
   }
 
-  TypeArray::Raw subclass_id_array = get_subclass_list(ic->class_id());
-  const int subclass_id_array_len = subclass_id_array().length();
-  for( int i = 0; i < subclass_id_array_len; i++) {
-    InstanceClass::Raw klass =
-      Universe::class_from_id(subclass_id_array().short_at(i));
-    ClassInfo::Raw info = klass().class_info();    
-    Method::Raw m = info().vtable_method_at(vtable_index);
-    if( !method->equals(&m) ) {
-      return true; // This method has been overridden in a subclass
-    }    
-  }
-  
-  return false;
-}
-
-void ROMOptimizer::make_virtual_methods_final(InstanceClass *ic, 
-                                              ROMVector *log_vector
-                                              JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  ObjArray::Fast methods = ic->methods();
-  const int len = methods().length();
-  const jint package_flags = get_package_flags(ic);
-  const AccessFlags class_flags = ic->access_flags();
-
-  Method::Fast method;
-  for( int i = 0; i < len; i++ ) {
-    method = methods().obj_at(i);
-    if( method.is_null() ||
-        method().is_object_initializer() ||
-        method().is_static() ||
-        method().is_final() ) {
-      continue;
+  if (PostponeErrorsUntilRuntime) {
+    // During romization we forcibly verify all classes as they are loaded, 
+    // so the class can be non-verified at this point only if it failed
+    // verification.
+    if (!klass->is_verified()) {
+      return false;
     }
+  }
+  GUARANTEE(klass->is_verified(), "Sanity");
 
-    AccessFlags method_flags = method().access_flags();
-    if (is_member_reachable_by_apps(package_flags, class_flags, method_flags)){
-#if ENABLE_MEMBER_HIDING
-      if (!is_hidden_method(ic, &method))
+#if USE_SOURCE_IMAGE_GENERATOR
+  if( !is_init_at_build(klass) )
 #endif
-      // This method may be overridden by application classes. Don't mark it
-      // final
-      continue;
-    }
-
-    if (!is_overridden(ic, &method)) {
-      method_flags.set_is_final();
-      method().set_access_flags(method_flags);
-
-#if USE_ROM_LOGGING
-      log_vector->add_element(&method JVM_CHECK);
-#else
-      (void)log_vector;
-#endif
+  {
+    if( klass->find_local_class_initializer() ) {
+      return false;
     }
   }
-}
 
-bool ROMOptimizer::has_subclasses(const InstanceClass* klass) {
-  const OopDesc* klass_obj = klass->obj();
-  for (SystemClassStream st; st.has_next();) {
-    const InstanceClass::Raw ic = st.next();
-    if (ic().super() == klass_obj) {
-      // klass has at least one subclass
-      return true;
+  // All super classes and super interfaces must be initialized
+  InstanceClass::Raw ic = klass->obj();
+  for ( ; !ic.is_null(); ic = ic().super()) {
+    if (!ic.equals(klass) && !ic().is_initialized()) {
+      return false;
+    }
+
+    const TypeArray::Raw interfaces = ic().local_interfaces();
+    const int n_interfaces = interfaces().length();
+    for( int i = 0; i < n_interfaces; i++ ) {
+      const int intf_id = interfaces().ushort_at(i);
+      const InstanceClass::Raw intf = Universe::class_from_id(intf_id);
+      if( !intf().is_initialized() ) {
+        return false;
+      }
     }
   }
-  return false;
+
+  return true;
 }
 
 void ROMOptimizer::initialize_classes(JVM_SINGLE_ARG_TRAPS) {
@@ -668,7 +778,7 @@ void ROMOptimizer::print_class_initialization_log(JVM_SINGLE_ARG_TRAPS) {
       _log_stream->cr();
 
       {
-        Method::Raw init = klass().find_local_class_initializer();
+        const Method::Raw init = klass().find_local_class_initializer();
         if( !init.is_null() ) {
           _log_stream->print_cr("\t-> <clinit> not executed (%d bytes)",
                                init().code_size());
@@ -683,7 +793,7 @@ void ROMOptimizer::print_class_initialization_log(JVM_SINGLE_ARG_TRAPS) {
           _log_stream->cr();
         }
 
-        TypeArray::Raw interfaces = ic().local_interfaces();
+        const TypeArray::Raw interfaces = ic().local_interfaces();
         const int n_interfaces = interfaces().length();
         for( int i = 0; i < n_interfaces; i++) {
           const int intf_id = interfaces().ushort_at(i);
@@ -700,51 +810,6 @@ void ROMOptimizer::print_class_initialization_log(JVM_SINGLE_ARG_TRAPS) {
   }
 }
 #endif
-
-bool ROMOptimizer::may_be_initialized(InstanceClass *klass) {
-  if (klass->is_initialized()) {
-    return false;
-  }
-
-  if (PostponeErrorsUntilRuntime) {
-    // During romization we forcibly verify all classes as they are loaded, 
-    // so the class can be non-verified at this point only if it failed
-    // verification.
-    if (!klass->is_verified()) {
-      return false;
-    }
-  }
-  GUARANTEE(klass->is_verified(), "Sanity");
-
-#if USE_SOURCE_IMAGE_GENERATOR
-  if( !is_init_at_build(klass) )
-#endif
-  {
-    if( klass->find_local_class_initializer() ) {
-      return false;
-    }
-  }
-
-  // All super classes and super interfaces must be initialized
-  InstanceClass::Raw ic = klass->obj();
-  for ( ; !ic.is_null(); ic = ic().super()) {
-    if (!ic.equals(klass) && !ic().is_initialized()) {
-      return false;
-    }
-
-    TypeArray::Raw interfaces = ic().local_interfaces();
-    const int n_interfaces = interfaces().length();
-    for( int i = 0; i < n_interfaces; i++ ) {
-      const int intf_id = interfaces().ushort_at(i);
-      InstanceClass::Raw intf = Universe::class_from_id(intf_id);
-      if( !intf().is_initialized() ) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
 
 // Turn on the JVM_ACC_PRELOADED flags of all romized system classes 
 // and the JVM_ACC_CONVERTED flags of all romized application classes 
@@ -785,12 +850,12 @@ inline void ROMOptimizer::fill_interface_implementation_cache(void) {
   }
 
   for (i = 0; i < Universe::number_of_java_classes(); i++) {
-    JavaClass::Raw java_cls = Universe::class_from_id(i);
+    const JavaClass::Raw java_cls = Universe::class_from_id(i);
     if (java_cls().is_fake_class() || !java_cls().is_instance_class()) {
       continue;
     }
 
-    InstanceClass::Raw cls = java_cls.obj();
+    const InstanceClass::Raw cls = java_cls.obj();
 
 #if USE_SOURCE_IMAGE_GENERATOR      
     const bool not_reachable_by_applications = is_hidden(&cls);    
@@ -985,29 +1050,36 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
   // methods that operate on the current class.
 }
 #if USE_SOURCE_IMAGE_GENERATOR || !ENABLE_LIB_IMAGES
-void ROMOptimizer::forbid_invoke_interface_optimization(InstanceClass* cls, bool direct) {
+void
+ROMOptimizer::forbid_invoke_interface_optimization(const InstanceClass* cls,
+                                                   const bool direct) const {
   {
-    TypeArray::Raw local_interfaces = cls->local_interfaces();
+    const TypeArray::Raw local_interfaces = cls->local_interfaces();
     TypeArray::Raw cache = direct ? direct_interface_implementation_cache()->obj() : 
                                     interface_implementation_cache()->obj() ;
-    int len = local_interfaces().length();
     cache().int_at_put(cls->class_id(), FORBID_TO_IMPLEMENT);
+
+    const int len = local_interfaces().length();
     for (int i = 0; i < len; i++) {
-      int interf_id = local_interfaces().ushort_at(i);
+      const int interf_id = local_interfaces().ushort_at(i);
       cache().int_at_put(interf_id, FORBID_TO_IMPLEMENT);
     }
   }
   if( !direct ) {
-    InstanceClass::Raw super_cls = cls->super();
+    const InstanceClass::Raw super_cls = cls->super();
     if( super_cls.not_null() ) {
       forbid_invoke_interface_optimization(&super_cls, false);
     }
   }
 }
 
-void ROMOptimizer::set_implementing_class(int interf_id, int class_id, bool only_childs, bool direct_only) {
-  TypeArray::Raw cache = direct_only ? 
-                  direct_interface_implementation_cache()->obj() : interface_implementation_cache()->obj();
+void ROMOptimizer::set_implementing_class(const int interf_id,
+                                          const int class_id,
+                                          const bool only_childs,
+                                          const bool direct_only) const {
+  TypeArray::Raw cache = direct_only
+                       ? direct_interface_implementation_cache()->obj()
+                       : interface_implementation_cache()->obj();
   if (!only_childs) {
     if (cache().int_at(interf_id) == NOT_IMPLEMENTED) {
       //this is the first implementing class
@@ -1017,15 +1089,16 @@ void ROMOptimizer::set_implementing_class(int interf_id, int class_id, bool only
       cache().int_at_put(interf_id, FORBID_TO_IMPLEMENT);
     }
   }
-  InstanceClass::Raw cls = Universe::class_from_id(interf_id);
+  const InstanceClass::Raw cls = Universe::class_from_id(interf_id);
   {
-    TypeArray::Raw interfaces = cls().local_interfaces();
-    for (int i = 0; i < interfaces().length(); i++) {
+    const TypeArray::Raw interfaces = cls().local_interfaces();
+    const int interfaces_length = interfaces().length();
+    for (int i = 0; i < interfaces_length; i++) {
       set_implementing_class(interfaces().ushort_at(i), class_id, false, direct_only);
     }
   }
   if (!direct_only) {
-    InstanceClass::Raw super_cls = cls().super();
+    const InstanceClass::Raw super_cls = cls().super();
     if (super_cls().not_null()) {
       set_implementing_class(super_cls().class_id(), class_id, true, false);
     }

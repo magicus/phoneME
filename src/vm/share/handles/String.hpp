@@ -30,7 +30,7 @@
 class String : public Instance {
  public:
   static int value_offset()  { return header_size() + 0; }
-  void set_value(Oop* value)  { obj_field_put(value_offset(), value);  }
+  void set_value(const Oop* value)  { obj_field_put(value_offset(), value);  }
 
   HANDLE_DEFINITION(String, Instance);
 

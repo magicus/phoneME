@@ -109,8 +109,7 @@ class ROMOptimizer {
     #define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)  \
       template(ROMProfile, global_profile,  "")       \
       template(ROMProfile, current_profile, "")       \
-      template(ROMVector,  profiles_vector, "")       \
-      template(TypeArray,  profile_hidden_bitmap, "")
+      template(ROMVector,  profiles_vector, "")
   #else 
     #define MPS_ROMOPTIMIZER_OOP_FIELDS_DO(template)
   #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
@@ -131,7 +130,8 @@ class ROMOptimizer {
     MEMBER_HIDING_ROMOPTIMIZER_OOP_FIELDS_DO(template)\
     template(ROMVector, hidden_classes, "")           \
     template(ROMVector, hidden_packages, "")          \
-    template(ROMVector, restricted_packages, "")
+    template(ROMVector, restricted_packages, "")      \
+    template(TypeArray, extended_class_attributes, "")
 #else 
   #define SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template)
 #endif // USE_SOURCE_IMAGE_GENERATOR
@@ -359,21 +359,21 @@ public:
   static void trace_failed_quicken(Method *method, 
                                    JavaClass *dependency JVM_TRAPS);
   static void process_quickening_failure(Method *method);
-  bool may_be_initialized(InstanceClass *klass);
+  bool may_be_initialized(const InstanceClass* klass) const;
 
 #if USE_SOURCE_IMAGE_GENERATOR
   bool is_in_restricted_package (const InstanceClass* klass) const;
   bool is_in_hidden_package     (const InstanceClass* klass) const;
   bool is_hidden                (const InstanceClass* klass) const;
 #else
-  bool is_in_restricted_package (const InstanceClass* ) const {
+  static bool is_in_restricted_package (const InstanceClass* ) {
     // IMPL_NOTE: Monet: all classes can be considered as restricted
     return false;
   }
-  bool is_in_hidden_package(const InstanceClass* ) const {
+  static bool is_in_hidden_package(const InstanceClass* ) {
     return false;
   }
-  bool is_hidden(const InstanceClass* ) const {
+  static bool is_hidden(const InstanceClass* ) {
     // IMPL_NOTE: Monet: all classes can be considered as restricted
     return false;
   }
@@ -381,7 +381,7 @@ public:
 
   ReturnOop original_fields(const InstanceClass* klass, bool &is_orig);
   void set_classes_as_romized();
-  bool is_overridden(InstanceClass *ic, Method *method);
+  bool is_overridden(const InstanceClass* ic, const Method *method) const;
 #if USE_SOURCE_IMAGE_GENERATOR
   static bool class_matches_classes_list(const InstanceClass* klass,
                                          const ROMVector* patterns);
@@ -391,8 +391,10 @@ public:
 
 #if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
   void fill_interface_implementation_cache(void);
-  void forbid_invoke_interface_optimization(InstanceClass* cls, bool indirect_only);
-  void set_implementing_class(int interface_id, int class_id, bool only_childs, bool direct);  
+  void forbid_invoke_interface_optimization(const InstanceClass* cls,
+                                            const bool indirect_only) const;
+  void set_implementing_class(const int interface_id, const int class_id,
+                              const bool only_childs, const bool direct) const;
   enum {
     NOT_IMPLEMENTED = -1, 
     FORBID_TO_IMPLEMENT = -2
@@ -477,7 +479,7 @@ private:
     *kvm_native_methods_table() = build_method_table(_kvm_natives_log 
                                                      JVM_NO_CHECK_AT_BOTTOM);
   }
-  ReturnOop build_method_table(const ROMVector* methods JVM_TRAPS);
+  ReturnOop build_method_table(const ROMVector* methods JVM_TRAPS) const;
 
   bool dont_rename_class(const InstanceClass* klass) const {
     return class_list_contains(dont_rename_classes(), klass);
@@ -500,9 +502,9 @@ private:
   void disable_compilation(const char* pattern JVM_TRAPS);
   void allocate_empty_arrays(JVM_SINGLE_ARG_TRAPS);
   void make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS);
-  void make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS);
-  void make_virtual_methods_final(InstanceClass *ic, ROMVector *log_vector
-                                  JVM_TRAPS);
+  void make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) const;
+  void make_virtual_methods_final(const InstanceClass* ic, ROMVector* log_vector
+                                  JVM_TRAPS) const;
 #if USE_SOURCE_IMAGE_GENERATOR
   static bool name_matches_pattern(const char name[], const int name_len,
                                    const ROMVector* patterns);
@@ -519,19 +521,31 @@ private:
   void optimize_fast_accessors(JVM_SINGLE_ARG_TRAPS);
   void merge_string_bodies(JVM_SINGLE_ARG_TRAPS);
   int  compress_and_merge_strings(ROMVector *all_strings, TypeArray* body);
-  void replace_string_bodies(ROMVector *all_strings, TypeArray* body);
+  static void replace_string_bodies(const ROMVector* all_strings,
+                                    const TypeArray* body);
 #if !USE_PRODUCT_BINARY_IMAGE_GENERATOR
   jint find_duplicate_chars(jchar *pool, jint pool_size,
                             jchar *match, jint num_chars);
 #endif
   void resize_class_list(JVM_SINGLE_ARG_TRAPS);
 
+#if !USE_SOURCE_IMAGE_GENERATOR || !ENABLE_MEMBER_HIDING
+  static bool is_hidden_method(const InstanceClass* /*ic*/,
+                               const Method* /*method*/) {
+    return false;
+  }
+  static bool is_hidden_field (const InstanceClass* /*ic*/,
+                               const OopDesc* /*field*/) {
+    return false;
+  }
+#endif
+
 #if USE_SOURCE_IMAGE_GENERATOR
   void record_original_field_info(InstanceClass *klass, int name_index 
                                   JVM_TRAPS);
   void record_original_fields(InstanceClass *klass JVM_TRAPS);
-  jushort get_index_from_alternate_constant_pool(InstanceClass *klass,
-                                                 jushort symbol_index);
+  jushort get_index_from_alternate_constant_pool(const InstanceClass* klass,
+                                                 const jushort symbol_index);
 #else
   void record_original_field_info(InstanceClass* /*klass*/, int /*name_index*/
                                   JVM_TRAPS) {JVM_IGNORE_TRAPS;}
@@ -554,6 +568,30 @@ private:
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
   bool is_method_removable_from_table(const InstanceClass* klass,
                                       const Method* method);
+  enum {
+    MEMBERS_UNACCESSIBLE,
+    PUBLIC_MEMBERS_ACCESSIBLE,
+    PROTECTED_MEMBERS_ACCESSIBLE,
+    PACKAGE_PRIVATE_MEMBERS_ACCESSIBLE
+  };
+  void create_extended_class_attributes(JVM_SINGLE_ARG_TRAPS);
+  jbyte get_extended_class_attributes(const int i) const {
+    GUARANTEE(extended_class_attributes()->not_null(), "Sanity");
+    return extended_class_attributes()->byte_at(i);
+  }
+  void set_extended_class_attributes(const int i, const jbyte value) const {
+    extended_class_attributes()->ubyte_at_put(i, value);
+  }
+  jbyte get_class_access_level(const InstanceClass* klass) const {
+    return get_extended_class_attributes(klass->class_id());
+  }
+  void set_class_access_level(const InstanceClass* klass, const jbyte value) const {
+    return set_extended_class_attributes(klass->class_id(), value);
+  }
+  bool is_member_reachable_by_apps(const jbyte class_access_level,
+                                   const AccessFlags member_flags) const;
+  bool is_member_reachable_by_apps(const InstanceClass* klass,
+                                   const AccessFlags member_flags) const;
   static bool is_member_reachable_by_apps(const jint package_flags, 
                                           const AccessFlags class_flags,
                                           const AccessFlags member_flags);
@@ -616,6 +654,7 @@ private:
   void record_original_class_info(const InstanceClass* klass,
                                   Symbol* name) const;
   void record_original_method_info(const Method* method JVM_TRAPS) const;
+
   void rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS);
   void mark_hidden_classes(JVM_SINGLE_ARG_TRAPS);
 #if ENABLE_MEMBER_HIDING
@@ -703,7 +742,7 @@ private:
     SIZE
   };
   void initialize_subclasses_cache(JVM_SINGLE_ARG_TRAPS);
-  ReturnOop get_subclass_list(jushort klass_id);
+  static ReturnOop get_subclass_list(jushort klass_id);
   //ENDOF SUBCLASS CACHE ZONE
 
   enum {

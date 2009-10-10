@@ -497,11 +497,9 @@ ConstantPool::resolve_invoke_static_at(InstanceClass *sender_class,
   }
 
   receiver_class = method().holder();
-
   if (!sender_class->is_preloaded() && receiver_class().is_hidden()) {
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);   
   }
-
   if (do_init) {
     // Initialize the receiver_class
 #if ENABLE_ISOLATES

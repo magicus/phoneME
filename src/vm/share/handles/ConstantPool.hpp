@@ -385,7 +385,7 @@ class ConstantPool: public Oop {
     }
   }
 
-  void symbol_at_put(int index, Oop* oop) {
+  void symbol_at_put(int index, const Oop* oop) {
     tag_at_put(index, JVM_CONSTANT_Utf8);
     GUARANTEE(oop->is_symbol() || oop->is_byte_array(), "Sanity");
     obj_field_put(offset_from_index(index), oop);
@@ -395,7 +395,7 @@ class ConstantPool: public Oop {
     tag_at_put(index, JVM_CONSTANT_String);
     obj_field_put(offset_from_index(index), str);
   }
-  void string_at_put(int index, Oop* str) {
+  void string_at_put(int index, const Oop* str) {
     string_at_put(index, str->obj());
   }
 

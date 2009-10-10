@@ -1110,8 +1110,8 @@ jint ROMOptimizer::find_duplicate_chars(jchar *pool, jint pool_size,
   return -1;
 }
 
-void ROMOptimizer::replace_string_bodies(ROMVector *all_strings,
-                                         TypeArray* body) {
+void ROMOptimizer::replace_string_bodies(const ROMVector* all_strings,
+                                         const TypeArray* body) {
   const int size = all_strings->size();
   for (int i = 0; i < size; i++) {
     String::Raw str = all_strings->element_at(i);
@@ -1197,14 +1197,13 @@ ROMOptimizer::original_fields(const InstanceClass* klass, bool& is_orig) {
 }
 
 jushort
-ROMOptimizer::get_index_from_alternate_constant_pool(InstanceClass *klass,
-                                                     jushort symbol_index) {
+ROMOptimizer::get_index_from_alternate_constant_pool(const InstanceClass* klass,
+                                                     const jushort symbol_index) {
   ConstantPool::Raw cp = klass->constants();
-  Symbol::Raw symbol = cp().symbol_at(symbol_index);
-  int len = romizer_alternate_constant_pool()->length();
-  for (int i=0; i<len; i++) {
-    ConstantTag tag = romizer_alternate_constant_pool()->tag_at(i);
-
+  const Symbol::Raw symbol = cp().symbol_at(symbol_index);
+  const int len = romizer_alternate_constant_pool()->length();
+  for (int i = 0; i < len; i++) {
+    const ConstantTag tag = romizer_alternate_constant_pool()->tag_at(i);
     if (tag.is_invalid()) {
       // We have searched all the existing entries and found no match.
       romizer_alternate_constant_pool()->symbol_at_put(i, &symbol);
@@ -1227,12 +1226,10 @@ inline void ROMOptimizer::record_original_method_info(const Method* method
   ObjArray::Raw info = Universe::new_obj_array(3 JVM_ZCHECK(info));
   const int class_id = method->holder_id();
 
-  ObjArray::Raw old  = romizer_original_method_info()->obj_at(class_id);
-  Symbol::Raw name = method->name();
-
   info().obj_at_put(ROM::INFO_OFFSET_METHOD,    method);
-  info().obj_at_put(ROM::INFO_OFFSET_NAME,      &name);
-  info().obj_at_put(ROM::INFO_OFFSET_NEXT,      &old);
+  info().obj_at_put(ROM::INFO_OFFSET_NAME,      method->name());
+  info().obj_at_put(ROM::INFO_OFFSET_NEXT,
+                    romizer_original_method_info()->obj_at(class_id));
 
   romizer_original_method_info()->obj_at_put(class_id, &info);
 
@@ -1248,21 +1245,17 @@ inline void ROMOptimizer::record_original_method_info(const Method* method
   _log_stream->cr();
 }
 
-ReturnOop ROMOptimizer::build_method_table(const ROMVector * methods
-                                           JVM_TRAPS) {
+ReturnOop ROMOptimizer::build_method_table(const ROMVector* methods
+                                           JVM_TRAPS) const {
   const int size = methods->size();
-  ObjArray::Raw table = Universe::new_obj_array(size * 3 JVM_CHECK_(0));
+  ObjArray::Raw table = Universe::new_obj_array(size * 3 JVM_OZCHECK_0(table));
 
-  for (int i=0; i<size; i++) {
-    Method::Raw method = methods->element_at(i);
-    InstanceClass::Raw klass = method().holder();
-    Symbol::Raw class_name = klass().name();
-    Symbol::Raw method_name = method().name();
-    Symbol::Raw method_sig = method().signature();
-
-    table().obj_at_put(i * 3 + 0, &class_name);
-    table().obj_at_put(i * 3 + 1, &method_name);
-    table().obj_at_put(i * 3 + 2, &method_sig);
+  for (int i = 0, j = 0; i < size; i++) {
+    const Method::Raw method = methods->element_at(i);
+    const InstanceClass::Raw klass = method().holder();
+    table().obj_at_put(j++, klass().name());
+    table().obj_at_put(j++, method().name());
+    table().obj_at_put(j++, method().signature());
   }
 
   return table;
@@ -1828,8 +1821,7 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
     // (1) Rename the fields in this class
     // Don't rename fields if KNI code may use them by name.
     if (!dont_rename_fields_in_class(&klass)){
-      const jint package_flags = get_package_flags(&klass);
-      const AccessFlags class_flags = klass().access_flags();
+      const jbyte class_access_level = get_class_access_level(&klass);
 
       UsingFastOops fast_oops1;
 #if ENABLE_MEMBER_HIDING
@@ -1841,13 +1833,9 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
         //5-tuples of shorts [access, name index, sig index, initval index, offset]
         const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
         const OopDesc* field_name = cp().symbol_at(name_index);
-#if ENABLE_MEMBER_HIDING
-        if (!is_hidden_field(&klass, field_name))
-#endif
-        {
+        if (!is_hidden_field(&klass, field_name)) {
           AccessFlags field_flags(fields().ushort_at(i + Field::ACCESS_FLAGS_OFFSET));
-          if (is_member_reachable_by_apps(package_flags, class_flags,
-                                                         field_flags)) {
+          if (is_member_reachable_by_apps(class_access_level, field_flags)) {
             continue;
           }
         }
@@ -1877,9 +1865,6 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
           continue;
         }
 
-#if ENABLE_MEMBER_HIDING
-        if (!is_hidden_method(&klass, &method))
-#endif
         if (is_method_reachable_by_apps(&klass, &method)) {
           continue;
         }
@@ -1956,16 +1941,12 @@ inline bool ROMOptimizer::is_in_public_itable(const InstanceClass* ic,
 bool
 ROMOptimizer::is_method_reachable_by_apps(const InstanceClass* ic,
                                           const Method* method) const {
-  if (!is_hidden(ic)) {  
-    const jint package_flags = get_package_flags(ic);
-    const AccessFlags class_flags = ic->access_flags();
-    const AccessFlags method_flags = method->access_flags();
-    
-    if( is_member_reachable_by_apps(package_flags, class_flags, method_flags) ) {
-      return true;
-    }
+  if (is_hidden_method(ic, method)) {
+    return false;
   }
-
+  if (is_member_reachable_by_apps(ic, method->access_flags())) {
+    return true;
+  }
   return method->is_public() && !method->is_static() &&
          (is_in_public_vtable(ic, method) || is_in_public_itable(ic, method));
 }
@@ -1984,11 +1965,6 @@ ROMOptimizer::is_invocation_closure_root(const InstanceClass* ic,
   if (method->is_native()) {
     return true;
   }
-#if ENABLE_MEMBER_HIDING
-  if (is_hidden_method(ic, method)) {
-    return false;
-  }
-#endif
 
   return is_method_reachable_by_apps(ic, method);
 }
@@ -2133,8 +2109,18 @@ bool ROMOptimizer::is_field_removable(const InstanceClass* ic,
     }
   }
 
-  return !is_member_reachable_by_apps(get_package_flags(ic), ic->access_flags(),
-                                      flags);
+#if ENABLE_MEMBER_HIDING
+  {
+    ConstantPool::Raw cp = ic->constants();
+    const jushort name_index = fields().ushort_at(field_index + Field::NAME_OFFSET);
+    const OopDesc* field_name = cp().symbol_at(name_index);
+    if (is_hidden_field(ic, field_name)) {
+      return true;
+    }
+  }
+#endif // ENABLE_MEMBER_HIDING
+
+  return !is_member_reachable_by_apps(ic, flags);
 }
 
 void ROMOptimizer::compact_field_tables(JVM_SINGLE_ARG_TRAPS) {
