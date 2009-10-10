@@ -328,13 +328,15 @@ BasicType ConstantPool::field_type_at(int index, int& offset, bool is_static,
 
     // Resolve offset and declaring class (can be superclass or interface)
     *declaring_class = static_receiver_class.obj();
-    Field f(declaring_class, &field_name, &field_type);
-
+  
+    Field f(declaring_class, &field_name, &field_type);        
+    
     // At this point, declaring_class points the actual class where the field
     // is defined -- this may be in an interface implemented by 
     // static_receiver_class, or a superclass of static_receiver_class.
 
-    if (!f.is_valid_in_current_profile()) {
+    if ((declaring_class->not_null() && declaring_class->is_hidden())
+        || !f.is_valid_in_current_profile()) {
       Throw::no_such_field_error(JVM_SINGLE_ARG_THROW_(T_ILLEGAL));
     }
 
