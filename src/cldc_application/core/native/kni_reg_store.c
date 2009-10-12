@@ -679,8 +679,10 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
             break;
         }
         mode = KNI_GetParameterAsInt(3);
-
-        jsr211_get_handler(callerId, id, mode, &handler);
+        jsize id_string_length = KNI_GetStringLength(id);
+        jsize caller_id_string_length = KNI_GetStringLength(callerId);
+        jsr211_get_handler(callerId, caller_id_string_length, 
+                id, id_string_length, mode, &handler);
     } while (0);
 
     JAVAME_FREE(callerId);

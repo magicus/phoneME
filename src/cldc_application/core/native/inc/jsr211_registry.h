@@ -262,15 +262,20 @@ jsr211_result jsr211_get_all(const jchar* caller_id, jsr211_field field,
  * given @link caller_id should be returned.
  *
  * @param caller_id calling application identifier.
+ * @param caller_id_sz length of calling application identifier
  * @param id handler ID.
+ * @param id_sz length of handler ID
  * @param mode flag indicating whether exact or prefixed search should be 
  * performed according to @link JSR211_SEARCH_MODE constants.
  * @param handler output value - requested handler.
  *  <br>Use @link jsr211_fillHandler function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_get_handler(const jchar* caller_id, 
-                        const jchar* id, jsr211_search_flag mode,
+jsr211_result jsr211_get_handler(const jchar* caller_id,
+                        int caller_id_sz,
+                        const jchar* id,
+                        int id_sz,
+                        jsr211_search_flag mode,
                         /*OUT*/ JSR211_RESULT_CH handler);
 
 /**
