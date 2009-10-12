@@ -105,7 +105,8 @@ public class Notice extends NoticeBase {
     /**
      * Called by Notice visualizer when the user dismisses the 
      * notice. 
-     * 
+     * <p> 
+     * Posts corresponding message to all running tasks.
      */
     public void dismiss() {
         // this will cause removed() callback, 
@@ -115,7 +116,8 @@ public class Notice extends NoticeBase {
 
     /**
      * Called by Notice visualizer when the user selects the notice.
-     * 
+     * <p>
+     * Posts corresponding message to all running tasks.
      */
     public void select() {
         // this will cause removed() callback, 
@@ -124,7 +126,9 @@ public class Notice extends NoticeBase {
     }
 
     /**
-     * Called by Notice watcher when notice duration exceeded.
+     * Called by Notice watcher when notice duration exceeded. 
+     * <p> 
+     * Posts corresponding message to all running tasks. 
      * 
      */
     public void timeout() {
@@ -132,6 +136,31 @@ public class Notice extends NoticeBase {
         // but caller instance has no listeners so nothing happens
         NoticeManager.getInstance().remove(this, TIMEOUT);
     }
+
+    /**
+     * Called by {@link NoticeManager} in reponse to event caused by 
+     * one of {@link #dismiss},  {@link #select}, {@link #timeout} 
+     * call. 
+     * 
+     * 
+     * @param reason the reason of removing.
+     */
+    public void removed(int reason) {
+        if (REMOVED == status) {
+            return;
+        }
+        status = REMOVED;
+        if (null != listener) {
+            if (SELECTED == reason) {
+                listener.noticeSelected((Notice)this);
+            } else if (DISMISSED == reason) {
+                listener.noticeDismissed((Notice)this);
+            } else if (TIMEOUT == reason) {
+                listener.noticeTimeout((Notice)this);
+            }
+        }
+    }
+
 
     /* ------------------  SERIALIZATION section ----------------- */
 
@@ -219,4 +248,5 @@ public class Notice extends NoticeBase {
             image = null;
         }
     }
+
 }

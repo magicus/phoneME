@@ -41,25 +41,81 @@ import com.sun.midp.main.NoticeManagerListener;
 
 
 /**
- * Displays a small informational note unobtrusive way.
- * <p>
- * A notice is used by MIDlet post small portion of information
- * to the user without taking screen control.
+ * Displays a small informational note unobtrusive way. 
+ * <p> 
+ * A {@link Notice} is used by MIDlet to post small portion of 
+ * information to the user without taking screen control. 
  *
  */
 class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandListener, NoticeManagerListener  {
-    Alert alert;
+    /**
+     * <i>Select</i> command for Alert.
+     * 
+     */
     Command dismiss;
+
+    /**
+     * <i>Dismiss</i> command for Alert.
+     * 
+     */
     Command select;
+
+    /**
+     * Notices from given running suite.
+     * 
+     */
     Vector notices;
+
+    /**
+     * The display the form is displayed on.
+     * 
+     */
     Display display;
+
+    /**
+     * The notice manager.
+     * 
+     */
     NoticeManager manager;
+
+    /**
+     * Running midlet suite info.
+     * 
+     */
     RunningMIDletSuiteInfo rmi;
+
+    /**
+     * The form exit command.
+     * 
+     */
     Command exit;
+
+    /**
+     * The form show command.
+     * 
+     */
     Command show;
+
+    /**
+     * Parent displayable
+     * 
+     */
     Displayable parent;
+
+    /**
+     * An arrays of notices display form for different suites.
+     * 
+     */
     static Hashtable actionCenter;
 
+    /**
+     * Private constructor.
+     * 
+     * 
+     * @param d the <code>Display</code> this Form is displayed on.
+     * @param p the parent displayable 
+     * @param s suite info the notices belong to.
+     */
     private NoticeManagerUIImpl(Display d, Displayable p, RunningMIDletSuiteInfo s) {
         super(Resource.getString(ResourceConstants.NOTICE_POPUP_TITLE)
                   + s.displayName);
@@ -67,9 +123,20 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
         manager.addListener(this);
         display = d;
         parent = p;
+        rmi = s;
         setupForm();
     }
 
+    /**
+     * Creates and returns Displayable for given suite.
+     * 
+     * 
+     * @param s suite info the notices belong to.
+     * @param d the <code>Display</code> this Form is displayed on.
+     * @param p the parent displayable 
+     * 
+     * @return Form 
+     */
     static Form getNoticeManagerFor(RunningMIDletSuiteInfo s, Display d, Displayable p) {
         if (null == actionCenter) {
             actionCenter = new Hashtable();
@@ -83,6 +150,10 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
         return form;
     }
 
+    /**
+     * Creates form.
+     * 
+     */
     private void setupForm() {
         Notice[] n = manager.getNotices();
         if (null != n) {
@@ -97,6 +168,8 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
             }
         }
         exit = new Command(Resource.getString(ResourceConstants.EXIT), Command.EXIT, 1);
+        dismiss = new Command(Resource.getString(ResourceConstants.DISMISS), Command.ITEM, 1);
+        select = new Command(Resource.getString(ResourceConstants.SELECT), Command.ITEM, 2);
         addCommand(exit);
         setCommandListener(this);
         Enumeration enm = notices.elements();
@@ -106,14 +179,14 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
         }
     }
 
+    /**
+     * Adds item for given notice.
+     * 
+     * 
+     * @param n <code>Notice</code>
+     */
     private void addItem(Notice n) {
-        ImageItem item = new ImageItem(n.getLabel(), n.getImage(), 
-                                       ImageItem.LAYOUT_LEFT, 
-                                       null, ImageItem.PLAIN);
-        if (null == show) {
-            show = new Command(Resource.getString(ResourceConstants.SHOW_MSG), Command.ITEM, 1);
-        }
-        item.addCommand(show);
+        CustomImageItem item = new CustomImageItem(n);
         item.setItemCommandListener(this);
         append(item);
     }
@@ -162,6 +235,10 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
             ImageItem item = (ImageItem)get(i);
             item.setImage(note.getImage());
             item.setLabel(note.getLabel());
+            item.removeCommand(select);
+            if (note.isSelectable()) {
+                item.addCommand(select);
+            }
         }
     }
 
@@ -181,6 +258,9 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
      */
     public void commandAction(Command c, Displayable d) {
         if (c == exit) {
+            manager.removeListener(this);
+            actionCenter.remove(rmi);
+            // ready for GC
             display.setCurrent(parent);
         }
     }
@@ -193,11 +273,23 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
      * @param item the <code>Item</code> on which the command was invoked
      */
     public void commandAction(Command c, Item item) {
-        if (show == c) {
-            Alert alert = new Alert("Message:", item.getLabel(), 
-                                    ((ImageItem)item).getImage(),
-                                    null);
-            display.setCurrent(alert, this);
+        if (select == c) {
+            ((CustomImageItem)item).notice.select();
+        } else {
+            ((CustomImageItem)item).notice.dismiss();
+        }
+    }
+
+    private class CustomImageItem extends ImageItem {
+        Notice notice;
+        CustomImageItem(Notice n) {
+            super(n.getLabel(), n.getImage(), ImageItem.LAYOUT_LEFT, 
+                  null, ImageItem.PLAIN);
+            if (n.isSelectable()) {
+                super.addCommand(select);
+            }
+            super.addCommand(dismiss);
+            notice = n;
         }
     }
 }

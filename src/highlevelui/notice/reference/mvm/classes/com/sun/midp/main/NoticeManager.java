@@ -45,25 +45,70 @@ import com.sun.midp.lcdui.Notice;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.log.Logging;
 
+
+/**
+ * Notice manager implements {@link Notice} posting and removing
+ * functionality as well as notification of listeners about
+ * notices status.
+ * 
+ */
 public class NoticeManager implements EventListener, MIDletProxyListListener {
 
+    /**
+     * An error message that is displayed if specified
+     * initialization sequence was violated.
+     * 
+     */
     private static final String errorMsg = 
     "Incorrect usage: NoticeManager must be initialized first";
 
+    /**
+     * The singleton.
+     * 
+     */
     private static NoticeManager singleton;
 
+    /**
+     * Current task event queue.
+     * 
+     */
     private EventQueue queue;
 
-    Vector listeners;
+    /**
+     * Registered notice status listeners.
+     * 
+     */
+    private Vector listeners;
 
-    Vector notices;
+    /**
+     * Registered notices.
+     * 
+     */
+    private Vector notices;
 
+
+    /**
+     * Common initialization function. Registers 
+     * NOTIFICATION_ANNOUNCEMENT_EVENT handler. Used by every task 
+     * initializers. 
+     * 
+     * 
+     * @param queue event queue.
+     */
     public static void initCommon(EventQueue queue) {
         if (null == singleton) {
             singleton = new NoticeManager(queue);
         }
     }
 
+    /**
+     * AMS specific initialization. Registers the manager as {@link 
+     * MIDletProxyList} listener. Need to cleanup registered notice 
+     * table if the originator MIDlet exits unexpectedly.
+     * 
+     * 
+     * @param proxyList 
+     */
     public static void initWithAMS(MIDletProxyList proxyList) {
         if (null == singleton) {
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
@@ -76,6 +121,13 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
     }
 
 
+    /**
+     * Private constructor assure the single instance of 
+     * NoticeManager. 
+     * 
+     * 
+     * @param queue current task event queue.
+     */
     private NoticeManager(EventQueue queue) {
         queue.registerEventListener(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT, this);
         // home indicator and notice visualizer
@@ -85,6 +137,12 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         this.queue = queue;
     }
 
+    /**
+     * Returns NoticeManager singleton.
+     * 
+     * 
+     * @return NoticeManager singleton.
+     */
     public static NoticeManager getInstance() {
         if (null == singleton) {
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
@@ -124,14 +182,16 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         if (null == notice) {
             if (ev.intParam2 != Notice.REMOVED) {
                 try {
+                    /* We specify class name for the case when custom Notice based class was posted.*/
                     notice = (Notice)Class.forName(ev.stringParam1).newInstance();
                 } catch (Exception ee) {
                     if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                         Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
-                                       "Can't instantate " + ev.stringParam1);
+                                       "Can't instantiate " + ev.stringParam1);
                     }
                     return;
                 }
+                /* String as container is used temporary.*/
                 ByteArrayInputStream byteStream = new ByteArrayInputStream(ev.stringParam2.getBytes());
                 DataInputStream inData = new DataInputStream(byteStream);
                 try {
@@ -141,7 +201,6 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
                         Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
                                        "Can't deserialize " + ev.stringParam1);
                     }
-                    Logging.trace(e, "NoticeManager:process");
                     return;
                 }
                 notifyNew(notice);
@@ -149,6 +208,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         } else if (Notice.REMOVED == ev.intParam2) {
             notifyRemoved(notice, ev.intParam3);
         } else {
+            /* String as container is used temporary.*/
             ByteArrayInputStream byteStream = new ByteArrayInputStream(ev.stringParam2.getBytes());
             DataInputStream inData = new DataInputStream(byteStream);
             try {
@@ -179,7 +239,9 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
     public void midletAdded(MIDletProxy midlet) {
     }
     /**
-     * Called when a MIDlet is removed from the list.
+     * Called when a MIDlet is removed from the list. 
+     * <p> 
+     * Cleanups all related  notices.
      *
      * @param midlet The proxy of the removed MIDlet
      */
@@ -218,11 +280,13 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
 
     /* ----------------------- NoticeManagerUI ----------------- */
 
-    /**
+    /** 
+     * Registers notice status listener. 
+     * <p> 
      * Synchronized to prevent listeners notification.
      * 
-     * 
-     * @param listener 
+     * @param listener {@link NoticeManagerListener} implemented 
+     *                 object.
      */
     public synchronized void addListener(NoticeManagerListener listener) {
         if (!listeners.contains(listener)) {
@@ -230,16 +294,26 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         }
     }
 
+    /**
+     * Removes notice status listener. 
+     * <p> 
+     * Synchronized to prevent listeners notification.
+     * 
+    * @param listener {@link NoticeManagerListener} implemented 
+    *                 object.
+     */
     public synchronized void removeListener(NoticeManagerListener listener) {
         listeners.removeElement(listener);
     }
 
 
-    /**
-     * Synchronized to prevent listeners modification.
+    /** 
+     * Notifies listeners about new {@link notice}. 
+     * <p> 
+     * Synchronized to prevent listeners registration/removal.
      * 
      * 
-     * @param notice 
+     * @param notice new notice
      */
     private synchronized void notifyNew(Notice notice) {
         notices.addElement(notice);
@@ -252,6 +326,14 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         }
     }
 
+    /** 
+     * Notifies listeners about updated {@link notice}. 
+     * <p> 
+     * Synchronized to prevent listeners registration/removal.
+     * 
+     * 
+     * @param notice updated notice
+     */
     private synchronized void notifyUpdated(Notice notice) {
         if (listeners.size() > 0) {
             Enumeration enm = listeners.elements();
@@ -262,6 +344,15 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         }
     }
 
+    /** 
+     * Notifies listeners about removed {@link notice}. 
+     * <p> 
+     * Synchronized to prevent listeners registration/removal.
+     * 
+     * 
+     * @param notice removed notice 
+     * @param reason the code of the reason the notice was removed.
+     */
     private synchronized void notifyRemoved(Notice notice, int reason) {
         notices.removeElement(notice);
         notice.removed(reason);
@@ -277,12 +368,13 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
     /* --------------------------- Notice management ----------------- */
 
     /**
-     * 
+     * Publishes the {@link Notice} across running tasks.
      * <p> 
      * IMPL_NOTE: need to think how to avoid message flood and large 
-     * image trasfer 
+     * image transfer 
      * 
-     * @param notice 
+     * @param notice the <code>Notice</code> to be published. 
+     * @see NoticeBase for reason codes. 
      */
     public void post(Notice notice) throws IOException {
         NativeEvent event = new NativeEvent(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT);
@@ -309,6 +401,15 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         notifyNew(notice);
     }
 
+    /**
+     * Make previously published {@link Notice} be {@link 
+     * NoticeBase#REMOVED}. 
+     * 
+     * 
+     * @param notice the notice to remove
+     * @param reason the reason of removal 
+     * @see NoticeBase for reason codes. 
+     */
     public void remove(Notice notice, int reason) {
         notifyRemoved(notice, reason);
         if (Notice.TIMEOUT == reason) {
@@ -323,6 +424,15 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         queue.sendNativeEventToIsolate(event, notice.getOriginatorID());
     }
 
+    /**
+     * Checks for the notice with given UID.
+     * 
+     * 
+     * @param uid unique ID of the notice.
+     * 
+     * @return Notice the <Notice> instance or null of no notice was
+     *         found.
+     */
     private Notice findNotice(int uid) {
         Enumeration enm = notices.elements();
         while (enm.hasMoreElements()) {
@@ -334,12 +444,25 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         return null;
     }
 
+    /**
+     * Retruns all registered notices array. 
+     * 
+     * @return registered notices array
+     */
     public synchronized Notice[] getNotices() {
         Notice[] n = new Notice[notices.size()];
         notices.copyInto(n);
         return n;
     }
 
+    /**
+     * Finds first notices from given originator.
+     * 
+     * 
+     * @param origID the originator ID.
+     * 
+     * @return null if no notice was found.
+     */
     public Notice pop(int origID) {
         if (notices.size() > 0) {
             Enumeration enm = notices.elements();

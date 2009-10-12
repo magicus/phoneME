@@ -52,6 +52,9 @@
             Name="SELECT"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"
+            Name="DISMISS"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
             Name="YES"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"

@@ -34,20 +34,49 @@ import java.util.Vector;
 import com.sun.midp.main.NoticeManagerListener;
 import com.sun.midp.main.NoticeManager;
 
+/**
+ * Service class that watches for notices expiration.
+ * <p>
+ * Every task instances has own watcher that looking for both
+ * original notices and notices coming from other midlets. Thus
+ * no timeout events are sent through event system.
+ * 
+ */
 public class NoticeWatcher implements NoticeManagerListener {
 
+    /**
+     * A timer that handles all timer tasks.
+     * 
+     */
     Timer timer;
+
+    /**
+     * A map that correlate timer task with the notice.
+     * 
+     */
     Hashtable map;
 
+    /**
+     * This class singleton.
+     * 
+     */
     private static NoticeWatcher singleton;
 
 
+    /**
+     * NoticeWatcher initializer.
+     * 
+     */
     public static void init() {
         if (null == singleton) {
             singleton = new NoticeWatcher();
         }
     }
 
+    /**
+     * Private constructor prevents custom class creation.
+     * 
+     */
     private NoticeWatcher() {
         NoticeManager.getInstance().addListener(this);
         timer = new Timer();
@@ -79,12 +108,12 @@ public class NoticeWatcher implements NoticeManagerListener {
             if (task.scheduledExecutionTime() == notice.getTimeout()) {
                 return;
             }
-            if (notice.getTimeout() > 0) {
-                task.cancel();
-                map.remove(notice);
-            }
+            task.cancel();
+            map.remove(notice);
         }
-        schedule(notice);
+        if (0 != notice.getTimeout()) {
+            schedule(notice);
+        }
     }
 
     /**
@@ -101,18 +130,28 @@ public class NoticeWatcher implements NoticeManagerListener {
     }
 
 
+    /**
+     * Schedules notice expiration task.
+     * 
+     * 
+     * @param notice to be watched for expiration.
+     */
     private void schedule(Notice notice) {
         int duration = (int)(notice.getTimeout() - System.currentTimeMillis());
         if (duration < 0) {
             // remove notice at separate thread
             duration  = 1;
         }
-				NoticeCanceler task = new NoticeCanceler(notice);
+        NoticeCanceler task = new NoticeCanceler(notice);
         map.put(notice, task);
         timer.schedule(task, duration);
 
     }
 
+    /**
+     * Private class that fires the notice at separate thread.
+     * 
+     */
     private class NoticeCanceler extends TimerTask {
         private Notice note;
         NoticeCanceler(Notice notice) {
@@ -122,10 +161,10 @@ public class NoticeWatcher implements NoticeManagerListener {
          * The action to be performed by this timer task.
          */
         public void run() {
-                // causes removeNotice call
-                note.timeout();
+            // causes removeNotice call
+            note.timeout();
         }
     }
 }
 
-    
+

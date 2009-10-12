@@ -26,6 +26,11 @@
 
 package com.sun.midp.lcdui;
 
+/**
+ * An interface for classes that want to be {@link Notice}
+ * status listeners.
+ * 
+ */
 public interface NoticeListener {
     /**
      * Called when a Notification has been dismissed by the user.

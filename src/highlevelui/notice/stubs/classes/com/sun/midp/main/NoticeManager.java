@@ -27,22 +27,59 @@
 package com.sun.midp.main;
 import com.sun.midp.events.EventQueue;
 
+
+/**
+ * Stubbed NoticeManager class. Used if USE_NOTIFICATION=false
+ * 
+ */
 public class NoticeManager {
 
-    
+    /**
+     * Common initialization function. Registeres 
+     * NOTIFICATION_ANNOUNCEMENT_EVENT handler. Used by every task 
+     * initializators. 
+     * 
+     * 
+     * @param queue event queue.
+     */
     public static void initCommon(EventQueue queue) {
     }
 
+    /**
+     * AMS specific initialization. Registers the manager as {@link 
+     * MIDletProxyList} listener. Need to cleanup registered notice 
+     * table if the originator MIDlet crashed.
+     * 
+     * 
+     * @param proxyList 
+     */
     public static void initWithAMS(MIDletProxyList proxyList) {
     }
 
+    /**
+     * Creates (if necessary) and returns NoticeManager singleton.
+     * 
+     * @return NoticeManager singleton.
+     */
     public static NoticeManager getInstance() {
         return new NoticeManager();
     }
 
+    /**
+     * Registers notice status listeners.
+     * 
+     * 
+     * @param listener {@link NoticeManagerListener} type listener.
+     */
     public synchronized void addListener(NoticeManagerListener listener) {
     }
 
+    /**
+     * Remove notice status listener.
+     * 
+     * 
+     * @param listener {@link NoticeManagerListener} type listener.
+     */
     public synchronized void removeListener(NoticeManagerListener listener) {
     }
 }

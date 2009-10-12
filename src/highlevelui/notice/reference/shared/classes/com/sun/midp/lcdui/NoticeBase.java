@@ -60,7 +60,7 @@ public abstract class NoticeBase {
 
     /**
      * Notice state. A Notice becomes removed after one of the 
-     * follwoing actions: 
+     * following actions: 
      * <ul> 
      * <li>a Notice was dismissed or selected by the user</li> 
      * <li>a Notice was removed by the originator</li> 
@@ -99,27 +99,64 @@ public abstract class NoticeBase {
 
 
     /**
-     * 
+     * A time when the Notice was last posted.
      * 
      */
     protected long timestamp;
 
+    /**
+     * The notice image.
+     * 
+     */
     protected Image image;
 
+    /**
+     * The notice label.
+     * 
+     */
     protected String label;
 
+    /**
+     * The notice type.
+     * 
+     */
     protected NoticeType type;
 
+    /**
+     * Selectable status of posted notice.
+     * 
+     */
     protected boolean selectable;
 
+    /**
+     * The listener of the notice status.
+     * 
+     */
     protected NoticeListener listener;
 
+    /**
+     * The notice UID.
+     * 
+     */
     protected int uid;
 
+    /**
+     * The notice status.
+     * 
+     */
     protected int status;
 
+
+    /**
+     * The name of the originator application.
+     * 
+     */
     protected String originator;
 
+    /**
+     * The notice expiration time.
+     * 
+     */
     protected long timeout;
 
 
@@ -163,54 +200,108 @@ public abstract class NoticeBase {
         NoticeWatcher.init();
     }
 
+    /**
+     * Parameterless constructor. Used by MVM Notice implementation
+     * when initialization is done through deserialization.
+     * 
+     */
     protected NoticeBase() {
         NoticeWatcher.init();
     }
 
 
+    /**
+     * Returns the notice timestamp.
+     * 
+     * 
+     * @return the time the notice was last posted.
+     */
     public long getTimestamp() {
         return timestamp;
     }
 
+    /**
+     * Returns the notice type.
+     * 
+     * 
+     * @return NoticeType
+     */
     public NoticeType getType() {
         return type;
     }
 
+    /**
+     * Changes the notice image.
+     * 
+     * 
+     * @param newImage new notice image.
+     */
     public void setImage(Image newImage) {
         image = newImage;
     }
 
+    /**
+     * Changes the notice label.
+     * 
+     * 
+     * @param newLabel new notice label.
+     */
     public void setLabel(String newLabel) {
         label = newLabel;
     }
 
+    /**
+     * Publishes the Notice. 
+     * 
+     * @param selectable <code>true</code> if the Notice must be 
+     *                   presented in selectable way.
+     * @param duration  the notice duration time.
+     */
     public synchronized void post(boolean selectable, int duration) throws IOException {
+        /* Replace duration value with more conform value*/
         int minDuration = 
             Configuration.getIntProperty("NOTIFICATION.MIN_DURATION", duration);
-        if (duration < minDuration) {
+        if (duration < minDuration && 0 != duration) {
             duration = minDuration;
         }
         status = AVAILABLE;
         timestamp = System.currentTimeMillis();
         this.selectable = selectable;
 
-        timeout = timestamp + duration;
+        if (0 != duration) {
+            timeout = timestamp + duration;
+        } else {
+            timeout = 0;
+        }
     }
 
+    /**
+     * Checks the notice for selectable status.
+     * 
+     * 
+     * @return boolean <code>true</code> is the Notice is 
+     *         selectable.
+     */
     public boolean isSelectable() {
         return selectable;
     }
 
-    /**
-     * Synchronized with post where the value is updated
+    /** 
+     * Returns the notice expiration time.
+     *  <p>
+     * Synchronized with post where the value is updated 
      * 
-     * 
-     * @return int 
+     * @return the notice expiration time or 0 if the notice can't 
+     *         be expired
      */
     public synchronized long getTimeout() {
         return timeout;
     }
 
+    /**
+     * Removes the notice.
+     * 
+     */
     public void remove() {
         if (REMOVED == status) {
             throw new IllegalStateException("Already removed");
@@ -218,14 +309,34 @@ public abstract class NoticeBase {
         status = REMOVED;
     }
 
+    /**
+     * Returns the notice label.
+     * 
+     * 
+     * @return notice label
+     */
     public String getLabel() {
         return label;
     }
 
+    /**
+     * Returns the notice image.
+     * 
+     * 
+     * @return notice image
+     */
     public Image getImage() {
         return image;
     }
 
+    /**
+     * Assigns the notice status listener. 
+     * <p> 
+     * If the listener reference is <code>null</code> then the 
+     * notice is removed as well. 
+     * 
+     * @param l new listener reference.
+     */
     public void setListener(NoticeListener l) {
         if (null != listener && null == l) {
             remove();
@@ -234,35 +345,67 @@ public abstract class NoticeBase {
     }
 
 
+    /**
+     * Returns the originator application name.
+     * 
+     * 
+     * @return the application name.
+     */
     public String getOriginator() {
         return originator;
     }
 
+    /**
+     * Returns unique ID of the notice.
+     * 
+     * 
+     * @return UID
+     */
     public int getUID() {
         return uid;
     }
 
+    /**
+     * Abstract method that removes the notice with notification of
+     * the listeners through {@link NoticeListener#noticeDismissed}
+     * call. 
+     * <p> 
+     * The function is called by the code that handles user action 
+     * for this notice. 
+     * <p>
+     * The implementation depends on target environment.
+     */
     public abstract void dismiss();
 
+    /**
+     * Abstract method that removes the notice with notification of
+     * the listeners through {@link NoticeListener#noticeSelected}
+     * call.
+     * <p> 
+     * The function is called by the code that handles user action 
+     * for this notice. 
+     * <p>
+     * The implementation depends on target environment.
+     */
     public abstract void select();
 
+    /**
+     * Abstract method that removes the notice with notification of
+     * the listeners through {@link NoticeListener#noticeTimeout}
+     * call.
+     * <p> 
+     * The function is called by {@link NoticeWatcher}
+     * <p>
+     * The implementation depends on target environment.
+     */
     public abstract void timeout();
 
-    public void removed(int reason) {
-        if (REMOVED == status) {
-            return;
-        }
-        status = REMOVED;
-        if (null != listener) {
-            if (SELECTED == reason) {
-                listener.noticeSelected((Notice)this);
-            } else if (DISMISSED == reason) {
-                listener.noticeDismissed((Notice)this);
-            } else if (TIMEOUT == reason) {
-                listener.noticeTimeout((Notice)this);
-            }
-        }
-    }
 
+    /**
+     * Creates unique ID for new <code>Notice</code> instance.
+     * 
+     * 
+     * @return UID
+     */
     private native int getUID0();
 }

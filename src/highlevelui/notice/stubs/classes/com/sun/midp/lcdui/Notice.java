@@ -26,5 +26,9 @@
 
 package com.sun.midp.lcdui;
 
+/**
+ * Stubbed class for  USE_NOTIFICATION=false
+ * 
+ */
 public class Notice {
 }
