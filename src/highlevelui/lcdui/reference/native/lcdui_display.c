@@ -164,6 +164,7 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_reverseOrientation0) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_lcdui_DisplayDevice_clamshellHandling0) {
     lcdlf_handle_clamshell_event();
+    KNI_ReturnVoid();
 }
 
 
@@ -313,4 +314,5 @@ KNIDECL(com_sun_midp_lcdui_DisplayDevice_displayStateChanged0) {
     jint hardwareId = KNI_GetParameterAsInt(1);
     jint state = KNI_GetParameterAsInt(2);
     lcdlf_display_device_state_changed(hardwareId, state);
+    KNI_ReturnVoid();
 }
