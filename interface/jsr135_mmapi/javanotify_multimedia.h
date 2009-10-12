@@ -131,14 +131,22 @@ typedef enum {
     JAVACALL_EVENT_MEDIA_LENGTH_REQUEST = 9,
 
     /** Posted when the system or another higher priority application has released 
-        an exclusive device which is now available to the Player. */
+      * an exclusive device which is now available to the Player.
+      */
     JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE = 10,
 
     /** Posted when the system or another higher priority application has temporarily 
-        taken control of an exclusive device which was previously available to the Player. */
+      * taken control of an exclusive device which was previously available to the Player.
+      * After this event and before JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE, all functions
+      * that alter player state should return JAVACALL_NO_AUDIO_DEVICE and player should
+      * remain in STOPPED state
+      */
     JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE = 11,
 
-    /** Posted when an error had occurred. */
+    /** Posted when an error had occurred. 
+      * After this event, all javacall_media_*** functions for this player
+      * should return JAVACALL_FAIL except for javacall_media_destroy.
+      */
     JAVACALL_EVENT_MEDIA_ERROR = 12,
 
     /** Posted when a Player has reached the end of the media. */
