@@ -92,7 +92,7 @@ class MediaDownload {
      * 
      */
     void bgDownload() {
-        if (!eom) {
+        if (!eom && (downloadThread == null)) {
             downloadThread = new Thread() {
                 public void run() {
                     try {
