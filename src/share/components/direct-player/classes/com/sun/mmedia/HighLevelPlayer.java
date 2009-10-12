@@ -955,22 +955,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
         lowLevelPlayer.doPreStop();
 
-        if( null != asyncExecutor )
-        {
-            asyncExecutor.runAsync( new AsyncExecutor.Task() {
-                public boolean run() throws MediaException {
-                    lowLevelPlayer.doStop();
-                    return true;
-                }
-            });
-            //System.out.println("HighLevelPlayer: stop() resumed");
-            if( 0 != asyncExecutor.getResult() )
-            {
-                throw new MediaException("stop() failed");
-            }
-        } else {
-            lowLevelPlayer.doStop();
-        }
+        lowLevelPlayer.doStop( asyncExecutor );
 
         // Update the time base to use the system time
         // before stopping.

@@ -118,7 +118,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // Get total duration of media data
     protected native int nGetDuration(int handle);
     // Pause
-    protected native boolean nPause(int handle);
+    protected native boolean nPause(int handle, AsyncExecutor ae );
     // Switch to foreground
     private native boolean nSwitchToForeground(int hNative, int options);
     // Switch to background
@@ -458,7 +458,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             videoControl.stop();
         }
 
-        if (false == nPause(getOwner().getNativeHandle())) {
+        if (false == ae.complete( nPause(getOwner().getNativeHandle(), ae) ) ) {
             throw new MediaException("Player cannot be stopped");
         }
         state = Player.PREFETCHED;

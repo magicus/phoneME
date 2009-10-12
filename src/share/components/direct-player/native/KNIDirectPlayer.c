@@ -133,6 +133,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result result;
+    jboolean returnValue = KNI_FALSE;
     
     MMP_DEBUG_STR("+nStart\n");
 
@@ -142,14 +143,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
 
 LockAudioMutex();            
     result = javacall_media_run( pKniInfo->pNativeHandle );
-    setResultAndSyncMode( 2, result );
+    setResultAndSyncMode( KNIPASSARGS 2, result );
 UnlockAudioMutex();            
 
-    if (JAVACALL_OK != result && JAVACALL_WOULD_BLOCK != result) {
-        KNI_ReturnBoolean(KNI_FALSE);
+    if (JAVACALL_OK == result || JAVACALL_WOULD_BLOCK == result) {
+        returnValue = KNI_TRUE;
     }
     
-    KNI_ReturnBoolean(KNI_TRUE);
+    KNI_ReturnBoolean( returnValue );
 }
 
 /*  protected native int nGetMediaTime ( int handle ) ; */
@@ -225,13 +226,14 @@ UnlockAudioMutex();
     KNI_ReturnInt((jint)ms);
 }
 
-/*  protected native boolean nPause ( int handle ) ; */
+/*  protected native boolean nPause ( int handle, AsyncExecutor ae ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result result = JAVACALL_FAIL;
+    jboolean returnValue = KNI_FALSE;
 
     MMP_DEBUG_STR("+nPause\n");  
 
@@ -243,10 +245,15 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
 
 LockAudioMutex();            
         result = javacall_media_pause( pKniInfo->pNativeHandle );
+        setResultAndSyncMode( KNIPASSARGS 2, result );
 UnlockAudioMutex();
     }
 
-    KNI_ReturnBoolean(JAVACALL_OK == result? KNI_TRUE: KNI_FALSE);
+    if( JAVACALL_OK == result || JAVACALL_WOULD_BLOCK == result ) {
+        returnValue = KNI_TRUE;
+    }
+    
+    KNI_ReturnBoolean( returnValue );
 }
 
 /*************************************************************************/
@@ -447,7 +454,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
 LockAudioMutex();
         res = javacall_media_prefetch( pKniInfo->pNativeHandle );
         setResultAndSyncMode( KNIPASSARGS 2, res );
-        returnValue = ( JAVACALL_OK == res || JAVACALL_WOULD_BLOCK == res );
+        if( JAVACALL_OK == res || JAVACALL_WOULD_BLOCK == res ) {
+            returnValue = KNI_TRUE;
+        }
 UnlockAudioMutex();
     }
     
