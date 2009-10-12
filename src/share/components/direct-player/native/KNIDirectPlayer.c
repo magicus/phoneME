@@ -106,7 +106,7 @@ UnlockAudioMutex();
     KNI_ReturnInt(returnValue);
 }
 
-/*  protected native void nReleaseDevice ( int handle ) ; */
+/*  protected native void nReleaseDevice ( int handle, AsyncExecutor ae ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseDevice) {
 
@@ -120,7 +120,8 @@ LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle ) {
         result = javacall_media_deallocate( pKniInfo->pNativeHandle );
     }
-UnlockAudioMutex();            
+UnlockAudioMutex();
+    setResultAndSyncMode( KNIPASSARGS 2, result );
 
     MMP_DEBUG_STR("-nReleaseDevice\n");
     KNI_ReturnVoid();

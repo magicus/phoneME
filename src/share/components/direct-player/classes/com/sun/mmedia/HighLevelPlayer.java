@@ -1007,19 +1007,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        if( null != asyncExecutor ) {
-            try {
-                asyncExecutor.runAsync(new AsyncExecutor.Task() {
-                    public boolean run() throws MediaException {
-                        lowLevelPlayer.doDeallocate();
-                        return true;
-                    }
-                });
-            } catch (MediaException ex) {}
-            //System.out.println("HighLevelPlayer: deallocate() resumed");
-        } else {
-            lowLevelPlayer.doDeallocate();
-        }
+        lowLevelPlayer.doDeallocate( asyncExecutor );
         
         if (stream != null) {
             // if stream is not seekable, just return

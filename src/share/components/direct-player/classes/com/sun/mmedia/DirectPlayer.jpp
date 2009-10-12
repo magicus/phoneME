@@ -106,7 +106,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // Acquire it or return false if it is not available
     private native boolean nAcquireRadioAccess();
     // Relase device reference
-    protected native void nReleaseDevice(int handle);
+    protected native void nReleaseDevice(int handle, AsyncExecutor ae );
     // Access to Radio Tuner for a Java Player is exclusive. Release it
     private native void nReleaseRadioAccess();
     // Start playing
@@ -485,7 +485,8 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         
         releaseRadioAccess();
 
-        nReleaseDevice(getOwner().getNativeHandle());
+        nReleaseDevice(getOwner().getNativeHandle(), ae);
+        ae.complete();
 
         isFirstStart = true;
         state = Player.REALIZED;

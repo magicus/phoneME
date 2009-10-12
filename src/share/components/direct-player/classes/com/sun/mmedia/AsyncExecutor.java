@@ -31,7 +31,7 @@ class AsyncExecutor {
     protected int result = 0;
     private int outputParam = 0;
 
-    private synchronized void complete() {
+    public synchronized void complete() {
         while (isBlockedUntilEvent) {
             try {
                 wait();
@@ -73,6 +73,8 @@ class AsyncExecutor {
     }
 
     static private class NullInstance extends AsyncExecutor {
+        public void complete() {}
+        
         public boolean complete(boolean result) {
             return result;
         }
