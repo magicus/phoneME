@@ -206,12 +206,12 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * @exception MediaException thrown if setMediaTime fails.
      * @return the new media time in microseconds.
      */
-    protected long doSetMediaTime(long now) throws MediaException {
+    protected long doSetMediaTime(long now, AsyncExecutor ae) throws MediaException {
         if (seekType == SourceStream.NOT_SEEKABLE)
             throw new MediaException("stream not seekable");
 
         if (getOwner().getState() == Player.STARTED)
-            doStop();
+            doStop( null );
 
         if (now > duration)
             now = duration;
@@ -243,7 +243,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
 
             if (getOwner().getState() == Player.STARTED)
                 // restart the player
-                doStart();
+                doStart( null );
         } catch (IOException e) {
             throw new MediaException(e.getMessage());
         }
@@ -297,7 +297,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * @exception MediaException Thrown if the <code>Player</code> cannot
      *                           be prefetched.
      */
-    protected void doPrefetch() throws MediaException {
+    protected void doPrefetch( AsyncExecutor ae ) throws MediaException {
         if (referenceFrame == null)
             referenceFrame = new int[videoWidth * videoHeight];
 
@@ -330,7 +330,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * @return    true, if the player was started successfully,
      *            otherwise false.
      */
-    protected boolean doStart() {
+    protected boolean doStart( AsyncExecutor ae ) {
         if (duration == 0) { // e.g. for non-animated GIFs
             new Thread(new Runnable() {
                 public void run() {
@@ -382,7 +382,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * @exception MediaException Thrown if the <code>Player</code> cannot
      *                           be stoppped.     
      */
-    protected void doStop() throws MediaException {
+    protected void doStop( AsyncExecutor ae ) throws MediaException {
         if (stopped) return;    
 
         synchronized (playLock) {
@@ -409,7 +409,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      * 
      * @see   Player#deallocate()
      */
-    protected void doDeallocate() {
+    protected void doDeallocate( AsyncExecutor ae ) {
         playThreadFinished();
         
         stopped = false;
@@ -424,10 +424,10 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
     protected void doClose() {
         try {
             doPreStop();
-            doStop();
+            doStop( null );
         } catch (MediaException ex) {}
 
-        doDeallocate();
+        doDeallocate( null );
         
         done = true;
 
@@ -1338,7 +1338,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             long time = mapFrameToTime(frameNumber);
 
             try {
-                doSetMediaTime(time);
+                doSetMediaTime(time, null );
             } catch (MediaException e) {
                 // nothing to do
             }
@@ -1407,7 +1407,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             long time = mapFrameToTime((int)newFrame);
 
             try {
-                doSetMediaTime(time);
+                doSetMediaTime(time, null );
 
                 frames_skipped = (int) (newFrame  - oldFrame);
             } catch (MediaException e) {

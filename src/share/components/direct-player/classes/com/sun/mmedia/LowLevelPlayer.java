@@ -61,7 +61,7 @@ abstract class LowLevelPlayer {
      *
      * @exception  MediaException  Description of the Exception
      */
-    protected abstract void doPrefetch() throws MediaException;
+    protected abstract void doPrefetch( AsyncExecutor ae ) throws MediaException;
 
     /**
      * Subclasses need to implement this start
@@ -69,7 +69,7 @@ abstract class LowLevelPlayer {
      *
      * @return    Description of the Return Value
      */
-    protected abstract boolean doStart();
+    protected abstract boolean doStart( AsyncExecutor ae );
 
     /**
      * Subclasses must implement this method to do the actual starting
@@ -83,7 +83,7 @@ abstract class LowLevelPlayer {
      *
      * @exception  MediaException  Description of the Exception
      */
-    protected abstract void doStop() throws MediaException;
+    protected abstract void doStop( AsyncExecutor ae ) throws MediaException;
 
     /**
      * Subclasses must implement this method to do pre stop works
@@ -94,7 +94,7 @@ abstract class LowLevelPlayer {
      * Subclasses need to implement this to deallocate
      * the <code>Player</code>.
      */
-    protected abstract void doDeallocate();
+    protected abstract void doDeallocate( AsyncExecutor ae );
 
     /**
      * Subclasses need to implement this to close
@@ -110,7 +110,7 @@ abstract class LowLevelPlayer {
      * @return                     Description of the Return Value
      * @exception  MediaException  Description of the Exception
      */
-    protected abstract long doSetMediaTime(long now) throws MediaException;
+    protected abstract long doSetMediaTime(long now, AsyncExecutor ae) throws MediaException;
 
     /**
      * Subclasses need to implement this to get the media time
