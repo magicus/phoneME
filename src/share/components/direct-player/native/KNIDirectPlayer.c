@@ -126,7 +126,7 @@ UnlockAudioMutex();
     KNI_ReturnVoid();
 }
 
-/*  protected native boolean nStart ( int handle ) ; */
+/*  protected native boolean nStart ( int handle, AsyncExecutor ae ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
 
@@ -142,9 +142,10 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
 
 LockAudioMutex();            
     result = javacall_media_run( pKniInfo->pNativeHandle );
+    setResultAndSyncMode( 2, result );
 UnlockAudioMutex();            
 
-    if (JAVACALL_OK != result) {
+    if (JAVACALL_OK != result && JAVACALL_WOULD_BLOCK != result) {
         KNI_ReturnBoolean(KNI_FALSE);
     }
     

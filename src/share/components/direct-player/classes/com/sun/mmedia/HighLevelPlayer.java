@@ -644,7 +644,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
                 directInputThread.close();
             }
 
-            asyncExecutor = null; // Isn't used for Java handled players
+            asyncExecutor = AsyncExecutor.getNullInstance(); // Isn't used for Java handled players
             
             /* verify if handled by Java */
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
@@ -899,23 +899,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
-        if( null != asyncExecutor ) {
-            asyncExecutor.runAsync(new AsyncExecutor.Task() {
-                public boolean run() throws MediaException {
-                    if (!lowLevelPlayer.doStart()) {
-                        throw new MediaException("start");
-                    }
-                    return true;
-                }
-            });
-            //System.out.println("HighLevelPlayer: start() resumed");
-            if( 0 != asyncExecutor.getResult() ) {
-                throw new MediaException("start");
-            }
-        } else {
-            if (!lowLevelPlayer.doStart()) {
-                throw new MediaException("start");
-            }
+        if (!lowLevelPlayer.doStart( asyncExecutor )) {
+            throw new MediaException("start");
         }
 
         setState( STARTED );
@@ -1799,7 +1784,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         loopAfterEOM = false;
     }
 
-    private AsyncExecutor asyncExecutor = null;
+    private AsyncExecutor asyncExecutor = AsyncExecutor.getNullInstance();
     AsyncExecutor getAsyncExecutor()
     {
         return asyncExecutor;

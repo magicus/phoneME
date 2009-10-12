@@ -110,7 +110,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // Access to Radio Tuner for a Java Player is exclusive. Release it
     private native void nReleaseRadioAccess();
     // Start playing
-    protected native boolean nStart(int handle);
+    protected native boolean nStart(int handle, AsyncExecutor ae);
     // Get current media time as ms
     protected native int nGetMediaTime(int handle);
     // Set media time as ms
@@ -407,7 +407,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         }
         int hNative = getOwner().getNativeHandle();
 
-        ret = nStart( hNative );
+        ret = ae.complete( nStart( hNative, ae ) );
         
         state = Player.STARTED;
         return ret;
