@@ -130,52 +130,53 @@ class ROMOptimizer {
     MEMBER_HIDING_ROMOPTIMIZER_OOP_FIELDS_DO(template)\
     template(ROMVector, hidden_classes, "")           \
     template(ROMVector, hidden_packages, "")          \
-    template(ROMVector, restricted_packages, "")      \
-    template(TypeArray, extended_class_attributes, "")
+    template(ROMVector, restricted_packages, "")
 #else 
   #define SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template)
 #endif // USE_SOURCE_IMAGE_GENERATOR
 
-#define ROMOPTIMIZER_OOP_FIELDS_DO(template) \
-  SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template) \
-  template(TypeArray,empty_short_array, "") \
-  template(ObjArray, empty_obj_array, "") \
-  template(ObjArray, init_at_build_classes, "Classes that should be " \
-                                            "initialized at build time") \
-  template(ObjArray, init_at_load_classes,  "Classes that should be " \
-                                            "initialized VM load time") \
-  template(ObjArray, dont_rename_fields_classes, "Don't rename private" \
-                                            "fields in these classes") \
-  template(ObjArray, dont_rename_methods_classes,"Don't rename private" \
-                                            "methods in these classes") \
-  template(ObjArray, dont_rename_classes,   "Don't rename these classes," \
+#define ROMOPTIMIZER_OOP_FIELDS_DO(template)                                  \
+  SOURCE_ROMOPTIMIZER_OOP_FIELDS_DO(template)                                 \
+  template(TypeArray,empty_short_array, "")                                   \
+  template(ObjArray, empty_obj_array, "")                                     \
+  template(ObjArray, init_at_build_classes, "Classes that should be "         \
+                                            "initialized at build time")      \
+  template(ObjArray, init_at_load_classes,  "Classes that should be "         \
+                                            "initialized VM load time")       \
+  template(ObjArray, dont_rename_fields_classes, "Don't rename private"       \
+                                            "fields in these classes")        \
+  template(ObjArray, dont_rename_methods_classes,"Don't rename private"       \
+                                            "methods in these classes")       \
+  template(ObjArray, dont_rename_classes,   "Don't rename these classes,"     \
                                             "even if they belong to a hidden" \
-                                            "package") \
-  template(ObjArray ,romizer_original_class_name_list, "Original names of" \
-                                            "classes we've renamed.") \
+                                            "package")                        \
+  template(ObjArray ,romizer_original_class_name_list, "Original names of"    \
+                                            "classes we've renamed.")         \
   template(ObjArray, romizer_original_method_info, "Original names/signatures"\
-                                            "of methods that we've renamed") \
+                                            "of methods that we've renamed")  \
   template(ObjArray, romizer_original_fields_list, "Original names/signatures"\
-                                            "of fields that we've renamed") \
-  template(ConstantPool,romizer_alternate_constant_pool, "") \
-  template(ObjArray, kvm_native_methods_table, "Methods that use KVM-style " \
-                                            "native interface") \
-  template(ObjArray, jni_native_methods_table, "Methods that use JNI-style " \
-                                            "native interface") \
-  template(ROMVector,precompile_method_list, "") \
-  template(ObjArray,     string_table, "") \
-  template(ObjArray,     symbol_table, "") \
-  template(ConstantPool, embedded_table_holder, "") \
-  template(ObjArray,     subclasses_array, "")  \
-  template(ROMVector,    reserved_words, "")    \
-  template(TypeArray,    direct_interface_implementation_cache, \
+                                            "of fields that we've renamed")   \
+  template(ConstantPool,romizer_alternate_constant_pool, "")                  \
+  template(ObjArray, kvm_native_methods_table, "Methods that use KVM-style "  \
+                                            "native interface")               \
+  template(ObjArray, jni_native_methods_table, "Methods that use JNI-style "  \
+                                            "native interface")               \
+  template(ROMVector,    precompile_method_list, "")                          \
+  template(ObjArray,     string_table, "")                                    \
+  template(ObjArray,     symbol_table, "")                                    \
+  template(ConstantPool, embedded_table_holder, "")                           \
+  template(ObjArray,     subclasses_array, "")                                \
+  template(ROMVector,    reserved_words, "")                                  \
+  template(TypeArray,    direct_interface_implementation_cache,               \
                                      "for each interface contains class_id of \
-                                      implementing class, or -1 in case of \
-                                      multiple classes") \
-  template(TypeArray,    interface_implementation_cache, \
-                                     "for each interface contains class_id of \
-                                      directly implementing class, or -1 in case of \
-                                      multiple classes")
+                                      implementing class, or -1 in case of    \
+                                      multiple classes")                      \
+  template(TypeArray,    interface_implementation_cache,                      \
+                         "for each interface contains class_id of directly    \
+                          implementing class, or -1 in case of                \
+                          multiple classes")                                  \
+  template(TypeArray,    extended_class_attributes,                           \
+                         "Additional class attributes derived by ROMizer")
 
 #if USE_SOURCE_IMAGE_GENERATOR
 #define SOURCE_ROMOPTIMIZER_INT_FIELDS_DO(template) \
