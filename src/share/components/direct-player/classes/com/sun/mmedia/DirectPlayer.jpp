@@ -134,7 +134,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private native boolean nPcmAudioPlayback(int hNative);
 
     // Start Prefetch of Native Player
-    protected native void nPrefetch(int hNative, AsyncExecutor ae );
+    protected native boolean nPrefetch(int hNative, AsyncExecutor ae );
     // Is Control supported by native or not
     protected static native boolean nIsFramePositioningControlSupported(int hNative);
     protected static native boolean nIsMetaDataControlSupported(int hNative);
@@ -258,7 +258,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             synchronized (this) {
                 try {
                     doPreStop();
-                    doStop( null );
+                    doStop( AsyncExecutor.getNullInstance() );
                 } catch (MediaException e) {
                     Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
                         "Exception during stop by stop timer");
@@ -315,9 +315,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             
         /* prefetch native player */
         /* predownload media data to fill native buffers */
-        nPrefetch( hNative, ae );
-        ae.complete();
-        if( 0 != ae.getResult() ) {
+        if( !ae.complete( nPrefetch(hNative, ae)) ) {
             throw new MediaException("Can not prefetch");
         }
     }
@@ -868,7 +866,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
                 try {
                     doPreStop();
-                    doStop( null );
+                    doStop( AsyncExecutor.getNullInstance() );
                 } catch (MediaException e) {
                     Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
                         "Exception during stop by stop timer");

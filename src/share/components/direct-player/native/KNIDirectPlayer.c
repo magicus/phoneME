@@ -434,22 +434,23 @@ static void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res ) 
     KNI_EndHandles();
 }
 
-/*  private native void nPrefetch(int hNative, AsyncExecutor ae ); */
-KNIEXPORT KNI_RETURNTYPE_VOID
+/*  private native boolean nPrefetch(int hNative, AsyncExecutor ae ); */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    jboolean returnValue = KNI_FALSE;
     javacall_result res = JAVACALL_FAIL;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
         res = javacall_media_prefetch( pKniInfo->pNativeHandle );
         setResultAndSyncMode( KNIPASSARGS 2, res );
+        returnValue = ( JAVACALL_OK == res || JAVACALL_WOULD_BLOCK == res );
 UnlockAudioMutex();
     }
     
-    
-    KNI_ReturnVoid();
+    KNI_ReturnBoolean(returnValue);
 }
 
 static jboolean controlSupported( KNIPlayerInfo* pKniInfo, int ctl_mask ) {

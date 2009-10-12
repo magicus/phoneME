@@ -25,16 +25,13 @@
 
 package com.sun.mmedia;
 
-import java.io.IOException;
-import javax.microedition.media.MediaException;
-
 class AsyncExecutor {
 
-    boolean isBlockedUntilEvent = false;
-    private int result = 0;
+    protected boolean isBlockedUntilEvent = false;
+    protected int result = 0;
     private int outputParam = 0;
 
-    synchronized void complete() {
+    private synchronized void complete() {
         while (isBlockedUntilEvent) {
             try {
                 wait();
@@ -43,25 +40,44 @@ class AsyncExecutor {
         }
     }
 
-    synchronized void complete( int outputParam ) {
-        this.outputParam = outputParam;
+    public synchronized boolean complete( boolean result ) {
+        this.result = result ? 0 : 1;
         complete();
+        return 0 == this.result;
     }
 
-    int getResult() {
+    private int getResult() {
         return result;
     }
 
-    int getOutputParam() {
+    private int getOutputParam() {
         return outputParam;
     }
 
-    synchronized void unblockOnEvent(int result, int outputParam) {
+    public synchronized void unblockOnEvent(int result, int outputParam) {
         if( isBlockedUntilEvent ) {
             isBlockedUntilEvent = false;
             this.result = result;
             this.outputParam = outputParam;
             notify();
+        }
+    }
+
+    static private AsyncExecutor nullAsyncExecutor = null;
+
+    static public AsyncExecutor getNullInstance() {
+        if( null == nullAsyncExecutor ) {
+            nullAsyncExecutor = new NullInstance();
+        }
+        return nullAsyncExecutor;
+    }
+
+    static private class NullInstance extends AsyncExecutor {
+        public boolean complete(boolean result) {
+            return result;
+        }
+
+        public void unblockOnEvent(int result, int outputParam) {
         }
     }
 }
