@@ -30,6 +30,8 @@
 
 #include "mastermode_check_signal.h"
 
+KNIEXPORT KNI_RETURNTYPE_LONG JVM_JavaMilliSeconds();
+
 /**
  * Adjust timeout value to not miss new comming timer
  * alarms while the system is blocked
