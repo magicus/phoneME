@@ -65,6 +65,10 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
     return JAVACALL_TRUE;
 }
 
+/* The 1st parameter is the number of the native method parameter
+   that is an AsyncExecutor instance */
+static void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res );
+
 /* KNI Implementation **********************************************************************/
 
 /*  protected native int nClose ( int handle ) ; */
@@ -407,21 +411,45 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPcmAudioPlayback) {
     KNI_ReturnBoolean(KNI_FALSE);
 }
 
-/*  private native boolean nPrefetch(int hNative); */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+static void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res ) {
+
+    KNI_StartHandles( 2 );
+    KNI_DeclareHandle( asyncExecutor );
+    KNI_DeclareHandle( clazz );
+    
+    KNI_GetParameterAsObject( parNum, asyncExecutor );
+    
+    if( KNI_IsNullHandle( asyncExecutor ) ) {
+        return;
+    }
+    
+    KNI_GetObjectClass( asyncExecutor, clazz );
+    
+    KNI_SetIntField( asyncExecutor, KNI_GetFieldID( clazz, "result", "I" ), ( jint )res );
+    if( JAVACALL_WOULD_BLOCK == res ) {
+        KNI_SetBooleanField( asyncExecutor, 
+            KNI_GetFieldID( clazz, "isBlockedUntilEvent", "Z" ), KNI_TRUE );
+    }
+    
+    KNI_EndHandles();
+}
+
+/*  private native void nPrefetch(int hNative, AsyncExecutor ae ); */
+KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean returnValue = KNI_FALSE;
+    javacall_result res = JAVACALL_FAIL;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
-        if (JAVACALL_OK == javacall_media_prefetch(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        }
+        res = javacall_media_prefetch( pKniInfo->pNativeHandle );
+        setResultAndSyncMode( KNIPASSARGS 2, res );
 UnlockAudioMutex();
     }
-    KNI_ReturnBoolean(returnValue);
+    
+    
+    KNI_ReturnVoid();
 }
 
 static jboolean controlSupported( KNIPlayerInfo* pKniInfo, int ctl_mask ) {

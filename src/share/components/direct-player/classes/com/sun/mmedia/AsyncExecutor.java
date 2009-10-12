@@ -43,6 +43,11 @@ class AsyncExecutor {
         }
     }
 
+    synchronized void complete( int outputParam ) {
+        this.outputParam = outputParam;
+        complete();
+    }
+
     int getResult() {
         return result;
     }

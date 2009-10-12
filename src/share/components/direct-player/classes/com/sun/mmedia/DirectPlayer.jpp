@@ -134,7 +134,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private native boolean nPcmAudioPlayback(int hNative);
 
     // Start Prefetch of Native Player
-    protected native boolean nPrefetch(int hNative);
+    protected native void nPrefetch(int hNative, AsyncExecutor ae );
     // Is Control supported by native or not
     protected static native boolean nIsFramePositioningControlSupported(int hNative);
     protected static native boolean nIsMetaDataControlSupported(int hNative);
@@ -309,13 +309,15 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         state = Player.REALIZED;
     }
     
-    private void prefetchData() throws MediaException
+    private void prefetchData( AsyncExecutor ae ) throws MediaException
     {
         int hNative = getOwner().getNativeHandle();
             
         /* prefetch native player */
         /* predownload media data to fill native buffers */
-        if (!nPrefetch(hNative)) {
+        nPrefetch( hNative, ae );
+        ae.complete();
+        if( 0 != ae.getResult() ) {
             throw new MediaException("Can not prefetch");
         }
     }
@@ -340,7 +342,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      */
     protected void doPrefetch( AsyncExecutor ae ) throws MediaException {
 
-        prefetchData();
+        prefetchData( ae );
         acquireDevice();
         
         if (nPcmAudioPlayback(getOwner().getNativeHandle())) {

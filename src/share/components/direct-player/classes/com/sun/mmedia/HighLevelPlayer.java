@@ -787,21 +787,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         /* prefetch native player */
         /* predownload media data to fill native buffers */
-        if( null != asyncExecutor ) {
-            asyncExecutor.runAsync( new AsyncExecutor.Task() {
-                public boolean run() throws MediaException {
-                    lowLevelPlayer.doPrefetch();
-                    return true;
-                }
-            });
-            //System.out.println("HighLevelPlayer: Prefetch resumed");
-            if( 0 != asyncExecutor.getResult() )
-            {
-                throw new MediaException("prefetch() failed");
-            }
-        } else {
-            lowLevelPlayer.doPrefetch();
-        }
+        lowLevelPlayer.doPrefetch( asyncExecutor );
 
         VolumeControl vc = ( VolumeControl )getControl(
                 pkgName + vocName);
