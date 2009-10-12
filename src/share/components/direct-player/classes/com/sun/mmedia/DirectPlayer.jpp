@@ -258,7 +258,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             synchronized (this) {
                 try {
                     doPreStop();
-                    doStop();
+                    doStop( null );
                 } catch (MediaException e) {
                     Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
                         "Exception during stop by stop timer");
@@ -338,7 +338,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      *
      * @exception  MediaException  Description of the Exception
      */
-    protected void doPrefetch() throws MediaException {
+    protected void doPrefetch( AsyncExecutor ae ) throws MediaException {
 
         prefetchData();
         acquireDevice();
@@ -398,7 +398,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      * @return <code>true</code> if player start was successful,
      *         <code>false</code> otherwise.
      */
-    protected boolean doStart() {
+    protected boolean doStart( AsyncExecutor ae ) {
         boolean ret = false;
         
         if( null != videoControl )
@@ -451,7 +451,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      *
      * @exception  MediaException  Description of the Exception
      */
-    protected void doStop() throws MediaException {
+    protected void doStop( AsyncExecutor ae ) throws MediaException {
 
         if ( null != videoControl )
         {
@@ -477,7 +477,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      * Override method in BasicPlayer to deallocate
      * the <code>Player</code>.
      */
-    protected void doDeallocate() {
+    protected void doDeallocate( AsyncExecutor ae ) {
         // release device
         if (nPcmAudioPlayback(getOwner().getNativeHandle())) {
             AudioTunnel.getInstance().stop();
@@ -547,7 +547,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      * @return The actual media time set in microseconds.
      * @exception MediaException Thrown if the media time cannot be set.
      */
-    protected long doSetMediaTime(long now) throws MediaException {
+    protected long doSetMediaTime(long now, AsyncExecutor ae ) throws MediaException {
         if (now <= 0) now = 0;
         
         long dur = doGetDuration();
@@ -866,7 +866,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
                 try {
                     doPreStop();
-                    doStop();
+                    doStop( null );
                 } catch (MediaException e) {
                     Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
                         "Exception during stop by stop timer");

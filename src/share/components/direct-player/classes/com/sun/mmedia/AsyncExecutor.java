@@ -30,61 +30,33 @@ import javax.microedition.media.MediaException;
 
 class AsyncExecutor {
 
-    private boolean isBlockedUntilEvent = false;
-    private int asyncExecResult = 0;
-    private int asyncExecOutputParam = 0;
+    boolean isBlockedUntilEvent = false;
+    private int result = 0;
+    private int outputParam = 0;
 
-    synchronized boolean runAsync(Task task) throws MediaException {
-        boolean res = task.run();
-        if( res ) {
-            isBlockedUntilEvent = true;
-            while (isBlockedUntilEvent) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-            //System.out.println( "HighLevelPlayer: runAsync() unblocked");
-        } else {
-            //System.out.println( "HighLevelPlayer: runAsync() didn't block" );
-        }
-        return res;
-    }
-
-    synchronized boolean runAsync( TaskWithIO task ) throws MediaException, IOException {
-        boolean res = task.run();
-        if( res ) {
-            isBlockedUntilEvent = true;
-            while( isBlockedUntilEvent ) {
-                try {
-                    wait();
-                } catch( InterruptedException ex ) {}
+    synchronized void complete() {
+        while (isBlockedUntilEvent) {
+            try {
+                wait();
+            } catch (InterruptedException ex) {
             }
         }
-        return res;
     }
 
     int getResult() {
-        return asyncExecResult;
+        return result;
     }
 
     int getOutputParam() {
-        return asyncExecOutputParam;
+        return outputParam;
     }
 
     synchronized void unblockOnEvent(int result, int outputParam) {
-        isBlockedUntilEvent = false;
-        asyncExecResult = result;
-        asyncExecOutputParam = outputParam;
-        notify();
-    }
-
-    static interface Task {
-
-        public boolean run() throws MediaException;
-    }
-
-    static interface TaskWithIO {
-        public boolean run() throws IOException, MediaException;
+        if( isBlockedUntilEvent ) {
+            isBlockedUntilEvent = false;
+            this.result = result;
+            this.outputParam = outputParam;
+            notify();
+        }
     }
 }
