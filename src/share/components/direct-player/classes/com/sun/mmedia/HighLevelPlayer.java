@@ -25,8 +25,6 @@
 
 package com.sun.mmedia;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
@@ -417,7 +415,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             if (time < getMediaTime()) {
                 try {
                     lowLevelPlayer.doPreStop();
-                    lowLevelPlayer.doStop();
+                    lowLevelPlayer.doStop( asyncExecutor );
                 } catch (MediaException e) {
                     // Not much we can do here.
                 }

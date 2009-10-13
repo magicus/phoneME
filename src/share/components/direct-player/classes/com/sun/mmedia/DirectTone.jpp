@@ -103,10 +103,10 @@ final class DirectTone extends DirectPlayer {
      *
      * @exception  MediaException  Description of the Exception
      */
-    protected void doPrefetch() throws MediaException {
+    protected void doPrefetch( AsyncExecutor ae ) throws MediaException {
         int hNative = getOwner().getNativeHandle();
         /* prefetch native player */
-        if (!nPrefetch(hNative)) {
+        if (!nPrefetch(hNative, ae)) {
             throw new MediaException("Can not prefetch");
         }
         state = Player.PREFETCHED;
