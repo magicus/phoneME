@@ -59,16 +59,17 @@
 /**
  * Append handler to single handler result buffer by handler ID
  */
-#define fill_handler(id, result)  put_handler(id, result, 0);
+#define fill_handler(id, result, len)  put_handler(id, result, len, 0);
 
 /**
  * Append handler to array of handlers result buffer by handler ID
  */
-#define append_handler(id, result)  put_handler(id, result, 1);
+#define append_handler(id, result, len)  put_handler(id, result, len, 1);
 
-static int put_handler(const jchar* id, JSR211_RESULT_BUFFER * result, int append) {
-
-    int id_sz = wcslen( id );
+static int put_handler(const jchar* id,
+                        JSR211_RESULT_BUFFER * result,
+                        int id_sz,
+                        int append) {
 
     jchar* classname = NULL;
     int classname_len = MAX_BUFFER;
@@ -131,7 +132,7 @@ jsr211_result jsr211_initialize(void){
  */
 jsr211_result jsr211_finalize(void){
     javacall_chapi_finalize_registry();
-    return 0;
+    return JSR211_OK;
 }
 
 /**
@@ -142,7 +143,7 @@ jsr211_result jsr211_finalize(void){
  * @return JSR211_OK if content handler registered successfully
  */
 jsr211_result jsr211_register_handler(const jsr211_content_handler* ch) {
-
+    javacall_utf16 JAVA_APPLICATION[] = {'J','a','v','a',' ','A','p','p','l','i','c','a','t','i','o','n', 0};
     jsr211_result status = JSR211_FAILED;
     javacall_utf16_string *types = NULL;
     javacall_utf16_string *suffixes = NULL;
@@ -154,7 +155,7 @@ jsr211_result jsr211_register_handler(const jsr211_content_handler* ch) {
 
     status = javacall_chapi_register_handler(
                         (javacall_const_utf16_string)ch->id,
-                        (javacall_const_utf16_string)L"Java Appliation",
+                        (javacall_const_utf16_string)JAVA_APPLICATION,
                         (javacall_const_utf16_string)ch->suite_id, 
                         (javacall_const_utf16_string)ch->class_name,
                         (javacall_chapi_handler_registration_type)ch->flag, 
@@ -238,7 +239,7 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
             if (!javacall_chapi_is_access_allowed(buffer,caller_id)) continue;
         }
 
-        res = append_handler(buffer, result);
+        res = append_handler(buffer, result, len - 1);
         if (res) break;
     } 
 
@@ -279,7 +280,7 @@ jsr211_result jsr211_find_for_suite( SuiteIdType suiteId, /*OUT*/ JSR211_RESULT_
 
         if (!jsr211_isUniqueHandler(buffer,len - 1, result)) continue;
 
-        res = append_handler(buffer, result);
+        res = append_handler(buffer, result, len - 1);
         if (res) break;
     } 
 
@@ -456,16 +457,19 @@ jsr211_result jsr211_get_all(
  * given @link caller_id should be returned.
  *
  * @param caller_id calling application identifier.
+* @param caller_id_sz length of calling application identifier
  * @param id handler ID.
+ * @param id_sz length of handler ID
  * @param flag indicating whether exact or prefixed search mode should be 
  * performed.
  * @param handler output value - requested handler.
  *  <br>Use the @link jsr211_fillHandler() jsr211_fillHandler function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_get_handler(
-        javacall_const_utf16_string caller_id,
-        javacall_const_utf16_string id,
+jsr211_result jsr211_get_handler(const jchar* caller_id,
+        int caller_id_sz,
+        const jchar* id,
+        int id_sz,
         jsr211_search_flag search_flag,
         /*OUT*/ JSR211_RESULT_CH result){
 
@@ -473,7 +477,7 @@ jsr211_result jsr211_get_handler(
 
     if (search_flag==JSR211_SEARCH_EXACT){
         if (javacall_chapi_is_access_allowed(id,caller_id)){
-            res = fill_handler(id, result);
+            res = fill_handler(id, result, id_sz);
         }
     } else {
         int pos = 0;
@@ -485,7 +489,7 @@ jsr211_result jsr211_get_handler(
             ASSURE_BUF(buffer,len,maxlen);
             if (res) break;
             if (javacall_chapi_is_access_allowed(buffer, caller_id)){
-                res = fill_handler(buffer, result);
+                res = fill_handler(buffer, result, len);
             }
             break;
         }

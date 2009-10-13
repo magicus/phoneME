@@ -663,6 +663,8 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
     int mode;
     jchar* callerId = NULL;
     jchar* id = NULL;
+    int id_string_length = 0;
+    int caller_id_string_length = 0;
     JSR211_RESULT_BUFFER handler = jsr211_create_result_buffer();
     
     KNI_StartHandles(2);
@@ -679,8 +681,10 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
             break;
         }
         mode = KNI_GetParameterAsInt(3);
-
-        jsr211_get_handler(callerId, id, mode, &handler);
+        id_string_length = KNI_GetStringLength(handlerObj);
+        caller_id_string_length = KNI_GetStringLength(callerObj);
+        jsr211_get_handler(callerId, caller_id_string_length, 
+                id, id_string_length, mode, &handler);
     } while (0);
 
     JAVAME_FREE(callerId);

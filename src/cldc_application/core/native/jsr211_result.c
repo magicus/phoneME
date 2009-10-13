@@ -245,20 +245,25 @@ jsr211_result jsr211_appendString( const jchar* str, size_t str_size, /*OUT*/ JS
 jsr211_boolean jsr211_isUniqueString(const jchar *str, size_t sz, int casesens, JSR211_RESULT_STRARRAY array) {
     JSR211_BUFFER_DATA bd = jsr211_get_result_data(*array);
     JSR211_ENUM_HANDLE eh = jsr211_get_enum_handle( bd );
+    jsr211_boolean result = JSR211_TRUE;
     while( (bd = jsr211_get_next( &eh )) != NULL ){
         const void * data; size_t length;
         jsr211_get_data( bd, &data, &length );
         if ( length == sz * sizeof(jchar) ) {
-            if (casesens == JAVACALL_TRUE) {
-                if( wcsncmp(str, (const jchar *)data, sz) == 0 )
-                    return JAVACALL_FALSE;
+            if (casesens == JSR211_TRUE) {
+                if( javautil_str_wcsncmp(str, (const jchar *)data, sz) == 0 ) {
+                    result = JSR211_FALSE;
+                    break;
+                }
             } else {
-                if( javautil_wcsnicmp(str, (const jchar *)data, sz) == 0 )
-                    return JAVACALL_FALSE;
+                if( javautil_wcsnicmp(str, (const jchar *)data, sz) == 0 ) {
+                    result = JSR211_FALSE;
+                    break;
+                }
             }
         }
     }
-    return JAVACALL_TRUE;
+    return result;
 }
 
 /**
@@ -278,10 +283,10 @@ jsr211_boolean jsr211_isUniqueHandler(const jchar *id, size_t id_sz, JSR211_RESU
         jsr211_get_data( id_handle, &data, &length );
         if ( length == id_sz * sizeof(jchar) ) {
             if( wcsncmp(id, (const jchar *)data, id_sz) == 0 )
-                return JAVACALL_FALSE;
+                return JSR211_FALSE;
         }
     }
-    return JAVACALL_TRUE;
+    return JSR211_TRUE;
 }
 
 /**
