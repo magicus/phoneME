@@ -151,7 +151,7 @@ static javacall_result recorder_get_time(javacall_handle handle, javacall_int32*
     return JAVACALL_OK;
 }
 
-static javacall_result recorder_set_time(javacall_handle handle, javacall_int32 ms)
+static javacall_result recorder_set_time(javacall_handle handle, javacall_int32* ms)
 {
     return JAVACALL_FAIL;
 }

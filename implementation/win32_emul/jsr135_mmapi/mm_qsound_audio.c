@@ -940,24 +940,25 @@ static javacall_result audio_qs_get_time(javacall_handle handle, javacall_int32*
     return JAVACALL_OK;
 }
 
-static javacall_result audio_qs_set_time(javacall_handle handle, javacall_int32 ms){
+static javacall_result audio_qs_set_time(javacall_handle handle, javacall_int32 *ms){
 
     ah* h = (ah*)handle;
     long currtime;
 
-    DEBUG_ONLY( PRINTF( "- set time (%ld)", ms ); )
+    DEBUG_ONLY( PRINTF( "- set time (%ld)", *ms ); )
 
     if( h->midiStream != NULL && h->storage != NULL )
     {
-        currtime = mQ234_PlayControl_SetPosition(h->synth, ms*10) != 0 ?
+        currtime = mQ234_PlayControl_SetPosition(h->synth, (*ms)*10) != 0 ?
         mQ234_PlayControl_GetPosition(h->synth)/10 : 0;
     }
     else
     {
-        currtime = h->mtime = ms*10;
+        currtime = h->mtime = (*ms)*10;
     }
 
-    JC_MM_DEBUG_PRINT3("audio_set_time: h=0x%08X ms:%ld ct:%ld\n", (int)handle, ms, currtime);
+    JC_MM_DEBUG_PRINT3("audio_set_time: h=0x%08X ms:%ld ct:%ld\n", (int)handle, (*ms), currtime);
+    (*ms) = currtime;
     return JAVACALL_OK;
 }
 

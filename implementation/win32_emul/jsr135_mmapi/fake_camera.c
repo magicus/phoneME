@@ -289,7 +289,7 @@ static javacall_result fake_camera_get_time(javacall_handle handle, javacall_int
     return JAVACALL_OK;
 }
 
-static javacall_result fake_camera_set_time(javacall_handle handle, javacall_int32 ms)
+static javacall_result fake_camera_set_time(javacall_handle handle, javacall_int32* ms)
 {
     return JAVACALL_FAIL;
 }

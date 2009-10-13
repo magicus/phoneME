@@ -1053,10 +1053,10 @@ static javacall_result dshow_get_time(javacall_handle handle, javacall_int32* ms
     return JAVACALL_OK;
 }
 
-static javacall_result dshow_set_time(javacall_handle handle, javacall_int32 ms)
+static javacall_result dshow_set_time(javacall_handle handle, javacall_int32* ms)
 {
     dshow_player* p      = (dshow_player*)handle;
-    p->target_mt         = ms;
+    p->target_mt         = *ms;
     p->pending_operation = dshow_player::OPER_SET_MT;
     DEBUG_ONLY( PRINTF( "*** setting media time ***\n" ); )
     SetEvent( p->hOperEvent );

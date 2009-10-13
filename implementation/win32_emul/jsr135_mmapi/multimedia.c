@@ -1051,7 +1051,7 @@ javacall_result javacall_media_get_media_time(javacall_handle handle, javacall_i
     return JAVACALL_FAIL;
 }
 
-javacall_result javacall_media_set_media_time(javacall_handle handle, javacall_int32 ms)
+javacall_result javacall_media_set_media_time(javacall_handle handle, javacall_int32* ms)
 {
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;

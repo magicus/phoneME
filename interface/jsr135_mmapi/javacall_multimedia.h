@@ -769,7 +769,11 @@ javacall_result javacall_media_get_media_time(
  * procedure.
  *
  * @param handle  Handle to the native player.
- * @param time    Media time in milliseconds.
+ * @param time    Media time in milliseconds. In case fucnction completes synchronously
+ *                returns actual time set, otherwise returned value is ignored and 
+ *                actual time is reported as JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED
+ *                event parameter.
+ *                
  *
  * @retval JAVACALL_OK          Procedure succeeded synchronously
  * @retval JAVACALL_FAIL        Procedure failed, the media time cannot be set, Java
@@ -780,7 +784,7 @@ javacall_result javacall_media_get_media_time(
  */
 javacall_result javacall_media_set_media_time(
     javacall_handle handle,
-    javacall_int32 time);
+    /*INOUT*/ javacall_int32 *time);
 
 /**
  * Get the duration of the media associated with the native player.

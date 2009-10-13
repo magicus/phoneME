@@ -243,7 +243,7 @@ typedef struct {
     javacall_result (*data_written)(javacall_handle handle, javacall_bool *new_request);
 
     javacall_result (*get_time)(javacall_handle handle, javacall_int32* ms);
-    javacall_result (*set_time)(javacall_handle handle, javacall_int32 ms);
+    javacall_result (*set_time)(javacall_handle handle, javacall_int32* ms);
     javacall_result (*get_duration)(javacall_handle handle, javacall_int32* ms);
 
     javacall_result (*switch_to_foreground)(javacall_handle handle, int options);
