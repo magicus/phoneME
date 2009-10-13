@@ -31,24 +31,18 @@
 
 package com.sun.mmedia;
 
-import java.io.IOException;
 import java.util.*;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
-import com.sun.mmedia.DefaultConfiguration;
-import com.sun.mmedia.DirectVolume;
-import com.sun.mmedia.DirectMetaData;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
-import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.BasicDS;
 
 import javax.microedition.media.control.StopTimeControl;
 // #ifdef RECORD [
-import com.sun.mmedia.DirectRecord;
 // #endif ]
 
 /**
@@ -554,8 +548,13 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         long dur = doGetDuration();
 
         if (Player.TIME_UNKNOWN != dur && now > dur) now = dur;
+
+        int ms = ( int )( now / 1000 );
+
+        ms = ae.completeAndReturnInt( nSetMediaTime(
+                    getOwner().getNativeHandle(), ms, ae ) );
         
-        return ae.completeAndReturnInt( nSetMediaTime( getOwner().getNativeHandle(), ( int )now/1000, ae ) );
+        return ( long )1000 * ms;
     }
     
     /**

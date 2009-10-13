@@ -29,8 +29,10 @@ import javax.microedition.media.MediaException;
 
 class AsyncExecutor {
 
-    protected boolean isBlockedUntilEvent = false;
-    protected int nativeReturnCode = 0;
+    // N.B.: this field is accessed from KNI code of DirecPlayer
+    volatile protected boolean isBlockedUntilEvent = false;
+    // N.B.: this field is accessed from KNI code of DirecPlayer
+    volatile protected int nativeReturnCode = 0;
     private int outputParam = 0;
 
     public synchronized void complete() {

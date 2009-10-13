@@ -25,6 +25,8 @@
 
 package com.sun.mmedia;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import  javax.microedition.media.*;
 import  javax.microedition.media.control.*;
 import  javax.microedition.media.protocol.SourceStream;
@@ -233,13 +235,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
     // Init native library
     private native int nCreateAndRealizeURLBasedPlayerAsync( int appId,
-            int pID, String URI) throws IOException, MediaException;
+            int pID, String URI, AsyncExecutor ae );
 
     private native void nDoOnRealizeResult( int result ) throws IOException, MediaException;
 
     private native int nCreateAndRealizeJavaFedPlayerAsync( int appId,
-            int pID, String URI, String contentType, long streamLen )
-            throws IOException, MediaException;
+            int pID, String URI, String contentType, long streamLen,
+            AsyncExecutor ae );
 
     // Get Media Format
     private native String nGetMediaFormat(int handle);
@@ -293,20 +295,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         
         asyncExecutor = new AsyncExecutor();
 
-        int result = -1;
-        if( asyncExecutor.runAsync( new AsyncExecutor.TaskWithIO() {
-            public boolean run() throws MediaException, IOException {
-                hNative = nCreateAndRealizeURLBasedPlayerAsync(appId,
-                        pID, locator);
-                return ( 0 != hNative );
-            }
-        } ) ) {
-            result = asyncExecutor.getResult();
-            nDoOnRealizeResult(result);
-        }
+        nDoOnRealizeResult( asyncExecutor.complete(
+                nCreateAndRealizeURLBasedPlayerAsync( appId, pID, locator, asyncExecutor ) ) );
         //System.out.println( "HighLevelPlayer: createAndRealize1() resumed" );
 
-        handledByDevice = ( 0 == result );
+        handledByDevice = ( 0 != hNative );
 
     }
 
@@ -613,26 +606,13 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             if (type == null && stream != null && stream.getContentDescriptor() != null) {
                 type = stream.getContentDescriptor().getContentType();
             }
-
-            final String contentType = type;
-
-            if( asyncExecutor.runAsync( new AsyncExecutor.Task() {
-                public boolean run() throws MediaException {
-                    try {
-                        hNative = nCreateAndRealizeJavaFedPlayerAsync(appId,
-                                pID, locator, contentType, len);
-                    } catch (IOException ex) {
-                        throw new MediaException( ex.getMessage() );
-                    }
-                    return ( 0 != hNative );
-                }
-            }) ) {
-                result = asyncExecutor.getResult();
-                try {
-                    nDoOnRealizeResult(result);
-                } catch (IOException ex) {
-                    throw new MediaException(ex.getMessage());
-                }
+            try {
+                nDoOnRealizeResult(asyncExecutor.complete(
+                        nCreateAndRealizeJavaFedPlayerAsync(appId, pID,
+                            locator, type, len, asyncExecutor)));
+                //System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
+            } catch (IOException ex) {
+                throw new MediaException( ex.getMessage() );
             }
             //System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
         }
@@ -643,8 +623,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             if (null != directInputThread) {
                 directInputThread.close();
             }
-
-            asyncExecutor = AsyncExecutor.getNullInstance(); // Isn't used for Java handled players
+            // Java handled player operations are always synchronous
+            asyncExecutor = AsyncExecutor.getNullInstance();
             
             /* verify if handled by Java */
             mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
@@ -1190,22 +1170,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         long rtn = TIME_UNKNOWN;
-        if( null != asyncExecutor ) {
-            final long timeToSet = now;
-            asyncExecutor.runAsync( new AsyncExecutor.Task() {
-                public boolean run() throws MediaException {
-                    lowLevelPlayer.doSetMediaTime(timeToSet);
-                    return true;
-                }
-            });
-            //System.out.println("HighLevelPlayer: setMediaTime resumed");
-            if( 0 != asyncExecutor.getResult() ) {
-                throw new MediaException( "Media time cannot be set" );
-            }
-            rtn = ( long )1000 * asyncExecutor.getOutputParam();
-        } else {
-            rtn = lowLevelPlayer.doSetMediaTime( now );
-        }
+        rtn = lowLevelPlayer.doSetMediaTime( now, asyncExecutor );
 
         EOM = false;
 

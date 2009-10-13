@@ -28,6 +28,7 @@
 #include "jsr135_sync.h"
 #include "javautil_string.h"
 #include "sni.h"
+#include "mmapiAsync.h"
 
 
 /* Global Variables ************************************************************************/
@@ -64,10 +65,6 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
 
     return JAVACALL_TRUE;
 }
-
-/* The 1st parameter is the number of the native method parameter
-   that is an AsyncExecutor instance */
-static void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res );
 
 /* KNI Implementation **********************************************************************/
 
@@ -424,29 +421,6 @@ KNIDECL(com_sun_mmedia_DirectTone_finalize) {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nPcmAudioPlayback) {
     KNI_ReturnBoolean(KNI_FALSE);
-}
-
-static void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res ) {
-
-    KNI_StartHandles( 2 );
-    KNI_DeclareHandle( asyncExecutor );
-    KNI_DeclareHandle( clazz );
-    
-    KNI_GetParameterAsObject( parNum, asyncExecutor );
-    
-    if( KNI_IsNullHandle( asyncExecutor ) ) {
-        return;
-    }
-    
-    KNI_GetObjectClass( asyncExecutor, clazz );
-    
-    KNI_SetIntField( asyncExecutor, KNI_GetFieldID( clazz, "nativeReturnCode", "I" ), ( jint )res );
-    if( JAVACALL_WOULD_BLOCK == res ) {
-        KNI_SetBooleanField( asyncExecutor, 
-            KNI_GetFieldID( clazz, "isBlockedUntilEvent", "Z" ), KNI_TRUE );
-    }
-    
-    KNI_EndHandles();
 }
 
 /*  private native boolean nPrefetch(int hNative, AsyncExecutor ae ); */
