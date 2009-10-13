@@ -25,10 +25,12 @@
 
 package com.sun.mmedia;
 
+import javax.microedition.media.MediaException;
+
 class AsyncExecutor {
 
     protected boolean isBlockedUntilEvent = false;
-    protected int result = 0;
+    protected int nativeReturnCode = 0;
     private int outputParam = 0;
 
     public synchronized void complete() {
@@ -41,13 +43,28 @@ class AsyncExecutor {
     }
 
     public synchronized boolean complete( boolean result ) {
-        this.result = result ? 0 : 1;
+        this.nativeReturnCode = result ? 0 : 1;
         complete();
-        return 0 == this.result;
+        return 0 == this.nativeReturnCode;
+    }
+
+    public synchronized int complete( int nativeReturnCode ) {
+        this.nativeReturnCode = nativeReturnCode;
+        complete();
+        return this.nativeReturnCode;
+    }
+    
+    public synchronized int completeAndReturnInt( int outputParam ) throws MediaException {
+        this.outputParam = outputParam;
+        complete();
+        if (0 != this.nativeReturnCode) {
+            throw new MediaException( "Async operation failed" );
+        }
+        return this.outputParam;
     }
 
     private int getResult() {
-        return result;
+        return nativeReturnCode;
     }
 
     private int getOutputParam() {
@@ -57,7 +74,7 @@ class AsyncExecutor {
     public synchronized void unblockOnEvent(int result, int outputParam) {
         if( isBlockedUntilEvent ) {
             isBlockedUntilEvent = false;
-            this.result = result;
+            this.nativeReturnCode = result;
             this.outputParam = outputParam;
             notify();
         }
@@ -77,6 +94,14 @@ class AsyncExecutor {
         
         public boolean complete(boolean result) {
             return result;
+        }
+
+        public synchronized int complete(int nativeReturnCode) {
+            return nativeReturnCode;
+        }
+        
+        public synchronized int completeAndReturnInt(int outputParam) throws MediaException {
+            return outputParam;
         }
 
         public void unblockOnEvent(int result, int outputParam) {

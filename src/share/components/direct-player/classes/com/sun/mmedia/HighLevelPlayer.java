@@ -1077,22 +1077,8 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
 
         if( null != lowLevelPlayer ) {
-            if( null != asyncExecutor ) {
-                try {
-                    asyncExecutor.runAsync(new AsyncExecutor.Task() {
-
-                        public boolean run() throws MediaException {
-                            lowLevelPlayer.doClose();
-                            //System.out.println("HighLevelPlayer: async doClose() returned");
-                            return true;
-                        }
-                    });
-                } catch (MediaException ex) {}
-                //System.out.println("HighLevelPlayer: close() resumed");
-            } else {
-                lowLevelPlayer.doClose();
-                //System.out.println("HighLevelPlayer: sync doClose() returned");
-            }
+            lowLevelPlayer.doClose();
+            //System.out.println("HighLevelPlayer: sync doClose() returned");
         }
 
         hNative = 0;

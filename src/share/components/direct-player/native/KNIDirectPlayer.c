@@ -176,13 +176,13 @@ UnlockAudioMutex();
     KNI_ReturnInt((jint)ms);
 }
 
-/*  protected native boolean nSetMediaTime ( int handle , long ms ) ; */
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+/*  protected native int nSetMediaTime ( int handle , int ms, AsyncExecutor ae ) throws MediaException; */
+KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    long ms = (long)KNI_GetParameterAsLong(2);
+    int ms = (int)KNI_GetParameterAsInt(2);
     javacall_result ret = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
@@ -190,10 +190,16 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
     if (pKniInfo && pKniInfo->pNativeHandle) {
 LockAudioMutex();
         ret = javacall_media_set_media_time( pKniInfo->pNativeHandle, ms );
+        
 UnlockAudioMutex();            
-    } 
+    }
+    setResultAndSyncMode( KNIPASSARGS 3, ret );
+    if( JAVACALL_OK != ret && JAVACALL_WOULD_BLOCK != ret ) {
+        KNI_ThrowNew( "javax/microedition/media/MediaException",
+            "\nFailed to set media time\n" );
+    }
 
-    KNI_ReturnBoolean( JAVACALL_OK == ret ? KNI_TRUE : KNI_FALSE );
+    KNI_ReturnInt( ms );
 }
 
 /*  protected native int nGetDuration ( int handle ) ; */
@@ -434,7 +440,7 @@ static void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res ) 
     
     KNI_GetObjectClass( asyncExecutor, clazz );
     
-    KNI_SetIntField( asyncExecutor, KNI_GetFieldID( clazz, "result", "I" ), ( jint )res );
+    KNI_SetIntField( asyncExecutor, KNI_GetFieldID( clazz, "nativeReturnCode", "I" ), ( jint )res );
     if( JAVACALL_WOULD_BLOCK == res ) {
         KNI_SetBooleanField( asyncExecutor, 
             KNI_GetFieldID( clazz, "isBlockedUntilEvent", "Z" ), KNI_TRUE );
