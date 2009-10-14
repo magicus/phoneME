@@ -58,8 +58,17 @@ PacketStream::read_bytes(void *dest, int size)
 void
 PacketStream::write_bytes(char* source, int size)
 {
+  int written = 0;
   Transport::transport_op_def_t *ops = _transport_ops;
-  ops->write_bytes(&_transport, source, size);
+
+  while (written < size) {
+    int count = ops->write_bytes(&_transport, source + written, size - written);
+    if (count > 0) {
+        written += count;
+    } else {
+        break;
+    }
+  }
 }
 
 void PacketInputStream::flush(Transport::transport_op_def_t *ops) {
