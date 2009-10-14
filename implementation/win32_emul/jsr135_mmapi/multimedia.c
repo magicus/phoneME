@@ -735,7 +735,7 @@ javacall_result javacall_media_create_managed_player(
         *handle = (javacall_handle)pPlayer;
         JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
         _beginthread( create_player_thread, 0, pPlayer );
-        return JAVACALL_OK;
+        return JAVACALL_WOULD_BLOCK;
     }
     else
     {
@@ -821,7 +821,7 @@ javacall_result javacall_media_create_unmanaged_player(
         *handle = (javacall_handle)pPlayer;
         JC_MM_ASSERT( QUERY_BASIC_ITF(pPlayer->mediaItfPtr, create) );
         _beginthread( create_player_thread, 0, pPlayer );
-        return JAVACALL_OK;
+        return JAVACALL_WOULD_BLOCK;
     }
     else
     {
