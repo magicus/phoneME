@@ -28,6 +28,7 @@
 
 #include "jsrop_exceptions.h"
 #include "jsr135_sync.h"
+#include "mmapiAsync.h"
 
 /* Global Variables ************************************************************************/
 
@@ -113,9 +114,9 @@ KNIDECL(com_sun_mmedia_HighLevelPlayer_nCreateAndRealizeJavaFedPlayerAsync) {
     MMP_DEBUG_STR2("+nCreateAndRealizeJavaFedPlayerAsync application=%d, player=%d\n", appId, playerId);
 
     pszURI = getUTF16StringFromParameter( KNIPASSARGS 3, &URILength );
-    pszCType = getUTF16StringFromParameter( KNIPASSARGS 4, &cTypeLength );
+    pszCType = getUTF16StringFromParameter( KNIPASSARGS 5, &cTypeLength );
     
-    streamLen = ( javacall_int64 )KNI_GetParameterAsLong( 5 );
+    streamLen = ( javacall_int64 )KNI_GetParameterAsLong( 6 );
     
     pKniInfo = (KNIPlayerInfo*)MMP_MALLOC(sizeof(KNIPlayerInfo));
     
@@ -134,7 +135,7 @@ LockAudioMutex();
     }
 UnlockAudioMutex();
 
-    setResultAndSyncMode( KNIPASSARGS 6, res );
+    setResultAndSyncMode( KNIPASSARGS 4, res );
 
     if (pszURI)      { MMP_FREE(pszURI); }
     if (pszCType)    { MMP_FREE(pszCType); }
@@ -165,8 +166,6 @@ static KNIPlayerInfo* getNativeHandle( KNIDECLARGS int dummy ) {
 }
 
 static void setNativeHandle( KNIDECLARGS KNIPlayerInfo *pKniInfo ) {
-    KNIPlayerInfo* pKniInfo;
-    (void)dummy;
     KNI_StartHandles(2);
     KNI_DeclareHandle(instance);
     KNI_DeclareHandle(clazz);

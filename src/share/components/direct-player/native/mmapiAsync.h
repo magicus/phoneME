@@ -26,6 +26,6 @@
 
 /* The 1st parameter is the number of the native method parameter
    that is an AsyncExecutor instance */
-static void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res );
+void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res );
 
 #endif /* __MMAPI_ASYNC_H */

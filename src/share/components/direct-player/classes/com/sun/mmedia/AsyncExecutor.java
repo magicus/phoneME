@@ -91,7 +91,7 @@ class AsyncExecutor {
         return nullAsyncExecutor;
     }
 
-    static private class NullInstance extends AsyncExecutor {
+    static class NullInstance extends AsyncExecutor {
         public void complete() {}
         
         public boolean complete(boolean result) {

@@ -22,7 +22,10 @@
  * information or have any questions.
  */
  
- void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res ) {
+#include "KNICommon.h"
+#include "mmapiAsync.h"
+
+void setResultAndSyncMode( KNIDECLARGS int parNum, javacall_result res ) {
 
     KNI_StartHandles( 2 );
     KNI_DeclareHandle( asyncExecutor );

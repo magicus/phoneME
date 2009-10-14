@@ -238,8 +238,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     private native void nDoOnRealizeResult( int result ) throws IOException, MediaException;
 
     private native int nCreateAndRealizeJavaFedPlayerAsync( int appId,
-            int pID, String URI, String contentType, long streamLen,
-            AsyncExecutor ae );
+            int pID, String URI, AsyncExecutor ae, String contentType, long streamLen );
 
     // Get Media Format
     private native String nGetMediaFormat(int handle);
@@ -607,7 +606,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             try {
                 nDoOnRealizeResult(asyncExecutor.complete(
                         nCreateAndRealizeJavaFedPlayerAsync(appId, pID,
-                            locator, type, len, asyncExecutor)));
+                            locator, asyncExecutor, type, len)));
                 //System.out.println( "HighLevelPlayer: createAndRealize2() resumed" );
             } catch (IOException ex) {
                 throw new MediaException( ex.getMessage() );
@@ -1707,6 +1706,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
     }
 
     private AsyncExecutor asyncExecutor = AsyncExecutor.getNullInstance();
+    
     AsyncExecutor getAsyncExecutor()
     {
         return asyncExecutor;
