@@ -316,9 +316,9 @@ void midpFinalize() {
 #if ENABLE_MULTIPLE_ISOLATES
     midp_links_shutdown();
 #endif    
-
+#if !ENABLE_CDC
     pcsl_network_finalize_start(NULL);
-
+#endif
     midpAppDir = NULL;
     midpFinalizeMemory();
 
