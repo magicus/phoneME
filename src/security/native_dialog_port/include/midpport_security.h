@@ -58,7 +58,8 @@ void midpport_security_set_permission_listener(MIDP_SECURITY_PERMISSION_LISTENER
  * Start a security permission checking.
  *
  * @param suiteId       - the MIDlet suite the permission should be checked with
- * @param permission    - permission type
+ * @param permission    - permission string
+ * @param permissionLength    - length of the permission string
  * @param pHandle       - address of variable to receive the handle; this is set
  *                        only when this function returns -1.
  *
@@ -70,7 +71,8 @@ void midpport_security_set_permission_listener(MIDP_SECURITY_PERMISSION_LISTENER
  *          and the result will be notified through security permission
  *          listener.
  */
-jint midpport_security_check_permission(jint suiteId, jint permission,
+jint midpport_security_check_permission(jint suiteId, jchar* permission, 
+                                        jint permissionLength,
                                         jint* pHandle);
                                         
 /**
@@ -82,7 +84,8 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
  * it should be reported as unknown.
  * 
  * @param suiteId       - the MIDlet suite the permission should be checked with
- * @param permission    - permission type
+ * @param permission    - permission string
+ * @param permissionLength    - length of the permission string
  *
  * @return status code as:
  *      0 - if the permission is denied
@@ -90,6 +93,8 @@ jint midpport_security_check_permission(jint suiteId, jint permission,
  *     -1 - if the permission cannot be determined without blocking Java
  *          platform system, for example by asking for user interaction.
  */
-jint midpport_security_check_permission_status(jint suiteId, jint permission);
+jint midpport_security_check_permission_status(jint suiteId,  
+                                               jchar* permission, 
+                                               jint permissionLength);
                                         	   
 #endif /* _MIDP_SECURITY_H_ */

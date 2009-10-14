@@ -43,6 +43,7 @@
 #include <midpString.h>
 #include <midpUtilKni.h>
 #include <midpServices.h>
+#include <midpMalloc.h>
 
 /** 
  * 0 if no security permission listener has been registered.
@@ -86,9 +87,21 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
     if (info == NULL) {
         /* initial invocation: send request */
                 jint requestHandle;
+        jint permissionLength;
+        jchar* permission = NULL;
         jint suiteId = KNI_GetParameterAsInt(1);
-        jint permId = KNI_GetParameterAsInt(2);
-        jint result = midpport_security_check_permission(suiteId, permId,
+        jint result;
+        
+        KNI_StartHandles(1);
+        KNI_DeclareHandle(permissionHandle);
+        KNI_GetParameterAsObject(2, permissionHandle);
+        permissionLength = KNI_GetStringLength(permissionHandle);
+        permission = midpMalloc(permissionLength * sizeof(jchar));
+        if (permission) {
+            KNI_GetStringRegion(permissionHandle, 0, permissionLength, permission);
+
+
+            result = midpport_security_check_permission(suiteId, permission, permissionLength,
                   &requestHandle);
 
                 if (result == 1) {
@@ -97,6 +110,8 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
                   /* Block the caller until the security listener is called */
                   midp_thread_wait(SECURITY_CHECK_SIGNAL, requestHandle, NULL);
                 }
+        }
+        KNI_EndHandles();
     } else {
         /* reinvocation: check result */
         granted = (jboolean)(info->status);
@@ -123,10 +138,18 @@ Java_com_sun_midp_security_SecurityHandler_checkPermissionStatus0()
 {
     jint status = 0;
     jint suiteId = KNI_GetParameterAsInt(1);
-    jint permId = KNI_GetParameterAsInt(2);
+    jint permissionLength;
+    jchar* permission = NULL;
 
-    status = midpport_security_check_permission_status(suiteId, permId);
-
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(permissionHandle);
+    KNI_GetParameterAsObject(2, permissionHandle);
+    permissionLength = KNI_GetStringLength(permissionHandle);
+    permission = midpMalloc(permissionLength * sizeof(jchar));
+    if (permission) {
+        status = midpport_security_check_permission_status(suiteId, permission, permissionLength);
+    }
+    KNI_EndHandles();
     KNI_ReturnInt(status);
 }
 
