@@ -49,7 +49,7 @@ extern "C" {
 
 // ===========================================================================
 
-#define DEBUG_ONLY(x)
+#define DEBUG_ONLY(x) x
 
 static void PRINTF( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -266,7 +266,7 @@ player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata,
                                       JAVACALL_OK,
                                       NULL );
 
-    if( WAIT_OBJECT_0 != WaitForSingleObject( dwr_event, 30000 ) )
+    if( WAIT_OBJECT_0 != WaitForSingleObject( dwr_event, /*30000*/INFINITE ) )
     {
         DEBUG_ONLY( PRINTF( "*** ERROR: timeout waiting for data (@%I64d l=%i) ***\n", offset, len ); )
         return player_callback::result_io;
