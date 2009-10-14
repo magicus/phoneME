@@ -29,7 +29,7 @@ public:
   HANDLE_DEFINITION(SymbolTable, ObjArray);
 
   static juint hash(utf8 name, int name_length);
-  static juint hash(Symbol *symbol);
+  static juint hash(const Symbol* symbol);
 
   static SymbolTable* current( void ) {
     return Universe::symbol_table();

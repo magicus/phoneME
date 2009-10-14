@@ -1221,7 +1221,7 @@ bool VerifyMethodCodes::is_protected_access(int index, bool is_method
       // The constructor already looks up the tree to find the
       // the right class, and assigns that value to klass
       Field field(&klass, &name, &signature);
-      return  field.is_valid()
+      return  field.is_valid_in_current_profile()
            && field.is_protected() 
            && !klass().is_same_class_package(&my_name);
     }

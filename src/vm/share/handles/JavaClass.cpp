@@ -330,37 +330,37 @@ bool JavaClass::is_subtype_of(JavaClass* other_class) {
       || compute_and_set_is_subtype_of(other_class);
 }
 
-bool JavaClass::is_subclass_of(JavaClass* other_class) {
+bool JavaClass::is_subclass_of(const JavaClass* other_class) const {
   // This is a hot loop, so we're using raw pointers here to help C++
   // compiler generate better code. If a GC happens we're
   // in deep trouble!
 
   AllocationDisabler raw_pointers_used_in_this_function;
 
-  JavaClassDesc *current = (JavaClassDesc *)this->obj();
-  JavaClassDesc *other   = (JavaClassDesc *)other_class->obj();
+  const JavaClassDesc* current = (JavaClassDesc *)this->obj();
+  const JavaClassDesc *other   = (JavaClassDesc *)other_class->obj();
 
   do {
     if (other == current) {
       return true;
     }
-    current = (JavaClassDesc*)current->_super;
+    current = (const JavaClassDesc*)current->_super;
   } while (current != NULL);
 
   return false;
 }
 
-bool JavaClass::is_strict_subclass_of(JavaClass* other_class) {
+bool JavaClass::is_strict_subclass_of(const JavaClass* other_class) const {
   // This is a hot loop, so we're using raw pointers here to help C++
   // compiler generate better code. If a GC happens we're
   // in deep trouble!
 
   AllocationDisabler raw_pointers_used_in_this_function;
 
-  JavaClassDesc* current = (JavaClassDesc*)this->obj();
-  JavaClassDesc* other   = (JavaClassDesc*)other_class->obj();
+  const JavaClassDesc* current = (JavaClassDesc*)this->obj();
+  const JavaClassDesc* other   = (JavaClassDesc*)other_class->obj();
 
-  while( (current = (JavaClassDesc*)current->_super) != NULL ) {
+  while( (current = (const JavaClassDesc*)current->_super) != NULL ) {
     if (other == current) {
       return true;
     }

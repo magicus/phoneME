@@ -45,9 +45,13 @@ inline void ROMClassPatternMatcher::not_found(const char name[]) {
 #endif
 }
 
+void ROMClassPatternMatcher::invalid_pattern(void) {
+  error( "Invalid pattern" );
+}
+
 bool ROMClassPatternMatcher::validate(const char pattern[], const int length) {
   if( !length ) {
-    error( "Invalid pattern" );
+    invalid_pattern();
     return false;
   }
   for( int i = 0; i < length; i++ ) {
@@ -82,7 +86,7 @@ bool ROMClassPatternMatcher::initialize(const char* pattern,
 void ROMClassPatternMatcher::run(const char pattern[] JVM_TRAPS) {
   _match_found = false;
 
-  bool pattern_is_valid =
+  const bool pattern_is_valid =
     initialize(pattern, jvm_strlen(pattern) JVM_NO_CHECK_AT_BOTTOM);
   if (!pattern_is_valid) {
     return;

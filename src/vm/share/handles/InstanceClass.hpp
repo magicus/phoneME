@@ -87,8 +87,8 @@ class InstanceClass: public JavaClass {
   ReturnOop lookup_method_in_all_interfaces(Symbol* name, Symbol* signature,
                                             int& interface_class_id,
                                             int& itable_index);
-  bool is_same_class_package(Symbol* other_class_name);
-  bool is_same_class_package(InstanceClass* other_class);
+  bool is_same_class_package(const Symbol* other_class_name) const;
+  bool is_same_class_package(const InstanceClass* other_class) const;
   bool check_access_by(InstanceClass* sender_class, FailureMode fail_mode
                        JVM_TRAPS);
 
@@ -98,31 +98,33 @@ class InstanceClass: public JavaClass {
                                        Symbol *class_name  JVM_TRAPS);
 
   // Convenience functions for accessing stuff inside class_info()
-  ReturnOop constants() const {
+  ReturnOop constants(void) const {
     return (ReturnOop) ((void*)raw_class_info()->instance._constants);
   }
-  ReturnOop fields() const {
+  ReturnOop fields(void) const {
     return (ReturnOop) ((void*)raw_class_info()->instance._fields);
   }
-  void set_fields(TypeArray* value) {
+  void set_fields(TypeArray* value) const {
     ClassInfo::Raw info = class_info();
     info().set_fields(value);
   }
-  ReturnOop methods() const {
+
+  ReturnOop methods(void) const {
     return (ReturnOop) ((void*)raw_class_info()->instance._methods);
   }
-  void set_methods(ObjArray* value) {
+  void set_methods(ObjArray* value) const {
     ClassInfo::Raw info = class_info();
     info().set_methods(value);
   }
-  ReturnOop local_interfaces() const {
+
+  ReturnOop local_interfaces(void) const {
     return (ReturnOop) ((void*)raw_class_info()->instance._local_interfaces);
   }
-  void set_local_interfaces(TypeArray* value) {
+  void set_local_interfaces(TypeArray* value) const {
     ClassInfo::Raw info = class_info();
     info().set_local_interfaces(value);
   }
-  bool is_fake_class() {
+  bool is_fake_class(void) const {
     return access_flags().is_fake_class();
   }
 
@@ -135,6 +137,15 @@ class InstanceClass: public JavaClass {
     info().set_inner_classes(value);
   }
 #endif
+
+#if ENABLE_MEMBER_HIDING
+  int field_count(void) const {
+    const TypeArray::Raw fields = this->fields();
+    return fields().length() / 5;
+  }
+  int method_count(void) const;
+  int method_index(const Method* method) const;
+#endif // ENABLE_MEMBER_HIDING
 
   ReturnOop find_local_method(Symbol* name, Symbol* signature,
                               const bool non_static_only = false) const;

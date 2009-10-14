@@ -152,8 +152,8 @@ void Inflater::refill_input(int processed JVM_TRAPS) {
   GUARANTEE(in_buf.not_null(), "Sanity");
 
   int length = in_buf().length();
+  GUARANTEE(0 <= processed && processed <= length, "Sanity");
   int remainder = length - processed;
-  GUARANTEE(remainder <= processed, "Sanity");
 
   Buffer::Raw new_in_buffer = Universe::new_byte_array_raw(length JVM_CHECK);
   address base = new_in_buffer().base_address();

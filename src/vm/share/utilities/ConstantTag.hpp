@@ -228,7 +228,7 @@ class ConstantTag {
     _tag = tag; 
   }
 
-  jubyte value() {
+  jubyte value(void) const {
     return _tag;
   }
 

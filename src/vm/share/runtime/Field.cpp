@@ -49,16 +49,22 @@ void Field::initialize(InstanceClass* ic, Symbol* name, Symbol* signature) {
   }
 }
 
-void Field::initialize(InstanceClass* ic, jint index) {
+void Field::initialize(InstanceClass* ic, const jint index,
+                       const TypeArray* fields) {
   _ic              = ic;
   _index           = index;
-  TypeArray::Raw f = get_fields_for(_ic);
-  jint flags       = f().ushort_at(index + ACCESS_FLAGS_OFFSET);
+  const jint flags = fields->ushort_at(index + ACCESS_FLAGS_OFFSET);
   _access.set_flags(flags);
-  _name_index      = f().ushort_at(index + NAME_OFFSET);
-  _signature_index = f().ushort_at(index + SIGNATURE_OFFSET);
-  _initval_index   = f().ushort_at(index + INITVAL_OFFSET);
-  _offset          = f().ushort_at(index + OFFSET_OFFSET);
+  _name_index      = fields->ushort_at(index + NAME_OFFSET);
+  _signature_index = fields->ushort_at(index + SIGNATURE_OFFSET);
+  _initval_index   = fields->ushort_at(index + INITVAL_OFFSET);
+  _offset          = fields->ushort_at(index + OFFSET_OFFSET);
+}
+
+
+void Field::initialize(InstanceClass* ic, const jint index) {
+  const TypeArray::Raw fields = get_fields_for(ic);
+  initialize(ic, index, &fields);
 }
 
 ReturnOop Field::name(void) const {
@@ -77,13 +83,14 @@ BasicType Field::type(void) const {
   return sig().basic_type();
 }
 
+
 void Field::check_access_by(InstanceClass* sender_class,
                             InstanceClass* static_receiver_class,
                             FailureMode fail_mode JVM_TRAPS) const {
-  InstanceClass* field_class = ic();
   if (is_public()) {
     return;
   }
+  const InstanceClass* field_class = ic();
   if (field_class->equals(sender_class)) {
     return;
   }

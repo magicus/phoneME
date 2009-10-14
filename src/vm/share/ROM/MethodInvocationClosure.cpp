@@ -183,13 +183,13 @@ void  MethodInvocationClosure::initialize(JVM_SINGLE_ARG_TRAPS) {
 }
 
 
-inline int MethodInvocationClosure::hashcode_for_symbol(Symbol *symbol) {
+inline int MethodInvocationClosure::hashcode_for_symbol(const Symbol* symbol) {
   return SymbolTable::hash(symbol);
 }
 
-int MethodInvocationClosure::hashcode_for_method(Method *method) {
-  Symbol::Raw name = method->name();
-  Symbol::Raw sig = method->signature();
+int MethodInvocationClosure::hashcode_for_method(const Method* method) {
+  const Symbol::Raw name = method->name();
+  const Symbol::Raw sig = method->signature();
 
   return (hashcode_for_symbol(&name) ^ hashcode_for_symbol(&sig));
 }
@@ -200,7 +200,7 @@ bool MethodInvocationClosure::add_method(Method* method) {
     const juint start = juint(hashcode_for_method(method)) % len;
 
     for (juint i=start; ;) {
-      Method::Raw m = _methods.obj_at(i);
+      const Method::Raw m = _methods.obj_at(i);
       if (m.equals(method)) {
         return false;
       }

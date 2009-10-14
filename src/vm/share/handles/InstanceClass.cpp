@@ -659,12 +659,13 @@ void InstanceClass::remove_clinit() {
     return;
   }
 
+#if 0
   if (is_interface()) {
     // IMPL_NOTE: itable calculations assumes that this->methods()
     // contains no NULL pointers
     return;
   }
-
+#endif
   ObjArray::Raw class_methods(methods());
   const int length = class_methods().length();
   for (int index = 0; index < length; index++) {
@@ -689,13 +690,15 @@ bool InstanceClass::itable_contains(InstanceClass* instance_class) {
   return false;
 }
 
-bool InstanceClass::is_same_class_package(Symbol* other_class_name) {
-  Symbol::Raw this_class_name = name();
+bool
+InstanceClass::is_same_class_package(const Symbol* other_class_name) const {
+  const Symbol::Raw this_class_name = name();
   return this_class_name().is_same_class_package(other_class_name);
 }
 
-bool InstanceClass::is_same_class_package(InstanceClass* other_class) {
-  Symbol::Raw other_class_name = other_class->name();
+bool
+InstanceClass::is_same_class_package(const InstanceClass* other_class) const {
+  const Symbol::Raw other_class_name = other_class->name();
   return is_same_class_package(&other_class_name);
 }
 
@@ -1114,6 +1117,73 @@ bool InstanceClass::compute_is_subtype_of(JavaClass* other_class) {
   }
 }
 
+#if ENABLE_MEMBER_HIDING
+int InstanceClass::method_count(void) const {
+  int n;
+  {
+    const ObjArray::Raw methods = this->methods();
+    const int methods_length = methods().length();
+    n = methods_length;
+
+    if (is_interface()) {
+      for (int i = 0; i < methods_length; i++) {
+        if (methods().obj_at(i) == NULL) {
+          n--;
+        }
+      }
+    }
+  }
+
+  {
+    const jushort holder_id = class_id();
+    const ClassInfo::Raw info = class_info();
+    const int vtable_length = info().vtable_length();
+    for (int i = 0; i < vtable_length; i++) {
+      const Method::Raw method = info().vtable_method_at(i);
+      if (method.not_null() && method().holder_id() == holder_id) {
+        n++;
+      }
+    }
+  }
+  return n;
+}
+
+int InstanceClass::method_index(const Method* method) const {
+  const OopDesc* p = method->obj();
+  int n = 0;
+  {
+    const ObjArray::Raw methods = this->methods();
+    const int methods_length = methods().length();
+
+    for (int i = 0; i < methods_length; i++) {
+      const OopDesc* m = methods().obj_at(i);
+      if (m == p) {
+        return n;
+      }
+      if (m) {
+        n++;
+      }
+    }
+  }
+  {
+    const jushort holder_id = class_id();
+    const ClassInfo::Raw info = class_info();
+    AZZERT_ONLY(const int vtable_length = info().vtable_length();)
+    for (int i = 0;; i++) {
+      GUARANTEE(i < vtable_length, "Sanity");
+      const Method::Raw m = info().vtable_method_at(i);
+      if (m.obj() == p) {
+        break;
+      }
+      if (m.not_null() && m().holder_id() == holder_id) {
+        n++;
+      }
+    }
+  }
+  return n;
+}
+#endif
+
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR \
      ||ENABLE_JVMPI_PROFILE
 // Returns the original set of fields before romizer has renamed them.
@@ -1369,7 +1439,7 @@ void InstanceClass::verify_field(const char* name, const char* signature,
 
   if (field_name.not_null() && field_signature.not_null()) {
     OriginalField f(this, &field_name, &field_signature);
-    if (!f.is_valid()) {
+    if (!f.is_valid_in_current_profile()) {
       internal_field_error(&field_name, &field_signature);
       JVM_FATAL(internal_field_must_be_valid);
     }

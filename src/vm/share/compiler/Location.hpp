@@ -114,6 +114,20 @@ public:
   }
 #endif
 
+#if ENABLE_CSE
+  void set_push_bci(jshort bci) {
+    _push_bci = bci + 1;
+  }
+
+  jshort push_bci() const {
+    return _push_bci - 1;
+  }
+
+  void reset_push_bci() {
+    _push_bci = 0;
+  }
+#endif
+
   Assembler::Register get_register() const {
     return (Assembler::Register)value();
   }
@@ -315,6 +329,12 @@ class Location: public StackObj {
 #if ENABLE_COMPILER_TYPE_INFO
   jushort class_id() const {
     return frame_raw_location_at(index())->class_id();
+  }
+#endif
+
+#if ENABLE_CSE
+  jshort push_bci() const {
+    return frame_raw_location_at(index())->push_bci();
   }
 #endif
 

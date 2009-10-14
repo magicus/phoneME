@@ -1944,7 +1944,7 @@ void ROMWriter::write_system_symbols(ObjectWriter *obj_writer JVM_TRAPS) {
   Oop null_owner;
 
   obj_writer->start_block(SYSTEM_SYMBOLS_BLOCK, 0 JVM_CHECK);
-  int count = Symbols::number_of_system_symbols();
+  const int count = Symbols::number_of_system_symbols();
   for (int index= 0; index < count; index++) {
     Oop object((OopDesc*)system_symbols[index]);
     obj_writer->put_reference(&null_owner, -1, &object JVM_CHECK);

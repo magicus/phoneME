@@ -300,18 +300,18 @@ class ConstantPool: public Oop {
 
   ReturnOop unresolved_klass_at(int index JVM_TRAPS) const;
 
-  ReturnOop unchecked_unresolved_klass_at(int index) {
+  ReturnOop unchecked_unresolved_klass_at(int index) const {
     int offset = offset_from_index(index);
     GUARANTEE(tag_at(index).is_unresolved_klass(), "sanity");
     return obj_field(offset);
   }
 
-  int string_index_at(int index) {
+  int string_index_at(int index) const {
     GUARANTEE(tag_at(index).is_string_index(), "Corrupted constant pool");
     return int_field(offset_from_index(index));
   }
 
-  ReturnOop unresolved_string_at(int index) {
+  ReturnOop unresolved_string_at(int index) const {
     GUARANTEE(tag_at(index).is_unresolved_string(), "Corrupted constant pool");
     return obj_field(offset_from_index(index));
   }
@@ -385,7 +385,7 @@ class ConstantPool: public Oop {
     }
   }
 
-  void symbol_at_put(int index, Oop* oop) {
+  void symbol_at_put(int index, const Oop* oop) {
     tag_at_put(index, JVM_CONSTANT_Utf8);
     GUARANTEE(oop->is_symbol() || oop->is_byte_array(), "Sanity");
     obj_field_put(offset_from_index(index), oop);
@@ -395,7 +395,7 @@ class ConstantPool: public Oop {
     tag_at_put(index, JVM_CONSTANT_String);
     obj_field_put(offset_from_index(index), str);
   }
-  void string_at_put(int index, Oop* str) {
+  void string_at_put(int index, const Oop* str) {
     string_at_put(index, str->obj());
   }
 

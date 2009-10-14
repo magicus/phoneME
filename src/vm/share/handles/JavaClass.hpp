@@ -207,8 +207,8 @@ public:
   ReturnOop get_array_class(jint distance JVM_TRAPS);
 
   // sub class check
-  bool is_subclass_of(JavaClass* other_class);
-  bool is_strict_subclass_of(JavaClass* other_class);
+  bool is_subclass_of(const JavaClass* other_class) const;
+  bool is_strict_subclass_of(const JavaClass* other_class) const;
   bool is_subtype_of(JavaClass* other_class);
 
   bool compute_and_set_is_subtype_of(JavaClass* other_class);
@@ -265,10 +265,10 @@ public:
     ClassInfo::Raw info = class_info();
     info().set_name(value);
   }
-  AccessFlags access_flags() const {
+  const AccessFlags access_flags(void) const {
     return raw_class_info()->_access_flags;
   }
-  void set_access_flags(AccessFlags access_flags) {
+  void set_access_flags(const AccessFlags access_flags) const {
     ClassInfo::Raw info = class_info();
     info().set_access_flags(access_flags);
   }
@@ -277,17 +277,22 @@ public:
     flags.set_is_non_optimizable();
     set_access_flags(flags);
   }
+  void set_is_hidden( void ) {
+    AccessFlags flags = access_flags();
+    flags.set_is_hidden();
+    set_access_flags(flags);
+  }
 
-  jushort class_id() const {
+  jushort class_id(void) const {
     return raw_class_info()->_class_id;
   }
-  jint vtable_length() const {
+  jint vtable_length(void) const {
     return raw_class_info()->_vtable_length;
   }
-  jint itable_length() const {
+  jint itable_length(void) const {
     return raw_class_info()->_itable_length;
   }
-  bool is_array_class() const {
+  bool is_array_class(void) const {
     return access_flags().is_array_class();
   }
 

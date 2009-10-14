@@ -109,7 +109,7 @@ _JNI_FindClass(JNIEnv *env, const char * name) {
                                                  JVM_CHECK_0);
 
   AZZERT_ONLY(Symbol::Fast actual_name = cl().name());
-  GUARANTEE(actual_name().matches(&class_name),
+  GUARANTEE(actual_name().equals(&class_name),
             "Inconsistent class name lookup result");
 
   // For hidden classes we throw NoClassDefFoundError if lookup

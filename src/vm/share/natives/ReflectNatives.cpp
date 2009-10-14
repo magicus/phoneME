@@ -34,27 +34,25 @@ extern "C" {
 /* Helper function to get the fields */
 static inline jfieldID find_instance_field(InstanceClass* ic, String* name,
                                            const bool is_static JVM_TRAPS) {
-  UsingFastOops fast_oops;
-
   GUARANTEE(ic->not_null(), "Isolate is not ready");
-  TypeArray::Fast fields = ic->fields();
-  Symbol::Fast n = SymbolTable::symbol_for(name JVM_CHECK_0);
+  Symbol::Raw n = SymbolTable::symbol_for(name JVM_CHECK_0);
+  const TypeArray::Raw fields = ic->fields();
   // IMPL_NOTE: for now we don't check the signatures
   // we also cannot check the type of the field because we are using a
   // class_list that is not the current running one.
   //  Symbol::Fast s = TypeSymbol::parse("Ljava/lang/Object" JVM_CHECK_0);
 
   for (int index = 0; index < fields().length(); index += Field::NUMBER_OF_SLOTS) {
-    Field f(ic, index);
+    const Field f(ic, index);
     if ((f.is_static() == is_static)) { // && (f.type() == bt)) {
-      Symbol::Raw name = f.name();
-      if (name().matches(&n)) {
+      const Symbol::Raw name = f.name();
+      if (name().equals(&n)) {
         return (jfieldID)((jint)f.offset());
       }
     }
   }
   // Throw a no such field error if the field cannot be found
-  Throw::no_such_field_error(JVM_SINGLE_ARG_CHECK_0);
+  Throw::no_such_field_error(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
   return NULL;
 }
 

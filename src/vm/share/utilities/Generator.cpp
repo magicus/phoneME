@@ -86,6 +86,11 @@ void Generator::generate() {
   JvmPathChar interpreter[] = {
     'I','n','t','e','r','p','r','e','t','e','r','_', 0
   };
+  
+  if (GenerateMacCode) {
+    // implies GenerateGNUCode with small differences in assembler keywords
+    GenerateGNUCode = true;
+  }
 
   if (GenerateInlineAsm) {
     extension = extension_c;

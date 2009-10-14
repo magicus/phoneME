@@ -59,7 +59,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_sin", eax, ecx);
+  aligned_call("jvm_sin", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -72,7 +72,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_cos", eax, ecx);
+  aligned_call("jvm_cos", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -85,7 +85,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_tan", eax, ecx);
+  aligned_call("jvm_tan", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -98,7 +98,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_sqrt", eax, ecx);
+  aligned_call("jvm_sqrt", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -111,7 +111,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_ceil", eax, ecx);
+  aligned_call("jvm_ceil", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -124,7 +124,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_floor", eax, ecx);
+  aligned_call("jvm_floor", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -139,7 +139,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_asin", eax, ecx);
+  aligned_call("jvm_asin", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -152,7 +152,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_acos", eax, ecx);
+  aligned_call("jvm_acos", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -165,7 +165,7 @@ void NativeGenerator::generate_native_math_entries() {
   popl(edi);
   pop_double(eax, ecx);
 
-  ALIGNED_CALL_2("jvm_atan", eax, ecx);
+  aligned_call("jvm_atan", eax, ecx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);
@@ -179,7 +179,7 @@ void NativeGenerator::generate_native_math_entries() {
   pop_double(eax, ecx);
   pop_double(ebx, edx);
 
-  ALIGNED_CALL_4("jvm_atan2", eax, ecx, ebx, edx);
+  aligned_call("jvm_atan2", eax, ecx, ebx, edx);
 
   push_from_fpu_stack(double_tag, offset, true);
   jmp(edi);

@@ -283,8 +283,10 @@ bool ROM::link_static(OopDesc** ram_persistent_handles, int num_handles) {
              _rom_rom_duplicated_handles_size);
 #endif
 #if !ROMIZED_PRODUCT
-  int num_bytes = Symbols::number_of_system_symbols() * sizeof(OopDesc*);
-  jvm_memcpy(system_symbols, _rom_system_symbols_src, num_bytes);
+  {
+    const int num_bytes = Symbols::number_of_system_symbols() * sizeof(OopDesc*);
+    jvm_memcpy(system_symbols, _rom_system_symbols_src, num_bytes);
+  }
 #endif
 
 #if ENABLE_ISOLATES
@@ -1224,6 +1226,59 @@ bool ROM::is_hidden_class_in_profile(const jushort class_id) {
   return (_rom_hidden_classes_bitmaps[i] >> shift) & 1;
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_MEMBER_HIDING
+bool ROM::is_hidden_member(const int i) {
+  const int index = i >> LogBitsPerByte;
+  const int offset = i & (BitsPerByte-1);
+  return (_rom_modified_class_bitmap[index] >> offset) & 1;
+}
+
+bool ROM::is_hidden_field(const jushort class_id, const int field_index) {
+  const jushort index = class_id - _rom_modified_class_index_base;
+  if (index >= _rom_modified_class_index_size) {
+    return false;
+  }
+
+  const short modified_index = _rom_modified_class_index[index];
+  if (modified_index < 0) {
+    return false;
+  }
+
+  const int attr = _rom_modified_class_attributes[modified_index];
+  if (!(attr & CLASS_HAS_HIDDEN_FIELDS)) {
+    return false;
+  }
+
+  const int n = field_index / Field::NUMBER_OF_SLOTS;
+  return is_hidden_member((attr & CLASS_HIDDEN_MEMBERS_BIT_OFFSET_MASK) + n);
+}
+
+bool ROM::is_hidden_method(const Method* method) {
+  const jushort index = method->holder_id() - _rom_modified_class_index_base;
+  if (index >= _rom_modified_class_index_size) {
+    return false;
+  }
+
+  const short modified_index = _rom_modified_class_index[index];
+  if (modified_index < 0) {
+    return false;
+  }
+
+  const int attr = _rom_modified_class_attributes[modified_index];
+  if (!(attr & CLASS_HAS_HIDDEN_METHODS)) {
+    return false;
+  }
+
+  const InstanceClass::Raw holder = method->holder();
+  int n = holder().method_index(method);
+  if (attr & CLASS_HAS_HIDDEN_FIELDS) {
+    n += holder().field_count();
+  }
+  return is_hidden_member((attr & CLASS_HIDDEN_MEMBERS_BIT_OFFSET_MASK) + n);
+}
+#endif // ENABLE_MEMBER_HIDING
+
 
 #if ENABLE_LIB_IMAGES && ENABLE_MONET && ENABLE_ISOLATES
 void ROM::accumulate_task_memory_usage() {

@@ -42,7 +42,7 @@ juint SymbolTable::hash(utf8 s, int length) {
   }
   return value;  
 }
-juint SymbolTable::hash(Symbol *symbol) {
+juint SymbolTable::hash(const Symbol* symbol) {
   return hash(symbol->utf8_data(), symbol->length());
 }
 

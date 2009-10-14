@@ -24,16 +24,46 @@
  * information or have any questions.
  */
 
+#include "incls/_precompiled.incl"
+#include "incls/_ROMMemberPatternMatcher.cpp.incl"
+
 #if ENABLE_ROM_GENERATOR
 
-class ROMMethodPatternMatcher: public ROMMemberPatternMatcher {
-protected:
-  virtual void handle_class(const InstanceClass* klass JVM_TRAPS);
+bool ROMMemberPatternMatcher::initialize(const char* pattern, const int /*len*/
+                                         JVM_TRAPS) {
+  if (pattern[0] == '*' || pattern[1] == 0) {
+    pattern = "*.*";
+  }
 
-  // Override this method to handle all matching methods
-  virtual void handle_matching_method(Method* method JVM_TRAPS);
+  const char* delimiter = (const char*) jvm_strrchr(pattern, '.');
+  if (!delimiter) {
+    invalid_pattern();
+    return false;
+  }
 
-  bool match_method(const Method* method) const;
-};
+  int pos = delimiter - pattern;
+  const bool ok = 
+    ROMClassPatternMatcher::initialize(pattern, pos JVM_NO_CHECK_AT_BOTTOM);
+  if (!ok) {
+    return false;
+  }
+  
+  // parse the method name after '.'
+  pattern += pos + 1;
+  if ((delimiter = (const char*)jvm_strchr(pattern, '(')) == NULL) {
+    pos = jvm_strlen(pattern);
+  } else {
+    // delimiter points to the start of method's signature
+    pos = delimiter - pattern;
+    _signature = TypeSymbol::parse(pattern + pos JVM_CHECK_0);
+  }
+
+  if (!ROMClassPatternMatcher::validate(pattern, pos)) {
+    return false;
+  }
+
+  _name = SymbolTable::symbol_for((utf8) pattern, pos JVM_CHECK_0);
+  return true;
+}
 
 #endif // ENABLE_ROM_GENERATOR

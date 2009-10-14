@@ -59,7 +59,7 @@ void InterpreterStubs::generate_primordial_to_current_thread() {
   // 1 = return address
   // 8 = pushal
   // 1 = pushl(ebp)
-  APPLY_STACK_ALIGNMENT_FIX((1 + 8 + 1) * BytesPerWord, 0);
+  push_native_stack_padding((1 + 8 + 1) * BytesPerWord, 0);
 
   pushal();
   pushl(ebp);
@@ -92,7 +92,7 @@ void InterpreterStubs::generate_current_thread_to_primordial() {
   // 1 = return address
   // 8 = pushal
   // 1 = pushl(ebp)
-  REVERT_STACK_ALIGNMENT_FIX((1 + 8 + 1) * BytesPerWord, 0);
+  pop_native_stack_padding((1 + 8 + 1) * BytesPerWord, 0);
 
   ret();
   entry_end(); // current_thread_to_primordial

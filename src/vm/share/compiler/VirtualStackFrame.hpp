@@ -47,6 +47,11 @@ protected:
   juint  _length;
 #if ENABLE_COMPILER_TYPE_INFO
   jushort _class_id;
+#endif
+#if ENABLE_CSE
+  jushort _push_bci; // bci at which the value was pushed to this location
+#endif
+#if (ENABLE_COMPILER_TYPE_INFO + ENABLE_CSE) == 1
   jushort _padding;
 #endif
 #ifndef PRODUCT
@@ -57,6 +62,120 @@ public:
 };
 
 class RawLocation;
+
+#if ENABLE_CSE
+
+#define FOR_VISIBLE_EXPRESSION_FIELDS(template) \
+  template(jshort,  start_bci, 1)          \
+  template(jshort,  expr_length, 0)        \
+  template(jint,    locals_map, 0)         \
+  template(jint,    fields_map, 0)         \
+  template(jint,    array_types_map, 0)    \
+  template(jubyte,  value_type, 0)
+
+#define FOR_HIDDEN_EXPRESSION_FIELDS(template) \
+  template(jubyte,  value_flags, 0)        \
+  template(jushort, value_class_id, 0)     \
+  template(jint,    value_length, 0)
+
+#define FOR_ALL_EXPRESSION_FIELDS(template) \
+  FOR_VISIBLE_EXPRESSION_FIELDS(template)   \
+  FOR_HIDDEN_EXPRESSION_FIELDS(template)
+
+#define DECLARE_FIELD(type, name, off) \
+    type _##name;
+#define DEFINE_ACCESSOR(type, name, off)       \
+    type name() const { return _##name - off; } \
+    void set_##name(type name) { _##name = name + off; }
+
+class Expression {
+ private:
+
+  FOR_ALL_EXPRESSION_FIELDS(DECLARE_FIELD)
+
+  FOR_HIDDEN_EXPRESSION_FIELDS(DEFINE_ACCESSOR)
+
+ public:
+  FOR_VISIBLE_EXPRESSION_FIELDS(DEFINE_ACCESSOR)
+
+  void copy_value_flags_from(const Value & value) {
+    GUARANTEE(value_type() == value.type(), "Types mismatch");
+    set_value_flags(value.flags());
+#if ENABLE_COMPILER_TYPE_INFO
+    set_value_class_id(value.class_id());
+#endif
+    set_value_length(value.length());
+  }
+
+  void copy_value_flags_to(Value & value) const {
+    GUARANTEE(value_type() == value.type(), "Types mismatch");
+    value.set_flags(value_flags());
+#if ENABLE_COMPILER_TYPE_INFO
+    value.set_class_id(value_class_id());
+#endif
+    value.set_length(value_length());
+  }
+};
+
+#undef DECLARE_FIELD
+#undef DEFINE_ACCESSOR
+
+class ExpressionAttributeClosure : public BytecodeClosure {
+ public:
+  ExpressionAttributeClosure() : 
+   _locals_map(0), _fields_map(0), _array_types_map(0) {}
+
+  virtual void load_local(BasicType kind, int index JVM_TRAPS);
+
+  virtual void load_array(BasicType kind JVM_TRAPS);
+
+  virtual void get_field(int index JVM_TRAPS);
+    
+  virtual void get_static(int index JVM_TRAPS);
+
+  virtual void fast_get_field(BasicType field_type, int field_offset JVM_TRAPS);
+
+  jint locals_map() const {
+    return _locals_map;
+  }
+
+  jint fields_map() const {
+    return _fields_map;
+  }
+
+  jint array_types_map() const {
+    return _array_types_map;
+  }
+
+ private:
+  jint   _locals_map;
+  jint   _fields_map;
+  jint   _array_types_map;
+};
+
+class KillExpressionClosure : public BytecodeClosure {
+ public:
+  KillExpressionClosure(VirtualStackFrame* f) {
+    _frame = f;
+  }
+
+  virtual void store_local(BasicType kind, int index JVM_TRAPS);
+
+  virtual void store_array(BasicType kind JVM_TRAPS);
+
+  virtual void put_field(int index JVM_TRAPS);
+    
+  virtual void put_static(int index JVM_TRAPS);
+
+  virtual void fast_put_field(BasicType field_type, int field_offset JVM_TRAPS);
+
+ private: 
+  VirtualStackFrame* frame() const { return _frame; }
+
+  VirtualStackFrame* _frame;
+};
+
+#endif
 
 class VirtualStackFrame: public CompilerObject {
  private:
@@ -77,6 +196,14 @@ class VirtualStackFrame: public CompilerObject {
   //there's no register assigned for base or boundary.
   //we don't adjust register reference when one is cached.
   int            _bound_mask;
+#endif
+
+#if ENABLE_CSE
+  Expression _expressions_map[Assembler::number_of_registers];
+  // If inside a bytecode segment that represents a valid expression,
+  // keeps the first bci of the most recent expression being calculated on
+  // stack. Otherwise, -1.
+  jshort     _expression_start_bci;
 #endif
 
 #if USE_COMPILER_FPU_MAP
@@ -109,219 +236,6 @@ class VirtualStackFrame: public CompilerObject {
   }
 
  public:
-#if ENABLE_CSE
-  friend class BytecodeCompileClosure;
-
-  //some osr entry is loop entry also
-  //so they are unpassable and all the cached notation
-  //status should be cleaned.
-  //the osr entry created by "if" is passable.
-  enum osr_const {
-    passable = 1,
-    unpassable = 0
-  };
-
-  //high bits stand for the begin index
-  //low bits stand for the end index.
-  enum tag_const {
-    low_bit = 16,
-    low_mask = 0xffff,
-    high_bit = 16,
-    high_mask = 0xffff0000
-  };
-
-  //tag popped from tag stack
-  static jint _cse_tag ;
-
-  //the bci triggest the latest popping from operation stack
-  static jint _pop_bci;
-
-  //whether the notations could pass through the
-  //osr entry.
-  static jint _passable_entry;
-
-  //whether the tracking of byte code snippet of each value
-  //in the operation stack should be aborted.
-  static bool _abort;
- private:
-
-  //push tag on tag stack.
-  //the tag will contain the leftest bci
-  //of current item.
-  //example of current execution stack and tag
-  //cur bci = 2:
-  //|         1  |bci2 iconst 1 tag:(0x0,0x2)
-  //|         2  |bci1 iconst 2 tag:(0x0,0x1)
-  //cur bci = 3:
-  //after execution of iadd
-  //|        3   |bci3 iadd     tag:(0x1,0x3)
-  //cur bci = 4
-  //|   1    |bci 4 iconst 1   tag:(0x0, 0x4)
-  //|   3    |bci 3 iadd        tag:(0x1,0x3)
-  //cur bci = 5
-  //after execution of iadd bci 5
-  //|   4    |bci 5 iadd       tag:(0x1, 0x5)
-
-  //high bits of tag2 is 0x1 (begin bci of result of iadd(bci=3) which is the bci of iconst2)
-  //low bits of tag2 is 0x5
-  void   push_tag();
-
-  //pop tag from tag stack.
-  //get the leftest bci of current result
-  //value
-  void   pop_tag();
-
-  //get the bci information from a tag
-  void   decode_tag(jint tag);
-
-  //return the size of tag stack used in CSE.
-  static jint size_of_tag_stack(Method* method);
- public:
-
-  static inline void  mark_as_passable(void) {
-    _passable_entry = passable;
-  }
-
-  static inline void mark_as_unpassable(void) {
-    _passable_entry = unpassable;
-  }
-
-  static inline bool is_entry_passable(void) {
-    return _passable_entry != unpassable;
-  }
-
-  //when the entry is passable, we also record the registers whose notation
-  //shouldn't be cleaned for multi-entry caused by OSR.
-  static inline void record_remained_registers(jint bitmap_of_registers) {
-    _passable_entry = bitmap_of_registers;
-  }
-
-  static inline jint remained_registers(void) {
-    return _passable_entry;
-  }
-
-  //reset the status values for beginning the tracking of byte code snippet
-  //of each value in the operation stack.
-  static inline void  init_status_of_current_snippet_tracking(void) {
-    _pop_bci = -1;
-    _cse_tag = 0;
-    _abort = false;
-  }
-
-  //reset the status values for aborting from the tracking of byte code snippet
-  //of each value in the operation stack.
-  //aborted status will be set if we want to abort from the generation of the
-  //notation of a value in some cases, such as we come across a snippet like the begin_bci > end_bci(
-  //caused by goto)
-  //and so on.
-  static inline  void abort_tracking_of_current_snippet( void ) {
-    _pop_bci = -1;
-    _cse_tag = 0;
-    _abort = true;
-  }
-
-  //tell whether the current status is caused by aborting of tracking
-  static inline bool is_aborted_from_tracking(void) {
-    return _abort;
-  }
-
-  //reset the abort status, in case a aborted is set during the compilation of
-  //last byte code.
-  static inline void mark_as_not_aborted(void) {
-    _abort = false;
-  }
-
-  //check whether the _pop_bci is updated due to popping action of
-  //operation stack
-  static inline bool is_popped(void) {
-    return  _pop_bci != -1;
-  }
-
-  // get the first bci of the byte code string
-  // from which we get the result.
-  // since the value store in _cse_tag is start from 1,
-  // we substract 1 here(bci start from zero).
-  static inline jint first_bci_of_current_snippet(void) {
-    jint first_bci = 0;
-    first_bci = (_cse_tag & low_mask) - 1;
-    if ( (_cse_tag & high_mask) != 0 ) {
-      first_bci  = (_cse_tag >> low_bit) - 1;
-    }
-    return first_bci;
-  }
-
-  //creat a tag from the current bci and the popped bci.
-  //The popped bci is extract from cse_tag.
-  //The popped bci will be the leftest bci of an byte code snippet.
-  //For example, (1+2)+4, the popped bci of final result 7 should
-  //be the bci of iconst 1.
-  //if the current bci won't cause a pop operation, the tag is the current  bci
-
-  static inline jint create_tag(jint current_bci) {
-    //bci encoded in tag start from 1.
-    jint tag = current_bci + 1 ;
-    if ( _pop_bci  == current_bci) {
-      //the pop item is eat by this bci
-      //we should track its _cse_tag.
-      //for example: a iadd is compiled
-      if ( (_cse_tag & high_mask) == 0) {
-         //the pop item is atomic
-         //we make the bci of that pop item as
-         //the begin bci of current tag
-        tag  |= (( (_cse_tag) & low_mask) << low_bit);
-      } else {
-        //the pop item is calculated from a expression
-        //we use its begin bci as the begin bci of current tag
-        tag  |= ( (_cse_tag) & high_mask);
-      }
-    }
-    return tag;
-  }
-
-  //the offset of bci stack base in the VirtualStackFrame
-  jint* bci_stack_base( void ) {
-    return (jint*) DERIVED(address, this+1,
-            _location_map_size - method()->max_execution_stack_count() *
-            sizeof(jint));
-  }
-  const jint* bci_stack_base( void ) const {
-    return (const jint*) DERIVED(address, this+1,
-            _location_map_size - method()->max_execution_stack_count() *
-            sizeof(jint));
-  }
-
-  //the tag corresponding to the index of item on the operation stack
-  jint* tag_at(const int index)  {
-    // Note: 2 additional stack elements are needed,
-    // see VirtualStackFrame::create() for details
-    GUARANTEE( unsigned(index) < 
-               unsigned(method()->max_execution_stack_count()) + 2,
-               "Tag index out of bounds" );
-    return bci_stack_base() + index;
-  }
-  const jint* tag_at(const int index) const {
-    // Note: 2 additional stack elements are needed,
-    // see VirtualStackFrame::create() for details
-    GUARANTEE( unsigned(index) < 
-               unsigned(method()->max_execution_stack_count()) + 2,
-               "Tag index out of bounds" );
-    return bci_stack_base() + index;
-  }
-
-  //clean the register notations whose value should be cleaned due to multi-entry
-  void wipe_notation_for_osr_entry();
-
-  //clean notations for registers not mapped to any location
-  void wipe_notation_for_unmapped();
-#else
- private:
-  void   push_tag() {}
-  void   pop_tag() {}
-  static jint size_of_tag_stack(Method* method) {return 0;}
- public:
-  void wipe_notation_for_osr_entry() {}
-  void wipe_notation_for_unmapped() {}
-#endif
   // copy this virtual stack frame to dst
   void copy_to(VirtualStackFrame* dst) const {
     // Need to copy only the locations that are actually in use. I.e.,
@@ -477,7 +391,11 @@ class VirtualStackFrame: public CompilerObject {
   // Dirtify a given register by invalidating all mappings of this register.
   void dirtify(Assembler::Register reg);
 
-  bool is_mapping_something(const Assembler::Register reg) const;
+  bool is_mapping_something(const Assembler::Register reg) const {
+    return is_mapping_location(reg) || is_annotated(reg);
+  }
+  bool is_mapping_location(const Assembler::Register reg) const;
+  bool is_annotated(const Assembler::Register reg) const;
 
  public:
   // Accessors for the virtual stack pointer variable.
@@ -709,7 +627,6 @@ class VirtualStackFrame: public CompilerObject {
   bool has_no_literals(void) const { return true; }
 #endif
 
-
 #if ENABLE_REMEMBER_ARRAY_LENGTH
   enum BoundMaskElement {
     index_bits = 0xfff, // store the location index of a array bound checked variable
@@ -850,6 +767,62 @@ class VirtualStackFrame: public CompilerObject {
   void set_value_class(Value & value, JavaClass * java_class);
 #endif
 
+#if ENABLE_CSE
+  void push_expression();
+  void pop_expression();
+
+  void set_expr_start_bci(int bci) {
+    _expression_start_bci = bci;
+  }
+
+  int expr_start_bci() const {
+    return _expression_start_bci;
+  }
+
+  void reset_expr_start_bci() {
+    _expression_start_bci = -1;
+  }
+
+  bool in_expression_segment() const {
+    return expr_start_bci() >= 0;
+  }
+
+  void reset_expression_segment();
+
+  bool has_expression(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg].expr_length() > 0;
+  }
+
+  const Expression & expression(const Assembler::Register reg) const {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg];
+  }
+
+  Expression & expression(const Assembler::Register reg) {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    return _expressions_map[reg];
+  }
+
+  void clear_expression(const Assembler::Register reg) {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+    jvm_memset(_expressions_map + reg, 0, sizeof(Expression));
+  }
+
+  void clear_expressions(void);
+#else
+  void push_expression() {}
+  void pop_expression() {}
+  bool has_expression(const Assembler::Register reg) const { return false; }
+  void reset_expression_segment() {}
+  void clear_expression(const Assembler::Register) {}
+  void clear_expressions(void) {}
+#endif
+
   // Debug dump the state of the virtual stack frame.
   void dump_fp_registers(bool /*as_comment*/) const PRODUCT_RETURN;
   void dump(bool /*as_comment*/)                    PRODUCT_RETURN;
@@ -973,6 +946,55 @@ public:
 private:
   VirtualStackFrame* _vsf;
   int                _index;
+};
+#endif
+
+#if ENABLE_CSE
+class ExpressionStream {
+public:
+  ExpressionStream(VirtualStackFrame* vsf) {
+    _vsf = vsf;
+    _index = -1;
+    next();
+  }
+  void next();
+  bool eos() {
+    return _index >= Assembler::number_of_registers;
+  }
+  void reset() {
+    _index = -1; next();
+  }
+
+  Assembler::Register reg() const {
+    return (Assembler::Register)_index;
+  }
+
+#define DEFINE_EXPR_ACCESSOR(type, name, off) \
+  type name() const { return frame()->expression(reg()).name(); }
+
+  FOR_VISIBLE_EXPRESSION_FIELDS(DEFINE_EXPR_ACCESSOR);
+
+  bool has_local_index(int index) const {
+    GUARANTEE(index >= 0 && index < BitsPerWord, "Invalid index");
+    return locals_map() & (1 << index);
+  }
+  bool has_field_offset(int offset) const {
+    GUARANTEE(offset >= 0 && offset < BitsPerWord, "Invalid offset");
+    return fields_map() & (1 << offset);
+  }
+  bool has_array_type(BasicType type) const {
+    GUARANTEE(type >= T_BOOLEAN && type <= T_ARRAY, "Invalid type");
+    return array_types_map() & (1 << type);
+  }
+
+  void kill() {
+    frame()->clear_expression((Assembler::Register)_index);
+  }
+private:
+  VirtualStackFrame* frame() const { return _vsf; }
+
+  VirtualStackFrame*  _vsf;
+  jint                _index;
 };
 #endif
 

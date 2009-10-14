@@ -76,6 +76,9 @@ class AccessFlags {
   jint _flags;
 
  public:
+  AccessFlags(void) {}
+  AccessFlags(const jint flags): _flags(flags) {}
+
   // Java access flags
   bool is_public() const {
     return (_flags & JVM_ACC_PUBLIC) != 0;
@@ -317,13 +320,15 @@ class AccessFlags {
     atomic_clear_bits(JVM_ACC_NATIVE);
   }
 
-  /// This structure is used in non-product mode to print out the
-  /// definitions of the access-flags bits.
+#if USE_DEBUG_PRINTING
+  // This structure is used in non-product mode to print out the
+  // definitions of the access-flags bits.
   struct FlagInfo {
     juint flag;
     juint type;
-    const char *name;
+    const char* name;
   };
 
-  static FlagInfo flag_info[];
+  static const FlagInfo flag_info[];
+#endif
 };

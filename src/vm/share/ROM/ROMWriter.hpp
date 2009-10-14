@@ -569,14 +569,16 @@ public:
   
   void write_persistent_handles(ObjectWriter *obj_writer JVM_TRAPS);
   void write_system_symbols(ObjectWriter *obj_writer JVM_TRAPS);
-  virtual void write_constant_string(Symbol* /*s*/ JVM_TRAPS) 
-               {JVM_IGNORE_TRAPS;}
-  virtual void write_constant_string_ref(Symbol* /*s*/) {}
-  virtual void write_restricted_packages( void ) {}
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
+
+#if USE_SOURCE_IMAGE_GENERATOR
+
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
   virtual void write_hidden_classes( void ) {}
   virtual void write_restricted_in_profiles( void ) const {}
-#endif
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#endif // USE_SOURCE_IMAGE_GENERATOR
+
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
 #if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES        
   virtual void write_tm_reference(Oop* /*owner*/, int owner_offset, Oop* /*oop*/, FileStream* /*stream*/) {}

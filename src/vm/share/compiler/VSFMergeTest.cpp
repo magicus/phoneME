@@ -34,8 +34,7 @@
 void VSFMergeTest::run(OsFile_Handle config_file) {
   SETUP_ERROR_CHECKER_ARG;
 
-  AccessFlags access_flags;
-  access_flags.set_flags(0);
+  AccessFlags access_flags(0);
   Method method = Universe::new_method(0, access_flags JVM_CHECK);
   method.set_max_locals(MAX_TEST_LOCATION_COUNT);
 

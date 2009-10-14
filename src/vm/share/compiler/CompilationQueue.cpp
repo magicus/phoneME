@@ -34,14 +34,6 @@
 
 #if ENABLE_COMPILER
 
-#if ENABLE_CSE
-# define ABORT_CSE_TRACKING \
-    VirtualStackFrame::abort_tracking_of_current_snippet();\
-    RegisterAllocator::wipe_all_notations();
-#else
-# define ABORT_CSE_TRACKING
-#endif
-
 CompilationQueueElement* CompilationQueueElement::allocate(
   const CompilationQueueElementType type, const jint bci JVM_TRAPS )
 {
@@ -233,8 +225,6 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
     Entry* entry = compiler->entry_for(compiler->bci());
     if( entry ) {      
       //flush all the cached regiser
-      VERBOSE_CSE(("clear notation for has_entry"));
-      ABORT_CSE_TRACKING;
 
       // We enter here if we already have generated code for this closure;
       // We will not compile this closure again, but we may need to emit
@@ -434,9 +424,6 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         stub->insert();
       }
 #endif
-
-      VERBOSE_CSE(("clear notation for bci with multiple entry "));
-      ABORT_CSE_TRACKING;
     }
     if (PrintCompiledCodeAsYouGo && GenerateCompilerComments) {
       tty->cr();
@@ -464,8 +451,6 @@ void CompilationContinuation::end_compile( void ) {
 
 bool CompilationContinuation::compile(JVM_SINGLE_ARG_TRAPS) {
   if (!is_suspended()) {
-    VERBOSE_CSE(("clear notation for a new Compilation Continuation "));
-    ABORT_CSE_TRACKING;
     CompilationContinuation::begin_compile(JVM_SINGLE_ARG_CHECK_0);
   }
 
@@ -923,8 +908,4 @@ void CompilationQueueElement::iterate_oopmaps(oopmaps_doer do_map, void *param) 
 
 #endif // PRODUCT
 
-
-#ifdef ABORT_CSE_TRACKING
-#undef ABORT_CSE_TRACKING
-#endif
 #endif // ENABLE_COMPILER

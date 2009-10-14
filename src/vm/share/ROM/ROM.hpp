@@ -416,6 +416,17 @@ public:
   static const char* const* profiles_names(void) { return _rom_profiles_names; }
 #endif
 
+#if ENABLE_MEMBER_HIDING
+  enum {
+    CLASS_HAS_HIDDEN_FIELDS   = 1 << 31,
+    CLASS_HAS_HIDDEN_METHODS  = 1 << 30,
+    CLASS_HIDDEN_MEMBERS_BIT_OFFSET_MASK = CLASS_HAS_HIDDEN_METHODS - 1
+  };
+  static bool is_hidden_member(const int i);
+  static bool is_hidden_field(const jushort class_id, const int field_index);
+  static bool is_hidden_method(const Method* method);
+#endif
+
 private:
   static bool name_matches_patterns(const char* name, const int len,
                                     const char* patterns);

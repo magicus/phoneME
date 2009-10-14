@@ -393,7 +393,6 @@ class Bytecodes: public AllStatic {
     WideLengthMask  = 0x00F,
     Exceptions      = 0x010,
     NullCheck       = 0x020 | Exceptions,
-    CSE             = 0x040,
     NoFallThru      = 0x080,
     NoPatching      = 0x100,
     NoInlining      = 0x200,
@@ -422,6 +421,9 @@ class Bytecodes: public AllStatic {
 
     // Note: need to revisit it for hardware fp on ARM
     SoftFloat       = Exceptions,
+
+    Expr            = 0x800,
+    ExprStart       = 0x1000,
 
     None            = 0
   };
@@ -468,42 +470,25 @@ class Bytecodes: public AllStatic {
     return can_redo_flags(get_flags(code));
   }
 
-  static void verify() PRODUCT_RETURN;
-
 #if ENABLE_CSE
-//a cse string should  begin with a byte code who 
-//won't eat value in the expression stack
-//since when we omit a common sequence,
-//we just push a result on top of stack.
-  static bool can_decrease_stack(const Code code) {
-    return code > _aload_3 &&
-           code != _getstatic &&
-           code != _fast_1_getstatic &&
-           code != _fast_2_getstatic &&
-           code != _aload_0_fast_agetfield_1 &&
-           code != _aload_0_fast_igetfield_1
-#if !ENABLE_CPU_VARIANT
-           && (code <_aload_0_fast_agetfield_4 ||
-           code >= _fast_init_1_putstatic)
-#endif
-           ;
+  static bool is_expr(const jushort flags) {
+    return flags & (Expr | ExprStart);
   }
 
-  static bool is_kind_of_eliminable(const Code code) {
-#if ENABLE_JAVA_STACK_TAGS
-    switch (code) {
-     case Bytecodes::_fast_igetstatic:
-     case Bytecodes::_fast_lgetstatic:
-     case Bytecodes::_fast_fgetstatic:
-     case Bytecodes::_fast_dgetstatic:
-     case Bytecodes::_fast_agetstatic:
-       return true;
-    }
-#endif
-    return get_flags(code) & CSE;
+  static bool is_expr(const Code code) {
+    return is_expr(get_flags(code));
   }
 
-#endif // if ENABLE_CSE
+  static bool is_expr_start(const jushort flags) {
+    return flags & ExprStart;
+  }
+
+  static bool is_expr_start(const Code code) {
+    return is_expr_start(get_flags(code));
+  }
+#endif
+
+  static void verify() PRODUCT_RETURN;
 
 #if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
   static bool is_null_point_exception_throwable(const Code code) {

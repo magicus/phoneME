@@ -41,19 +41,19 @@ ReturnOop Natives::get_native_function_name(Method *method JVM_TRAPS) {
 
   ObjArray methods = ic.methods();
   for (int i=0; i<methods.length(); i++) {
-    Method other_method = methods.obj_at(i);
+   const  Method::Raw other_method = methods.obj_at(i);
     if (other_method.is_null()) {
       // removed <clinit>
       continue;
     }
-    if (!other_method.is_native()) {
+    if (!other_method().is_native()) {
       continue;
     }
     if (method->equals(&other_method)) {
       continue;
     }
-    Symbol other_name = other_method.get_original_name(dummy);
-    if (method_name.matches(&other_name)) {
+    const Symbol::Raw other_name = other_method().get_original_name(dummy);
+    if (method_name.equals(&other_name)) {
       // Overloaded native method - need signature
       signature = method->signature();
       break;
@@ -823,8 +823,8 @@ ReturnOop Java_java_lang_Class_forName(JVM_SINGLE_ARG_TRAPS) {
                                                  ExceptionOnFailure
                                                  JVM_CHECK_0);
 
-  AZZERT_ONLY(Symbol::Fast actual_name = cl().name());
-  GUARANTEE(actual_name().matches(&class_name),
+  AZZERT_ONLY(Symbol::Raw actual_name = cl().name());
+  GUARANTEE(class_name().matches(&actual_name),
             "Inconsistent class name lookup result");
 
   // For hidden classes we throw ClassNotFoundException if lookup

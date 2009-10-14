@@ -169,7 +169,7 @@ slow_path:
 
 // Is this a class identifier that contains only ASCII? If the answer
 // is no, you should call skip_class_identifier() instead.
-bool Signature::is_class_identifier_quick(Symbol* signature) {
+bool Signature::is_class_identifier_quick(const Symbol* signature) {
   AZZERT_ONLY(verify_tables());
 
   utf8 ptr = signature->utf8_data();

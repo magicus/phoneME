@@ -284,6 +284,7 @@ void BytecodeCompileClosure::branch_if_flags(JVM_SINGLE_ARG_TRAPS) {
         set_bytecode(bci);
         set_default_next_bytecode_index(bci);
         compiler()->set_bci(bci); // Is it really necessary?
+        frame()->reset_expression_segment();
 
         // Pop argument
         PoppedValue op1(T_INT);
@@ -605,9 +606,6 @@ void BytecodeCompileClosure::branch_if_icmp(cond_op cond, int dest JVM_TRAPS) {
 
   // Insert OSR entries for backward branches.
   if (dest < bci() || is_active_bci()) {
-      
-    //cse     
-    record_passable_statue_of_osr_entry(dest);      
     osr_entry(JVM_SINGLE_ARG_CHECK);
   }
 
@@ -2104,6 +2102,8 @@ void BytecodeCompileClosure::bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
     GUARANTEE( !(__ has_overflown_compiled_method()), "sanity");
   }
 
+  cse_bytecode_prolog(JVM_SINGLE_ARG_CHECK);
+
   __ bytecode_prolog();
 
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
@@ -2164,6 +2164,8 @@ BytecodeCompileClosure::check_exception_handler_start(JVM_SINGLE_ARG_TRAPS) {
 void BytecodeCompileClosure::bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
   JVM_IGNORE_TRAPS;
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(bytecode_epilog);
+
+  cse_bytecode_epilog(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 
 #ifndef PRODUCT
   if (GenerateCompilerComments && DumpVSFInComments) {
@@ -2229,6 +2231,162 @@ void BytecodeCompileClosure::init_static_array(JVM_SINGLE_ARG_TRAPS) {
   __ init_static_array(result JVM_CHECK);
 }
 #endif //!ENABLE_CPU_VARIANT
+
+#if ENABLE_CSE
+bool BytecodeCompileClosure::eliminate_expression(int bci JVM_TRAPS) {
+  if (Compiler::is_inlining()) {
+    return false;
+  }
+
+  const int max_length = method_size() - bci;
+
+  if (max_length <= 0 || compiler()->entry_count_for(bci) > 1) {
+    return false;
+  }
+
+  Assembler::Register reg = Assembler::no_reg;
+  int best_match_length = 0;
+
+  ExpressionStream es(frame());
+  for ( ; !es.eos() ; es.next()) {
+    int expr_length = es.expr_length();
+    if (expr_length > best_match_length && expr_length < max_length) {
+      int expr_bci = es.start_bci();
+      const address code_base = method()->code_base();
+      if (jvm_memcmp(code_base + expr_bci, 
+                     code_base + bci, expr_length) == 0) {
+        best_match_length = expr_length;
+        reg = es.reg();
+      }
+    }
+  }
+
+  if (best_match_length <= 0) {
+    return false;
+  }
+
+  const Expression & ex = frame()->expression(reg);
+  BasicType type = (BasicType)ex.value_type();
+  GUARANTEE(type >= T_BOOLEAN && type <= T_OBJECT && 
+            !is_two_word(type), "Invalid type");
+  Value match_value(type); 
+
+  RegisterAllocator::reference(reg);
+  match_value.set_register(reg);
+  ex.copy_value_flags_to(match_value);
+  frame()->increment_virtual_stack_pointer();
+  const int virtual_sp = frame()->virtual_stack_pointer();
+  frame()->value_at_put(virtual_sp, match_value);
+  frame()->raw_location_at(virtual_sp)->set_push_bci(bci);
+
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
+  if (GenerateCompilerComments) {
+    __ comment("Expression at %s matches bytecodes at [%d,%d]. Skipping: ", 
+               RegisterAllocator::register_name(reg),
+               bci, bci + best_match_length - 1);
+    Verbose++; // force callee names to be printed out, etc.
+    int skip_bci = bci;
+    const int skip_bci_end = bci + best_match_length;
+    const Method * m = method();
+    while (skip_bci < skip_bci_end) {
+      int next_bci = m->next_bci(skip_bci);
+      FixedArrayOutputStream output;
+      method()->print_bytecodes(&output, skip_bci, next_bci, false);
+      __ comment(output.array());
+      skip_bci = next_bci;
+    }
+    Verbose--;
+
+    if (DumpVSFInComments) {
+      // a frame->dump() is potentially quite expensive to compute, so we
+      // avoid computing it unless asked to generate compiler comments.
+      frame()->dump(true);
+      frame()->dump_fp_registers(true);
+    }
+  }
+#endif
+
+  set_next_bytecode_index(bci + best_match_length);
+
+  return true;
+}
+
+void BytecodeCompileClosure::cse_bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
+  if (Compiler::is_inlining()) {
+    return;
+  }
+
+  const jint current_bci = bci();
+  const Bytecodes::Code code = bytecode_at(current_bci);
+  VirtualStackFrame* vsf = frame();
+
+  if (!Bytecodes::is_expr(code)) {
+    KillExpressionClosure cl(vsf);
+    cl.initialize(method());
+    method()->iterate_bytecode(current_bci, &cl, code JVM_CHECK);
+    vsf->reset_expression_segment();
+  } else if (Bytecodes::is_expr_start(code)) {
+    vsf->set_expr_start_bci(current_bci);
+  }
+}
+
+void BytecodeCompileClosure::cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
+  if (Compiler::is_inlining()) {
+    return;
+  }
+
+  const int next_bci = next_bytecode_index();
+
+  if (next_bci < 0) {
+    // terminated compilation
+    return;
+  }
+
+  VirtualStackFrame * vsf = frame();
+  if (vsf->in_expression_segment()) {
+    const int index = vsf->virtual_stack_pointer();
+
+    RawLocation *raw_location = vsf->raw_location_at(index);
+    const int current_bci = code_generator()->bci();
+    int start_bci = vsf->expr_start_bci();
+
+    GUARANTEE(start_bci == raw_location->push_bci(), "Sanity");
+    GUARANTEE(start_bci >= 0 && start_bci <= current_bci, 
+              "Invalid expression start bci");
+    GUARANTEE(!raw_location->is_two_word(), "2-word expressions not supported");
+    if (raw_location->in_register()) {
+      const int next_bci = method()->next_bci(current_bci);
+
+      ExpressionAttributeClosure cl;
+      cl.initialize(method());
+      SETUP_ERROR_CHECKER_ARG;
+      method()->iterate(start_bci, next_bci, &cl JVM_NO_CHECK);
+      if (CURRENT_HAS_PENDING_EXCEPTION) {
+        Thread::clear_current_pending_exception();
+      } else {
+        if (start_bci == current_bci && cl.locals_map() != 0 && 
+            cl.fields_map() == 0 && cl.array_types_map() == 0) {
+          // Do not treat single local load bytecodes as expressions,
+          // since no code is needed to load a local mapped to a register
+        } else {
+          Assembler::Register reg = raw_location->get_register();
+          Value value(raw_location, index);
+          const int expr_length = next_bci - start_bci;
+          Expression & ex = vsf->expression(reg);
+          ex.set_start_bci(start_bci);
+          ex.set_expr_length(expr_length);
+          ex.set_locals_map(cl.locals_map());
+          ex.set_fields_map(cl.fields_map());
+          ex.set_array_types_map(cl.array_types_map());
+          ex.set_value_type(value.type());
+          ex.copy_value_flags_from(value);
+        }
+      }
+    }
+  }
+}
+#endif
+
 #undef __
 
 inline void
@@ -2251,16 +2409,16 @@ bool BytecodeCompileClosure::compile(JVM_SINGLE_ARG_TRAPS) {
   // overwritten during the compilation.
   set_default_next_bytecode_index(bci);
 
-  const Bytecodes::Code code = bytecode_at(bci);
-  if( !code_eliminate_prologue(code) ) {
-    // Compile current bytecode
-    // Must use Compiler::bci() because bci could change
-    method()->iterate_bytecode(compiler()->bci(), this, code JVM_CHECK_(false));
-    code_eliminate_epilogue(code);
+  const bool eliminated = eliminate_expression(bci JVM_CHECK_(false));
 
-    // Update current bytecode index
-    compiler()->set_bci(next_bytecode_index());
+  if (!eliminated) {
+    const Bytecodes::Code code = bytecode_at(bci);
+    // Compile current bytecode
+    method()->iterate_bytecode(bci, this, code JVM_CHECK_(false));
   }
+
+  // Update current bytecode index
+  compiler()->set_bci(next_bytecode_index());
 
   // Return whether or not the compilation should continue.
   return !is_compilation_done();
@@ -2283,218 +2441,6 @@ void BytecodeCompileClosure::print_on(Stream *st) {
 }
 void BytecodeCompileClosure::p()  {
   print_on(tty);
-}
-#endif
-
-#if ENABLE_CSE
-void BytecodeCompileClosure::record_passable_statue_of_osr_entry(int dest) {
-   if (dest >= bci() && is_active_bci()) {
-     //for non loop osr
-     //we should try to keep the cse values
-     VERBOSE_CSE(("mask osr passable bci = %d", compiler()->bci()));
-     VirtualStackFrame::mark_as_passable();
-   }
-} 
-
-bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
-  // IMPL_NOTE: need to revisit for inlining
-  if (!compiler()->is_inlining()) {
-    jint bci_after_elimination = not_found;
-    //can_decrease_stack mean the code will
-    //consume the items of the operation stack
-    //since we only target the byte code related to
-    //memory acces and arithmetic
-    if (!Bytecodes::can_decrease_stack(code)) {
-      // If the bytecode does not consume stack items, we should start a new snippet
-      // to guarantee that each calculates only one value
-      VirtualStackFrame::abort_tracking_of_current_snippet();
-      if (is_following_codes_can_be_eliminated(bci_after_elimination)) {  
-	GUARANTEE(bci_after_elimination != not_found, "cse match error")
-	//next bci to be compiled, cse will skip some byte code here.
-	set_default_next_bytecode_index(bci_after_elimination);
-	compiler()->set_bci(next_bytecode_index());
-	//skip the compilation of current bci
-	return true;
-      }
-    }
-    
-    method()->wipe_out_dirty_recorded_snippet(compiler()->bci(), code);
-  }
-
-  //if we aborted in previous bci, we reset and start a new code snippet tracking.
-  VirtualStackFrame::mark_as_not_aborted();
-  return false;
-}
-
-void BytecodeCompileClosure::code_eliminate_epilogue(Bytecodes::Code code) {
-  // IMPL_NOTE: need to revisit for inlining
-  if( !Compiler::is_inlining()) {
-    if (Bytecodes::is_kind_of_eliminable(code)) {
-      record_current_code_snippet();       
-    }
-  }
-}
-
-void BytecodeCompileClosure::record_current_code_snippet(void) {
-  jint begin;
-  jint end = bci();
-
-  // IMPL_NOTE: need to revisit for inlining
-  GUARANTEE(!Compiler::is_inlining(), "Unsupported for inlining");
-  Method * method = Compiler::root()->method();
-
-  //track the dependency between 
-  //eliminatable byte codes string 
-  //and java local variables(field, array)
-  jint local_mask = 0;
-  jint constant_mask = 0;
-  jint array_type = 0;
-                                           //leftest bci
-  begin = VirtualStackFrame::first_bci_of_current_snippet();
-
-  //current byte code can't be CSE passable.
-  //the tracked status of tag stack should be cleared
-  //For example:
-  //        o o
-  //        |/
-  //        o  <-- tag(field modified by abort() method) status must be cleaned here(multipule entries) 
-  //        |
-  //        o  
-  if (VirtualStackFrame::is_aborted_from_tracking()) {
-    return ;
-  }
-
-  //reach the end of byte code, 
-  //no more CSE needed
-  if (end >= method->code_size()) {
-    return;
-  }
-
-  //if the operation stack is empty
-  //we don't do CSE, because we 
-  //have no register information 
-  //in this cases
-  if (method->is_local(frame()->virtual_stack_pointer())) {
-    return;
-  }
-
-  //The bci should start from zero. So if there's a pop happen and we still 
-  //get -1 here,we should abort the notation of current byte codes.
-  if (begin == -1 ) {
-    //is a pop action really happen on execution stack.       
-    if (VirtualStackFrame::is_popped()) {
-      return;
-    } else {
-      //The result is caused by one byte code without poping value from stack. 
-      // like new bci like aload_0_fast_get_field_1...
-      begin = end;
-    }
-  }
-
-  // fall through back, 
-  // so we abandon this 
-  //We only record the offset and length of a snippet.
-  //so we don't handle  this case if begin > end, since the length of the notation will be negative.
-  if (begin > end) {
-    VirtualStackFrame::abort_tracking_of_current_snippet();
-    return;
-  }
-   if (!method->is_snippet_can_be_elminate(begin, end, local_mask, constant_mask, 
-                                       array_type)) {
-    return;
-  }
-
-  //found the register holding the result
-  Value cached(frame()->expression_stack_type(0));
-  if (cached.is_two_word()) {
-    return;
-  }
-  int old_code_size = code_generator()->code_size();
-  frame()->value_at(cached, frame()->virtual_stack_pointer());
-  if (!cached.in_register()) {
-    return;
-  }
-
-  int new_code_size = code_generator()->code_size();
-  GUARANTEE(new_code_size == old_code_size, "extra load instruction is emitted");
-  
-  //generate notation
-  RegisterAllocator::Register reg = cached.lo_register();
-  RegisterAllocator::set_array_element_type(reg, array_type);
-  RegisterAllocator::set_notation(reg, begin, end - begin + 1);
-  RegisterAllocator::set_locals(reg, local_mask);
-  RegisterAllocator::set_constants(reg, constant_mask);
-  RegisterAllocator::set_type(reg, cached.type());
-  VERBOSE_CSE(("mark byte code snippet [%d, %d]",begin, end));
-  RegisterAllocator::dump_notation(reg);
-}
-
-bool BytecodeCompileClosure::is_following_codes_can_be_eliminated(jint& bci_after_elimination) {
-   jint begin_bci;
-   jint end_bci;
-   jint longest_next_bci = 0;
-   jint longest_length = 0;
-   jint bci = compiler()->bci();
-   Assembler::Register longest = Assembler::first_register;
-   Assembler::Register reg = Assembler::first_register;
-   if ( !RegisterAllocator::is_notated()) {
-      return false;
-   }
-
-   //visit each notation in the register notation table.
-   //for each notation: 1. get its byte code sequence.
-   // 2. compare the byte codes start from current bci with the ones of the notation
-   //if a same one is found, we may skip the compilation of those byte codes by 
-   //reuse the value in the register.
-   //the byte code sequence in the notation start from the 
-   //leftest bci that the value is computed from. For example, ((3+5)-7), 
-   //we record the bci of  iconst 3.
-   for (reg ;
-        reg <= Assembler::last_register;
-        reg = (Assembler::Register) ((int) reg + 1)) {
-     if( RegisterAllocator::is_notated(reg)) {
-       RegisterAllocator::get_notation(reg, begin_bci, end_bci);
-       if( method()->compare_bytecode( begin_bci, end_bci,
-             bci, bci_after_elimination) ) { 
-        //one match;
-        if ( (end_bci - begin_bci) > longest_length) {
-           if ( longest_length != 0 ) {
-             VERBOSE_CSE(("found one more code snippet\n"));
-           } 
-           //try to find the longest matching sequence 
-           //if (1+2) and  (1+2)+3 are both cached, 
-           //and current byte codes are (1+2)+3 
-           //we will try to match (1+2)+3 here.
-           longest_length = end_bci - begin_bci;
-           longest = reg;
-           longest_next_bci = bci_after_elimination;
-         }
-       }
-     }
-   }
-
-   if ( longest_length == 0) {
-    return false;
-   }
-   
-   reg = longest;
-   RegisterAllocator::get_notation(reg, begin_bci, end_bci);
-   bci_after_elimination = longest_next_bci;
-   //wrapper the register into a value and push on the stack.
-   {
-     BasicType type = (BasicType)RegisterAllocator::get_type(reg);
-     Value matched_value( type ); 
-     GUARANTEE(type >= T_BOOLEAN && type <=T_OBJECT, "Error register type");
-     //increase the reference
-     RegisterAllocator::reference(reg);
-     matched_value.set_register(reg);
-     frame()->push(matched_value);
-     if(VerboseByteCodeEliminate) { 
-       VERBOSE_CSE(("hit cache"));
-       RegisterAllocator::dump_notation(reg);
-     }
-     return true;
-   }
 }
 #endif
 
