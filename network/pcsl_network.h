@@ -529,6 +529,14 @@ extern unsigned short pcsl_network_ntohs(
  */
 extern char * pcsl_inet_ntoa (void *ipBytes);
 
+/** 
+ * Query and return the status of network and roam guard.
+ *
+ * @return PCSL_NET_SUCCESS upon success;\n
+ * PCSL_NET_WOULDBLOCK if the caller must call the finish function again to 
+ * complete the operation;\n
+ */
+extern int pcsl_network_check_native_guards_status(void);
 
 /** @} */   //End of group High Level Interface
 
