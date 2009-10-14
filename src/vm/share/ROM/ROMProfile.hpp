@@ -27,12 +27,27 @@
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
 
 class ROMProfileDesc : public MixedOopDesc {
-#define ROMPROFILE_FIELDS_DO(template)  \
-  template(Symbol,    profile_name       )  \
+#if ENABLE_MEMBER_HIDING
+  #define MEMBER_HIDING_ROMPROFILE_VECTORS_DO(template) \
+      template(ROMVector, hidden_field_classes    ) \
+      template(ROMVector, hidden_field_names      ) \
+      template(ROMVector, hidden_method_classes   ) \
+      template(ROMVector, hidden_method_names     ) \
+      template(ROMVector, hidden_method_signatures)
+#else
+  #define MEMBER_HIDING_ROMPROFILE_VECTORS_DO(template)
+#endif // ENABLE_MEMBER_HIDING
+
+#define ROMPROFILE_VECTORS_DO(template)  \
   template(ROMVector, hidden_classes     )  \
   template(ROMVector, hidden_packages    )  \
   template(ROMVector, restricted_packages)  \
-  template(TypeArray, hidden_set         )
+  MEMBER_HIDING_ROMPROFILE_VECTORS_DO(template)
+
+#define ROMPROFILE_FIELDS_DO(template)  \
+  template(Symbol,    profile_name) \
+  template(TypeArray, hidden_set  ) \
+  ROMPROFILE_VECTORS_DO(template)
 
 private:
 #define ROMPROFILE_COUNT_FIELDS(type, name) name##_index,
@@ -76,6 +91,12 @@ public:
 
   OopDesc* allocate_hidden_set(JVM_SINGLE_ARG_TRAPS);
   void fill_hidden_set( void );
+
+#if ENABLE_MEMBER_HIDING
+  bool is_hidden_method(const InstanceClass* klass, const Method* method) const;
+  bool is_hidden_field (const InstanceClass* klass, const OopDesc* field) const;
+#endif // ENABLE_MEMBER_HIDING
+
 #undef ROMPROFILE_FIELDS_DO
 };
 

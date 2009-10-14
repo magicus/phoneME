@@ -28,15 +28,15 @@
 
 class ROMTableInfo {
 protected:
-  ObjArray *_heap_table;
+  ObjArray* _heap_table;
   int _count;
 public:
   ROMTableInfo(ObjArray *array);
-  ObjArray * heap_table() {
+  ObjArray* heap_table(void) const {
     return _heap_table;
   }
-  int num_buckets();
-  int count() {
+  int num_buckets(void) const;
+  int count(void) const {
     return _count;
   }
   virtual juint hash(Oop * /*object*/) JVM_PURE_VIRTUAL_0;
@@ -59,36 +59,36 @@ public:
   void add_to_bucket(ObjArray *rom_table, int index, Oop *object);
 
   // Total number of strings in the string table
-  int string_count() {
+  int string_count(void) const {
     return _string_count;
   }
   // Total number of symbols in the symbol table
-  int symbol_count() {
+  int symbol_count(void) const {
     return _symbol_count;
   }
 
-  ReturnOop string_table() {
+  ReturnOop string_table(void) const {
     return _string_table.obj();
   }
   ReturnOop symbol_table() {
     return _symbol_table.obj();
   }
 
-  void set_embedded_hashtables(ConstantPool *holder, int strings_offset, 
+  void set_embedded_hashtables(const ConstantPool* holder, int strings_offset,
                                int symbols_offset) {
     _embedded_table_holder = holder->obj();
     _embedded_strings_offset = strings_offset;
     _embedded_symbols_offset = symbols_offset;
   }
 
-  ReturnOop embedded_table_holder() {
+  ReturnOop embedded_table_holder(void) const {
     return _embedded_table_holder.obj();
   }
 
-  int embedded_strings_offset() {
+  int embedded_strings_offset(void) const {
     return _embedded_strings_offset;
   }
-  int embedded_symbols_offset() {
+  int embedded_symbols_offset(void) const {
     return _embedded_symbols_offset;
   }
 private:
@@ -302,16 +302,16 @@ public:
   ROMOPTIMIZER_INT_FIELDS_DO(ROMOPTIMIZER_DECLARE_INT_GETTER)
   ROMOPTIMIZER_INT_FIELDS_DO(ROMOPTIMIZER_DECLARE_INT_SETTER)
 
-  static void set_next_state() {
+  static void set_next_state(void) {
     set_state(state() + 1);
   }
-  static bool is_active() {
+  static bool is_active(void) {
     return state() < STATE_COUNT;
   }
-  static bool is_done() {
+  static bool is_done(void) {
     return state() >= STATE_COUNT;
   }
-  static int number_of_states() {
+  static int number_of_states(void) {
     return STATE_COUNT;
   }
   
@@ -409,9 +409,10 @@ private:
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR
   void set_profile( OopDesc* profile ) {
     set_current_profile( profile );
-    set_hidden_classes( current_profile()->hidden_classes()  );
-    set_hidden_packages( current_profile()->hidden_packages() );
-    set_restricted_packages( current_profile()->restricted_packages() );
+    #define ROMPROFILE_SET_VECTORS(type, name)\
+      set_##name(current_profile()->name());
+    ROMPROFILE_VECTORS_DO(ROMPROFILE_SET_VECTORS)
+    #undef ROMPROFILE_SET_VECTORS
   }
 
   int find_profile(const char name[]);
@@ -746,26 +747,10 @@ private:
   static ReturnOop get_subclass_list(jushort klass_id);
   //ENDOF SUBCLASS CACHE ZONE
 
-  enum {
-    UNRESTRICTED_PACKAGE = 0,
-    RESTRICTED_PACKAGE   = 1,
-    HIDDEN_PACKAGE       = 2
-  };
-
   // used by ROMOptimizer::remove_unused_static_fields
   enum {
     DEAD_FIELD = 0x10000
   };
-
-  jint get_package_flags(const InstanceClass* klass) const {
-    if( is_in_hidden_package(klass) ) {
-      return HIDDEN_PACKAGE;
-    }
-    if( is_in_restricted_package(klass) ) {
-      return RESTRICTED_PACKAGE;
-    }
-    return UNRESTRICTED_PACKAGE;
-  }
 
   friend class MethodIterator;
   friend class ROMClassPatternMatcher;

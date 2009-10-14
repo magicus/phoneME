@@ -408,6 +408,53 @@ void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
   initialize_subclasses_cache(JVM_SINGLE_ARG_CHECK);
 }
 
+/*======================================================================
+ *
+ * Field/Method reachability
+ *
+ * The following table describes what fields/methods may be reachable by
+ * user applications. For the unreachable fields/methods, we can perform
+ * the following optimizations:
+ *
+ *        - change their names to .unknown.
+ *        - eliminate field from field table
+ *        - eliminate method from method table
+ *        - remove method from the system entirely
+ *
+ * Note that these optimizations are subject to further restrictions (e.g.,
+ * a <clinit> method should not be renamed). See the following methods
+ * for details:
+ *
+ *        field_may_be_renamed()
+ *        method_may_be_renamed()
+ *        is_field_removable()
+ *
+ *----------------------+-------------------+---------------------------
+ *                                          |     class access
+ *----------------------+-------------------+---------+-----------------
+ *                      |field/method access| public  | non-public
+ *----------------------+-------------------+---------+-----------------
+ * unrestricted package | public            |    Y    |    Y++
+ *                      | protected         |    Y    |    Y++
+ *                      | package private   |    Y    |    Y++
+ *                      | private           |    -    |    -
+ *----------------------+-------------------+---------+-----------------
+ * restricted package   | public            |    Y    |    -
+ *                      | protected         |    Y    |    -
+ *                      | package private   |    -    |    -
+ *                      | private           |    -    |    -
+ *----------------------+-------------------+---------+-----------------
+ * hidden package       | public            |    -    |    -
+ *                      | protected         |    -    |    -
+ *                      | package private   |    -    |    -
+ *                      | private           |    -    |    -
+ *----------------------+-------------------+---------+-----------------
+ *
+ * ++: if AgressiveROMSymbolRenaming is true, these fields/methods
+ *     are consider unreachable.
+ *======================================================================
+ */
+
 void ROMOptimizer::create_extended_class_attributes(JVM_SINGLE_ARG_TRAPS) {
   *extended_class_attributes() = 
     Universe::new_byte_array(Universe::number_of_java_classes() JVM_CHECK);
@@ -420,24 +467,6 @@ void ROMOptimizer::create_extended_class_attributes(JVM_SINGLE_ARG_TRAPS) {
     if (!klass().is_public() && AggressiveROMSymbolRenaming) {
       continue;
     }
-#if 0
-    {
-      const jbyte new_level = klass().is_final() ? PUBLIC_MEMBERS_ACCESSIBLE
-                                                 : PROTECTED_MEMBERS_ACCESSIBLE;
-      InstanceClass::Raw super = klass;
-      do {
-        const jbyte old_level = get_class_access_level(&super);
-        if (old_level >= new_level) {
-          break;
-        }
-        set_class_access_level(&super, new_level);
-        super = super().super();
-      } while (super.not_null());
-    }
-    if (!is_in_restricted_package(&klass)) {
-      set_class_access_level(&klass, PACKAGE_PRIVATE_MEMBERS_ACCESSIBLE);
-    }
-#else
     jbyte access_level;
     if (is_in_restricted_package(&klass)) {
       if (!klass().is_public()) {
@@ -452,7 +481,6 @@ void ROMOptimizer::create_extended_class_attributes(JVM_SINGLE_ARG_TRAPS) {
       access_level = PACKAGE_PRIVATE_MEMBERS_ACCESSIBLE;
     }
     set_class_access_level(&klass, access_level);
-#endif
   }
 }
 
@@ -1105,84 +1133,6 @@ void ROMOptimizer::set_implementing_class(const int interf_id,
   }
 }
 #endif
-
-/*======================================================================
- *
- * Field/Method reachability
- *
- * The following table describes what fields/methods may be reachable by
- * user applications. For the unreachable fields/methods, we can perform
- * the following optimizations:
- *
- *        - change their names to .unknown.
- *        - eliminate field from field table
- *        - eliminate method from method table
- *        - remove method from the system entirely
- *
- * Note that these optimizations are subject to further restrictions (e.g.,
- * a <clinit> method should not be renamed). See the following methods
- * for details:
- *
- *        field_may_be_renamed()
- *        method_may_be_renamed()
- *        is_field_removable()
- *
- *----------------------+-------------------+---------------------------
- *                                          |     class access
- *----------------------+-------------------+---------+-----------------
- *                      |field/method access| public  | non-public
- *----------------------+-------------------+---------+-----------------
- * unrestricted package | public            |    Y    |    Y++
- *                      | protected         |    Y    |    Y++
- *                      | package private   |    Y    |    Y++
- *                      | private           |    -    |    -
- *----------------------+-------------------+---------+-----------------
- * restricted package   | public            |    Y    |    -
- *                      | protected         |    Y    |    -
- *                      | package private   |    -    |    -
- *                      | private           |    -    |    -
- *----------------------+-------------------+---------+-----------------
- * hidden package       | public            |    -    |    -
- *                      | protected         |    -    |    -
- *                      | package private   |    -    |    -
- *                      | private           |    -    |    -
- *----------------------+-------------------+---------+-----------------
- *
- * ++: if AgressiveROMSymbolRenaming is true, these fields/methods
- *     are consider unreachable.
- *======================================================================
- */
-
-bool ROMOptimizer::is_member_reachable_by_apps(const jint package_flags, 
-                                               const AccessFlags class_flags,
-                                               const AccessFlags member_flags) {
-  switch (package_flags) {
-  case UNRESTRICTED_PACKAGE:
-    if (class_flags.is_public() || !AggressiveROMSymbolRenaming ) {
-      if (member_flags.is_public() ||
-          member_flags.is_protected() ||
-          member_flags.is_package_private()) {
-        return true;
-      }
-    }
-    break;
-
-  case RESTRICTED_PACKAGE:
-    if (class_flags.is_public()) {
-      if (member_flags.is_public() ||
-          member_flags.is_protected()) {
-        return true;
-      }
-    }
-    break;
-
-  case HIDDEN_PACKAGE:
-    break;
-  }
-
-  return false;
-}
-
 
 void ROMOptimizer::inline_exception_constructors() {
   // There are many recursive invocations of Exception constructors
@@ -2169,14 +2119,14 @@ ROMTableInfo::ROMTableInfo(ObjArray *array) {
   }
 }
 
-int ROMTableInfo::num_buckets() {
+int ROMTableInfo::num_buckets(void) const {
   int num = (_count + ROMHashTableDepth - 1) / ROMHashTableDepth;
 
   // If the number is small, make it divisible by 2 so that
   // we can use bitwise AND instead of division in SymbolTable::symbol_for()
   // Do this max for bucket size less than 1024.
-  for (int i=2; i<=10; i++) {
-    int n = 1 << i;
+  for (int i = 2; i <= 10; i++) {
+    const int n = 1 << i;
     if (num < (n * 3 / 2)) {
       num = n;
       return num;

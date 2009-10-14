@@ -176,7 +176,7 @@ extern const unsigned short _rom_modified_class_index_base;
 extern const unsigned short _rom_modified_class_index_size;
 extern const short          _rom_modified_class_index[];
 extern const int            _rom_modified_class_attributes[];
-extern const char           _rom_modified_class_bitmap[];
+extern const unsigned char  _rom_modified_class_bitmap[];
 #endif // ENABLE_MEMBER_HIDING
 
 /*

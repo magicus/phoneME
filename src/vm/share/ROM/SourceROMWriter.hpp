@@ -110,6 +110,9 @@ private:
   virtual void write_compiled_text_reference(FileStream* stream,int offset, 
                                              int delta);
   bool is_text_subtype(int type);
+  void write_constant_string_ref(Symbol* s);
+  void write_restricted_packages(void);
+  void write_constant_string(Symbol* s JVM_TRAPS);
 
 protected:
   virtual void write_data_body(SourceObjectWriter* obj_writer JVM_TRAPS);
@@ -155,9 +158,6 @@ public:
   void print_separator(const char * section);
   void write_original_class_info_table(JVM_SINGLE_ARG_TRAPS);
   void write_original_info_strings(JVM_SINGLE_ARG_TRAPS);
-  void write_constant_string(Symbol* s JVM_TRAPS);
-  void write_constant_string_ref(Symbol* s);
-  virtual void write_restricted_packages(void);
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   virtual void write_hidden_classes( void );
   virtual void write_restricted_in_profiles();
@@ -178,7 +178,7 @@ private:
   void write_modified_class_index     (const int min, const int max);
   int  write_modified_class_attributes(const int min, const int max);
   void write_modified_class_bitmap    (const int min, const int max,
-                                       jbyte bitmap[]);
+                                       jubyte bitmap[]);
   void write_hidden_members(JVM_SINGLE_ARG_TRAPS);
 public:
 #endif // ENABLE_MEMBER_HIDING

@@ -30,6 +30,28 @@
    
 #if USE_SOURCE_IMAGE_GENERATOR
 
+void SourceROMWriter::save_file_streams(void) {
+  ROMWriter::save_file_streams();
+
+  _declare_stream.save(&_declare_stream_state);
+  _main_stream.save(&_main_stream_state);
+  _reloc_stream.save(&_reloc_stream_state);
+  _jni_stream.save(&_jni_stream_state);
+  _kvm_stream.save(&_kvm_stream_state);
+}
+
+inline void SourceROMWriter::restore_file_streams(void) {
+  ROMWriter::restore_file_streams();
+
+  _declare_stream.restore(&_declare_stream_state);
+  _main_stream.restore(&_main_stream_state);
+  _reloc_stream.restore(&_reloc_stream_state);
+  _jni_stream.restore(&_jni_stream_state);
+  _kvm_stream.restore(&_kvm_stream_state);
+
+  _comment_stream = &_main_stream;
+}
+
 // This method is called for 1 time after JVM_Start() is called.
 void SourceROMWriter::initialize() {
   ROMWriter::initialize();
@@ -40,28 +62,6 @@ SourceROMWriter::SourceROMWriter() : ROMWriter() {
   // This constructor is NOT just called to initialize the romizer.
   // It's called every time when the romizer is resumed.
   restore_file_streams();
-}
-
-void SourceROMWriter::save_file_streams() {
-  ROMWriter::save_file_streams();
-
-  _declare_stream.save(&_declare_stream_state);
-  _main_stream.save(&_main_stream_state);
-  _reloc_stream.save(&_reloc_stream_state);
-  _jni_stream.save(&_jni_stream_state);
-  _kvm_stream.save(&_kvm_stream_state);
-}
-
-void SourceROMWriter::restore_file_streams() {
-  ROMWriter::restore_file_streams();
-
-  _declare_stream.restore(&_declare_stream_state);
-  _main_stream.restore(&_main_stream_state);
-  _reloc_stream.restore(&_reloc_stream_state);
-  _jni_stream.restore(&_jni_stream_state);
-  _kvm_stream.restore(&_kvm_stream_state);
-
-  _comment_stream = &_main_stream;
 }
 
 void SourceROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
@@ -1181,7 +1181,7 @@ void SourceROMWriter::write_original_info_strings(JVM_SINGLE_ARG_TRAPS) {
   // (1) The constant strings for the renamed fields  
   Symbol::Fast symbol;
   for (i=0; ; i++) {
-    ConstantTag tag = orig_cp().tag_at(i);
+    const ConstantTag tag = orig_cp().tag_at(i);
     if (tag.is_invalid()) {
       break;
     }
@@ -1193,18 +1193,13 @@ void SourceROMWriter::write_original_info_strings(JVM_SINGLE_ARG_TRAPS) {
   ObjArray::Fast info;
   Method::Fast method;
   Symbol::Fast name;
-  for (i=0; i<class_count; i++) {
+  for (i = 0; i < class_count; i++) {
     info = minfo_list().obj_at(i);
-    if (info.is_null()) {
-      // no renamed methods
-      continue;
-    }
-
     while (!info.is_null()) {
       method = info().obj_at(ROM::INFO_OFFSET_METHOD);
       name   = info().obj_at(ROM::INFO_OFFSET_NAME);
 
-      int offset = offset_of(&method JVM_CHECK);
+      const int offset = offset_of(&method JVM_CHECK);
       if (offset == -1) {
         // The method has been removed from the system entirely. No
         // need to put it inside the original info table.
@@ -1220,7 +1215,7 @@ void SourceROMWriter::write_original_info_strings(JVM_SINGLE_ARG_TRAPS) {
   for (i=0; i<class_count; i++) {
     JavaClass::Raw klass = Universe::class_from_id(i);
     if (klass.not_null() && klass().is_instance_class()) {
-      InstanceClass::Raw ic = klass.obj();
+      const InstanceClass::Raw ic = klass.obj();
       name = ic().name();
       if (name().equals(Symbols::unknown())) {
         orig_name = ic().original_name();
@@ -1247,7 +1242,7 @@ void SourceROMWriter::write_original_class_info_table(JVM_SINGLE_ARG_TRAPS) {
   // (1) Print ROM::_alternate_constant_pool
   main_stream()->print_cr("const char* const _rom_alternate_constant_pool_src[] = {");
   for (i=0; ; i++) {
-    ConstantTag tag = orig_cp().tag_at(i);
+    const ConstantTag tag = orig_cp().tag_at(i);
     if (tag.is_invalid()) {
       break;
     }
@@ -1698,7 +1693,7 @@ SourceROMWriter::write_modified_class_attributes(const int min, const int max) {
 
 inline void
 SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
-                                             jbyte bitmap[]) {
+                                             jubyte bitmap[]) {
   int bit_count = 0;
   for (SystemClassStream st; st.has_next();) {
     InstanceClass::Raw klass = st.next();
@@ -1827,12 +1822,12 @@ void SourceROMWriter::write_hidden_members(JVM_SINGLE_ARG_TRAPS) {
   }
   main_stream()->print_cr( "}; // _rom_modified_class_attributes\n" );   
 
-  main_stream()->print_cr( "const char _rom_modified_class_bitmap[] = {" );
+  main_stream()->print_cr( "const unsigned char _rom_modified_class_bitmap[] = {" );
   const int bit_scale_byte_size = (bit_count+(BitsPerByte-1)) >> LogBitsPerByte;
   if (bit_scale_byte_size) {
     TypeArray::Raw bit_scale =
       Universe::new_byte_array(bit_scale_byte_size JVM_OZCHECK(bit_scale));
-    jbyte* bitmap = bit_scale().byte_base_address();
+    jubyte* bitmap = bit_scale().ubyte_base_address();
     write_modified_class_bitmap(min, max, bitmap);
     for (int i = 0; i < bit_scale_byte_size; i++) {
       main_stream()->print (" 0x%02x,", bitmap[i]);
@@ -2063,80 +2058,88 @@ void SourceROMWriter::fixup_image(JVM_SINGLE_ARG_TRAPS) {
 void SourceROMWriter::write_aot_symbol_table(JVM_SINGLE_ARG_TRAPS) {
   main_stream()->print_cr("extern \"C\" {\nconst int __aot_symbol_table[] = {");
 
-  OopDesc *obj = (OopDesc*)jvm_fast_globals.compiler_area_start;
-  OopDesc *end = (OopDesc*)jvm_fast_globals.compiler_area_top;
-
-  int cm_count = 0;
-  int method_count = 0;
-  while (obj < end) {
-    obj = DERIVED(OopDesc*, obj, obj->object_size());
-    cm_count ++;
-  }
-  // determine total number of methods
-  UsingFastOops level1;
+  UsingFastOops fast_oops;
   ObjArray::Fast raw_objects = visited_objects()->raw_array();
   ObjArray::Fast raw_infos   = visited_object_infos()->raw_array();
-  int size = visited_objects()->size();
-  int i;
-  for (i=0; i<size; i++) {
-    Oop::Raw object = raw_objects().obj_at(i);
-    if (object.is_method()) {
-      method_count ++;
-    }
-  }
-
-  main_stream()->print_cr("  %d,", cm_count + method_count);
-
-  // Dump names of all compiled methods (in JNI style so that it's easier
-  // to set break points inside debugger).
-
-  obj = (OopDesc*)jvm_fast_globals.compiler_area_start;
-  CompiledMethod::Fast cm;
   Method::Fast method;
-  InstanceClass::Fast ic;
+  CompiledMethod::Fast cm;
   Symbol::Fast class_name;
   Symbol::Fast method_name;
   Symbol::Fast signature;
   TypeArray::Fast native_name;
-  while (obj < end) {
-    bool dummy;
-    cm = obj;
-    method = cm().method();
-    ic = method().holder();
-    class_name = ic().original_name();
-    method_name = method().get_original_name(dummy);
-    if (method().is_overloaded()) {
-      signature = method().signature();
+
+  const int size = visited_objects()->size();
+  const OopDesc* const end = (OopDesc*)jvm_fast_globals.compiler_area_top;
+
+  {
+    int cm_count = 0;
+    {
+      for( const OopDesc* obj = (OopDesc*)jvm_fast_globals.compiler_area_start;
+           obj < end;
+           obj = DERIVED(OopDesc*, obj, obj->object_size()) ) {
+        cm_count ++;
+      }
     }
-    native_name = Natives::convert_to_jni_name(&class_name,
-         &method_name, &signature JVM_CHECK);
-    main_stream()->print("  ");
-    write_compiled_code_reference(&cm, main_stream(), false JVM_CHECK); // addr
-    main_stream()->print(", %d", cm().size()); // code size
-    main_stream()->print_cr(", (int)\"%s\",", (char*)native_name().data()); // name
-    obj = DERIVED(OopDesc*, obj, obj->object_size());
+
+    // determine total number of methods
+    int method_count = 0;
+    {
+      for( int i = 0; i < size; i++ ) {
+        const Oop::Raw object = raw_objects().obj_at(i);
+        if (object.is_method()) {
+          method_count ++;
+        }
+      }
+    }
+
+    main_stream()->print_cr("  %d,", cm_count + method_count);
+  }
+
+
+  // Dump names of all compiled methods (in JNI style so that it's easier
+  // to set break points inside debugger).
+  {
+    GCDisabler raw_pointers_used_in_this_block;
+
+    OopDesc* obj = (OopDesc*)jvm_fast_globals.compiler_area_start;
+    while (obj < end) {
+      cm = obj;
+      method = cm().method();
+
+      const InstanceClass::Raw ic = method().holder();
+      class_name = ic().original_name();
+
+      bool dummy;
+      method_name = method().get_original_name(dummy);
+
+      if (method().is_overloaded()) {
+        signature = method().signature();
+      }
+      native_name = Natives::convert_to_jni_name(&class_name,
+           &method_name, &signature JVM_CHECK);
+
+      main_stream()->print("  ");
+      write_compiled_code_reference(&cm, main_stream(), false JVM_CHECK); // addr
+      main_stream()->print(", %d", cm().size()); // code size
+      main_stream()->print_cr(", (int)\"%s\",", (char*)native_name().data()); // name
+      obj = DERIVED(OopDesc*, obj, obj->object_size());
+    }
   }
 
   // Dump names of all regular methods (in Java style so that it's easier
   // to distinguish them from compiled methods).
-  Oop::Fast object;
-  for (i=0; i<size; i++) {
-    object = raw_objects().obj_at(i);
-    if (object().is_method()) {
-      bool dummy;
-      method = object().obj();
-      ic = method().holder();
-      class_name = ic().original_name();
-      method_name = method().get_original_name(dummy);
-      if (method().is_overloaded()) {
-        signature = method().signature();
+  {
+    for (int i = 0; i < size; i++) {
+      const Oop::Raw object = raw_objects().obj_at(i);
+      if (object().is_method()) {
+        method = object().obj();
+        main_stream()->print("  ");
+        write_reference(&method, TEXT_BLOCK, main_stream() JVM_CHECK);
+        main_stream()->print(", %d", method.object_size());
+        main_stream()->print(", (int)\"");
+        method().print_name_on(main_stream());
+        main_stream()->print_cr("\",");
       }
-      main_stream()->print("  ");
-      write_reference(&method, TEXT_BLOCK, main_stream() JVM_CHECK);
-      main_stream()->print(", %d", method.object_size());
-      main_stream()->print(", (int)\"");
-      method().print_name_on(main_stream());
-      main_stream()->print_cr("\",");
     }
   }
 

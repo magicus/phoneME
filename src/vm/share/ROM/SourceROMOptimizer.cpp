@@ -2607,56 +2607,42 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
   }
   max_set().sub( min_set.obj() );
   max_set().compute_range();
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
   {
     UsingFastOops fast_oops;
     InstanceClass::Fast klass;
     for (SystemClassStream st; st.has_next();) {
       klass = st.next();
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
       if( min_set().get_bit( klass().class_id() ) ) {
-        AccessFlags flags = klass().access_flags();
-        flags.set_is_hidden();
-        klass().set_access_flags(flags);
+#else
+      if( is_in_hidden_package(&klass) ) {
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+        klass().set_is_hidden();
 #if USE_ROM_LOGGING
         log_vector.add_element(&klass JVM_CHECK);
 #endif // USE_ROM_LOGGING
       }
     }
   }
-#else // !ENABLE_MULTIPLE_PROFILES_SUPPORT
-  UsingFastOops fast_oops;
-  InstanceClass::Fast klass;
-  for (SystemClassStream st; st.has_next();) {
-    klass = st.next();
-    if (class_matches_classes_list(&klass, hidden_classes())
-        || is_in_hidden_package(&klass)) {
-      AccessFlags flags = klass().access_flags() ;
-      flags.set_is_hidden();
-      klass().set_access_flags(flags);
-#if USE_ROM_LOGGING
-      log_vector.add_element(&klass JVM_CHECK);
-#endif // USE_ROM_LOGGING
-    }
-  }
-#endif // !ENABLE_MULTIPLE_PROFILES_SUPPORT
   
 #if USE_ROM_LOGGING
-  _log_stream->cr();
-  _log_stream->print_cr("[Classes marked as 'hidden']");
+  {
+    _log_stream->cr();
+    _log_stream->print_cr("[Classes marked as 'hidden']");
 
-  // Print the results
-  log_vector.sort();
-  for (int i=0; i<log_vector.size(); i++) {
-    InstanceClass::Raw klass = log_vector.element_at(i);
-    klass().print_name_on(_log_stream);
+    // Print the results
+    log_vector.sort();
+    const int log_vector_size = log_vector.size();
+    for (int i = 0; i < log_vector_size; i++) {
+      InstanceClass::Raw klass = log_vector.element_at(i);
+      klass().print_name_on(_log_stream);
+      _log_stream->cr();
+    }
     _log_stream->cr();
   }
-  _log_stream->cr();
 #endif
 }
 
-#if ENABLE_MEMBER_HIDING && ENABLE_MULTIPLE_PROFILES_SUPPORT
-void ROMOptimizer::mark_hidden_members(JVM_SINGLE_ARG_TRAPS) {
-}
-#endif // ENABLE_MEMBER_HIDING && ENABLE_MULTIPLE_PROFILES_SUPPORT
 #endif

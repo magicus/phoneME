@@ -569,10 +569,6 @@ public:
   
   void write_persistent_handles(ObjectWriter *obj_writer JVM_TRAPS);
   void write_system_symbols(ObjectWriter *obj_writer JVM_TRAPS);
-  virtual void write_constant_string(Symbol* /*s*/ JVM_TRAPS) 
-               {JVM_IGNORE_TRAPS;}
-  virtual void write_constant_string_ref(Symbol* /*s*/) {}
-  virtual void write_restricted_packages( void ) {}
 
 #if USE_SOURCE_IMAGE_GENERATOR
 

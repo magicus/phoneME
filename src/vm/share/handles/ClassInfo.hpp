@@ -117,7 +117,7 @@ class ClassInfo: public Oop {
     return access_flags().has_vanilla_constructor();
   }
 
-  void set_access_flags(AccessFlags access_flags) {
+  void set_access_flags(const AccessFlags access_flags) {
     int_field_put(access_flags_offset(), access_flags.as_int());
   }
   void set_is_verified( void ) {
