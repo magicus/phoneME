@@ -183,7 +183,8 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
 /**
  * Checks for security permission.
  * @param suite_id      the MIDlet Suite the permission should be checked with
- * @param permission    permission type
+ * @param permission_str permission string
+ * @param permission_len length of the permission string
  * @param enable_block  enable user interaction. If it is
  *                      JAVACALL_FALSE the call should never be blocked.
  * @param result        address of variable to receive the
@@ -210,14 +211,16 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
  */
 javacall_result
 javacall_security_check_permission(const javacall_suite_id suite_id,
-                                   const javacall_security_permission permission,
+                                   javacall_const_utf16_string permission_str,
+                                   const int permission_len,
                                    const javacall_bool enable_block,
                                    unsigned int* const result) {
     (void)suite_id;
-    (void)permission;
+    (void)permission_str;
+    (void)permission_len;
     (void)enable_block;
     *result = JAVACALL_SECURITY_DENY;
-    return JAVACALL_FALSE;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 

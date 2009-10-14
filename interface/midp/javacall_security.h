@@ -369,8 +369,9 @@ typedef enum {
 
 /**
  * Checks for security permission.
- * @param suite_id      the MIDlet Suite the permission should be checked with
- * @param permission    permission type
+ * @param suite_id       the MIDlet Suite the permission should be checked with
+ * @param permission_str permission string
+ * @param permission_len length of the permission string
  * @param enable_block  enable user interaction. If it is
  *                      JAVACALL_FALSE the call should never be blocked.
  * @param result        address of variable to receive the
@@ -397,7 +398,8 @@ typedef enum {
  */
 javacall_result
 javacall_security_check_permission(const javacall_suite_id suite_id,
-                                   const javacall_security_permission permission,
+                                   javacall_const_utf16_string permission_str,
+                                   const int permission_len,
                                    const javacall_bool enable_block,
                                    unsigned int* const result);
 /**
@@ -405,7 +407,6 @@ javacall_security_check_permission(const javacall_suite_id suite_id,
  * 
  * @param suite_id      the MIDlet Suite the permission was
  *                      checked with
- * @param permission    permission type
  * @param session       the handle of security session the java
  *                      thread waiting for
  * @param result        the result of permission check
@@ -414,7 +415,6 @@ javacall_security_check_permission(const javacall_suite_id suite_id,
  */
 void 
 javanotify_security_permission_check_result(const javacall_suite_id suite_id, 
-                                            const javacall_security_permission permission,
                                             const unsigned int session,
                                             const unsigned int result);
 
