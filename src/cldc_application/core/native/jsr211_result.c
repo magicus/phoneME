@@ -251,7 +251,7 @@ jsr211_boolean jsr211_isUniqueString(const jchar *str, size_t sz, int casesens, 
         jsr211_get_data( bd, &data, &length );
         if ( length == sz * sizeof(jchar) ) {
             if (casesens == JSR211_TRUE) {
-                if( javautil_str_wcsncmp(str, (const jchar *)data, sz) == 0 ) {
+                if( javautil_wcsncmp(str, (const jchar *)data, sz) == 0 ) {
                     result = JSR211_FALSE;
                     break;
                 }
