@@ -296,6 +296,15 @@ size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, s
     return nchars;
 }
 
+int javautil_wcsncmp(const javacall_const_utf16_string string1, const javacall_const_utf16_string string2, size_t nchars){
+	javacall_utf16_string str1 = string1;
+	javacall_utf16_string str2 = string2;
+	++nchars;
+	while (--nchars && *str1 && *str2 && *str1 == *str2) {++str1;++str2;}
+	return (!nchars) ? 0 : *str1 - *str2;
+}
+
+
 int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars)
 {
 #define BUFFER_SIZE 0x20

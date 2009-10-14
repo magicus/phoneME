@@ -157,6 +157,19 @@ size_t javautil_wcsncpy(javacall_utf16 * dst, javacall_const_utf16_string src, s
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars);
 int javautil_stricmp(const char* string1, const char* string2);
 int javautil_wcsnicmp(javacall_const_utf16_string string1, javacall_const_utf16_string string2, size_t nchars);
+	
+/**
+* Compare characters of two strings.
+*     javautil_wcsncmp
+*
+* @param string1, string2 null-terminated strings to compare
+* @param nchars the number of characters to compare
+* @return integer value indicates the relationship between the substrings as follows.
+*   < 0   string1 less than string2
+*   0     string1 identical to string2
+*   > 0   string1 greater than string2
+*/	
+int javautil_wcsncmp(javacall_const_utf16_string str1, javacall_const_utf16_string str2, size_t nchars);	
 
 /**
  * Returns a new string that is a concatenation of two input strings.
