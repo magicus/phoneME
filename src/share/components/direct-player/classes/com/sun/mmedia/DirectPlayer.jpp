@@ -31,24 +31,18 @@
 
 package com.sun.mmedia;
 
-import java.io.IOException;
 import java.util.*;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
-import com.sun.mmedia.DefaultConfiguration;
-import com.sun.mmedia.DirectVolume;
-import com.sun.mmedia.DirectMetaData;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
-import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.BasicDS;
 
 import javax.microedition.media.control.StopTimeControl;
 // #ifdef RECORD [
-import com.sun.mmedia.DirectRecord;
 // #endif ]
 
 /**
@@ -106,19 +100,19 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     // Acquire it or return false if it is not available
     private native boolean nAcquireRadioAccess();
     // Relase device reference
-    protected native void nReleaseDevice(int handle);
+    protected native void nReleaseDevice(int handle, AsyncExecutor ae );
     // Access to Radio Tuner for a Java Player is exclusive. Release it
     private native void nReleaseRadioAccess();
     // Start playing
-    protected native boolean nStart(int handle);
+    protected native boolean nStart(int handle, AsyncExecutor ae);
     // Get current media time as ms
     protected native int nGetMediaTime(int handle);
     // Set media time as ms
-    protected native boolean nSetMediaTime(int handle, long ms);
+    protected native int nSetMediaTime(int handle, int ms, AsyncExecutor ae) throws MediaException;
     // Get total duration of media data
     protected native int nGetDuration(int handle);
     // Pause
-    protected native boolean nPause(int handle);
+    protected native boolean nPause(int handle, AsyncExecutor ae );
     // Switch to foreground
     private native boolean nSwitchToForeground(int hNative, int options);
     // Switch to background
@@ -134,7 +128,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
     private native boolean nPcmAudioPlayback(int hNative);
 
     // Start Prefetch of Native Player
-    protected native boolean nPrefetch(int hNative);
+    protected native boolean nPrefetch(int hNative, AsyncExecutor ae );
     // Is Control supported by native or not
     protected static native boolean nIsFramePositioningControlSupported(int hNative);
     protected static native boolean nIsMetaDataControlSupported(int hNative);
@@ -258,7 +252,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
             synchronized (this) {
                 try {
                     doPreStop();
-                    doStop();
+                    doStop( AsyncExecutor.getNullInstance() );
                 } catch (MediaException e) {
                     Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
                         "Exception during stop by stop timer");
@@ -309,13 +303,13 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         state = Player.REALIZED;
     }
     
-    private void prefetchData() throws MediaException
+    private void prefetchData( AsyncExecutor ae ) throws MediaException
     {
         int hNative = getOwner().getNativeHandle();
             
         /* prefetch native player */
         /* predownload media data to fill native buffers */
-        if (!nPrefetch(hNative)) {
+        if( !ae.complete( nPrefetch(hNative, ae)) ) {
             throw new MediaException("Can not prefetch");
         }
     }
@@ -338,9 +332,9 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      *
      * @exception  MediaException  Description of the Exception
      */
-    protected void doPrefetch() throws MediaException {
+    protected void doPrefetch( AsyncExecutor ae ) throws MediaException {
 
-        prefetchData();
+        prefetchData( ae );
         acquireDevice();
         
         if (nPcmAudioPlayback(getOwner().getNativeHandle())) {
@@ -398,7 +392,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      * @return <code>true</code> if player start was successful,
      *         <code>false</code> otherwise.
      */
-    protected boolean doStart() {
+    protected boolean doStart( AsyncExecutor ae ) {
         boolean ret = false;
         
         if( null != videoControl )
@@ -407,7 +401,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         }
         int hNative = getOwner().getNativeHandle();
 
-        ret = nStart( hNative );
+        ret = ae.complete( nStart( hNative, ae ) );
         
         state = Player.STARTED;
         return ret;
@@ -451,14 +445,14 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      *
      * @exception  MediaException  Description of the Exception
      */
-    protected void doStop() throws MediaException {
+    protected void doStop( AsyncExecutor ae ) throws MediaException {
 
         if ( null != videoControl )
         {
             videoControl.stop();
         }
 
-        if (false == nPause(getOwner().getNativeHandle())) {
+        if (false == ae.complete( nPause(getOwner().getNativeHandle(), ae) ) ) {
             throw new MediaException("Player cannot be stopped");
         }
         state = Player.PREFETCHED;
@@ -477,7 +471,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      * Override method in BasicPlayer to deallocate
      * the <code>Player</code>.
      */
-    protected void doDeallocate() {
+    protected void doDeallocate( AsyncExecutor ae ) {
         // release device
         if (nPcmAudioPlayback(getOwner().getNativeHandle())) {
             AudioTunnel.getInstance().stop();
@@ -485,7 +479,8 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         
         releaseRadioAccess();
 
-        nReleaseDevice(getOwner().getNativeHandle());
+        nReleaseDevice(getOwner().getNativeHandle(), ae);
+        ae.complete();
 
         isFirstStart = true;
         state = Player.REALIZED;
@@ -547,18 +542,19 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
      * @return The actual media time set in microseconds.
      * @exception MediaException Thrown if the media time cannot be set.
      */
-    protected long doSetMediaTime(long now) throws MediaException {
+    protected long doSetMediaTime(long now, AsyncExecutor ae ) throws MediaException {
         if (now <= 0) now = 0;
         
         long dur = doGetDuration();
 
         if (Player.TIME_UNKNOWN != dur && now > dur) now = dur;
+
+        int ms = ( int )( now / 1000 );
+
+        ms = ae.completeAndReturnInt( nSetMediaTime(
+                    getOwner().getNativeHandle(), ms, ae ) );
         
-        if ( !nSetMediaTime(getOwner().getNativeHandle(), now/1000) ) {
-            throw new MediaException("media time cannot be set");
-        }                
-        return -1; // the actual result will be return asynchronously,
-                   // with event
+        return ( long )1000 * ms;
     }
     
     /**
@@ -866,7 +862,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
                 try {
                     doPreStop();
-                    doStop();
+                    doStop( AsyncExecutor.getNullInstance() );
                 } catch (MediaException e) {
                     Logging.report(Logging.ERROR, LogChannels.LC_MMAPI,
                         "Exception during stop by stop timer");

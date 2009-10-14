@@ -146,6 +146,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/HighLevelPlayer.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectInputThread.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/AsyncExecutor.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectDebugOut.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDIControl.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMEventListener.java \
@@ -246,6 +247,7 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNITonePlayer.c \
 	KNIDirectConfig.c \
 	KNIDirectMIDIControl.c \
+	mmapiAsync.c \
 	mmapiDynamicProperties.c
 
 JSR_135_NATIVE_LIB    = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_135_LIB_NAME)$(LIB_POSTFIX)
