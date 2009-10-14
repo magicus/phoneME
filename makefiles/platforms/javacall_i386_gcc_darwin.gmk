@@ -1,6 +1,4 @@
 #
-#  
-#
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -23,56 +21,28 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
-#
-# Generic compiler specific defines
 #
 ######################################################################
-ifdef GNU_TOOLS_DIR
-    GNU_TOOLS_BINDIR=$(GNU_TOOLS_DIR)/bin/
-else
-    ifeq ($(PCSL_CPU), arm)
-	GNU_TOOLS_DIR=/opt/Embedix/tools/arm-linux
-	GNU_TOOLS_BINDIR=$(GNU_TOOLS_DIR)/bin/
-    else
-	# Otherwise, use gcc command from path
-	GNU_TOOLS_BINDIR=
-    endif
-endif
+#
+# To be used for building on darwin i386 platforms
+# forces 32 compilation on all darwin systems
+#
+######################################################################
 
-GCC_VERSION	=
+PCSL_OS=javacall
+PCSL_CPU=i386
 
-CC		= $(GNU_TOOLS_BINDIR)gcc$(GCC_VERSION)
-CPP		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
-LD		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
-AR		= $(GNU_TOOLS_BINDIR)ar -rc
+FILE_MODULE=javacall
+NETWORK_MODULE=javacall
+MEMORY_PORT_MODULE=javacall
+MEMORY_MODULE=heap
+PRINT_MODULE=javacall
 
-CC_OUTPUT=-o 
-AR_OUTPUT=
-LD_OUTPUT=-o 
+LD_FLAGS+=-m32
+CFLAGS+=-m32
 
-LIB_EXT=.a
+include $(PCSL_DIR)/makefiles/share/gcc.gmk
+include $(PCSL_DIR)/makefiles/share/linux.gmk
 
-CFLAGS+=-c
-
-ifeq ($(USE_GCOV), true)
-CFLAGS   += -O0 -fprofile-arcs -ftest-coverage
-endif
-
-ifeq ($(USE_DEBUG), true)
-CFLAGS+=-g
-else
-ifneq ($(USE_GCOV), true)
-CFLAGS+=-O3 -fexpensive-optimizations
-endif
-endif
-
-LD_FLAGS+=
-ifeq ($(USE_GCOV), true)
-LD_FLAGS += -lgcov
-endif
-
-ifeq ($(PCSL_CPU), arm)
-CFLAGS   += -DARM
-LD_FLAGS += -Xlinker --no-warn-mismatch
-endif
+# must be included after compiler definition
+include $(PCSL_DIR)/makefiles/share/javacall.gmk
