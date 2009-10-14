@@ -86,6 +86,8 @@ import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.util.DateParser;
 import com.sun.midp.util.Properties;
 
+import com.sun.midp.io.Base64;
+
 /**
  * This class implements the necessary functionality
  * for an HTTP connection.
@@ -123,6 +125,19 @@ public class Protocol extends ConnectionBaseAdapter
     private static int outputDataSize;
     /** The "host:port" value to use for HTTP proxied requests. */
     private static String http_proxy;
+    private static String http_proxy_username;
+    private static String http_proxy_password;
+    
+    /* x-network-type property */
+    protected static String network_type;
+
+    /** Sprint specific headers */
+    /* x-wap-profile property */
+    protected static String wap_profile;
+    
+    /*user-agent*/
+    protected static String user_agent;
+
     /** The flag indicates absolute URL should be used in "GET" requests. */
     private static boolean isUseAbsUrl;
     /** Maximum number of persistent connections. */
@@ -133,6 +148,8 @@ public class Protocol extends ConnectionBaseAdapter
     protected static StreamConnectionPool connectionPool; 
     /** True if com.sun.midp.io.http.force_non_persistent = true. */
     private static boolean nonPersistentFlag;
+    /** True if com.sun.midp.io.http.force_platform_user_agent = true. */
+    private static boolean forcePlatformUserAgentFlag = false;
     /**
      * The methods other than openPrim need to know that the
      * permission occurred. com.sun.midp.io.j2me.https.Protocol
@@ -144,12 +161,14 @@ public class Protocol extends ConnectionBaseAdapter
      * com.sun.midp.io.j2me.https.Protocol class also uses this field.
      */
     protected boolean ownerTrusted;
-    
-    /**
-     * True if the last disconnect lead to a stream reusage.
-     */
-    protected boolean connReused;         
 
+    // #ifdef ENABLE_SPRINT_CIQ
+    //ciqRespLen =  readHeader + \r\n(2) +  hexa byte(4) + \r\n(2)  + readMessage + \r\n(2) + 0(1) + \r\n(2)
+    private String ciqRespStr;
+
+    private int ciqBodyLen;
+    // #endif
+   
     /** Get the configuration values for this class. */
     static {
         int temp;
@@ -159,13 +178,33 @@ public class Protocol extends ConnectionBaseAdapter
          * so when this method subclassed by HTTPS http_proxy will be null
          * and the proxy will not be added into the request.
          */
-        http_proxy = Configuration.getProperty("com.sun.midp.io.http.proxy");
+        http_proxy = Configuration.getProperty("platform.http.proxy.host");
+        if(null != http_proxy) {
+            String port = Configuration.getProperty("platform.http.proxy.port");
+            if(null != port) {
+                http_proxy += ":" + port;
+            }
+            http_proxy_username = Configuration.getProperty("platform.http.proxy.username");
+            http_proxy_password = Configuration.getProperty("platform.http.proxy.password");
+        }
         
+        /**
+         * Get the properties from the underlying platform. The 
+         * properties will remain static. 
+         */
+        
+        wap_profile = Configuration.getProperty("platform.http.x-wap-profile");
+
+        String flag = Configuration.getProperty("com.sun.midp.io.http.force_platform_user_agent");
+        if ((flag != null) && (flag.equals("true"))) {
+            forcePlatformUserAgentFlag = true;
+        }
+        user_agent = Configuration.getProperty("platform.http.user-agent");
         /*
          * CR#4455443 - allows for configuration options to shut off 
          * the persistent connection feature for http 
          */
-        String flag = 
+        flag = 
             Configuration.getProperty(
                                 "com.sun.midp.io.http.force_non_persistent");
         if ((flag != null) && (flag.equals("true"))) {
@@ -296,6 +335,14 @@ public class Protocol extends ConnectionBaseAdapter
      * pool, forcing an IOException on the read thread.
      */
     private boolean readInProgress;
+
+    // #ifdef ENABLE_SPRINT_CIQ
+    /** Number of bytes of http request data */
+    private int ciqReqLen;
+    
+    /** Number of bytes of http request data */	
+    private int ciqRespLen;
+    // #endif
 
     /**
      * Create a new instance of this class and intialize variables.
@@ -914,7 +961,12 @@ public class Protocol extends ConnectionBaseAdapter
                 if (Character.digit(ch, 16) == -1)
                     break;
             }
-
+            
+            // #ifdef ENABLE_SPRINT_CIQ
+            // ciqBodyLen = hexa byte(4);
+            ciqBodyLen = i;
+            // #endif
+            
             /* look at extensions?.... */
             size = Integer.parseInt(chunk.substring(0, i), 16);
         } catch (NumberFormatException e) {
@@ -1629,7 +1681,13 @@ public class Protocol extends ConnectionBaseAdapter
             throw new SecurityException("The permission check was bypassed");
         }
 
-        streamConnection = connect();
+        streamConnection = connectionPool.get(classSecurityToken, protocol,
+                                              url.host, url.port);
+
+
+        if (streamConnection == null) {
+            streamConnection = connect();
+        }
 
         /*
          * Because StreamConnection.open*Stream cannot be called twice
@@ -1672,46 +1730,44 @@ public class Protocol extends ConnectionBaseAdapter
          * the applications value. The TCP and SSL protocols will deny the
          * standard ports to untrusted applications so they cannot get around
          * this field being added to their HTTP(S) requests.
-         */
-        if (!ownerTrusted) {
-            String newUserAgentValue;
-            String origUserAgentValue = 
-                    reqProperties.getPropertyIgnoreCase("User-Agent");
-            if (origUserAgentValue != null) {
-                /*
-                 * HTTP header values can be concatenated, so original value
-                 * of the "User-Agent" header field should not be ignored in 
-                 * this case
-                 */
-                newUserAgentValue = origUserAgentValue;
-                if (-1 == origUserAgentValue.indexOf(UNTRUSTED)) {
-                    newUserAgentValue += " " + UNTRUSTED;
-                }
-            } else {
-                String platformUA = Configuration.getProperty("User-Agent");
-                if (platformUA != null) {
-                    newUserAgentValue = platformUA;
-                    if (-1 == platformUA.indexOf(UNTRUSTED)) {
-                        newUserAgentValue += " " + UNTRUSTED;
-                    }
-                } else {
-                    newUserAgentValue = UNTRUSTED;
+         */   
+
+        String UserAgentValue = null;
+        if(forcePlatformUserAgentFlag == false) {
+            UserAgentValue = reqProperties.getPropertyIgnoreCase("User-Agent");
+        }
+        if(UserAgentValue == null) {
+            UserAgentValue = user_agent;
+        }
+        if(!ownerTrusted) {
+            if(UserAgentValue == null) {
+                UserAgentValue = UNTRUSTED;
+            }else {
+                if(-1 == UserAgentValue.indexOf(UNTRUSTED)) {
+                    UserAgentValue += " " + UNTRUSTED;
                 }
             }
-            reqProperties.setPropertyIgnoreCase("User-Agent", 
-                    newUserAgentValue);
         }
 
+        if(UserAgentValue != null) {
+            reqProperties.setPropertyIgnoreCase("User-Agent", UserAgentValue);
+        }
+
+        /* Using current values for network-type overriding application's settings.*/
+        network_type = Configuration.getProperty("platform.http.x-network-type");
+        reqProperties.setPropertyIgnoreCase("x-network-type", network_type);
+
+        /* Using static value for wap-profile overriding application's settings.*/
+        if (null != wap_profile)
+		reqProperties.setPropertyIgnoreCase("x-wap-profile", wap_profile);
+
         // HTTP 1.0 requests must contain content length for proxies
-        // (with the exception of GET and HEAD requests that do not have content)
-        if (getRequestProperty("Content-Length") == null
-            && !method.equals(HEAD)
-            && !method.equals(GET)) {
+        if (getRequestProperty("Content-Length") == null) {
             setRequestField("Content-Length", Integer.toString(bytesToWrite));
         }
 
         reqLine = new StringBuffer(256);
-        
+
         /*
          * HTTP RFC and CR#4402149,
          * if there is no path then add a slash ("/").
@@ -1773,6 +1829,32 @@ public class Protocol extends ConnectionBaseAdapter
         
         setRequestField("Host", url.authority);
 
+       
+	// Add "Proxy-Authorization" field in the request header
+	if (http_proxy != null)
+	{
+		if (http_proxy_username != null || http_proxy_password != null)
+		{
+			byte[] encodedBytes = new String(http_proxy_username+":" + http_proxy_password).getBytes(); 
+			String encoded = Base64.encode(encodedBytes, 0, encodedBytes.length);
+			setRequestField("Proxy-Authorization", "Basic " + encoded);
+	
+			int size = proxyHeaders.size();
+			for (int i = 0; i < size; i++) 
+			{
+				reqLine.append(proxyHeaders.getKeyAt(i));
+				reqLine.append(": ");
+				reqLine.append(proxyHeaders.getValueAt(i));
+				reqLine.append("\r\n");
+			}
+		}
+		}
+        
+	// Accept header
+        if (getRequestProperty("Accept") == null) {
+        	setRequestField("Accept", "*/*");
+        }
+
         if (chunkedOut) {
             /*
              * Signal the server that the body is chunked
@@ -1819,6 +1901,14 @@ public class Protocol extends ConnectionBaseAdapter
         reqLine.append("\r\n");
 
         streamOutput.write(reqLine.toString().getBytes());
+
+        // #ifdef ENABLE_SPRINT_CIQ
+        String strHeader = reqLine.toString();
+
+        ciqReportHttpHeader(strHeader);		
+
+        ciqReqLen = strHeader.length();
+        // #endif
     }
 
     /**
@@ -1879,6 +1969,11 @@ public class Protocol extends ConnectionBaseAdapter
         }           
 
         streamOutput.write(writebuf, start, length);
+
+        // #ifdef ENABLE_SPRINT_CIQ 
+        ciqReqLen += length;	 // ciqReqLen = header + body
+        // #endif
+
         bytesToWrite = 0;
     }
 
@@ -1892,6 +1987,10 @@ public class Protocol extends ConnectionBaseAdapter
 
         // Even if we get an exception this request is finished
         requestFinished = true;
+        
+        // #ifdef ENABLE_SPRINT_CIQ
+        ciqReportHttpRequest(method, ciqReqLen, getURL(), network_type);
+        // #endif
 
         /*
          * if this is a CHUNKed session write out the last set of CRLF
@@ -1928,6 +2027,10 @@ public class Protocol extends ConnectionBaseAdapter
             readResponseMessage(streamInput);
             readHeaders(streamInput);
         }
+
+        // #ifdef ENABLE_SPRINT_CIQ
+        ciqReportHttpResponse(responseCode, ciqRespLen, getURL(), network_type);
+        // #endif
     }
 
     /**
@@ -1973,6 +2076,9 @@ public class Protocol extends ConnectionBaseAdapter
         streamOutput = conn.openDataOutputStream();
         streamInput = conn.openDataInputStream();
 
+        // do not try tunneling for http.
+        isUseAbsUrl = true;
+        /*
         try {
             isUseAbsUrl = !doTunnelHandshake(streamOutput, streamInput);
         } catch (IOException ioe) {
@@ -1999,7 +2105,7 @@ public class Protocol extends ConnectionBaseAdapter
 
             // reopen connection
             conn = createConnection("//" + http_proxy);
-        }
+        } */
         return conn;
     }
 
@@ -2048,19 +2154,58 @@ public class Protocol extends ConnectionBaseAdapter
         /*
          * request = required *optional emptyLine
          * required = "CONNECT" SP HOST ":" PORT SP HTTP_VERSION endOfLine
+         *            "Host:" SP HOST ":" PORT endOfLine
          * optional = HTTP_HEADER endOfLine ; proxy dependent: most likely
          *                                  ; used for authorization.
          * emptyLine = endOfLine
          * endOfLine = *1CR LF
          *
          * example:
-         * CONNECT home.acme.com:443 HTTP/1.0
-         * Proxy-Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+         *       CONNECT server.example.com:443 HTTP/1.1
+         *       Host: server.example.com:443
+         *       Proxy-Authorization: basic aGVsbG86d29ybGQ=
          *
          */
-        required = "CONNECT " + hostAndPort + " " + HTTP_VERSION + endOfLine;
+        required = "CONNECT " + hostAndPort + " " + HTTP_VERSION + endOfLine +
+                   "Host: " + url.authority + endOfLine;
+
+        String UserAgentValue = null;
+        if(forcePlatformUserAgentFlag == false) {
+            UserAgentValue = reqProperties.getPropertyIgnoreCase("User-Agent");
+        }
+        if(UserAgentValue == null) {
+            UserAgentValue = user_agent;
+        }
+        if(!ownerTrusted) {
+            if(UserAgentValue == null) {
+                UserAgentValue = UNTRUSTED;
+            }else {
+                if(-1 == UserAgentValue.indexOf(UNTRUSTED)) {
+                    UserAgentValue += " " + UNTRUSTED;
+                }
+            }
+        }
+
+        if(UserAgentValue != null) {
+            required += "User-Agent: " + UserAgentValue + endOfLine;
+        }
+
+        String AcceptValue = reqProperties.getPropertyIgnoreCase("Accept");
+        if(AcceptValue == null) {
+            AcceptValue = "*/*";
+        }
+        required += "Accept: " + AcceptValue + endOfLine;
 
         os.write(required.getBytes());
+
+        if (http_proxy != null) {
+            if (http_proxy_username != null || http_proxy_password != null)
+            {
+                byte[] encodedBytes = new String(http_proxy_username+":" + http_proxy_password).getBytes(); 
+                String encoded = Base64.encode(encodedBytes, 0, encodedBytes.length);		
+                proxyHeaders.setProperty("Proxy-Authorization", "Basic " + encoded);
+            }
+        }
 
         numberOfKeys = proxyHeaders.size();
         for (int i = 0; i < numberOfKeys; i++) {
@@ -2099,7 +2244,7 @@ public class Protocol extends ConnectionBaseAdapter
         if (errorGroup == 4) { // bad request
             return false; // CONNECT method is not supported by server
         }
-        if (errorGroup == 2) {
+        if (errorGroup != 2) {
             throw new
                 IOException("Error initializing HTTP tunnel connection: \n"
                             + responseMsg);
@@ -2191,6 +2336,11 @@ public class Protocol extends ConnectionBaseAdapter
             throw new IOException("status code in response is not a number");
         }
 
+        
+        // #ifdef ENABLE_SPRINT_CIQ
+        ciqRespStr = line +"\r\n";
+        // #endif
+
         responseMsg = line.substring(codeEnd + 1);
     }
 
@@ -2211,6 +2361,10 @@ public class Protocol extends ConnectionBaseAdapter
         String prevValue = null;
         int index;
 
+        // #ifdef ENABLE_SPRINT_CIQ
+        int chunkTotal = 0;
+        // #endif
+
         /*
          * Initialize and set the current input stream variables
          */
@@ -2228,9 +2382,13 @@ public class Protocol extends ConnectionBaseAdapter
             } catch (IOException ioe) {
                 throw new IOException(ioe.getMessage());
             }
+            // #ifdef ENABLE_SPRINT_CIQ
+               ciqRespStr += line + "\r\n";
+            // #endif
 
-            if (line == null || line.equals(""))
+            if (line == null || line.equals("")) {
                 break;
+            }
 
             if ((!firstLine) && (line.charAt(0) == ' ' ||
                                     line.charAt(0) == '\t')) {
@@ -2320,7 +2478,23 @@ public class Protocol extends ConnectionBaseAdapter
             }
         }
 
-    	/* Last chunk or zero length response data. */
+        // #ifdef ENABLE_SPRINT_CIQ
+        chunkTotal = chunksize;
+
+        if(chunkedIn)
+        {
+            chunkTotal += 8/*4 times CRLF*/ + 1 + ciqBodyLen;
+        }
+
+        if (chunkTotal == 0)
+            ciqRespLen = contentLength;
+        else
+            ciqRespLen = chunkTotal;
+
+        ciqRespLen += ciqRespStr.length();
+        // #endif
+
+        /* Last chunk or zero length response data. */
         if (chunksize == 0) {
             eof = true;
         }
@@ -2394,11 +2568,10 @@ public class Protocol extends ConnectionBaseAdapter
     /**
      * Disconnect the current low level socket connection. If the connection
      * is an HTTP1.1 connection that connection will be put back in the pool
-     * for another session to use to connect.      
+     * for another session to use to connect.
      */
     protected void disconnect() throws IOException {
         if (streamConnection == null) {
-            connReused = false;
             return;
         }
 
@@ -2409,7 +2582,6 @@ public class Protocol extends ConnectionBaseAdapter
          */
         if (!eof && !chunkedIn && chunksize >= 0 &&
                 totalbytesread == chunksize) {
-                
             eof = true;
         }
 
@@ -2424,7 +2596,6 @@ public class Protocol extends ConnectionBaseAdapter
          */
         synchronized (streamInput) {
             if (readInProgress) {
-                
                 // do not save the connection
                 ConnectionCloseFlag = true;
             }
@@ -2432,7 +2603,6 @@ public class Protocol extends ConnectionBaseAdapter
 
         if (!requestFinished || !eof || httpVer.equals("HTTP/1.0") ||
                 ConnectionCloseFlag) {
-                
             if (streamConnection instanceof StreamConnectionElement) {
                 // we got this connection from the pool
                 connectionPool.remove(
@@ -2441,7 +2611,6 @@ public class Protocol extends ConnectionBaseAdapter
                 disconnect(streamConnection);
             }
 
-            connReused = false;
             return;
         }
 
@@ -2449,7 +2618,6 @@ public class Protocol extends ConnectionBaseAdapter
             // we got this connection from the pool
             connectionPool.returnForReuse(
                    (StreamConnectionElement)streamConnection);
-            connReused = true;
             return;
         }
 
@@ -2458,10 +2626,7 @@ public class Protocol extends ConnectionBaseAdapter
                  streamConnection, streamOutput, streamInput)) {
             // pool full, disconnect
             disconnect(streamConnection);
-            connReused = false;
-            return;
         }
-        connReused = true;
     }
 
     /** 
@@ -2498,6 +2663,16 @@ public class Protocol extends ConnectionBaseAdapter
             }
         }
     }
+
+    // #ifdef ENABLE_SPRINT_CIQ
+    private static native void ciqReportHttpHeader(String header);
+
+    private static native void ciqReportHttpRequest(String method, int length, 
+                                                                                  String uri, String network_type); 
+    
+    private static native void ciqReportHttpResponse(int responseCode,  int responseMsgLength, 
+                                                                                   String uri, String network_type); 	
+    // #endif
 }
 
 

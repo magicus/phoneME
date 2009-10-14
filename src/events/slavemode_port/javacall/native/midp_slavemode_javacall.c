@@ -731,6 +731,12 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
                               newSignal.status);
             }
             break;
+        case NETWORK_GUARDS_SIGNAL:
+            midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                    newSignal.waitingFor, newSignal.descriptor,
+                                    newSignal.status);
+            break;
+            
 
         default:
             break;

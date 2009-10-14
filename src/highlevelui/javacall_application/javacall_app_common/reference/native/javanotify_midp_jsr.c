@@ -93,6 +93,10 @@ extern "C" {
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
+#ifdef ENABLE_API_EXTENSIONS
+#include <javacall_sprint.h>
+#endif
+
 #define MAX_PHONE_NUMBER_LENGTH 48
 
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
@@ -1517,6 +1521,22 @@ void javanotify_enable_odd() {
      midp_jc_event_send(&e);
 }
 #endif
+#ifdef ENABLE_API_EXTENSIONS
+void javanotify_native_guard_event(int operation_result)
+{
+    midp_jc_event_union e;
+ 
+    REPORT_INFO1(LC_CORE, "javanotify_native_guard_event() result=%d >>\n",
+            operation_result);
+    e.eventType = MIDP_JC_EVENT_SOCKET;
+    e.data.socketEvent.waitingFor = NETWORK_GUARDS_SIGNAL;
+    e.data.socketEvent.handle = 0;
+    e.data.socketEvent.status = operation_result;
+    e.data.socketEvent.extraData = NULL;
+    
+    midp_jc_event_send(&e);
+}
+#endif /* ENABLE_API_EXTENSIONS */
 
 #ifdef __cplusplus
 }

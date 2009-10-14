@@ -139,6 +139,8 @@ public class Socket implements ServerSocketConnection, ServerSocket {
      * @exception IOException if an I/O error occurs
      */
     private void openCommon(int port, int suiteId) throws IOException {
+        checkNativeGuards0();
+
         open0(port > 0 ? port : 0, suiteId);
         connectionOpen = true;
     }
@@ -282,6 +284,14 @@ public class Socket implements ServerSocketConnection, ServerSocket {
      * @return the local port number for this socket connection
      */
     private native int getLocalPort0();
+
+    /**
+     * Checks the status of network and roam guards.
+     *
+     * @exception  IOException  if network or roam guard is set.
+     */
+    private native void checkNativeGuards0() 
+        throws IOException;
 }
 
 

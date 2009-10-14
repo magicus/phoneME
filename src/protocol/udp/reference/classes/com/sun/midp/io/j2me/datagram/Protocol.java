@@ -226,6 +226,7 @@ public class Protocol implements UDPDatagramConnection,
             throw new IllegalArgumentException("Illegal mode");
         }
 
+        checkNativeGuards0();
         open0(incomingPort, midletSuite.getID());
         open = true;
 
@@ -777,4 +778,12 @@ public class Protocol implements UDPDatagramConnection,
      * @return the port number
      */
     private native int getPort0();
+
+    /**
+     * Checks the status of network and roam guards.
+     *
+     * @exception  IOException  if network or roam guard is set.
+     */
+    private native void checkNativeGuards0() 
+        throws IOException;
 }

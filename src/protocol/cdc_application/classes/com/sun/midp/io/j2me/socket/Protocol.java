@@ -28,6 +28,7 @@
 package com.sun.midp.io.j2me.socket;
 
 import java.io.*;
+import java.net.*;
 import javax.microedition.io.*;
 
 import com.sun.j2me.security.AccessController;
@@ -122,10 +123,10 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
         }
 	if ("".equals(host)) {
 	    AccessController.checkPermission(SERVER_PERMISSION_NAME,
-					     "localhost:" + port);
+					     "TCP Server" + port);
 	} else {
 	    AccessController.checkPermission(CLIENT_PERMISSION_NAME,
-                                         host + ":" + port);
+                                         "TCP" + ":" + host + ":" + port);
 	}
         return;
     }

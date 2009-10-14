@@ -811,3 +811,65 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getPort0(void) {
     KNI_EndHandles();
     KNI_ReturnInt((jint)port);
 }
+
+/**
+ * Checks the status of network and roam guards.
+ *
+ * @exception  IOException  if network or roam guard is set.
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_io_j2me_datagram_Protocol_checkNativeGuards0(void) {
+    MidpReentryData* info;
+    jint status;
+    void *context = NULL;
+	enum {
+	    GUARD_STATE_ERROR_NONE = 0,
+        GUARD_NO_SERVICE_ERROR = -5,
+        GUARD_STATE_ERROR_NET_GUARD = -11,
+        GUARD_STATE_ERROR_ROAM_GUARD = -12
+    };
+
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (info == NULL) {   /* First invocation */
+        SNI_BEGIN_RAW_POINTERS;
+        status = pcsl_network_check_native_guards_status();
+        SNI_END_RAW_POINTERS;
+        		
+        if (status == PCSL_NET_WOULDBLOCK) {
+            midp_thread_wait(NETWORK_GUARDS_SIGNAL, (int) 0, context);
+        } else if (status == PCSL_NET_SUCCESS) {
+            midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE, 
+                    "No network guard and no roam guard.");
+            REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+        } else {
+            midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE, "Network can't access");
+            REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+            KNI_ThrowNew(midpIOException, gKNIBuffer);
+        }
+    } else { /* Reinvocation after unblocking the thread */
+        switch (info->status) {
+            case GUARD_STATE_ERROR_NONE:
+                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE, "No Guard Error");
+                REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+                break;
+            case GUARD_STATE_ERROR_NET_GUARD:
+                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                        "Network unavailable due to Network Guard setting");
+                REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+                KNI_ThrowNew(midpIOException, gKNIBuffer);
+                break;
+            case GUARD_STATE_ERROR_ROAM_GUARD:
+                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                        "Network unavailable due to Data Roam Guard setting");
+                REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+                KNI_ThrowNew(midpIOException, gKNIBuffer);
+                break;
+            default:
+                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE, "Network can't access");
+                REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
+                KNI_ThrowNew(midpIOException, gKNIBuffer);
+                break;
+        }
+    }
+    KNI_ReturnVoid();
+}

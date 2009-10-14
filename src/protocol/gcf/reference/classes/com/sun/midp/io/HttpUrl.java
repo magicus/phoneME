@@ -294,7 +294,10 @@ public class HttpUrl {
             return;
         }
 
-        if (Character.isDigit(host.charAt(0))) {
+        lastDot = host.lastIndexOf('.');
+        if (lastDot != -1 && host.length() > (lastDot + 1) 
+                && Character.isDigit(host.charAt(lastDot + 1))) {
+            //IP v4 address
             if (!isValidIPv4Address(host)) {
                 throw new IllegalArgumentException("invalid IPv4 format");
             }
@@ -316,6 +319,15 @@ public class HttpUrl {
             machine = host.substring(0, startOfDomain - 1);
         } else {
             machine = host;
+            try {
+                int octet = Integer.parseInt(machine);
+                if (0 <= octet && octet <= 255) {
+                    throw new IllegalArgumentException(
+                            "No dot after numberic host name: " + machine);
+                }
+            } catch (NumberFormatException nfe) {
+                /* local domain literal */
+            }
         }
     }
 
@@ -551,6 +563,11 @@ public class HttpUrl {
 
     /**
      * Checks is host name has a valid format (RFC 2396).
+     *       hostport      = host [ ":" port ]
+     *       host          = hostname | IPv4address
+     *       hostname      = *( domainlabel "." ) toplabel [ "." ]
+     *       domainlabel   = alphanum | alphanum *( alphanum | "-" ) alphanum
+     *       toplabel      = alpha | alpha *( alphanum | "-" ) alphanum
      *
      * @param hose the host name for checking
      * @return true when the host name has a valid format
@@ -566,12 +583,12 @@ public class HttpUrl {
                     return false;
                 }
                 lenDomain = 0;
-            } else if (currChar == '-' || Character.isDigit(currChar)) {
+            } else if (currChar == '-' ) {
                 if (lenDomain == 0) {
                     return false;
                 }
                 lenDomain++;
-            } else if (Character.isLowerCase(currChar) || Character.isUpperCase(currChar)) {
+            } else if (Character.isLowerCase(currChar) || Character.isUpperCase(currChar) || Character.isDigit(currChar)) {
                 lenDomain++;
             } else {
                 return false;

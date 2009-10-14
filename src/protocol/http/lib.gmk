@@ -38,6 +38,8 @@
 #
 SUBSYSTEMS += http
 
+vpath % $(SUBSYSTEM_DIR)/protocol/http/reference/native
+
 # Javadoc source path
 SUBSYSTEM_HTTP_SOURCEPATH += $(SUBSYSTEM_DIR)/protocol/http/classes$(PATHSEP)$(SUBSYSTEM_DIR)/protocol/http/reference/classes
 
@@ -50,11 +52,14 @@ MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_HTTP_PACKAGES)
 GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 	$(SUBSYSTEM_HTTP_PACKAGES)
 
+$(GENERATED_DIR)/classes/com/sun/midp/io/j2me/http/Protocol.java :  $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/midp/io/j2me/http/Protocol.jpp
+	@$(call runjpp,$^,$@)
+
 # Java files for the ( http ) module
 #
 SUBSYSTEM_HTTP_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/http/classes/javax/microedition/io/HttpConnection.java \
-    $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/midp/io/j2me/http/Protocol.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/http/Protocol.java \
     $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/midp/io/j2me/http/StreamConnectionElement.java \
     $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/midp/io/j2me/http/StreamConnectionPool.java
 
@@ -63,9 +68,18 @@ SUBSYSTEM_HTTP_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/kvem/io/j2me/http/Protocol.java 
 endif
 
+
+SUBSYSTEM_HTTP_NATIVE_FILES += \
+	httpProtocol.c
+
+
 ifeq ($(USE_I3_TEST), true)
 
 SUBSYSTEM_HTTP_I3TEST_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/http/reference/i3test/com/sun/midp/io/j2me/http/TestHttpHeaders.java
+endif
 
+ifeq ($(USE_SPRINT_CIQ), true)
+    JPP_DEFS += -DENABLE_SPRINT_CIQ
+    EXTRA_CFLAGS += -DENABLE_SPRINT_CIQ=1
 endif

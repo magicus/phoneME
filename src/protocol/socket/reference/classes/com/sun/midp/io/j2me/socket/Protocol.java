@@ -262,6 +262,8 @@ public class Protocol extends NetworkConnectionBase
             throw new IllegalArgumentException("Missing port number");
         }
 
+        checkNativeGuards0();
+
         result = getIpNumber0(host, ipBytes);
         if (result == -1) {
             throw new
@@ -802,4 +804,13 @@ public class Protocol extends NetworkConnectionBase
      * result from this operation is ignored.
      */
     private native void shutdownOutput0();
+
+    /**
+     * Checks the status of network and roam guards.
+     *
+     * @exception  IOException  if network or roam guard is set.
+     */
+    private native void checkNativeGuards0() 
+        throws IOException;
+
 }
