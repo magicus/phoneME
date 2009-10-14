@@ -588,7 +588,7 @@ private:
     return get_extended_class_attributes(klass->class_id());
   }
   void set_class_access_level(const InstanceClass* klass, const jbyte value) const {
-    return set_extended_class_attributes(klass->class_id(), value);
+    set_extended_class_attributes(klass->class_id(), value);
   }
   bool is_member_reachable_by_apps(const jbyte class_access_level,
                                    const AccessFlags member_flags) const;
