@@ -90,19 +90,6 @@ Compiler::~Compiler() {
   Compiler* parent_compiler = parent();
 #if ENABLE_INLINE
   if (parent_compiler != NULL) {
-    if (!CURRENT_HAS_PENDING_EXCEPTION) {
-      const VirtualStackFrame* frame = this->frame();
-      if (frame) {
-#ifdef AZZERT
-        Signature::Raw signature = method()->signature();
-        const BasicType return_type = signature().return_type(true);
-        GUARANTEE(frame->virtual_stack_pointer() ==
-                  local_base() - 1 + word_size_for(return_type), "Sanity");
-#endif
-      } else {
-        parent_compiler->terminate_compilation();
-      }
-    }
     code_generator()->set_method( parent_compiler->method() );
     _num_stack_lock_words = parent_compiler->saved_num_stack_lock_words();
   } else {
@@ -842,10 +829,24 @@ void Compiler::internal_compile_inlined( Method::Attributes& attributes
     if (!return_label.is_unused()) {
       code_generator()->bind(return_label);
     }
-  }
 
-  // Set the return frame as the current frame for the parent
-  Compiler::set_frame( parent_frame() );
+    VirtualStackFrame* frame = this->parent_frame();
+    if (frame) {
+#ifdef AZZERT
+      Signature::Raw signature = method()->signature();
+      const BasicType return_type = signature().return_type(true);
+      GUARANTEE(frame->virtual_stack_pointer() ==
+                local_base() - 1 + word_size_for(return_type), "Sanity");
+#endif
+      // Set the return frame as the current frame for the parent
+      Compiler::set_frame( frame );
+    } else {
+      // Parent VSF has not been set - inlined method terminates abnormally
+      parent()->terminate_compilation();
+      // Restore VSF of the parent compilation element
+      set_parent_frame( Compiler::frame() );
+    }
+  }
 }
 #endif  
 
