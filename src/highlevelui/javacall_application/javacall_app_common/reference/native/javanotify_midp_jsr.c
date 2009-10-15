@@ -93,10 +93,6 @@ extern "C" {
 #include <javacall_odd.h>
 #endif /* ENABLE_ON_DEVICE_DEBUG */
 
-#ifdef ENABLE_API_EXTENSIONS
-#include <javacall_sprint.h>
-#endif
-
 #define MAX_PHONE_NUMBER_LENGTH 48
 
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
