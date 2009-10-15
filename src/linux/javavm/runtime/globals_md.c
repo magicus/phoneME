@@ -211,14 +211,15 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 		    realpath((char *)dlinfo.dli_fname, buf);
 		    p0 = buf;
 		} else {
-		    l = open("/proc/self/maps", O_RDONLY);
-		    if (l == -1) {
+		    int fd = open("/proc/self/maps", O_RDONLY);
+		    if (fd == -1) {
 #ifdef CVM_DEBUG
 			fprintf(stderr, "open of /proc/self/maps failed\n");
 #endif
 			return CVM_FALSE;
 		    }
-		    l = read(l, buf, sizeof buf);
+		    l = read(fd, buf, sizeof buf);
+		    close(fd);
 		    if (l == -1) {
 #ifdef CVM_DEBUG
 			fprintf(stderr, "read of /proc/self/maps failed\n");
