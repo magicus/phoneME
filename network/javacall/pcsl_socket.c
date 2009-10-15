@@ -29,10 +29,6 @@
 #include <javacall_network.h>
 #include <javacall_socket.h>
 
-#ifdef ENABLE_API_EXTENSIONS
- #include <javacall_sprint.h>
-#endif
-
 extern javacall_result javacall_sprint_check_native_guard_setting(void);
 
 int javacall_to_pcsl_result( javacall_result res ){
@@ -251,12 +247,7 @@ pcsl_network_getremoteport(void *handle, int *pPortNumber) {
  */
 int
 pcsl_network_check_native_guards_status(void) {
-    javacall_result res = JAVACALL_OK;
-
-#ifdef ENABLE_API_EXTENSIONS
-    res = javacall_sprint_check_native_guard_setting();
-#endif /* ENABLE_API_EXTENSIONS */
-    return javacall_to_pcsl_result(res);
+    return javacall_to_pcsl_result(javacall_check_native_guard_setting());
 }
 
 
