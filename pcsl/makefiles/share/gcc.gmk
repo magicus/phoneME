@@ -1,0 +1,78 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Generic compiler specific defines
+#
+######################################################################
+ifdef GNU_TOOLS_DIR
+    GNU_TOOLS_BINDIR=$(GNU_TOOLS_DIR)/bin/
+else
+    ifeq ($(PCSL_CPU), arm)
+	GNU_TOOLS_DIR=/opt/Embedix/tools/arm-linux
+	GNU_TOOLS_BINDIR=$(GNU_TOOLS_DIR)/bin/
+    else
+	# Otherwise, use gcc command from path
+	GNU_TOOLS_BINDIR=
+    endif
+endif
+
+GCC_VERSION	=
+
+CC		= $(GNU_TOOLS_BINDIR)gcc$(GCC_VERSION)
+CPP		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
+LD		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
+AR		= $(GNU_TOOLS_BINDIR)ar -rc
+
+CC_OUTPUT=-o 
+AR_OUTPUT=
+LD_OUTPUT=-o 
+
+LIB_EXT=.a
+
+CFLAGS+=-c
+
+ifeq ($(USE_GCOV), true)
+CFLAGS   += -O0 -fprofile-arcs -ftest-coverage
+endif
+
+ifeq ($(USE_DEBUG), true)
+CFLAGS+=-g
+else
+ifneq ($(USE_GCOV), true)
+CFLAGS+=-O3 -fexpensive-optimizations
+endif
+endif
+
+LD_FLAGS+=
+ifeq ($(USE_GCOV), true)
+LD_FLAGS += -lgcov
+endif
+
+ifeq ($(PCSL_CPU), arm)
+CFLAGS   += -DARM
+LD_FLAGS += -Xlinker --no-warn-mismatch
+endif
