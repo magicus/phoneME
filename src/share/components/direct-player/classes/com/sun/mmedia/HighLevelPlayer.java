@@ -298,6 +298,28 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
 
         handledByDevice = ( 0 != hNative );
 
+        if( !handledByDevice ) {
+            source.connect();
+            
+            SourceStream[] streams = source.getStreams();
+            if (null == streams) {
+                throw new MediaException("DataSource.getStreams() returned null");
+            } else if (0 == streams.length) {
+                throw new MediaException("DataSource.getStreams() returned an empty array");
+            } else if (null == streams[0]) {
+                throw new MediaException("DataSource.getStreams()[0] is null");
+            }
+            if (streams.length > 1 && Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                        "*** DataSource.getStreams() returned " + streams.length +
+                        " streams, only first one will be used!");
+            }
+
+            stream = streams[0];
+            if (0 == stream.getContentLength()) {
+                throw new MediaException("Media size is zero");
+            }
+        }
     }
 
     void receiveRSL()
@@ -570,32 +592,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         int result = -1;
 
         if( !handledByDevice ) {
-            try {
-                source.connect();
-            } catch (IOException ex) {
-                throw new MediaException( "Cannot realize, problem connecting to the source" );
-            }
-            SourceStream[] streams = source.getStreams();
-            if (null == streams) {
-                throw new MediaException("DataSource.getStreams() returned null");
-            } else if (0 == streams.length) {
-                throw new MediaException("DataSource.getStreams() returned an empty array");
-            } else if (null == streams[0]) {
-                throw new MediaException("DataSource.getStreams()[0] is null");
-            }
-            if (streams.length > 1 && Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                    "*** DataSource.getStreams() returned " + streams.length +
-                    " streams, only first one will be used!");
-            }
-
-            stream = streams[0];
             final long len = stream.getContentLength();
-            if( 0 == len )
-            {
-                throw new MediaException("Media size is zero");
-            }
-
             directInputThread = new DirectInputThread( this );
             directInputThread.start();
 
@@ -762,9 +759,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             return;
         }
 
+        //System.out.println( "HighLevelPlayer: prefetch()" );
         /* prefetch native player */
         /* predownload media data to fill native buffers */
         lowLevelPlayer.doPrefetch( asyncExecutor );
+        //System.out.println( "HighLevelPlayer: doPrefetch() resumed" );
 
         VolumeControl vc = ( VolumeControl )getControl(
                 pkgName + vocName);
@@ -876,9 +875,11 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             }
         }
 
+        //System.out.println( "HighLevelPlayer: doStart()");
         if (!lowLevelPlayer.doStart( asyncExecutor )) {
             throw new MediaException("start");
         }
+        //System.out.println( "HighLevelPlayer: doStart() resumed");
 
         setState( STARTED );
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
