@@ -1159,3 +1159,14 @@ javacall_result /*OPTIONAL*/ javacall_socket_getremoteaddr(
 char* javacall_inet_ntoa(void *address) {
     return inet_ntoa(*((struct in_addr*)address));
 }
+
+
+/**
+ * Network / Roam guard implementation
+ *
+ * Query the possibility of network connection to the platform 
+ * Returns JAVACALL_WOULD_BLOCK if network or roam guard is set
+ */
+javacall_result javacall_check_native_guard_setting(void) {
+    return JAVACALL_OK; /* stub */
+}

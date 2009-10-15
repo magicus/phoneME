@@ -443,6 +443,21 @@ char * javacall_inet_ntoa(void *address);
  */
 javacall_result javacall_server_socket_set_notifier(javacall_handle handle, javacall_bool set);
 
+/**
+ * Network / Roam guard implementation
+ *
+ * Query the possibility of network connection to the platform 
+ * Returns JAVACALL_WOULD_BLOCK if network or roam guard is set
+ */
+javacall_result javacall_check_native_guard_setting(void);
+
+/**
+ * Notify function for Network/Roam guard implementation
+ *
+ * This function will be called by the platform with the user permission
+ */
+void javanotify_native_guard_event(int operation_result);
+
 /** @} */
 
 /** @} */
