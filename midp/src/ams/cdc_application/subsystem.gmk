@@ -1,0 +1,95 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+include $(SUBSYSTEM_DIR)/ams/ams_common.gmk
+
+SUBSYSTEM_AMS_PACKAGES += \
+    com.sun.midp.main \
+    com.sun.midp.midlet \
+    com.sun.midp.midletsuite \
+    com.sun.midp.installer 
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_AMS_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES += $(SUBSYSTEM_AMS_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "AMS Libraries" \
+    $(shell echo $(SUBSYSTEM_AMS_PACKAGES) | tr ' ' $(PATHSEP))
+
+include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ota_control/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
+include $(SUBSYSTEM_AMS_DIR)/vm_utils/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk
+
+# Local module directory
+CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(CDC_AMS_DIR)/classes
+
+# Java files for the sub-system
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CDCInit.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcAccessControlContext.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletSuiteLoader.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MidletSuiteContainer.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/NativeForegroundState.java
+
+vpath % $(CDC_AMS_DIR)/native
+
+SUBSYSTEM_AMS_NATIVE_FILES += \
+   NativeForegroundState.c
+
+ifdef INCLUDE_SHELL_SCRIPTS
+  SUBSYSTEM_AMS_LAZY_MAKEFILES += \
+    $(CDC_AMS_DIR)/runMidlet.gmk
+
+  SUBSYSTEM_AMS_EXECUTABLES += \
+    $(BINDIR)/runMidlet \
+    $(BINDIR)/autotest.sh \
+    $(BINDIR)/installMidlet
+endif
+
