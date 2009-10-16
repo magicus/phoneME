@@ -37,13 +37,14 @@
 #include <ROMStructs.h>
 #include <commonKNIMacros.h>
 
-#include <midpport_security.h>
+#include <midp_security.h>
 #include <midp_thread.h>
 #include <midpError.h>
 #include <midpString.h>
 #include <midpUtilKni.h>
 #include <midpServices.h>
 #include <midpMalloc.h>
+#include <javacall_security.h>
 
 /** 
  * 0 if no security permission listener has been registered.
@@ -80,7 +81,7 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
     MidpReentryData* info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
     if (!isListenerRegistered) {
-        midpport_security_set_permission_listener(midpPermissionListener);
+        security_set_permission_listener(midpPermissionListener);
         isListenerRegistered = 1;
     }
 
@@ -98,18 +99,34 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
         permissionLength = KNI_GetStringLength(permissionHandle);
         permission = midpMalloc(permissionLength * sizeof(jchar));
         if (permission) {
+            unsigned int res;
             KNI_GetStringRegion(permissionHandle, 0, permissionLength, permission);
+            switch (javacall_security_check_permission((javacall_suite_id)suiteId,
+                                               (javacall_const_utf16_string)permission,
+                                               permissionLength,
+                                               JAVACALL_FALSE,
+                                               &res)) {
 
-
-            result = midpport_security_check_permission(suiteId, permission, permissionLength,
-                  &requestHandle);
-
-                if (result == 1) {
-                  granted = KNI_TRUE;
-                } else if (result == -1) {
-                  /* Block the caller until the security listener is called */
-                  midp_thread_wait(SECURITY_CHECK_SIGNAL, requestHandle, NULL);
-                }
+            case JAVACALL_OK:
+                result = CONVERT_PERMISSION_STATUS(res);
+                break;
+            case JAVACALL_WOULD_BLOCK:
+        /* incorrect behaviour: regardless the fact that NAMS shows user dialog,
+        application need to get result immediately */
+                result = -1;
+                REPORT_ERROR(LC_SECURITY,
+                     "javacall_security_check_permission() returns incorrect status");
+                break;
+            default:
+                result = 0;
+                break;
+            }
+            if (result == 1) {
+                granted = KNI_TRUE;
+            } else if (result == -1) {
+            /* Block the caller until the security listener is called */
+                midp_thread_wait(SECURITY_CHECK_SIGNAL, requestHandle, NULL);
+            }
         }
         KNI_EndHandles();
     } else {
@@ -147,7 +164,26 @@ Java_com_sun_midp_security_SecurityHandler_checkPermissionStatus0()
     permissionLength = KNI_GetStringLength(permissionHandle);
     permission = midpMalloc(permissionLength * sizeof(jchar));
     if (permission) {
-        status = midpport_security_check_permission_status(suiteId, permission, permissionLength);
+        unsigned int res;
+        switch (javacall_security_check_permission((javacall_suite_id)suiteId,
+                                                   (javacall_const_utf16_string)permission,
+                                                   permissionLength,
+                                                   JAVACALL_FALSE,
+                                                   &res)) {
+        case JAVACALL_OK:
+            status = CONVERT_PERMISSION_STATUS(res);
+            break;
+        case JAVACALL_WOULD_BLOCK:
+        /* incorrect behaviour: regardless the fact that NAMS shows user dialog,
+        application need to get result immediately */
+            status = -1;
+            REPORT_ERROR(LC_SECURITY,
+                     "javacall_security_check_permission() returns incorrect status");
+            break;
+        default:
+            status = 0;
+            break;
+        }
     }
     KNI_EndHandles();
     KNI_ReturnInt(status);
