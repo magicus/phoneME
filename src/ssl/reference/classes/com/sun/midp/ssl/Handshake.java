@@ -188,6 +188,7 @@ class Handshake {
     private int nextMsgStart = 0;
     /** Count of bytes left in the data buffer. */
     private int cnt = 0;
+    /*private*/ byte negVersion;
 
     /**
      * Validates a chain of certificates and returns the RSA public
@@ -388,11 +389,33 @@ class Handshake {
             return -1;
         }
 
-        // Get the server version
-        if ((rec.inputData[start + idx++] != (ver >>> 4)) ||
-                (rec.inputData[start + idx++] != (ver & 0x0f))) {
+        // Get the server's  version
+	byte srvrMajorNo, srvrMinorNo;
+
+	srvrMajorNo=rec.inputData[start + idx++];
+       srvrMinorNo=rec.inputData[start + idx++];
+        
+        // Assuming that all the versions higher than v3.0 will have 
+	//fall back mode to previous versions >=3.0
+	// Presently the  support  is for v3.0 and v3.1 
+            
+
+	if (srvrMajorNo >= (byte)(0x03) &&
+	    srvrMajorNo <= (byte)(ver >>> 4) &&  
+	    srvrMinorNo <= (byte)(ver & 0x0f)) {
+	       negVersion =  (byte)((srvrMajorNo<<4) + (srvrMinorNo & 0x0f)) ;
+		rec.setNegVersion(negVersion); // set version at record layer to the negotiated version 
+	}
+	else 
             return -1;
+
+	if (negVersion == 0x31) {
+	    FINISH_PREFIX[3] = 0x0C;  // msg length: 12
+           System.out.println(" ========> SSL  VER ="+negVersion);
         }
+    else{
+        FINISH_PREFIX[3] = 0x24;  // use SSL msg length: 40
+    }
 
         // .. the 32-byte server random
         srand = new byte[32];
@@ -722,11 +745,28 @@ class Handshake {
 
             rnd.nextBytes(preMaster, 0, 48);
             // ... first two bytes must have client version
-            preMaster[0] = (byte) (ver >>> 4);
-            preMaster[1] = (byte) (ver & 0x0f);
+	    /**according to the TLS/SSL specs the version should be the one
+	       porposed in the clientHello message but b'cos of a buggy but
+	       very prevelant implementation of SSL that checks for only "3.0"
+	       we have to hack out code to be compatible. The client sends the 
+	       "negVersion" and not the "ver". This breaks compliance  with
+	       standard but is compatible with most of the server
+	    */
+
+	    preMaster[0] = (byte) (negVersion >>> 4);
+            preMaster[1] = (byte) (negVersion & 0x0f);
+	    
+	    //it is the additional  2 bytes that have to be added in TLS : undocumnested stuff :)
+	    int tlsAdditionalBytes =0;          
+            boolean isTLS = false;    
                 
-            // Prepare a message containing the RSA encrypted pre-master
-            int modLen = eKey.getModulusLen();
+        // Prepare a message containing the RSA encrypted pre-master
+        if (negVersion == 0x31){
+			isTLS = true;
+			tlsAdditionalBytes =2;
+	    }
+
+	    int modLen =  eKey.getModulusLen() + tlsAdditionalBytes;
             byte[] msg = new byte[HDR_SIZE + modLen];
             int idx = 0;
             // Fill the type
@@ -736,23 +776,33 @@ class Handshake {
             msg[idx++] = (byte) (modLen >>> 8);
             msg[idx++] = (byte) (modLen & 0xff);
 
+	    // For some  undocumented reasons in openssl
+	    if(isTLS) {
+	       msg[idx++] = (byte)(((modLen-2)>>8L    )&0xff);
+	       msg[idx++] = (byte)(((modLen-2)  )&0xff);
+           }
+
             // ... the encrypted pre-master secret
             try {
                 Cipher rsa = Cipher.getInstance("RSA");
 
                 rsa.init(Cipher.ENCRYPT_MODE, eKey);
                 int val = rsa.doFinal(preMaster, 0, 48, msg, idx);
-                if (val != modLen) 
+				
+                if (val+ tlsAdditionalBytes  != modLen) 
                     throw new IOException("RSA result too short");
             } catch (Exception e) {
                 throw new IOException("premaster encryption caught " + e);
             }
 
-            // Update the hash of handshake messages
-            ourMD5.update(msg, 0, msg.length);
-            ourSHA.update(msg, 0, msg.length);
+	     if(isTLS) {
+		     tlsAdditionalBytes -=2;
+	       }
                         
-            rec.wrRec(Record.HNDSHK, msg, 0, msg.length);
+            // Update the hash of handshake messages
+            ourMD5.update(msg, 0, msg.length+tlsAdditionalBytes);
+            ourSHA.update(msg, 0, msg.length+tlsAdditionalBytes);
+            rec.wrRec(Record.HNDSHK, msg, 0, msg.length+tlsAdditionalBytes);
         }
     }
     
@@ -763,6 +813,15 @@ class Handshake {
      * @exception IOException if there is a problem during the computation
      */ 
     private void mkMaster() throws IOException {
+	if (negVersion == 0x31) {
+	    byte[] temp = new byte[crand.length + srand.length];
+	    System.arraycopy(crand, 0, temp, 0, crand.length);
+	    System.arraycopy(srand, 0, temp, crand.length, srand.length);
+	    master = PRF(preMaster, "master secret", temp, 48);
+	    return;
+	}
+
+	//else it is 0x30
         byte[] expansion[] = { 
                 { (byte) 0x41 },                              // 'A'
                 { (byte) 0x42, (byte) 0x42 },                 // 'BB'
@@ -845,6 +904,8 @@ class Handshake {
      * @exception IOException if handshake digests could not be computed
      */ 
     private byte[] computeFinished(byte who) throws IOException {
+	if (negVersion == 0x31)
+	    return computeFinished31(who);
         byte[] sender[] = {
                 { 0x53, 0x52, 0x56, 0x52}, // for server
                 { 0x43, 0x4c, 0x4e, 0x54}  // for client
@@ -883,6 +944,44 @@ class Handshake {
             throw new IOException("MessageDigest not cloneable");
         }
     }
+    /**
+     * Computes the content of a Finished message for TLS
+     * The only method that calls it is computeFinished 
+     * <P />
+     * @param who the role (either Record.CLIENT or
+     * Record.SERVER) for which the finish message is computed
+     * @return a byte array containing the hash of all handshake 
+     * messages seen so far
+     * @exception IOException if handshake digests could not be computed
+     */ 
+
+    private byte[] computeFinished31(byte who) throws IOException {
+
+	String[] sender = {
+	    "server finished",           //for Server
+           "client finished"               // for client
+        };
+
+	MessageDigest md5 , sha;
+       byte[] temp = new byte[MD5_SIZE + SHA_SIZE]; 	
+	   
+	try {
+	    md5 = (MessageDigest) ourMD5.clone();	    
+	    byte[] md5Arr = new byte[MD5_SIZE];
+	    md5.digest(md5Arr, 0, MD5_SIZE);
+		
+	    sha = (MessageDigest) ourSHA.clone();
+           byte[] shaArr = new byte[SHA_SIZE];
+	    sha.digest(shaArr, 0, SHA_SIZE);	    	
+	    
+	    System.arraycopy(md5Arr, 0, temp, 0, md5Arr.length);
+ 	    System.arraycopy(shaArr, 0,  temp,md5Arr.length, shaArr.length);	
+	}catch (Exception e){
+	     throw new IOException("MessageDigest not cloneable");
+       }
+		
+       return PRF(master, sender[who], temp, 12);
+    }
 
     /**
      * Sends a Finished message.
@@ -891,12 +990,12 @@ class Handshake {
      * record layer
      */ 
     private void sndFinished() throws IOException {
-        // HDR_SIZE + MD5_SIZE + SHA_SIZE is 40
-        byte[] msg = new byte[40];
         
+	byte[] msg;
+	byte[] tmp = computeFinished(role);
+	msg = new byte[tmp.length+ 4];
         System.arraycopy(FINISH_PREFIX, 0, msg, 0, 4);
-        // MD5_SIZE + SHA_SIZE is 36
-        System.arraycopy(computeFinished(role), 0, msg, 4, 36);
+        System.arraycopy(tmp, 0, msg, 4, tmp.length);
 
         // Update the hash of handshake messages
         ourMD5.update(msg, 0, msg.length);
@@ -950,7 +1049,7 @@ class Handshake {
      */ 
     private int rcvFinished() throws IOException {
         int msgLength = getNextMsg(FINISH);
-        if (msgLength != 40) {
+        if (msgLength != 16  &&  msgLength != 40) {  // 16 for TLS and 40 for SSLv3
             return -1;
         }
 
@@ -969,6 +1068,179 @@ class Handshake {
         }
     }
 
+
+
+   /**
+     * It is the implementation of the pseudo random function defined
+     * in rfc 2246 section 5
+     * <P />
+     * @param secret It  secret that needs to be expanded into blocks 
+     * of data for the purposes of key generation or validation
+     * @param label An identifying string
+     * @param seed  Random seed 
+     * @param destLen The length of the returned byte array 
+     * @return a byte array of length destLen
+     */   
+
+ public static  byte[] PRF ( byte[] secret, String label, byte[] seed, int destLen ) { 	
+    byte[] firstHalfSecret;
+ 	byte[] secondHalfSecret;
+ 	int halfSecretLen;        
+ 	int odd = (secret.length % 2);
+	int len = secret.length/2 + odd;
+ 	firstHalfSecret = new byte [len];
+	secondHalfSecret = new byte [len];
+    System.arraycopy(secret,0,firstHalfSecret,0,len);
+ 	System.arraycopy(secret,secret.length - len,secondHalfSecret,0,len);
+
+ 	byte labelByteArr[] = label.getBytes();
+ 	byte[] byteSeed = new byte[labelByteArr.length + seed.length];
+ 	System.arraycopy(labelByteArr,0,byteSeed,0,labelByteArr.length);
+ 	System.arraycopy(seed,0,byteSeed,labelByteArr.length, seed.length);
+ 	byte[] p_md5 = p_hash("MD5", firstHalfSecret, byteSeed, destLen);
+ 	byte[] p_sha = p_hash("SHA-1" ,secondHalfSecret, byteSeed, destLen);
+
+  	for ( int i=0;i < destLen; i++ ) {
+ 	    p_md5[i] = (byte) (p_md5[i] ^ p_sha[i]);
+       } 
+
+ 	return p_md5;
+}
+
+   
+    /**
+     * Implementation of p_hash construct defined
+     * in rfc 2246 section 5
+     * <P />
+     * @param alg Hashing algorithm type. Currently MD5 or SHA
+     * @param secret Secret that needs to be expanded into blocks 
+     * of data for the purposes of key generation or validation
+     * @param label Identifying string
+     * @param seed Random seed
+     * @param length The length of the returned byte array 
+     * @return a byte array of length 'length'
+     */  
+ 
+    public  static byte[] p_hash(String alg, byte[] secret, byte[] data, int length) {
+ 	int iterations;
+ 	int algSize;
+
+	byte[] algArr = new byte[length];
+ 	byte[] A_i = data;   // calculated A(0)
+       
+	int algArrIndex=0;   
+ 	
+       if(alg.equals("MD5")) {
+	   	algSize = MD5_SIZE;
+       }
+	else {
+		algSize = SHA_SIZE;
+	}
+
+	byte[] temp = new byte[data.length + algSize];   
+	
+       iterations = (length%algSize == 0) ? length/algSize: length/algSize +1;
+ 	 
+ 	for (int i = 0;i < iterations-1 ; i++) {
+ 	    A_i = hmac(alg, secret, A_i);              // calculating A(i)
+ 	    System.arraycopy(A_i, 0, temp, 0, A_i.length);   // copying a(i) into temp
+           System.arraycopy(data, 0, temp, A_i.length, data.length);// copying data into temp
+ 	    System.arraycopy( hmac(alg, secret, temp), 0, algArr, algArrIndex, algSize);//algArr=algArr +HMAC(temp)
+ 	    algArrIndex += algSize;
+ 	} 
+ 
+ 	for(int i =0; i<10000; i++) ;
+ 
+       // in the last iteration have to fill up only upto the end of algArr
+ 	A_i = hmac(alg, secret, A_i);
+       System.arraycopy(A_i, 0, temp, 0, A_i.length);
+       System.arraycopy(data, 0, temp, A_i.length, data.length);
+       System.arraycopy( hmac(alg, secret, temp), 0, algArr, algArrIndex, algArr.length -algArrIndex);
+ 
+       return algArr; 	
+     }
+ 
+   
+
+ /**
+   * It is the implementation of the hashing function defined
+    * in rfc 2104
+    * <P />
+    * @param alg Hashing algorithm type. 
+    * @param secret Secret whose hash is to be found
+    * @param seed Random seed
+    * @return a byte array of length 'length'
+    */  
+ public static byte[] hmac(String alg,byte[] secret, byte[] seed) {
+ 	int blockSize = 64;    // for both the algo block size is 64.
+ 	byte[] ipad = new byte [64];
+ 	byte[] opad = new byte[64];
+ 	MessageDigest d = null;
+ 	int algSize = 0;
+ 		
+ 	try { 	    	
+ 	    if (alg.equals("MD5")) {
+ 		d = MessageDigest.getInstance("MD5");
+ 		algSize=MD5_SIZE;
+ 	    }
+ 	    else {
+ 		d = MessageDigest.getInstance("SHA-1");
+ 		algSize = SHA_SIZE;
+ 	    } 
+ 	}catch (Exception e ) { 
+ 	    System.out.println ("No MD5 or SHA");    
+ 	} 
+ 
+ 	//Filling up ipad and opad
+       int i;
+ 	for (i = 0; i< 64; i++) {
+ 	    ipad[i] = (byte)0x36;
+ 	    opad[i] = (byte)0x5C; 
+ 	} 
+ 
+ 	// checking to see if seed is greater than 64 
+ 	if ( secret.length > blockSize) {
+	    try {	
+        	    byte[] temp = new byte[blockSize]; //does the specifications say that the array is initailzed to zero 	    
+       	    d.update(secret, 0, secret.length);
+        	    d.digest(temp, 0 , temp.length);
+        	    secret = temp;
+	    }catch (Exception e) {
+                  throw new RuntimeException("No hmac Digest 1");
+           }
+ 	}else {
+ 	    byte temp[] = new byte[blockSize];
+ 	    System.arraycopy(secret, 0, temp,0, secret.length);
+ 	    secret = temp;
+ 	}
+ 
+      byte[] temp = new byte[algSize];
+      try {
+        	// ipad = K XOR ipad 
+        	for (i = 0;i < blockSize; i++) 
+        	    ipad[i] = (byte) (secret[i] ^ ipad[i]);
+        
+        	// ipad = H(K XOR ipad, seed)
+        	d.update(ipad,0,ipad.length); 
+       	d.update(seed, 0, seed.length);
+       	d.digest(ipad,0, ipad.length);
+        	 
+        	//opad = K XOR opad 
+        	for (i = 0; i<blockSize ; i++) 
+        	    opad[i] = (byte) ( secret[i] ^ opad[i]);
+       	
+              
+        	d.update(opad, 0, opad.length);
+       	d.update(ipad,0, algSize);
+       	d.digest(temp, 0, temp.length);
+      	}catch (Exception e) {
+            throw new RuntimeException("No hmac digest 2");
+       }
+ 	 		
+ 	return temp;
+     }
+ 
+
     /**
      * Initiates an SSL handshake with the peer specified previously
      * in the constructor. 
@@ -979,11 +1251,11 @@ class Handshake {
      */
      // IMPL_NOTE: Allow handshake parameters such as ver, cipher suites 
      // and compression methods to be passed as arguments.
-    void doHandShake(byte aswho) throws IOException {
+    void doHandShake(byte aswho, byte proposedVersion) throws IOException {
         long t1 = System.currentTimeMillis();
         int code = 0;
         
-        ver = (byte) 0x30;  // IMPL_NOTE: This is hardcoded for now
+        ver = proposedVersion;  
         role = aswho;
         
         byte val = 0;
