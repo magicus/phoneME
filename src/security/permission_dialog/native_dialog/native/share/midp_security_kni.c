@@ -127,6 +127,8 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
             /* Block the caller until the security listener is called */
                 midp_thread_wait(SECURITY_CHECK_SIGNAL, requestHandle, NULL);
             }
+        } else {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }
         KNI_EndHandles();
     } else {
@@ -184,6 +186,8 @@ Java_com_sun_midp_security_SecurityHandler_checkPermissionStatus0()
             status = 0;
             break;
         }
+    } else {
+        KNI_ThrowNew(midpOutOfMemoryError, NULL);
     }
     KNI_EndHandles();
     KNI_ReturnInt(status);
