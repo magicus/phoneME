@@ -176,10 +176,7 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle han
                                                              javacall_int32 client_y_arg,
                                                              javacall_int16 button_arg,
                                                              javacall_handle related_target_arg,
-                                                             javacall_bool ctrlKey_arg,
-                                                             javacall_bool altKey_arg,
-                                                             javacall_bool shiftKey_arg,
-                                                             javacall_bool metaKey_arg,
+                                                             javacall_const_utf16_string modifiers_list_arg,
                                                              javacall_int32 wheel_delta_arg);
 
 /**

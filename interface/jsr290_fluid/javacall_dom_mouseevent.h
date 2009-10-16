@@ -648,12 +648,9 @@ javacall_dom_mouseevent_init_mouse_event_ns_start(javacall_handle handle,
                                                   javacall_int32 screen_y_arg,
                                                   javacall_int32 client_x_arg,
                                                   javacall_int32 client_y_arg,
-                                                  javacall_bool ctrl_key_arg,
-                                                  javacall_bool alt_key_arg,
-                                                  javacall_bool shift_key_arg,
-                                                  javacall_bool meta_key_arg,
                                                   javacall_int16 button_arg,
-                                                  javacall_handle related_target_arg);
+                                                  javacall_handle related_target_arg,
+                                                  javacall_const_utf16_string modifiers_list);
 
 /**
  * Forms request to the native engine and returns with JAVACALL_WOULD_BLOCK code 
