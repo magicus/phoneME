@@ -24,7 +24,7 @@
 
 #include <java_types.h>
 #include <secure_random_port.h>
-#include <javacall_defs.h>
+#include <javacall_random.h>
 
 jboolean get_random_bytes_port(unsigned char*buffer, jint size) {
        return JAVACALL_OK == javacall_random_get_seed(buffer, size);
