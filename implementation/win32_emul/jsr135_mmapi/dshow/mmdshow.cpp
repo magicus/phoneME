@@ -474,9 +474,10 @@ static javacall_result dshow_destroy(javacall_handle handle)
 
 static javacall_result dshow_close(javacall_handle handle)
 {
-    dshow_player* p = (dshow_player*)handle;
+    //dshow_player* p = (dshow_player*)handle;
     PRINTF( "*** close ***\n" );
 
+    /*
     if( NULL != p->pModule )
     {
         p->pModule->removePlayer( p );
@@ -487,8 +488,9 @@ static javacall_result dshow_close(javacall_handle handle)
     if( NULL != p->ppl ) p->ppl->close();
 
     if( p->is_video ) lcd_output_video_frame( p->ovl, NULL );
+    */
 
-    return JAVACALL_OK;
+    return dshow_destroy(handle);
 }
 
 static javacall_result dshow_get_player_controls(javacall_handle handle,
