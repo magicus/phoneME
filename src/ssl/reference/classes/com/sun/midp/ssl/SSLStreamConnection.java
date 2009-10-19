@@ -106,6 +106,9 @@ public class SSLStreamConnection implements StreamConnection {
     /** Cipher suite from a successful handshake. */
     private String cipherSuite;
 
+    /** negotiated SSL version. */
+    byte negVersion;
+
     /*
      * The following are visible within the package so In and Out can 
      * manipulate them directly
@@ -160,9 +163,10 @@ public class SSLStreamConnection implements StreamConnection {
         try {
             Handshake hndshk = new Handshake(host, port, rec, cs);
 
-            hndshk.doHandShake(Record.CLIENT);
+            hndshk.doHandShake(Record.CLIENT,(byte)0x31); //version 0x31
             serverCert = hndshk.sCert;
             cipherSuite = hndshk.negSuiteName;
+	    negVersion = hndshk.negVersion;
         } catch (IOException e) {
             cleanupIfNeeded();
             throw e;
@@ -362,7 +366,8 @@ class SSLSecurityInfo implements SecurityInfo {
      * @return a String containing the version of the protocol
      */
     public String getProtocolVersion() {
-        return "3.0";
+        //return "3.1";
+	return (parent.negVersion >> 4) + "." + (parent.negVersion & 0x0f);
     }
 
     /**
@@ -375,7 +380,11 @@ class SSLSecurityInfo implements SecurityInfo {
      * If WTLS (WAP 199) is used for the connection the return value is "WTLS".
      */
     public String getProtocolName() {
-        return "SSL";
+    	if (parent.negVersion <= 0x30) {
+            return "SSL";
+        } else {	
+        	return "TLS";
+        }
     }
 
     /**
