@@ -1029,15 +1029,32 @@ private:
 #endif
 
   // Saving heap config during expansion
+#define SAVED_HEAP_CONFIG_DO(template)  \
+  template(near_mask)         \
+  template(slice_shift)       \
+  template(slice_offset_bits) \
+  template(slice_offset_mask) \
+  template(slice_size)        \
+  template(nof_slices)
+
   struct SavedHeapConfig {
-    size_t    _old_near_mask;
-    size_t    _old_slice_shift;
-    size_t    _old_slice_offset_bits;
-    size_t    _old_slice_offset_mask;
-    size_t    _old_slice_size;
+    #define SAVED_HEAP_CONFIG_DEFINE_FIELD(name) size_t _old_##name;
+      SAVED_HEAP_CONFIG_DO(SAVED_HEAP_CONFIG_DEFINE_FIELD)
+    #undef SAVED_HEAP_CONFIG_DEFINE_FIELD
   };
-  static void save_heap_config    ( SavedHeapConfig&        state );
-  static void restore_heap_config ( const SavedHeapConfig&  state );
+  static void save_heap_config( SavedHeapConfig& state ) {
+    // Save old global values that may be changed
+    #define SAVED_HEAP_CONFIG_SAVE(name) state._old_##name = _##name;
+      SAVED_HEAP_CONFIG_DO(SAVED_HEAP_CONFIG_SAVE)
+    #undef SAVED_HEAP_CONFIG_SAVE
+  }
+  static void restore_heap_config( const SavedHeapConfig& state ) {
+    // This function is called when a heap expansion fails.
+    #define SAVED_HEAP_CONFIG_RESTORE(name) _##name = state._old_##name;
+      SAVED_HEAP_CONFIG_DO(SAVED_HEAP_CONFIG_RESTORE)
+    #undef SAVED_HEAP_CONFIG_RESTORE
+  }
+#undef SAVED_HEAP_CONFIG_DO
 
   static bool      _last_heap_expansion_failed;
 

@@ -1986,25 +1986,10 @@ size_t ObjectHeap::update_slices_size(size_t object_heap_size) {
   return slices_size;
 }
 
-inline void ObjectHeap::save_heap_config( SavedHeapConfig& state ) {
-  // Save old global values that may be changed
-  state._old_near_mask          = _near_mask;
-  state._old_slice_shift        = _slice_shift;
-  state._old_slice_offset_bits  = _slice_offset_bits;
-  state._old_slice_offset_mask  = _slice_offset_mask;
-  state._old_slice_size         = _slice_size;
-}
-
-inline void ObjectHeap::restore_heap_config( const SavedHeapConfig& state ) {
-  // This function is called when a heap expansion fails.
-  _near_mask                 = state._old_near_mask;
-  _slice_shift               = state._old_slice_shift;
-  _slice_offset_bits         = state._old_slice_offset_bits;
-  _slice_offset_mask         = state._old_slice_offset_mask;
-  _slice_size                = state._old_slice_size;
-}
-
 bool ObjectHeap::adjust_heap_size(size_t target_heap_size) {
+  SavedHeapConfig saved_state;
+  save_heap_config(saved_state);
+
   target_heap_size = align_up(target_heap_size);
   GUARANTEE(target_heap_size > 0, "Invalid heap size");
   must_be_aligned( target_heap_size );
@@ -2058,30 +2043,23 @@ bool ObjectHeap::adjust_heap_size(size_t target_heap_size) {
                     target_heap_size/1024));
     }
 
-    SavedHeapConfig saved_state;
-    save_heap_config(saved_state);
-
     const size_t old_heap_size =
       OsMemory_adjust_chunk(_heap_chunk, heap_chunk_size);
-    const size_t old_bitv_size =
-      OsMemory_adjust_chunk(_bitv_chunk, bitv_chunk_size);
-    if (old_heap_size == 0 || old_bitv_size == 0) {
-      // At least one adjustment failed. Restore old size
-      if (old_heap_size != 0) {
+    size_t old_bitv_size = 0;
+    if (old_heap_size != 0) {
+      old_bitv_size = OsMemory_adjust_chunk(_bitv_chunk, bitv_chunk_size);
+      if (old_bitv_size == 0) {
         OsMemory_adjust_chunk(_heap_chunk, old_heap_size);
       }
-      if (old_bitv_size != 0) {
-        OsMemory_adjust_chunk(_bitv_chunk, old_bitv_size);
-      }
+    }
+    if (old_bitv_size == 0) {
       // if we fail to adjust the heap size, all globals should remain
       // unchanged.
       restore_heap_config(saved_state);
-
       _last_heap_expansion_failed = true;
       return false;
-    } else {
-      _last_heap_expansion_failed = false;
     }
+    _last_heap_expansion_failed = false;
   }
 
   must_be_aligned( unsigned(_heap_chunk));
