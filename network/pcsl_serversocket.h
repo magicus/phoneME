@@ -69,7 +69,40 @@ extern
 int pcsl_serversocket_open(
     int port,
     void **pHandle);
-    
+
+
+/**
+ * Creates a server socket.
+ *
+ * @param port number of the port to open
+ * @param pHandle address of variable to receive the handle; this is set
+ *        only when this function returns PCSL_NET_SUCCESS.
+ *
+ * @return PCSL_NET_SUCCESS if the function completes successfully;\n
+ * PCSL_NET_IOERROR if there was an IO error and IOException needs to be thrown.
+ */
+extern
+int pcsl_server_socket_open_start(
+    int port,
+    void **pHandle,
+    void **pContext);
+
+
+/**
+ * Creates a server socket.
+ *
+ * @param port number of the port to open
+ * @param pHandle address of variable to receive the handle; this is set
+ *        only when this function returns PCSL_NET_SUCCESS.
+ *
+ * @return PCSL_NET_SUCCESS if the function completes successfully;\n
+ * PCSL_NET_IOERROR if there was an IO error and IOException needs to be thrown.
+ */
+extern
+int pcsl_server_socket_open_finish(
+    void **pHandle,
+    void **pContext);
+
 /**
  * Initiates accept and open of connection associated with the
  * platform-specific handle. 

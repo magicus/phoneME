@@ -56,7 +56,32 @@ int pcsl_serversocket_open(
       res = javacall_server_socket_open_finish(pHandle, &Context);
     return javacall_to_pcsl_result (res);
 }
-    
+
+/**
+ * See pcsl_serversocket.h for definition.
+ */
+int
+pcsl_server_socket_open_start(int port, void **pHandle, void **pContext) {
+    javacall_result res;
+
+    res = javacall_server_socket_open_start(port, pHandle, pContext);
+
+    return javacall_to_pcsl_result(res);
+}
+
+
+/**
+ * See pcsl_serversocket.h for definition.
+ */
+int
+pcsl_server_socket_open_finish(void **handle, void **context) {
+    javacall_result res;
+
+    res = javacall_server_socket_open_finish(handle, context);
+
+    return javacall_to_pcsl_result(res);
+}
+
 /**
  * See pcsl_serversocket.h for definition.
  */
