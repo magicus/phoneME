@@ -87,11 +87,12 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
 
     if (info == NULL) {
         /* initial invocation: send request */
-                jint requestHandle;
+        jint requestHandle;
         jint permissionLength;
         jchar* permission = NULL;
         jint suiteId = KNI_GetParameterAsInt(1);
         jint result;
+        javacall_result status;
         
         KNI_StartHandles(1);
         KNI_DeclareHandle(permissionHandle);
@@ -101,21 +102,19 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
         if (permission) {
             unsigned int res;
             KNI_GetStringRegion(permissionHandle, 0, permissionLength, permission);
-            switch (javacall_security_check_permission((javacall_suite_id)suiteId,
+            status = javacall_security_check_permission((javacall_suite_id)suiteId,
                                                (javacall_const_utf16_string)permission,
                                                permissionLength,
-                                               JAVACALL_FALSE,
-                                               &res)) {
-
+                                               JAVACALL_TRUE,
+                                               &res);
+            midpFree(permission);
+            switch (status) {
             case JAVACALL_OK:
                 result = CONVERT_PERMISSION_STATUS(res);
                 break;
             case JAVACALL_WOULD_BLOCK:
-        /* incorrect behaviour: regardless the fact that NAMS shows user dialog,
-        application need to get result immediately */
+                requestHandle = res;
                 result = -1;
-                REPORT_ERROR(LC_SECURITY,
-                     "javacall_security_check_permission() returns incorrect status");
                 break;
             default:
                 result = 0;
@@ -155,10 +154,11 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 Java_com_sun_midp_security_SecurityHandler_checkPermissionStatus0()
 {
-    jint status = 0;
+    jint result = 0;
     jint suiteId = KNI_GetParameterAsInt(1);
     jint permissionLength;
     jchar* permission = NULL;
+    javacall_result status;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(permissionHandle);
@@ -167,29 +167,33 @@ Java_com_sun_midp_security_SecurityHandler_checkPermissionStatus0()
     permission = midpMalloc(permissionLength * sizeof(jchar));
     if (permission) {
         unsigned int res;
-        switch (javacall_security_check_permission((javacall_suite_id)suiteId,
+        KNI_GetStringRegion(permissionHandle, 0, permissionLength, permission);
+
+        status = javacall_security_check_permission((javacall_suite_id)suiteId,
                                                    (javacall_const_utf16_string)permission,
                                                    permissionLength,
                                                    JAVACALL_FALSE,
-                                                   &res)) {
+                                                   &res);
+        midpFree(permission);
+        switch (status) {
         case JAVACALL_OK:
-            status = CONVERT_PERMISSION_STATUS(res);
+            result = CONVERT_PERMISSION_STATUS(res);
             break;
         case JAVACALL_WOULD_BLOCK:
         /* incorrect behaviour: regardless the fact that NAMS shows user dialog,
         application need to get result immediately */
-            status = -1;
+            result = -1;
             REPORT_ERROR(LC_SECURITY,
                      "javacall_security_check_permission() returns incorrect status");
             break;
         default:
-            status = 0;
+            result = 0;
             break;
         }
     } else {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     }
     KNI_EndHandles();
-    KNI_ReturnInt(status);
+    KNI_ReturnInt(result);
 }
 
