@@ -43,6 +43,23 @@ int pcsl_serversocket_open(
 {
     return PCSL_NET_IOERROR;
 }
+
+/**
+ * See pcsl_serversocket.h for definition.
+ */
+int
+pcsl_server_socket_open_start(int port, void **pHandle, void **pContext) {
+    return PCSL_NET_IOERROR;
+}
+
+
+/**
+ * See pcsl_serversocket.h for definition.
+ */
+int
+pcsl_server_socket_open_finish(void **handle, void **context) {
+    return PCSL_NET_IOERROR;
+}
     
 /**
  * See pcsl_serversocket.h for definition.

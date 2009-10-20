@@ -119,6 +119,26 @@ int pcsl_serversocket_open(
 }
 
 /**
+ * See pcsl_serversocket.h for definition.
+ */
+int
+pcsl_server_socket_open_start(int port, void **pHandle, void **pContext) {
+    (void)pContext;
+    return pcsl_serversocket_open(port, pHandle);
+}
+
+
+/**
+ * See pcsl_serversocket.h for definition.
+ */
+int
+pcsl_server_socket_open_finish(void **handle, void **context) {
+    (void)handle;
+    (void)context;
+    return PCSL_NET_IOERROR;
+}
+
+/**
  * Common functionality for accept start and finish
  */
 static int pcsl_serversocket_accept_common(
