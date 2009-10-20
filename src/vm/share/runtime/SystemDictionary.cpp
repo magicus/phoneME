@@ -32,8 +32,9 @@
 char SystemDictionary::_last_class_loaded[LAST_CLASS_LOADED_BUF_SIZE];
 #endif
 
-ReturnOop SystemDictionary::bucket_for(ObjArray *sd, juint hash_value) {
-  juint len = (juint)sd->length();
+ReturnOop
+SystemDictionary::bucket_for(const ObjArray* sd, const juint hash_value) {
+  const juint len = (juint)sd->length();
   juint index;
   if (len == 64) {
     index = hash_value & (64 - 1);
@@ -51,65 +52,51 @@ void SystemDictionary::set_bucket_for(ObjArray *sd, juint hash_value,
 // lookup_only -- only search loaded classes, don't try to load
 //                from classpath.
 // check_only  -- if not found, don't throw an exception
-ReturnOop SystemDictionary::find(LoaderContext *loader_ctx, 
-                                 bool lookup_only, 
-                                 bool check_only JVM_TRAPS) {
-
-  ObjArray::Raw dictionary = Universe::system_dictionary();
- 
-  if (!dictionary.is_null()) {
-    InstanceClass::Raw cl = 
-      find_class_in_dictionary(&dictionary, loader_ctx, lookup_only);
-    if (cl().not_null()) {
-      return cl;
+ReturnOop SystemDictionary::find(LoaderContext* loader_ctx, 
+                                 const bool lookup_only, 
+                                 const bool check_only JVM_TRAPS) {
+  OopDesc* cl =
+         find_class_in_dictionary(Universe::system_dictionary(),
+                                  loader_ctx, lookup_only);
+  if (!cl) {
+    cl = find_class_in_dictionary(Universe::current_dictionary(),
+                                  loader_ctx, lookup_only);
+    if (!cl && !check_only) {
+      Throw::class_not_found(loader_ctx JVM_NO_CHECK_AT_BOTTOM);
     }
   }
-  dictionary = Universe::current_dictionary();
-  if (!dictionary.is_null()) {
-    InstanceClass::Raw cl = 
-      find_class_in_dictionary(&dictionary, loader_ctx, lookup_only);
-    if (cl().not_null()) {
-      return cl;
-    }
-  }
-  if (!check_only) {
-    Throw::class_not_found(loader_ctx JVM_NO_CHECK_AT_BOTTOM);
-  }
-  return NULL;
+  return cl;
 }
 
 
-ReturnOop SystemDictionary::find_class_in_dictionary(ObjArray *dictionary,
-                                 LoaderContext *loader_ctx, 
-                                 bool lookup_only) {
-
-  juint hash_value = loader_ctx->class_name()->hash();
-  for (InstanceClass::Raw cl = bucket_for(dictionary, hash_value); 
-       !cl.is_null(); 
-       cl = cl().next()) {
-    Symbol::Raw name = cl().name();
-    if (loader_ctx->class_name()->equals(&name)) {
-      // class match 
+ReturnOop
+SystemDictionary::find_class_in_dictionary(const ObjArray *dictionary,
+                                           LoaderContext *loader_ctx, 
+                                           const bool lookup_only) {
+  if (dictionary->not_null()) {
+    const juint hash_value = loader_ctx->class_name()->hash();
+    for (InstanceClass::Raw cl = bucket_for(dictionary, hash_value); 
+         !cl.is_null(); 
+         cl = cl().next()) {
+      if (!loader_ctx->class_name()->equals(cl().name())) {
+        continue;
+      }
       if (lookup_only) {
         // return the class immediately for lookups only
         return cl;
       } 
-    } else { 
-      GUARANTEE(!loader_ctx->class_name()->equals(&name), "symbols misuse!");
-      // no match found
-      continue;
-    }
-    if (cl().is_fake_class() && loader_ctx->resolve_mode() != SemiResolve) {
-      continue;
-    }
+      if (cl().is_fake_class() && loader_ctx->resolve_mode() != SemiResolve) {
+        continue;
+      }
 
 #ifdef USE_CLASS_LOADER
-    Oop::Raw loader = cl().class_loader();
-    if (!loader_ctx->class_loader->equals(&loader)) {
-      continue;
-    }
+      Oop::Raw loader = cl().class_loader();
+      if (!loader_ctx->class_loader->equals(&loader)) {
+        continue;
+      }
 #endif
-    return cl;
+      return cl;
+    }
   }
   return NULL;
 }
@@ -268,10 +255,9 @@ ReturnOop SystemDictionary::load_system_class(LoaderContext *loader_ctx JVM_TRAP
 void SystemDictionary::insert(LoaderContext *loader_ctx, 
                               InstanceClass* instance_class JVM_TRAPS) {
   GUARANTEE(!instance_class->is_null(), "sanity check");
+  
   UsingFastOops fastoops;
-
-  ObjArray::Fast dictionary;
-  dictionary = Universe::current_dictionary();
+  ObjArray::Fast dictionary = Universe::current_dictionary();
 #if ENABLE_ISOLATES
   GUARANTEE(dictionary.not_null(),"dictionary is null");
 #endif
@@ -285,7 +271,6 @@ void SystemDictionary::insert(LoaderContext *loader_ctx,
     InstanceClass::Raw last = ic;
 
     while (ic.not_null()) {
-
       InstanceClass::Raw next = ic().next();
       Symbol::Raw name2 = ic().name();
 

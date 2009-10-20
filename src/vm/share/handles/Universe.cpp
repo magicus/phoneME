@@ -1277,8 +1277,7 @@ ReturnOop Universe::new_type_array(TypeArrayClass* klass, jint length JVM_TRAPS)
 }
 
 ReturnOop Universe::new_method(const int code_length,
-                               const AccessFlags access_flags JVM_TRAPS)
-{
+                               const AccessFlags access_flags JVM_TRAPS) {
   Method::Raw m = allocate_method(code_length JVM_NO_CHECK);
   if (m.not_null()) {
     m().set_access_flags(access_flags);
@@ -1318,21 +1317,27 @@ ReturnOop Universe::new_instance(InstanceClass* klass JVM_TRAPS) {
   OopDesc* result = ObjectHeap::allocate(instance_size.fixed_value() 
                                          JVM_ZCHECK_0(result));
   result->initialize(klass->prototypical_near());
-  AccessFlags flags = klass->access_flags();
+  const AccessFlags flags = klass->access_flags();
   if (flags.has_finalizer()) {
     UsingFastOops fast_oops;
     Oop::Fast obj(result);  // create handle, call below can gc
     if (flags.has_unresolved_finalizer()) {
       UsingFastOops fast_oops2;
-      Method::Fast finalize_method = 
-        klass->find_local_void_method(Symbols::finalize_name());
+      Method::Fast finalize_method = klass->lookup_finalizer();
+      GUARANTEE(finalize_method.not_null() && finalize_method().is_private() &&
+                finalize_method().is_native(), "Must have finalize() method");
 #if ENABLE_DYNAMIC_NATIVE_METHODS
-      address finalizer = 
-        Natives::load_dynamic_native_code(&finalize_method JVM_CHECK_0);
-      GUARANTEE(finalizer != NULL, "Error must be thrown");
-
-      flags.clear_has_unresolved_finalizer();
-      klass->set_access_flags(flags);
+      InstanceClass::Fast finalize_holder = finalize_method().holder();
+      if (finalize_holder().has_unresolved_finalizer()) {
+        address finalizer = 
+          Natives::load_dynamic_native_code(&finalize_method
+                                            JVM_ZCHECK_0(finalizer));
+        finalize_holder().clear_has_unresolved_finalizer();
+      }
+      InstanceClass::Raw ic = klass->obj();
+      for( ; !ic.equals(&finalize_holder); ic = ic().super() ) {
+        ic().clear_has_unresolved_finalizer();
+      }
 #else 
       Throw::unsatisfied_link_error(&finalize_method JVM_THROW_0)
 #endif

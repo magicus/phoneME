@@ -42,8 +42,7 @@ void FinalizerConsDesc::run_finalizer( void ) {
     GUARANTEE(referent_class().has_finalizer(), 
             "Class of finalizable object must have finalizer");
 
-    Method::Raw finalize_method = 
-      referent_class().lookup_void_method(Symbols::finalize_name());
+    Method::Raw finalize_method = referent_class().lookup_finalizer();
     GUARANTEE(finalize_method.not_null(), "Must have finalize() method");
   
     remember_kni_parameter_base = _kni_parameter_base;

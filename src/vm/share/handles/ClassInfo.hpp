@@ -113,6 +113,9 @@ class ClassInfo: public Oop {
   bool has_finalizer() const {
     return access_flags().has_finalizer();
   }
+  bool has_unresolved_finalizer() const {
+    return access_flags().has_unresolved_finalizer();
+  }
   bool has_vanilla_constructor() const {
     return access_flags().has_vanilla_constructor();
   }

@@ -107,10 +107,11 @@ class SystemDictionary : public AllStatic {
                 /*check_only=*/ true JVM_NO_CHECK_AT_BOTTOM);
   }
   static ReturnOop find(LoaderContext *loader_ctx, 
-                        bool lookup_only, bool check_only JVM_TRAPS);
-  static ReturnOop find_class_in_dictionary(ObjArray *dictionary,
-                                            LoaderContext *loader_ctx, 
-                                            bool lookup_only);
+                        const bool lookup_only,
+                        const bool check_only JVM_TRAPS);
+  static ReturnOop find_class_in_dictionary(const ObjArray* dictionary,
+                                            LoaderContext* loader_ctx, 
+                                            const bool lookup_only);
   static ReturnOop find_class_or_null(Symbol *class_name);
 
 #if ENABLE_ISOLATES
@@ -131,7 +132,7 @@ class SystemDictionary : public AllStatic {
 
   static ReturnOop fetch_buffer(LoaderContext *loader_ctx JVM_TRAPS);
 
-  static ReturnOop bucket_for(ObjArray *sd, juint hash_value);
+  static ReturnOop bucket_for(const ObjArray* sd, const juint hash_value);
   static void set_bucket_for(ObjArray *sd, juint hash_value, InstanceClass* bucket);
   static void set_bucket_for(ObjArray *sd, juint hash_value, ObjArrayClass* bucket);
   static ReturnOop create_fake_class(LoaderContext *loader_ctx JVM_TRAPS);

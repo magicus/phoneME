@@ -273,14 +273,16 @@ public:
     info().set_access_flags(access_flags);
   }
   void set_is_non_optimizable( void ) {
-    AccessFlags flags = access_flags();
+    ClassInfo::Raw info = class_info();
+    AccessFlags flags = info().access_flags();
     flags.set_is_non_optimizable();
-    set_access_flags(flags);
+    info().set_access_flags(flags);
   }
   void set_is_hidden( void ) {
-    AccessFlags flags = access_flags();
+    ClassInfo::Raw info = class_info();
+    AccessFlags flags = info().access_flags();
     flags.set_is_hidden();
-    set_access_flags(flags);
+    info().set_access_flags(flags);
   }
 
   jushort class_id(void) const {
@@ -315,13 +317,27 @@ public:
 
 #if ENABLE_COMPILER_TYPE_INFO
   // Returns true if this class doesn't have any subtypes except for itself
-  bool is_final_type() const;
+  bool is_final_type(void) const;
 #endif
 
-  bool has_finalizer()     const { return access_flags().has_finalizer(); }
+  bool has_finalizer(void) const {
+    return access_flags().has_finalizer();
+  }
+  bool has_unresolved_finalizer(void) const {
+    return access_flags().has_unresolved_finalizer();
+  }
   bool has_vanilla_constructor() const {
     return access_flags().has_vanilla_constructor();
   }
+
+#if ENABLE_DYNAMIC_NATIVE_METHODS
+  void clear_has_unresolved_finalizer(void) {
+    ClassInfo::Raw info = class_info();
+    AccessFlags flags = info().access_flags();
+    flags.clear_has_unresolved_finalizer();
+    info().set_access_flags(flags);
+  }
+#endif
 
 #if ENABLE_ROM_GENERATOR
   int generate_fieldmap(TypeArray* field_map);

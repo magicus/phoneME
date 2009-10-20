@@ -78,6 +78,7 @@ class InstanceClass: public JavaClass {
   ReturnOop lookup_method(Symbol* name, Symbol* signature,
                           const bool non_static_only = false) const;
   ReturnOop lookup_void_method(Symbol* name) const;
+  ReturnOop lookup_finalizer(void) const;
   ReturnOop lookup_main_method(void) const;
 
   // Returns the Method.

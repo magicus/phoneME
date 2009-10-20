@@ -723,7 +723,7 @@ void ROMOptimizer::initialize_classes(JVM_SINGLE_ARG_TRAPS) {
       }
 #if USE_SOURCE_IMAGE_GENERATOR
       if (is_init_at_build(&klass)) {
-              Universe::record_inited_at_build(&klass JVM_CHECK);
+        Universe::record_inited_at_build(&klass JVM_CHECK);
       }
 #endif
     }

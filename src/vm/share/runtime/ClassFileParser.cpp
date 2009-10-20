@@ -1854,11 +1854,16 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
 #if !USE_SOURCE_IMAGE_GENERATOR
       if (fm().get_native_code() == (address)Java_void_unimplemented) {
         access_flags.set_has_unresolved_finalizer();
-      } else 
-#endif
-      {
-        access_flags.set_has_finalizer();
       }
+#endif
+      access_flags.set_has_finalizer();
+    } else if (super_class().has_finalizer()) {
+      access_flags.set_has_finalizer();
+#if !USE_SOURCE_IMAGE_GENERATOR
+      if (super_class().has_unresolved_finalizer()) {
+        access_flags.set_has_unresolved_finalizer();
+      }
+#endif
     }
   }
 #if ENABLE_ISOLATES

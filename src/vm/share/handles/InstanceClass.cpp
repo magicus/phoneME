@@ -391,11 +391,14 @@ ReturnOop InstanceClass::lookup_void_method(Symbol* name) const {
   return lookup_method(name, Symbols::void_signature());
 }
 
+ReturnOop InstanceClass::lookup_finalizer(void) const {
+  return lookup_void_method(Symbols::finalize_name());
+}
+
 ReturnOop InstanceClass::lookup_main_method(void) const {
   return lookup_method(Symbols::main_name(),
                        Symbols::string_array_void_signature());
 }
-
 
 /// Adds miranda methods to a class's methods array. For an interface I and
 /// a class C that declares to implement I, a miranda method I.m is a method

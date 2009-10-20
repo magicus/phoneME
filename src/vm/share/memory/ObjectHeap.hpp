@@ -1028,6 +1028,8 @@ private:
   static bool      _is_finalizing;
 #endif
 
+  static bool      _last_heap_expansion_failed;
+
   // Saving heap config during expansion
 #define SAVED_HEAP_CONFIG_DO(template)  \
   template(near_mask)         \
@@ -1055,8 +1057,6 @@ private:
     #undef SAVED_HEAP_CONFIG_RESTORE
   }
 #undef SAVED_HEAP_CONFIG_DO
-
-  static bool      _last_heap_expansion_failed;
 
 #if ENABLE_COMPILER
   static OopDesc** _saved_compiler_area_top;
