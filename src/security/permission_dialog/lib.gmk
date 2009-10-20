@@ -64,7 +64,7 @@ ifeq ($(PERMISSION_DIALOG_IMPL), native_dialog)
 #
 # vpath for module specific files
 #
-vpath % $(PERMISSION_DIALOG_DIR)/native_dialog/native/share
+vpath % $(PERMISSION_DIALOG_DIR)/native_dialog/native
 
 #
 # Native files for the native impl of the library
@@ -75,7 +75,7 @@ SUBSYSTEM_SECURITY_NATIVE_FILES += \
 
 # Native include path for the ( native_dialog ) module
 SUBSYSTEM_SECURITY_EXTRA_INCLUDES += \
-    -I$(PERMISSION_DIALOG_DIR)/native_dialog/native/share
+    -I$(PERMISSION_DIALOG_DIR)/native_dialog/native
 
 else
 
