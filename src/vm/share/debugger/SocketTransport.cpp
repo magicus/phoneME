@@ -563,7 +563,7 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
   SocketTransport *st = (SocketTransport *)t;
   int dbg_socket = st->debugger_socket();
   if (dbg_socket == -1)
-    return 0;
+    return -1;
   return (send(dbg_socket, (char *)buf, len, 0));
 }
 

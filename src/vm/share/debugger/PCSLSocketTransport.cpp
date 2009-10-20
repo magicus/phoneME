@@ -364,7 +364,7 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
   }
 
   if (dbg_handle == INVALID_HANDLE) {
-    return 0;
+    return -1;
   }
 
   if (!_wait_for_write) {
@@ -389,7 +389,7 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
 #ifdef AZZERT
     tty->print_cr("SocketTransport: pcsl_socket_write_*() failed");
 #endif
-    return 0;
+    return -1;
   }
 
   return bytes_sent;

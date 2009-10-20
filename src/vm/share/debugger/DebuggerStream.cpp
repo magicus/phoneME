@@ -63,7 +63,7 @@ PacketStream::write_bytes(char* source, int size)
 
   while (written < size) {
     int count = ops->write_bytes(&_transport, source + written, size - written);
-    if (count > 0) {
+    if (count >= 0) {
         written += count;
     } else {
         break;
