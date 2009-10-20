@@ -411,9 +411,11 @@ class Handshake {
 
 	if (negVersion == 0x31) {
 	    FINISH_PREFIX[3] = 0x0C;  // msg length: 12
-           System.out.println(" ========> SSL  VER ="+negVersion);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                           " ========> SSL  VER ="+negVersion);
         }
-    else{
+    } else {
         FINISH_PREFIX[3] = 0x24;  // use SSL msg length: 40
     }
 
@@ -1188,7 +1190,10 @@ class Handshake {
  		algSize = SHA_SIZE;
  	    } 
  	}catch (Exception e ) { 
- 	    System.out.println ("No MD5 or SHA");    
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                "No MD5 or SHA");
+        }
  	} 
  
  	//Filling up ipad and opad
