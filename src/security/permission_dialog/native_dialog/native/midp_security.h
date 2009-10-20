@@ -48,48 +48,18 @@
 typedef void (*MIDP_SECURITY_PERMISSION_LISTENER)(jint handle, jboolean granted);
 
 /**
+ * Permission check status from
+ * javacall_security_permission_result to MIDP defined values.
+ * <p>
+ * They are the same now.
+ */
+#define CONVERT_PERMISSION_STATUS(x) x
+
+/**
  * Sets the permission result listener.
  *
  * @param listener            The permission checking result listener
  */
 void midpport_security_set_permission_listener(MIDP_SECURITY_PERMISSION_LISTENER listener);
-
-/**
- * Start a security permission checking.
- *
- * @param suiteId       - the MIDlet suite the permission should be checked with
- * @param permission    - permission type
- * @param pHandle       - address of variable to receive the handle; this is set
- *                        only when this function returns -1.
- *
- * @return error code as:
- *      0 - if the permission is denied
- *      1 - if the permission is granted
- *     -1 - if the permission cannot be determined without blocking Java
- *          platform system. A handle for this check session is returned
- *          and the result will be notified through security permission
- *          listener.
- */
-jint midpport_security_check_permission(jint suiteId, jint permission,
-                                        jint* pHandle);
-                                        
-/**
- * Check status of a security permission.
- * This call should never block. 
- * If no API on the device defines the specific permission requested
- * then it must be reported as denied. If the status of the permission is 
- * not known because it might require a user interaction then 
- * it should be reported as unknown.
- * 
- * @param suiteId       - the MIDlet suite the permission should be checked with
- * @param permission    - permission type
- *
- * @return status code as:
- *      0 - if the permission is denied
- *      1 - if the permission is granted
- *     -1 - if the permission cannot be determined without blocking Java
- *          platform system, for example by asking for user interaction.
- */
-jint midpport_security_check_permission_status(jint suiteId, jint permission);
                                         	   
 #endif /* _MIDP_SECURITY_H_ */

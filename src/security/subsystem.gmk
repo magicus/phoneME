@@ -63,9 +63,9 @@ include $(SUBSYSTEM_SECURITY_DIR)/access_controller_cldc_port/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/der/lib.gmk
 include $(SUBSYSTEM_SECURITY_DIR)/ocsp/lib.gmk
 
-ifeq ($(USE_NATIVE_PERMISSION_DIALOG), true)
-  include $(SUBSYSTEM_SECURITY_DIR)/native_dialog_port/lib.gmk
-endif
+#ifeq ($(USE_NATIVE_PERMISSION_DIALOG), true)
+#  include $(SUBSYSTEM_SECURITY_DIR)/native_dialog_port/lib.gmk
+#endif
 
 #####################################################################
 # Restricted Security 

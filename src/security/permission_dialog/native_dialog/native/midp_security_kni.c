@@ -37,12 +37,14 @@
 #include <ROMStructs.h>
 #include <commonKNIMacros.h>
 
-#include <midpport_security.h>
+#include <midp_security.h>
 #include <midp_thread.h>
 #include <midpError.h>
 #include <midpString.h>
 #include <midpUtilKni.h>
 #include <midpServices.h>
+#include <midpMalloc.h>
+#include <javacall_security.h>
 
 /** 
  * 0 if no security permission listener has been registered.
@@ -79,24 +81,55 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
     MidpReentryData* info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
     if (!isListenerRegistered) {
-        midpport_security_set_permission_listener(midpPermissionListener);
+        security_set_permission_listener(midpPermissionListener);
         isListenerRegistered = 1;
     }
 
     if (info == NULL) {
         /* initial invocation: send request */
-                jint requestHandle;
+        jint requestHandle;
+        jint permissionLength;
+        jchar* permission = NULL;
         jint suiteId = KNI_GetParameterAsInt(1);
-        jint permId = KNI_GetParameterAsInt(2);
-        jint result = midpport_security_check_permission(suiteId, permId,
-                  &requestHandle);
-
-                if (result == 1) {
-                  granted = KNI_TRUE;
-                } else if (result == -1) {
-                  /* Block the caller until the security listener is called */
-                  midp_thread_wait(SECURITY_CHECK_SIGNAL, requestHandle, NULL);
-                }
+        jint result;
+        javacall_result status;
+        
+        KNI_StartHandles(1);
+        KNI_DeclareHandle(permissionHandle);
+        KNI_GetParameterAsObject(2, permissionHandle);
+        permissionLength = KNI_GetStringLength(permissionHandle);
+        permission = midpMalloc(permissionLength * sizeof(jchar));
+        if (permission) {
+            unsigned int res;
+            KNI_GetStringRegion(permissionHandle, 0, permissionLength, permission);
+            status = javacall_security_check_permission((javacall_suite_id)suiteId,
+                                               (javacall_const_utf16_string)permission,
+                                               permissionLength,
+                                               JAVACALL_TRUE,
+                                               &res);
+            midpFree(permission);
+            switch (status) {
+            case JAVACALL_OK:
+                result = CONVERT_PERMISSION_STATUS(res);
+                break;
+            case JAVACALL_WOULD_BLOCK:
+                requestHandle = res;
+                result = -1;
+                break;
+            default:
+                result = 0;
+                break;
+            }
+            if (result == 1) {
+                granted = KNI_TRUE;
+            } else if (result == -1) {
+            /* Block the caller until the security listener is called */
+                midp_thread_wait(SECURITY_CHECK_SIGNAL, requestHandle, NULL);
+            }
+        } else {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        }
+        KNI_EndHandles();
     } else {
         /* reinvocation: check result */
         granted = (jboolean)(info->status);
@@ -121,12 +154,46 @@ Java_com_sun_midp_security_SecurityHandler_checkPermission0() {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 Java_com_sun_midp_security_SecurityHandler_checkPermissionStatus0()
 {
-    jint status = 0;
+    jint result = 0;
     jint suiteId = KNI_GetParameterAsInt(1);
-    jint permId = KNI_GetParameterAsInt(2);
+    jint permissionLength;
+    jchar* permission = NULL;
+    javacall_result status;
 
-    status = midpport_security_check_permission_status(suiteId, permId);
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(permissionHandle);
+    KNI_GetParameterAsObject(2, permissionHandle);
+    permissionLength = KNI_GetStringLength(permissionHandle);
+    permission = midpMalloc(permissionLength * sizeof(jchar));
+    if (permission) {
+        unsigned int res;
+        KNI_GetStringRegion(permissionHandle, 0, permissionLength, permission);
 
-    KNI_ReturnInt(status);
+        status = javacall_security_check_permission((javacall_suite_id)suiteId,
+                                                   (javacall_const_utf16_string)permission,
+                                                   permissionLength,
+                                                   JAVACALL_FALSE,
+                                                   &res);
+        midpFree(permission);
+        switch (status) {
+        case JAVACALL_OK:
+            result = CONVERT_PERMISSION_STATUS(res);
+            break;
+        case JAVACALL_WOULD_BLOCK:
+        /* incorrect behaviour: regardless the fact that NAMS shows user dialog,
+        application need to get result immediately */
+            result = -1;
+            REPORT_ERROR(LC_SECURITY,
+                     "javacall_security_check_permission() returns incorrect status");
+            break;
+        default:
+            result = 0;
+            break;
+        }
+    } else {
+        KNI_ThrowNew(midpOutOfMemoryError, NULL);
+    }
+    KNI_EndHandles();
+    KNI_ReturnInt(result);
 }
 

@@ -105,16 +105,14 @@ public final class SecurityHandler {
      */
     public int checkPermission(String permission) {
         int status = 0;
-        int permId;
 
         try {
-            permId = Permissions.getId(permission);
         	MIDletSuite current =
 		MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
 
         	if (current != null) {
         		// query native security mgr for status
-                status = checkPermissionStatus0(current.getID(), permId);
+                status = checkPermissionStatus0(current.getID(), permission);
         	}
         } catch (SecurityException exc) {
             // intentionally ignored
@@ -211,8 +209,8 @@ public final class SecurityHandler {
 
         if (current != null) {
             // can throw SecurityException
-            int permId = Permissions.getId(permission);
-            if (checkPermission0(current.getID(), permId)) {
+            if (checkPermission0(current.getID(), permission))
+            {
                 return false;
             }
         }
@@ -268,11 +266,11 @@ public final class SecurityHandler {
      * This call may block if user needs to be asked.
      *
      * @param suiteId the MIDlet suite the permission should be checked against
-     * @param permission the permission id
+     * @param permission the permission string
      * 
      * @return true if permission is granted. Otherwise, false.
      */
-    private native boolean checkPermission0(int suiteId, int permission);
+    private native boolean checkPermission0(int suiteId, String permission);
     
     /**
      * Get the status of the specified permission.
@@ -290,5 +288,5 @@ public final class SecurityHandler {
      *  -1 if the status is unknown
      */
     private native int checkPermissionStatus0(int suiteId,
-					      int permission);
+                    					      String permission);
 }
