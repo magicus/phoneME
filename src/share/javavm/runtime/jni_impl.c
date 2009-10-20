@@ -265,7 +265,14 @@ CVMjniNewLocalRef(JNIEnv *env, jobject obj)
 	    return NULL;
 	}
 	CVMID_icellAssign(currentEE, resultCell, obj);
-	return resultCell;
+        /* If obj is a weak reference GC could have happened before
+         * unsafe assign action happened so check for null
+         */
+        if (CVMID_icellIsNull(resultCell)) {
+            CVMjniDeleteLocalRef(env, resultCell);
+            resultCell = NULL;
+        }
+        return resultCell;
     }
 }
 
@@ -531,6 +538,13 @@ CVMjniNewGlobalRef(JNIEnv *env, jobject ref)
 	} else {
 	    CVMthrowOutOfMemoryError(currentEE, NULL);
 	}
+        /* If ref is a weak reference, GC could have happened before
+         * unsafe assign action happened so check for null
+         */
+        if (CVMID_icellIsNull(cell)) {
+            CVMjniDeleteGlobalRef(env, cell);
+            cell = NULL;
+        }
 	return cell;
     }
 }
