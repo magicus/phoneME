@@ -618,12 +618,10 @@ javacall_dom_mouseevent_init_mouse_event_finish(void *context);
  *    Refer to the 
  *   <code>MouseEvent.initMouseEvent()</code> method for a description 
  *   of this parameter. 
- * @param modifiersList  A 
- *   <a href='http://www.w3.org/TR/2004/REC-xml-20040204/#NT-S'>
- *   white space</a> separated list of modifier key identifiers to be 
- *   activated on this object. As an example, <code>"Control Alt"</code> 
- *   will activated the control and alt modifiers.
- *
+ * @param ctrl_key_arg  Specifies <code>MouseEvent.ctrlKey</code>. 
+ * @param alt_key_arg  Specifies <code>MouseEvent.altKey</code>. 
+ * @param shift_key_arg  Specifies <code>MouseEvent.shiftKey</code>. 
+ * @param meta_key_arg  Specifies <code>MouseEvent.metaKey</code>. 
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured
@@ -662,12 +660,10 @@ javacall_dom_mouseevent_init_mouse_event_ns_start(javacall_handle handle,
  * as <code>UIEvent.initUIEventNS()</code>. 
  * 
  * @param context The context saved during asynchronous operation.
- * @param modifiersList  A 
- *   <a href='http://www.w3.org/TR/2004/REC-xml-20040204/#NT-S'>
- *   white space</a> separated list of modifier key identifiers to be 
- *   activated on this object. As an example, <code>"Control Alt"</code> 
- *   will activated the control and alt modifiers.
- *
+ * @param ctrl_key_arg  Specifies <code>MouseEvent.ctrlKey</code>. 
+ * @param alt_key_arg  Specifies <code>MouseEvent.altKey</code>. 
+ * @param shift_key_arg  Specifies <code>MouseEvent.shiftKey</code>. 
+ * @param meta_key_arg  Specifies <code>MouseEvent.metaKey</code>. 
  * 
  * @return JAVACALL_OK if all done successfuly,
  *         JAVACALL_FAIL if error in native code occured

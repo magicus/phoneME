@@ -144,8 +144,10 @@ javacall_dom_mousewheelevent_get_wheel_delta_finish(void *context,
  * @param related_target_arg Pointer to the object of
  *   refer to the <code>MouseEvent.initMouseEventNS()</code>
  *   method for a description of this parameter.
- * @param modifiersListArg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
+ * @param ctrl_key_arg  Specifies <code>MouseEvent.ctrlKey</code>. 
+ * @param alt_key_arg  Specifies <code>MouseEvent.altKey</code>. 
+ * @param shift_key_arg  Specifies <code>MouseEvent.shiftKey</code>. 
+ * @param meta_key_arg  Specifies <code>MouseEvent.metaKey</code>. 
  * @param wheel_delta_arg  A number indicating the distance in "clicks"
  *   (positive means rotated away from the user, negative means rotated
  *   towards the user). The default value of the wheelDelta attribute is 0. 
@@ -195,8 +197,10 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle han
  *
  * 
  * @param context The context saved during asynchronous operation.
- * @param modifiersListArg Refer to the <code>MouseEvent.initMouseEventNS()</code>
- *   method for a description of this parameter.
+ * @param ctrl_key_arg  Specifies <code>MouseEvent.ctrlKey</code>. 
+ * @param alt_key_arg  Specifies <code>MouseEvent.altKey</code>. 
+ * @param shift_key_arg  Specifies <code>MouseEvent.shiftKey</code>. 
+ * @param meta_key_arg  Specifies <code>MouseEvent.metaKey</code>. 
  *   (positive means rotated away from the user, negative means rotated
  *   towards the user). The default value of the wheelDelta attribute is 0. 
  *
