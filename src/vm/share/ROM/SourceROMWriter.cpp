@@ -1802,7 +1802,7 @@ void SourceROMWriter::write_hidden_members(JVM_SINGLE_ARG_TRAPS) {
   main_stream()->print_cr(
     "const unsigned short _rom_modified_class_index_base = %d;\n"
     "const unsigned short _rom_modified_class_index_size = %d;\n",
-    min, size);
+    min < 0 ? 0 : min, size);
 
   main_stream()->print_cr("const short _rom_modified_class_index[] = {" );
   if (size) {
