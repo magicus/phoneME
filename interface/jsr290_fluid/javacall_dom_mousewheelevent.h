@@ -144,7 +144,7 @@ javacall_dom_mousewheelevent_get_wheel_delta_finish(void *context,
  * @param related_target_arg Pointer to the object of
  *   refer to the <code>MouseEvent.initMouseEventNS()</code>
  *   method for a description of this parameter.
- * @param modifiers_list_arg Refer to the <code>MouseEvent.initMouseEventNS()</code>
+ * @param modifiersListArg Refer to the <code>MouseEvent.initMouseEventNS()</code>
  *   method for a description of this parameter.
  * @param wheel_delta_arg  A number indicating the distance in "clicks"
  *   (positive means rotated away from the user, negative means rotated
@@ -176,10 +176,10 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle han
                                                              javacall_int32 client_y_arg,
                                                              javacall_int16 button_arg,
                                                              javacall_handle related_target_arg,
-                                                             javacall_bool ctrlKey_arg,
-                                                             javacall_bool altKey_arg,
-                                                             javacall_bool shiftKey_arg,
-                                                             javacall_bool metaKey_arg,
+                                                             javacall_bool ctrl_key_arg,
+                                                             javacall_bool alt_key_arg,
+                                                             javacall_bool shift_key_arg,
+                                                             javacall_bool meta_key_arg,
                                                              javacall_int32 wheel_delta_arg);
 
 /**
@@ -195,6 +195,8 @@ javacall_dom_mousewheelevent_init_mouse_wheel_event_ns_start(javacall_handle han
  *
  * 
  * @param context The context saved during asynchronous operation.
+ * @param modifiersListArg Refer to the <code>MouseEvent.initMouseEventNS()</code>
+ *   method for a description of this parameter.
  *   (positive means rotated away from the user, negative means rotated
  *   towards the user). The default value of the wheelDelta attribute is 0. 
  *
