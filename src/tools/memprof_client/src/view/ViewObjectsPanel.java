@@ -57,6 +57,7 @@ public class ViewObjectsPanel extends JPanel {
   public void initUI(boolean add_show_root_path_button) {
     setLayout(new GridBagLayout());
     JPanel top_panel = new JPanel();
+    top_panel.setLayout(new BoxLayout(top_panel, BoxLayout.X_AXIS));
     top_panel.add(address_label);
     top_panel.add(address_field);
     address_field.setEditable(false);
@@ -67,22 +68,14 @@ public class ViewObjectsPanel extends JPanel {
     top_panel.add(type_label);
     top_panel.add(type_field);
     if (add_show_root_path_button) {
-      _root_path = new JButton("Show path from the root") {
-        public Dimension getPreferredSize() {
-          return new Dimension(160, 20);
-        }
-      };
+      _root_path = new JButton("Show path from the root");
       _root_path.addActionListener(new ShowRootPathListener());
 
       _root_path.setFont(_root_path.getFont().deriveFont(9.0f));
       _root_path.setEnabled(false);
       top_panel.add(_root_path);
     } else { //this is show path from the root object
-        _stack_location = new JButton("Show stack trace") {
-          public Dimension getPreferredSize() {
-            return new Dimension(160, 20);
-          }
-        };
+        _stack_location = new JButton("Show stack trace");
         _stack_location.addActionListener(new ShowStackTraceListener());
   
         _stack_location.setFont(_stack_location.getFont().deriveFont(9.0f));
@@ -90,8 +83,8 @@ public class ViewObjectsPanel extends JPanel {
         top_panel.add(_stack_location);
   
     }
-    add(top_panel, new GridBagConstraints(0, 0, 1, 1, 1, 1,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+    add(top_panel, new GridBagConstraints(0, 0, 1, 1, 1, 0,
+           GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
     JPanel bottom_panel = new JPanel();
     JScrollPane pane = new JScrollPane() {
       public Dimension getPreferredSize() {return new Dimension(100, 220);}
@@ -103,11 +96,11 @@ public class ViewObjectsPanel extends JPanel {
 
     bottom_panel.setLayout(new GridBagLayout());
     bottom_panel.add(pane, new GridBagConstraints(0, 0, 1, 2, 1, 1,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+           GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
     bottom_panel.add(new JLabel("Referees"), new GridBagConstraints(1, 0, 1, 1, 1, 1,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+           GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
     bottom_panel.add(new JLabel("References"), new GridBagConstraints(2, 0, 1, 1, 1, 1,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+           GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
     pane = new JScrollPane() {
       public Dimension getPreferredSize() {
         return new Dimension(220, 200);
@@ -115,7 +108,7 @@ public class ViewObjectsPanel extends JPanel {
     };
     pane.getViewport().setView(referees);
     bottom_panel.add(pane, new GridBagConstraints(1, 1, 1, 1, 1, 21,
-             GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+             GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
     pane = new JScrollPane() {
         public Dimension getPreferredSize() {
           return new Dimension(220, 200);
@@ -123,10 +116,10 @@ public class ViewObjectsPanel extends JPanel {
       };
     pane.getViewport().setView(references);
     bottom_panel.add(pane, new GridBagConstraints(2, 1, 1, 1, 1, 21,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+           GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
   
     add(bottom_panel, new GridBagConstraints(0, 1, 1, 1, 1, 20,
-           GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+           GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
 
   }
 

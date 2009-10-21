@@ -88,7 +88,7 @@ public class Client {
     _frame.setLocation(0, 0);
     _frame.setSize(1000, 700);
     _frame.setVisible(true);
-    _frame.setResizable(false);
+    _frame.setResizable(true);
     _frame.getContentPane().setLayout(new GridBagLayout());
     _frame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
@@ -114,19 +114,20 @@ public class Client {
     _memory_access_panel.setSize(1000, 300);
     _memory_access_panel.update();
     
-    _frame.getContentPane().add(_memory_access_panel, new GridBagConstraints(0, 0, 3, 1, 1, 1,
-                  GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 2, 2), 0, 0));
+    _frame.getContentPane().add(_memory_access_panel, new GridBagConstraints(0, 0, 3, 1, 1, 0,
+                  GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
 
     JPanel lists_panel = new JPanel();
+    lists_panel.setLayout(new BorderLayout());
     JScrollPane pane = new JScrollPane() {
       public Dimension getPreferredSize() {return new Dimension(350, 250);}
     };
     _classes_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     _classes_list.addListSelectionListener(new ClassesListSelectionListener());
     pane.getViewport().setView(_classes_list);
-    lists_panel.add(pane);
+    lists_panel.add(BorderLayout.CENTER, pane);
     _frame.getContentPane().add(lists_panel, new GridBagConstraints(0, 1, 2, 1, 1, 1, 
-                  GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
+                  GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
 
     _view_objects_panel = new ViewObjectsPanel(_data_provider);
     _view_objects_panel.initUI(true);
@@ -155,7 +156,7 @@ public class Client {
     tmpPanel.add(BorderLayout.NORTH, button_panel);
     tmpPanel.add(BorderLayout.SOUTH, _statusLabel);
 
-    _frame.getContentPane().add(tmpPanel, new GridBagConstraints(2, 2, 1, 1, 1, 1,
+    _frame.getContentPane().add(tmpPanel, new GridBagConstraints(2, 2, 1, 1, 0, 0,
                   GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
 
     setDisconnected();

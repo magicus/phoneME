@@ -75,7 +75,7 @@ public class ViewMemoryPanel extends JComponent {
 
   public void paint(Graphics g) {
     Dimension size = getSize();
-    _block_width = (size.width - 150) / _hor_bloc_number;
+    _block_width = (size.width - 200) / _hor_bloc_number;
     _block_height = size.height / _ver_bloc_number;
     prepare_blocks();
     for (int i = 0; i < _block_number; i++) {
