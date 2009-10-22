@@ -1213,9 +1213,8 @@ void CodeGenerator::method_prolog(Method *method JVM_TRAPS) {
       StackOverflowStub* stub =
         StackOverflowStub::allocate(stack_overflow, done, r1, r0 JVM_ZCHECK(stub));
       stub->insert();
-      // If we go to the stub, we can't be guaranteed it has preserved literals
-      frame()->clear_literals();
-      frame()->clear_expressions();
+      // We'll never return from StackOverflowStub, so no need to clear register
+      // annotations
     } else {
       int offset = (int)&gp_interpreter_method_entry_ptr -
                    (int)&gp_base_label;
@@ -3044,7 +3043,7 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
     if (stub.not_null()) {
       stub().insert();
       frame()->clear_literals();
-      frame()->clear_expressions();
+      frame()->clear_expressions_for_unmapped();
     }
     return;
   }
@@ -3073,7 +3072,7 @@ bind(done);
                             done JVM_ZCHECK(stub));
   stub->insert();
   frame()->clear_literals();
-  frame()->clear_expressions();
+  frame()->clear_expressions_for_unmapped();
 }
 
 void CodeGenerator::check_cast(Value& object, Value& klass, int class_id
@@ -3115,7 +3114,7 @@ void CodeGenerator::check_cast(Value& object, Value& klass, int class_id
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-  frame()->clear_expressions();
+  frame()->clear_expressions_for_unmapped();
 }
 
 void CodeGenerator::instance_of(Value& result, Value& object,
@@ -3162,7 +3161,7 @@ bind(done_checking);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-  frame()->clear_expressions();
+  frame()->clear_expressions_for_unmapped();
 }
 
 void CodeGenerator::check_cast_stub(CompilationQueueElement* cqe JVM_TRAPS) {
@@ -3301,7 +3300,7 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-  frame()->clear_expressions();
+  frame()->clear_expressions_for_unmapped();
 #else // !ENABLE_INLINE_COMPILER_STUBS
 
   GUARANTEE(klass->instance_size().is_fixed(), "Sanity");
@@ -3419,11 +3418,12 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
                                  slow_case, done JVM_ZCHECK(stub));
   stub->insert();
 
+  frame()->clear_expressions_for_unmapped();
+
   frame()->pop(length);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-  frame()->clear_expressions();
 #else // !ENABLE_INLINE_COMPILER_STUBS
   // Do flushing, and remember to unmap.
   flush_frame(JVM_SINGLE_ARG_CHECK);
@@ -4612,9 +4612,8 @@ bool CodeGenerator::quick_catch_exception(const Value &exception_obj,
                                quick_case JVM_ZCHECK_0(stub));
   stub->insert();
 
-  // If we go to the stub, we can't be guaranteed it has preserved literals
-  frame()->clear_literals();
-  frame()->clear_expressions();
+  // The stub will jump to the exception handler and never return here, 
+  // so no need to clear register annotations.
 
   return true; // successful!
 }
@@ -4706,13 +4705,14 @@ bind(done_checking);
     TypeCheckStub::allocate(bci(), slow_case, done_checking JVM_ZCHECK(stub));
   stub->insert();
 
+  frame()->clear_expressions_for_unmapped();
+
   frame()->pop(object);
   frame()->pop(index);
   frame()->pop(array);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-  frame()->clear_expressions();
 }
 
 CodeGenerator::Condition

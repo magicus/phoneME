@@ -204,6 +204,7 @@ class VirtualStackFrame: public CompilerObject {
   // keeps the first bci of the most recent expression being calculated on
   // stack. Otherwise, -1.
   jshort     _expression_start_bci;
+  int        _expressions_mask;
 #endif
 
 #if USE_COMPILER_FPU_MAP
@@ -792,35 +793,72 @@ class VirtualStackFrame: public CompilerObject {
   bool has_expression(const Assembler::Register reg) const {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
-    return _expressions_map[reg].expr_length() > 0;
+#if ENABLE_ARM_VFP
+    GUARANTEE((int)reg < BitsPerInt, "CSE supports at most 32 regs");
+    if ((int)reg >= BitsPerInt) {
+      return false;
+    }
+#endif    
+    return _expressions_mask & (1 << reg);
+  }
+
+  void set_has_expression(const Assembler::Register reg) {
+    GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
+              "Invalid register");
+#if ENABLE_ARM_VFP
+    GUARANTEE((int)reg < BitsPerInt, "CSE supports at most 32 regs");
+    if ((int)reg >= BitsPerInt) {
+      return;
+    }
+#endif    
+    _expressions_mask |= (1 << reg);
   }
 
   const Expression & expression(const Assembler::Register reg) const {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
+    GUARANTEE(has_expression(reg), "No expression for this register");
+#if ENABLE_ARM_VFP
+    GUARANTEE((int)reg < BitsPerInt, "CSE supports at most 32 regs");
+#endif
     return _expressions_map[reg];
   }
 
   Expression & expression(const Assembler::Register reg) {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
+    GUARANTEE(has_expression(reg), "No expression for this register");
+#if ENABLE_ARM_VFP
+    GUARANTEE((int)reg < BitsPerInt, "CSE supports at most 32 regs");
+#endif
     return _expressions_map[reg];
   }
 
   void clear_expression(const Assembler::Register reg) {
     GUARANTEE((int)reg >= 0 && (int)reg < Assembler::number_of_registers, 
               "Invalid register");
-    jvm_memset(_expressions_map + reg, 0, sizeof(Expression));
+#if ENABLE_ARM_VFP
+    GUARANTEE((int)reg < BitsPerInt, "CSE supports at most 32 regs");
+    if ((int)reg >= BitsPerInt) {
+      return;
+    }
+#endif    
+    _expressions_mask &= ~(1 << reg);
   }
 
-  void clear_expressions(void);
+  void clear_expressions(void) {
+    _expressions_mask = 0;
+  }
+  void clear_expressions_for_unmapped(void);
 #else
   void push_expression() {}
   void pop_expression() {}
   bool has_expression(const Assembler::Register reg) const { return false; }
+  void set_has_expression(const Assembler::Register reg) {}
   void reset_expression_segment() {}
   void clear_expression(const Assembler::Register) {}
   void clear_expressions(void) {}
+  void clear_expressions_for_unmapped(void) {}
 #endif
 
   // Debug dump the state of the virtual stack frame.

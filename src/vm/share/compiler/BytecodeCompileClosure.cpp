@@ -2361,6 +2361,7 @@ void BytecodeCompileClosure::cse_bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
           Assembler::Register reg = raw_location->get_register();
           Value value(raw_location, index);
           const int expr_length = next_bci - start_bci;
+          vsf->set_has_expression(reg);
           Expression & ex = vsf->expression(reg);
           ex.set_start_bci(start_bci);
           ex.set_expr_length(expr_length);

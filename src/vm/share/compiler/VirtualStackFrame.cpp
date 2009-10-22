@@ -535,7 +535,11 @@ void VirtualStackFrame::conformance_entry(bool merging) {
     clear_bound();
   }
 
-  clear_expressions();
+  if (merging) {
+    clear_expressions();
+  } else {
+    clear_expressions_for_unmapped();
+  }
 
 #if USE_COMPILER_FPU_MAP && ENABLE_FLOAT
   GUARANTEE( fpu_register_map().is_clearable(),
@@ -2790,8 +2794,30 @@ void VirtualStackFrame::reset_expression_segment() {
   }
 }
 
-void VirtualStackFrame::clear_expressions(void) {
-  jvm_memset(_expressions_map, 0, sizeof _expressions_map);
+void VirtualStackFrame::clear_expressions_for_unmapped(void) {
+  const RawLocation *raw_location = raw_location_at(0);
+  const RawLocation *end  = raw_location_end(raw_location);
+
+  int register_bitmap = 0;
+
+  while (raw_location < end) {
+    if (raw_location->is_two_word()) {
+      raw_location ++;
+    } else if (!raw_location->is_flushed() && raw_location->in_register()) {
+      Assembler::Register reg = raw_location->get_register();
+#if ENABLE_ARM_VFP
+      if (reg < BitsPerInt) {
+        register_bitmap |= 1 << reg;
+      }
+#else      
+      GUARANTEE(reg < BitsPerInt, "Invalid register");
+      register_bitmap |= 1 << reg;
+#endif
+    }
+    raw_location ++;
+  }
+
+  _expressions_mask &= register_bitmap;
 }
 
 void ExpressionStream::next(void) {
