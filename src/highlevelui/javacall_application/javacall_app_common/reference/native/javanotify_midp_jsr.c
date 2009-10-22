@@ -1218,8 +1218,11 @@ javanotify_method_completion_notification (
     midp_jc_event_send(&e);
 }
 
-void javanotify_fluid_handle_event_request (javacall_handle  request_handle,
-                                            javacall_handle  app_id) {
+void
+javanotify_fluid_handle_event_request (
+    javacall_handle                       request_handle,
+    javacall_handle                       app_id
+    ) {
 	midp_jc_event_union e;
 
     REPORT_INFO(LC_CORE, "javanotify_fluid_event_request() >>\n");
@@ -1229,7 +1232,7 @@ void javanotify_fluid_handle_event_request (javacall_handle  request_handle,
     midp_jc_event_send(&e);
 }
 
-void
+void 
 javanotify_fluid_display_box (
     javacall_handle                       fluid_image,
     javacall_handle                       app_id,
@@ -1247,6 +1250,34 @@ javanotify_fluid_display_box (
     e.data.jsr290FluidEvent.text        = javautil_wcsdup(message);
     e.data.jsr290FluidEvent.text1       = javautil_wcsdup(defaultValue);
     e.data.jsr290FluidEvent.result      = type;
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_layout_changed(
+    javacall_handle                       fluid_image,
+    javacall_handle                       app_id
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_LAYOUT_CHANGED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
+
+    midp_jc_event_send(&e);
+}
+
+void
+javanotify_fluid_focus_changed(
+    javacall_handle                       fluid_image,
+    javacall_handle                       app_id
+    ) {
+    midp_jc_event_union e;
+
+    e.eventType = JSR290_JC_EVENT_FLUID_FOCUS_CHANGED;
+    e.data.jsr290FluidEvent.fluid_image = fluid_image;
+    e.data.jsr290FluidEvent.app_id      = app_id;
 
     midp_jc_event_send(&e);
 }
