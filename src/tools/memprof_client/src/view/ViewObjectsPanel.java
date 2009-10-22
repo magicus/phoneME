@@ -86,9 +86,7 @@ public class ViewObjectsPanel extends JPanel {
     add(top_panel, new GridBagConstraints(0, 0, 1, 1, 1, 0,
            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
     JPanel bottom_panel = new JPanel();
-    JScrollPane pane = new JScrollPane() {
-      public Dimension getPreferredSize() {return new Dimension(100, 220);}
-    };
+    JScrollPane pane = new JScrollPane();
     _object_list = new JList();
     _object_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     _object_list.addListSelectionListener(new ObjectListSelectionListener());
@@ -101,21 +99,13 @@ public class ViewObjectsPanel extends JPanel {
            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
     bottom_panel.add(new JLabel("References"), new GridBagConstraints(2, 0, 1, 1, 1, 1,
            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
-    pane = new JScrollPane() {
-      public Dimension getPreferredSize() {
-        return new Dimension(220, 200);
-      }
-    };
+    pane = new JScrollPane();
     pane.getViewport().setView(referees);
-    bottom_panel.add(pane, new GridBagConstraints(1, 1, 1, 1, 1, 21,
+    bottom_panel.add(pane, new GridBagConstraints(1, 1, 1, 1, 2.5, 21,
              GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
-    pane = new JScrollPane() {
-        public Dimension getPreferredSize() {
-          return new Dimension(220, 200);
-        }
-      };
+    pane = new JScrollPane();
     pane.getViewport().setView(references);
-    bottom_panel.add(pane, new GridBagConstraints(2, 1, 1, 1, 1, 21,
+    bottom_panel.add(pane, new GridBagConstraints(2, 1, 1, 1, 2.5, 21,
            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
   
     add(bottom_panel, new GridBagConstraints(0, 1, 1, 1, 1, 20,

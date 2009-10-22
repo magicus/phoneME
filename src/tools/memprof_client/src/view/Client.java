@@ -131,7 +131,7 @@ public class Client {
 
     _view_objects_panel = new ViewObjectsPanel(_data_provider);
     _view_objects_panel.initUI(true);
-    _frame.getContentPane().add(_view_objects_panel, new GridBagConstraints(2, 1, 1, 1, 1, 1,
+    _frame.getContentPane().add(_view_objects_panel, new GridBagConstraints(2, 1, 1, 1, 1.5, 1,
                   GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 2, 2, 2), 0, 0));
 
 
