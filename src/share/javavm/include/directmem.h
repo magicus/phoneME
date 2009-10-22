@@ -677,8 +677,24 @@
 
 #define CVMD_fieldReadRef(o_, off_, item_)     \
     CVMDprivate_typedRead(o_, off_, item_, Ref, CVMObject*)
+#ifndef CVM_JAVASE_CLASS_HAS_REF_FIELD
 #define CVMD_fieldWriteRef(o_, off_, item_)    \
     CVMDprivate_typedWrite(o_, off_, item_, Ref, CVMObject*)
+#else
+/*
+ * If the object is in ROM then we cannot mark the cardtable. For JAVA
+ * SE 1.5 and 1.6, there are reference fields in java.lang.Class.
+ */
+#define CVMD_fieldWriteRef(o_, off_, item_)    \
+    {									 \
+	CVMObject* volatile *fieldLoc_ = 				 \
+	    (CVMObject* volatile *)CVMDprivate_fieldLoc32(o_, off_);	 \
+        if (!CVMobjectIsInROM(o_)) {					 \
+	    CVMgcimplWriteBarrierRef((o_), (fieldLoc_), (item_));	 \
+        }                                                                \
+        *fieldLoc_ = (item_);						 \
+    }
+#endif
 
 #define CVMD_fieldReadInt(o_, off_, item_)     \
     CVMDprivate_typedRead(o_, off_, item_, Int, CVMJavaInt)

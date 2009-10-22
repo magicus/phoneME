@@ -4286,8 +4286,46 @@ emitMarkCardTable(CVMJITCompilationContext *con,
     CVMUint32 lowerBound  = (CVMUint32)CVMglobals.youngGenLowerBound;
     CVMUint32 higherBound = (CVMUint32)CVMglobals.youngGenUpperBound;
 #endif
+#ifdef CVM_JAVASE_CLASS_HAS_REF_FIELD
+    int fixupPC1;
+#endif
 
     CVMJITpopCodegenComment(con, comment);
+
+    /* In SE 1.5 and later version, the java.lang.Class has non-static
+     * reference fields. If the Class instance is ROMized, we should 
+     * not mark the card table.
+     */
+#ifdef CVM_JAVASE_CLASS_HAS_REF_FIELD
+    {
+        CVMRMResource *tmpRes = CVMRMgetResource(CVMRM_INT_REGS(con),
+                          CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+        int tmpReg = CVMRMgetRegisterNumber(tmpRes);
+        /* load object hdr.clas */
+        CVMJITaddCodegenComment((con, "get obj.hdr.clas"));
+        CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+                                       tmpReg, objAddrReg,
+                                       CVMoffsetof(CVMObjectHeader, clas));
+        /* check if the object is in ROM */
+        CVMJITaddCodegenComment((con, "check if object is in ROM"));
+        CVMCPUemitBinaryALUConstant(con, CVMCPU_AND_OPCODE,
+                                    tmpReg, tmpReg,
+                                    CVM_OBJECT_IN_ROM_MASK,
+                                    CVMJIT_NOSETCC);
+        CVMCPUemitCompareConstant(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_NE,
+                                  tmpReg, 0);
+        /* skip mark cardtable if the object is in ROM */
+        CVMJITaddCodegenComment((con, "skip mark cardtable if it's in ROM"));
+        CVMCPUemitBranch(con, 0, CVMCPU_COND_NE);
+#ifdef CVMCPU_HAS_DELAY_SLOT
+        fixupPC1 = CVMJITcbufGetLogicalPC(con) - 2 * CVMCPU_INSTRUCTION_SIZE;
+#else
+        fixupPC1 = CVMJITcbufGetLogicalPC(con) - 1 * CVMCPU_INSTRUCTION_SIZE;
+#endif
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), tmpRes);
+    }
+#endif
+
 #ifdef CVM_SEGMENTED_HEAP
     CVMJITprintCodegenComment(("Check if barrier required:"));
 
@@ -4408,6 +4446,11 @@ emitMarkCardTable(CVMJITCompilationContext *con,
     CVMJITfixupAddress(con, fixupPC, CVMJITcbufGetLogicalPC(con),
 		       CVMJIT_COND_BRANCH_ADDRESS_MODE);
     con->inConditionalCode = CVM_FALSE;
+#endif
+
+#ifdef CVM_JAVASE_CLASS_HAS_REF_FIELD
+    CVMJITfixupAddress(con, fixupPC1,  CVMJITcbufGetLogicalPC(con),
+                       CVMJIT_COND_BRANCH_ADDRESS_MODE);
 #endif
 
     CVMRMrelinquishResource(CVMRM_INT_REGS(con), markReg);

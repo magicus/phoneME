@@ -127,6 +127,14 @@ CVMpreloaderIterateAllClasses(CVMExecEnv* ee,
 			      CVMClassCallbackFunc callback,
 			      void* data);
 
+#ifdef CVM_JAVASE_CLASS_HAS_REF_FIELD
+extern void
+CVMpreloaderScanPreloadedClassObjects(CVMExecEnv* ee,
+                                      CVMGCOptions* gcOpts,
+                                      CVMRefCallbackFunc callback,
+                                      void* data);
+#endif
+
 #if defined(CVM_INSPECTOR) || defined(CVM_DEBUG_ASSERTS) || defined(CVM_JVMPI)
 
 /* Purpose: Checks to see if the specified object is a preloaded object. */
