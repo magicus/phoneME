@@ -75,7 +75,10 @@ public class ViewMemoryPanel extends JComponent {
 
   public void paint(Graphics g) {
     Dimension size = getSize();
-    _block_width = (size.width - 150) / _hor_bloc_number;
+    final int legenda_width = g.getFontMetrics().stringWidth(
+            "_inline_allocation_top block"); // longest item
+
+    _block_width = (size.width - legenda_width - 10) / (_hor_bloc_number + 2);
     _block_height = size.height / _ver_bloc_number;
     prepare_blocks();
     for (int i = 0; i < _block_number; i++) {
