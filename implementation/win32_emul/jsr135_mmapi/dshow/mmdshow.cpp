@@ -234,12 +234,13 @@ void dshow_player::audio_format_changed(nat32 samples_per_second,
 
 void dshow_player::playback_finished()
 {
+    DEBUG_ONLY( PRINTF( "*** playback finished ***\n" ); )
     if( !eom_sent && !dwr_cancel )
     {
         eom_sent = true;
 
         long t = get_media_time();
-        DEBUG_ONLY( PRINTF( "*** playback finished, t=%ld\n", t ); )
+        DEBUG_ONLY( PRINTF( "*** sending EOM, t=%ld\n", t ); )
         javanotify_on_media_notification( JAVACALL_EVENT_MEDIA_END_OF_MEDIA,
                                           appId, playerId, JAVACALL_OK, (void*)(size_t)t );
 
@@ -813,7 +814,7 @@ static void oper_thread(void *param)
             break;
 
         case dshow_player::OPER_PAUSE:
-            DEBUG_ONLY(PRINTF("   >> pause...\n",r);)
+            DEBUG_ONLY(PRINTF("   >> pause...\n");)
             p->get_media_time();
             r = p->ppl->pause();
             if(r == player::result_success) p->playing = false;
