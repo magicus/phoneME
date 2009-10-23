@@ -185,10 +185,12 @@ public class CommonDS extends BasicDS implements SourceStream {
                 goodurl = true;
             }
         } catch (RuntimeException re) {
+            System.out.println( "CommonDS: an Exception is caught" );
+            re.printStackTrace();
             throw re;
         } catch (Exception ex) {
-//            System.out.println( "CommonDS: an Exception is caught" );
-//            ex.printStackTrace();
+            System.out.println( "CommonDS: an Exception is caught" );
+            ex.printStackTrace();
             throw new IOException("failed to connect to " + 
                             locator + " : " + ex.getMessage());
         }
@@ -265,7 +267,17 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @exception     IOException
      */
     public int read(byte buffer[], int offset, int length) throws IOException {
-        final int read = inputStream.read(buffer, offset, length);
+        int read = 0;
+        try {
+            read = inputStream.read(buffer, offset, length);
+        } catch( IOException e ) {
+            final long l = location;
+            if( !reconnect() ) {
+                throw e;
+            }
+            location = skip(l);
+            read = inputStream.read(buffer, offset, length);
+        }
         if( read > 0 ) {
             location += read;
         }
@@ -303,15 +315,45 @@ public class CommonDS extends BasicDS implements SourceStream {
 
         if (where < oldLocation) { // seek backward
             seekToStart();
-            location = skip(inputStream, where);
+            location = skip(where);
         } else {
-            skipped = skip(inputStream, (where - oldLocation));
+            skipped = skip(where - oldLocation);
             location = oldLocation + skipped;
         }
 
         return (location);
     }
 
+
+    private synchronized boolean reconnect() {
+        if( null == inputStream ) {
+            return false;
+        }
+        
+        final int timeout = 180000; //ms, 3 minute
+        final int period = 3000; // 3 sec
+        int elapsed = 0;
+
+        try {
+            inputStream.close();
+        } catch (IOException ex) {}
+        connected = false;
+        location = 0;
+        for( elapsed = 0; elapsed < timeout; elapsed += period ) {
+            try {
+                getConnection();
+                connected = true;
+                break;
+            } catch (IOException ex) {
+                try {
+                    Thread.sleep(period);
+                } catch (InterruptedException ex1) {
+                    return false;
+                }
+            }
+        }
+        return connected;
+    }
 
     /**
      *  Description of the Method
@@ -340,7 +382,14 @@ public class CommonDS extends BasicDS implements SourceStream {
 //                }
                 inputStream.close();
                 connected = false;
-                getConnection(); // may throw an Exception
+                location = 0;
+                try {
+                    getConnection(); // may throw an Exception
+                } catch( IOException e ) {
+                    if( !reconnect() ) {
+                        throw e;
+                    }
+                }
                 connected = true;
             } else {
                 throw new IOException( "Couldn't seek in the stream, not connected" );
@@ -378,30 +427,34 @@ public class CommonDS extends BasicDS implements SourceStream {
 //            System.out.println( "CommonDS: an Exception while closing the stream" );
 //            e.printStackTrace();
         }
+        location = 0;
     }
 
     public long getContentLength() {
         return contentLength;
     }
 
-    static final private int BUFLEN = 512;
-    static private byte[] buf = null;
-
     /**
      * @return number of bytes actually skipped
      */
-    private long skip(InputStream istream, long amount) throws IOException {
+    private long skip(long amount) throws IOException {
         long remaining = amount;
-        int actual;
-    
-        if (buf == null)
-            buf = new byte[BUFLEN];
+        long actual = 0;
     
         while (remaining > 0) {
             // istream.skip() does not work in particular impl cldc
     
-            actual = (int)(remaining > BUFLEN ? BUFLEN : remaining);
-            actual = istream.read(buf, 0, actual);
+            try {
+                actual = inputStream.skip( remaining );
+            } catch( IOException e ) {
+                final long l = location;
+                if( !reconnect() ) {
+                    throw e;
+                }
+                location = l;
+                remaining = l + amount;
+                continue;
+            }
     
             if (actual == 0) {
                 // in the of case that amount > the rest available length of
