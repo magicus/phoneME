@@ -489,7 +489,7 @@ jsr211_result jsr211_get_handler(const jchar* caller_id,
             ASSURE_BUF(buffer,len,maxlen);
             if (res) break;
             if (javacall_chapi_is_access_allowed(buffer, caller_id)){
-                res = fill_handler(buffer, result, len);
+                res = fill_handler(buffer, result, len-1);
             }
             break;
         }
