@@ -1231,7 +1231,11 @@ bool ROM::is_hidden_class_in_profile(const jushort class_id) {
 bool ROM::is_hidden_member(const int i) {
   const int index = i >> LogBitsPerByte;
   const int offset = i & (BitsPerByte-1);
-  return (_rom_modified_class_bitmap[index] >> offset) & 1;
+  const unsigned char* base = _rom_modified_class_bitmap;
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  base += Universe::current_profile_id() * _rom_modified_class_bitmap_row_size;
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  return (base[index] >> offset) & 1;
 }
 
 bool ROM::is_hidden_field(const jushort class_id, const int field_index) {

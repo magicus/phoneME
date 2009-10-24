@@ -55,7 +55,7 @@ void ROMBitSet::print_bytes( Stream* out, const int from, int count ) {
 
   const jubyte* p = bytes() + from;
   do {
-    out->print( "0x%x, ", *p++ );
+    out->print( "0x%02x, ", *p++ );
   } while( --count );
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR

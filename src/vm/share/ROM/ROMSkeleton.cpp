@@ -162,6 +162,9 @@ extern "C" {
   const short          _rom_modified_class_index[]      = {0};
   const int            _rom_modified_class_attributes[] = {0};
   const unsigned char  _rom_modified_class_bitmap[]     = {0};
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  const int _rom_modified_class_bitmap_row_size         = 0;
+#endif //  ENABLE_MULTIPLE_PROFILES_SUPPORT
 #endif // ENABLE_MEMBER_HIDING
 
   const int _ROM_LINKCHECK_HLE  = 0;

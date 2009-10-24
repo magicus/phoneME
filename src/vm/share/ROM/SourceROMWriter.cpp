@@ -738,7 +738,7 @@ void SourceROMWriter::write_stuff_body(SourceObjectWriter* obj_writer
   print_separator("Member hiding tables");
   main_stream()->print_cr("#if ENABLE_MEMBER_HIDING");
   write_hidden_members(JVM_SINGLE_ARG_CHECK);
-  main_stream()->print_cr("#endif // ENABLE_MEMBER_HIDING\n");
+  main_stream()->print_cr("#endif // ENABLE_MEMBER_HIDING");
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
@@ -1596,8 +1596,24 @@ inline int SourceROMWriter::method_count(const InstanceClass* ic) {
   return ic->method_count();
 }
 
-
 bool SourceROMWriter::has_hidden_fields (const InstanceClass* ic) {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  if (ROMOptimizer::global_profile()->has_hidden_fields(ic)) {
+    return true;
+  }
+
+  const ROMVector* rom_profiles = ROMOptimizer::profiles_vector();
+  GUARANTEE(rom_profiles != NULL, "Sanity");
+
+  const int profiles_count = rom_profiles->size();
+  for (int i = 0; i < profiles_count; i++) {
+    const ROMProfile::Raw profile = rom_profiles->element_at(i);
+    if (profile().has_hidden_fields(ic)) {
+      return true;
+    }
+  }
+  return false;
+#else // ENABLE_MULTIPLE_PROFILES_SUPPORT
   ConstantPool::Raw cp = ic->constants();
   const TypeArray::Raw fields = ic->fields();
   const int fields_length = fields().length();
@@ -1610,9 +1626,27 @@ bool SourceROMWriter::has_hidden_fields (const InstanceClass* ic) {
     }
   }
   return false;
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 }
 
 bool SourceROMWriter::has_hidden_methods (const InstanceClass* ic) {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  if (ROMOptimizer::global_profile()->has_hidden_methods(ic)) {
+    return true;
+  }
+
+  const ROMVector* rom_profiles = ROMOptimizer::profiles_vector();
+  GUARANTEE(rom_profiles != NULL, "Sanity");
+
+  const int profiles_count = rom_profiles->size();
+  for (int i = 0; i < profiles_count; i++) {
+    const ROMProfile::Raw profile = rom_profiles->element_at(i);
+    if (profile().has_hidden_methods(ic)) {
+      return true;
+    }
+  }
+  return false;
+#else // ENABLE_MULTIPLE_PROFILES_SUPPORT
   {
     const ObjArray::Raw methods = ic->methods();
     const int methods_length = methods().length();
@@ -1637,6 +1671,7 @@ bool SourceROMWriter::has_hidden_methods (const InstanceClass* ic) {
     }
   }
   return false;
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 }
 
 inline void
@@ -1693,7 +1728,14 @@ SourceROMWriter::write_modified_class_attributes(const int min, const int max) {
 
 inline void
 SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
-                                             jubyte bitmap[]) {
+                                             jubyte bitmap[]
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+                                             , const ROMProfile* profile
+  #define _ profile->
+#else // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  #define _ 
+#endif
+) {
   int bit_count = 0;
   for (SystemClassStream st; st.has_next();) {
     InstanceClass::Raw klass = st.next();
@@ -1702,8 +1744,8 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
     if (class_id < min || klass().access_flags().is_hidden()) {
       continue;
     }
-    const bool hidden_fields = has_hidden_fields(&klass);
-    const bool hidden_methods = has_hidden_methods(&klass);
+    const bool hidden_fields = _ has_hidden_fields(&klass);
+    const bool hidden_methods = _ has_hidden_methods(&klass);
     if (hidden_fields || hidden_methods) {
       main_stream()->print("/*\n  ");
       klass().print_name_on(main_stream());
@@ -1717,7 +1759,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
         for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
           const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
           OopDesc* field_name = cp().symbol_at(name_index);
-          if (is_hidden_field(&klass, field_name)) {
+          if (_ is_hidden_field(&klass, field_name)) {
             main_stream()->print("      ");
             Symbol::Raw name = field_name;
             name().print_symbol_on(main_stream());
@@ -1741,7 +1783,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
           for (int i = 0; i < methods_length; i++) {
             const Method::Raw method = methods().obj_at(i);
             if (method.not_null()) {
-              if (is_hidden_method(&klass, &method)) {
+              if (_ is_hidden_method(&klass, &method)) {
                 main_stream()->print("      ");
                 Symbol::Raw name = method().name();
                 name().print_symbol_on(main_stream());
@@ -1760,7 +1802,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
           for (int i = 0; i < vtable_length; i++) {
             const Method::Raw method = info().vtable_method_at(i);
             if (method.not_null() && method().holder_id() == class_id) {
-              if (is_hidden_method(&klass, &method)) {
+              if (_ is_hidden_method(&klass, &method)) {
                 main_stream()->print("      ");
                 Symbol::Raw name = method().name();
                 name().print_symbol_on(main_stream());
@@ -1776,9 +1818,10 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
       } else {
         main_stream()->print_cr("    No hidden methods");
       }
+      main_stream()->print("*/\n");
     }
   }
-  main_stream()->print("*/\n ");
+  main_stream()->sp();
 }
 
 void SourceROMWriter::write_hidden_members(JVM_SINGLE_ARG_TRAPS) {
@@ -1828,14 +1871,43 @@ void SourceROMWriter::write_hidden_members(JVM_SINGLE_ARG_TRAPS) {
     TypeArray::Raw bit_scale =
       Universe::new_byte_array(bit_scale_byte_size JVM_OZCHECK(bit_scale));
     jubyte* bitmap = bit_scale().ubyte_base_address();
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+    const ROMVector* rom_profiles = ROMOptimizer::profiles_vector();
+    GUARANTEE(rom_profiles != NULL, "Sanity");
+
+    const int profiles_count = rom_profiles->size();
+    for (int profile_id = 0; profile_id < profiles_count; profile_id++) {
+      if (profile_id != 0) {
+        main_stream()->cr();
+        main_stream()->cr();
+      }
+      main_stream()->print( "// Profile " );
+      print_profile_name(profile_id);
+      main_stream()->cr();
+
+      const ROMProfile::Raw profile = rom_profiles->element_at(profile_id);
+      write_modified_class_bitmap(min, max, bitmap, &profile);
+
+      for (int i = 0; i < bit_scale_byte_size; i++) {
+        main_stream()->print (" 0x%02x,", bitmap[i]);
+        bitmap[i] = 0;
+      }
+    }
+#else // ENABLE_MULTIPLE_PROFILES_SUPPORT
     write_modified_class_bitmap(min, max, bitmap);
     for (int i = 0; i < bit_scale_byte_size; i++) {
       main_stream()->print (" 0x%02x,", bitmap[i]);
     }
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   } else {
     main_stream()->print( "  0 // No modified classes" );
   }
   main_stream()->print_cr( "\n}; // _rom_modified_class_bitmap\n" );   
+
+  main_stream()->print_cr("#if ENABLE_MULTIPLE_PROFILES_SUPPORT");
+  main_stream()->print_cr(
+    "const int _rom_modified_class_bitmap_row_size = %d;", bit_scale_byte_size);
+  main_stream()->print_cr("#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT\n");
 }
 #endif // ENABLE_MEMBER_HIDING
 

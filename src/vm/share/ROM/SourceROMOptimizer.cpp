@@ -206,11 +206,11 @@ inline void ROMOptimizer::optimize_package_lists(JVM_SINGLE_ARG_TRAPS) {
 bool ROMOptimizer::is_in_restricted_package( const InstanceClass* klass ) const {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   if( !class_matches_packages_list(klass, restricted_packages()) ) {
-    ROMVector* rom_profiles = profiles_vector();
+    const ROMVector* rom_profiles = profiles_vector();
     const int profiles_count = rom_profiles->size();
     for( int i = 0; i < profiles_count; i++ ) {
-      ROMProfile::Raw profile = rom_profiles->element_at(i);
-      ROMVector::Raw restricted_packages = profile().restricted_packages();
+      const ROMProfile::Raw profile = rom_profiles->element_at(i);
+      const ROMVector::Raw restricted_packages = profile().restricted_packages();
       if( !class_matches_packages_list(klass, &restricted_packages) ) {
         return false;
       } 
@@ -224,16 +224,12 @@ bool ROMOptimizer::is_in_restricted_package( const InstanceClass* klass ) const 
 
 bool ROMOptimizer::is_in_hidden_package( const InstanceClass* klass ) const {
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-  if( !class_matches_classes_list(klass, hidden_classes()) &&
-      !class_matches_packages_list(klass, hidden_packages()) ) {
-    ROMVector* rom_profiles = profiles_vector();
+  if( !global_profile()->is_hidden(klass) ) {
+    const ROMVector* rom_profiles = profiles_vector();
     const int profiles_count = rom_profiles->size();
     for( int i = 0; i < profiles_count; i++ ) {
-      ROMProfile::Raw profile = rom_profiles->element_at(i);
-      ROMVector::Raw hidden_packages = profile().hidden_packages();
-      ROMVector::Raw hidden_classes = profile().hidden_classes();
-      if( !class_matches_classes_list (klass, &hidden_classes) &&
-          !class_matches_packages_list(klass, &hidden_packages) ) {
+      const ROMProfile::Raw profile = rom_profiles->element_at(i);
+      if( !profile().is_hidden(klass) ) {
         return false;
       } 
     }
@@ -244,6 +240,97 @@ bool ROMOptimizer::is_in_hidden_package( const InstanceClass* klass ) const {
          class_matches_packages_list(klass, hidden_packages());
 #endif
 }
+
+#if ENABLE_MEMBER_HIDING
+bool
+ROMOptimizer::is_hidden_field(const InstanceClass* ic, const OopDesc* field) {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  if (!global_profile()->is_hidden_class_or_field(ic, field)) {
+    const ROMVector* rom_profiles = profiles_vector();
+    GUARANTEE(rom_profiles != NULL, "Sanity");
+
+    const int profiles_count = rom_profiles->size();
+    for (int i = 0; i < profiles_count; i++) {
+      const ROMProfile::Raw profile = rom_profiles->element_at(i);
+      if (!profile().is_hidden_class_or_field(ic, field)) {
+        return false;
+      }
+    }
+  }
+  return true;
+#else // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  const Symbol::Raw class_name = ic->name();
+
+  const ROMVector* class_patterns = hidden_field_classes();
+  const ROMVector* name_patterns = hidden_field_names();
+
+  const int number_of_patterns = class_patterns->size();
+  GUARANTEE(name_patterns->size() == number_of_patterns, "Sanity");
+
+  for (int i = 0; i < number_of_patterns; i++) {
+    const SymbolDesc* class_pattern =
+      (const SymbolDesc*) class_patterns->element_at(i);
+    if (class_name().matches_pattern(class_pattern)) {
+      const SymbolDesc* name_pattern =
+        (const SymbolDesc*) name_patterns->element_at(i);
+      if (((const SymbolDesc*)field)->matches_pattern(name_pattern)) {
+        return true;
+      }
+    }
+  }
+  return false;
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+}
+
+bool
+ROMOptimizer::is_hidden_method(const InstanceClass* ic, const Method* method) {
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  if (!global_profile()->is_hidden_class_or_method(ic, method)) {
+    const ROMVector* rom_profiles = profiles_vector();
+    GUARANTEE(rom_profiles != NULL, "Sanity");
+
+    const int profiles_count = rom_profiles->size();
+    for (int i = 0; i < profiles_count; i++) {
+      const ROMProfile::Raw profile = rom_profiles->element_at(i);
+      if (!profile().is_hidden_class_or_method(ic, method)) {
+        return false;
+      }
+    }
+  }
+  return true;
+#else // ENABLE_MULTIPLE_PROFILES_SUPPORT
+  const Symbol::Raw class_name = ic->name();
+  const Symbol::Raw method_name = method->name();
+
+  const OopDesc* method_signature = method->signature();
+
+  const ROMVector* class_patterns = hidden_method_classes();
+  const ROMVector* name_patterns = hidden_method_names();
+  const ROMVector* signatures = hidden_method_signatures();
+
+  const int number_of_patterns = class_patterns->size();
+  GUARANTEE(name_patterns->size() == number_of_patterns, "Sanity");
+  GUARANTEE(signatures->size() == number_of_patterns, "Sanity");
+
+  for (int i = 0; i < number_of_patterns; i++) {
+    const SymbolDesc* class_pattern =
+      (const SymbolDesc*) class_patterns->element_at(i);
+    if (class_name().matches_pattern(class_pattern)) {
+      const SymbolDesc* name_pattern =
+        (const SymbolDesc*) name_patterns->element_at(i);
+      if (method_name().matches_pattern(name_pattern)) {
+        const OopDesc* signature = signatures->element_at(i);
+        if (!signature || signature == method_signature) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+}
+
+#endif
 
 bool ROMOptimizer::is_hidden( const InstanceClass* klass ) const {
   return is_in_hidden_package(klass) ||
@@ -1736,65 +1823,6 @@ ROMOptimizer::fix_field_tables_after_static_field_removal(ObjArray* directory) {
   }
 }
 
-#if ENABLE_MEMBER_HIDING
-bool
-ROMOptimizer::is_hidden_field(const InstanceClass* ic, const OopDesc* field) {
-  const Symbol::Raw class_name = ic->name();
-
-  const ROMVector* class_patterns = hidden_field_classes();
-  const ROMVector* name_patterns = hidden_field_names();
-
-  const int number_of_patterns = class_patterns->size();
-  GUARANTEE(name_patterns->size() == number_of_patterns, "Sanity");
-
-  for (int i = 0; i < number_of_patterns; i++) {
-    const SymbolDesc* class_pattern =
-      (const SymbolDesc*) class_patterns->element_at(i);
-    if (class_name().matches_pattern(class_pattern)) {
-      const SymbolDesc* name_pattern =
-        (const SymbolDesc*) name_patterns->element_at(i);
-      if (((const SymbolDesc*)field)->matches_pattern(name_pattern)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-bool
-ROMOptimizer::is_hidden_method(const InstanceClass* ic, const Method* method) {
-  const Symbol::Raw class_name = ic->name();
-  const Symbol::Raw method_name = method->name();
-
-  const OopDesc* method_signature = method->signature();
-
-  const ROMVector* class_patterns = hidden_method_classes();
-  const ROMVector* name_patterns = hidden_method_names();
-  const ROMVector* signatures = hidden_method_signatures();
-
-  const int number_of_patterns = class_patterns->size();
-  GUARANTEE(name_patterns->size() == number_of_patterns, "Sanity");
-  GUARANTEE(signatures->size() == number_of_patterns, "Sanity");
-
-  for (int i = 0; i < number_of_patterns; i++) {
-    const SymbolDesc* class_pattern =
-      (const SymbolDesc*) class_patterns->element_at(i);
-    if (class_name().matches_pattern(class_pattern)) {
-      const SymbolDesc* name_pattern =
-        (const SymbolDesc*) name_patterns->element_at(i);
-      if (method_name().matches_pattern(name_pattern)) {
-        const OopDesc* signature = signatures->element_at(i);
-        if (!signature || signature == method_signature) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-#endif
-
 void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
   int class_count = 0;
   int field_count = 0;
@@ -1903,10 +1931,11 @@ inline bool ROMOptimizer::is_in_public_vtable(const InstanceClass* ic,
                                               const Method* method) const {
   const int vtable_index = method->vtable_index();
   InstanceClass::Raw klass = ic->obj();
-  for( ; klass.not_null(); klass = klass().super() ) {
-    if( !is_hidden(&klass) && vtable_index < klass().vtable_length()) {
+  while( klass.not_null() && vtable_index < klass().vtable_length() ) {
+    if( !is_hidden(&klass) ) {
       return true;
     }
+    klass = klass().super();
   }
 
   return false;

@@ -91,10 +91,22 @@ public:
 
   OopDesc* allocate_hidden_set(JVM_SINGLE_ARG_TRAPS);
   void fill_hidden_set( void );
+  
+  bool is_in_hidden_package (const InstanceClass* klass) const;
+  bool is_hidden_class      (const InstanceClass* klass) const;
+  bool is_hidden            (const InstanceClass* klass) const;
 
 #if ENABLE_MEMBER_HIDING
   bool is_hidden_method(const InstanceClass* klass, const Method* method) const;
   bool is_hidden_field (const InstanceClass* klass, const OopDesc* field) const;
+
+  bool is_hidden_class_or_method(const InstanceClass* klass,
+                                 const Method* method) const;
+  bool is_hidden_class_or_field (const InstanceClass* klass,
+                                 const OopDesc* field) const;
+
+  bool has_hidden_fields (const InstanceClass* ic) const;
+  bool has_hidden_methods(const InstanceClass* ic) const;
 #endif // ENABLE_MEMBER_HIDING
 
 #undef ROMPROFILE_FIELDS_DO

@@ -177,9 +177,16 @@ private:
 
   void write_modified_class_index     (const int min, const int max);
   int  write_modified_class_attributes(const int min, const int max);
+
   void write_modified_class_bitmap    (const int min, const int max,
-                                       jubyte bitmap[]);
+                                       jubyte bitmap[]
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+                                       , const ROMProfile* profile
+#endif
+                                       );
+
   void write_hidden_members(JVM_SINGLE_ARG_TRAPS);
+
 public:
 #endif // ENABLE_MEMBER_HIDING
 

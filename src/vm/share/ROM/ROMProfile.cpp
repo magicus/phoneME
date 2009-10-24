@@ -54,24 +54,18 @@ ReturnOop ROMProfile::create(const char name[] JVM_TRAPS) {
   return profile().obj();
 }
 
-ReturnOop ROMProfile::allocate_hidden_set(JVM_SINGLE_ARG_TRAPS) {
-  OopDesc* p = ROMBitSet::create(JVM_SINGLE_ARG_NO_CHECK);
-  set_hidden_set(p);
-  return p;
+inline bool ROMProfile::is_in_hidden_package(const InstanceClass* klass) const {
+  const ROMVector::Raw hidden_packages = this->hidden_packages();
+  return ROMOptimizer::class_matches_packages_list(klass, &hidden_packages);
 }
 
-void ROMProfile::fill_hidden_set( void ) {
-  ROMVector::Raw hidden_packages = this->hidden_packages();
-  ROMVector::Raw hidden_classes  = this->hidden_classes();
-  ROMBitSet::Raw hidden_set      = this->hidden_set();;
+inline bool ROMProfile::is_hidden_class(const InstanceClass* klass) const {
+  const ROMVector::Raw hidden_classes = this->hidden_classes();
+  return ROMOptimizer::class_matches_classes_list (klass, &hidden_classes);
+}
 
-  for( SystemClassStream st; st.has_next(); ) {
-    InstanceClass::Raw klass = st.next();
-    if( ROMOptimizer::class_matches_classes_list (&klass, &hidden_classes ) ||
-        ROMOptimizer::class_matches_packages_list(&klass, &hidden_packages) ) {
-      hidden_set().set_bit( klass().class_id() );
-    }
-  }
+bool ROMProfile::is_hidden(const InstanceClass* klass) const {
+  return is_in_hidden_package(klass) || is_hidden_class(klass);
 }
 
 #if ENABLE_MEMBER_HIDING
@@ -129,6 +123,78 @@ bool ROMProfile::is_hidden_field (const InstanceClass* klass,
   }
   return false;
 }
+
+bool ROMProfile::is_hidden_class_or_method(const InstanceClass* klass,
+                                           const Method* method) const {
+  return is_hidden(klass) || is_hidden_method(klass, method);
+}
+
+bool ROMProfile::is_hidden_class_or_field (const InstanceClass* klass,
+                                           const OopDesc* field) const {
+  return is_hidden(klass) || is_hidden_field(klass, field);
+}
+
+bool ROMProfile::has_hidden_fields (const InstanceClass* ic) const {
+  if (!is_hidden(ic)) {
+    ConstantPool::Raw cp = ic->constants();
+    const TypeArray::Raw fields = ic->fields();
+    const int fields_length = fields().length();
+
+    for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
+      const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
+      const OopDesc* field_name = cp().symbol_at(name_index);
+      if (is_hidden_field(ic, field_name)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool ROMProfile::has_hidden_methods(const InstanceClass* ic) const {
+  if (!is_hidden(ic)) {
+    {
+      const ObjArray::Raw methods = ic->methods();
+      const int methods_length = methods().length();
+
+      for (int i = 0; i < methods_length; i++) {
+        const Method::Raw method = methods().obj_at(i);
+        if (method.not_null() && is_hidden_method(ic, &method)) {
+          return true;
+        }
+      }
+    }
+    {
+      const jushort holder_id = ic->class_id();
+      const ClassInfo::Raw info = ic->class_info();
+      const int vtable_length = info().vtable_length();
+      for (int i = 0; i < vtable_length; i++) {
+        const Method::Raw method = info().vtable_method_at(i);
+        if (method.not_null() && method().holder_id() == holder_id
+                              && is_hidden_method(ic, &method)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
 #endif // ENABLE_MEMBER_HIDING
 
+ReturnOop ROMProfile::allocate_hidden_set(JVM_SINGLE_ARG_TRAPS) {
+  OopDesc* p = ROMBitSet::create(JVM_SINGLE_ARG_NO_CHECK);
+  set_hidden_set(p);
+  return p;
+}
+
+void ROMProfile::fill_hidden_set( void ) {
+  ROMBitSet::Raw hidden_set = this->hidden_set();
+
+  for( SystemClassStream st; st.has_next(); ) {
+    const InstanceClass::Raw klass = st.next();
+    if( is_hidden(&klass) ) {
+      hidden_set().set_bit( klass().class_id() );
+    }
+  }
+}
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT && USE_SOURCE_IMAGE_GENERATOR

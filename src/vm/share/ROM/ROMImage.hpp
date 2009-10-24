@@ -177,6 +177,9 @@ extern const unsigned short _rom_modified_class_index_size;
 extern const short          _rom_modified_class_index[];
 extern const int            _rom_modified_class_attributes[];
 extern const unsigned char  _rom_modified_class_bitmap[];
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+extern const int            _rom_modified_class_bitmap_row_size;
+#endif //  ENABLE_MULTIPLE_PROFILES_SUPPORT
 #endif // ENABLE_MEMBER_HIDING
 
 /*
