@@ -50,7 +50,7 @@ void print(const char8 *fmt, ...)
 
     printf("%s", str8);
     // printf("%x %s", GetCurrentThreadId(), str8);
-    // OutputDebugStringA(str8);
+    OutputDebugStringA(str8);
 }
 
 void print(const char16 *fmt, ...)
@@ -64,7 +64,7 @@ void print(const char16 *fmt, ...)
 
     wprintf(L"%s", str16);
     // wprintf(L"%x %s", GetCurrentThreadId(), str16);
-    // OutputDebugStringW(str16);
+    OutputDebugStringW(str16);
 }
 
 void error(HRESULT hr)
