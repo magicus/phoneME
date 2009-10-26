@@ -67,8 +67,8 @@ const nat32 null = 0;
 // #define ENABLE_JSR_135_FMT_VP6_DSHOW_INT
 // #define ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
 // #define ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
-#undef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
-#undef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
+// #undef ENABLE_JSR_135_DSHOW_AUDIO_OUTPUT_FILTER
+// #undef ENABLE_JSR_135_DSHOW_VIDEO_OUTPUT_FILTER
 
 
 // #include <initguid.h>
@@ -724,6 +724,21 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
         amt.pbFormat = null;
     }
 #endif
+    else if(len >= wcslen(L"audio/X-MP3-draft-00") && !wcsncmp(pformat, L"audio/X-MP3-draft-00", wcslen(L"audio/X-MP3-draft-00")))
+    {
+        pplayer = new player_dshow;
+        if(!pplayer) return false;
+
+        amt.majortype = MEDIATYPE_Stream;
+        amt.subtype = MEDIASUBTYPE_MPEG1Audio;
+        amt.bFixedSizeSamples = TRUE;
+        amt.bTemporalCompression = FALSE;
+        amt.lSampleSize = 1;
+        amt.formattype = GUID_NULL;
+        amt.pUnk = null;
+        amt.cbFormat = 0;
+        amt.pbFormat = null;
+    }
     else
     {
         return false;
