@@ -289,9 +289,9 @@ endif
 # USE_VERBOSE_MAKE properly for backwards compatibility. This is the
 # only place where CVM_TERSEOUTPUT can be checked
 ifeq ($(CVM_TERSEOUTPUT),false)
-USE_VERBOSE_MAKE	?= true
+USE_VERBOSE_MAKE	= true
 else
-USE_VERBOSE_MAKE	?= false
+USE_VERBOSE_MAKE	= false
 endif
 
 # %begin lvm
