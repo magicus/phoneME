@@ -1046,7 +1046,7 @@ endif
 # zip or jar class files
 #####################################
 
-CVM_CLASSES_TMP = $(CVM_BUILD_SUBDIR_NAME)/.classes.tmp
+CVM_CLASSES_TMP = $(CVM_BUILD_TOP)/.classes.tmp
 
 $(CVM_BUILDTIME_CLASSESZIP): $(CVM_BUILD_TOP)/.btclasses
 	@echo ... $@
