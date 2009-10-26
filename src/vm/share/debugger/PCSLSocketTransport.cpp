@@ -367,23 +367,20 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
     return 0;
   }
 
-  if (!_wait_for_write) {
-    status = pcsl_socket_write_start(dbg_handle, (char*)buf,
+  status = pcsl_socket_write_start(dbg_handle, (char*)buf,
                                      len, &bytes_sent, &pContext);
-  } else {  /* Reinvocation after unblocking the thread */
-    status = pcsl_socket_write_finish(dbg_handle, (char*)buf,
-                                      len, &bytes_sent, pContext);
-  }
 
   if (status == PCSL_NET_WOULDBLOCK) {
     if (Verbose) {
       tty->print_cr("SocketTransport::write_bytes(): waiting for write");
     }
-    _wait_for_write = true;
-    return 0;
+    // We need a blocking socket here, but PCSL doesn't provide it.
+    while (status == PCSL_NET_WOULDBLOCK) {
+        usleep(50);
+        status = pcsl_socket_write_finish(dbg_handle, (char*)buf,
+                                            len, &bytes_sent, pContext);
+    }
   }
-
-  _wait_for_write = false;
 
   if (status != PCSL_NET_SUCCESS) {
 #ifdef AZZERT
