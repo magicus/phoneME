@@ -376,7 +376,6 @@ int SocketTransport::write_bytes(Transport *t, void *buf, int len)
     }
     // We need a blocking socket here, but PCSL doesn't provide it.
     while (status == PCSL_NET_WOULDBLOCK) {
-        usleep(50);
         status = pcsl_socket_write_finish(dbg_handle, (char*)buf,
                                             len, &bytes_sent, pContext);
     }
