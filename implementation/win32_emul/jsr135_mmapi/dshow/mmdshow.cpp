@@ -149,6 +149,7 @@ public:
     bool                  dwr_cancel;
 
     HANDLE                out_queue_event;
+    bool                  buffering;
 
     long                  target_mt;
     HANDLE                hOperThread;
@@ -322,6 +323,13 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 {
     EnterCriticalSection( &cs );
 
+    if( buffering )
+    {
+        DEBUG_ONLY( PRINTF( "### BUFFERING STARTED ###\n" ); )
+        buffering = false;
+        buffering_stopped();
+    }
+
     while( out_queue_n + nbytes > OUT_QUEUE_SIZE && !dwr_cancel )
     {
         DEBUG_ONLY( PRINTF( "### sample_ready: waiting ###\n" ); )
@@ -390,7 +398,13 @@ long dshow_player::read(short* buffer, int samples)
     if( nbytes > out_queue_n ) {
         zero_padding_size = nbytes - out_queue_n;
         nbytes = out_queue_n;
-        //DEBUG_ONLY( PRINTF( "### underflow ###\n" ); )
+
+        if( !buffering )
+        {
+            DEBUG_ONLY( PRINTF( "### BUFFERING STOPPED ###\n" ); )
+            buffering = true;
+            buffering_started();
+        }
     }
 
     BYTE*  out = (BYTE*)buffer;
@@ -612,6 +626,7 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
     p->dwr_cancel       = false;
 
     p->out_queue_event  = CreateEvent( NULL, FALSE, FALSE, NULL );
+    p->buffering        = false;
 
     outer_player->mediaHandle = (javacall_handle)p;
 

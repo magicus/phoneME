@@ -737,11 +737,22 @@ HRESULT __stdcall filter_in_pin::Length(LONGLONG *pTotal, LONGLONG *pAvailable)
     print("filter_in_pin::Length called...\n");
 #endif
     if(!pTotal || !pAvailable) return E_POINTER;
+    HRESULT r;
     EnterCriticalSection(&pfilter->cs_filter);
-    *pTotal = stream_len;
-    *pAvailable = stream_len;
+    if(stream_len)
+    {
+        *pTotal = stream_len;
+        *pAvailable = stream_len;
+        r = S_OK;
+    }
+    else
+    {
+        *pTotal = 180558;
+        *pAvailable = 0;
+        r = VFW_S_ESTIMATED;
+    }
     LeaveCriticalSection(&pfilter->cs_filter);
-    return S_OK;
+    return r;
 }
 
 //----------------------------------------------------------------------------
