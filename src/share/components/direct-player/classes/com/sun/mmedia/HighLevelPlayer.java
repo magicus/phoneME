@@ -621,7 +621,10 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
             asyncExecutor = AsyncExecutor.getNullInstance();
             
             /* verify if handled by Java */
-            mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
+            if( null != source.getLocator() ) {
+                mediaFormat = Configuration.getConfiguration().ext2Format(source.getLocator());
+            }
+
             if( null == mediaFormat ) {
                 mediaFormat = Configuration.getConfiguration().mime2Format( type );
             }

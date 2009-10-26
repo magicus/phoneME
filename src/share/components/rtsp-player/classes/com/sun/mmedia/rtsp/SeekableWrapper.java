@@ -24,98 +24,95 @@
 
 package com.sun.mmedia.rtsp;
 
+import java.io.ByteArrayOutputStream;
 import javax.microedition.media.protocol.SourceStream;
 import javax.microedition.media.protocol.ContentDescriptor;
-import javax.microedition.media.Player;
 import javax.microedition.media.Control;
 
-public class RtspSS implements SourceStream {
+public class SeekableWrapper implements SourceStream {
 
-    private ContentDescriptor cdescr;
-    private Depacketizer depacketizer;
-    private RtspDS ds;
-    private long   cur_pos = 0;
+    private SourceStream ss;
+    private int cur_pos        = 0;
 
-    public RtspSS(RtspDS ds) {
-        depacketizer = null;
-        this.ds = ds;
-    }
+    private ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    public void setContentDescriptor(String descr) {
-
-        String d = descr;
-
-        if (Player.TIME_UNKNOWN != ds.getDuration()) {
-            d = descr + "; duration=" + ds.getDuration() / 1000; // mks ==> ms
-        }
-
-        cdescr = new ContentDescriptor(d);
-
-        String d_upr = descr.toUpperCase();
-
-        if (d_upr.startsWith("AUDIO/X-MP3-DRAFT-00")) {
-            depacketizer = new AduqDepacketizer();
-        } else {
-            depacketizer = new DefaultDepacketizer();
-        }
+    public SeekableWrapper(SourceStream ss) {
+        this.ss = ss;
     }
 
     // ===================== SourceStream methods =============
 
     public ContentDescriptor getContentDescriptor() {
-        return cdescr;
+        return ss.getContentDescriptor();
     }
 
     public long getContentLength() {
-        return -1;
+        return ss.getContentLength();
     }
 
     public int getSeekType() {
-        return NOT_SEEKABLE;
+        return RANDOM_ACCESSIBLE;
     }
 
     public int getTransferSize() {
-        return -1;
+        return ss.getTransferSize();
     }
 
     public int read(byte[] b, int off, int len) throws java.io.IOException {
-        int n_read = depacketizer.read(b, off, len); 
-        cur_pos += n_read;
-        return n_read;
+
+        int copy_amount = len;
+        int read_amount = 0;
+        int n_read      = 0; 
+
+        if( cur_pos + len > baos.size() ) {
+            copy_amount = baos.size() - cur_pos;
+            read_amount = cur_pos + len - baos.size();
+        }
+
+        if( copy_amount > 0 ) {
+            byte[] bytes = baos.toByteArray();
+            System.arraycopy( bytes, cur_pos, b, off, copy_amount );
+            cur_pos += copy_amount;
+        }
+
+        if( read_amount > 0 )
+        {
+            n_read = ss.read(b, off + copy_amount, read_amount); 
+            baos.write(b, off + copy_amount, n_read);
+            cur_pos += n_read;
+        }
+        return copy_amount + n_read;
     }
 
-    public long seek(long where) 
-        throws java.io.IOException {
+    public long seek(long where) throws java.io.IOException {
+
+        int w = (int)where;
+
+        if( w < 0 ) w = 0;
+        if( w <= cur_pos ) {
+            cur_pos = w;
+        } else {
+            byte[] b = new byte[ w - cur_pos ];
+            while( cur_pos < w ) {
+                int n_read = ss.read(b, 0, w - cur_pos ); 
+                baos.write(b, 0, n_read);
+                cur_pos += n_read;
+            }
+        }
         return cur_pos;
     }
 
     public long tell() {
-        return cur_pos;
+        return (long)cur_pos;
     }
 
     // ===================== Controllable methods =============
 
     public Control getControl(String controlType) {
-        return null;
+        return ss.getControl(controlType);
     }
 
     public Control[] getControls() {
-        return new Control[] { null };
-    }
-
-    // ===================== RTP packet queue =================
-
-    public boolean processPacket(RtpPacket pkt) {
-
-        if (null == cdescr) {
-            RtpPayloadType pt = RtpPayloadType.get(pkt.payloadType());
-            if (null != pt) {
-                setContentDescriptor(pt.getDescr());
-            } else {
-                // unsupported content type
-                depacketizer = null;
-            }
-        }
-        return (null != depacketizer) && depacketizer.processPacket(pkt);
+        return ss.getControls();
     }
 }

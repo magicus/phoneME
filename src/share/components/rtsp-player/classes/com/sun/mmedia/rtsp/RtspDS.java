@@ -66,6 +66,7 @@ public class RtspDS extends BasicDS {
     private boolean usingUdp = false; 
 
     private RtspSS[] streams = null;
+    private SeekableWrapper[] wrappers = null;
 
     private static int nextUdpPort = MIN_UDP_PORT;
     private int nextInterleavedChannel = 0;
@@ -155,6 +156,7 @@ public class RtspDS extends BasicDS {
         }
 
         streams[trk] = new RtspSS(this);
+        wrappers[trk] = new SeekableWrapper( streams[trk] );
 
         if (usingUdp) {
             conn.setSS(streams[trk]);
@@ -196,6 +198,7 @@ public class RtspDS extends BasicDS {
                 if (0 == num_tracks) throw new IOException("no media descriptions received");
 
                 streams = new RtspSS[num_tracks];
+                wrappers = new SeekableWrapper[num_tracks];
 
                 // sessionId is null at this point
                 for (int trk = 0; trk < num_tracks; trk++) {
@@ -265,7 +268,7 @@ public class RtspDS extends BasicDS {
 
     public synchronized SourceStream[] getStreams() {
         if (null == connection) throw new IllegalStateException("RTSP: Not connected");
-        return streams;
+        return wrappers;
     }
 
     public synchronized long getDuration() {

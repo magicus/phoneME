@@ -167,6 +167,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
 ifeq ($(USE_RTSP), true)
 
 SUBSYSTEM_JSR_135_JAVA_FILES += \
+	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/SeekableWrapper.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspUrl.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspDS.java \
 	$(JSR_135_DIR)/src/share/components/rtsp-player/classes/com/sun/mmedia/rtsp/RtspSS.java \
