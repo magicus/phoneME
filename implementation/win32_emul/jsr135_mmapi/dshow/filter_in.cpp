@@ -27,7 +27,7 @@
 #include "enum_pins_single.hpp"
 #include "filter_in.hpp"
 
-#define write_level 3
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"

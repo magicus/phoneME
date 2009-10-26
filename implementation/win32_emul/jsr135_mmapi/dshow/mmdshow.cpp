@@ -75,6 +75,8 @@ class dshow_player : public player_callback,
     virtual void        size_changed( int16 w, int16 h );
     virtual void        audio_format_changed(nat32 samples_per_second, nat32 channels, nat32 bits_per_sample);
     virtual void        playback_finished();
+    virtual void        buffering_started();
+    virtual void        buffering_stopped();
     virtual result      data(int64 offset, int32 len, nat8 *pdata, int32 *plen);
     virtual result      get_stream_length(int64 *plength);
 
@@ -245,6 +247,32 @@ void dshow_player::playback_finished()
                                           appId, playerId, JAVACALL_OK, (void*)(size_t)t );
 
     }
+}
+
+void dshow_player::buffering_started()
+{
+    DEBUG_ONLY(PRINTF("*** buffering started ***\n");)
+    long t = get_media_time();
+    DEBUG_ONLY(PRINTF("*** sending BUFFERING_STARTED, t=%ld\n", t);)
+    javanotify_on_media_notification(
+        JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,
+        appId,
+        playerId,
+        JAVACALL_OK,
+        (void *)(size_t)t);
+}
+
+void dshow_player::buffering_stopped()
+{
+    DEBUG_ONLY(PRINTF("*** buffering stopped ***\n");)
+    long t = get_media_time();
+    DEBUG_ONLY(PRINTF("*** sending BUFFERING_STOPPED, t=%ld\n", t);)
+    javanotify_on_media_notification(
+        JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
+        appId,
+        playerId,
+        JAVACALL_OK,
+        (void *)(size_t)t);
 }
 
 player_callback::result dshow_player::data(int64 offset, int32 len, nat8 *pdata, int32 *plen)

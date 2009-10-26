@@ -155,10 +155,20 @@ typedef enum {
     /** Posted when the duration of a Player is updated. */    
     JAVACALL_EVENT_MEDIA_DURATION_UPDATED = 14,
 
-    /** Posted when the Player enters into a buffering mode. */
+    /**
+     * Posted when the native player enters the buffering mode.
+     *
+     * Additional data:
+     *  intParam2(data) - media time.
+     */
     JAVACALL_EVENT_MEDIA_BUFFERING_STARTED = 15,
 
-    /** Posted when the Player leaves the buffering mode. */
+    /**
+     * Posted when the native player leaves the buffering mode.
+     *
+     * Additional data:
+     *  intParam2(data) - media time.
+     */
     JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED = 16,
 
     /** Posted when an error occurs during the recording. */

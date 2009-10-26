@@ -28,7 +28,7 @@
 #include "filter_out.hpp"
 #include "player.hpp"
 
-#define write_level 1
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
@@ -129,7 +129,7 @@ class player_dshow : public player
 
     result get_state(player::state *p_state)
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::get_state called...\n");
 #endif
         *p_state = state;
@@ -139,13 +139,13 @@ class player_dshow : public player
 
     result stop()
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::stop called...\n");
 #endif
         HRESULT hr = pmc->Stop();
         if(hr != S_OK && hr != S_FALSE)
         {
-#if write_level > 0
+#if write_level > 1
             error("IMediaControl::Stop", hr);
 #endif
             return result_media;
@@ -158,13 +158,13 @@ class player_dshow : public player
 
     result pause()
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::pause called...\n");
 #endif
         HRESULT hr = pmc->Pause();
         if(hr != S_OK && hr != S_FALSE)
         {
-#if write_level > 0
+#if write_level > 1
             error("IMediaControl::Pause", hr);
 #endif
             return result_media;
@@ -177,13 +177,13 @@ class player_dshow : public player
 
     result run()
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::run called...\n");
 #endif
         HRESULT hr = pmc->Run();
         if(hr != S_OK && hr != S_FALSE)
         {
-#if write_level > 0
+#if write_level > 1
             error("IMediaControl::Run", hr);
 #endif
             return result_media;
@@ -196,20 +196,20 @@ class player_dshow : public player
 
     result destroy()
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::destroy called...\n");
         pgb->AddRef();
         print("Reference count is %u...\n", pgb->Release());
 #endif
-#if write_level > 0
+#if write_level > 1
         if(!pgb)
         {
             print("player_dshow::destroy called twice!\n");
             return result_illegal_state;
         }
 #endif
-        pmc->Stop();
-        Sleep(100);
+        // pmc->Stop();
+        // Sleep(100);
 #ifdef ENABLE_JSR_135_FMT_VP6_DSHOW_INT
         pbf_flv_dec->Release();
 #endif
@@ -220,7 +220,7 @@ class player_dshow : public player
         if(!locator_len) pfi->Release();
         pms->Release();
         pmc->Release();
-#if write_level > 0
+#if write_level > 1
         pgb->AddRef();
         nat32 rc = pgb->Release();
         print("Reference count is %u...\n", rc);
@@ -242,14 +242,14 @@ class player_dshow : public player
 
     result get_media_time(int64 *p_time)
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::get_media_time called...\n");
 #endif
         LONGLONG cur;
         HRESULT hr = pms->GetCurrentPosition(&cur);
         if(hr != S_OK)
         {
-#if write_level > 0
+#if write_level > 1
             error("IMediaSeeking::GetCurrentPosition", hr);
 #endif
             *p_time = media_time;
@@ -265,14 +265,14 @@ class player_dshow : public player
 
     result set_media_time(int64 time_requested, int64 *p_time_actual)
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::set_media_time called...\n");
 #endif
         LONGLONG cur = time_requested * 10;
         HRESULT hr = pms->SetPositions(&cur, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning);
         if(hr != S_OK)
         {
-#if write_level > 0
+#if write_level > 1
             error("IMediaSeeking::SetPositions", hr);
 #endif
             *p_time_actual = media_time;
@@ -287,14 +287,14 @@ class player_dshow : public player
 
     result get_duration(int64 *p_duration)
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::get_duration called...\n");
 #endif
         LONGLONG duration;
         HRESULT hr = pms->GetDuration(&duration);
         if(hr != S_OK)
         {
-#if write_level > 0
+#if write_level > 1
             error("IMediaSeeking::GetDuration", hr);
 #endif
             return result_media;
@@ -307,7 +307,7 @@ class player_dshow : public player
 
     result set_loop_count(int32 count)
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::set_loop_count called...\n");
 #endif
         return result_media;
@@ -315,7 +315,7 @@ class player_dshow : public player
 
     result set_stream_length(int64 length)
     {
-#if write_level > 0
+#if write_level > 1
         print("player_dshow::set_stream_length called...\n");
 #endif
         if(pfi->set_stream_length(length))
@@ -329,7 +329,7 @@ class player_dshow : public player
 
 bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callback *pcallback, player **ppplayer)
 {
-#if write_level > 0
+#if write_level > 1
     print(L"player_dshow::create_locator_player_dshow(%s) called...\n", len ? plocator : L"");
 #endif
     player_dshow *pplayer;
@@ -360,7 +360,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
     HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
     if(FAILED(hr))
     {
-#if write_level > 0
+#if write_level > 1
         error("CoInitializeEx", hr);
 #endif
     }
@@ -370,7 +370,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
             IID_IGraphBuilder, (void **)&pplayer->pgb);
         if(hr != S_OK)
         {
-#if write_level > 0
+#if write_level > 1
             error("CoCreateInstance", hr);
 #endif
         }
@@ -379,7 +379,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
             hr = pplayer->pgb->QueryInterface(IID_IMediaControl, (void **)&pplayer->pmc);
             if(hr != S_OK)
             {
-#if write_level > 0
+#if write_level > 1
                 error("IGraphBuilder::QueryInterface(IID_IMediaControl)", hr);
 #endif
             }
@@ -388,7 +388,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                 hr = pplayer->pgb->QueryInterface(IID_IMediaSeeking, (void **)&pplayer->pms);
                 if(hr != S_OK)
                 {
-#if write_level > 0
+#if write_level > 1
                     error("IGraphBuilder::QueryInterface(IID_IMediaSeeking)", hr);
 #endif
                 }
@@ -407,7 +407,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                     amt_a.pbFormat = null;
                     if(!create_filter_out(&amt_a, pcallback, &pplayer->pfo_a))
                     {
-#if write_level > 0
+#if write_level > 1
                         error("filter_out::create(Audio)", 0);
 #endif
                     }
@@ -427,7 +427,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                         amt_v.pbFormat = null;
                         if(!create_filter_out(&amt_v, pcallback, &pplayer->pfo_v))
                         {
-#if write_level > 0
+#if write_level > 1
                             error("filter_out::create", 0);
 #endif
                         }
@@ -439,7 +439,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                 (void **)&pplayer->pbf_flv_split);
                             if(hr != S_OK)
                             {
-#if write_level > 0
+#if write_level > 1
                                 error("FlvSplitCreateInstance", hr);
 #endif
                             }
@@ -451,7 +451,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                     (void **)&pplayer->pbf_flv_dec);
                                 if(hr != S_OK)
                                 {
-#if write_level > 0
+#if write_level > 1
                                     error("FlvDecVP6CreateInstance", hr);
 #endif
                                 }
@@ -462,7 +462,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                     hr = pplayer->pgb->AddFilter(pplayer->pfo_a, L"Output audio filter");
                                     if(hr != S_OK)
                                     {
-#if write_level > 0
+#if write_level > 1
                                         error("IGraphBuilder::AddFilter(Output audio filter)", hr);
 #endif
                                     }
@@ -473,7 +473,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                         hr = pplayer->pgb->AddFilter(pplayer->pfo_v, L"Output video filter");
                                         if(hr != S_OK)
                                         {
-#if write_level > 0
+#if write_level > 1
                                             error("IGraphBuilder::AddFilter(Output video filter)", hr);
 #endif
                                         }
@@ -484,7 +484,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                             hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
                                             if(hr != S_OK)
                                             {
-#if write_level > 0
+#if write_level > 1
                                                 error("IGraphBuilder::AddFilter(FLV splitter)", hr);
 #endif
                                             }
@@ -495,7 +495,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                                 hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
                                                 if(hr != S_OK)
                                                 {
-#if write_level > 0
+#if write_level > 1
                                                     error("IGraphBuilder::AddFilter(FLV decoder)", hr);
 #endif
                                                 }
@@ -505,7 +505,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                                     hr = pplayer->pgb->RenderFile(plocator, null);
                                                     if(hr != S_OK)
                                                     {
-#if write_level > 0
+#if write_level > 1
                                                         error("IGraphBuilder::RenderFile", hr);
 #endif
                                                     }
@@ -514,7 +514,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
                                                         hr = pplayer->pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
                                                         if(hr != S_OK)
                                                         {
-#if write_level > 0
+#if write_level > 1
                                                             error("IMediaSeeking::SetTimeFormat", hr);
 #endif
                                                         }
@@ -562,7 +562,7 @@ bool create_locator_player_dshow(nat32 len, const char16 *plocator, player_callb
 
 bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_length_known, int64 stream_length, player_callback *pcallback, player **ppplayer)
 {
-#if write_level > 0
+#if write_level > 1
     print(L"player_dshow::create_stream_player_dshow(%s, %s, %I64i) called...\n", len ? pformat : L"", stream_length_known ? L"true" : L"false", stream_length);
 #endif
     player_dshow *pplayer;
@@ -754,7 +754,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
     HRESULT hr = CoInitializeEx(null, COINIT_MULTITHREADED);
     if(FAILED(hr))
     {
-#if write_level > 0
+#if write_level > 1
         error("CoInitializeEx", hr);
 #endif
     }
@@ -764,7 +764,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
             IID_IGraphBuilder, (void **)&pplayer->pgb);
         if(hr != S_OK)
         {
-#if write_level > 0
+#if write_level > 1
             error("CoCreateInstance", hr);
 #endif
         }
@@ -773,7 +773,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
             hr = pplayer->pgb->QueryInterface(IID_IMediaControl, (void **)&pplayer->pmc);
             if(hr != S_OK)
             {
-#if write_level > 0
+#if write_level > 1
                 error("IGraphBuilder::QueryInterface(IID_IMediaControl)", hr);
 #endif
             }
@@ -782,7 +782,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                 hr = pplayer->pgb->QueryInterface(IID_IMediaSeeking, (void **)&pplayer->pms);
                 if(hr != S_OK)
                 {
-#if write_level > 0
+#if write_level > 1
                     error("IGraphBuilder::QueryInterface(IID_IMediaSeeking)", hr);
 #endif
                 }
@@ -790,7 +790,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                 {
                     if(!create_filter_in(&amt, pcallback, &pplayer->pfi))
                     {
-#if write_level > 0
+#if write_level > 1
                         error("filter_in::create", 0);
 #endif
                     }
@@ -809,7 +809,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                         amt_a.pbFormat = null;
                         if(!create_filter_out(&amt_a, pcallback, &pplayer->pfo_a))
                         {
-#if write_level > 0
+#if write_level > 1
                             error("filter_out::create(Audio)", 0);
 #endif
                         }
@@ -829,7 +829,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                             amt_v.pbFormat = null;
                             if(!create_filter_out(&amt_v, pcallback, &pplayer->pfo_v))
                             {
-#if write_level > 0
+#if write_level > 1
                                 error("filter_out::create", 0);
 #endif
                             }
@@ -839,7 +839,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                 hr = pplayer->pfi->FindPin(L"Output", &pplayer->pp);
                                 if(hr != S_OK)
                                 {
-#if write_level > 0
+#if write_level > 1
                                     error("filter_in::FindPin", hr);
 #endif
                                 }
@@ -850,7 +850,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                         (void **)&pplayer->pbf_flv_split);
                                     if(hr != S_OK)
                                     {
-#if write_level > 0
+#if write_level > 1
                                         error("FlvSplitCreateInstance", hr);
 #endif
                                     }
@@ -862,7 +862,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                             (void **)&pplayer->pbf_flv_dec);
                                         if(hr != S_OK)
                                         {
-#if write_level > 0
+#if write_level > 1
                                             error("FlvDecVP6CreateInstance", hr);
 #endif
                                         }
@@ -872,7 +872,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                             hr = pplayer->pgb->AddFilter(pplayer->pfi, L"Input filter");
                                             if(hr != S_OK)
                                             {
-#if write_level > 0
+#if write_level > 1
                                                 error("IGraphBuilder::AddFilter(Input filter)", hr);
 #endif
                                             }
@@ -882,7 +882,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                                 hr = pplayer->pgb->AddFilter(pplayer->pfo_a, L"Output audio filter");
                                                 if(hr != S_OK)
                                                 {
-#if write_level > 0
+#if write_level > 1
                                                     error("IGraphBuilder::AddFilter(Output audio filter)", hr);
 #endif
                                                 }
@@ -893,7 +893,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                                     hr = pplayer->pgb->AddFilter(pplayer->pfo_v, L"Output video filter");
                                                     if(hr != S_OK)
                                                     {
-#if write_level > 0
+#if write_level > 1
                                                         error("IGraphBuilder::AddFilter(Output video filter)", hr);
 #endif
                                                     }
@@ -904,7 +904,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                                         hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_split, L"FLV splitter");
                                                         if(hr != S_OK)
                                                         {
-#if write_level > 0
+#if write_level > 1
                                                             error("IGraphBuilder::AddFilter(FLV splitter)", hr);
 #endif
                                                         }
@@ -915,7 +915,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                                             hr = pplayer->pgb->AddFilter(pplayer->pbf_flv_dec, L"FLV decoder");
                                                             if(hr != S_OK)
                                                             {
-#if write_level > 0
+#if write_level > 1
                                                                 error("IGraphBuilder::AddFilter(FLV decoder)", hr);
 #endif
                                                             }
@@ -930,7 +930,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                                                     hr = pplayer->pgb->Render(pplayer->pp);
                                                                     if(hr != S_OK)
                                                                     {
-#if write_level > 0
+#if write_level > 1
                                                                         error("IGraphBuilder::Render", hr);
 #endif
                                                                     }
@@ -939,7 +939,7 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                                                         hr = pplayer->pms->SetTimeFormat(&TIME_FORMAT_MEDIA_TIME);
                                                                         if(hr != S_OK)
                                                                         {
-#if write_level > 0
+#if write_level > 1
                                                                             error("IMediaSeeking::SetTimeFormat", hr);
 #endif
                                                                         }
