@@ -1080,7 +1080,7 @@ CVMpreloaderScanPreloadedClassObjects(CVMExecEnv* ee,
         if (cb != NULL) {
 	    CVMObject *obj = *(CVMObject**)CVMcbJavaInstance(cb);
             CVMobjectWalkRefsWithSpecialHandling(ee, gcOpts, obj,
-                                                 cb, {
+                    CVMsystemClass(java_lang_Class), {
 	        if (*refPtr != 0) {
 	            (*callback)(refPtr, data);
 	        }                            
