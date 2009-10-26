@@ -323,13 +323,6 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
 {
     EnterCriticalSection( &cs );
 
-    if( buffering )
-    {
-        DEBUG_ONLY( PRINTF( "### BUFFERING STARTED ###\n" ); )
-        buffering = false;
-        buffering_stopped();
-    }
-
     while( out_queue_n + nbytes > OUT_QUEUE_SIZE && !dwr_cancel )
     {
         DEBUG_ONLY( PRINTF( "### sample_ready: waiting ###\n" ); )
@@ -359,6 +352,12 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
         }
 
         out_queue_n += nbytes;
+    }
+
+    if( buffering && out_queue_n > OUT_QUEUE_SIZE / 2 )
+    {
+        buffering = false;
+        buffering_stopped();
     }
 
     LeaveCriticalSection( &cs );
@@ -395,13 +394,19 @@ long dshow_player::read(short* buffer, int samples)
 
     size_t zero_padding_size = 0;
     size_t nbytes = samples * 2 * channels;
+
+    if( buffering ) {
+        memset( buffer, 0, nbytes );
+        LeaveCriticalSection( &cs );
+        return MQ234_ERROR_NO_ERROR;
+    }
+
     if( nbytes > out_queue_n ) {
         zero_padding_size = nbytes - out_queue_n;
         nbytes = out_queue_n;
 
-        if( !buffering )
+        if( !buffering && !eom_sent )
         {
-            DEBUG_ONLY( PRINTF( "### BUFFERING STOPPED ###\n" ); )
             buffering = true;
             buffering_started();
         }
