@@ -42,153 +42,26 @@ void extra_camera_controls_cleanup( javacall_impl_player * player );
 
 static javacall_media_caps g_caps[] = 
 {
-//    mediaFormat,                   contentTypes,           'whole' protocols,              streaming protocols
-    { JAVACALL_MEDIA_FORMAT_MS_PCM,  "audio/x-wav audio/wav",             JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-    { JAVACALL_MEDIA_FORMAT_MIDI,    "audio/midi audio/mid audio/x-midi", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-    { JAVACALL_MEDIA_FORMAT_SP_MIDI, "audio/sp-midi",                     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-    { JAVACALL_MEDIA_FORMAT_TONE,    "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-#ifdef ENABLE_JSR_135_DSHOW
-    { JAVACALL_MEDIA_FORMAT_FLV,     "video/x-flv",                       0, JAVACALL_MEDIA_MEMORY_PROTOCOL },
-#endif //ENABLE_JSR_135_DSHOW
-    { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
-#ifdef ENABLE_AMR
-    { JAVACALL_MEDIA_FORMAT_AMR,     "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
-#endif // ENABLE_AMR
-    { JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, "audio/x-wav",                 JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
-    { NULL,                          NULL,                   0,                              0 }
+    //    mediaFormat,                   contentTypes,                       'whole' protocols, streaming protocols
+    { JAVACALL_MEDIA_FORMAT_RTP_MPA,     "audio/x-mp3-draft-00",              JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MPEG_1,      "video/mpeg",                        JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MPEG_4_SVP,  "video/mp4",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_VIDEO_3GPP,  "video/3gpp",                        JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_FLV,         "video/x-flv",                       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_AMR,         "audio/amr",                         JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_TONE,        "audio/x-tone-seq audio/tone",       JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_SP_MIDI,     "audio/sp-midi",                     JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MIDI,        "audio/midi audio/mid audio/x-midi", JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MS_PCM,       "audio/x-wav audio/wav",             JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3, "audio/mpeg",                        JAVACALL_MEDIA_MEMORY_PROTOCOL, 0 },
+
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_AUDIO, "audio/x-wav",                     JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_RADIO, "audio/x-wav",                     JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+    { JAVACALL_MEDIA_FORMAT_CAPTURE_VIDEO, "video/mpeg",                      JAVACALL_MEDIA_CAPTURE_PROTOCOL, 0 },
+    { NULL,                                NULL,                              0,                              0  }
 };
 
 static int nCaps;
-
-#ifdef ENABLE_MMAPI_LIME
-
-#include <stdlib.h> // for itoa()
-#include "javacall_properties.h"
-#include <string.h>
-
-struct _cap_item {
-    javacall_media_caps *cap;
-    struct _cap_item *next;
-};
-
-typedef struct _cap_item cap_item;
-
-#define DEFAULT_VALUE_LEN       0xFF
-#define MEDIA_CAPS_SIZE         sizeof(javacall_media_caps)
-
-static javacall_media_format_type streamable_fmt[] = 
-{
-    JAVACALL_MEDIA_FORMAT_VIDEO_3GPP,
-    JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3
-};
-
-static javacall_bool is_streamable(javacall_media_format_type fmt)
-{
-    int i;
-    for (i = 0; i < sizeof(streamable_fmt) / sizeof(javacall_media_format_type); i++)
-    {
-        if (streamable_fmt[i] == fmt)
-        {
-            return JAVACALL_TRUE;
-        }
-    }
-    return JAVACALL_FALSE;
-}
-
-static javacall_media_caps nullCap = { NULL, NULL, 0, 0 };
-
-javacall_media_caps* get_cap_item(const char *strItem) {
-    int mediaFormatLen, contentTypesLen;
-    javacall_media_caps *cap;
-    
-    char *mediaFormat;
-    char *contentTypes;
-    
-    char *delimiter = strchr(strItem, ' ');
-    
-    if (*delimiter == '\0') {
-        // malformed string
-        return &nullCap;
-    }
-    
-    cap = (javacall_media_caps *) javacall_malloc(MEDIA_CAPS_SIZE);
-    mediaFormatLen = delimiter - strItem;
-    contentTypesLen = strlen(strItem) - mediaFormatLen - 1;
-    mediaFormat = (char *) javacall_malloc(mediaFormatLen + 1);
-    contentTypes = (char *) javacall_malloc(contentTypesLen + 1);
-    
-    strncpy(mediaFormat, strItem, mediaFormatLen);
-    strncpy(contentTypes, strItem + mediaFormatLen + 1, contentTypesLen);
-    mediaFormat[mediaFormatLen] = '\0';
-    contentTypes[contentTypesLen] = '\0';
-    
-    cap->mediaFormat = mediaFormat;
-    cap->contentTypes = contentTypes;
-    cap->wholeProtocols = (strstr(mediaFormat, "CAPTURE") != NULL) ?
-        JAVACALL_MEDIA_CAPTURE_PROTOCOL : JAVACALL_MEDIA_MEMORY_PROTOCOL;
-    cap->streamingProtocols = 0;
-    
-    return cap;
-}
-
-javacall_media_caps* list2array(cap_item *head, const int count) {
-    
-    int i;
-    cap_item *pos;
-    
-    javacall_media_caps *caps_array = (javacall_media_caps *) 
-            javacall_malloc (MEDIA_CAPS_SIZE * (count+1));
-    
-    for (i = 0; (i < count) && (head != NULL); i++) {
-        memcpy(&(caps_array[i]), head->cap, MEDIA_CAPS_SIZE);
-        pos = head;
-        head = head->next;
-        free(pos);
-    }
-    
-    memcpy(&(caps_array[i]), &nullCap, MEDIA_CAPS_SIZE);
-    return caps_array;
-}
-
-javacall_media_caps *get_capabilities_from_properties() {
-    
-    static const char* prefix = "mmapi.content";
-    
-    char key[24]; // 13 for the prefix + 10 for the number + '\0'
-    char number[11]; // 10 decimal ciphers (2^32)
-    char *value;
-
-    cap_item* item;
-    cap_item* head = NULL;
-    int i = 0;
-    
-    strcpy(key, prefix);
-    value = (char *) javacall_malloc(DEFAULT_VALUE_LEN);
-    while (1) {
-        itoa(i, number, 10);
-        strcpy(key + strlen(prefix), number);
-        key[strlen(prefix) + strlen(number)] = '\0';
-
-        if (JAVACALL_FAIL == 
-                 javacall_get_property(key, JAVACALL_INTERNAL_PROPERTY, &value)) {
-            break;
-        }
-
-        item = (cap_item *) javacall_malloc(sizeof(cap_item));
-        item->cap = get_cap_item(value);
-        item->next = head;
-        head = item;
-        i++;
-    }
-
-    free(value);
-    
-    nCaps = i;
-    
-    return list2array(head, i);
-}
-
-#endif // of ENABLE_MMAPI_LIME
 
 void mmSetStatusLine( const char* fmt, ... ) {
     char           str8[ 256 ];
@@ -220,17 +93,13 @@ void mmSetStatusLine( const char* fmt, ... ) {
 
 static javacall_media_configuration g_cfg;
 
-javacall_media_caps* get_capabilities() {
+static javacall_media_caps* get_capabilities() {
 
     static javacall_media_caps *caps = NULL;
 
     if (caps == NULL) {
-    #ifdef ENABLE_MMAPI_LIME
-        caps = get_capabilities_from_properties();
-    #else
         caps = g_caps;
         nCaps = sizeof g_caps / sizeof g_caps[0] - 1;
-    #endif
     }
 
     return caps;
