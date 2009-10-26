@@ -374,7 +374,7 @@ CNIjava_lang_String_hashCode(CVMExecEnv* ee, CVMStackVal32 *arguments,
  * SE6 has a newer version of indexOf(int, int) that does some extra
  * handling not currently done in stringIndexOfHelper1.
 */
-#ifndef JAVASE
+#if !(JAVASE >= 16)
 
 /*
  * Helper function for indexOf(I)I and indexOf(II)I.
