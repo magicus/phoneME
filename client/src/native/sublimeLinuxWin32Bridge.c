@@ -24,8 +24,19 @@
 
 #include "sublimeLinuxWin32Bridge.h"
 
+static int process_id = 0;
+
+void set_current_process_id(int pid) {
+    process_id = pid;
+}
+
+
 #ifdef WIN32 
 #include <jni.h>
+
+int get_current_process_id() {
+    return process_id != 0 ? process_id : GetCurrentProcessId();
+}
 
 void WaitForMutex(MUTEX_HANDLE m){
     WaitForSingleObject(m, INFINITE); 
@@ -57,8 +68,13 @@ void yield(){
 #include <stdlib.h>
 #include <string.h>
 
-/* Directory for temporary files used by Events/SharedBuffers */ 
+/* Directory for temporary files used by Events/SharedBuffers */
 static char * tempFilesLocation; 
+
+int get_current_process_id() {
+    return process_id != 0 ? process_id : getpid();
+}
+
 
 /* After the directory for temporary files was created on the Java part, the path 
  *  should be updated with this function 
@@ -217,10 +233,6 @@ EVENT_HANDLE LimeCreateEvent(void* sa, int manualReset, int initialState, char *
     e->setEvent = sublime_event_setEvent;
     e->waitForEvent = sublime_event_waitForEvent;
     return e; 
-}
-
-int GetCurrentProcessId(){
-    return getpid(); 
 }
 
 int GetLastError(){

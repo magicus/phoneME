@@ -58,6 +58,14 @@ JNIEXPORT jint JNICALL Java_com_sun_kvem_Sublime_getSublimeProcessId
 
 /*
  * Class:     com_sun_kvem_Sublime
+ * Method:    setSublimeProcessId
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_setSublimeProcessId
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     com_sun_kvem_Sublime
  * Method:    setTempFilesDirectory
  * Signature: (Ljava/lang/String;)V
  */
