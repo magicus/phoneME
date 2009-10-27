@@ -1739,6 +1739,13 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
     if (class_id < min || klass().access_flags().is_hidden()) {
       continue;
     }
+    
+    const bool has_hidden_fields = this->has_hidden_fields(&klass);
+    const bool has_hidden_methods = this->has_hidden_fields(&klass);
+    if (!has_hidden_fields && !has_hidden_methods) {
+      continue;
+    }
+    
     const bool hidden_fields = profile->has_hidden_fields(&klass);
     const bool hidden_methods = profile->has_hidden_methods(&klass);
     if (hidden_fields || hidden_methods) {
@@ -1766,8 +1773,10 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
         bit_count++;
       }
     } else {
-      main_stream()->print_cr("    No hidden fields");
-      if (has_hidden_fields(&klass)) { // In other profile(s)
+      if (hidden_methods) {
+        main_stream()->print_cr("    No hidden fields");
+      }
+      if (has_hidden_fields) { // In other profile(s)
         bit_count += field_count(&klass);
       }
     }
@@ -1813,8 +1822,10 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
         }
       }
     } else {
-      main_stream()->print_cr("    No hidden methods");
-      if (has_hidden_fields(&klass)) { // In other profile(s)
+      if (hidden_fields) {
+        main_stream()->print_cr("    No hidden methods");
+      }
+      if (has_hidden_fields) { // In other profile(s)
         bit_count += method_count(&klass);
       }
     }
