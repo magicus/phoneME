@@ -88,6 +88,8 @@ public:
     long                  get_media_time();
     void                  prepare_scaled_frame();
 
+    javacall_impl_player *outer_player;
+
     int                   appId;
     int                   playerId;
     int                   gmIdx;
@@ -157,12 +159,12 @@ public:
 
     enum OPER
     {
-        OPER_PREFETCH, 
-        OPER_DEALLOCATE, 
-        OPER_RUN, 
-        OPER_PAUSE, 
-        OPER_SET_MT, 
-        OPER_DESTROY
+        OPER_DESTROY,
+        OPER_PREFETCH,
+        OPER_DEALLOCATE,
+        OPER_RUN,
+        OPER_PAUSE,
+        OPER_SET_MT
     };
     volatile OPER         pending_operation;
 };
@@ -562,204 +564,24 @@ static bool mime_equal( javacall_const_utf16_string mime, long mimeLength, const
     return !wcsncmp( (const wchar_t*)mime, v, min( (size_t)mimeLength, wcslen( v ) ) );
 }
 
-static void oper_thread(void *param);
+//=============================================================================
 
-static javacall_result dshow_create(javacall_impl_player* outer_player)
+static void oper_thread(void *param)
 {
-    dshow_player* p = new dshow_player;
-
-    DEBUG_ONLY( PRINTF( "\n\n*** create('%S','%S') ***\n", 
-        ( NULL == outer_player->uri ) ? L"" : (const wchar_t*)outer_player->uri, 
-        ( NULL == outer_player->mime ) ? L"" : (const wchar_t*)outer_player->mime ); )
-
-    javacall_const_utf16_string mime     = outer_player->mime;
-    int                         mime_len = ( NULL == mime ) ? 0 : (long)wcslen( (const wchar_t*)mime );
-
-    if( dshow_player::num_players >= MAX_DSHOW_PLAYERS )
-        return JAVACALL_OUT_OF_MEMORY;
-
-    p->gmIdx = -1;
-    javacall_result res = appIDtoGM( outer_player->appId, &(p->gmIdx) );
-    
-    if( JAVACALL_OK != res )
-    {
-        gmDetach( p->gmIdx );
-        return JAVACALL_NO_AUDIO_DEVICE;
-    }
-
-    p->duration         = -1;
-
-    p->appId            = outer_player->appId;
-    p->playerId         = outer_player->playerId;
-    p->mediaType        = fmt_str2enum( outer_player->mediaType );
-
-    p->playing          = false;
-
-    p->all_data_arrived = false;
-    p->whole_content_size = outer_player->streamLen;
-    p->bytes_buffered   = 0;
-
-    p->media_time       = 0;
-    p->volume           = 100;
-    p->pan              = 0;
-    p->muted            = false;
-    p->visible          = false;
-
-    p->video_width      = 0;
-    p->video_height     = 0;
-    p->video_frame      = NULL;
-
-    p->out_width        = -1;
-    p->out_height       = -1;
-    p->out_frame        = NULL;
-
-    p->ovl              = -1;
-
-    p->snapshot         = NULL;
-    p->snapshot_len     = NULL;
-
-    p->ppl              = NULL;
-    p->pModule          = NULL;
-    p->our_module       = true;
-
-    InitializeCriticalSection( &(p->cs) );
-    p->out_queue_w      = 0;
-    p->out_queue_r      = 0;
-    p->out_queue_n      = 0;
-
-    p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
-    p->dwr_cancel       = false;
-
-    p->out_queue_event  = CreateEvent( NULL, FALSE, FALSE, NULL );
-    p->buffering        = false;
-
-    outer_player->mediaHandle = (javacall_handle)p;
-
-    if( NULL == mime || mime_equal( mime, mime_len, L"text/plain" ) )
-    {
-        switch( p->mediaType )
-        {
-        case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
-        case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
-        case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
-        case JC_FMT_MPEG_4_SVP:   mime = (javacall_const_utf16_string)L"video/mp4";   break;
-        case JC_FMT_MPEG_1:       mime = (javacall_const_utf16_string)L"video/mpeg";  break;
-        case JC_FMT_AMR:          
-        case JC_FMT_AMR_WB:          
-        case JC_FMT_AMR_WB_PLUS:  mime = (javacall_const_utf16_string)L"audio/amr";   break;
-        case JC_FMT_MS_PCM:       mime = (javacall_const_utf16_string)L"audio/wav";   break;
-        default:
-            return JAVACALL_FAIL;
-        }
-    }
-
-    mime_len = (long)wcslen( (const wchar_t*)mime );
-
-    if( mime_equal( mime, mime_len, L"audio/mp3"  ) ||
-        mime_equal( mime, mime_len, L"audio/mpeg" ) ||
-        mime_equal( mime, mime_len, L"audio/MPA"  ) ||
-        mime_equal( mime, mime_len, L"audio/X-MP3-draft-00" ) )
-    {
-        //get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
-        //get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
-        get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
-
-        p->mediaType = JC_FMT_MPEG1_LAYER3;
-        mime = (javacall_const_utf16_string)L"audio/mpeg";
-        mime_len = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mime_len, L"video/x-vp6" ) ||
-             mime_equal( mime, mime_len, L"video/x-flv" ) ||
-             mime_equal( mime, mime_len, L"video/x-javafx" ) )
-    {
-        p->mediaType = JC_FMT_FLV;
-        mime = (javacall_const_utf16_string)L"video/x-flv";
-        mime_len = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mime_len, L"video/3gpp" ) )
-    {
-        p->mediaType = JC_FMT_VIDEO_3GPP;
-        mime = (javacall_const_utf16_string)L"video/3gpp";
-        mime_len = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mime_len, L"video/mp4" ) )
-    {
-        p->mediaType = JC_FMT_MPEG_4_SVP;
-        mime = (javacall_const_utf16_string)L"video/mp4";
-        mime_len = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mime_len, L"video/mpeg" ) )
-    {
-        p->mediaType = JC_FMT_MPEG_1;
-        mime = (javacall_const_utf16_string)L"video/mpeg";
-        mime_len = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mime_len, L"audio/amr" ) )
-    {
-        p->mediaType = JC_FMT_AMR;
-        mime = (javacall_const_utf16_string)L"audio/amr";
-        mime_len = (long)wcslen( (const wchar_t*)mime );
-    }
-    else if( mime_equal( mime, mime_len, L"audio/wav" ) ||
-             mime_equal( mime, mime_len, L"audio/x-wav" ))
-    {
-        p->mediaType = JC_FMT_MS_PCM;
-        mime = (javacall_const_utf16_string)L"audio/wav";
-        mime_len = (long)wcslen( (const wchar_t*)mime );
-    }
-    else
-    {
-        p->mediaType = JC_FMT_UNSUPPORTED;
-    }
-
-    p->mime       = mime;
-    p->mimeLength = mime_len;
-
-    p->is_video         = ( JC_FMT_FLV        == p->mediaType || 
-                            JC_FMT_VIDEO_3GPP == p->mediaType || 
-                            JC_FMT_MPEG_4_SVP == p->mediaType || 
-                            JC_FMT_MPEG_1     == p->mediaType );
-
-    if( p->is_video )
-    {
-        p->ovl = lcd_open_overlay();
-        if( -1 == p->ovl )
-        {
-            return JAVACALL_OUT_OF_MEMORY;
-        }
-    }
-
-    DEBUG_ONLY( PRINTF( "*** creating dshow player... ***\n" ); )
-
-    p->is_managed = FALSE;
-
-    if( JC_FMT_AMR == p->mediaType && NULL != outer_player->uri )
-    {
-        if( 0 == _wcsnicmp( (const wchar_t*)outer_player->uri, HTTP_PROTOCOL_PREFIX, 
-                            min( wcslen( HTTP_PROTOCOL_PREFIX ), wcslen( (const wchar_t*)outer_player->uri ) ) ) )
-        {
-            p->is_managed = TRUE;
-        }
-        else
-        {
-            javacall_utf16_string local_uri;
-
-            p->is_managed = is_uri_local_file( outer_player->uri, &local_uri );
-
-            if( p->is_managed )
-            {
-                FREE( outer_player->uri );
-                outer_player->uri = local_uri;
-            }
-        }
-    }
+    dshow_player*                    p = (dshow_player*)param;
+    player::result                   r;
+    javacall_media_notification_type evt_type;
+    void*                            evt_data = NULL;
+    int64                            mt;
+    int64                            time_actual;
+    dshow_player::OPER               op;
 
     bool ok;
 
     if( p->is_managed )
     {
-        ok = create_locator_player_dshow( wcslen( (const wchar_t*)outer_player->uri), 
-                                          (const wchar_t*)outer_player->uri, p, &(p->ppl));
+        ok = create_locator_player_dshow( wcslen( (const wchar_t*)p->outer_player->uri), 
+                                          (const wchar_t*)p->outer_player->uri, p, &(p->ppl));
     }
     else
     {
@@ -782,62 +604,29 @@ static javacall_result dshow_create(javacall_impl_player* outer_player)
         add_to_qsound( p );
 
         p->hOperEvent  = CreateEvent( NULL, FALSE, FALSE, NULL );
-        p->hOperThread = (HANDLE)_beginthread(oper_thread, 0, p);
+
+        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CREATE_FINISHED,
+                                         p->appId,
+                                         p->playerId,
+                                         JAVACALL_OK, NULL);
     }
     else
     {
+        javacall_impl_player *outer_player = p->outer_player;
         outer_player->mediaHandle = NULL;
+
         delete p;
+
+        if( NULL != outer_player->uri  ) FREE( outer_player->uri  );
+        if( NULL != outer_player->mime ) FREE( outer_player->mime );
+        FREE( outer_player );
+
+        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_CREATE_FINISHED,
+                                         p->appId,
+                                         p->playerId,
+                                         JAVACALL_FAIL, NULL);
+        return;
     }
-
-    return ok ? JAVACALL_OK : JAVACALL_FAIL;
-}
-
-static javacall_result dshow_destroy(javacall_handle handle)
-{
-    dshow_player* p = (dshow_player*)handle;
-    DEBUG_ONLY( PRINTF( "*** destroying... ***\n" ); )
-
-    p->dwr_cancel = true;
-    SetEvent( p->dwr_event );
-
-    p->pending_operation = dshow_player::OPER_DESTROY;
-    SetEvent( p->hOperEvent );
-
-    return JAVACALL_WOULD_BLOCK;
-}
-
-//=============================================================================
-
-static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)
-{
-    dshow_player* p = (dshow_player*)handle;
-    DEBUG_ONLY( PRINTF( "*** get format ***\n" ); )
-    *fmt = p->mediaType;
-    return JAVACALL_OK;
-}
-
-static javacall_result dshow_get_player_controls(javacall_handle handle,
-    int* controls)
-{
-    dshow_player* p = (dshow_player*)handle;
-    DEBUG_ONLY( PRINTF( "*** get controls ***\n" ); )
-    *controls = JAVACALL_MEDIA_CTRL_VOLUME;
-    if( p->is_video ) *controls |= JAVACALL_MEDIA_CTRL_VIDEO;
-    return JAVACALL_OK;
-}
-
-//=============================================================================
-
-static void oper_thread(void *param)
-{
-    dshow_player*                    p = (dshow_player*)param;
-    player::result                   r;
-    javacall_media_notification_type evt_type;
-    void*                            evt_data = NULL;
-    int64                            mt;
-    int64                            time_actual;
-    dshow_player::OPER               op;
 
     do
     {
@@ -978,6 +767,251 @@ static void oper_thread(void *param)
     } while( dshow_player::OPER_DESTROY != op );
 
     DEBUG_ONLY( PRINTF( "   >> oper thread finished\n" ); )
+}
+
+static javacall_result dshow_create(javacall_impl_player* outer_player)
+{
+    dshow_player* p = new dshow_player;
+
+    p->outer_player = outer_player;
+
+    DEBUG_ONLY( PRINTF( "\n\n*** create('%S','%S') ***\n", 
+        ( NULL == outer_player->uri ) ? L"" : (const wchar_t*)outer_player->uri, 
+        ( NULL == outer_player->mime ) ? L"" : (const wchar_t*)outer_player->mime ); )
+
+    javacall_const_utf16_string mime     = outer_player->mime;
+    int                         mime_len = ( NULL == mime ) ? 0 : (long)wcslen( (const wchar_t*)mime );
+
+    if( dshow_player::num_players >= MAX_DSHOW_PLAYERS )
+    {
+        if( NULL != outer_player->uri  ) FREE( outer_player->uri  );
+        if( NULL != outer_player->mime ) FREE( outer_player->mime );
+        FREE( outer_player );
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+
+    p->gmIdx = -1;
+    javacall_result res = appIDtoGM( outer_player->appId, &(p->gmIdx) );
+    
+    if( JAVACALL_OK != res )
+    {
+        gmDetach( p->gmIdx );
+        if( NULL != outer_player->uri  ) FREE( outer_player->uri  );
+        if( NULL != outer_player->mime ) FREE( outer_player->mime );
+        FREE( outer_player );
+        return JAVACALL_NO_AUDIO_DEVICE;
+    }
+
+    p->duration         = -1;
+
+    p->appId            = outer_player->appId;
+    p->playerId         = outer_player->playerId;
+    p->mediaType        = fmt_str2enum( outer_player->mediaType );
+
+    p->playing          = false;
+
+    p->all_data_arrived = false;
+    p->whole_content_size = outer_player->streamLen;
+    p->bytes_buffered   = 0;
+
+    p->media_time       = 0;
+    p->volume           = 100;
+    p->pan              = 0;
+    p->muted            = false;
+    p->visible          = false;
+
+    p->video_width      = 0;
+    p->video_height     = 0;
+    p->video_frame      = NULL;
+
+    p->out_width        = -1;
+    p->out_height       = -1;
+    p->out_frame        = NULL;
+
+    p->ovl              = -1;
+
+    p->snapshot         = NULL;
+    p->snapshot_len     = NULL;
+
+    p->ppl              = NULL;
+    p->pModule          = NULL;
+    p->our_module       = true;
+
+    InitializeCriticalSection( &(p->cs) );
+    p->out_queue_w      = 0;
+    p->out_queue_r      = 0;
+    p->out_queue_n      = 0;
+
+    p->dwr_event        = CreateEvent( NULL, FALSE, FALSE, NULL );
+    p->dwr_cancel       = false;
+
+    p->out_queue_event  = CreateEvent( NULL, FALSE, FALSE, NULL );
+    p->buffering        = false;
+
+    outer_player->mediaHandle = (javacall_handle)p;
+
+    if( NULL == mime || mime_equal( mime, mime_len, L"text/plain" ) )
+    {
+        switch( p->mediaType )
+        {
+        case JC_FMT_FLV:          mime = (javacall_const_utf16_string)L"video/x-flv"; break;
+        case JC_FMT_MPEG1_LAYER3: mime = (javacall_const_utf16_string)L"audio/mpeg";  break;
+        case JC_FMT_VIDEO_3GPP:   mime = (javacall_const_utf16_string)L"video/3gpp";  break;
+        case JC_FMT_MPEG_4_SVP:   mime = (javacall_const_utf16_string)L"video/mp4";   break;
+        case JC_FMT_MPEG_1:       mime = (javacall_const_utf16_string)L"video/mpeg";  break;
+        case JC_FMT_AMR:          
+        case JC_FMT_AMR_WB:          
+        case JC_FMT_AMR_WB_PLUS:  mime = (javacall_const_utf16_string)L"audio/amr";   break;
+        case JC_FMT_MS_PCM:       mime = (javacall_const_utf16_string)L"audio/wav";   break;
+        default:
+            if( NULL != outer_player->uri  ) FREE( outer_player->uri  );
+            if( NULL != outer_player->mime ) FREE( outer_player->mime );
+            FREE( outer_player );
+            return JAVACALL_FAIL;
+        }
+    }
+
+    mime_len = (long)wcslen( (const wchar_t*)mime );
+
+    if( mime_equal( mime, mime_len, L"audio/mp3"  ) ||
+        mime_equal( mime, mime_len, L"audio/mpeg" ) ||
+        mime_equal( mime, mime_len, L"audio/MPA"  ) ||
+        mime_equal( mime, mime_len, L"audio/X-MP3-draft-00" ) )
+    {
+        //get_int_param( mime, (javacall_const_utf16_string)L"channels", &(p->channels) );
+        //get_int_param( mime, (javacall_const_utf16_string)L"rate",     &(p->rate)     );
+        get_int_param( mime, (javacall_const_utf16_string)L"duration", &(p->duration) );
+
+        p->mediaType = JC_FMT_MPEG1_LAYER3;
+        mime = (javacall_const_utf16_string)L"audio/mpeg";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/x-vp6" ) ||
+             mime_equal( mime, mime_len, L"video/x-flv" ) ||
+             mime_equal( mime, mime_len, L"video/x-javafx" ) )
+    {
+        p->mediaType = JC_FMT_FLV;
+        mime = (javacall_const_utf16_string)L"video/x-flv";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/3gpp" ) )
+    {
+        p->mediaType = JC_FMT_VIDEO_3GPP;
+        mime = (javacall_const_utf16_string)L"video/3gpp";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/mp4" ) )
+    {
+        p->mediaType = JC_FMT_MPEG_4_SVP;
+        mime = (javacall_const_utf16_string)L"video/mp4";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"video/mpeg" ) )
+    {
+        p->mediaType = JC_FMT_MPEG_1;
+        mime = (javacall_const_utf16_string)L"video/mpeg";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"audio/amr" ) )
+    {
+        p->mediaType = JC_FMT_AMR;
+        mime = (javacall_const_utf16_string)L"audio/amr";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else if( mime_equal( mime, mime_len, L"audio/wav" ) ||
+             mime_equal( mime, mime_len, L"audio/x-wav" ))
+    {
+        p->mediaType = JC_FMT_MS_PCM;
+        mime = (javacall_const_utf16_string)L"audio/wav";
+        mime_len = (long)wcslen( (const wchar_t*)mime );
+    }
+    else
+    {
+        p->mediaType = JC_FMT_UNSUPPORTED;
+    }
+
+    p->mime       = mime;
+    p->mimeLength = mime_len;
+
+    p->is_video         = ( JC_FMT_FLV        == p->mediaType || 
+                            JC_FMT_VIDEO_3GPP == p->mediaType || 
+                            JC_FMT_MPEG_4_SVP == p->mediaType || 
+                            JC_FMT_MPEG_1     == p->mediaType );
+
+    if( p->is_video )
+    {
+        p->ovl = lcd_open_overlay();
+        if( -1 == p->ovl )
+        {
+            if( NULL != outer_player->uri  ) FREE( outer_player->uri  );
+            if( NULL != outer_player->mime ) FREE( outer_player->mime );
+            FREE( outer_player );
+            return JAVACALL_OUT_OF_MEMORY;
+        }
+    }
+
+    DEBUG_ONLY( PRINTF( "*** creating dshow player... ***\n" ); )
+
+    p->is_managed = FALSE;
+
+    if( JC_FMT_AMR == p->mediaType && NULL != outer_player->uri )
+    {
+        if( 0 == _wcsnicmp( (const wchar_t*)outer_player->uri, HTTP_PROTOCOL_PREFIX, 
+                            min( wcslen( HTTP_PROTOCOL_PREFIX ), wcslen( (const wchar_t*)outer_player->uri ) ) ) )
+        {
+            p->is_managed = TRUE;
+        }
+        else
+        {
+            javacall_utf16_string local_uri;
+
+            p->is_managed = is_uri_local_file( outer_player->uri, &local_uri );
+
+            if( p->is_managed )
+            {
+                FREE( outer_player->uri );
+                outer_player->uri = local_uri;
+            }
+        }
+    }
+
+    p->hOperThread = (HANDLE)_beginthread(oper_thread, 0, p);
+
+    return JAVACALL_WOULD_BLOCK;
+}
+
+static javacall_result dshow_destroy(javacall_handle handle)
+{
+    dshow_player* p = (dshow_player*)handle;
+    DEBUG_ONLY( PRINTF( "*** destroying... ***\n" ); )
+
+    p->dwr_cancel = true;
+    SetEvent( p->dwr_event );
+
+    p->pending_operation = dshow_player::OPER_DESTROY;
+    SetEvent( p->hOperEvent );
+
+    return JAVACALL_WOULD_BLOCK;
+}
+
+//=============================================================================
+
+static javacall_result dshow_get_format(javacall_handle handle, jc_fmt* fmt)
+{
+    dshow_player* p = (dshow_player*)handle;
+    DEBUG_ONLY( PRINTF( "*** get format ***\n" ); )
+    *fmt = p->mediaType;
+    return JAVACALL_OK;
+}
+
+static javacall_result dshow_get_player_controls(javacall_handle handle,
+    int* controls)
+{
+    dshow_player* p = (dshow_player*)handle;
+    DEBUG_ONLY( PRINTF( "*** get controls ***\n" ); )
+    *controls = JAVACALL_MEDIA_CTRL_VOLUME;
+    if( p->is_video ) *controls |= JAVACALL_MEDIA_CTRL_VIDEO;
+    return JAVACALL_OK;
 }
 
 //=============================================================================

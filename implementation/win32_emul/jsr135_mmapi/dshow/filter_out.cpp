@@ -589,6 +589,12 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
     int64 tstart;
     int64 tend;
+#if write_level > 1
+    if(pSample->GetMediaTime(&tstart, &tend) == S_OK)
+    {
+        print("Start media time=%I64x, end media time=%I64x\n", tstart, tend);
+    }
+#endif
     HRESULT r = pSample->GetTime(&tstart, &tend);
     if(r != S_OK && r != VFW_S_NO_STOP_TIME)
     {
@@ -597,6 +603,9 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
         return VFW_E_RUNTIME_ERROR;
     }
+#if write_level > 1
+    print("Start time=%I64i, end time=%I64i\n", tstart, tend);
+#endif
     bool delivered = false;
     EnterCriticalSection(&cs_receive);
     EnterCriticalSection(&pfilter->cs_filter);
