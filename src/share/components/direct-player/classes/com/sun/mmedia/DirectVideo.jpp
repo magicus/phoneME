@@ -478,9 +478,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
             hidden = true;
         }
         if (!hidden && visible) {
-            boolean isOverlapped = true; // (null != mmh) && mmh.isDisplayOverlapped(g);
-                                         // IMPL_NOTE: if condition above is used,
-                                         //            video will overlap softbutton bar
+
+            boolean isOverlapped = locationControl.isFullScreen() 
+                ? (null != mmh) && mmh.isDisplayOverlapped(g)
+                : true;
+
             if (isOverlapped) {
                 prepareClippedPreview(g, x, y, w, h);
             } else {
@@ -539,9 +541,11 @@ class DirectVideo implements VideoControl, MIDPVideoPainter {
                     "DVItem.paint visible=" + visible); 
             }
             if (!hidden && visible) {
-                boolean isOverlapped = true;//(null != mmh) && mmh.isDisplayOverlapped(g);
-                                            // IMPL_NOTE: if condition above is used,
-                                            //            video will overlap softbutton bar
+
+                boolean isOverlapped = locationControl.isFullScreen() 
+                    ? (null != mmh) && mmh.isDisplayOverlapped(g)
+                    : true;
+
                 if (isOverlapped) {
                     prepareClippedPreview(g, 0, 0, w, h);
                 } else {
