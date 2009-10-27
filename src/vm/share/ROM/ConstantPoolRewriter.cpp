@@ -485,8 +485,7 @@ void ConstantPoolRewriter::rewrite_line_number_tables(Method *old_method,
 
 void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
   Method new_method;
-  if (method->is_abstract() || method->is_native() || 
-      method->code_size() == 0) {
+  if (method->is_native_or_abstract() || method->code_size() == 0) {
     rewrite_method_header(method JVM_CHECK);
     // The method is not really replaced, but we enter it into the hash
     // table anyway so that replace_method_references() has to do less work.
@@ -510,7 +509,7 @@ void ConstantPoolRewriter::rewrite_exception_table(Method *method,
   TypeArray::Fast new_exception_table;
   if (!exception_table.is_null() && exception_table().length() > 0) {
     // 4-tuples of ints [start_pc, end_pc, handler_pc, catch_type index]
-    GUARANTEE(!method->is_abstract() && !method->is_native(), "sanity");
+    GUARANTEE(!method->is_native_or_abstract(), "sanity");
     int len = exception_table().length();
     new_exception_table = Universe::new_short_array(len JVM_CHECK);
 
@@ -625,8 +624,8 @@ ConstantPoolRewriter::create_method_replacement(Method *method JVM_TRAPS) {
   // (4) Rewrite the header to use the new CP
   rewrite_method_header(&new_method JVM_CHECK_0);
 
-  if (!(method->is_native() || method->is_abstract())) {
-    GUARANTEE(!(new_method().is_native() || new_method().is_abstract()), "sanity");
+  if (!method->is_native_or_abstract()) {
+    GUARANTEE(!new_method().is_native_or_abstract(), "sanity");
   }
 
   return new_method.obj();  

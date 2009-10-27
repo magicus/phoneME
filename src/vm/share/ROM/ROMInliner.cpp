@@ -168,58 +168,49 @@ public:
   }
 };
 
-void ROMInliner::initialize(int max_len JVM_TRAPS) {
-
+void ROMInliner::initialize(const int max_len JVM_TRAPS) {
   // create array able to hold all methods
-  int method_count = 0;
-  for (SystemClassStream st; st.has_next();) {
-    InstanceClass::Raw klass = st.next();
-    ObjArray::Raw methods = klass().methods();
-    method_count += methods().length();
+  {
+    int method_count = 0;
+    for (SystemClassStream stream; stream.has_next();) {
+      InstanceClass::Raw klass = stream.next();
+      ObjArray::Raw methods = klass().methods();
+      method_count += methods().length();
+    }
+    _methods = Universe::new_obj_array(method_count * 3 JVM_CHECK);
   }
-  _methods = Universe::new_obj_array(method_count * 3 JVM_CHECK);
 
   // iterate over all methods and put potentially inlineable methods in hash
-  UsingFastOops level1;
-  Method::Fast method;
-  ObjArray::Fast methods;
-  for (SystemClassStream stream; stream.has_next();) {
-    InstanceClass::Raw klass = stream.next();
-    
-    methods = klass().methods();
-    
-    for (int i=0; i<methods().length(); i++) {
-      method = methods().obj_at(i);
+  {
+    for (SystemClassStream stream; stream.has_next();) {
+      InstanceClass::Raw klass = stream.next();    
+      ObjArray::Raw methods = klass().methods();
+      const int methods_length = methods().length();
       
-      if (method.is_null()) {
-        // A nulled-out method
-        continue;
+      for (int i = 0; i < methods_length; i++) {
+        Method::Raw method = methods().obj_at(i);      
+        if (method.not_null() && !method().is_native_or_abstract() &&
+            !method().uses_monitors() && method().code_size() < max_len ) {
+          add(&method);
+        }        
       }
-      
-      // callees like these can't really be inlined
-      if (method().is_abstract()         ||
-                method().is_native()           ||
-                method().code_size() >= max_len) {
-              continue;
-      }
-
-      add(&method);
     }
   }
 }
 
-void ROMInliner::add(Method* method) {
+void ROMInliner::add(const Method* method) {
   AllocationDisabler raw_pointers_used_in_this_function;
 
-  OopDesc *p = method->obj();
-  juint len = (juint)_methods.length();
-  juint start = (juint)(hashcode_for_method(method)) % len;
+  const OopDesc* p = method->obj();
+  const juint len = (juint)_methods.length();
+  const juint start = (juint)(hashcode_for_method(method)) % len;
 
-  for (juint i=start; ;) {
-    OopDesc *o = _methods.obj_at(i);
+  for (juint i = start; ;) {
+    const OopDesc* o = _methods.obj_at(i);
     if (o == p) { // Already added
       return;
-    } else if (o == NULL) {
+    }
+    if (o == NULL) {
       _methods.obj_at_put(i, method);
       return;
     }
@@ -236,37 +227,34 @@ void ROMInliner::add(Method* method) {
   }
 }
 
-bool ROMInliner::contains(Method* method) {
+bool ROMInliner::contains(const Method* method) const {
   AllocationDisabler raw_pointers_used_in_this_function;
 
-  OopDesc *p = method->obj();
-  juint len = (juint)_methods.length();
-  juint start = (juint)(hashcode_for_method(method)) % len;
+  const OopDesc* p = method->obj();
+  const juint len = (juint)_methods.length();
+  const juint start = (juint)(hashcode_for_method(method)) % len;
 
-  for (juint i=start; ;) {
-    OopDesc *o = _methods.obj_at(i);
+  for (juint i = start;;) {
+    const OopDesc* o = _methods.obj_at(i);
     if (o == p) {
       return true;
-    } else if (o == NULL) {
-      return false;
+    }
+    if (o == NULL) {
+      break;
     }
 
     i ++;
     if (i >= len) {
       i = 0;
     }
-
-    if (i == start) {
-      return false;
-    }     
   }
 
   return false;
 }
 
-int ROMInliner::hashcode_for_method(Method *method) {
-  Symbol::Raw name = method->name();
-  Symbol::Raw sig = method->signature();
+int ROMInliner::hashcode_for_method(const Method *method) {
+  const Symbol::Raw name = method->name();
+  const Symbol::Raw sig = method->signature();
 
   int code = (hashcode_for_symbol(&name) ^ hashcode_for_symbol(&sig));
   code *= method->code_size();
@@ -275,7 +263,7 @@ int ROMInliner::hashcode_for_method(Method *method) {
   return code;
 }
 
-int ROMInliner::hashcode_for_symbol(Symbol *symbol) {
+int ROMInliner::hashcode_for_symbol(const Symbol* symbol) {
   return SymbolTable::hash(symbol);
 }
 
@@ -298,36 +286,32 @@ int ROMInliner::try_to_inline_in_method(Method* method JVM_TRAPS) {
 // private final synthetic Field this$0:<outer> ... but really, there's
 // no guarantee.
 
-bool ROMInliner::is_inner_class_of(InstanceClass *inner, InstanceClass* outer)
-{
-  Symbol::Raw inner_name = inner->name();
-  Symbol::Raw outer_name = outer->name();
-  int len = outer_name().length();
-  int i;
+bool ROMInliner::is_inner_class_of(const InstanceClass* inner,
+                                   const InstanceClass* outer) {
+  const Symbol::Raw inner_name = inner->name();
+  const Symbol::Raw outer_name = outer->name();
+  const int len = outer_name().length();
 
-  if (inner_name().length() <= len) {
+  if (inner_name().length() <= len || inner_name().byte_at(len) != '$') {
     return false;
   }
-  for (i=0; i<len; i++) {
+  for (int i = 0; i < len; i++) {
     if (inner_name().byte_at(i) != outer_name().byte_at(i)) {
       return false;
     }
   }
-  if (i < inner_name().length() && inner_name().byte_at(i) == '$') {
-    return true;
-  } else {
-    return false;
-  }
+  return true;
 }
 
-bool ROMInliner::may_inline_invokestatic(Method* caller, Method* callee) {
+bool ROMInliner::may_inline_invokestatic(const Method* caller,
+                                         const Method* callee) {
   // Assuming caller is a method of class A and callee is a static method
   // of class B. In some cases invokestatic is safe to inline:
   //
   // [1] caller is a non-static method, and and A is an inner class of B.
   // [2] A is a subclass of B.
-  InstanceClass::Raw A = caller->holder();
-  InstanceClass::Raw B = callee->holder();
+  const InstanceClass::Raw A = caller->holder();
+  const InstanceClass::Raw B = callee->holder();
 
   if (A().is_subclass_of(&B)) {
     return true;
@@ -339,10 +323,12 @@ bool ROMInliner::may_inline_invokestatic(Method* caller, Method* callee) {
   // the context of an supposed inner class, that an outer class is 
   // initialized. Therefore, it would be unsafe to do this for downloaded
   // classes.
-  Symbol::Raw callee_name = callee->get_original_name();
-  if (callee_name().length() < 8 || 
-      jvm_memcmp(callee_name().base_address(), "access$", 7) != 0) {
-    return false;
+  {
+    const Symbol::Raw callee_name = callee->get_original_name();
+    if (callee_name().length() < 8 || 
+        jvm_memcmp(callee_name().base_address(), "access$", 7) != 0) {
+      return false;
+    }
   }
   if (!caller->is_static() && is_inner_class_of(&A, &B)) {
     // This looks very much like an accessor method generated by Javac. The
@@ -354,6 +340,14 @@ bool ROMInliner::may_inline_invokestatic(Method* caller, Method* callee) {
   return false;
 }
 
+inline bool ROMInliner::try_inline_empty_method(Method* caller, 
+                                                Method* callee, 
+                                                int bci_in_caller) {  
+  return callee->code_size() == 1 &&
+         callee->bytecode_at(0) == Bytecodes::_return &&
+         pop_as_needed(caller, callee, bci_in_caller);
+}
+
 void ROMInliner::try_inline(Method* caller, Method* callee, int bci_in_caller)
 {
   if (!contains(callee)) {
@@ -361,7 +355,7 @@ void ROMInliner::try_inline(Method* caller, Method* callee, int bci_in_caller)
     return;
   }
 
-  Bytecodes::Code call_bc = caller->bytecode_at(bci_in_caller);
+  const Bytecodes::Code call_bc = caller->bytecode_at(bci_in_caller);
   bool is_invokestatic = false;
 
   switch (call_bc) {
@@ -385,11 +379,6 @@ void ROMInliner::try_inline(Method* caller, Method* callee, int bci_in_caller)
     return;
   }
   
-  // don't inline synchronized methods
-  if (callee->uses_monitors()) {
-    return;
-  }
-
 #if VERBOSE_INLINING
   tty->print("will try to inline: ");
   caller->print_name_on(tty);
@@ -468,8 +457,8 @@ static bool is_load(Bytecodes::Code code, int at) {
             code == Bytecodes::_dload_3);
   }
   
-   SHOULD_NOT_REACH_HERE();
-   return false;
+  SHOULD_NOT_REACH_HERE();
+  return false;
 }
 
 bool ROMInliner::pop_as_needed(Method* caller, 
@@ -513,6 +502,7 @@ bool ROMInliner::pop_as_needed(Method* caller,
     }
     caller->bytecode_at_put_raw(bci_in_caller + i, code);
   }
+  _rewritten++;
   return true;
 }
 
@@ -601,29 +591,9 @@ bool ROMInliner::zero_bci_is_branch_target(Method* method) {
 }
 #endif
 
-int ROMInliner::num_args(Method* callee) {
-  Signature::Raw method_signature = callee->signature();
+int ROMInliner::num_args(const Method* callee) {
+  const Signature::Raw method_signature = callee->signature();
   return method_signature().parameter_word_size(callee->is_static());  
-}
-
-bool ROMInliner::try_inline_empty_method(Method* caller, 
-                                         Method* callee, 
-                                         int bci_in_caller) 
-{  
-  if (callee->code_size() != 1) {
-    return false;
-  }
-
-  Bytecodes::Code ret_bc = callee->bytecode_at(0);
-  if (ret_bc != Bytecodes::_return) {
-    return false;
-  }
-  
-  if (pop_as_needed(caller, callee, bci_in_caller)) {
-    _rewritten++;
-    return true;
-  }
-  return false;
 }
 
 bool ROMInliner::try_inline_empty_constructor(Method* caller, 
@@ -643,7 +613,7 @@ bool ROMInliner::try_inline_empty_constructor(Method* caller,
   if ((callee->bytecode_at(0) == Bytecodes::_aload_0) &&
       (callee->bytecode_at(1) == Bytecodes::_fast_invokevirtual_final) &&
       (callee->bytecode_at(4) == Bytecodes::_return)) {
-    InstanceClass::Raw callee_class = callee->holder();
+    const InstanceClass::Raw callee_class = callee->holder();
     if (callee_class().access_flags().has_vanilla_constructor()) {
       is_empty = true;
     }
@@ -656,14 +626,7 @@ bool ROMInliner::try_inline_empty_constructor(Method* caller,
     is_empty = true;
   }
 
-  if (is_empty) {
-    if (pop_as_needed(caller, callee, bci_in_caller)) {
-      _rewritten++;
-      return true;
-    }
-  }
-
-  return false;
+  return is_empty && pop_as_needed(caller, callee, bci_in_caller);
 }
 
 #if NOT_CURRENTLY_USED
@@ -693,11 +656,7 @@ bool ROMInliner::try_inline_arg_return(Method* caller,
   // inlining done here seems unsafe. So I am disabling this function
   // 
 
-  if (pop_as_needed(caller, callee, bci_in_caller)) {
-    _rewritten++;
-    return true;
-  }
-  return false;
+  return pop_as_needed(caller, callee, bci_in_caller);
 }
 #endif
 
@@ -708,29 +667,34 @@ bool ROMInliner::try_inline_static_getter(Method* caller, Method* callee,
   if (callee->code_size() != 4 || callee->size_of_parameters() != 0) {
     return false;
   }
-  UsingFastOops fast_oops;
 
   Bytecodes::Code get_bc = callee->bytecode_at(0);
-  if (get_bc != Bytecodes::_fast_1_getstatic &&
-      get_bc != Bytecodes::_fast_2_getstatic &&
-      get_bc != Bytecodes::_fast_init_1_getstatic &&
-      get_bc != Bytecodes::_fast_init_2_getstatic) {
-    return false;
+  switch (get_bc) {
+    case Bytecodes::_fast_1_getstatic:
+    case Bytecodes::_fast_2_getstatic:
+    case Bytecodes::_fast_init_1_getstatic:
+    case Bytecodes::_fast_init_2_getstatic:
+      break;
+    default:
+      return false;
   }
-  Bytecodes::Code ret_bc = callee->bytecode_at(3);
-  if (ret_bc != Bytecodes::_ireturn &&
-      ret_bc != Bytecodes::_areturn &&
-      ret_bc != Bytecodes::_freturn &&
-      ret_bc != Bytecodes::_dreturn &&
-      ret_bc != Bytecodes::_lreturn)  {
-    // not a getter (this could be a throw bytecode: CR 6197045)
-    return false;
+
+  switch (callee->bytecode_at(3)) {
+    case Bytecodes::_ireturn:
+    case Bytecodes::_areturn:
+    case Bytecodes::_freturn:
+    case Bytecodes::_dreturn:
+    case Bytecodes::_lreturn:
+      break;
+    default:
+      // not a getter (this could be a throw bytecode: CR 6197045)
+      return false;
   }
   
-  int callee_cpindex = callee->get_java_ushort(1);
-  InstanceClass::Fast receiver = callee->holder();
-  ConstantPool::Fast caller_cp = caller->constants();
-  ConstantPool::Fast callee_cp = callee->constants();
+  const int callee_cpindex = callee->get_java_ushort(1);
+  InstanceClass::Raw receiver = callee->holder();
+  ConstantPool::Raw caller_cp = caller->constants();
+  ConstantPool::Raw callee_cp = callee->constants();
   if (!callee_cp().tag_at(callee_cpindex).is_resolved_static_field()) {
     return false;
   }
@@ -757,16 +721,16 @@ bool ROMInliner::try_inline_static_getter(Method* caller, Method* callee,
   }
 
   switch (caller->bytecode_at(bci_in_caller)) {
-  case Bytecodes::_fast_invokestatic:
-    get_bc = is_two_word(type) ? Bytecodes::_fast_2_getstatic :
-                                 Bytecodes::_fast_1_getstatic;
-    break;
-  case Bytecodes::_fast_init_invokestatic:
-    get_bc = is_two_word(type) ? Bytecodes::_fast_init_2_getstatic :
-                                 Bytecodes::_fast_init_1_getstatic;
-    break;
-  default:
-    SHOULD_NOT_REACH_HERE();
+    case Bytecodes::_fast_invokestatic:
+      get_bc = is_two_word(type) ? Bytecodes::_fast_2_getstatic :
+                                   Bytecodes::_fast_1_getstatic;
+      break;
+    case Bytecodes::_fast_init_invokestatic:
+      get_bc = is_two_word(type) ? Bytecodes::_fast_init_2_getstatic :
+                                   Bytecodes::_fast_init_1_getstatic;
+      break;
+    default:
+      SHOULD_NOT_REACH_HERE();
   }
 
   GUARANTEE(caller->bytecode_length_for(bci_in_caller) == 3, "sanity");
@@ -779,10 +743,9 @@ bool ROMInliner::try_inline_static_getter(Method* caller, Method* callee,
 int ROMInliner::find_or_add_resolved_field_ref(ConstantPool *cp, int tag_value,
                                                int offset, int class_id,
                                                BasicType type, int is_static) {
-  int i;
-  int len = cp->length();
-  for (i = 1; i < len; i++) {
-    ConstantTag tag = cp->tag_at(i);
+  const int len = cp->length();
+  for (int i = 1; i < len; i++) {
+    const ConstantTag tag = cp->tag_at(i);
     if (tag.value() == tag_value) {
       int old_offset;
       int old_class_id;
@@ -793,14 +756,14 @@ int ROMInliner::find_or_add_resolved_field_ref(ConstantPool *cp, int tag_value,
     }
 
     switch (tag.value()) {
-    case JVM_CONSTANT_Long:
-    case JVM_CONSTANT_Double:
-      i++;
-      break;
-    case JVM_CONSTANT_NameAndType:
-    case JVM_CONSTANT_Invalid:
-      cp->resolved_field_at_put(i, class_id, offset, type, is_static);
-      return i;
+      case JVM_CONSTANT_Long:
+      case JVM_CONSTANT_Double:
+        i++;
+        break;
+      case JVM_CONSTANT_NameAndType:
+      case JVM_CONSTANT_Invalid:
+        cp->resolved_field_at_put(i, class_id, offset, type, is_static);
+        return i;
     }
   }
 

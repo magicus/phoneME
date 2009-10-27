@@ -31,7 +31,7 @@ HANDLE_CHECK(Signature, is_valid_method_signature(NULL))
 
 // Returns the number of parameters in this signature, including the 
 // implied <this> paramater for a virtual method.
-jint Signature::parameter_word_size(bool is_static) {
+jint Signature::parameter_word_size(const bool is_static) const {
   GUARANTEE(ObjectHeap::is_gc_active()||is_valid_method_signature(), "sanity");
 
   jint size = decode_ushort_at(0);

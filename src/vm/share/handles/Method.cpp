@@ -986,7 +986,7 @@ jushort Method::compute_size_of_parameters() {
  * (2) Fills in the HAS_INVOKE_BYTECODES and HAS_MONITOR_BYTECODES flags.
  */
 void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
-  if (is_native() || is_abstract()) {
+  if (is_native_or_abstract()) {
     // We've generated the code ourselves.  Nothing to check.
     return;
   }
@@ -2869,11 +2869,10 @@ void Method::print_name_to(char *buffer, int max_length) {
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || \
         ENABLE_PERFORMANCE_COUNTERS ||ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 ReturnOop Method::get_original_name(bool& renamed) const {
-  Symbol::Raw n = name();
-
+  const Symbol::Raw n = name();
   if (n().equals(Symbols::unknown())) {
     renamed = true;
-    Symbol::Raw n2 = ROM::get_original_method_name(this);
+    const Symbol::Raw n2 = ROM::get_original_method_name(this);
     if (!n2.is_null()) {
       return n2.obj();
     }

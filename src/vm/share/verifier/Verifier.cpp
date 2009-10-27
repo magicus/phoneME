@@ -71,8 +71,7 @@ void Verifier::verify_class_internal(InstanceClass* ic JVM_TRAPS) {
     method = methods().obj_at(i);
 
     // Skip abstract and native methods. 
-    if (method().access_flags().is_native() || 
-        method().access_flags().is_abstract()) {
+    if (method().access_flags().is_native_or_abstract()) { 
       continue;
     }
 

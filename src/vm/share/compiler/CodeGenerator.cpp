@@ -127,8 +127,7 @@ void CodeGenerator::ensure_sufficient_stack_for(int index, BasicType kind) {
 
   int max_index = max_execution_stack_count + inliner_stack_count -
     Compiler::current()->num_stack_lock_words() - 1;
-  GUARANTEE(adjusted_index <= max_index ||
-            method()->is_native() || method()->is_abstract(),
+  GUARANTEE(adjusted_index <= max_index || method()->is_native_or_abstract(),
             "max index should be max");
   if (adjusted_index > frame()->stack_pointer()) {
     frame()->set_stack_pointer(max_index);

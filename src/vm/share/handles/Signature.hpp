@@ -33,7 +33,7 @@ public:
   ~Signature() {}
   // Returns the parameter size (in words) for a method call based
   // static-ness and signature
-  jint parameter_word_size(bool is_static);
+  jint parameter_word_size(const bool is_static) const;
 
   // Returns the return type for a signature
   BasicType return_type(bool fast = false);

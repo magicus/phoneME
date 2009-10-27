@@ -30,7 +30,7 @@ class ROMInliner {
 public:
   // max_len defines maximal length of inlined method, usually should be 
   // something  < 10
-  void initialize(int max_len JVM_TRAPS);
+  void initialize(const int max_len JVM_TRAPS);
   
   // tries to inline all calls in method to methods in _methods
   // list, returns number of inlined calls
@@ -40,12 +40,14 @@ public:
 
 private:
   // auxiliary methods
-  void add(Method* method);
-  bool contains(Method* method);
-  int hashcode_for_method(Method *method);
-  int hashcode_for_symbol(Symbol *symbol);
-  static bool may_inline_invokestatic(Method* caller, Method* callee);
-  static bool is_inner_class_of(InstanceClass *inner, InstanceClass* outer);
+  void add(const Method* method);
+  bool contains(const Method* method) const;
+  static int hashcode_for_method(const Method* method);
+  static int hashcode_for_symbol(const Symbol* symbol);
+  static bool may_inline_invokestatic(const Method* caller,
+                                      const Method* callee);
+  static bool is_inner_class_of(const InstanceClass* inner,
+                                const InstanceClass* outer);
 
   // those are called when inlining different things
   bool try_inline_empty_method(Method* caller, Method* callee, 
@@ -76,7 +78,7 @@ private:
 #endif
 
   // return number of stack words consumed by method invocation
-  int  num_args(Method* calee);
+  static int num_args(const Method* calee);
 
   ObjArray _methods;
 

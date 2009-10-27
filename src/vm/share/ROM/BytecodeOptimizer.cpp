@@ -370,7 +370,7 @@ ReturnOop BytecodeOptimizer::optimize_static_arrays(Method *method JVM_TRAPS) {
   TypeArray exception_table = new_method.exception_table();
   if (!exception_table.is_null() && exception_table.length() > 0) {
     // 4-tuples of ints [start_pc, end_pc, handler_pc, catch_type index]
-    GUARANTEE(!new_method.is_abstract() && !new_method.is_native(), "sanity");
+    GUARANTEE(!new_method.is_native_or_abstract(), "sanity");
     int len = exception_table.length();
     TypeArray new_exception_table = Universe::new_short_array(len JVM_CHECK_0);
 

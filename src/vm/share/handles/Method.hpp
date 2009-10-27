@@ -725,6 +725,10 @@ public:
   bool is_protected       (void) const { return access_flags().is_protected();      }
   bool is_package_private (void) const { return access_flags().is_package_private();}
 
+  bool is_native_or_abstract (void) const {
+    return access_flags().is_native_or_abstract();
+  }
+
   bool is_quick_native(void) const {
     return code_size() == 0 && is_native();
   }
@@ -776,12 +780,12 @@ public:
   }
 #endif
 
-  inline ReturnOop get_original_name() {
+  inline ReturnOop get_original_name(void) const {
     bool dummy;
     return get_original_name(dummy);
   }
 
-  bool is_overloaded() const;
+  bool is_overloaded(void) const;
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE || USE_DEBUG_PRINTING
   void print_name_on_tty() const {

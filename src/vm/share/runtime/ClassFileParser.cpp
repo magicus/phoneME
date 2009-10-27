@@ -968,8 +968,7 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
   juint code_length = 0;
   jint code_offset = 0;
   TypeArray::Fast exception_table;
-  bool is_code_required = 
-      !(access_flags.is_native() || access_flags.is_abstract());
+  bool is_code_required = !access_flags.is_native_or_abstract();
   bool parsed_checked_exceptions_attribute = false;
   ObjArray::Fast stackmaps;
 
@@ -1040,7 +1039,7 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
   cpf_check_0(!is_code_required, missing_code_attribute);
 
   // Setup bytecode for native methods.
-  if (access_flags.is_native() || access_flags.is_abstract()) {
+  if (access_flags.is_native_or_abstract()) {
     GUARANTEE(code_length == 0, "Sanity check");
     code_length = Bytecodes::length_for(Bytecodes::_fast_invokenative);
   }
@@ -1072,7 +1071,7 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
   cpf_check_0(m().size_of_parameters() <= 255, too_many_method_parameters);
 
   // Fill in code attribute information
-  if (m().is_native() || m().is_abstract()) {
+  if (m().is_native_or_abstract()) {
     max_locals = m().size_of_parameters();
   } else {
     cpf_check_0(m().size_of_parameters() <= max_locals, invalid_frame_size);
@@ -1103,7 +1102,7 @@ ClassFileParser::parse_method(ClassParserState *state, ConstantPool* cp,
 #endif
  
   // Copy byte codes
-  if (m().access_flags().is_native() || m().access_flags().is_abstract()) {
+  if (m().is_native_or_abstract()) {
     // Setup unimplemented native code reference.
     if (m().is_abstract()) {
       init_native_method(&m, (address) Java_abstract_method_execution);
@@ -1847,7 +1846,7 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
 
   // Finalization support
   if (super_class.not_null()) {  // Don't set flag for java.lang.Object
-    Method::Raw fm = 
+    const Method::Raw fm = 
       InstanceClass::find_method(&methods, Symbols::finalize_name(),
                                  Symbols::void_signature());
     if (fm.not_null() && fm().is_private() && fm().is_native()) {

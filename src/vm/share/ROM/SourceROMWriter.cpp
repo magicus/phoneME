@@ -1726,16 +1726,11 @@ SourceROMWriter::write_modified_class_attributes(const int min, const int max) {
   return bit_count;
 }
 
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
 inline void
 SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
-                                             jubyte bitmap[]
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-                                             , const ROMProfile* profile
-  #define _ profile->
-#else // ENABLE_MULTIPLE_PROFILES_SUPPORT
-  #define _ 
-#endif
-) {
+                                             jubyte bitmap[],
+                                             const ROMProfile* profile) {
   int bit_count = 0;
   for (SystemClassStream st; st.has_next();) {
     InstanceClass::Raw klass = st.next();
@@ -1744,8 +1739,105 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
     if (class_id < min || klass().access_flags().is_hidden()) {
       continue;
     }
-    const bool hidden_fields = _ has_hidden_fields(&klass);
-    const bool hidden_methods = _ has_hidden_methods(&klass);
+    const bool hidden_fields = profile->has_hidden_fields(&klass);
+    const bool hidden_methods = profile->has_hidden_methods(&klass);
+    if (hidden_fields || hidden_methods) {
+      main_stream()->print("/*\n  ");
+      klass().print_name_on(main_stream());
+      main_stream()->cr();
+    };
+    if (hidden_fields) {
+      main_stream()->print_cr("    Hidden fields:");
+      ConstantPool::Raw cp = klass().constants();
+      const TypeArray::Raw fields = klass().fields();
+      const int fields_length = fields().length();
+      for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
+        const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
+        OopDesc* field_name = cp().symbol_at(name_index);
+        if (profile->is_hidden_field(&klass, field_name)) {
+          main_stream()->print("      ");
+          Symbol::Raw name = field_name;
+          name().print_symbol_on(main_stream());
+          main_stream()->cr();
+
+          bitmap[bit_count >> LogBitsPerByte] |=
+           1 << (bit_count & (BitsPerByte-1));
+        }
+        bit_count++;
+      }
+    } else {
+      main_stream()->print_cr("    No hidden fields");
+      if (has_hidden_fields(&klass)) { // In other profile(s)
+        bit_count += field_count(&klass);
+      }
+    }
+    if (hidden_methods) {
+      main_stream()->print_cr("    Hidden methods:");
+      { // Static methods first
+        const ObjArray::Raw methods = klass().methods();
+        const int methods_length = methods().length();
+
+        for (int i = 0; i < methods_length; i++) {
+          const Method::Raw method = methods().obj_at(i);
+          if (method.not_null()) {
+            if (profile->is_hidden_method(&klass, &method)) {
+              main_stream()->print("      ");
+              Symbol::Raw name = method().name();
+              name().print_symbol_on(main_stream());
+              main_stream()->cr();
+
+              bitmap[bit_count >> LogBitsPerByte] |=
+               1 << (bit_count & (BitsPerByte-1));
+            }
+            bit_count++;
+          }
+        }
+      }
+      { // Virtual methods next
+        const ClassInfo::Raw info = klass().class_info();
+        const int vtable_length = info().vtable_length();
+        for (int i = 0; i < vtable_length; i++) {
+          const Method::Raw method = info().vtable_method_at(i);
+          if (method.not_null() && method().holder_id() == class_id) {
+            if (profile->is_hidden_method(&klass, &method)) {
+              main_stream()->print("      ");
+              Symbol::Raw name = method().name();
+              name().print_symbol_on(main_stream());
+              main_stream()->cr();
+
+              bitmap[bit_count >> LogBitsPerByte] |=
+               1 << (bit_count & (BitsPerByte-1));
+            }
+            bit_count++;
+          }
+        }
+      }
+    } else {
+      main_stream()->print_cr("    No hidden methods");
+      if (has_hidden_fields(&klass)) { // In other profile(s)
+        bit_count += method_count(&klass);
+      }
+    }
+    if (hidden_fields || hidden_methods) {
+      main_stream()->print("*/\n");
+    }
+  }
+  main_stream()->sp();
+}
+#else //  ENABLE_MULTIPLE_PROFILES_SUPPORT
+inline void
+SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
+                                             jubyte bitmap[]) {
+  int bit_count = 0;
+  for (SystemClassStream st; st.has_next();) {
+    InstanceClass::Raw klass = st.next();
+    const int class_id = klass().class_id();
+    if (class_id > max) break;
+    if (class_id < min || klass().access_flags().is_hidden()) {
+      continue;
+    }
+    const bool hidden_fields = has_hidden_fields(&klass);
+    const bool hidden_methods = has_hidden_methods(&klass);
     if (hidden_fields || hidden_methods) {
       main_stream()->print("/*\n  ");
       klass().print_name_on(main_stream());
@@ -1759,7 +1851,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
         for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
           const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
           OopDesc* field_name = cp().symbol_at(name_index);
-          if (_ is_hidden_field(&klass, field_name)) {
+          if (is_hidden_field(&klass, field_name)) {
             main_stream()->print("      ");
             Symbol::Raw name = field_name;
             name().print_symbol_on(main_stream());
@@ -1783,7 +1875,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
           for (int i = 0; i < methods_length; i++) {
             const Method::Raw method = methods().obj_at(i);
             if (method.not_null()) {
-              if (_ is_hidden_method(&klass, &method)) {
+              if (is_hidden_method(&klass, &method)) {
                 main_stream()->print("      ");
                 Symbol::Raw name = method().name();
                 name().print_symbol_on(main_stream());
@@ -1802,7 +1894,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
           for (int i = 0; i < vtable_length; i++) {
             const Method::Raw method = info().vtable_method_at(i);
             if (method.not_null() && method().holder_id() == class_id) {
-              if (_ is_hidden_method(&klass, &method)) {
+              if (is_hidden_method(&klass, &method)) {
                 main_stream()->print("      ");
                 Symbol::Raw name = method().name();
                 name().print_symbol_on(main_stream());
@@ -1823,6 +1915,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
   }
   main_stream()->sp();
 }
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
 void SourceROMWriter::write_hidden_members(JVM_SINGLE_ARG_TRAPS) {
   int min = -1;

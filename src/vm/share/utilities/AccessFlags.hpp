@@ -116,6 +116,9 @@ class AccessFlags {
   bool is_abstract() const {
     return (_flags & JVM_ACC_ABSTRACT) != 0;
   }
+  bool is_native_or_abstract() const {
+    return (_flags & (JVM_ACC_NATIVE | JVM_ACC_ABSTRACT)) != 0;
+  }
   bool is_strict() const {
     return (_flags & JVM_ACC_STRICT) != 0;
   }  
