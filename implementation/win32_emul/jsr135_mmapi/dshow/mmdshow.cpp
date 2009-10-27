@@ -397,7 +397,7 @@ long dshow_player::read(short* buffer, int samples)
     size_t zero_padding_size = 0;
     size_t nbytes = samples * 2 * channels;
 
-    if( buffering || !playing ) {
+    if( buffering || !playing || dwr_cancel ) {
         memset( buffer, 0, nbytes );
         LeaveCriticalSection( &cs );
         return MQ234_ERROR_NO_ERROR;
