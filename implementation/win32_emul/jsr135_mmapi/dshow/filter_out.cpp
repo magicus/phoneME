@@ -90,7 +90,7 @@ class filter_out_pin : public IPin, IMemInputPin
     friend bool create_filter_out(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, IBaseFilter **ppfilter);
 };
 
-class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking//, IReferenceClock
+class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking, IReferenceClock
 {
     friend filter_out_pin;
 
@@ -108,6 +108,9 @@ class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking/
     HANDLE event_state_set;
     HANDLE event_not_paused;
     HANDLE thread_worker;
+    int64 perf_freq;
+    int64 t_perf_prev;
+    int64 t_prev;
 
     // Possible filter states:
     //
@@ -174,6 +177,11 @@ class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking/
     virtual HRESULT __stdcall SetRate(double dRate);
     virtual HRESULT __stdcall GetRate(double *pdRate);
     virtual HRESULT __stdcall GetPreroll(LONGLONG *pllPreroll);
+    // IReferenceClock
+    virtual HRESULT __stdcall GetTime(REFERENCE_TIME *pTime);
+    virtual HRESULT __stdcall AdviseTime(REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HEVENT hEvent, DWORD_PTR *pdwAdviseCookie);
+    virtual HRESULT __stdcall AdvisePeriodic(REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HSEMAPHORE hSemaphore, DWORD_PTR *pdwAdviseCookie);
+    virtual HRESULT __stdcall Unadvise(DWORD_PTR dwAdviseCookie);
 
     static nat32 __stdcall worker_thread(void *param);
 
@@ -592,7 +600,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
     int64 tstart;
     int64 tend;
-#if write_level > 0
+#if write_level > 1
     if(pSample->GetMediaTime(&tstart, &tend) == S_OK)
     {
         print("Start media time=%I64x, end media time=%I64x\n", tstart, tend);
@@ -606,7 +614,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
         return VFW_E_RUNTIME_ERROR;
     }
-#if write_level > 0
+#if write_level > 1
     if(amt.majortype == MEDIATYPE_Audio)
     {
         print("Audio: Start time=%I64i, end time=%I64i\n", tstart, tend);
@@ -629,6 +637,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
     bool delivered = false;
     EnterCriticalSection(&cs_receive);
     EnterCriticalSection(&pfilter->cs_filter);
+    pfilter->t_last = tend;
     for(;;)
     {
         if(flushing)
@@ -728,7 +737,6 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
                 {
                     pfilter->pcallback->frame_ready((bits16 *)pb);
                 }
-                pfilter->t_last = tend;
                 LeaveCriticalSection(&pfilter->cs_filter);
                 LeaveCriticalSection(&cs_receive);
 #if write_level > 1
@@ -824,6 +832,12 @@ HRESULT __stdcall filter_out_filter::QueryInterface(REFIID riid, void **ppvObjec
     {
         *(IMediaSeeking **)ppvObject = this;
         ((IMediaSeeking *)*ppvObject)->AddRef();
+        return S_OK;
+    }
+    if(riid == IID_IReferenceClock)
+    {
+        *(IReferenceClock **)ppvObject = this;
+        ((IReferenceClock *)*ppvObject)->AddRef();
         return S_OK;
     }
     *ppvObject = null;
@@ -1600,6 +1614,64 @@ HRESULT __stdcall filter_out_filter::GetPreroll(LONGLONG *pllPreroll)
     return r;
 }
 
+HRESULT __stdcall filter_out_filter::GetTime(REFERENCE_TIME *pTime)
+{
+#if write_level > 1
+    print("filter_out_filter::GetTime called...\n");
+#endif
+    if(!pTime) return E_POINTER;
+    int64 t_abs;
+    QueryPerformanceCounter((LARGE_INTEGER *)&t_abs);
+    int64 t_step = t_abs - t_perf_prev;
+    t_perf_prev = t_abs;
+    t_step = (int64)((real64)t_step * 10000000. / (real64)perf_freq);
+
+    if(state == State_Running)
+    {
+        t_step = max(min(t_step, t_start + t_last - t_prev), 0);
+#if write_level > 1
+        print("t_start=%I64i, t_last=%I64i, t_prev=%I64i\n", t_start, t_last, t_prev);
+#endif
+    }
+
+    if(t_step)
+    {
+        int64 t = t_prev + t_step;
+        t_prev = t;
+        *pTime = t;
+        return S_OK;
+    }
+    else
+    {
+        *pTime = t_prev;
+        return S_FALSE;
+    }
+}
+
+HRESULT __stdcall filter_out_filter::AdviseTime(REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HEVENT hEvent, DWORD_PTR *pdwAdviseCookie)
+{
+#if write_level > 0
+    print("filter_out_filter::AdviseTime called...\n");
+#endif
+    return E_OUTOFMEMORY;
+}
+
+HRESULT __stdcall filter_out_filter::AdvisePeriodic(REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HSEMAPHORE hSemaphore, DWORD_PTR *pdwAdviseCookie)
+{
+#if write_level > 0
+    print("filter_out_filter::AdvisePeriodic called...\n");
+#endif
+    return E_OUTOFMEMORY;
+}
+
+HRESULT __stdcall filter_out_filter::Unadvise(DWORD_PTR dwAdviseCookie)
+{
+#if write_level > 0
+    print("filter_out_filter::Unadvise called...\n");
+#endif
+    return S_FALSE;
+}
+
 inline nat32 filter_out_filter::round(nat32 n)
 {
     n--;
@@ -1639,7 +1711,7 @@ nat32 __stdcall filter_out_filter::worker_thread(void *param)
                 {
                     if(t > pfilter->t_start + pfilter->t_last)
                     {
-                        IAMClockAdjust *pamca;
+                        /*IAMClockAdjust *pamca;
                         r = pfilter->pclock->QueryInterface(IID_IAMClockAdjust, (void **)&pamca);
                         if(r != S_OK)
                         {
@@ -1649,9 +1721,9 @@ nat32 __stdcall filter_out_filter::worker_thread(void *param)
                         }
                         else
                         {
-                            pamca->SetClockDelta(-10000);
+                            pamca->SetClockDelta(-30000);
                             pamca->Release();
-                        }
+                        }*/
 
                         /*IMediaEventSink *pmes;
                         r = pfilter->pgraph->QueryInterface(IID_IMediaEventSink, (void **)&pmes);
@@ -1776,6 +1848,13 @@ bool create_filter_out(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, IB
     wcscpy_s(pfilter->name, MAX_FILTER_NAME, L"");
     pfilter->state = State_Stopped;
     pfilter->state2 = State_Stopped;
+
+    QueryPerformanceFrequency((LARGE_INTEGER *)&pfilter->perf_freq);
+// #if write_level > 0
+//     print("Performance frequency=%I64i.\n", pfilter->perf_freq);
+// #endif
+    QueryPerformanceCounter((LARGE_INTEGER *)&pfilter->t_perf_prev);
+    pfilter->t_prev = 0;
 
     pfilter->thread_worker = (HANDLE)_beginthreadex(null, 0, filter_out_filter::worker_thread, pfilter, 0, null);
 
