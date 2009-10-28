@@ -232,7 +232,11 @@ runamsg:
 #----------------------------------------------------------------------
 # Native test files
 #----------------------------------------------------------------------
+ifeq ($(ENABLE_MEMBER_HIDING), true)
+ROM_CFG = $(WorkSpace)/src/tests/test_rom_member_hiding.cfg
+else
 ROM_CFG = $(WorkSpace)/src/tests/test_rom.cfg
+endif
 
 ROMImage.cpp: $(ROMCLASSES_ZIP) $(ROM_CFG) $(ROM_GENERATOR) 
 	$(ROM_GENERATOR) -cp $(ROMCLASSES_ZIP)$(PATHSEP)$(RESOURCES_ZIP) \
