@@ -69,6 +69,7 @@ static void PRINTF( const char* fmt, ... ) {
 class dshow_player : public player_callback, 
                      public IWaveStream
 {
+public:
     // player_callback methods:
     virtual void        frame_ready( bits16 const* pFrame );
     virtual void        sample_ready(nat32 nbytes, void const* pdata);
@@ -356,12 +357,6 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
         }
 
         out_queue_n += nbytes;
-    }
-
-    if( buffering && playing && out_queue_n > OUT_QUEUE_SIZE / 2 )
-    {
-        buffering = false;
-        buffering_stopped();
     }
 
     LeaveCriticalSection( &cs );
@@ -1124,6 +1119,13 @@ javacall_result dshow_data_written(javacall_handle handle,
 {
     dshow_player* p = (dshow_player*)handle;
     DEBUG_ONLY( PRINTF( "       --- data_written.\n" ); )
+
+    if( p->buffering && p->playing && p->out_queue_n > OUT_QUEUE_SIZE / 2 )
+    {
+        p->buffering = false;
+        p->buffering_stopped();
+    }
+
     SetEvent( p->dwr_event );
     *new_request = JAVACALL_FALSE;
     return JAVACALL_OK;
