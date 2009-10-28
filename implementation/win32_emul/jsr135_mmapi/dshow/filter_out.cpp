@@ -1649,7 +1649,7 @@ nat32 __stdcall filter_out_filter::worker_thread(void *param)
                         }
                         else
                         {
-                            pamca->SetClockDelta(-1000);
+                            pamca->SetClockDelta(-10000);
                             pamca->Release();
                         }
 
