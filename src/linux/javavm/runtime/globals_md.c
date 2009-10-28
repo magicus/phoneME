@@ -193,7 +193,7 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 #endif
 
     {
-	char buf[MAXPATHLEN + 1], *p0, *p, *pEnd;
+	char buf[MAXPATHLEN + 1], *p0, *p;
 
 	{
 	    Dl_info dlinfo;
@@ -322,9 +322,11 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
             return CVM_FALSE;
         }
         strcpy(p, p0);
-        pEnd = p + strlen(p);
-        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
-        strcpy(pEnd, "lib");
+	{
+	    char* pEnd = p + strlen(p);
+	    *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+	    strcpy(pEnd, "lib");
+	}
         pathInfo->libPath = p;
         /* lib and dll are the same so this shortcut */
         pathInfo->dllPath = strdup(p);
