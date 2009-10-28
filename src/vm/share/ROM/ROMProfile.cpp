@@ -71,28 +71,31 @@ bool ROMProfile::is_hidden(const InstanceClass* klass) const {
 #if ENABLE_MEMBER_HIDING
 bool ROMProfile::is_hidden_method(const InstanceClass* klass,
                                   const Method* method) const {
-  const Symbol::Raw class_name = klass->name();
   const Symbol::Raw method_name = method->name();
-  const OopDesc* method_signature = method->signature();
+  if (!Symbols::unknown()->equals(method_name.obj())) {
+    const Symbol::Raw class_name = klass->name();
+    const Symbol::Raw method_name = method->name();
+    const OopDesc* method_signature = method->signature();
 
-  const ROMVector::Raw class_patterns = hidden_method_classes();
-  const ROMVector::Raw name_patterns = hidden_method_names();
-  const ROMVector::Raw signatures = hidden_method_signatures();
+    const ROMVector::Raw class_patterns = hidden_method_classes();
+    const ROMVector::Raw name_patterns = hidden_method_names();
+    const ROMVector::Raw signatures = hidden_method_signatures();
 
-  const int number_of_patterns = class_patterns().size();
-  GUARANTEE(name_patterns().size() == number_of_patterns, "Sanity");
-  GUARANTEE(signatures().size() == number_of_patterns, "Sanity");
+    const int number_of_patterns = class_patterns().size();
+    GUARANTEE(name_patterns().size() == number_of_patterns, "Sanity");
+    GUARANTEE(signatures().size() == number_of_patterns, "Sanity");
 
-  for( int i = 0; i < number_of_patterns; i++ ) {
-    const SymbolDesc* class_pattern =
-      (const SymbolDesc*) class_patterns().element_at(i);
-    if( class_name().matches_pattern(class_pattern) ) {
-      const SymbolDesc* name_pattern =
-        (const SymbolDesc*) name_patterns().element_at(i);
-      if( method_name().matches_pattern(name_pattern) ) {
-        const OopDesc* signature = signatures().element_at(i);
-        if( !signature || signature == method_signature ) {
-          return true;
+    for( int i = 0; i < number_of_patterns; i++ ) {
+      const SymbolDesc* class_pattern =
+        (const SymbolDesc*) class_patterns().element_at(i);
+      if( class_name().matches_pattern(class_pattern) ) {
+        const SymbolDesc* name_pattern =
+          (const SymbolDesc*) name_patterns().element_at(i);
+        if( method_name().matches_pattern(name_pattern) ) {
+          const OopDesc* signature = signatures().element_at(i);
+          if( !signature || signature == method_signature ) {
+            return true;
+          }
         }
       }
     }
@@ -102,22 +105,24 @@ bool ROMProfile::is_hidden_method(const InstanceClass* klass,
 
 bool ROMProfile::is_hidden_field (const InstanceClass* klass,
                                   const OopDesc* field) const {
-  const Symbol::Raw class_name = klass->name();
+  if (!Symbols::unknown()->equals(field)) {
+    const Symbol::Raw class_name = klass->name();
 
-  const ROMVector::Raw class_patterns = hidden_field_classes();
-  const ROMVector::Raw name_patterns = hidden_field_names();
+    const ROMVector::Raw class_patterns = hidden_field_classes();
+    const ROMVector::Raw name_patterns = hidden_field_names();
 
-  const int number_of_patterns = class_patterns().size();
-  GUARANTEE(name_patterns().size() == number_of_patterns, "Sanity");
+    const int number_of_patterns = class_patterns().size();
+    GUARANTEE(name_patterns().size() == number_of_patterns, "Sanity");
 
-  for( int i = 0; i < number_of_patterns; i++ ) {
-    const SymbolDesc* class_pattern =
-      (const SymbolDesc*) class_patterns().element_at(i);
-    if( class_name().matches_pattern(class_pattern) ) {
-      const SymbolDesc* name_pattern =
-        (const SymbolDesc*) name_patterns().element_at(i);
-      if( ((const SymbolDesc*)field)->matches_pattern(name_pattern) ) {
-        return true;
+    for( int i = 0; i < number_of_patterns; i++ ) {
+      const SymbolDesc* class_pattern =
+        (const SymbolDesc*) class_patterns().element_at(i);
+      if( class_name().matches_pattern(class_pattern) ) {
+        const SymbolDesc* name_pattern =
+          (const SymbolDesc*) name_patterns().element_at(i);
+        if( ((const SymbolDesc*)field)->matches_pattern(name_pattern) ) {
+          return true;
+        }
       }
     }
   }
@@ -139,11 +144,12 @@ bool ROMProfile::has_hidden_fields (const InstanceClass* ic) const {
     ConstantPool::Raw cp = ic->constants();
     const TypeArray::Raw fields = ic->fields();
     const int fields_length = fields().length();
+    const OopDesc* unknown = Symbols::unknown()->obj();
 
     for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
       const jushort name_index = fields().ushort_at(i + Field::NAME_OFFSET);
       const OopDesc* field_name = cp().symbol_at(name_index);
-      if (is_hidden_field(ic, field_name)) {
+      if (field_name != unknown && is_hidden_field(ic, field_name)) {
         return true;
       }
     }
@@ -153,13 +159,16 @@ bool ROMProfile::has_hidden_fields (const InstanceClass* ic) const {
 
 bool ROMProfile::has_hidden_methods(const InstanceClass* ic) const {
   if (!is_hidden(ic)) {
+    const OopDesc* unknown = Symbols::unknown()->obj();
     {
       const ObjArray::Raw methods = ic->methods();
       const int methods_length = methods().length();
 
       for (int i = 0; i < methods_length; i++) {
         const Method::Raw method = methods().obj_at(i);
-        if (method.not_null() && is_hidden_method(ic, &method)) {
+        if (method.not_null()
+            && method().name() != unknown
+            && is_hidden_method(ic, &method)) {
           return true;
         }
       }
@@ -170,8 +179,10 @@ bool ROMProfile::has_hidden_methods(const InstanceClass* ic) const {
       const int vtable_length = info().vtable_length();
       for (int i = 0; i < vtable_length; i++) {
         const Method::Raw method = info().vtable_method_at(i);
-        if (method.not_null() && method().holder_id() == holder_id
-                              && is_hidden_method(ic, &method)) {
+        if (method.not_null()
+            && method().name() != unknown
+            && method().holder_id() == holder_id
+            && is_hidden_method(ic, &method)) {
           return true;
         }
       }

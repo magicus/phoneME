@@ -1852,9 +1852,6 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
       const jbyte class_access_level = get_class_access_level(&klass);
 
       UsingFastOops fast_oops1;
-#if ENABLE_MEMBER_HIDING
-      const Symbol::Fast class_name = klass().name();
-#endif
       TypeArray::Fast fields = klass().fields();
       const int fields_length = fields().length();
       for (int i = 0; i < fields_length; i += Field::NUMBER_OF_SLOTS) {
@@ -1970,10 +1967,8 @@ inline bool ROMOptimizer::is_in_public_itable(const InstanceClass* ic,
 bool
 ROMOptimizer::is_method_reachable_by_apps(const InstanceClass* ic,
                                           const Method* method) const {
-  if (is_hidden_method(ic, method)) {
-    return false;
-  }
-  if (is_member_reachable_by_apps(ic, method->access_flags())) {
+  if (!is_hidden_method(ic, method) &&
+      is_member_reachable_by_apps(ic, method->access_flags())) {
     return true;
   }
   return method->is_public() && !method->is_static() &&

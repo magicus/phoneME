@@ -206,7 +206,7 @@ public:
 
   /// Equality-testing operations.
   bool equals(const BasicOop* other) const { return obj() == other->obj(); }
-  bool equals(ReturnOop other) const { return obj() == other; }
+  bool equals(const OopDesc*  other) const { return obj() == other; }
 
   /// Get size of object pointed to by handle.
   size_t object_size() const { return obj()->object_size(); }

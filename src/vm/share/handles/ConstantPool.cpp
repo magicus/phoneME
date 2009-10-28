@@ -390,6 +390,13 @@ ConstantPool::lookup_method_at(InstanceClass *sender_class, int index,
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
   }
 
+  const InstanceClass::Raw holder = m().holder();
+  if (holder().is_hidden()) {
+    trace_no_such_method_error(sender_class, static_receiver_class, name,
+                               signature);
+    Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
+  }
+  
   static_receiver_class->check_access_by(sender_class, ErrorOnFailure JVM_CHECK_0);
 
   m().check_access_by(sender_class, static_receiver_class, 

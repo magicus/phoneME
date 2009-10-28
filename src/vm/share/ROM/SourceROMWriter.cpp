@@ -1580,13 +1580,16 @@ void SourceROMWriter::write_hidden_classes(void) {
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
 #if ENABLE_MEMBER_HIDING
-inline bool SourceROMWriter::is_hidden_field (const InstanceClass* ic,
+bool SourceROMWriter::is_hidden_field (const InstanceClass* ic,
                                               const OopDesc* field) {
-  return ROMOptimizer::is_hidden_field(ic, field);
+  return !Symbols::unknown()->equals(field) &&
+         ROMOptimizer::is_hidden_field(ic, field);
 }
-inline bool SourceROMWriter::is_hidden_method(const InstanceClass* ic,
+
+bool SourceROMWriter::is_hidden_method(const InstanceClass* ic,
                                               const Method* method) {
-  return ROMOptimizer::is_hidden_method(ic, method);
+  return !Symbols::unknown()->equals(method->name()) &&
+         ROMOptimizer::is_hidden_method(ic, method);
 }
 
 inline int SourceROMWriter::field_count (const InstanceClass* ic) {
@@ -1741,7 +1744,7 @@ SourceROMWriter::write_modified_class_bitmap(const int min, const int max,
     }
     
     const bool has_hidden_fields = this->has_hidden_fields(&klass);
-    const bool has_hidden_methods = this->has_hidden_fields(&klass);
+    const bool has_hidden_methods = this->has_hidden_methods(&klass);
     if (!has_hidden_fields && !has_hidden_methods) {
       continue;
     }
