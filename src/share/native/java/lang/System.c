@@ -310,3 +310,26 @@ Java_java_lang_System_mapLibraryName(JNIEnv *env, jclass ign, jstring libname)
 
     return (*env)->NewString(env, chars, len);
 }
+
+
+/* 
+ * A useful method if you need to do a println before the VM is
+ * fully initialized in System.out is available. Uncomment this code
+ * and add the prototype to System.java if you want to use it.
+ */
+
+#if 0
+JNIEXPORT void JNICALL
+Java_java_lang_System_println(JNIEnv *env, jclass ign, jstring output)
+{
+    int len;
+    const char* chars;
+    jboolean isCopy;
+    len = (*env)->GetStringLength(env, output);
+    chars = (*env)->GetStringUTFChars(env, output, &isCopy);
+    CVMconsolePrintf("%s\n", chars);
+    if (isCopy) {
+	CVMjniReleaseStringUTFChars(env, output, chars);
+    }
+}
+#endif
