@@ -304,7 +304,7 @@ DWORD WINAPI mixing_thread( void* arg )
 
         if( g_bMixStopFlag ) break;
 
-        Sleep( should_sleep ? 50 : 0 );
+        Sleep( should_sleep ? 1 : 0 );
     }
 
     return 0;

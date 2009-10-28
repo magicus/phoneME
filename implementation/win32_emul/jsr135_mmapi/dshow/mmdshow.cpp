@@ -356,7 +356,7 @@ void dshow_player::sample_ready(nat32 nbytes, void const* pdata)
         out_queue_n += nbytes;
     }
 
-    if( buffering && out_queue_n > OUT_QUEUE_SIZE / 2 )
+    if( buffering && out_queue_n > 0x1000/*OUT_QUEUE_SIZE / 2*/ )
     {
         buffering = false;
         buffering_stopped();
@@ -431,6 +431,8 @@ long dshow_player::read(short* buffer, int samples)
     } else {
         out_queue_r += n1;
     }
+
+    // printf("read %u bytes out of %u\n", nbytes, out_queue_n);
 
     out_queue_n -= nbytes;
 
