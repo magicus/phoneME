@@ -24,6 +24,7 @@
 
 #include <amvideo.h>
 #include <dvdmedia.h>
+#include <evcode.h>
 #include <process.h>
 #include <uuids.h>
 #include <vfwmsgs.h>
@@ -89,7 +90,7 @@ class filter_out_pin : public IPin, IMemInputPin
     friend bool create_filter_out(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, IBaseFilter **ppfilter);
 };
 
-class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking
+class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking//, IReferenceClock
 {
     friend filter_out_pin;
 
@@ -103,8 +104,10 @@ class filter_out_filter : public IBaseFilter, IAMFilterMiscFlags, IMediaSeeking
     FILTER_STATE state;
     FILTER_STATE state2;
     int64 t_start;
+    int64 t_last;
     HANDLE event_state_set;
     HANDLE event_not_paused;
+    HANDLE thread_worker;
 
     // Possible filter states:
     //
@@ -589,7 +592,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
     int64 tstart;
     int64 tend;
-#if write_level > 1
+#if write_level > 0
     if(pSample->GetMediaTime(&tstart, &tend) == S_OK)
     {
         print("Start media time=%I64x, end media time=%I64x\n", tstart, tend);
@@ -603,8 +606,25 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
         return VFW_E_RUNTIME_ERROR;
     }
-#if write_level > 1
-    print("Start time=%I64i, end time=%I64i\n", tstart, tend);
+#if write_level > 0
+    if(amt.majortype == MEDIATYPE_Audio)
+    {
+        print("Audio: Start time=%I64i, end time=%I64i\n", tstart, tend);
+    }
+    else if(amt.majortype == MEDIATYPE_Video)
+    {
+        print("Video: Start time=%I64i, end time=%I64i\n", tstart, tend);
+    }
+    else
+    {
+        print("Start time=%I64i, end time=%I64i\n", tstart, tend);
+    }
+    int64 t;
+    r = pfilter->pclock->GetTime(&t);
+    if(r == S_OK || r == S_FALSE)
+    {
+        print("Reference time=%I64i, stream time=%I64i\n", t, t - pfilter->t_start);
+    }
 #endif
     bool delivered = false;
     EnterCriticalSection(&cs_receive);
@@ -708,6 +728,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
                 {
                     pfilter->pcallback->frame_ready((bits16 *)pb);
                 }
+                pfilter->t_last = tend;
                 LeaveCriticalSection(&pfilter->cs_filter);
                 LeaveCriticalSection(&cs_receive);
 #if write_level > 1
@@ -842,7 +863,13 @@ ULONG __stdcall filter_out_filter::Release()
         if(pin.amt.pUnk) pin.amt.pUnk->Release();
         if(pin.amt.cbFormat) delete[] pin.amt.pbFormat;
 
+        reference_count = 0;
+        LeaveCriticalSection(&cs_filter);
+
+        WaitForSingleObject(thread_worker, INFINITE);
+
         DeleteCriticalSection(&cs_filter);
+
         // delete ppin;
         delete this;
         return 0;
@@ -972,6 +999,7 @@ HRESULT __stdcall filter_out_filter::Run(REFERENCE_TIME tStart)
     {
     }
     t_start = tStart;
+    t_last = 0;
     LeaveCriticalSection(&cs_filter);
     return S_OK;
 }
@@ -1586,8 +1614,65 @@ inline nat32 filter_out_filter::round(nat32 n)
 
 nat32 __stdcall filter_out_filter::worker_thread(void *param)
 {
-    // filter_out_filter *pfilter = (filter_out_filter *)param;
-    return 0;
+    filter_out_filter *pfilter = (filter_out_filter *)param;
+    for(;;)
+    {
+        EnterCriticalSection(&pfilter->cs_filter);
+        if(!pfilter->reference_count)
+        {
+            LeaveCriticalSection(&pfilter->cs_filter);
+            return 0;
+        }
+        if(pfilter->state == State_Running)
+        {
+            if(pfilter->pin.amt.majortype == MEDIATYPE_Audio)
+            {
+                int64 t;
+                HRESULT r = pfilter->pclock->GetTime(&t);
+                if(r != S_OK && r != S_FALSE)
+                {
+#if write_level > 0
+                    error("IReferenceClock::GetTime", r);
+#endif
+                }
+                else
+                {
+                    if(t > pfilter->t_start + pfilter->t_last)
+                    {
+                        IAMClockAdjust *pamca;
+                        r = pfilter->pclock->QueryInterface(IID_IAMClockAdjust, (void **)&pamca);
+                        if(r != S_OK)
+                        {
+#if write_level > 0
+                            error("IReferenceClock::QueryInterface(IID_IAMClockAdjust)", r);
+#endif
+                        }
+                        else
+                        {
+                            pamca->SetClockDelta(-1000);
+                            pamca->Release();
+                        }
+
+                        /*IMediaEventSink *pmes;
+                        r = pfilter->pgraph->QueryInterface(IID_IMediaEventSink, (void **)&pmes);
+                        if(r != S_OK)
+                        {
+#if write_level > 0
+                            error("IGraphBuilder::QueryInterface(IID_IMediaEventSink)", r);
+#endif
+                        }
+                        else
+                        {
+                            // pmes->Notify(EC_STARVATION, 0, 0);
+                            pmes->Release();
+                        }*/
+                    }
+                }
+            }
+        }
+        LeaveCriticalSection(&pfilter->cs_filter);
+        Sleep(1);
+    }
 }
 
 bool create_filter_out(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, IBaseFilter **ppfilter)
@@ -1692,7 +1777,7 @@ bool create_filter_out(const AM_MEDIA_TYPE *pamt, player_callback *pcallback, IB
     pfilter->state = State_Stopped;
     pfilter->state2 = State_Stopped;
 
-    _beginthreadex(null, 0, filter_out_filter::worker_thread, pfilter, 0, null);
+    pfilter->thread_worker = (HANDLE)_beginthreadex(null, 0, filter_out_filter::worker_thread, pfilter, 0, null);
 
     *ppfilter =  pfilter;
     return true;

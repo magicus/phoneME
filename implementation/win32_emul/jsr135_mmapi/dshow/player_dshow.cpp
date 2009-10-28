@@ -24,11 +24,12 @@
 
 #include <control.h>
 #include <uuids.h>
+#include <vfwmsgs.h>
 #include "filter_in.hpp"
 #include "filter_out.hpp"
 #include "player.hpp"
 
-#define write_level 0
+#define write_level 
 
 #if write_level > 0
 #include "writer.hpp"
@@ -245,6 +246,49 @@ class player_dshow : public player
 #if write_level > 1
         print("player_dshow::get_media_time called...\n");
 #endif
+#if write_level > 0
+        {
+            /*FILTER_STATE fs;
+            HRESULT hr = pmc->GetState(0, (OAFilterState *)&fs);
+            if(hr == S_OK)
+            {
+                print("IMediaControl::GetState returns S_OK, fs=%i.\n", fs);
+            }
+            else if(hr == VFW_S_STATE_INTERMEDIATE)
+            {
+                print("IMediaControl::GetState returns VFW_S_STATE_INTERMEDIATE, fs=%i.\n", fs);
+            }
+            else if(hr == VFW_S_CANT_CUE)
+            {
+                print("IMediaControl::GetState returns VFW_S_CANT_CUE, fs=%i.\n", fs);
+            }
+            else if(hr == E_FAIL)
+            {
+                print("IMediaControl::GetState returns E_FAIL, fs=%i.\n", fs);
+            }
+            else
+            {
+                print("IMediaControl::GetState returns %x, fs=%i.\n", hr, fs);
+            }*/
+            IMediaFilter *pmf;
+            if(pgb->QueryInterface(IID_IMediaFilter, (void **)&pmf) == S_OK)
+            {
+                IReferenceClock *prc;
+                if(pmf->GetSyncSource(&prc) == S_OK)
+                {
+                    if(prc)
+                    {
+                        int64 t;
+                        prc->GetTime(&t);
+                        print("time = %I64i.\n", t);
+                        prc->Release();
+                    }
+                }
+                pmf->Release();
+            }
+        }
+#endif
+
         LONGLONG cur;
         HRESULT hr = pms->GetCurrentPosition(&cur);
         if(hr != S_OK)
@@ -945,6 +989,17 @@ bool create_stream_player_dshow(nat32 len, const char16 *pformat, bool stream_le
                                                                         }
                                                                         else
                                                                         {
+
+                                                                            /*IReferenceClock *prc;
+                                                                            hr = CoCreateInstance(CLSID_SystemClock, null, CLSCTX_INPROC_SERVER,
+                                                                                IID_IReferenceClock, (void **)&prc);
+                                                                            IMediaFilter *pmf;
+                                                                            if(pplayer->pgb->QueryInterface(IID_IMediaFilter, (void **)&pmf) == S_OK)
+                                                                            {
+                                                                                pmf->SetSyncSource(prc);
+                                                                                pmf->Release();
+                                                                            }*/
+
                                                                             r = true;
                                                                         }
                                                                     }
