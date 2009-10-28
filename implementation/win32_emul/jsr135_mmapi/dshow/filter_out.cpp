@@ -614,7 +614,7 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
         return VFW_E_RUNTIME_ERROR;
     }
-#if write_level > 1
+#if write_level > 0
     if(amt.majortype == MEDIATYPE_Audio)
     {
         print("Audio: Start time=%I64i, end time=%I64i\n", tstart, tend);
@@ -627,6 +627,8 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
     {
         print("Start time=%I64i, end time=%I64i\n", tstart, tend);
     }
+#endif
+#if write_level > 1
     int64 t;
     r = pfilter->pclock->GetTime(&t);
     if(r == S_OK || r == S_FALSE)
@@ -711,7 +713,13 @@ HRESULT __stdcall filter_out_pin::Receive(IMediaSample *pSample)
 #endif
                 return VFW_E_RUNTIME_ERROR;
             }
-            if(t - pfilter->t_start < tstart)
+            if(t - pfilter->t_start > tstart + 50000)
+            {
+                LeaveCriticalSection(&pfilter->cs_filter);
+                LeaveCriticalSection(&cs_receive);
+                return S_OK;
+            }
+            else if(t - pfilter->t_start < tstart)
             {
                 LeaveCriticalSection(&pfilter->cs_filter);
                 Sleep(1);
@@ -1618,6 +1626,16 @@ HRESULT __stdcall filter_out_filter::GetTime(REFERENCE_TIME *pTime)
 {
 #if write_level > 1
     print("filter_out_filter::GetTime called...\n");
+#endif
+#if write_level > 2
+    if(pin.amt.majortype == MEDIATYPE_Audio)
+    {
+        print("Audio.\n");
+    }
+    else if(pin.amt.majortype == MEDIATYPE_Video)
+    {
+        print("Video.\n");
+    }
 #endif
     if(!pTime) return E_POINTER;
     int64 t_abs;
