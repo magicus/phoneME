@@ -29,7 +29,7 @@
 #include "filter_out.hpp"
 #include "player.hpp"
 
-#define write_level 
+#define write_level 0
 
 #if write_level > 0
 #include "writer.hpp"
