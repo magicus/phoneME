@@ -37,8 +37,9 @@
  *
  * void* malloc(size_t size);
  * void* calloc(size_t nelem, size_t elsize);
- * void  free(void* ptr);
  * void* realloc(void* ptr, size_t size);
+ * char* strdup(const char *s);
+ * void  free(void* ptr);
  *
  * long  strtol(const char *str, char **endptr, int base);
  *
