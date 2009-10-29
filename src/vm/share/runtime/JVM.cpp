@@ -951,7 +951,12 @@ extern "C" jlong JVM_TimeSlice(void) {
   if (!JVM::is_started()) {
     return -2;
   }
-  return Scheduler::time_slice(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+  Os::resume_ticks();
+  jlong timeout = Scheduler::time_slice(JVM_SINGLE_ARG_NO_CHECK);
+  if (0 < timeout || timeout > 500) {
+    Os::suspend_ticks();
+  }
+  return timeout;
 }
 
 extern "C" jboolean JVM_SetUseVerifier(jboolean use_verifier) {
