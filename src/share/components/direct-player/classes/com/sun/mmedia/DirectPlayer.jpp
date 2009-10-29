@@ -206,7 +206,8 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
         } else if (time != StopTimeControl.RESET &&
                    getOwner().getState() == Player.STARTED) {
-            long currentTime = doGetMediaTime();
+            //long currentTime = doGetMediaTime();
+            long currentTime = getOwner().getMediaTime();
             if (time >= currentTime) {
                 scheduleStopTimer(time);
             }
@@ -219,7 +220,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
         boolean isTempoControlSupported = false;
         boolean stopped = false;
         long duration = doGetDuration();
-        long currentTime = doGetMediaTime();
+        long currentTime = getOwner().getMediaTime();
         
         if (currentTime == Player.TIME_UNKNOWN) {
             return false;
@@ -850,7 +851,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
                               stop-time point.
                 */
 
-                long mt  = doGetMediaTime();
+                long mt  = getOwner().getMediaTime();
                 long dur = doGetDuration();
                 
                 while ((mt != -1) && 
@@ -861,7 +862,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
                         // just skip it
                     }
                     
-                    mt = doGetMediaTime();
+                    mt = getOwner().getMediaTime();
                 }
 
                 try {
