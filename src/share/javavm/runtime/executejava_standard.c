@@ -2671,6 +2671,7 @@ new_transition:
 	    }
 
 	    TRACESTATUS();
+	    DECACHE_PC();
 	    TRACE_METHOD_RETURN(frame);
 	    CVMpopFrame(stack, frame);
 
@@ -3846,6 +3847,7 @@ new_transition:
 	     * if the method returns a ref.
 	     */
 	    if (frame == initialframe) {
+		DECACHE_PC();
                 TRACE_METHOD_RETURN(frame);
 		goto finish;
 	    }
