@@ -642,7 +642,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nMakeSnapshot) {
         pImageTypeStr = MMP_MALLOC(imageTypeLength * sizeof(jchar));
         if (pImageTypeStr) {
             KNI_GetStringRegion(imageTypeHandle, 0, imageTypeLength, pImageTypeStr);
-            ret = javacall_media_start_video_snapshot( pKniInfo->pNativeHandle,
+            ret = javacall_media_make_video_snapshot( pKniInfo->pNativeHandle,
                         pImageTypeStr, imageTypeLength );
             setResultAndSyncMode( KNIPASSARGS 3, ret );
             MMP_FREE(pImageTypeStr);
