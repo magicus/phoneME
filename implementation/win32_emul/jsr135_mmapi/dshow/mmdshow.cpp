@@ -685,7 +685,7 @@ static void oper_thread(void *param)
         case dshow_player::OPER_GET_MT:
             DEBUG_ONLY( PRINTF( "   >> get_time...\n" ); )
             p->get_media_time();
-            r = JAVACALL_OK;
+            r = player::result_success;
             DEBUG_ONLY( PRINTF( "   >> get_time finished: %ld\n", p->media_time ); )
             evt_type = JAVACALL_EVENT_MEDIA_GET_MEDIA_TIME_FINISHED;
             evt_data = (void*)(p->media_time);
