@@ -750,13 +750,20 @@ javacall_result javacall_media_data_written(
  * Get the native player's current media time.
  * Always succeeds.
  *
+ * This procedure is asynchronous, an event
+ * JAVACALL_EVENT_MEDIA_GET_MEDIA_TIME_FINISHED will be posted on completion.
+ * Media time will be returned with event.
+ *
+ * The player may need to process stream data before it completes the
+ * procedure.
+ *
  * @param handle  Handle to the native player.
  * @param time    Out - media time in milliseconds or -1 if time is unknown.
  *
  * @retval JAVACALL_OK          Procedure succeeded synchronously.
  * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
  *                              will be flagged with an event
- *                              JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED.
+ *                              JAVACALL_EVENT_MEDIA_GET_MEDIA_TIME_FINISHED.
  */
 javacall_result javacall_media_get_media_time(
     javacall_handle handle,
@@ -779,11 +786,11 @@ javacall_result javacall_media_get_media_time(
  *                event parameter.
  *                
  *
- * @retval JAVACALL_OK          Procedure succeeded synchronously
- * @retval JAVACALL_FAIL        Procedure failed, the media time cannot be set, Java
- *                              will throw MediaException.
- * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
- *                              will be flagged with an event
+ * @retval JAVACALL_OK          Procedure succeeded synchronously.
+ * @retval JAVACALL_FAIL        Procedure failed, the media time cannot be set,
+ *                              Java will throw MediaException.
+ * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background,
+ *                              completion will be flagged with an event
  *                              JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED.
  */
 javacall_result javacall_media_set_media_time(
