@@ -179,6 +179,7 @@ private:
   int  write_modified_class_attributes(const int min, const int max);
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  static ROMProfile* global_profile(void);
   void write_modified_class_bitmap(const int min, const int max,
                                    jubyte bitmap[], const ROMProfile* profile);
 #else
