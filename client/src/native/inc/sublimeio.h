@@ -95,7 +95,6 @@ typedef struct InternalSharedBufferDataStruct {
 
 
 typedef struct SharedBufferStruct { 
-    InternalSharedBufferData *data;
     // read/write from/to the shared buffer 
     int (*write) (struct SharedBufferStruct* sb, char * buffer, int numOfBytes); 
     int (*read) (struct SharedBufferStruct* sb, char * targetBuffer, int32_t bufSize, int *byte);
@@ -111,6 +110,8 @@ typedef struct SharedBufferStruct {
     int32_t (*getBufferSize) (struct SharedBufferStruct* sb);
     int32_t (*getMsgLength) (struct SharedBufferStruct* sb);
     int32_t (*getThreadID) (struct SharedBufferStruct* sb);
+
+    InternalSharedBufferData data;
 } SharedBuffer; 
 
 SharedBuffer* CreateNewSharedBuffer(char* name);

@@ -183,7 +183,7 @@ static void process(JNIEnv *env, jclass classSublime) {
 
         /* copy the buffer w/o the buffer size field (4 bytes) */
         (*env)->SetByteArrayRegion(env, jbuffer, 0, messageSize + FIELDS_LENGTH, 
-                                   (jbyte *)&callSharedBuffer->data->dataBuffer->threadID);
+                                   (jbyte *)&callSharedBuffer->data.dataBuffer->threadID);
         callSharedBuffer->reset(callSharedBuffer); 
         (*env)->CallStaticVoidMethod(env, classSublime, mid_call, jbuffer);    
         (*env)->DeleteLocalRef(env, jbuffer); 
