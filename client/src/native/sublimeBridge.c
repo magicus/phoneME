@@ -66,6 +66,8 @@ typedef struct _BUFFER_POOL {
 static int stopProcess = 0;
 static BUFFER_POOL * bufferPool;
 
+static int initEvents();
+
 static void
 sublimeBridgeFatal(const char * format, ...) {
     va_list args;
@@ -237,7 +239,7 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(JNIEnv *e, jclass 
 }
 
 
-int initEvents() {
+static int initEvents() {
     /* create named events to communicate between processes */
     event0 = LimeCreateEvent(NULL, FALSE, FALSE, names[2]);
     event1 = LimeCreateEvent(NULL, FALSE, FALSE, names[3]);

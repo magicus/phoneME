@@ -171,12 +171,12 @@ static ULONG64 getCurrentTime(void) {
         st0.wMonth = 1;
         st0.wDay   = 1;
         SystemTimeToFileTime(&st0, &ft0);
-        fileTime_1_1_70 = (ULONG64)
-            (ft0.dwHighDateTime << 32 | ft0.dwLowDateTime);
+        fileTime_1_1_70 =
+            (((ULONG64) ft0.dwHighDateTime << 32) | ft0.dwLowDateTime);
     }
     GetSystemTime(&st0);
     SystemTimeToFileTime(&st0, &ft0);
-    return (((ULONG64) (ft0.dwHighDateTime << 32 | ft0.dwLowDateTime))
+    return ((((ULONG64) ft0.dwHighDateTime << 32) | ft0.dwLowDateTime)
             - fileTime_1_1_70) / 10000;
 }
 
