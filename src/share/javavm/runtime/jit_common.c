@@ -2670,6 +2670,10 @@ CVMJITPMIcalleeTableResize()
 	/* copy the callee record */
 	*calleeRec = *oldCalleeRec;
     }
+    
+    /* Free the old table */
+    free(oldCalleeRecords);
+
     CVMtraceJITPatchedInvokesExec({
         CVMJITPMIcalleeTableDump(CVM_FALSE);
     });
