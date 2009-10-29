@@ -1,0 +1,361 @@
+#
+# @(#)opcodes.list	1.77 06/10/10
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+#
+# Any line that doesn't have a-z in the 1st column is a comment.
+#
+# The first column is the name of the opcode.
+#
+# The second column is the opcode's number, or "-" to assign the
+# next available sequential number.
+#
+# The third column is the total length of the instruction.  We use 0
+# for opcodes of variable length, as well as unrecognized/unused
+# opcodes.
+#
+# The fourth and fifth column give what the opcode pops off the stack, and
+# what it then pushes back onto the stack
+#    -       <no effect on stack>   
+#    I       integer
+#    L       long integer
+#    F       float
+#    D       double float
+#    A       address [array or object]
+#    O       object only
+#    R       return address (for jsr)
+#    a       integer, array, or object
+#    ?       unknown
+#    [I], [L], [F], [D], [A], [B], [C], [?]
+#            array of integer, long, float, double, address, bytes, 
+#                  chars, or anything
+#    1,2,3,4,+ used by stack duplicating/popping routines.  
+# 
+# 1,2,3,4 represent >>any<< stack type except long or double.  Two numbers
+# separated by a + (in the third column) indicate that the two, together, can
+# be used for a double or long.  (Or they can represent two non-long items).
+#
+# The sixth column has a comma-separated list of attributes of the
+# opcode. These are necessary in the stackmap computation dataflow 
+# analysis.
+#
+# GC    -- a GC point
+# CGC   -- a conditional GC point; only if the thread is at a quickening point
+# BR    -- a branch
+# EXC   -- May throw exception
+# INV   -- A method invocation
+# NFLW  -- An instruction that doesn't let control flow through
+#           (returns, athrow, switches, goto, ret)
+# QUICK -- A quick instruction, re-written by the interpreter.
+# RET   -- A return opcode.
+# FP    -- A floating point opcode
+# -     -- No special attributes to speak of
+#            
+# The seventh column is a "simplification" of the opcode, for opcode
+# sequence measurements (see CVM_INSTRUCTION_COUNTING in executejava.c).
+#
+# The eigth column has the attribute of CVMJITIROpcodeTag.
+# The ninth column has the attribute of type tag listed in typeid.h.
+# The tenth column has the attribute of value representing constant value,
+# local variable number, etc.
+
+
+nop			  - 1 -     -   -	nop 	   0 0 0 /* nop */
+aconst_null		  - 1 -     A   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_OBJ 0 /* push null object */
+iconst_m1	    	  - 1 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT -1 /* push integer constant -1 */
+iconst_0	    	  - 1 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 0 /* push integer constant 0 */
+iconst_1	    	  - 1 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 1 /* push integer constant 1 */
+iconst_2	    	  - 1 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 2 /* push integer constant 2 */
+iconst_3	    	  - 1 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 3 /* push integer constant 3 */
+iconst_4	    	  - 1 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 4 /* push integer constant 4 */
+iconst_5	    	  - 1 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 5 /* push integer constant 5 */
+lconst_0	    	  - 1 -     L   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC64 CVM_TYPEID_LONG 0 /* push long 0L */
+lconst_1	    	  - 1 -     L   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC64 CVM_TYPEID_LONG 1 /* push long 1L */
+fconst_0	    	  - 1 -     F   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_FLOAT 0 /* push float constant 0.0 */
+fconst_1	    	  - 1 -     F   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_FLOAT 1 /* push float constant 1.0 */
+fconst_2	    	  - 1 -     F   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_FLOAT 2 /* push float constant 2.0 */
+dconst_0	    	  - 1 -     D   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC64 CVM_TYPEID_DOUBLE 0 /* push double float constant 0.0d */
+dconst_1	    	  - 1 -     D   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC64 CVM_TYPEID_DOUBLE 1 /* push double float constant 1.0d */
+bipush		    	  - 2 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 0  /* push byte-sized value */
+sipush		    	  - 3 -     I   -	iconst_0   CVMJIT_CONST_JAVA_NUMERIC32 CVM_TYPEID_INT 0 /* push two-byte value */
+ldc                	  - 2 -     ?  GC,EXC ldc      0 0 0 /* load a const from constant table */
+ldc_w	    	    	  - 3 -     ?  GC,EXC ldc	   0 0 0
+ldc2_w	    	    	  - 3 -     ?  GC,EXC ldc	   0 0 0 /* load a 2-word constant . . . */
+iload		    	  - 2 -     I   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_INT 0 /* load local integer variable */
+lload		    	  - 2 -     L   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_LONG 0 /* load local long variable */
+fload		    	  - 2 -     F   -	iload      CVMJIT_LOCAL CVM_TYPEID_FLOAT 0 /* load local floating variable */
+dload		    	  - 2 -     D   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_DOUBLE 0 /* load local double variable */
+aload		    	  - 2 -     A   -	aload  	   CVMJIT_LOCAL CVM_TYPEID_OBJ 0 /* load local object variable */
+iload_0		    	  - 1 -     I   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_INT 0 /* load local integer variable #0 */
+iload_1		    	  - 1 -     I   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_INT 1 /* load local integer variable #1 */
+iload_2		    	  - 1 -     I   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_INT 2 /* load local integer variable #2 */
+iload_3		    	  - 1 -     I   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_INT 3 /* load local integer variable #3 */
+lload_0		    	  - 1 -     L   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_LONG 0 /* load local long variable #0 */
+lload_1		    	  - 1 -     L   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_LONG 1 /* load local long variable #1 */
+lload_2		    	  - 1 -     L   -	iload      CVMJIT_LOCAL CVM_TYPEID_LONG 2 /* load local long variable #2 */
+lload_3		    	  - 1 -     L   -	iload      CVMJIT_LOCAL CVM_TYPEID_LONG 3 /* load local long variable #3 */
+fload_0		    	  - 1 -     F   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_FLOAT 0 /* load local float variable #0 */
+fload_1		    	  - 1 -     F   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_FLOAT 1 /* load local float variable #1 */
+fload_2		    	  - 1 -     F   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_FLOAT 2 /* load local float variable #2 */
+fload_3		    	  - 1 -     F   -	iload 	   CVMJIT_LOCAL CVM_TYPEID_FLOAT 3 /* load local float variable #3 */
+dload_0		    	  - 1 -     D   -	iload      CVMJIT_LOCAL CVM_TYPEID_DOUBLE 0 /* load local double variable #0 */
+dload_1		    	  - 1 -     D   -	iload      CVMJIT_LOCAL CVM_TYPEID_DOUBLE 1 /* load lcl double float variable #1 */
+dload_2		    	  - 1 -     D   -	iload      CVMJIT_LOCAL CVM_TYPEID_DOUBLE 2 /* load lcl double float variable #2 */
+dload_3		    	  - 1 -     D   -	iload      CVMJIT_LOCAL CVM_TYPEID_DOUBLE 3 /* load lcl double float variable #3 */
+aload_0		    	  - 1 -     A   -	aload_0    CVMJIT_LOCAL CVM_TYPEID_OBJ 0 /* load local object variable #0 */
+aload_1		    	  - 1 -     A   -	aload      CVMJIT_LOCAL CVM_TYPEID_OBJ 1 /* load local object variable #1 */
+aload_2		    	  - 1 -     A   -	aload      CVMJIT_LOCAL CVM_TYPEID_OBJ 2 /* load local object variable #2 */
+aload_3		    	  - 1 -     A   -	aload      CVMJIT_LOCAL CVM_TYPEID_OBJ 3 /* load local object variable #3 */
+iaload		    	  - 1 [I]I  I  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_INT 0 /* load from array of integer */
+laload		    	  - 1 [L]I  L  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_LONG 0 /* load from array of long */
+faload		    	  - 1 [F]I  F  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_FLOAT 0 /* load from array of float */
+daload		    	  - 1 [D]I  D  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_DOUBLE 0 /* load from array of double */
+aaload		    	  - 1 [A]I  A  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_OBJ 0 /* load from array of object */
+baload		    	  - 1 [B]I  I  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_BYTE 0 /* load from array of (signed) bytes */
+caload		    	  - 1 [C]I  I  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_CHAR 0 /* load from array of chars */
+saload		    	  - 1 [S]I  I  EXC	iaload     CVMJIT_INDEX CVM_TYPEID_SHORT 0 /* load from array of (signed) shorts */
+istore		    	  - 2 I     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_INT 0 /* store local integer variable */
+lstore		    	  - 2 L     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_LONG 0 /* store local long variable */
+fstore		    	  - 2 F     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_FLOAT 0 /* store local float variable */
+dstore		    	  - 2 D     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_DOUBLE 0 /* store local double variable */
+astore		    	  - 2 A     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_OBJ 0 /* store local object variable */
+istore_0	    	  - 1 I     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_INT 0 /* store local integer variable #0 */
+istore_1	    	  - 1 I     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_INT 1 /* store local integer variable #1 */
+istore_2	    	  - 1 I     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_INT 2 /* store local integer variable #2 */
+istore_3	    	  - 1 I     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_INT 3 /* store local integer variable #3 */
+lstore_0	    	  - 1 L     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_LONG 0 /* store local long variable #0 */
+lstore_1	    	  - 1 L     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_LONG 1 /* store local long variable #1 */
+lstore_2	    	  - 1 L     -   -	istore 	   CVMJIT_ASSIGN CVM_TYPEID_LONG 2 /* store local long variable #2 */
+lstore_3	    	  - 1 L     -   -	istore 	   CVMJIT_ASSIGN CVM_TYPEID_LONG 3 /* store local long variable #3 */
+fstore_0	    	  - 1 F     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_FLOAT 0 /* store local float variable #0 */
+fstore_1	    	  - 1 F     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_FLOAT 1 /* store local float variable #1 */
+fstore_2	    	  - 1 F     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_FLOAT 2 /* store local float variable #2 */
+fstore_3	    	  - 1 F     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_FLOAT 3 /* store local float variable #3 */
+dstore_0	    	  - 1 D     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_DOUBLE 0 /* store lcl double float variable #0 */
+dstore_1	    	  - 1 D     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_DOUBLE 1 /* store lcl double float variable #1 */
+dstore_2	    	  - 1 D     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_DOUBLE 2 /* store lcl double float variable #2 */
+dstore_3	    	  - 1 D     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_DOUBLE 3 /* store lcl double float variable #3 */
+astore_0	    	  - 1 A     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_OBJ 0 /* store local object variable #0 */
+astore_1	    	  - 1 A     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_OBJ 1 /* store local object variable #1 */
+astore_2	    	  - 1 A     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_OBJ 2 /* store local object variable #2 */
+astore_3	    	  - 1 A     -   -	istore     CVMJIT_ASSIGN CVM_TYPEID_OBJ 3 /* store local object variable #3 */
+iastore		    	  - 1 [I]II -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_INT 0 /* store into array of int */
+lastore		    	  - 1 [L]IL -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_LONG 0 /* store into array of long */
+fastore		    	  - 1 [F]IF -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_FLOAT 0 /* store into array of float */
+dastore		    	  - 1 [D]ID -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_DOUBLE 0 /* store into array of double float  */
+aastore		    	  - 1 [A]IA -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_OBJ 0 /* store into array of object */
+bastore		    	  - 1 [B]II -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_BYTE 0 /* store into array of (signed) bytes */
+castore		    	  - 1 [C]II -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_CHAR 0 /* store into array of chars */
+sastore		    	  - 1 [S]II -  EXC	iastore    CVMJIT_INDEX CVM_TYPEID_SHORT 0 /* store into array of (signed) shorts*/
+pop		    	  - 1 1     -   -	pop 	   0 0 0 /* pop top element */
+pop2		    	  - 1 2+1   -   -	pop  	   0 0 0 /* pop top two elements */
+dup		    	  - 1 1     11   -	dup        0 0 0 /* dup top element */
+dup_x1		    	  - 1 21    121   -	dup  	   0 0 0 /* dup top element. Skip one */
+dup_x2		    	  - 1 3+21  1321   - dup 	   0 0 0 /* dup top element. Skip two */
+dup2		    	  - 1 2+1   2121   -	dup  0 0 0 /* dup top two elements.  */
+dup2_x1		    	  - 1 32+1  21321   -	dup 0 0 0 /* dup top two elements.  Skip one */
+dup2_x2		    	  - 1 4+32+1 214321   -	dup 0 0 0 /* dup top two elements.  Skip two */
+swap                	  - 1 21    12      -	dup 0 0 0 /* swap top two elements of stack. */
+iadd		    	  - 1 II    I   -	iadd 	   CVMJIT_ADD CVM_TYPEID_INT 0 /* integer add */
+ladd		    	  - 1 LL    L   -	iadd 	   CVMJIT_ADD CVM_TYPEID_LONG 0 /* long add */
+fadd		    	  - 1 FF    F   FP	iadd       CVMJIT_ADD CVM_TYPEID_FLOAT 0 /* floating add */
+dadd		    	  - 1 DD    D   FP	iadd 	   CVMJIT_ADD CVM_TYPEID_DOUBLE 0 /* double float add */
+isub		    	  - 1 II    I   -	isub 	   CVMJIT_SUB CVM_TYPEID_INT 0 /* integer subtract */
+lsub		    	  - 1 LL    L   -	isub 	   CVMJIT_SUB CVM_TYPEID_LONG 0 /* long subtract */
+fsub		    	  - 1 FF    F   FP	isub 	   CVMJIT_SUB CVM_TYPEID_FLOAT 0 /* floating subtract */
+dsub		    	  - 1 DD    D   FP	isub 	   CVMJIT_SUB CVM_TYPEID_DOUBLE 0 /* floating double subtract */
+imul		    	  - 1 II    I   -	imul  	   CVMJIT_MUL CVM_TYPEID_INT 0 /* integer multiply */
+lmul		    	  - 1 LL    L   -	imul 	   CVMJIT_MUL CVM_TYPEID_LONG 0 /* long multiply */
+fmul		    	  - 1 FF    F   FP	imul 	   CVMJIT_MUL CVM_TYPEID_FLOAT 0 /* floating multiply */
+dmul		    	  - 1 DD    D   FP	imul   	   CVMJIT_MUL CVM_TYPEID_DOUBLE 0 /* double float multiply */
+idiv		    	  - 1 II    I   EXC	idiv 	   CVMJIT_DIV CVM_TYPEID_INT 0 /* integer divide */
+ldiv		    	  - 1 LL    L   EXC	idiv 	   CVMJIT_DIV CVM_TYPEID_LONG 0 /* long divide */
+fdiv		    	  - 1 FF    F   FP	idiv 	   CVMJIT_DIV CVM_TYPEID_FLOAT 0 /* floating divide */
+ddiv		    	  - 1 DD    D   FP	idiv 	   CVMJIT_DIV CVM_TYPEID_DOUBLE 0 /* double float divide */
+irem		    	  - 1 II    I   EXC	irem 	   CVMJIT_REM CVM_TYPEID_INT 0 /* integer mod */
+lrem		    	  - 1 LL    L   EXC	irem 	   CVMJIT_REM CVM_TYPEID_LONG 0 /* long mod */
+frem		    	  - 1 FF    F   FP	irem 	   CVMJIT_REM CVM_TYPEID_FLOAT 0 /* floating mod */
+drem		    	  - 1 DD    D   FP	irem 	   CVMJIT_REM CVM_TYPEID_DOUBLE 0 /* double float mod */
+ineg		    	  - 1 I     I   -	ineg 	   CVMJIT_NEG CVM_TYPEID_INT 0 /* integer negate */
+lneg		    	  - 1 L     L   -	ineg 	   CVMJIT_NEG CVM_TYPEID_LONG 0 /* long negate */
+fneg		    	  - 1 F     F   FP	ineg 	   CVMJIT_NEG CVM_TYPEID_FLOAT 0 /* floating negate */
+dneg		    	  - 1 D     D   FP	ineg 	   CVMJIT_NEG CVM_TYPEID_DOUBLE 0 /* double float negate */
+ishl		    	  - 1 II    I   -	ishl 	   CVMJIT_SHL CVM_TYPEID_INT 0 /* shift left */
+lshl		    	  - 1 LI    L   -	ishl   	   CVMJIT_SHL CVM_TYPEID_LONG 0 /* long shift left */
+ishr		    	  - 1 II    I   -	ishr 	   CVMJIT_SHR CVM_TYPEID_INT 0 /* shift right */
+lshr		    	  - 1 LI    L   -	ishr 	   CVMJIT_SHR CVM_TYPEID_LONG 0 /* long shift right */
+iushr		    	  - 1 II    I   -	iushr 	   CVMJIT_USHR CVM_TYPEID_INT 0 /* unsigned shift right */
+lushr		    	  - 1 LI    L   -	iushr 	   CVMJIT_USHR CVM_TYPEID_LONG 0 /* long unsigned shift right */
+iand		    	  - 1 II    I   -	iand  	   CVMJIT_AND CVM_TYPEID_INT 0 /* boolean and */
+land		    	  - 1 LL    L   -	iand 	   CVMJIT_AND CVM_TYPEID_LONG 0 /* long boolean and */
+ior		    	  - 1 II    I   -	ior 	   CVMJIT_OR CVM_TYPEID_INT 0 /* boolean or */
+lor		    	  - 1 LL    L   -	ior 	   CVMJIT_OR CVM_TYPEID_LONG 0 /* long boolean or */
+ixor		    	  - 1 II    I   -	ixor 	   CVMJIT_XOR CVM_TYPEID_INT 0 /* boolean xor */
+lxor		    	  - 1 LL    L   -	ixor 	   CVMJIT_XOR CVM_TYPEID_LONG 0 /* long boolean xor */
+iinc		    	  - 3 -     -   -	iinc       CVMJIT_ADD CVM_TYPEID_INT 0 /* increment lcl variable by constant */
+i2l		    	  - 1 I     L   -	i2l 	   CVMJIT_CONVERT_INTEGER CVM_TYPEID_LONG 0 /* integer to long */
+i2f		    	  - 1 I     F   -	i2l 	   CVMJIT_CONVERT_INTEGER CVM_TYPEID_FLOAT 0 /* integer to float */
+i2d		    	  - 1 I     D   -	i2l 	   CVMJIT_CONVERT_INTEGER CVM_TYPEID_DOUBLE 0 /* integer to double */
+l2i		    	  - 1 L     I   -	i2l 	   CVMJIT_CONVERT_LONG CVM_TYPEID_INT 0 /* long to integer */
+l2f		    	  - 1 L     F   -	i2l 	   CVMJIT_CONVERT_LONG CVM_TYPEID_FLOAT 0 /* long to float */
+l2d		    	  - 1 L     D   -	i2l 	   CVMJIT_CONVERT_LONG CVM_TYPEID_DOUBLE 0 /* long to double */
+f2i		    	  - 1 F     I   -	i2l 	   CVMJIT_CONVERT_FLOAT CVM_TYPEID_INT 0 /* float to integer */
+f2l		    	  - 1 F     L   -	i2l 	   CVMJIT_CONVERT_FLOAT CVM_TYPEID_LONG 0 /* float to long */
+f2d		    	  - 1 F     D   -	i2l 	   CVMJIT_CONVERT_FLOAT CVM_TYPEID_DOUBLE 0 /* float to double */
+d2i		    	  - 1 D     I   -	i2l 	   CVMJIT_CONVERT_DOUBLE CVM_TYPEID_INT 0 /* double to integer */
+d2l		    	  - 1 D     L   -	i2l 	   CVMJIT_CONVERT_DOUBLE CVM_TYPEID_LONG 0 /* double to long */
+d2f		    	  - 1 D     F   -	i2l 	   CVMJIT_CONVERT_DOUBLE CVM_TYPEID_FLOAT 0 /* double to float */
+i2b		    	  - 1 I     I   -	i2l 	   CVMJIT_CONVERT_I2B CVM_TYPEID_INT 0 /* integer to byte */
+i2c		    	  - 1 I     I   -	i2l 	   CVMJIT_CONVERT_I2C CVM_TYPEID_INT 0 /* integer to character */
+i2s	   	    	  - 1 I     I   -	i2l 	   CVMJIT_CONVERT_I2S CVM_TYPEID_INT 0 /* integer to signed short */
+lcmp		    	  - 1 LL    I   -	lcmp       CVMJIT_LCMP CVM_TYPEID_LONG 0 /* long compare */
+fcmpl		    	  - 1 FF    I   FP	lcmp 	   CVMJIT_FCMPL CVM_TYPEID_FLOAT 0 /* float compare.  -1 on incomparable */
+fcmpg		    	  - 1 FF    I   FP	lcmp 	   CVMJIT_FCMPG CVM_TYPEID_FLOAT 0 /* float compare.  1 on incomparable */
+dcmpl		    	  - 1 DD    I   FP	dcmpl 	   CVMJIT_DCMPL CVM_TYPEID_DOUBLE 0 /* dbl floating cmp.  -1 on incomp */
+dcmpg		    	  - 1 DD    I   FP	dcmpg 	   CVMJIT_DCMPG CVM_TYPEID_DOUBLE 0 /* dbl floating cmp.  1 on incomp */
+ifeq		    	  - 3 I     -   BR	ifeq 	   CVMJIT_EQ 0 0 /* goto if equal */
+ifne		    	  - 3 I     -   BR	ifeq 	   CVMJIT_NE 0 0 /* goto if not equal */
+iflt		    	  - 3 I     -   BR	ifeq 	   CVMJIT_LT 0 0 /* goto if less than */
+ifge		    	  - 3 I     -   BR	ifeq 	   CVMJIT_GE 0 0 /* goto if greater than or equal */
+ifgt		    	  - 3 I     -   BR	ifeq 	   CVMJIT_GT 0 0 /* goto if greater than */
+ifle		    	  - 3 I     -   BR	ifeq 	   CVMJIT_LE 0 0 /* goto if less than or equal */
+if_icmpeq	    	  - 3 II    -   BR	ifeq 	   CVMJIT_EQ CVM_TYPEID_INT 0 /* compare top two elements of stack */
+if_icmpne	    	  - 3 II    -   BR	ifeq 	   CVMJIT_NE CVM_TYPEID_INT 0 /* compare top two elements of stack */
+if_icmplt	    	  - 3 II    -   BR	ifeq 	   CVMJIT_LT CVM_TYPEID_INT 0 /* compare top two elements of stack */
+if_icmpge	    	  - 3 II    -   BR	ifeq 	   CVMJIT_GE CVM_TYPEID_INT 0 /* compare top two elements of stack */
+if_icmpgt	    	  - 3 II    -   BR	ifeq 	   CVMJIT_GT CVM_TYPEID_INT 0 /* compare top two elements of stack */
+if_icmple	    	  - 3 II    -   BR	ifeq 	   CVMJIT_LE CVM_TYPEID_INT 0 /* compare top two elements of stack */
+if_acmpeq	    	  - 3 AA    -   BR	ifeq 	   CVMJIT_EQ CVM_TYPEID_OBJ 0 /* compare top two objects of stack */
+if_acmpne	    	  - 3 AA    -   BR	ifeq 	   CVMJIT_NE CVM_TYPEID_OBJ 0 /* compare top two objects of stack */
+goto		    	  - 3 -     -   BR,NFLW	goto 	   CVMJIT_GOTO 0 0 /* unconditional goto */
+jsr		    	  - 3 -     R   BR	jsr 	   CVMJIT_JSR 0 0 /* jump subroutine */
+ret		    	  - 2 -     -   GC,NFLW	ret CVMJIT_RET CVM_TYPEID_VOID 0 /* return from subroutine */
+tableswitch	          - 0 I     -   BR,NFLW	tableswitch CVMJIT_TABLESWITCH 0 0 /* goto (case) */
+lookupswitch	          - 0 I     -   BR,NFLW	lookupswitch CVMJIT_LOOKUPSWITCH 0 0 /* goto (case) */
+ireturn		    	  - 1 I     -   GC,NFLW,RET	return CVMJIT_RETURN CVM_TYPEID_INT 0 /* return integer from procedure */
+lreturn		    	  - 1 L     -   GC,NFLW,RET	return CVMJIT_RETURN CVM_TYPEID_LONG 0 /* return long from procedure */
+freturn		    	  - 1 F     -   GC,NFLW,RET	return CVMJIT_RETURN CVM_TYPEID_FLOAT 0 /* return float from procedure */
+dreturn		    	  - 1 D     -   GC,NFLW,RET	return CVMJIT_RETURN CVM_TYPEID_DOUBLE 0 /* return double from procedure */
+areturn		    	  - 1 A     -   GC,NFLW,RET	return CVMJIT_RETURN CVM_TYPEID_OBJ 0 /* return object from procedure */
+return		    	  - 1 -     -   GC,NFLW,RET	return CVMJIT_RETURN CVM_TYPEID_VOID 0 /* return (void) from procedure */
+getstatic       	  - 3 -     ?   GC,EXC	getstatic 0 0 0 /* get static field value. */
+putstatic       	  - 3 ?     -   GC,EXC	putstatic 0 0 0 /* assign static field value */
+getfield        	  - 3 A     ?   GC,EXC	getfield 0 0 0 /* get field value from object. */
+putfield        	  - 3 ?     -   GC,EXC	putfield 0 0 0 /* assign field value to object. */
+invokevirtual   	  - 3 ?     ?   INV,GC,EXC 	invokevirtual 0 0 0 /* call method, based on object. */
+invokespecial    	  - 3 ?     ?   INV,GC,EXC 	invokespecial 0 0 0 /* call method, not based on object. */
+invokestatic       	  - 3 ?     ?   INV,GC,EXC 	invokestatic 0 0 0 /* call a static method. */
+invokeinterface    	  - 5 ?     ?   INV,GC,EXC 	invokeinterface 0 0 0 /* call an interface method */
+xxxunusedxxx              - 0 ?     ?   -     xxxunusedxxx 0 0 0 /* was newfromname */        
+new                 	  - 3 -     A   GC,EXC 	new CVMJIT_NEW_OBJECT CVM_TYPEID_OBJ 0 /* Create a new object */
+newarray            	  - 2 I     A   GC,EXC	newarray 0 0 0 /* Create a new array of non-objects*/
+anewarray           	  - 3 I     A   GC,EXC 	anewarray 0 0 0 /* Create a new array of objects */
+arraylength	    	  - 1 [?]   I   EXC	arraylength CVMJIT_ARRAY_LENGTH CVM_TYPEID_INT 0 /* get length of array */
+athrow		    	  - 1 O     -   EXC,NFLW	athrow CVMJIT_THROW 0 0 /* throw an exception */
+checkcast           	  - 3 A     A   GC,EXC 	checkcast CVMJIT_CHECKCAST 0 0 /* error if object not of given type */
+instanceof          	  - 3 A     I   GC,EXC 	instanceof CVMJIT_INSTANCEOF CVM_TYPEID_INT 0 /* is object of given type? */
+monitorenter	    	  - 1 A     -   GC,EXC	monitorenter CVMJIT_MONITOR_ENTER 0 0 /* enter a monitored region of code */
+monitorexit	    	  - 1 A     -   GC,EXC	monitorexit CVMJIT_MONITOR_EXIT 0 0 /* exit a monitored region of code */
+wide	        	  - 0 -     -   -	wide 0 0 0 /* prefix operation.   */
+multianewarray            - 4 ?     A   GC,EXC  multianewarray 0 0 0 /* create multidimensional array */
+ifnull		    	  - 3 A     -   BR 	ifeq CVMJIT_EQ CVM_TYPEID_OBJ 0 /* goto if null */
+ifnonnull	    	  - 3 A     -   BR	ifeq CVMJIT_NE CVM_TYPEID_OBJ 0 /* goto if not null */
+
+# The following instructions are "long" versions.  They allow access to
+# variables with index greater than 255.
+
+goto_w		    	  - 5 -     -   BR,NFLW	goto CVMJIT_GOTO 0 0 /* unconditional goto.  4byte offset */
+jsr_w		    	  - 5 -     R   BR	jsr CVMJIT_JSR 0 0 /* jump subroutine.  4byte offset */
+
+breakpoint	    	  - 1 -     -   GC	breakpoint 0 0 0 /* call breakpoint handler */
+
+# The compiler will not generate any of the following instructions.  They
+# are created by the interpreter from the non _quick versions of the
+# instructions.  
+
+aldc_ind_quick 	     	  - 2 -     O  CGC,QUICK ldc_quick 0 0 0 
+aldc_ind_w_quick     	  - 3 -     O  CGC,QUICK ldc_quick 0 0 0 
+aldc_quick 	     	224 2 -     O  CGC,QUICK ldc_quick 0 0 0 
+ldc_quick 	     	225 2 -     ?  CGC,QUICK ldc_quick 0 0 0 
+aldc_w_quick 	     	228 3 -     O  CGC,QUICK ldc_quick 0 0 0 
+ldc_w_quick      	229 3 -     ?  CGC,QUICK ldc_quick 0 0 0 
+ldc2_w_quick     	232 3 -     ?  CGC,QUICK ldc_quick 0 0 0 
+
+invokestatic_quick 	  - 3 ?     ?  INV,GC,EXC,QUICK invokestatic_quick CVMJIT_INVOKE 0 0 
+invokestatic_checkinit_quick 	  - 3 ?     ?   INV,GC,EXC,QUICK invokestatic_quick 0 0 0 
+invokevirtual_quick 	  - 3 ?     ?  INV,GC,EXC,QUICK invokevirtual_quick CVMJIT_INVOKE CVM_TYPEID_INT 0 
+ainvokevirtual_quick 	  - 3 ?     ?  INV,GC,EXC,QUICK invokevirtual_quick CVMJIT_INVOKE CVM_TYPEID_OBJ 0 
+dinvokevirtual_quick 	  - 3 ?     ?  INV,GC,EXC,QUICK invokevirtual_quick CVMJIT_INVOKE CVM_TYPEID_DOUBLE 0 
+vinvokevirtual_quick 	  - 3 ?     ?  INV,GC,EXC,QUICK invokevirtual_quick CVMJIT_INVOKE CVM_TYPEID_VOID 0 
+invokevirtual_quick_w     - 3 ?     ?  INV,GC,EXC,QUICK invokevirtual_quick_w 0 0 0 
+invokevirtualobject_quick - 3 ?     ?  INV,GC,EXC,QUICK invokevirtualobject_quick CVMJIT_INVOKE 0 0 
+invokenonvirtual_quick    - 3 ?     ?  INV,GC,EXC,QUICK invokenonvirtual_quick CVMJIT_INVOKE 0 0 
+invokesuper_quick         - 3 ?     ?  INV,GC,EXC,QUICK invokesuper_quick CVMJIT_INVOKE 0 0 
+invokeignored_quick       - 3 ?     ?  EXC,CGC,QUICK invokeignored_quick CVMJIT_INVOKE 0 0 
+invokeinterface_quick 	  - 5 ?     ?  INV,GC,EXC,QUICK invokeinterface_quick CVMJIT_INVOKE 0 0 
+
+checkcast_quick    	  - 3 A     A  EXC,CGC,QUICK checkcast_quick 0 0 0 
+instanceof_quick   	  - 3 A     I  EXC,CGC,QUICK instanceof_quick 0 0 0 
+nonnull_quick             - 1 A     -  EXC,CGC,QUICK nonnull_quick 0 0 0 /* throw exception if stacktop null */
+exittransition		  - 1 -     -   - exittransition 0 0 0 
+
+#
+# Don't change the order of these opcode unless you also
+# change the order o the checkinit opcodes below to match.
+#
+agetstatic_quick 	233 3 -     A  CGC,QUICK getstatic_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+getstatic_quick 	234 3 -     ?  CGC,QUICK getstatic_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+getstatic2_quick 	235 3 -     ?  CGC,QUICK getstatic_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+aputstatic_quick 	236 3 A     -  CGC,QUICK putstatic_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+putstatic_quick 	237 3 ?     -  CGC,QUICK putstatic_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+putstatic2_quick 	238 3 ?     _  CGC,QUICK putstatic_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+
+#
+# The following opcodes must appear in this order because this is the same
+# order that the non-checkinit verison depend on and JCC requires this.
+#
+agetstatic_checkinit_quick 	239 3 -     ?   GC,EXC,QUICK getstatic_quick 0 0 0 
+getstatic_checkinit_quick 	240 3 -     ?   GC,EXC,QUICK getstatic_quick 0 0 0 
+getstatic2_checkinit_quick 	241 3 -     ?   GC,EXC,QUICK getstatic_quick 0 0 0 
+aputstatic_checkinit_quick 	242 3 ?     -   GC,EXC,QUICK putstatic_quick 0 0 0 
+putstatic_checkinit_quick 	243 3 ?     -   GC,EXC,QUICK putstatic_quick 0 0 0 
+putstatic2_checkinit_quick 	244 3 ?     -   GC,EXC,QUICK putstatic_quick 0 0 0 
+
+getfield_quick  	208 3 A     ?  EXC,CGC,QUICK getfield_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+putfield_quick  	212 3 ?     -  EXC,CGC,QUICK putfield_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+getfield2_quick        	216 3 A     ?  EXC,CGC,QUICK getfield_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+putfield2_quick 	220 3 ?     -  EXC,CGC,QUICK putfield_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+agetfield_quick  	209 3 A     ?  EXC,CGC,QUICK getfield_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+aputfield_quick  	  - 3 ?     -  EXC,CGC,QUICK putfield_quick CVMJIT_FIELD_REF CVM_TYPEID_OBJ 0 
+getfield_quick_w  	  - 3 A     ?  EXC,CGC,QUICK getfield_quick_w 0 0 0 
+putfield_quick_w  	  - 3 ?     -  EXC,CGC,QUICK putfield_quick_w 0 0 0 
+
+new_checkinit_quick    	  - 3 -     A   GC,EXC,QUICK new_quick 0 0 0 
+new_quick          	  - 3 -     A  GC,EXC,QUICK new_quick  0 0 0 
+anewarray_quick    	  - 3 I     A  GC,EXC,QUICK anewarray_quick 0 0 0 
+multianewarray_quick      - 4 ?     A  GC,EXC,QUICK multianewarray_quick 0 0 0 
+
+prefix	        	  - 0 -     -   -	prefix 0 0 0 /* prefix operation.   */
+invokeinit          	  - 3 ?     ?   INV,GC,EXC 	invokespecial 0 0 0 /* used only by the verifier. */
