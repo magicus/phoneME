@@ -476,18 +476,12 @@ public final class String
      *             argument is negative or not less than the length of this
      *             string.
      */
-    public native char charAt(int index);
-
-    /*
-     * The original Java version
-     *
-     * public char charAt(int index) {
-     *	if ((index < 0) || (index >= count)) {
-     *	    throw new StringIndexOutOfBoundsException(index);
-     *	}
-     *	return value[index + offset];
-     *}
-     */
+    public char charAt(int index) {
+        if ((index < 0) || (index >= count)) {
+            throw new StringIndexOutOfBoundsException(index);
+        }
+        return value[index + offset];
+    }
 
     /**
      * Copies characters from this string into the destination character

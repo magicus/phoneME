@@ -1918,9 +1918,7 @@ CVM_SHAREOBJS_SPACE += \
 	Method.o \
 	Proxy.o \
 	Constructor.o \
-	FileDescriptor.o \
 	FileInputStream.o \
-	FileOutputStream.o \
 	ObjectInputStream.o \
 	ObjectStreamClass.o \
 	ObjectOutputStream.o \
@@ -1931,6 +1929,12 @@ CVM_SHAREOBJS_SPACE += \
 	Inflater.o \
 	Vector.o \
 	StringBuffer.o
+
+ifneq ($(USE_JAVASE),true)
+CVM_SHAREOBJS_SPACE += \
+	FileDescriptor.o \
+	FileOutputStream.o
+endif
 
 ifeq ($(CDC_10),true)
 CVM_SHAREOBJS_SPACE += \

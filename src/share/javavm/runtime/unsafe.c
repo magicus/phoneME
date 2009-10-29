@@ -31,6 +31,9 @@
 #include "javavm/include/clib.h"
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/common_exceptions.h"
+#include "javavm/include/reflect.h"
+#include "javavm/include/sync.h"
+#include "java_lang_ClassLoader.h"
 
 #define UNSAFE_ENTRY(result_type, header) \
     result_type JNICALL header { 
@@ -66,17 +69,21 @@ static jlong addr_to_java(void* p) {
 
 
 /* 
- * Note: The VM's obj_field and related accessors use byte-scaled
- * ("unscaled") offsets, just as the unsafe methods do. 
+ * Note: The VM's obj_field and related accessors use word-scaled
+ * offsets, just as the unsafe methods do. 
  */
 
 /* 
  * However, the method Unsafe.fieldOffset explicitly declines to 
  * guarantee this.  The field offset values manipulated by the Java user 
- * through the Unsafe API are opaque cookies that just happen to be byte 
+ * through the Unsafe API are opaque cookies that just happen to be word 
  * offsets.  We represent this state of affairs by passing the cookies 
  * through conversion functions when going between the VM and the Unsafe API. 
  * The conversion functions just happen to be no-ops at present. 
+ *
+ * That being said, for CVM we actually want the word-scaled field
+ * offset for VM object access APIs. So this API is still a nop,
+ * although it does not return the "byte" offset as the name would suggest.
  */
 
 static jlong field_offset_to_byte_offset(jlong field_offset) {
@@ -643,4 +650,75 @@ Java_sun_misc_Unsafe_registerNatives(JNIEnv *env, jclass unsafecls)
     jboolean ok = CVMjniRegisterNatives(env, unsafecls, methods, sizeof(methods)/sizeof(JNINativeMethod));
     CVMassert(ok == 0);
     (void)ok;
+}
+
+/*
+ * TODO - Need JIT intriniscs for the compareAndSwap methods.
+ */
+
+JNIEXPORT jboolean JNICALL
+Java_sun_misc_Unsafe_compareAndSwapInt(
+    JNIEnv* env, jobject this,
+    jobject o, jlong offset, jint expected, jint x)
+{
+    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
+    jint previous;
+    
+    CVMD_gcUnsafeExec(ee, {
+	CVMObject* directObj = CVMID_icellDirect(ee, o);
+	CVMJavaLong addr_long = CVMlongAdd(CVMvoidPtr2Long(directObj),
+					   offset * sizeof(CVMAddr));
+	CVMAddr* addr = CVMlong2VoidPtr(addr_long);
+	previous = CVMatomicCompareAndSwap(addr, x, expected);
+    });
+
+    return previous == expected;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_sun_misc_Unsafe_compareAndSwapLong(
+    JNIEnv* env, jobject this,
+    jobject o, jlong offset, jlong expected, jlong x)
+{
+    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
+    jlong previous;
+    jboolean result;
+    
+    CVMD_gcUnsafeExec(ee, {
+	CVMObject* directObj = CVMID_icellDirect(ee, o);
+	CVMJavaLong addr_long = CVMlongAdd(CVMvoidPtr2Long(directObj),
+					   offset * sizeof(CVMAddr));
+	CVMAddr* addr = CVMlong2VoidPtr(addr_long);
+	CVM_ACCESS_VOLATILE_LOCK(ee);
+	previous = CVMvoidPtr2Long(addr);
+	if (CVMlongEq(previous, expected)) {
+	    CVMlong2Jvm(addr, x);
+	    result = JNI_TRUE;
+	} else {
+	    result = JNI_FALSE;
+	}
+	CVM_ACCESS_VOLATILE_UNLOCK(ee);
+    });
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_sun_misc_Unsafe_compareAndSwapObject(
+    JNIEnv* env, jobject this,
+    jobject o, jlong offset, jobject expected, jobject x)
+{
+    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
+    jobject previous;
+    
+    CVMD_gcUnsafeExec(ee, {
+	CVMObject* directObj = CVMID_icellDirect(ee, o);
+	CVMJavaLong addr_long = CVMlongAdd(CVMvoidPtr2Long(directObj),
+					   offset * sizeof(CVMAddr));
+	CVMAddr* addr = CVMlong2VoidPtr(addr_long);
+	previous = (jobject)
+	    CVMatomicCompareAndSwap(addr, (CVMAddr)x, (CVMAddr)expected);
+    });
+
+    return previous == expected;
 }
