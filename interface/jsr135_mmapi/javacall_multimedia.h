@@ -748,11 +748,15 @@ javacall_result javacall_media_data_written(
 
 /**
  * Get the native player's current media time.
+ * Always succeeds.
  *
  * @param handle  Handle to the native player.
  * @param time    Out - media time in milliseconds or -1 if time is unknown.
  *
- * @retval JAVACALL_OK  Always succeeds.
+ * @retval JAVACALL_OK          Procedure succeeded synchronously.
+ * @retval JAVACALL_WOULD_BLOCK Procedure will continue in background, completion
+ *                              will be flagged with an event
+ *                              JAVACALL_EVENT_MEDIA_SET_MEDIA_TIME_FINISHED.
  */
 javacall_result javacall_media_get_media_time(
     javacall_handle handle,

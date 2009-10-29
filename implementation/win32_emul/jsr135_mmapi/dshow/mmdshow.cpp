@@ -164,7 +164,8 @@ public:
         OPER_DEALLOCATE,
         OPER_RUN,
         OPER_PAUSE,
-        OPER_SET_MT
+        OPER_SET_MT,
+        OPER_GET_MT
     };
     volatile OPER         pending_operation;
 };
@@ -681,6 +682,15 @@ static void oper_thread(void *param)
             evt_data = (void*)(p->media_time);
             break;
 
+        case dshow_player::OPER_GET_MT:
+            DEBUG_ONLY( PRINTF( "   >> get_time...\n" ); )
+            p->get_media_time();
+            r = JAVACALL_OK;
+            DEBUG_ONLY( PRINTF( "   >> get_time finished: %ld\n", p->media_time ); )
+            evt_type = JAVACALL_EVENT_MEDIA_GET_MEDIA_TIME_FINISHED;
+            evt_data = (void*)(p->media_time);
+            break;
+
         case dshow_player::OPER_DESTROY:
             DEBUG_ONLY( PRINTF( "   >> destroy...\n" ); )
             {
@@ -1132,10 +1142,10 @@ javacall_result dshow_data_written(javacall_handle handle,
 static javacall_result dshow_get_time(javacall_handle handle, javacall_int32* ms)
 {
     dshow_player* p = (dshow_player*)handle;
-    *ms = p->get_media_time();
-    DEBUG_ONLY( PRINTF( "--- get_time: %ld\n",*ms ); )
-    // if( p->duration != -1 && *ms > p->duration ) *ms = p->duration;
-    return JAVACALL_OK;
+    p->pending_operation = dshow_player::OPER_GET_MT;
+    DEBUG_ONLY( PRINTF( "*** getting media time ***\n" ); )
+    SetEvent( p->hOperEvent );
+    return JAVACALL_WOULD_BLOCK;
 }
 
 static javacall_result dshow_set_time(javacall_handle handle, javacall_int32* ms)
