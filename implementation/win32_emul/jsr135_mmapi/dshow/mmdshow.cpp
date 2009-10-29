@@ -1346,9 +1346,9 @@ static javacall_result dshow_set_video_fullscreenmode(javacall_handle /*handle*/
                       S N A P S H O T   S U P P O R T
 \*****************************************************************************/
 
-static javacall_result dshow_start_video_snapshot( javacall_handle handle, 
-                                                   const javacall_utf16* imageType, 
-                                                   long length )
+static javacall_result dshow_make_video_snapshot( javacall_handle handle, 
+                                                  const javacall_utf16* imageType, 
+                                                  long length )
 {
     javacall_result res;
     dshow_player* p = (dshow_player*)handle;
@@ -1474,7 +1474,7 @@ static media_video_interface _dshow_video_itf = {
 };
 
 static media_snapshot_interface _dshow_snapshot_itf = {
-    dshow_start_video_snapshot,
+    dshow_make_video_snapshot,
     dshow_get_video_snapshot_data_size,
     dshow_get_video_snapshot_data
 };

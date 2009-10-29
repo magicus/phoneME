@@ -350,7 +350,7 @@ typedef struct {
  * function pointer vector table for video snapshot
  */
 typedef struct {
-    javacall_result (*start_video_snapshot)(javacall_handle handle, const javacall_utf16* imageType, long length);
+    javacall_result (*make_video_snapshot)(javacall_handle handle, const javacall_utf16* imageType, long length);
     javacall_result (*get_video_snapshot_data_size)(javacall_handle handle, long* size);
     javacall_result (*get_video_snapshot_data)(javacall_handle handle, char* buffer, long size);
 } media_snapshot_interface;

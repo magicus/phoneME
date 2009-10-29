@@ -392,9 +392,9 @@ static javacall_result fake_camera_set_video_fullscreenmode(javacall_handle hand
                       S N A P S H O T   S U P P O R T
 \*****************************************************************************/
 
-static javacall_result fake_camera_start_video_snapshot( javacall_handle handle, 
-                                                         const javacall_utf16* imageType, 
-                                                         long length )
+static javacall_result fake_camera_make_video_snapshot( javacall_handle handle, 
+                                                        const javacall_utf16* imageType, 
+                                                        long length )
 {
     javacall_result res;
     fake_camera* c = (fake_camera*)handle;
@@ -476,7 +476,7 @@ static media_video_interface _fake_camera_video_itf = {
 };
     
 static media_snapshot_interface _fake_camera_snapshot_itf = {
-    fake_camera_start_video_snapshot,
+    fake_camera_make_video_snapshot,
     fake_camera_get_video_snapshot_data_size,
     fake_camera_get_video_snapshot_data
 };

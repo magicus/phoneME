@@ -1072,8 +1072,8 @@ javacall_result javacall_media_set_video_visible(javacall_handle handle, javacal
  *                              "javanotify_on_media_notification" function call
  * @retval JAVACALL_FAIL        Fail. Invalid encodingFormat or some errors.
  */
-javacall_result javacall_media_start_video_snapshot(javacall_handle handle, 
-                                                    javacall_const_utf16_string imageType, long length);
+javacall_result javacall_media_make_video_snapshot(javacall_handle handle, 
+                                                   javacall_const_utf16_string imageType, long length);
 
 /**
  * Get snapshot data size

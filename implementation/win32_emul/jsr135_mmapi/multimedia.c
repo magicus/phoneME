@@ -1115,16 +1115,16 @@ javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle
     return ret;
 }
 
-javacall_result javacall_media_start_video_snapshot(javacall_handle handle,
-                                                    const javacall_utf16* imageType,
-                                                    long length)
+javacall_result javacall_media_make_video_snapshot(javacall_handle handle,
+                                                   const javacall_utf16* imageType,
+                                                   long length)
 {
     javacall_result ret = JAVACALL_FAIL;
     javacall_impl_player* pPlayer = (javacall_impl_player*)handle;
     media_interface* pItf = pPlayer->mediaItfPtr;
 
-    if (QUERY_SNAPSHOT_ITF(pItf, start_video_snapshot)) {
-        ret = pItf->vptrSnapshot->start_video_snapshot(
+    if (QUERY_SNAPSHOT_ITF(pItf, make_video_snapshot)) {
+        ret = pItf->vptrSnapshot->make_video_snapshot(
             pPlayer->mediaHandle, imageType, length);
     }
 
