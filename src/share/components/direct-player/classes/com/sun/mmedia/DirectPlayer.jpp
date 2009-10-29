@@ -769,6 +769,7 @@ class DirectPlayer extends LowLevelPlayer implements VideoSource
 
         nMakeSnapshot( hNative, imageType, snapshotMaker );
         snapshotMaker.complete();
+        ret = nGetSnapshotData( hNative );
 
         return ret;
     }
