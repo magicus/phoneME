@@ -817,6 +817,10 @@ extern "C" jboolean JVM_ResumeIsolate(int isolate_id) {
   return KNI_FALSE;
 }
 
+extern "C" jboolean JVM_IsValidIsolateId(int isolate_id) {
+  return Task::is_valid_task_id(isolate_id) ? KNI_TRUE : KNI_FALSE;
+}
+
 #endif // ENABLE_ISOLATES
 
 #if USE_BINARY_IMAGE_LOADER

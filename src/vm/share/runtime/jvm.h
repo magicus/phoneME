@@ -724,6 +724,13 @@ jboolean JVM_IsIsolateSuspended(int isolate_id);
  */
 jboolean JVM_ResumeIsolate(int isolate_id);
 
+/*
+ * Returns KNI_TRUE if an isolate with the specified ID is currently started 
+ * and not terminated.
+ * Otherwise, returns KNI_FALSE.
+ */
+jboolean JVM_IsValidIsolateId(int isolate_id);
+
 #endif /* ENABLE_ISOLATES */
 
 /*
