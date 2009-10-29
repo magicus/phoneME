@@ -1,0 +1,60 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+
+# classpath separator for java and javac commands.
+PS ?= \;
+
+# macros used for win32 hosted builds: Interix versions.
+ifeq ($(USE_INTERIX), true)
+DOS2UNIX	 = dos2unix.exe
+WIN2POSIX_FILTER = xargs -n1 ntpath2posix
+POSIX2WIN_FILTER = (xargs -n1 posixpath2nt | tr '\\' /)
+WIN2POSIX_CMD	 = echo $(1) | $(WIN2POSIX_FILTER)
+WIN2POSIX	 = $(shell $(call WIN2POSIX_CMD,$(1)))
+POSIX2WIN_CMD	 = echo $(1) | $(POSIX2WIN_FILTER)
+POSIX2WIN        = $(shell $(call POSIX2WIN_CMD,$(1)))
+CHKWINPATH	 = $(shell test -d "`chgpath \"$(1)\"`" 2>&1 && echo $(1))
+endif
+
+# macros used for win32 hosted builds: Cygwin versions.
+ifeq ($(USE_CYGWIN), true)
+DOS2UNIX	 = dos2unix
+WIN2POSIX_CMD	 = cygpath $(1)
+WIN2POSIX	 = $(shell $(call WIN2POSIX_CMD,$(1)))
+WIN2POSIX_FILTER = xargs -r cygpath
+POSIX2WIN_CMD	 = cygpath -m $(1)
+POSIX2WIN        = $(shell $(call POSIX2WIN_CMD,$(1)))
+POSIX2WIN_FILTER = xargs -r cygpath -m
+CHKWINPATH	 = $(shell ls -d "$(1)" 2>&1)
+endif
+
+# safeguard for win32 builds other than Cygwin
+POSIX2WIN_CMD?=echo $(1)
+
+# path conversion macros used in shared makefiles.
+HOST2POSIX        = $(WIN2POSIX)
+POSIX2HOST 	  = $(POSIX2WIN)
+HOST2POSIX_CMD	  = $(WIN2POSIX_CMD)
+POSIX2HOST_CMD	  = $(POSIX2WIN_CMD)
+HOST2POSIX_FILTER = $(WIN2POSIX_FILTER)
+POSIX2HOST_FILTER = $(POSIX2WIN_FILTER)
