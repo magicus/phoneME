@@ -153,6 +153,7 @@ class MMEventListener implements EventListener {
 
             case EVENT_MEDIA_DESTROY_FINISHED:
                 break; //intentionally ignored
+            case EVENT_MEDIA_GET_MEDIA_TIME_FINISHED:
             case EVENT_MEDIA_SET_MEDIA_TIME_FINISHED:
             case EVENT_MEDIA_CREATE_FINISHED:
             case EVENT_MEDIA_PREFETCH_FINISHED:

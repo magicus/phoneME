@@ -116,14 +116,22 @@ mainloop:
                     if (!isDismissed) {
                         owner.doOnDirectInputError( ex.getMessage() );
                     }
-                    //System.out.println( "DirectInputThread: exit 6" );
+                    System.out.println( "DirectInputThread: exit 6" );
                     return;
                 } catch ( IOException e ) {
                     if( !isDismissed ) {
                         owner.doOnDirectInputError("Stream reading IOException: " + e.getMessage());
                     }
-                    //System.out.println( "DirectInputThread: exit 7" );
+                    System.out.println( "DirectInputThread: exit 7" );
                     return;
+                } catch ( RuntimeException t ) {
+                    System.out.println( "DirectInputThread: unexpected RuntimeException ");
+                    t.printStackTrace();
+                    throw t;
+                } catch ( Error e ) {
+                    System.out.println( "DirectInputThread: unexpected Error ");
+                    e.printStackTrace();
+                    throw e;
                 }
 
                 owner = (HighLevelPlayer) wrPlayer.get();

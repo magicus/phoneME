@@ -188,7 +188,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      *
      * @return    the media time in microseconds.
      */
-    protected long doGetMediaTime() {
+    protected long doGetMediaTime( AsyncExecutor ae ) {
         synchronized( mediaTimeLock ) {
             long mks = ( 0 != startTime ) ? getMicrosecondsFromStart() : 0;
             return ( mediaTimeOffset + mks ) * rateControl.getRate() / 100000;
@@ -612,7 +612,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
      */
     private void processFrame() {
         // the media time in milliseconds
-        long mediaTime = doGetMediaTime() / 1000;
+        long mediaTime = doGetMediaTime( null ) / 1000;
 
         // frame interval in milliseconds
         long frameInterval = getFrameInterval(frameCount) / 1000;
@@ -651,7 +651,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
         // report that stop time has been reached if
         // the mediaTime is greater or equal to stop time.      
         if ( getOwner().getStopTime() != StopTimeControl.RESET &&
-            doGetMediaTime() >= getOwner().getStopTime() ) {
+            doGetMediaTime( null ) >= getOwner().getStopTime() ) {
             stopTimeReached();
         }
        
@@ -662,14 +662,14 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
             //if (frameInterval > 0 && frameInterval < EARLY_THRESHOLD)
             //    EARLY_THRESHOLD = frameInterval / 2;
                         
-            mediaTime = doGetMediaTime() / 1000;
+            mediaTime = doGetMediaTime( null ) / 1000;
 
             if (mediaTime + EARLY_THRESHOLD <= displayTime) {
                 // wait for a bit
                 synchronized (playLock) {
                     try {
                         if (!done) {
-                            mediaTime = doGetMediaTime() / 1000;
+                            mediaTime = doGetMediaTime( null ) / 1000;
 
                             long waitTime = (displayTime - EARLY_THRESHOLD - mediaTime)
                                 * 100000 / rateControl.getRate();
@@ -677,7 +677,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                             while (!stopped && waitTime > 0) {
                                 if (waitTime > MIN_WAIT) {
                                     playLock.wait(MIN_WAIT);
-                                    mediaTime = doGetMediaTime() / 1000;
+                                    mediaTime = doGetMediaTime( null ) / 1000;
                                     waitTime = (displayTime - EARLY_THRESHOLD - 
                                            mediaTime) * 100000 / rateControl.getRate();
                                 } else {
@@ -686,7 +686,7 @@ final class GIFPlayer extends LowLevelPlayer implements Runnable {
                                 }
                                     
                                 if (getOwner().getStopTime() != StopTimeControl.RESET &&
-                                    doGetMediaTime() >= getOwner().getStopTime()) {
+                                    doGetMediaTime( null ) >= getOwner().getStopTime()) {
                                     stopTimeReached();
                                 }
                             }

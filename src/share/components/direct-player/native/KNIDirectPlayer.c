@@ -151,7 +151,7 @@ UnlockAudioMutex();
     KNI_ReturnBoolean( returnValue );
 }
 
-/*  protected native int nGetMediaTime ( int handle ) ; */
+/*  protected native int nGetMediaTime ( int handle, AsyncExecutor ae ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
 
@@ -162,11 +162,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
 LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle) {
         ret = javacall_media_get_media_time(pKniInfo->pNativeHandle, &ms);
-        if (ret != JAVACALL_OK) {
+        if (ret != JAVACALL_OK && ret != JAVACALL_WOULD_BLOCK ) {
             ms = -1;
         }
     }
 UnlockAudioMutex();
+    setResultAndSyncMode( KNIPASSARGS 2, ret );
 
     MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", ms);
 

@@ -252,6 +252,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         {
             new Thread( new Runnable() {
                 public void run() {
+                    System.out.println("HighLevelPlayer: doOnDirectInputError()" );
                     synchronized( HighLevelPlayer.this ) {
                         if( CLOSED != getState() ) {
                             close();
@@ -1203,7 +1204,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
      * is in the <i>CLOSED</i> state.
      * @see #setMediaTime
      */
-    public long getMediaTime() {
+    public synchronized long getMediaTime() {
         chkClosed(false);
         long time = TIME_UNKNOWN;
         if( hasZeroDuration() )
@@ -1212,7 +1213,7 @@ public final class HighLevelPlayer implements Player, TimeBase, StopTimeControl 
         }
         if( null != lowLevelPlayer )
         {
-            time = lowLevelPlayer.doGetMediaTime();
+            time = lowLevelPlayer.doGetMediaTime( asyncExecutor );
         }
         return time;
     };

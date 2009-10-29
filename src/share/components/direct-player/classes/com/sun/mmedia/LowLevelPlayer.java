@@ -118,7 +118,7 @@ abstract class LowLevelPlayer {
      *
      * @return    Description of the Return Value
      */
-    protected abstract long doGetMediaTime();
+    protected abstract long doGetMediaTime( AsyncExecutor ae );
 
     /**
      * Subclasses need to implement this to get the duration
