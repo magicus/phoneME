@@ -623,9 +623,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetContentType)
     KNI_EndHandlesAndReturnObject(stringObj);
 }
 
-/*  protected native void nStartSnapshot( int handle, String imageType ); */
+/*  protected native void nMakeSnapshot( int handle, String imageType, AsyncExecutor ae ); */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectPlayer_nStartSnapshot) {
+KNIDECL(com_sun_mmedia_DirectPlayer_nMakeSnapshot) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo*  pKniInfo = (KNIPlayerInfo*)handle;
     jint            imageTypeLength;
@@ -644,8 +644,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStartSnapshot) {
             KNI_GetStringRegion(imageTypeHandle, 0, imageTypeLength, pImageTypeStr);
             ret = javacall_media_start_video_snapshot( pKniInfo->pNativeHandle,
                         pImageTypeStr, imageTypeLength );
+            setResultAndSyncMode( KNIPASSARGS 3, ret );
             MMP_FREE(pImageTypeStr);
-            if (ret != JAVACALL_OK) {
+            if (ret != JAVACALL_OK && ret != JAVACALL_WOULD_BLOCK ) {
                 KNI_ThrowNew( "javax/microedition/media/MediaException",
                     "\nFailed to start Camera Snapshot\n");
             }
