@@ -108,26 +108,12 @@ static char* getMutexName(char* sharedBufferName){
 
 // blocking
 static void sharedBuffer_lock(SharedBuffer* sb){
-    assert(sb != NULL); 
-    
-#ifdef WIN32
-    
-    assert(sb->data.mutex != NULL);
-    assert(sb->data.mutex != INVALID_HANDLE_VALUE);
-
-#endif
+    assert(sb != NULL);     
     WaitForMutex(sb->data.mutex); 
 }
 
 static void sharedBuffer_unlock(SharedBuffer* sb){
     assert(sb != NULL); 
-
-#ifdef WIN32 
-
-    assert(sb->data.mutex != NULL);
-    assert(sb->data.mutex != INVALID_HANDLE_VALUE);
-
-#endif
     LimeReleaseMutex(sb->data.mutex);
 }
 
@@ -151,11 +137,8 @@ static int32_t sharedBuffer_getMsgLength(SharedBuffer *sb){
  */
 static int sharedBuffer_attachBuffer(SharedBuffer* sb, int size ){
     assert(sb != NULL);
-    assert(sb->data.hMapFile != NULL);
 
 #ifdef WIN32 
-    
-    assert(sb->data.hMapFile != INVALID_HANDLE_VALUE); 
     sb->data.dataBuffer = 
         (DataBuffer*) MapViewOfFile(sb->data.hMapFile,   
                                     FILE_MAP_ALL_ACCESS, //read/write permission
@@ -215,6 +198,8 @@ static int sharedBuffer_open(SharedBuffer* sb, int size){
     if (res == 0) {
         sharedBuffer_initPointers(sb); 
     }
+
+    assert(sb->data.dataBuffer != NULL);
     return res; 
 }
 
@@ -294,7 +279,7 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
 
 #endif /* WIN32 */ 
     
-    if ((res =  sharedBuffer_open(sb, size)) != 0){
+    if ((res = sharedBuffer_open(sb, size)) != 0){
         return res;
     }
     sb->data.dataBuffer->size = size; 
@@ -307,11 +292,9 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
  */ 
 static int sharedBuffer_close(SharedBuffer* sb){
     assert(sb != NULL); 
-    assert(sb->data.dataBuffer != NULL);
-    assert(sb->data.hMapFile != NULL);
+
 #ifdef WIN32
  
-    assert(sb->data.hMapFile != INVALID_HANDLE_VALUE);
     UnmapViewOfFile((char*)sb->data.dataBuffer);
     CloseHandle(sb->data.hMapFile); 
     CloseHandle(sb->data.mutex); 
@@ -339,7 +322,7 @@ static int sharedBuffer_close(SharedBuffer* sb){
 static int sharedBuffer_write(SharedBuffer* sb, char * buffer, int numOfBytes){
     uint32_t msgLength; 
     assert(sb != NULL); 
-    assert(sb->data.dataBuffer != NULL);
+
     if (numOfBytes + sb->getMsgLength(sb) > sb->getBufferSize(sb)){  
         fprintf(stderr, " SUBLIMEIO: buffer size ");
         fprintf(stderr, "(%d) is not big enough for message size (%d)\n", 
@@ -361,7 +344,6 @@ static int sharedBuffer_read(SharedBuffer* sb, char * targetBuffer,
                              int32_t bufSize, int *bytes){
     int32_t length; 
     assert(sb != NULL); 
-    assert(sb->data.dataBuffer != NULL);
     assert(targetBuffer != NULL); 
     assert(bufSize >= 0);
     length = ntohl(sb->data.dataBuffer->dataLength); 
@@ -457,7 +439,6 @@ static int sharedBuffer_reset(SharedBuffer *sb){
 
 static int32_t sharedBuffer_getThreadID(SharedBuffer* sb){
     assert(sb != NULL); 
-    assert(sb->data.dataBuffer != NULL); 
     return sb->data.dataBuffer->threadID; 
 }
 
@@ -465,14 +446,12 @@ static void sharedBuffer_stampID(SharedBuffer *sb){
     uint32_t id = getThreadUniqueId(); 
     id = htonl(id); 
     assert(sb != NULL); 
-    assert(sb->data.dataBuffer != NULL); 
     sb->data.dataBuffer->threadID = id; 
 }
 
 /* id - network byte order */ 
 static void sharedBuffer_setID(SharedBuffer *sb,uint32_t id){
     assert(sb != NULL); 
-    assert(sb->data.dataBuffer != NULL); 
     sb->data.dataBuffer->threadID = id; 
 }
 
@@ -511,7 +490,7 @@ SharedBuffer* CreateNewSharedBuffer(char* name){
         fflush(stderr); 
         return NULL; 
     }
-    
+
     return sb; 
 }
 
@@ -550,7 +529,15 @@ SharedBuffer* OpenSharedBuffer(char* name){
     sb->data.mutex = LimeCreateMutex(NULL, FALSE, mutexName); 
     free(mutexName);
 
+    if (sb->data.mutex == NULL) {
+        error("SUBLIMEIO: Could not create shared buffer mutex");
+        CloseHandle(sb->data.hMapFile);
+        free(sb);
+        return NULL;
+    }
+
     if (sharedBuffer_open(sb, size) != 0) {
+        CloseHandle(sb->data.mutex); 
         CloseHandle(sb->data.hMapFile);
         free(sb);
         return NULL;
@@ -558,10 +545,12 @@ SharedBuffer* OpenSharedBuffer(char* name){
     
     sb->data.write_pointer = sb->data.read_pointer = 0 ; 
     sb->data.dataBuffer->size = size; 
-    
+
     return sb; 
 }
 
 #endif
+
+
 
 
