@@ -44,6 +44,9 @@ public class CommonDS extends BasicDS implements SourceStream {
     private InputStream inputStream;
     private ContentDescriptor contentDescriptor = null;
     private boolean connected = false;
+    private boolean mustDisconnect = false;
+    final private Object connectionLock = new Object();
+    final private Object readLock = new Object();
 
 
     public void setLocator(String ml) throws MediaException {
@@ -56,35 +59,44 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @param  is  The new inputStream value
      */
     public synchronized void setInputStream(InputStream is) {
-        connected = true;
-        try {
-            super.setLocator(null);
-        } catch (MediaException e) { }
-        inputStream = is;
-        try {
-            //enable to call to is.reset()
-            is.mark(is.available());
-        } catch (IOException ioe) {
-                //ignore
+        synchronized( connectionLock ) {
+            connected = true;
+            mustDisconnect = false;
+            try {
+                super.setLocator(null);
+            } catch (MediaException e) { }
+            inputStream = is;
+            location = 0;
         }
+        synchronized( readLock ) {
+            try {
+                //enable to call to is.reset()
+                is.mark(is.available());
+            } catch (IOException ioe) {
+                    //ignore
+            }
 
         // #ifndef ENABLE_CDC [
-        if (is instanceof com.sun.cldc.io.ResourceInputStream) {
-            try {
-                contentLength = is.available();
-            } catch (IOException e) {
-                contentLength = -1;
+            if (is instanceof com.sun.cldc.io.ResourceInputStream) {
+                try {
+                    contentLength = is.available();
+                } catch (IOException e) {
+                    contentLength = -1;
+                }
             }
-        }
         // #endif ]
+        }
     }
 
-    public synchronized void connect() throws IOException {
-        if (connected) {
-            return;
+    public void connect() throws IOException {
+        synchronized( connectionLock ) {
+            mustDisconnect = false;
+            if (connected) {
+                return;
+            }
+            getConnection();
+            connected = true;
         }
-        getConnection();
-        connected = true;
     }
 
     private void markTheStream() {
@@ -188,6 +200,10 @@ public class CommonDS extends BasicDS implements SourceStream {
             System.out.println( "CommonDS: an Exception is caught" );
             re.printStackTrace();
             throw re;
+        } catch (IOException ioe) {
+            System.out.println( "CommonDS: an Exception is caught" );
+            ioe.printStackTrace();
+            throw ioe;
         } catch (Exception ex) {
             System.out.println( "CommonDS: an Exception is caught" );
             ex.printStackTrace();
@@ -195,16 +211,21 @@ public class CommonDS extends BasicDS implements SourceStream {
                             locator + " : " + ex.getMessage());
         }
 
-        if ( !goodurl)
+        if ( !goodurl) {
             throw new IOException("bad url");
+        }
+        location = 0;
     }
 
-    public synchronized void disconnect() {
-        if (!connected) {
-            return;
+    public void disconnect() {
+        synchronized( connectionLock ) {
+            mustDisconnect = true;
+            if (!connected) {
+                return;
+            }
+            close();
+            connected = false;
         }
-        close();
-        connected = false;
     }
 
     public void start() throws IOException {
@@ -267,21 +288,23 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @exception     IOException
      */
     public int read(byte buffer[], int offset, int length) throws IOException {
-        int read = 0;
-        try {
-            read = inputStream.read(buffer, offset, length);
-        } catch( IOException e ) {
-            final long l = location;
-            if( !reconnect() ) {
-                throw e;
+        synchronized( readLock ) {
+            int read = 0;
+            try {
+                read = inputStream.read(buffer, offset, length);
+            } catch( ConnectionNotFoundException e ) {
+                final long locationBefore = location;
+                if( !restoreConnection() ) {
+                    throw e;
+                }
+                skip( locationBefore );
+                read = inputStream.read(buffer, offset, length);
             }
-            location = skip(l);
-            read = inputStream.read(buffer, offset, length);
+            if( read > 0 ) {
+                location += read;
+            }
+            return read;
         }
-        if( read > 0 ) {
-            location += read;
-        }
-        return read;
     }
 
 
@@ -292,40 +315,40 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @returns                 the new stream position
      */
     public long seek(long where) throws IOException {
-        int seekable = this.getSeekType();
+        synchronized( readLock ) {
+            int seekable = this.getSeekType();
 
-        if (seekable == NOT_SEEKABLE) {
-            throw new IOException("can't seek");
+            if (seekable == NOT_SEEKABLE) {
+                throw new IOException("can't seek");
+            }
+
+            if (where < 0) {
+                where = 0;
+            }
+
+            if (seekable == SEEKABLE_TO_START && where != 0) {
+                throw new IOException("can't seek");
+            }
+
+            if ((contentLength > 0) && (where > contentLength)) {
+                where = contentLength;
+            }
+
+            long oldLocation = location;
+
+            if (where < oldLocation) { // seek backward
+                seekToStart();
+                skip(where);
+            } else {
+                skip(where - oldLocation);
+            }
+
+            return (location);
         }
-
-        if (where < 0) {
-            where = 0;
-        }
-
-        if (seekable == SEEKABLE_TO_START && where != 0) {
-            throw new IOException("can't seek");
-        }
-
-        if ((contentLength > 0) && (where > contentLength)) {
-            where = contentLength;
-        }
-
-        long oldLocation = location;
-        long skipped = 0;
-
-        if (where < oldLocation) { // seek backward
-            seekToStart();
-            location = skip(where);
-        } else {
-            skipped = skip(where - oldLocation);
-            location = oldLocation + skipped;
-        }
-
-        return (location);
     }
 
 
-    private synchronized boolean reconnect() {
+    private boolean restoreConnection() throws IOException {
         if( null == inputStream ) {
             return false;
         }
@@ -334,17 +357,27 @@ public class CommonDS extends BasicDS implements SourceStream {
         final int period = 3000; // 3 sec
         int elapsed = 0;
 
-        try {
-            inputStream.close();
-        } catch (IOException ex) {}
-        connected = false;
-        location = 0;
+        synchronized( connectionLock ) {
+            if ( mustDisconnect ) {
+                return false;
+            }
+            try {
+                inputStream.close();
+            } catch ( IOException e ) {}
+            connected = false;
+        }
+
         for( elapsed = 0; elapsed < timeout; elapsed += period ) {
             try {
-                getConnection();
-                connected = true;
+                synchronized( connectionLock ) {
+                    if( mustDisconnect ) {
+                        return false;
+                    }
+                    getConnection();
+                    connected = true;
+                }
                 break;
-            } catch (IOException ex) {
+            } catch (ConnectionNotFoundException ex) {
                 try {
                     Thread.sleep(period);
                 } catch (InterruptedException ex1) {
@@ -360,7 +393,7 @@ public class CommonDS extends BasicDS implements SourceStream {
      *
      * @exception  IOException  Description of the Exception
      */
-    public void seekToStart() throws IOException {
+    private void seekToStart() throws IOException {
         if (inputStream == null) {
             return;
         }
@@ -375,24 +408,24 @@ public class CommonDS extends BasicDS implements SourceStream {
             }
         }
 
-        synchronized( this ) {
-            if( connected ) {
+        try {
+            synchronized ( connectionLock ) {
+                if (mustDisconnect) {
+                    throw new IOException("Disconnected during seek()");
+                }
 //                if (null != locator && locator.toLowerCase().startsWith("http:")) {
 //                    System.out.println("CommonDS: closing the HTTP stream to reopen it");
 //                }
-                inputStream.close();
-                connected = false;
-                location = 0;
                 try {
-                    getConnection(); // may throw an Exception
-                } catch( IOException e ) {
-                    if( !reconnect() ) {
-                        throw e;
-                    }
-                }
+                    inputStream.close();
+                } catch( IOException e ) {}
+                connected = false;
+                getConnection(); // may throw an Exception
                 connected = true;
-            } else {
-                throw new IOException( "Couldn't seek in the stream, not connected" );
+            }
+        } catch( ConnectionNotFoundException e ) {
+            if( !restoreConnection() ) {
+                throw e;
             }
         }
     }
@@ -403,7 +436,9 @@ public class CommonDS extends BasicDS implements SourceStream {
      * @returns    the current point in the stream
      */
     public long tell() {
-        return location;
+        synchronized( readLock ) {
+            return location;
+        }
     }
 
 
@@ -412,7 +447,7 @@ public class CommonDS extends BasicDS implements SourceStream {
      *
      * @exception  if an I/O error occurs
      */
-    private synchronized void close() {
+    private void close() {
         if (inputStream == null) {
             return;
         }
@@ -427,7 +462,6 @@ public class CommonDS extends BasicDS implements SourceStream {
 //            System.out.println( "CommonDS: an Exception while closing the stream" );
 //            e.printStackTrace();
         }
-        location = 0;
     }
 
     public long getContentLength() {
@@ -437,22 +471,22 @@ public class CommonDS extends BasicDS implements SourceStream {
     /**
      * @return number of bytes actually skipped
      */
-    private long skip(long amount) throws IOException {
+    private void skip(long amount) throws IOException {
         long remaining = amount;
         long actual = 0;
+        final long locationBefore = location;
     
         while (remaining > 0) {
             // istream.skip() does not work in particular impl cldc
     
             try {
                 actual = inputStream.skip( remaining );
-            } catch( IOException e ) {
-                final long l = location;
-                if( !reconnect() ) {
+                location += actual;
+            } catch( ConnectionNotFoundException e ) {
+                if( !restoreConnection() ) {
                     throw e;
                 }
-                location = l;
-                remaining = l + amount;
+                remaining = locationBefore + amount;
                 continue;
             }
     
@@ -464,7 +498,6 @@ public class CommonDS extends BasicDS implements SourceStream {
             }
             remaining -= actual;
         }
-        return (amount - remaining);
     }
 
     public int getSeekType() {
