@@ -3649,6 +3649,7 @@ initializeThreadObjects(JNIEnv* env)
 	CVM_JVMPI_OPTIONS \
 	CVM_XRUN_OPTIONS \
 	"[-XfullShutdown] " \
+	"[-XhangOnStartup] " \
 	"[-XunlimitedGCRoots] " \
 	"[-XtimeStamping] " \
 	CVM_GC_OPTIONS \
@@ -4358,6 +4359,8 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #ifdef CVM_HAVE_PROCESS_MODEL
 	    options.fullShutdownFlag = CVM_TRUE;
 #endif
+	} else if (!strcmp(str, "-XhangOnStartup")) {
+	    options.hangOnStartup = CVM_TRUE;
 	} else if (!strcmp(str, "-XunlimitedGCRoots")) {
             options.unlimitedGCRoots = CVM_TRUE;
 #ifdef CVM_AGENTLIB
@@ -4584,6 +4587,11 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #endif
     }
 #endif /* CVM_XRUN */
+
+    if (CVMglobals.hangOnStartup != 0) {
+	CVMconsolePrintf("Hanging on startup\n");
+	while (CVMglobals.hangOnStartup != 0);
+    }
 
 #if defined(CVM_AOT) && !defined(CVM_MTASK)
 #ifdef CVM_JVMTI

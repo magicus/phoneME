@@ -1167,6 +1167,8 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->fullShutdown = CVM_TRUE;
 #endif
 
+    gs->hangOnStartup = options->hangOnStartup;
+
 #ifdef CVM_JVMTI
     /* jvmti global variables initialization */
     CVMjvmtiInitializeGlobals(&gs->jvmti);
