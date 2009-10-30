@@ -253,7 +253,7 @@ int initEvents() {
 /* used by Sublime.java to create a unique named shared buffer */ 
 JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_setSublimeProcessId(JNIEnv * e, jclass c, jint pid) {
 #ifndef WIN32
-    processID = (char*)malloc(sizeof(char)*sizeof(int32_t));
+    processID = (char*)malloc(12);
     itoa(pid, processID, 10);
     setenv("SUBLIME_PROC_ID", processID, 0);
     free(processID);
@@ -271,7 +271,7 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_process(JNIEnv *env, jclass clz
     jmethodID mid_release;
     
     procID =  get_current_process_id();
-    processID = (char*)malloc(sizeof(char)*sizeof(int32_t));
+    processID = (char*)malloc(12);
     itoa(procID, processID, 10);
     /* names for 2 shared buffers and 4 events */  
     names = (char **)malloc(sizeof(char*)*6);
