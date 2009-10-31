@@ -48,11 +48,7 @@ class Field: public StackObj {
   jushort offset                  (void) const { return _offset; }
   bool is_valid                   (void) const { return _index >= 0; }
   bool is_valid_in_current_profile(void) const {
-#if ENABLE_MEMBER_HIDING
     return is_valid() && !ROM::is_hidden_field(_ic->class_id(), _index);
-#else
-    return is_valid();
-#endif
   }
 
   // Initial field value

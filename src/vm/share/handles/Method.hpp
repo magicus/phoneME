@@ -734,11 +734,7 @@ public:
   }
 
   bool is_hidden(void) const {
-#if ENABLE_MEMBER_HIDING
     return ROM::is_hidden_method(this);
-#else
-    return false;
-#endif
   }
 
   void check_access_by(InstanceClass* sender_class, 

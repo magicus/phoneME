@@ -425,7 +425,14 @@ public:
   static bool is_hidden_member(const int i);
   static bool is_hidden_field(const jushort class_id, const int field_index);
   static bool is_hidden_method(const Method* method);
-#endif
+#else // ENABLE_MEMBER_HIDING
+  static bool is_hidden_field(const jushort class_id, const int field_index) {
+    return false;
+  }
+  static bool is_hidden_method(const Method* method) {
+    return false;
+  }
+#endif // ENABLE_MEMBER_HIDING
 
 private:
   static bool name_matches_patterns(const char* name, const int len,

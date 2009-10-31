@@ -34,19 +34,17 @@
 
 HANDLE_CHECK(Method, is_method())
 
-int Method::vtable_index() const {
+int Method::vtable_index(void) const {
   // Retrieve the vtbale index from the vtable by searching
-  InstanceClass::Raw klass = holder();
-  ClassInfoDesc *info = (ClassInfoDesc*) klass().class_info();
+  const InstanceClass::Raw klass = holder();
+  const ClassInfoDesc* info = (ClassInfoDesc*) klass().class_info();
 
-  OopDesc *this_obj = obj();
-  OopDesc **base = info->vtable_base();
-  int len = info->_vtable_length;
-  for (int index = 0; index < len; index++) {
-    if (this_obj != *base) {
-      base ++;
-    } else {
-      return index;
+  const OopDesc* this_obj = obj();
+  const OopDesc* const* base = info->vtable_base();
+  const int len = info->_vtable_length;
+  for (int i = 0; i < len; i++) {
+    if (this_obj == base[i]) {
+      return i;
     }
   }
 

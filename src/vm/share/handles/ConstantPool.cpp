@@ -384,19 +384,12 @@ ConstantPool::lookup_method_at(InstanceClass *sender_class, int index,
   resolve_helper(index, name, signature, static_receiver_class JVM_CHECK_0);
 
   Method::Fast m = static_receiver_class->lookup_method(name, signature);
-  if (m.is_null() || m().is_hidden()) {
+  if (m().is_hidden()) {
     trace_no_such_method_error(sender_class, static_receiver_class, name,
                                signature);
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
   }
 
-  const InstanceClass::Raw holder = m().holder();
-  if (holder().is_hidden()) {
-    trace_no_such_method_error(sender_class, static_receiver_class, name,
-                               signature);
-    Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
-  }
-  
   static_receiver_class->check_access_by(sender_class, ErrorOnFailure JVM_CHECK_0);
 
   m().check_access_by(sender_class, static_receiver_class, 
@@ -615,7 +608,7 @@ void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
     is_uncommon = true;
   }
 
-  if (named_method.is_null() || named_method().is_hidden()) {
+  if (named_method().is_hidden()) {
     trace_no_such_method_error(sender_class, &interface_class, &method_name,
       &method_signature);
     Throw::no_such_method_error(JVM_SINGLE_ARG_THROW);

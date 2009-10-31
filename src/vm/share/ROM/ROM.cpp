@@ -1259,6 +1259,17 @@ bool ROM::is_hidden_field(const jushort class_id, const int field_index) {
 }
 
 bool ROM::is_hidden_method(const Method* method) {
+  if (method->obj() == NULL) {
+    return true;
+  }
+
+  {
+    const InstanceClass::Raw holder = method->holder();
+    if (holder().is_hidden()) {
+      return true;
+    }
+  }
+
   const jushort index = method->holder_id() - _rom_modified_class_index_base;
   if (index >= _rom_modified_class_index_size) {
     return false;

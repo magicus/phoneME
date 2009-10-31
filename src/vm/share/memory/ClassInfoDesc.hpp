@@ -144,7 +144,10 @@ public:
     return _object_size;
   }
 
-  OopDesc** vtable_base() {
+  OopDesc** vtable_base(void) {
+    return (OopDesc**)  (((address)this) + header_size());
+  }
+  OopDesc* const* vtable_base(void) const {
     return (OopDesc**)  (((address)this) + header_size());
   }
 
