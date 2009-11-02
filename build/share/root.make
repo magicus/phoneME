@@ -231,7 +231,8 @@ _romtestvm_r: sanity $(OUTDIR)/tests/Makefile FORCE
 _romtestvm_g: sanity $(OUTDIR)/tests/Makefile FORCE
 	$(A)$(MAKE) -C $(OUTDIR)/tests romtestvm_g
 
-tests: debug release product _tests
+cldcvm_tests_target ?= debug release product
+tests: $(cldcvm_tests_target) _tests
 	$(A)$(MAKE) -C $(OUTDIR)/tests all
 	$(A)echo "done"
 

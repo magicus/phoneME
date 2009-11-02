@@ -81,9 +81,8 @@ VM_JAR_TESTS = bad_test.jar good_test.jar
 _javatests:  sanity tests.jar testtool.jar _build_ams_jars _build_shlib_jars _build_dyn_native_jars runtests.sh
 tests.jar:   $(VM_JAR_TESTS)
 javatests:   _javatests $(HTML_FILE)
-nativetests: romtestvm_g
-nativetests: romtestvm_r
-nativetests: romtestvm
+nativetests_deps ?= romtestvm_g romtestvm_r romtestvm
+nativetests: $(nativetests_deps)
 
 non-rom: javatests ROMImage.cpp NativesTable.cpp
 
