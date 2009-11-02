@@ -645,6 +645,8 @@
 //                                    all entries in a JAR file (e.g., used by
 //                                    the romizer and +TestCompiler)
 //
+// USE_DIRECTORIES                    Support for directories on the classpath
+//
 
 #define USE_SOURCE_IMAGE_GENERATOR    ((!ENABLE_MONET) && ENABLE_ROM_GENERATOR)
 
@@ -942,6 +944,8 @@
 //                                    for SUPPORTS_ADJUSTABLE_MEMORY_CHUNK=0.
 //                                    (see OsMemory.hpp)
 //
+// SUPPORTS_DIRECTORIES               Does the file system support directories?
+//
 // SUPPORTS_MEMORY_MAPPED_FILES       Does this OS port
 //                                    allow mapping files into a fixed
 //                                    memory space?
@@ -981,6 +985,10 @@
 
 #ifndef SUPPORTS_MONOTONIC_CLOCK
 #define SUPPORTS_MONOTONIC_CLOCK 0
+#endif
+
+#ifndef SUPPORTS_DIRECTORIES
+#define SUPPORTS_DIRECTORIES 1
 #endif
 
 #ifndef HOST_LITTLE_ENDIAN
@@ -1110,6 +1118,8 @@
 #    define STACK_ALIGNMENT_VALUE 16
 #  endif
 #endif
+
+#define USE_DIRECTORIES SUPPORTS_DIRECTORIES
 
 /*
  * Flags that still need to be documented or deleted, i.e. IMPL_NOTE:

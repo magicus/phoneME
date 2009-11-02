@@ -102,7 +102,13 @@ void JVM::set_arguments2(const JvmPathChar *classpath, char *main_class,
     _classpath = OsMisc_get_classpath();
   }
   if (_classpath == NULL) {
-    static const JvmPathChar default_classpath[] = {'.', 0};
+#if USE_DIRECTORIES
+#define DEFAULT_CLASSPATH {'.', 0}
+#else 
+#define DEFAULT_CLASSPATH {0}
+#endif
+    static const JvmPathChar default_classpath[] = DEFAULT_CLASSPATH;
+#undef DEFAULT_CLASSPATH
     _classpath = default_classpath;
   }
 

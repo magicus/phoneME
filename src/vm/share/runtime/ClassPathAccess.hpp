@@ -39,7 +39,9 @@ private:
                                               OopDesc* classpath JVM_TRAPS);
   static ReturnOop open_jar_entry(JarFileParser *parser, Symbol * entry_name,
                                   const bool is_class_file JVM_TRAPS);
+#if USE_DIRECTORIES
   static ReturnOop open_local_file(PathChar* path_name, Symbol * entry_name,
                                   const bool is_class_file JVM_TRAPS);
+#endif
   enum { NAME_BUFFER_SIZE = 270 };
 };

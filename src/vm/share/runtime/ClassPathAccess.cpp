@@ -53,6 +53,7 @@ inline ReturnOop ClassPathAccess::open_jar_entry(JarFileParser* parser,
   return NULL;
 }
 
+#if USE_DIRECTORIES
 inline ReturnOop ClassPathAccess::open_local_file(PathChar* path_name,
             Symbol* entry_symbol, const bool is_class_file JVM_TRAPS)
 {
@@ -85,6 +86,7 @@ inline ReturnOop ClassPathAccess::open_local_file(PathChar* path_name,
   return FileDecoder::allocate(handle, 0, size, MUST_CLOSE_FILE
                                JVM_NO_CHECK_AT_BOTTOM);
 }
+#endif
 
 ReturnOop ClassPathAccess::open_entry(Symbol* entry_name,
                      const bool is_class_file, OopDesc* classpath JVM_TRAPS)
@@ -112,7 +114,7 @@ ReturnOop ClassPathAccess::open_entry(Symbol* entry_name,
     // 7 extra chars for ".class" + 0
     DECLARE_STATIC_BUFFER(PathChar, path_name, NAME_BUFFER_SIZE + 7);
     const int path_length = path().length();
-    if( path_length >= NAME_BUFFER_SIZE ) {
+    if( path_length == 0 || path_length >= NAME_BUFFER_SIZE ) {
       continue; // Sorry, name too long
     }
     path().string_copy( path_name, NAME_BUFFER_SIZE );
@@ -121,10 +123,12 @@ ReturnOop ClassPathAccess::open_entry(Symbol* entry_name,
     if( parser.not_null() ) {
       p = open_jar_entry(&parser, entry_name, is_class_file JVM_CHECK_0);
       parser.set_null();
+#if USE_DIRECTORIES
     } else if( (path_length + 1 + entry_name->length()) >= NAME_BUFFER_SIZE ){
       continue; // Sorry, name too long
     } else {
       p = open_local_file(path_name, entry_name, is_class_file JVM_CHECK_0);
+#endif
     }
     if( p ) {
       break;
