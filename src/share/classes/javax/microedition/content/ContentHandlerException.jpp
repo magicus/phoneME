@@ -87,7 +87,7 @@ public class ContentHandlerException extends IOException {
             case NO_REGISTERED_HANDLER:
             case TYPE_UNKNOWN:
             case AMBIGUOUS:
-// #ifdef ENABLE_CLDC_111 [
+// #ifdef USE_CLDC_111 [
             case CAPACITY_EXCEEDED:
 // #endif ]
                 break;
