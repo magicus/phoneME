@@ -1102,6 +1102,16 @@ CVMgcScanRoots(CVMExecEnv *ee, CVMGCOptions* gcOpts,
 				  callbackData);
 	}
 #endif /* %begin,end lvm */
+
+#ifdef CVM_JAVASE_CLASS_HAS_REF_FIELD
+        /*
+         * Scan ROMized objects.
+         * The java.lang.Class in SE 1.5 and later version has non-static
+         * reference fields.
+         */
+        /*CVMpreloaderScanPreloadedClassObjects(ee, gcOpts,
+                                              callback, callbackData);*/
+#endif
     }
 
     {

@@ -193,7 +193,7 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 #endif
 
     {
-	char buf[MAXPATHLEN + 1], *p0, *p, *pEnd;
+	char buf[MAXPATHLEN + 1], *p0, *p;
 
 	{
 	    Dl_info dlinfo;
@@ -211,14 +211,15 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 		    realpath((char *)dlinfo.dli_fname, buf);
 		    p0 = buf;
 		} else {
-		    l = open("/proc/self/maps", O_RDONLY);
-		    if (l == -1) {
+		    int fd = open("/proc/self/maps", O_RDONLY);
+		    if (fd == -1) {
 #ifdef CVM_DEBUG
 			fprintf(stderr, "open of /proc/self/maps failed\n");
 #endif
 			return CVM_FALSE;
 		    }
-		    l = read(l, buf, sizeof buf);
+		    l = read(fd, buf, sizeof buf);
+		    close(fd);
 		    if (l == -1) {
 #ifdef CVM_DEBUG
 			fprintf(stderr, "read of /proc/self/maps failed\n");
@@ -307,7 +308,7 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
 		dllpath = archlib;
 	    }
             pathInfo->basePath = strdup(javahomepath);
-            pathInfo->libPath = strdup(libPath);
+            pathInfo->libPath = strdup(libpath);
             pathInfo->dllPath = strdup(dllpath);
 	    return CVM_TRUE;
         }
@@ -321,9 +322,11 @@ CVMBool CVMinitStaticState(CVMpathInfo *pathInfo)
             return CVM_FALSE;
         }
         strcpy(p, p0);
-        pEnd = p + strlen(p);
-        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
-        strcpy(pEnd, "lib");
+	{
+	    char* pEnd = p + strlen(p);
+	    *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+	    strcpy(pEnd, "lib");
+	}
         pathInfo->libPath = p;
         /* lib and dll are the same so this shortcut */
         pathInfo->dllPath = strdup(p);

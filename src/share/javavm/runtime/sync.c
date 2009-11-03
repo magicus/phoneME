@@ -475,8 +475,8 @@ static void postContendedEnter(CVMProfiledMonitor *self, CVMExecEnv *ee) {
 	CVMjvmpiPostMonitorContendedEnterEvent(ee, self);
     }
 #endif
-#ifdef CVM_JVMTI
     ee->threadState = CVM_THREAD_BLOCKED_MONITOR_ENTER;
+#ifdef CVM_JVMTI
     if (CVMjvmtiShouldPostMonitorContendedEnter()) {
 	CVMjvmtiPostMonitorContendedEnterEvent(ee, self);
     }
@@ -604,8 +604,8 @@ static void profileMonitorExit(CVMProfiledMonitor *self,
                                  CVMExecEnv *ee, CVMBool hasContention) {
 #ifdef CVM_JVMTI
         (void)hasContention;
-	ee->threadState &= ~CVM_THREAD_BLOCKED_MONITOR_ENTER;
 #endif
+	ee->threadState &= ~CVM_THREAD_BLOCKED_MONITOR_ENTER;
 #ifdef CVM_JVMPI
         if (hasContention &&
             CVMjvmpiEventMonitorContendedExitIsEnabled()) {

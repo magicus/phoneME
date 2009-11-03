@@ -33,6 +33,7 @@
 #include "jvm.h"
 #include "java_lang_ClassLoader.h"
 #include "java_lang_ClassLoader_NativeLibrary.h"
+#include "javavm/include/porting/linker.h"
 
 #include "jni_statics.h"
 
@@ -102,7 +103,6 @@ Java_java_lang_ClassLoader_InitializeLoaderGlobalRoot(JNIEnv *env,
 #endif
 }
 
-
 JNIEXPORT jclass JNICALL
 Java_java_lang_ClassLoader_defineClass0(JNIEnv *env,
 					jobject loader,
@@ -169,6 +169,37 @@ Java_java_lang_ClassLoader_defineClass0(JNIEnv *env,
     free(body);
     return result;
 }
+
+#ifdef JAVASE
+JNIEXPORT jclass JNICALL
+Java_java_lang_ClassLoader_defineClass1(JNIEnv *env,
+					jobject loader,
+					jstring name,
+					jbyteArray data,
+					jint offset,
+					jint length,
+					jobject pd,
+                                        jstring source)
+{
+    /* FIXME: currently we ignore the "source" argument" */
+    return Java_java_lang_ClassLoader_defineClass0(env, loader, name, data, offset, length, pd);
+}
+
+JNIEXPORT jclass JNICALL
+Java_java_lang_ClassLoader_defineClass2(JNIEnv *env,
+					jobject loader,
+					jstring name,
+					jobject data,
+					jint offset,
+					jint length,
+					jobject pd,
+					jstring source)
+{
+    /* FIXME: not implemented yet */
+    CVMassert(CVM_FALSE);
+    return NULL;
+}
+#endif
 
 JNIEXPORT void JNICALL
 Java_java_lang_ClassLoader_resolveClass0(JNIEnv *env, jobject thisObj,
@@ -292,6 +323,23 @@ Java_java_lang_ClassLoader_00024NativeLibrary_initIDs(JNIEnv *env, jclass thisOb
 
 typedef jint (JNICALL *JNI_OnLoad_t)(JavaVM *, void *);
 typedef void (JNICALL *JNI_OnUnload_t)(JavaVM *, void *);
+
+JNIEXPORT jboolean JNICALL 
+Java_java_lang_ClassLoader_00024NativeLibrary_exists(JNIEnv *env,
+                                                     jclass thisObj,
+                                                     jstring name)
+{
+    const char *cname;
+    jboolean ret;
+
+    cname = JNU_GetStringPlatformChars(env, name, 0);
+    if (cname == 0) {
+        return JNI_FALSE;
+    }
+    ret = CVMdynlinkExists(cname);
+    JNU_ReleaseStringPlatformChars(env, name, cname);
+    return ret;
+ }
 
 /*
  * Class:     java_lang_ClassLoader_NativeLibrary

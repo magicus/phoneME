@@ -576,6 +576,9 @@ CVMtypeidInit( CVMExecEnv *ee )
     CVMglobals.printlnTid =
 	CVMtypeidLookupMethodIDFromNameAndSig(ee, "println", 
 					   "(Ljava/lang/String;)V");
+    CVMglobals.getCauseTid =
+	CVMtypeidLookupMethodIDFromNameAndSig(ee, "getCause", 
+                                              "()Ljava/lang/Throwable;");
 #endif
 #ifdef CVM_DUAL_STACK
     {

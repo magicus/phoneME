@@ -46,7 +46,7 @@ CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
     const int pnamelen = pname ? strlen(pname) : 0;
     char *suffix;
 
-#ifdef CVM_DEBUG   
+#if defined(CVM_DEBUG) && (!defined(JAVASE) || JAVASE < 16)
     suffix = "_g";
 #else
     suffix = "";
@@ -120,6 +120,18 @@ void
 CVMdynlinkClose(void *dsoHandle)
 {
     dlclose(dsoHandle);
+}
+
+CVMBool
+CVMdynlinkExists(const char *name)
+{
+    void *handle;
+
+    handle = dlopen((const char *) name, RTLD_LAZY);
+    if (handle != NULL) {
+        dlclose(handle);
+    }
+    return (handle != NULL);
 }
 
 #endif /* #defined CVM_DYNAMIC_LINKING */

@@ -54,4 +54,21 @@ void
 JVM_StartSystemThread(JNIEnv *env, jobject thread,
 		      void(*nativeFunc)(void *), void* nativeFuncArg);
 
+#if JAVASE >= 16
+/*
+ * Java thread state support
+ *
+ * FIXME - not actually supported yet, but helps to fix build errors.
+ */
+enum {
+    JAVA_THREAD_STATE_NEW           = 0,
+    JAVA_THREAD_STATE_RUNNABLE      = 1,
+    JAVA_THREAD_STATE_BLOCKED       = 2,
+    JAVA_THREAD_STATE_WAITING       = 3,
+    JAVA_THREAD_STATE_TIMED_WAITING = 4,
+    JAVA_THREAD_STATE_TERMINATED    = 5,
+    JAVA_THREAD_STATE_COUNT         = 6
+};
+#endif
+
 #endif /* !_EXPORT_JVM_H_ */

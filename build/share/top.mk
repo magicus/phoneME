@@ -385,7 +385,7 @@ endif
 # If requested, load build flags from previous build. This must be done
 # before any makefile logic that is dependent on the build flags
 # that are read in.
-CVM_BUILD_FLAGS_FILE=$(CVM_BUILD_SUBDIR_NAME)/.previous.build.flags
+CVM_BUILD_FLAGS_FILE=$(CVM_BUILD_TOP)/.previous.build.flags
 ifeq ($(CVM_REBUILD),true)
 -include $(CVM_BUILD_FLAGS_FILE)
 endif

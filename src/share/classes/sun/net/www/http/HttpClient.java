@@ -313,7 +313,7 @@ public class HttpClient extends NetworkClient {
 		: proxyPort;
 	}
 	/* try to set host to "%d.%d.%d.%d" string if
-	 * visible - Sprint bug - brown */
+	 * visible - customer bug - brown */
 	try {
 	    InetAddress addr = InetAddress.getByName(url.getHost());
 	    this.host = addr.getHostAddress();

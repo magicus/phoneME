@@ -2673,6 +2673,7 @@ new_transition:
 	    }
 
 	    TRACESTATUS();
+	    DECACHE_PC();
 	    TRACE_METHOD_RETURN(frame);
 	    CVMpopFrame(stack, frame);
 
@@ -3596,13 +3597,9 @@ new_transition:
 		CNINativeMethod *f = (CNINativeMethod *)CVMmbNativeCode(mb);
 
 		TRACE_FRAMELESS_METHOD_CALL(frame, mb0, CVM_FALSE);
-#if defined(CVM_JVMTI_ENABLED) || !defined(CVM_OPTIMIZED)
                 ee->threadState = CVM_THREAD_IN_NATIVE;
-#endif
 		ret = (*f)(ee, topOfStack, &mb);
-#if defined(CVM_JVMTI_ENABLED) || !defined(CVM_OPTIMIZED)
                 ee->threadState &= ~CVM_THREAD_IN_NATIVE;
-#endif
 		TRACE_FRAMELESS_METHOD_RETURN(mb0, frame);
 
 		/* 
@@ -3852,6 +3849,7 @@ new_transition:
 	     * if the method returns a ref.
 	     */
 	    if (frame == initialframe) {
+		DECACHE_PC();
                 TRACE_METHOD_RETURN(frame);
 		goto finish;
 	    }

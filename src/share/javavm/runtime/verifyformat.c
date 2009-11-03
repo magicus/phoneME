@@ -39,7 +39,7 @@ typedef unsigned short unicode;
 
 #define JAVA_CLASSFILE_MAGIC                 0xCafeBabe
 #define JAVA_MIN_SUPPORTED_VERSION           45
-#define JAVA_MAX_SUPPORTED_VERSION           49
+#define JAVA_MAX_SUPPORTED_VERSION           50
 #define JAVA_MAX_SUPPORTED_MINOR_VERSION     0
 
 /* align byte code */
@@ -155,11 +155,11 @@ static void CNerror(CFcontext *context, char *name);
 static void UVerror(CFcontext *context);
 static void CFnomem(CFcontext *context);
 
-/* JAVA SE reports different error on bytecode verification */
-#ifndef JAVASE
-#define CVerror CFerror
-#else
+/* JAVA SE 1.4 reports different error on bytecode verification */
+#if JAVASE == 14
 static void CVerror(CFcontext *context, char *fmt, ...);
+#else
+#define CVerror CFerror
 #endif
 
 static void 
@@ -2206,7 +2206,15 @@ CFerror(CFcontext *context, char *format, ...)
     longjmp(context->jump_buffer, 1);
 }
 
-#ifdef JAVASE
+/*
+ * Some of the JCK 1.4 VM tests are not compatible with JCK 1.5
+ * and CDC TCK VM tests. For exmaple the 
+ * javasoft.sqe.tests.vm.classsfmttt.atr.atrcod006.atrccccod00601m1.atrrcod00601m1
+ * test. The tests in JCK 1.4 expect VerifyError, while the tests in
+ * JCK 1.5 and CDC TCK expect ClassFormatError. So provide a special
+ * CVerror for 1.4.
+ */
+#if JAVASE == 14
 static void
 CVerror(CFcontext *context, char *format, ...)
 {

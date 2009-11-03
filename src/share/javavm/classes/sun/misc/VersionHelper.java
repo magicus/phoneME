@@ -1,7 +1,5 @@
 /*
- * @(#)stdlib.h	1.12 06/10/10
- *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -25,33 +23,18 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ANSI_STDLIB_H
-#define _INCLUDED_PORTING_ANSI_STDLIB_H
-
-#include "javavm/include/porting/ansi/stddef.h"
+package sun.misc;
+import java.io.PrintStream;
 
 /*
- * ANSI <stdlib.h>
- *
- * Functions:
- *
- * void* malloc(size_t size);
- * void* calloc(size_t nelem, size_t elsize);
- * void* realloc(void* ptr, size_t size);
- * char* strdup(const char *s);
- * void  free(void* ptr);
- *
- * long  strtol(const char *str, char **endptr, int base);
- *
- * void  qsort(void* array, size_t numElements, size_t elementSize,
- *	       int (*)(const void *, const void *));
+ * This is just a helper class that allows for easily dealing with both the CDC
+ * and J2SE versions of sun.misc.Version. The CDC version takes a "longVersion"
+ * argument and the J2SE version does not. When building cvm for J2SE, we
+ * override VersionHelper with a copy that does not pass on the longVersion
+ * argument to sun.misc.Version.
  */
-
-#include "javavm/include/defs_md.h"
-#ifdef CVM_HDR_ANSI_STDLIB_H
-#include CVM_HDR_ANSI_STDLIB_H
-#else
-#include <stdlib.h>
-#endif
-
-#endif /* _INCLUDED_PORTING_ANSI_STDLIB_H */
+public class VersionHelper {
+    public static void print(boolean longVersion) {
+	sun.misc.Version.print(longVersion);
+    }
+}

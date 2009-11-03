@@ -86,6 +86,7 @@ public class ShowSysProps {
 	"file.separator",
 	"path.separator",
 	"line.separator",
+	"file.encoding",
 	"",
 	"user.name",
 	"user.home",

@@ -53,6 +53,12 @@ struct java_lang_String {
 #ifdef CVM_64
         CVMJavaInt pad_to_slot_size_1;
 #endif
+#if JAVASE >= 16
+        CVMJavaInt hash;
+#ifdef CVM_64
+        CVMJavaInt pad_to_slot_size_2;
+#endif
+#endif
 };
 
 /*

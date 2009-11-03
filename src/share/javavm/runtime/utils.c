@@ -90,22 +90,26 @@ void
 CVMdumpException(CVMExecEnv* ee) {
     CVMClassBlock* exceptionCb;
     CVMObjectICell* exceptionICell = CVMID_getGlobalRoot(ee);
+    CVMObjectICell* originalExceptionICell = CVMID_getGlobalRoot(ee);
     CVMStringICell* exceptionMessage;
 
     /* print the exception class name */
     CVMID_objectGetClass(ee, CVMlocalExceptionICell(ee), exceptionCb);
     CVMconsolePrintf("%C: ", exceptionCb);
 
-    if (exceptionICell == NULL) {
-      CVMconsolePrintf("backtrace not available\n");
-      return;
+    if (exceptionICell == NULL || originalExceptionICell == NULL) {
+        CVMconsolePrintf("backtrace not available\n");
+        goto delete_roots;
     }
 
     /* Fetch and clear the exception. Required if calling CVMprintStackTrace */
     CVMID_icellAssign(ee, exceptionICell,
 		      CVMlocalExceptionICell(ee));
+    CVMID_icellAssign(ee, originalExceptionICell,
+		      CVMlocalExceptionICell(ee));
     CVMclearLocalException(ee);
 
+ nextException:
     /* print the exception detailedMessage if there is one */
     exceptionMessage = CVMID_getGlobalRoot(ee);
     if (exceptionMessage != NULL) {
@@ -130,12 +134,48 @@ CVMdumpException(CVMExecEnv* ee) {
     /* print the exception backtrace */
     CVMprintStackTrace(ee, exceptionICell, NULL);
 
+    /* now check for the cause of the exception, if any */
+    {
+        JNIEnv* env = CVMexecEnv2JniEnv(ee);
+        CVMClassBlock* cb;
+        CVMMethodBlock* mb;
+	jobject causeICell;
+
+        CVMD_gcUnsafeExec(ee, {
+            cb = CVMobjectGetClass(CVMID_icellDirect(ee, exceptionICell));
+        });
+        mb = CVMclassGetNonstaticMethodBlock(cb, CVMglobals.getCauseTid);
+        CVMassert(mb != NULL);
+
+        /* Get the cause of the exception, if any. */
+        causeICell = (*env)->CallObjectMethod(env, exceptionICell, mb);
+
+        if (causeICell != NULL) {
+            CVMID_icellAssign(ee, exceptionICell, causeICell);
+            CVMjniDeleteLocalRef(env, causeICell);
+        } else {
+            CVMID_icellSetNull(exceptionICell);
+        }
+    }
+
+    /* print the cause of the exception if one was found */
+    if (!CVMID_icellIsNull(exceptionICell)) {
+        CVMconsolePrintf("Caused by: %C: ", exceptionCb);
+        goto nextException; /* print next cause if there is one */
+    }
+
     /* restore the local exception */
     CVMID_icellAssign(ee, CVMlocalExceptionICell(ee),
-		      exceptionICell);
+		      originalExceptionICell);
 
-    /* delete the global root */
-    CVMID_freeGlobalRoot(ee, exceptionICell);
+    /* delete the global roots */
+ delete_roots:
+    if (exceptionICell != NULL) {
+        CVMID_freeGlobalRoot(ee, exceptionICell);
+    }
+    if (originalExceptionICell != NULL) {
+        CVMID_freeGlobalRoot(ee, originalExceptionICell);
+    }
 }
 
 /*
@@ -2241,6 +2281,18 @@ CVMconvertJavaStringToCString(CVMExecEnv* ee, jobject stringobj)
     int        i;
 
     strDirect = CVMID_icellDirect(ee, stringobj);
+
+#ifdef JAVASE
+    /* FIXME - investigate the need for this. Supposedly SE will crash
+       if NULL is returned. This fix is just a hack.
+    */
+    if (strDirect == NULL) { 
+	buffer = malloc(16);
+	*buffer = '\0';
+        return buffer;
+    }
+#endif
+
     CVMD_fieldReadInt(strDirect, CVMoffsetOfjava_lang_String_offset, offset);
     CVMD_fieldReadInt(strDirect, CVMoffsetOfjava_lang_String_count, length);
     CVMD_fieldReadRef(strDirect, CVMoffsetOfjava_lang_String_value, charObj);

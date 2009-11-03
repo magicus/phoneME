@@ -1678,13 +1678,13 @@ CNIsun_misc_CVM_setNoVerification(CVMExecEnv* ee,
  * the corresponding classloader using CVM.setDeadLoader().
  ******************************************************/
 
-static CVMBool 
+static void
 nullifyRefCallBack(CVMObject** refPtr, void* data) {
     CVMObject* ref = *refPtr;
     CVMClassBlock *cb;
 
     if (ref == NULL || CVMobjectIsInROM(ref)) {
-        return CVM_TRUE;
+        return;
     }
 
     cb = CVMobjectGetClass(ref);
@@ -1712,7 +1712,7 @@ nullifyRefCallBack(CVMObject** refPtr, void* data) {
             }
         }
     }
-    return CVM_TRUE;
+    return;
 }
 
 
@@ -1844,6 +1844,39 @@ CNIsun_misc_CVM_nullifyRefsToDeadApp0(CVMExecEnv* ee,
         CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
 #endif
     }
+
+    return CNI_VOID;
+}
+
+/* Set the 'ignoreInterruptedException' flag in the target
+ * thread's 'ee'. The VM will ignore the InterruptedException
+ * handler in the target thread's non-system code.
+ */
+CNIEXPORT CNIResultCode
+CNIsun_misc_CVM_ignoreInterruptedException(CVMExecEnv* ee,
+                                CVMStackVal32 *arguments,
+                                CVMMethodBlock **p_mb)
+{
+    CVMObjectICell *threadICell = &arguments[0].j.r;
+    CVMJavaLong eetop;
+    CVMExecEnv *targetEE;
+
+    CVMD_gcSafeExec(ee, {
+        CVMsysMutexLock(ee, &CVMglobals.threadLock);
+    });
+
+    CVMD_fieldReadLong(CVMID_icellDirect(ee, threadICell),
+                       CVMoffsetOfjava_lang_Thread_eetop,
+                       eetop);
+    targetEE = (CVMExecEnv *)CVMlong2VoidPtr(eetop);
+
+    if (targetEE != NULL) {
+        targetEE->ignoreInterruptedException = CVM_TRUE;
+    }
+
+    CVMD_gcSafeExec(ee, {
+        CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
+    });
 
     return CNI_VOID;
 }

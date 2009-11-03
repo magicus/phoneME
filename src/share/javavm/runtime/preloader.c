@@ -725,7 +725,7 @@ CVMpreloaderInit()
 	    }
     	}
     }
-#endif //CVM_JIT_PATCHED_METHOD_INVOCATIONS
+#endif /* CVM_JIT_PATCHED_METHOD_INVOCATIONS */
 }
 
 CVMBool
@@ -1064,6 +1064,29 @@ CVMpreloaderIterateAllClasses(CVMExecEnv* ee,
     }
 
 }
+
+#ifdef CVM_JAVASE_CLASS_HAS_REF_FIELD
+void
+CVMpreloaderScanPreloadedClassObjects(CVMExecEnv* ee,
+                                      CVMGCOptions* gcOpts,
+                                      CVMRefCallbackFunc callback,
+                                      void* data)
+{
+    int i;
+    for (i = 0; i < CVM_nROMClasses; ++i) {
+        const CVMClassBlock *cb = CVM_ROMClassblocks[i];
+        if (cb != NULL) {
+	    CVMObject *obj = *(CVMObject**)CVMcbJavaInstance(cb);
+            CVMobjectWalkRefsWithSpecialHandling(ee, gcOpts, obj,
+                    CVMsystemClass(java_lang_Class), {
+	        if (*refPtr != 0) {
+	            (*callback)(refPtr, data);
+	        }                            
+	    }, callback, data);
+        }
+    }
+}
+#endif
 
 #if defined(CVM_INSPECTOR) || defined(CVM_DEBUG_ASSERTS) || defined(CVM_JVMPI)
 

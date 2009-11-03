@@ -124,6 +124,9 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
      */
     PUTPROP(props, "user.language", sprops.language);
     PUTPROP(props, "file.encoding", sprops.encoding);
+#ifdef JAVASE
+    PUTPROP(props, "sun.jnu.encoding", sprops.sun_jnu_encoding);
+#endif
     if (sprops.region) {
         PUTPROP(props, "user.region", sprops.region);
     }
@@ -186,7 +189,11 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP(props, "microedition.platform", "j2me");
     PUTPROP(props, "microedition.encoding", "ISO-8859-1");
     PUTPROP(props, "microedition.profiles", "");
-    PUTPROP(props, "microedition.locale", "en_US");
+    /*
+     * Using MIDP-compliant format for microedition.locale value
+     * in order to pass JSR-238 TCK.
+     */
+    PUTPROP(props, "microedition.locale", "en-US");
 #ifdef CVM_PROP_MIDP_IMPL
     PUTPROP(props, "com.sun.midp.implementation", CVM_PROP_MIDP_IMPL);
 #endif
@@ -303,3 +310,26 @@ Java_java_lang_System_mapLibraryName(JNIEnv *env, jclass ign, jstring libname)
 
     return (*env)->NewString(env, chars, len);
 }
+
+
+/* 
+ * A useful method if you need to do a println before the VM is
+ * fully initialized in System.out is available. Uncomment this code
+ * and add the prototype to System.java if you want to use it.
+ */
+
+#if 0
+JNIEXPORT void JNICALL
+Java_java_lang_System_println(JNIEnv *env, jclass ign, jstring output)
+{
+    int len;
+    const char* chars;
+    jboolean isCopy;
+    len = (*env)->GetStringLength(env, output);
+    chars = (*env)->GetStringUTFChars(env, output, &isCopy);
+    CVMconsolePrintf("%s\n", chars);
+    if (isCopy) {
+	CVMjniReleaseStringUTFChars(env, output, chars);
+    }
+}
+#endif

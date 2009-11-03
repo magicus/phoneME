@@ -719,7 +719,8 @@ initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
     if ((arg.error != JDWP_ERROR(NONE)) && 
         (arg.startCount == 0) && 
         initOnStartup) {
-        EXIT_ERROR(map2jvmtiError(arg.error), "No transports initialized");
+        LOG_MISC(("No transports initialized"));
+        disposeEnvironment(gdata->jvmti);
         return;
     }
 

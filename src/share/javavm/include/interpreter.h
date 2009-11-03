@@ -258,6 +258,8 @@ struct CVMExecEnv {
     CVMBool maskedInterrupt;	/* Was Thread.interrupt() called while
 				   interrupts were masked? */
 
+    CVMBool ignoreInterruptedException;
+
 #if defined(CVMJIT_SIMPLE_SYNC_METHODS) \
     && CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
     CVMOwnedMonitor simpleSyncReservedOwnedMonitor;
@@ -601,11 +603,9 @@ extern void CVMremoveThread(CVMExecEnv *ee, CVMBool userThread);
 #define CVMeeMarkHasRun(ee)  (CVMeeIncTickCount(ee))
 #endif /* CVM_JVMPI */
 
-#ifdef CVM_JVMTI
 /* Checks to see if the specified thread is suspended or not. */
 #define CVMeeThreadIsSuspended(ee) \
     (((ee)->threadState & CVM_THREAD_SUSPENDED) != 0)
-#endif /* CVM_JVMTI */
 
 /**********************************************************************
  * Interpreter Frames:

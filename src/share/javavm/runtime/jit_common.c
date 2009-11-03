@@ -1836,6 +1836,8 @@ typedef struct {
 } CVMJITSimpleSyncMethodName;
 
 static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
+/* FIXME - for now, don't include any simple sync methods */
+#ifndef JAVASE
     {
 	/* java.util.Random.next(I)I */
 	CVMsystemClass(java_util_Random),
@@ -1843,6 +1845,7 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	"nextSimpleSync",
         0
     },
+
     {
 	/* java.util.Hashtable.size()I */
 	CVMsystemClass(java_util_Hashtable),
@@ -1975,6 +1978,7 @@ static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
 	"nextElementSimpleSync",
         0
     },
+#endif /* !JAVASE */
 };
 
 #define CVM_JIT_NUM_SIMPLESYNC_METHODS  \
@@ -2666,6 +2670,10 @@ CVMJITPMIcalleeTableResize()
 	/* copy the callee record */
 	*calleeRec = *oldCalleeRec;
     }
+    
+    /* Free the old table */
+    free(oldCalleeRecords);
+
     CVMtraceJITPatchedInvokesExec({
         CVMJITPMIcalleeTableDump(CVM_FALSE);
     });

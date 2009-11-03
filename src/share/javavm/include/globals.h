@@ -104,6 +104,7 @@ struct CVMOptions {
 #ifdef CVM_HAVE_PROCESS_MODEL
     CVMBool fullShutdownFlag;
 #endif
+    CVMBool hangOnStartup;
     CVMBool unlimitedGCRoots;
 #ifndef CDC_10
     CVMBool javaAssertionsUserDefault; /* User class default (-ea/-da). */
@@ -391,6 +392,7 @@ struct CVMGlobalState {
 #endif /* CVM_REFLECT */
 #ifdef CVM_DEBUG_STACKTRACES
     CVMMethodTypeID printlnTid;
+    CVMMethodTypeID getCauseTid;
     CVMMethodBlock* java_lang_Throwable_fillInStackTrace;
 #ifdef CVM_DEBUG
     CVMFieldBlock*  java_lang_System_out;
@@ -551,6 +553,13 @@ struct CVMGlobalState {
      * Shutdown flags
      */
     CVMBool fullShutdown;
+
+    /*
+     * True if we should hang in an infinite loop when starting the vm.
+     * This is useful when debugging CVM as a shared library, since it
+     * is often not possible to set breakpoints until after CVM is invoked.
+     */
+    volatile CVMBool hangOnStartup;
 
     /* If true, no limit on the size of global roots stacks. */
     CVMBool unlimitedGCRoots;

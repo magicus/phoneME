@@ -163,14 +163,18 @@ CVMclassVerify(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
     }
 	
     {
-        CVMBool       result;
+        jint       result;
         char          message[256];
 	message[0] = 0;
 	result = 
 	    VerifyClass(ee, cb, message, sizeof(message), isRedefine);
-	if (!result) {
+        if (result < 0) {
 	    if (!CVMexceptionOccurred(ee)) {
-		CVMthrowVerifyError(ee, "%s", message);
+	        if (result == -1) {
+		    CVMthrowVerifyError(ee, "%s", message);
+	        } else if (result == -2) {
+	            CVMthrowClassFormatError(ee, "%s", message);
+                }
 	    }
 	    goto failed;
 	}

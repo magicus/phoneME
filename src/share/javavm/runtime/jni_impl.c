@@ -265,7 +265,14 @@ CVMjniNewLocalRef(JNIEnv *env, jobject obj)
 	    return NULL;
 	}
 	CVMID_icellAssign(currentEE, resultCell, obj);
-	return resultCell;
+        /* If obj is a weak reference GC could have happened before
+         * unsafe assign action happened so check for null
+         */
+        if (CVMID_icellIsNull(resultCell)) {
+            CVMjniDeleteLocalRef(env, resultCell);
+            resultCell = NULL;
+        }
+        return resultCell;
     }
 }
 
@@ -531,6 +538,13 @@ CVMjniNewGlobalRef(JNIEnv *env, jobject ref)
 	} else {
 	    CVMthrowOutOfMemoryError(currentEE, NULL);
 	}
+        /* If ref is a weak reference, GC could have happened before
+         * unsafe assign action happened so check for null
+         */
+        if (CVMID_icellIsNull(cell)) {
+            CVMjniDeleteGlobalRef(env, cell);
+            cell = NULL;
+        }
 	return cell;
     }
 }
@@ -3639,6 +3653,7 @@ initializeThreadObjects(JNIEnv* env)
 	CVM_JVMPI_OPTIONS \
 	CVM_XRUN_OPTIONS \
 	"[-XfullShutdown] " \
+	"[-XhangOnStartup] " \
 	"[-XunlimitedGCRoots] " \
 	"[-XtimeStamping] " \
 	CVM_GC_OPTIONS \
@@ -3919,16 +3934,16 @@ initializeSystemClasses(JNIEnv* env,
      *     CVMglobals.clinitTid, CVM_TRUE) == NULL);
      */
     CVMcbSetROMClassInitializationFlag(ee, CVMsystemClass(sun_misc_CVM));
-
-    /* First do the initialization that doesn't require thread support */
-    if (!initializeClassList(ee, errorStrBuf, sizeofErrorStrBuf,
-			     classInitList, classInitListLen)) {
-	errorStr = errorStrBuf;
-	return errorStr;
-    }
     
     /* Prepare for thread creation */
     if ((errorStr = initializeThreadObjects(env)) != NULL) {
+	return errorStr;
+    }
+
+    /* Initilize some core classes first. */
+    if (!initializeClassList(ee, errorStrBuf, sizeofErrorStrBuf,
+			     classInitList, classInitListLen)) {
+	errorStr = errorStrBuf;
 	return errorStr;
     }
     
@@ -4348,6 +4363,8 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #ifdef CVM_HAVE_PROCESS_MODEL
 	    options.fullShutdownFlag = CVM_TRUE;
 #endif
+	} else if (!strcmp(str, "-XhangOnStartup")) {
+	    options.hangOnStartup = CVM_TRUE;
 	} else if (!strcmp(str, "-XunlimitedGCRoots")) {
             options.unlimitedGCRoots = CVM_TRUE;
 #ifdef CVM_AGENTLIB
@@ -4574,6 +4591,11 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 #endif
     }
 #endif /* CVM_XRUN */
+
+    if (CVMglobals.hangOnStartup != 0) {
+	CVMconsolePrintf("Hanging on startup\n");
+	while (CVMglobals.hangOnStartup != 0);
+    }
 
 #if defined(CVM_AOT) && !defined(CVM_MTASK)
 #ifdef CVM_JVMTI

@@ -61,50 +61,6 @@
  * some cases. 
  */
 
-
-/*
- * Class:       java/lang/String
- * Method:      charAt
- * Signature:   (I)C
- */
-CNIEXPORT CNIResultCode
-CNIjava_lang_String_charAt(CVMExecEnv* ee, CVMStackVal32 *arguments,
-                           CVMMethodBlock **p_mb)
-{
-    CVMObject *thisStringObject;
-    CVMJavaInt index = arguments[1].j.i;
-    CVMJavaInt count;
-    CVMJavaInt offset;
-    CVMObject *valueObject;
-    CVMArrayOfChar *value;
-    CVMJavaChar c;
-    
-    /* CNI policy: offer a gc-safe checkpoint */
-    CVMD_gcSafeCheckPoint(ee, {}, {});
-
-    thisStringObject = CVMID_icellDirect(ee, &arguments[0].j.r);
-    FIELD_READ_COUNT(thisStringObject, count);
-    
-    /* The following also checks for (index < 0) by casting index into a
-       CVMUint32 before comparing against count: */
-    if (((CVMUint32)index) >= count) {
-        goto errorCase;
-    }
-
-    FIELD_READ_VALUE(thisStringObject, valueObject);
-    FIELD_READ_OFFSET(thisStringObject, offset);
-    value = (CVMArrayOfChar *)valueObject;
-    CVMD_arrayReadChar(value, index+offset, c);
-    arguments[0].j.i = c;
-    return CNI_SINGLE;
-
- errorCase:
-    CVMthrowStringIndexOutOfBoundsException(
-        ee, "String index out of range: %d", index);
-    return CNI_EXCEPTION;
-
-}
-
 /*
  * Class:       java/lang/String
  * Method:      getChars
@@ -339,12 +295,23 @@ CNIjava_lang_String_compareTo(CVMExecEnv* ee, CVMStackVal32 *arguments,
 }
 
 /*
+ * The SE6 version of hashCode is in Java and caches the hash
+ * in String.hash. It calls out to hashCode0 to compute the hash.
+ */
+#undef STRING_HASHCODE
+#if !(JAVASE >= 16)
+#define STRING_HASHCODE CNIjava_lang_String_hashCode
+#else
+#define STRING_HASHCODE CNIjava_lang_String_hashCode0
+#endif
+
+/*
  * Class:       java/lang/String
  * Method:      hashCode
  * Signature:   ()I
  */
 CNIEXPORT CNIResultCode
-CNIjava_lang_String_hashCode(CVMExecEnv* ee, CVMStackVal32 *arguments,
+STRING_HASHCODE(CVMExecEnv* ee, CVMStackVal32 *arguments,
                              CVMMethodBlock **p_mb)
 {
     CVMObjectICell * thisICell = &arguments[0].j.r;
@@ -369,6 +336,12 @@ CNIjava_lang_String_hashCode(CVMExecEnv* ee, CVMStackVal32 *arguments,
     arguments[0].j.i = h;
     return CNI_SINGLE; 
 }
+
+/*
+ * SE6 has a newer version of indexOf(int, int) that does some extra
+ * handling not currently done in stringIndexOfHelper1.
+*/
+#if !(JAVASE >= 16)
 
 /*
  * Helper function for indexOf(I)I and indexOf(II)I.
@@ -446,6 +419,8 @@ CNIjava_lang_String_indexOf__II(CVMExecEnv* ee, CVMStackVal32 *arguments,
     arguments[0].j.i = stringIndexOfHelper1(ee, thisICell, ch, fromIndex);
     return CNI_SINGLE;
 }
+
+#endif /* !JAVASE */
 
 /*
  * Helper function for indexOf(Ljava/lang/String;)I

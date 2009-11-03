@@ -1535,7 +1535,7 @@ CVMsplitVerifyRewriteStackMapsAsPointerMaps(VfyContext* cntxt);
 
 #endif
 
-static void Vfy_verifyMethodOrAbort(VfyContext* cntxt, METHOD vMethod);
+static void Vfy_verifyMethodOrAbort(VfyContext* cntxt, const METHOD vMethod);
 static CVMBool Vfy_checkNewInstructions(VfyContext* cntxt, METHOD vMethod);
 static int Vfy_verifyMethod(VfyContext* cntxt, CLASS vClass, METHOD vMethod);
 

@@ -31,6 +31,32 @@
 #include "javavm/include/jit/jitutils.h"
 #include "javavm/include/porting/jit/jit.h"
 
+#ifdef CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
+#include <sys/mman.h>
+
+/* The following is needed to supported an executable code cache
+   with some Unix releases.
+*/
+void *
+CVMJITallocCodeCache(CVMSize *size)
+{
+    void* s = mmap(0, *size, 
+          PROT_EXEC | PROT_READ | PROT_WRITE, 
+          MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (s == MAP_FAILED) {
+        return NULL;
+    }
+    return s;
+}
+
+void
+CVMJITfreeCodeCache(void *start)
+{
+    munmap(start, CVMglobals.jit.codeCacheSize);
+}
+
+#endif /* CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE */
+
 #ifdef CVMJIT_TRAP_BASED_GC_CHECKS
 #include <sys/mman.h>
 

@@ -1167,6 +1167,8 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->fullShutdown = CVM_TRUE;
 #endif
 
+    gs->hangOnStartup = options->hangOnStartup;
+
 #ifdef CVM_JVMTI
     /* jvmti global variables initialization */
     CVMjvmtiInitializeGlobals(&gs->jvmti);
@@ -1309,10 +1311,15 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
      */
     CVMstackmapComputerDestroy();
 
+/* Java SE Zip doesn't have this function.  Comment out for now.
+   FIXME - make sure this doesn't introduce a leak.
+*/
+#ifndef JAVASE
     /*
      * Destroy zip_util related data structures
      */
     CVMzutilDestroyZip();
+#endif
 
 #ifndef CDC_10
     /* free assertion command line options */

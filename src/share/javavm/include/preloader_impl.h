@@ -72,6 +72,21 @@ struct java_lang_Class {
     CVMObjectHeader    hdr;
     CVMClassBlock*     classBlockPointer;
     CVMObject*         classLoader;
+#if JAVASE >= 16
+    CVMObject* name;
+#endif
+#if JAVASE == 15
+    CVMJavaInt classRedefinedCount;
+    CVMJavaInt lastRedefinedCount;
+#endif
+#if JAVASE >= 15
+    CVMObject* genericInfo;
+    CVMObject* enumConstants;
+    CVMObject* enumConstantDirectory;
+    CVMObject* annotations;
+    CVMObject* declaredAnnotations;
+    CVMObject* annotationType;
+#endif
 };
 
 #define CVM_CLASS_INIT(cbname,hashCode) \

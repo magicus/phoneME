@@ -258,4 +258,16 @@ CVMdynlinkClose(void *dsoHandle)
     free(handle);
 }
 
+CVMBool
+CVMdynlinkExists(const char *name)
+{
+    void *handle;
+
+    handle = CVMdynlinkOpen((const char *) name);
+    if (handle != NULL) {
+        CVMdynlinkClose(handle);
+    }
+    return (handle != NULL);
+}
+
 #endif /* #defined CVM_DYNAMIC_LINKING */
