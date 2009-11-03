@@ -50,45 +50,51 @@ typedef u_int64_t ULONG64;
 #endif /* LONG64_DEFINED */ 
 #endif /* WIN32 */
 
-#ifdef SUBLIME_BUFFER_SIZE
-#define BUFFER_SIZE SUBLIME_BUFFER_SIZE
-#else /* SUBLIME_BUFFER_SIZE */
-/* 8 MB minus 12 bytes for the header length */ 
-#define BUFFER_SIZE 8388596
-#endif /* SUBLIME_BUFFER_SIZE */
-
 /*
- * the data buffer structure: 
- * 0 to 3   : data (only the data!) buffer size (w/o header) (host byte order) 
- * 4 to 7   : thread unique ID (host byte order)
- * 8 to 11  : read/write protocol - the message length (network byte order)
- * 12 to bufferSize+12 : data buffer
+ * the data buffer structure (all field values are in network byte order): 
+ * 0 to 3   : capacity - the real size of data field in bytes 
+ * 4 to 7   : closed - closed flag
+ * 8 to 11  : readIndex - the index at which to start read
+ * 12 to 15 : byteCount - the number of bytes which are valid in the buffer,
+ *                        valid data start at [data + readIndex] up to 
+ *                        [data + (readIndex + byteCount) % capacity - 1]
+ * 16 to capacity + 16 : the buffer
  */ 
 typedef struct DataBufferStruct{
-  int32_t size;
-  int32_t threadID;
-  int32_t dataLength;
-  char data;
+  int32_t capacity;
+  int32_t closed;
+  int32_t readIndex;
+  int32_t byteCount;
+  char data[4];
 } DataBuffer;
+
+/*  capacity + closed flag + read index + byte count */
+#define SUBLIME_FIELDS_LENGTH (sizeof(DataBuffer) - 4 * sizeof(char))
+
+#ifndef SUBLIME_BUFFER_SIZE
+#define SUBLIME_BUFFER_SIZE (8 * 1024 * 1024)
+#endif
+ 
+#define SUBLIME_USABLE_BUFFER_SIZE (SUBLIME_BUFFER_SIZE - SUBLIME_FIELDS_LENGTH)
 
 #ifdef WIN32 
 
 typedef struct InternalSharedBufferDataStruct {
     DataBuffer* dataBuffer;
     HANDLE hMapFile;
-    HANDLE mutex;
-    // pointers point to the specific byte to be written/read
-    int write_pointer, read_pointer;
+    MUTEX_HANDLE mutex;
+    EVENT_HANDLE bufferReadyEvent;
+    EVENT_HANDLE dataReadyEvent;
 } InternalSharedBufferData;
 
 #else /* !WIN32 */ 
 
 typedef struct InternalSharedBufferDataStruct {
-  DataBuffer* dataBuffer;
-  int* hMapFile;
-  pthread_mutex_t *mutex;
-  // pointers point to the specific byte to be written/read
-  int write_pointer, read_pointer;
+    DataBuffer* dataBuffer;
+    int* hMapFile;
+    MUTEX_HANDLE mutex;
+    EVENT_HANDLE bufferReadyEvent;
+    EVENT_HANDLE dataReadyEvent;
 } InternalSharedBufferData;
 
 #endif
@@ -96,20 +102,18 @@ typedef struct InternalSharedBufferDataStruct {
 
 typedef struct SharedBufferStruct { 
     // read/write from/to the shared buffer 
-    int (*write) (struct SharedBufferStruct* sb, char * buffer, int numOfBytes); 
-    int (*read) (struct SharedBufferStruct* sb, char * targetBuffer, int32_t bufSize, int *byte);
-    int (*readInt32) (struct SharedBufferStruct *sb, int32_t *result);
-    int (*readLong64)(struct SharedBufferStruct *sb, long64 *result) ;
-    int (*writeInt32)(struct SharedBufferStruct *sb, int32_t value) ;
-    int (*printf) (struct SharedBufferStruct *sb, char *format, ...);
-    void (*lock) (struct SharedBufferStruct* sb); 
-    void (*unlock) (struct SharedBufferStruct* sb);
-    int (*reset) (struct SharedBufferStruct* sb);
-    void (*stampID) (struct SharedBufferStruct* sb);
-    void (*setID) (struct SharedBufferStruct* sb, uint32_t id);
-    int32_t (*getBufferSize) (struct SharedBufferStruct* sb);
-    int32_t (*getMsgLength) (struct SharedBufferStruct* sb);
-    int32_t (*getThreadID) (struct SharedBufferStruct* sb);
+    int (*write)(struct SharedBufferStruct *sb, 
+                 const void *buffer, int32_t numOfBytes);
+    int (*writeAll)(struct SharedBufferStruct *sb, 
+                    const void *buffer, int32_t numOfBytes);
+    int (*writeInt32)(struct SharedBufferStruct *sb, int32_t value);
+    void (*flush)(struct SharedBufferStruct *sb);
+    int (*read)(struct SharedBufferStruct *sb, 
+                void *buffer, int32_t numOfBytes);
+    int (*readAll)(struct SharedBufferStruct *sb, 
+                   void *buffer, int32_t numOfBytes);
+    int (*readInt32)(struct SharedBufferStruct *sb, int32_t *result);
+    int (*readLong64)(struct SharedBufferStruct *sb, long64 *result);
 
     InternalSharedBufferData data;
 } SharedBuffer; 

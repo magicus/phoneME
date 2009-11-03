@@ -44,16 +44,13 @@
 #include <assert.h>
 #include "sublimeio.h"
 
-
-
-/*  buffer size + threadID + message length */
-#define FIELDS_LENGTH(sb) ((char *) &sb->data.dataBuffer->data \
-                                - (char *) &sb->data.dataBuffer->size)
-#define MUTEX_CHAR 'm'
-
 static int debug = 0; 
 
+static int sharedBuffer_createIpcObjects(SharedBuffer *sb, char *bufferName);
+static void sharedBuffer_destroyIpcObjects(SharedBuffer *sb);
 
+static void dataBuffer_write(DataBuffer *db, const void *data, int32_t length);
+static void dataBuffer_read(DataBuffer *db, void *data, int32_t length);
 
 #ifdef WIN32 
 
@@ -71,19 +68,10 @@ static void error(char * errorMsg){
     fprintf(stderr,"%s (%d)(%s)\n",errorMsg, dw, lpMsgBuf);
 }
 
-static uint32_t getThreadUniqueId(void) {
-    return(GetCurrentThreadId());
-}
-
 #else /* !WIN32 */
 
 static void error(char * errorMsg){
     fprintf(stderr,"%s (%d)\n",errorMsg, errno);
-}
-
-
-static uint32_t getThreadUniqueId(void) {
-    return (pthread_self());
 }
 
 #endif /* WIN32 */
@@ -91,43 +79,50 @@ static uint32_t getThreadUniqueId(void) {
 
 static void sharedBuffer_initPointers(SharedBuffer *sb) ;
 
+static char *constructIpcObjectName(const char *bufferName, 
+                                    const char *suffix){
+    int nameLength = strlen(bufferName); 
+    char* objectName = (char*) malloc(nameLength + strlen(suffix) + 1);
+    
+    if (objectName == NULL) {
+        return NULL;
+    }
+    
+    strcpy(objectName, bufferName);
+    strcpy(objectName + nameLength, suffix);
 
-
-/* the name of the mutex is identical to the name of the shared buffer 
- * + extra char for mutex (MUTEX_CHAR)
- * return a new allocated string (uses malloc)
- */ 
-static char* getMutexName(char* sharedBufferName){
-    int nameLength = strlen(sharedBufferName); 
-    char* mutexName = (char*)malloc(nameLength + 2);
-    strcpy(mutexName, sharedBufferName);
-    mutexName[nameLength] = MUTEX_CHAR;
-    mutexName[nameLength + 1] = 0;
-    return mutexName; 
+    return objectName; 
 }
 
-// blocking
-static void sharedBuffer_lock(SharedBuffer* sb){
-    assert(sb != NULL);     
-    WaitForMutex(sb->data.mutex); 
+static MUTEX_HANDLE constructIpcMutex(const char *bufferName,
+                                      const char *suffix) {
+    char *mutexName = constructIpcObjectName(bufferName, suffix);
+    MUTEX_HANDLE mutexHandle;
+    
+    if (mutexName == NULL) {
+        return NULL;
+    }
+    
+    mutexHandle = LimeCreateMutex(NULL, FALSE, mutexName);
+    free(mutexName);
+    
+    return mutexHandle;
 }
 
-static void sharedBuffer_unlock(SharedBuffer* sb){
-    assert(sb != NULL); 
-    LimeReleaseMutex(sb->data.mutex);
+static EVENT_HANDLE constructIpcEvent(const char *bufferName,
+                                      const char *suffix) {
+    char *eventName = constructIpcObjectName(bufferName, suffix);
+    EVENT_HANDLE eventHandle;
+    
+    if (eventName == NULL) {
+        return NULL;
+    }
+    
+    eventHandle = LimeCreateEvent(NULL, FALSE, FALSE, eventName);
+    free(eventName);
+    
+    return eventHandle;
 }
-
-/* returns the buffer size (dataBuffer[0,3]) */ 
-
-static int32_t sharedBuffer_getBufferSize(SharedBuffer *sb){
-    return sb->data.dataBuffer->size;
-}
-
-
-static int32_t sharedBuffer_getMsgLength(SharedBuffer *sb){
-    return ntohl(sb->data.dataBuffer->dataLength); 
-}
-
 
 /*
  * size - the desired buffer size. 
@@ -143,7 +138,7 @@ static int sharedBuffer_attachBuffer(SharedBuffer* sb, int size ){
         (DataBuffer*) MapViewOfFile(sb->data.hMapFile,   
                                     FILE_MAP_ALL_ACCESS, //read/write permission
                                     0, 0, 
-                                    size + (int)FIELDS_LENGTH(sb)); 
+                                    size + SUBLIME_FIELDS_LENGTH); 
 
     if (sb->data.dataBuffer == NULL) { 
         error("SUBLIMEIO: Could not map view of file ");
@@ -203,12 +198,10 @@ static int sharedBuffer_open(SharedBuffer* sb, int size){
     return res; 
 }
 
-
 /* create a new file mapping and open the shared buffer */
 static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
-    int size = BUFFER_SIZE; 
+    int size = SUBLIME_USABLE_BUFFER_SIZE; 
     int res; 
-    char* mutexName; 
 
 #ifndef WIN32 
     key_t kt; 
@@ -220,17 +213,11 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
     assert(sb != NULL);
     assert(bufferName != NULL);
     
-    sb->data.write_pointer = sb->data.read_pointer = 0;
-
-    mutexName = getMutexName(bufferName);
-    sb->data.mutex = LimeCreateMutex(NULL, FALSE, mutexName);
-    free(mutexName);
-     
-    if (sb->data.mutex == NULL){
-        error("SUBLIMEIO: Could not create mutex ");
-        exit(1);    
+    if (sharedBuffer_createIpcObjects(sb, bufferName) != 0) {
+        error("SUBLIMEIO: Could not create shared buffer IPC objects");
+        exit(1);
     }
-
+     
 #ifdef WIN32    
     
     sb->data.hMapFile = 
@@ -238,8 +225,9 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
                           NULL,                    // default security 
                           PAGE_READWRITE,          // read/write access
                           0,                       // max. object size 
-                          size + (int)FIELDS_LENGTH(sb),     // buffer size  
-                          bufferName);       // name of mapping object
+                          size + SUBLIME_FIELDS_LENGTH,     
+                                                   // buffer size  
+                          bufferName);             // name of mapping object
     if ((sb->data.hMapFile == NULL)||
         (sb->data.hMapFile == INVALID_HANDLE_VALUE)) {
         error("SUBLIMEIO: Could not create file mapping object ");
@@ -263,7 +251,8 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
     } 
 
     /* 511 - all permissions */ 
-    if ((shmid = shmget(kt, BUFFER_SIZE, IPC_CREAT | 511 )) == -1){
+    if ((shmid = shmget(kt, size + SUBLIME_FIELDS_LENGTH, IPC_CREAT | 511 )) 
+            == -1){
         error("CreateNewSharedBuffer: shmget failed");
     } 
 
@@ -282,7 +271,12 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
     if ((res = sharedBuffer_open(sb, size)) != 0){
         return res;
     }
-    sb->data.dataBuffer->size = size; 
+
+    sb->data.dataBuffer->capacity = htonl(size); 
+    sb->data.dataBuffer->closed = 0;
+    sb->data.dataBuffer->readIndex = 0;
+    sb->data.dataBuffer->byteCount = 0;
+
     return res; 
     
 }  
@@ -293,11 +287,20 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
 static int sharedBuffer_close(SharedBuffer* sb){
     assert(sb != NULL); 
 
+    /* TODO: flush */ 
+    /* sharedBuffer_flush(sb); */
+
+    WaitForMutex(sb->data.mutex);
+    sb->data.dataBuffer->closed = htonl(1);
+    LimeReleaseMutex(sb->data.mutex);
+    
+    LimeSetEvent(sb->data.bufferReadyEvent);
+    LimeSetEvent(sb->data.dataReadyEvent);
+
 #ifdef WIN32
  
     UnmapViewOfFile((char*)sb->data.dataBuffer);
     CloseHandle(sb->data.hMapFile); 
-    CloseHandle(sb->data.mutex); 
 
 #else /* !WIN32 */
 
@@ -308,170 +311,313 @@ static int sharedBuffer_close(SharedBuffer* sb){
      * but because it is called by both sides, it will get eventually destroyed
      */
     shmctl(*(sb->data.hMapFile), IPC_RMID, NULL);
-
-    pthread_mutex_destroy(sb->data.mutex); 
+    
     close(*(sb->data.hMapFile));
 
 #endif /* WIN32 */ 
+
+    sharedBuffer_destroyIpcObjects(sb);
     free(sb); 
+    
     return 0; 
 }
 
+static int sharedBuffer_write(SharedBuffer *sb, 
+                              const void *buffer, int32_t numOfBytes) {
+    int32_t bufCapacity;
+    int32_t bufClosed;
+    int32_t bufByteCount;
+    int32_t bufAvailableByteCount;
 
-/* first 4 bytes (sizeof int32_t) reserve for the actual length */
-static int sharedBuffer_write(SharedBuffer* sb, char * buffer, int numOfBytes){
-    uint32_t msgLength; 
-    assert(sb != NULL); 
-
-    if (numOfBytes + sb->getMsgLength(sb) > sb->getBufferSize(sb)){  
-        fprintf(stderr, " SUBLIMEIO: buffer size ");
-        fprintf(stderr, "(%d) is not big enough for message size (%d)\n", 
-                sb->getBufferSize(sb), numOfBytes+ sb->getMsgLength(sb));
-        fflush(stderr); 
-        exit(1); 
-    } 
-    msgLength = ntohl(sb->data.dataBuffer->dataLength); 
-    msgLength += numOfBytes;  
-    msgLength = htonl(msgLength); 
-    sb->data.dataBuffer->dataLength = msgLength; 
-    memcpy(&sb->data.dataBuffer->data + sb->data.write_pointer, 
-           buffer, numOfBytes);   
-    sb->data.write_pointer += numOfBytes; 
-    return 0;
-}
-
-static int sharedBuffer_read(SharedBuffer* sb, char * targetBuffer, 
-                             int32_t bufSize, int *bytes){
-    int32_t length; 
-    assert(sb != NULL); 
-    assert(targetBuffer != NULL); 
-    assert(bufSize >= 0);
-    length = ntohl(sb->data.dataBuffer->dataLength); 
-    length = (length < bufSize) ? length : bufSize; 
-    memcpy(targetBuffer, &sb->data.dataBuffer->data + sb->data.read_pointer, 
-           length);
-    sb->data.read_pointer += length;
-    *bytes = length;
-    return 0;
-}
-
-static int sharedBuffer_printf(SharedBuffer *sb, char *format, ...) {
-    char buffer[1024];
-    va_list args;
     assert(sb != NULL);
-    assert(format != NULL);
-    va_start(args, format);
-#ifdef WIN32 
-    
-    _vsnprintf(buffer, 1024, format, args);
+    assert(buffer != NULL);
+    assert(numOfBytes >= 0);
 
-#else /* !win32 */ 
+    if (numOfBytes == 0) {
+        return 0;
+    }
+
+    WaitForMutex(sb->data.mutex);
+        
+    bufCapacity = ntohl(sb->data.dataBuffer->capacity);
+    bufClosed = ntohl(sb->data.dataBuffer->closed);
+    bufByteCount = ntohl(sb->data.dataBuffer->byteCount);
     
-    vsnprintf(buffer, 1024, format, args);
+    while ((bufByteCount == bufCapacity) && !bufClosed) {
+        LimeReleaseMutex(sb->data.mutex);
+        WaitForEvent(sb->data.bufferReadyEvent);
+        
+        WaitForMutex(sb->data.mutex);
+        bufClosed = ntohl(sb->data.dataBuffer->closed);
+        bufByteCount = ntohl(sb->data.dataBuffer->byteCount);
+    }
     
-#endif
-    va_end(args);
-    return sb->write(sb, buffer, strlen(buffer));
+    if (bufClosed) {
+        LimeReleaseMutex(sb->data.mutex);
+        return -1;
+    }
+    
+    bufAvailableByteCount = bufCapacity - bufByteCount;
+    if (numOfBytes > bufAvailableByteCount) {
+        numOfBytes = bufAvailableByteCount;
+    }
+    
+    dataBuffer_write(sb->data.dataBuffer, buffer, numOfBytes);
+
+    if (numOfBytes == bufAvailableByteCount) {
+        /* the buffer is full, we can't delay the notification */
+        LimeSetEvent(sb->data.dataReadyEvent);
+    }
+    
+    LimeReleaseMutex(sb->data.mutex);
+
+    return numOfBytes;
+}
+
+static void sharedBuffer_flush(SharedBuffer *sb) {
+    int32_t bufByteCount;
+
+    WaitForMutex(sb->data.mutex);
+
+    bufByteCount = ntohl(sb->data.dataBuffer->byteCount);
+    if (bufByteCount > 0) {
+        LimeSetEvent(sb->data.dataReadyEvent);
+    }
+    
+    LimeReleaseMutex(sb->data.mutex);
+}
+
+static int sharedBuffer_read(SharedBuffer *sb, 
+                             void *buffer, int32_t numOfBytes) {
+    int32_t bufCapacity;
+    int32_t bufClosed;
+    int32_t bufByteCount;
+
+    assert(sb != NULL);
+    assert(buffer != NULL);
+    assert(numOfBytes >= 0);
+
+    if (numOfBytes == 0) {
+        return 0;
+    }
+
+    WaitForMutex(sb->data.mutex);
+        
+    bufCapacity = ntohl(sb->data.dataBuffer->capacity);
+    bufClosed = ntohl(sb->data.dataBuffer->closed);
+    bufByteCount = ntohl(sb->data.dataBuffer->byteCount);
+
+    while ((bufByteCount == 0) && !bufClosed) {
+        LimeReleaseMutex(sb->data.mutex);
+        WaitForEvent(sb->data.dataReadyEvent);
+        
+        WaitForMutex(sb->data.mutex);
+        bufClosed = ntohl(sb->data.dataBuffer->closed);
+        bufByteCount = ntohl(sb->data.dataBuffer->byteCount);
+    }
+
+    if (bufByteCount == 0) {
+        /* buffer is closed */
+        LimeReleaseMutex(sb->data.mutex);
+        return -1;
+    }
+
+    if (numOfBytes > bufByteCount) {
+        numOfBytes = bufByteCount;
+    }
+
+    dataBuffer_read(sb->data.dataBuffer, buffer, numOfBytes);
+    
+    if (bufByteCount == bufCapacity) {
+        /* the whole buffer was full, send notification */
+        LimeSetEvent(sb->data.bufferReadyEvent);
+    }
+
+    LimeReleaseMutex(sb->data.mutex);
+
+    return numOfBytes;
 }
 
 void DeleteSharedBuffer(SharedBuffer *sb){
     sharedBuffer_close(sb); 
 }
 
+static int sharedBuffer_readAll(SharedBuffer *sb, 
+                                void *buffer, int length) {
+    char *ptr = (char *) buffer;
+    while (length > 0) {
+        int readBytes = sb->read(sb, ptr, length);
+        if (readBytes < 0) {
+            return readBytes;
+        }
 
-static int sharedBuffer_readn(SharedBuffer *sb, char *buffer, int length) {
-    while (length != 0) {
-        int readBytes = 0;
-        int rc = sb->read(sb, buffer, length, &readBytes);
-        if (rc) return rc;
         length -= readBytes;
-        buffer += readBytes;
+        ptr += readBytes;
     }
+    
     return 0;
 }
 
-static int readInt(SharedBuffer *sb, uint32_t *result) {
-    assert(sb != NULL);
-    return sharedBuffer_readn(sb, (char *) result, sizeof(uint32_t));
+static int sharedBuffer_writeAll(SharedBuffer *sb, 
+                                 const void *buffer, int length) {
+    const char *ptr = (const char *) buffer;
+    while (length > 0) {
+        int writtenBytes = sb->write(sb, ptr, length);
+        if (writtenBytes < 0) {
+            return writtenBytes;
+        }
+
+        length -= writtenBytes;
+        ptr += writtenBytes;
+    }
+    
+    return 0;
 }
 
+static int readIntRaw(SharedBuffer *sb, uint32_t *result) {
+    assert(sb != NULL);
+    return sharedBuffer_readAll(sb, result, sizeof(uint32_t));
+}
 
 /** Extra optimization here, since it is the most frequently called
  * socket function */
 static int sharedBuffer_writeInt32(SharedBuffer *sb, int32_t value) {
+    assert(sb != NULL);    
     value = htonl(value); 
-    return sb->write(sb, (char*)&value, sizeof(int32_t));
+    return sharedBuffer_writeAll(sb, &value, sizeof(int32_t));
 }
 
 /* converts the result from network byteorder to host byteorder */ 
 
 static int sharedBuffer_readInt32(SharedBuffer *sb, int32_t *result) {
-    int bytes; 
+    int32_t temp; 
+    int retval;
+    
     assert(sb != NULL);
     assert(result != NULL);
-    sharedBuffer_read(sb,(char*) result, sizeof(int32_t), &bytes);
-    *result = ntohl(*result);
+    
+    retval = sharedBuffer_readAll(sb, &temp, sizeof(int32_t));
+    if (retval < 0) {
+        return retval;
+    }
+    
+    *result = ntohl(temp);
     return 0;
 }
-
 
 static int sharedBuffer_readLong64(SharedBuffer *sb, long64 *result) {
     uint32_t l = 12345678, h = 12345678;
+    int retval;
+
     assert(sb != NULL);
     assert(result != NULL);
-    if (readInt(sb, &h)) return 1;
-    if (readInt(sb, &l)) return 1;
-    (*result) = ((long64)ntohl(h) << 32) | ((long64)ntohl(l));
+    
+    retval = readIntRaw(sb, &h);
+    if (retval < 0) {
+        return retval;
+    }
+    
+    retval = readIntRaw(sb, &l);
+    if (retval < 0) {
+        return retval;
+    }
+    
+    (*result) = ((long64) ntohl(h) << 32) | ((long64) ntohl(l));
     return 0;
-}
-
-
-/*
- * reset the shared buffer fields for a new write operation 
- */
-static int sharedBuffer_reset(SharedBuffer *sb){
-    assert(sb != NULL);
-    sb->data.write_pointer = sb->data.read_pointer = 0 ; 
-    sb->data.dataBuffer->dataLength = 0; 
-    sb->data.dataBuffer->threadID = 0;
-    return 0;
-}
-
-static int32_t sharedBuffer_getThreadID(SharedBuffer* sb){
-    assert(sb != NULL); 
-    return sb->data.dataBuffer->threadID; 
-}
-
-static void sharedBuffer_stampID(SharedBuffer *sb){
-    uint32_t id = getThreadUniqueId(); 
-    id = htonl(id); 
-    assert(sb != NULL); 
-    sb->data.dataBuffer->threadID = id; 
-}
-
-/* id - network byte order */ 
-static void sharedBuffer_setID(SharedBuffer *sb,uint32_t id){
-    assert(sb != NULL); 
-    sb->data.dataBuffer->threadID = id; 
 }
 
 static void sharedBuffer_initPointers(SharedBuffer *sb) {
+    sb->write = sharedBuffer_write;
+    sb->writeAll = sharedBuffer_writeAll;
+    sb->writeInt32 = sharedBuffer_writeInt32;
+    sb->flush = sharedBuffer_flush;
     sb->read = sharedBuffer_read;
+    sb->readAll = sharedBuffer_readAll;
     sb->readInt32 = sharedBuffer_readInt32;
     sb->readLong64 = sharedBuffer_readLong64;
-    sb->write = sharedBuffer_write;
-    sb->writeInt32 = sharedBuffer_writeInt32;
-    sb->printf = sharedBuffer_printf;
-    sb->lock = sharedBuffer_lock;  
-    sb->unlock = sharedBuffer_unlock;
-    sb->getBufferSize = sharedBuffer_getBufferSize;
-    sb->reset = sharedBuffer_reset;
-    sb->getThreadID = sharedBuffer_getThreadID;
-    sb->stampID = sharedBuffer_stampID; 
-    sb->setID = sharedBuffer_setID; 
-    sb->getMsgLength = sharedBuffer_getMsgLength;
 }
 
+static int sharedBuffer_createIpcObjects(SharedBuffer *sb, char *bufferName) {
+    MUTEX_HANDLE mutex;
+    EVENT_HANDLE bufferReadyEvent;
+    EVENT_HANDLE dataReadyEvent;
+    
+    mutex = constructIpcMutex(bufferName, "_lock");
+    if (mutex == NULL) {
+        return -1;
+    }
+    
+    bufferReadyEvent = constructIpcEvent(bufferName, "_br_event");
+    if (bufferReadyEvent == NULL) {
+        LimeDestroyMutex(mutex);
+        return -1;
+    }
+    
+    dataReadyEvent = constructIpcEvent(bufferName, "_dr_event");
+    if (dataReadyEvent == NULL) {
+        LimeDestroyEvent(bufferReadyEvent);
+        LimeDestroyMutex(mutex);
+        return -1;
+    }
+    
+    sb->data.mutex = mutex;
+    sb->data.bufferReadyEvent = bufferReadyEvent;
+    sb->data.dataReadyEvent = dataReadyEvent;
+    
+    return 0;
+}
+
+static void sharedBuffer_destroyIpcObjects(SharedBuffer *sb) {
+    LimeDestroyMutex(sb->data.mutex);
+    LimeDestroyEvent(sb->data.bufferReadyEvent);
+    LimeDestroyEvent(sb->data.dataReadyEvent);
+}
+
+static void dataBuffer_write(DataBuffer *db, const void *data, int32_t length) {
+    const char *ptr = (const char *) data;
+
+    int32_t bufCapacity = ntohl(db->capacity);
+    int32_t bufReadIndex = ntohl(db->readIndex);
+    int32_t bufByteCount = ntohl(db->byteCount);
+
+    int32_t bufWriteIndex = (bufReadIndex + bufByteCount) % bufCapacity;
+    int32_t bufRemainderLen = bufCapacity - bufWriteIndex;
+    int32_t copiedChunkHeadLen = (length < bufRemainderLen) 
+                                         ? length
+                                         : bufRemainderLen;
+    int copiedChunkTailLen = length - copiedChunkHeadLen;
+
+    /* copy the head part */
+    memcpy(db->data + bufWriteIndex, ptr, copiedChunkHeadLen);
+    /* copy the tail part */
+    memcpy(db->data, ptr + copiedChunkHeadLen, copiedChunkTailLen);
+    
+    /* update the data buffer state variables */
+    db->byteCount = htonl(bufByteCount + length);
+}
+
+static void dataBuffer_read(DataBuffer *db, void *data, int32_t length) {
+    char *ptr = (char *) data;
+
+    int32_t bufCapacity = ntohl(db->capacity);
+    int32_t bufReadIndex = ntohl(db->readIndex);
+    int32_t bufByteCount = ntohl(db->byteCount);
+
+    int32_t bufRemainderLen = bufCapacity - bufReadIndex;
+    int32_t copiedChunkHeadLen = (length < bufRemainderLen) 
+                                         ? length
+                                         : bufRemainderLen;
+    int32_t copiedChunkTailLen = length - copiedChunkHeadLen;
+
+    /* copy the head part */
+    memcpy(ptr, db->data + bufReadIndex, copiedChunkHeadLen);
+    /* copy the tail part */
+    memcpy(ptr + copiedChunkHeadLen, db->data, copiedChunkTailLen);
+    
+    /* update the data buffer state variables */
+    db->readIndex = htonl((bufReadIndex + length) % bufCapacity);
+    db->byteCount = htonl(bufByteCount - length);
+}
 
 /* 
  * create a new sharedBuffer - allocate new memory for the name using strdup
@@ -485,6 +631,7 @@ SharedBuffer* CreateNewSharedBuffer(char* name){
         fflush(stderr); 
         return NULL; 
     }    
+    
     if (sharedBuffer_create(sb, name) != 0){
         error("SUBLIMEIO: Could not create shared buffer");
         fflush(stderr); 
@@ -494,20 +641,18 @@ SharedBuffer* CreateNewSharedBuffer(char* name){
     return sb; 
 }
 
-
 /*
  * open an existing shared buffer object with a given name using strdup 
  */
-SharedBuffer* OpenSharedBuffer(char* name){
+SharedBuffer* OpenSharedBuffer(char* bufferName){
 #ifndef WIN32
-    return CreateNewSharedBuffer(name); 
+    return CreateNewSharedBuffer(bufferName); 
 }
 #else /* WIN32 */
     SharedBuffer *sb = (SharedBuffer *) malloc(sizeof(SharedBuffer));
-    char *mutexName; 
-    int32_t size = BUFFER_SIZE; 
+    int32_t size = SUBLIME_USABLE_BUFFER_SIZE; 
 
-    assert(name != NULL);
+    assert(bufferName != NULL);
 
     if (sb == NULL) {
         error("SUBLIMEIO: Could not create shared buffer");
@@ -517,7 +662,7 @@ SharedBuffer* OpenSharedBuffer(char* name){
     sb->data.hMapFile = OpenFileMapping(
             FILE_MAP_ALL_ACCESS,   // read/write access
             FALSE,                 // do not inherit the name
-            name);                 // name of mapping object 
+            bufferName);           // name of mapping object 
     
     if (sb->data.hMapFile == NULL) { 
         error("SUBLIMEIO: Could not open file mapping object");
@@ -525,32 +670,21 @@ SharedBuffer* OpenSharedBuffer(char* name){
         return NULL;
     } 
 
-    mutexName = getMutexName(name); 
-    sb->data.mutex = LimeCreateMutex(NULL, FALSE, mutexName); 
-    free(mutexName);
-
-    if (sb->data.mutex == NULL) {
-        error("SUBLIMEIO: Could not create shared buffer mutex");
+    if (sharedBuffer_createIpcObjects(sb, bufferName) != 0) {
+        error("SUBLIMEIO: Could not create shared buffer IPC objects");
         CloseHandle(sb->data.hMapFile);
         free(sb);
         return NULL;
     }
 
     if (sharedBuffer_open(sb, size) != 0) {
-        CloseHandle(sb->data.mutex); 
+        sharedBuffer_destroyIpcObjects(sb);
         CloseHandle(sb->data.hMapFile);
         free(sb);
         return NULL;
     }
     
-    sb->data.write_pointer = sb->data.read_pointer = 0 ; 
-    sb->data.dataBuffer->size = size; 
-
     return sb; 
 }
 
 #endif
-
-
-
-

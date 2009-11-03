@@ -35,27 +35,12 @@
 #include "com_sun_kvem_Sublime.h"
 
 static SharedBuffer *callSharedBuffer, *returnSharedBuffer; 
-static char *buffer; 
-static char *processID; 
-static int32_t procID; 
-static char **names; 
-static jbyte *buf;
 
+static unsigned char *localBuffer;
+static size_t localBufferCapacity;
+ 
 /* 4 bytes for C thread ID and 4 bytes for message length field */ 
 #define FIELDS_LENGTH 8 
-
-/* 
- * events: 
- * 0 - method call received on first shared buffer (callSharedBuffer)
- * 1 - finished reading call from first shared buffer 
- * 2 - finished writing result to second shared buffer (returnSharedBuffer)
- * 3 - finished reading result from second shared buffer 
- */
-
-static EVENT_HANDLE event0; 
-static EVENT_HANDLE event1; 
-static EVENT_HANDLE event2; 
-static EVENT_HANDLE event3; 
 
 typedef struct _BUFFER_POOL {
     jclass classHandle;  
@@ -63,37 +48,130 @@ typedef struct _BUFFER_POOL {
     jmethodID midFreeBuffer;
 } BUFFER_POOL;
 
-static int stopProcess = 0;
+static MUTEX_HANDLE bridgeMutex;
 static BUFFER_POOL * bufferPool;
 
-static int initEvents();
+static void finalizeLimeBridge();
+
+static int
+prepareLocalBuffer(size_t minCapacity) {
+    unsigned char *newLocalBuffer;
+    
+    if (minCapacity <= localBufferCapacity) {
+        return 0;
+    }
+
+    newLocalBuffer = (unsigned char *) realloc(localBuffer, minCapacity);
+    if (newLocalBuffer == NULL) {
+        return -1;
+    }
+    
+    localBuffer = newLocalBuffer;
+    localBufferCapacity = minCapacity;
+    
+    return 0;
+}
+
+static void
+sublimeBridgeErrorImpl(const char * format, va_list argptr) {
+    fprintf(stderr, "SUBLIMEBRIDGE: ");
+
+    vfprintf(stderr, format, argptr);
+    fflush(stderr);
+}
+
+static void
+sublimeBridgeError(const char * format, ...) {
+    va_list args;
+
+    va_start(args, format);
+    sublimeBridgeErrorImpl(format, args);
+    va_end(args);
+}
 
 static void
 sublimeBridgeFatal(const char * format, ...) {
     va_list args;
 
-    fprintf(stderr, " SUBLIMEBRIDGE: ");
-
     va_start(args, format);
-    vfprintf(stderr, format, args);
+    sublimeBridgeErrorImpl(format, args);
     va_end(args);
 
-    fflush(stderr);
+    finalizeLimeBridge();
     exit(1);
 }
 
-static int CreateSharedBuffer(void) {
-    if ((callSharedBuffer = CreateNewSharedBuffer(names[0])) == NULL) {
-        fprintf(stderr, "Could not create SharedBuffer0 object (%d) \n", GetLastError());
-        fflush(stderr); 
-        return -1; 
+/* return a pointer to a new alloced string: name+process ID */ 
+static char * concatNameProcID(const char *name, const char *procid){
+    char *tmp = (char *) malloc(strlen(name) + strlen(procid) + 1);
+    if (tmp == NULL) {
+        return NULL;
     }
-    if ((returnSharedBuffer = CreateNewSharedBuffer(names[1])) == NULL) {
-        fprintf(stderr, "Could not create SharedBuffer1 object (%d)\n", GetLastError());
-        fflush(stderr); 
-        return -1; 
+
+    tmp = strcpy(tmp, name); 
+    tmp = strcat(tmp, procid); 
+    return tmp; 
+}
+
+static SharedBuffer* CreateSharedBufferForProcID(const char *prefix, 
+                                                 const char *procid) {
+    SharedBuffer* sharedBuffer;
+    char *fullBufferName = concatNameProcID(prefix, procid);
+    if (fullBufferName == NULL) {
+        return NULL;
     }
+    
+    sharedBuffer = CreateNewSharedBuffer(fullBufferName);
+    free(fullBufferName);
+    
+    return sharedBuffer;
+}
+
+static int initializeLimeBridge() {
+    int32_t pid;
+    int retval;
+    char *pidstr;
+    
+    pidstr = (char*) malloc(12 * sizeof(char));
+    if (pidstr == NULL) {
+        sublimeBridgeError("Could not allocate memory\n"); 
+        return -1;
+    } 
+    
+    pid = get_current_process_id();
+    itoa(pid, pidstr, 10);
+
+    callSharedBuffer = 
+            CreateSharedBufferForProcID(SUBLIME_SHARED_BUFFER_NAME0, pidstr);
+    returnSharedBuffer = 
+            CreateSharedBufferForProcID(SUBLIME_SHARED_BUFFER_NAME1, pidstr);
+
+    free(pidstr);
+
+    if ((callSharedBuffer == NULL) || (returnSharedBuffer == NULL)) {
+        sublimeBridgeError("Could not open shared buffers\n");
+        return -1;
+    }
+    
     return 0;
+}
+
+static void finalizeLimeBridge() {
+    if (callSharedBuffer != NULL) {
+        DeleteSharedBuffer(callSharedBuffer);
+        callSharedBuffer = NULL;
+    }
+
+    if (returnSharedBuffer != NULL) {
+        DeleteSharedBuffer(returnSharedBuffer);
+        returnSharedBuffer = NULL;
+    }
+    
+    if (localBuffer != NULL) {
+        free(localBuffer);
+        localBuffer = NULL;
+        localBufferCapacity = 0;
+    }
 }
 
 static BUFFER_POOL * 
@@ -169,157 +247,161 @@ static void process(JNIEnv *env, jclass classSublime) {
     mid_call = (*env)->GetStaticMethodID(env, classSublime, 
                                          "processRequest", "([B)V");  
     if (mid_call == NULL) {
+        BufferPool_destroy(env, bufferPool);
+        LimeDestroyMutex(bridgeMutex);
         sublimeBridgeFatal("Could not find method Sublime.processRequest()\n"); 
     }  
 
     while (1) {
-        /* wait for a call to be placed in callSharedBuffer */ 
-        WaitForEvent(event0);
-        if (stopProcess) {
+        uint32_t requestThreadID, requestSize; 
+        
+        if (callSharedBuffer->readInt32(callSharedBuffer, &requestThreadID)
+                != 0) {
             break;
         }
-        messageSize = callSharedBuffer->getMsgLength(callSharedBuffer); 
+
+        if (callSharedBuffer->readInt32(callSharedBuffer, &requestSize)
+                != 0) {
+            break;
+        }
+
+        WaitForMutex(bridgeMutex);
+
+        if (prepareLocalBuffer(requestSize + FIELDS_LENGTH) != 0) {
+            LimeReleaseMutex(bridgeMutex);
+
+            sublimeBridgeError("Could not allocate memory\n"); 
+            break;
+        }
+        
+        *((uint32_t *) localBuffer) = htonl(requestThreadID);
+        *((uint32_t *) localBuffer + 1) = htonl(requestSize);
+
+        if (callSharedBuffer->readAll(callSharedBuffer, 
+                                      localBuffer + FIELDS_LENGTH,
+                                      requestSize) != 0) {
+            LimeReleaseMutex(bridgeMutex);
+            break;
+        }
+
         /* 8 = place for C thread ID and request size  */  
         jbuffer = BufferPool_getBuffer(env, bufferPool, 
-                                       messageSize + FIELDS_LENGTH);  
+                                       requestSize + FIELDS_LENGTH);
+        (*env)->SetByteArrayRegion(env, jbuffer, 0, 
+                                   requestSize + FIELDS_LENGTH,
+                                   localBuffer);
 
-        /* copy the buffer w/o the buffer size field (4 bytes) */
-        (*env)->SetByteArrayRegion(env, jbuffer, 0, messageSize + FIELDS_LENGTH, 
-                                   (jbyte *)&callSharedBuffer->data.dataBuffer->threadID);
-        callSharedBuffer->reset(callSharedBuffer); 
+        LimeReleaseMutex(bridgeMutex);    
+
         (*env)->CallStaticVoidMethod(env, classSublime, mid_call, jbuffer);    
-        (*env)->DeleteLocalRef(env, jbuffer); 
-        LimeSetEvent(event1); 
+        (*env)->DeleteLocalRef(env, jbuffer);
     }
 }
 
-JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(JNIEnv *e, jclass clz, jbyteArray jarr) {
+JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(
+        JNIEnv *e, jclass clz, jbyteArray jarr) {
     int size = (*e)->GetArrayLength(e, jarr);
-    int sharedBufferSize;
-    uint32_t res_thread_id, resultSize; 
+    uint32_t resultThreadID, resultSize; 
 
-    if (size > BUFFER_SIZE) {
-        sublimeBridgeFatal("Shared buffer size (%d) is too small"
-                               " for this call (%d)\n", BUFFER_SIZE, size); 
-    }
-    if (buf == NULL) { 
-        sublimeBridgeFatal("malloc failed\n");  
-    } 
+    WaitForMutex(bridgeMutex);
+    
     if (returnSharedBuffer == NULL) {
-        sublimeBridgeFatal("Could not open shared buffer\n");  
+        /* already closed and destroyed */
+        LimeReleaseMutex(bridgeMutex);
+        
+        /* fixme: destroy mutex here? */
+        return;
     } 
-    if (event0 == NULL || event1 == NULL || event2 == NULL || event3 == NULL) {
-        if (initEvents() == -1) {
-            sublimeBridgeFatal("Could not initialize events\n");  
-        } 
+
+    if (prepareLocalBuffer(size) != 0) {
+        LimeReleaseMutex(bridgeMutex);
+        
+        sublimeBridgeError("Could not allocate memory\n");
+        return;
     }
 
-    returnSharedBuffer->lock(returnSharedBuffer); 
-    sharedBufferSize = returnSharedBuffer->getBufferSize(returnSharedBuffer); 
     /* Result buffer format: 
      * 4 bytes  - C thread ID
      * 4 bytes  - size of message(not including the first 8 bytes) 
      * the rest - the result data
      */
-    (*e)->GetByteArrayRegion(e, jarr,0,size,buf); 
-    resultSize = ntohl(*((uint32_t *)buf + 1));
-    res_thread_id = ntohl(*((uint32_t *) buf));
-    returnSharedBuffer->write(returnSharedBuffer, (char*)buf+FIELDS_LENGTH, 
-                              resultSize);
-    returnSharedBuffer->setID(returnSharedBuffer, res_thread_id); 
-    BufferPool_freeBuffer(e, bufferPool, jarr);
-    /* notify the CVM process that a result has been sent, and wait for ack */ 
-    LimeSetEvent(event2);
-    WaitForEvent(event3); 
-    returnSharedBuffer->reset(returnSharedBuffer); 
+    (*e)->GetByteArrayRegion(e, jarr, 0, size, localBuffer); 
+    resultThreadID = ntohl(*((uint32_t *) localBuffer));
+    resultSize = ntohl(*((uint32_t *) localBuffer + 1));
+    
+    returnSharedBuffer->writeInt32(returnSharedBuffer, resultThreadID);
+    returnSharedBuffer->writeInt32(returnSharedBuffer, resultSize);
+    returnSharedBuffer->writeAll(returnSharedBuffer, 
+                                 (char*) localBuffer + FIELDS_LENGTH,
+                                 resultSize);
 
-    returnSharedBuffer->unlock(returnSharedBuffer);  
-    /* for better performance: release CPU to allow other threads to lock returnSharedBuffer */ 
+    BufferPool_freeBuffer(e, bufferPool, jarr);
+
+    returnSharedBuffer->flush(returnSharedBuffer);
+
+    LimeReleaseMutex(bridgeMutex);
+
+    /*
+     * for better performance: release CPU to allow other threads to lock 
+     * returnSharedBuffer 
+     */ 
     yield();
 }
 
-
-static int initEvents() {
-    /* create named events to communicate between processes */
-    event0 = LimeCreateEvent(NULL, FALSE, FALSE, names[2]);
-    event1 = LimeCreateEvent(NULL, FALSE, FALSE, names[3]);
-    event2 = LimeCreateEvent(NULL, FALSE, FALSE, names[4]);
-    event3 = LimeCreateEvent(NULL, FALSE, FALSE, names[5]);
-    if (event0 == NULL || event1 == NULL || event2 == NULL || event3 == NULL) {
-        return -1; 
-    }
-    return 0; 
-}
-
-
 /* used by Sublime.java to create a unique named shared buffer */ 
-JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_setSublimeProcessId(JNIEnv * e, jclass c, jint pid) {
+JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_setSublimeProcessId(
+        JNIEnv * e, jclass c, jint pid) {
     set_current_process_id(pid);
 }
 
 /* used by Sublime.java to create a unique named shared buffer */ 
-JNIEXPORT jint JNICALL Java_com_sun_kvem_Sublime_getSublimeProcessId(JNIEnv * e, jclass c) {
+JNIEXPORT jint JNICALL Java_com_sun_kvem_Sublime_getSublimeProcessId(
+        JNIEnv * e, jclass c) {
     return get_current_process_id();
 }
-
  
-JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_process(JNIEnv *env, jclass clz) {
+JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_process(
+        JNIEnv *env, jclass clz) {
     jmethodID mid_release;
-    
-    procID =  get_current_process_id();
-    processID = (char*)malloc(sizeof(char)*sizeof(int32_t));
-    itoa(procID, processID, 10);
-    /* names for 2 shared buffers and 4 events */  
-    names = (char **)malloc(sizeof(char*)*6);
-    names[0] = (char *)malloc(sizeof(char)*(strlen(SUBLIME_SHARED_BUFFER_NAME0) + sizeof(int32_t)) + 1); 
-    strcpy(names[0], SUBLIME_SHARED_BUFFER_NAME0);
-    strcat(names[0], processID);
-    names[1] = (char *)malloc(sizeof(char)*(strlen(SUBLIME_SHARED_BUFFER_NAME1) + sizeof(int32_t)) + 1); 
-    strcpy(names[1], SUBLIME_SHARED_BUFFER_NAME1);
-    strcat(names[1], processID);
-    names[2] = (char *)malloc(sizeof(char)*(strlen(EVENT0) + sizeof(int32_t)) + 1); 
-    strcpy(names[2], EVENT0);
-    strcat(names[2], processID);
-    names[3] = (char *)malloc(sizeof(char)*(strlen(EVENT1) + sizeof(int32_t)) + 1); 
-    strcpy(names[3], EVENT1);
-    strcat(names[3], processID);
-    names[4] = (char *)malloc(sizeof(char)*(strlen(EVENT2) + sizeof(int32_t)) + 1); 
-    strcpy(names[4], EVENT2);
-    strcat(names[4], processID);
-    names[5] = (char *)malloc(sizeof(char)*(strlen(EVENT3) + sizeof(int32_t)) + 1); 
-    strcpy(names[5], EVENT3);
-    strcat(names[5], processID);
 
-    if (CreateSharedBuffer() != 0) { 
-        sublimeBridgeFatal("Could not open shared buffer\n");  
-    } 
-    free(names[0]);
-    free(names[1]);
-
-    if (initEvents() == -1) {
-        sublimeBridgeFatal("Could not initialize events\n");  
+    bridgeMutex = LimeCreateMutex(NULL, FALSE, NULL);
+    if (bridgeMutex == NULL) {
+        sublimeBridgeFatal("Could not create synchronization mutex\n");
     }
-    mid_release = (*env)->GetStaticMethodID(env, clz, "releaseInitLock", "()V"); 
-    if (mid_release == NULL) { 
-        sublimeBridgeFatal("Could not find method Sublime.releaseInitLock()\n");
-    }  
-    buf = (jbyte*)malloc(sizeof(jbyte) * BUFFER_SIZE);  
-    (*env)->CallStaticVoidMethod(env, clz, mid_release); 
+    
+    if (initializeLimeBridge() != 0) {
+        LimeDestroyMutex(bridgeMutex);
+        sublimeBridgeFatal("Failed to initialize lime bridge\n");
+    }
 
     bufferPool = BufferPool_create(env);
+
+    mid_release = (*env)->GetStaticMethodID(env, clz, "releaseInitLock", "()V"); 
+    if (mid_release == NULL) { 
+        BufferPool_destroy(env, bufferPool);
+        LimeDestroyMutex(bridgeMutex);
+        sublimeBridgeFatal("Could not find method Sublime.releaseInitLock()\n");
+    }  
+    (*env)->CallStaticVoidMethod(env, clz, mid_release); 
 
     /* enter the process requests loop */  
     process(env, clz); 
 
+    WaitForMutex(bridgeMutex);
+    
     BufferPool_destroy(env, bufferPool);
+    finalizeLimeBridge();
+    
+    LimeReleaseMutex(bridgeMutex);
 
-    DeleteSharedBuffer(callSharedBuffer);
-    DeleteSharedBuffer(returnSharedBuffer);
+    /* fixme: destroy mutex here? */
 }
 
 JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_stopProcess(JNIEnv *env, 
                                                              jclass clz) {
-    stopProcess = 1;
-    LimeSetEvent(event0);
-}
+    WaitForMutex(bridgeMutex);
 
+    finalizeLimeBridge();    
+
+    LimeReleaseMutex(bridgeMutex);    
+}

@@ -104,18 +104,8 @@ static EVENT_HANDLE acquireEvent(uint32_t);
  */             
 static SharedBuffer *callSharedBuffer, *returnSharedBuffer; 
 
-/* 
- * events for interprocess communication: 
- * event0: CVM->JVM - read call from callSharedBuffer
- * event1: event0 ack 
- * event2: JVM->CVM - read result from returnSharedBuffer 
- * event3: event2 ack 
- */
-static EVENT_HANDLE event0;
-static EVENT_HANDLE event1;
-static EVENT_HANDLE event2;
-static EVENT_HANDLE event3;
-
+static MUTEX_HANDLE callMutex;
+static EVENT_HANDLE callRetvalProcessedEvent;
 
 /* synchronized access to threadMap */ 
 static MUTEX_HANDLE threadMapMutex; 
@@ -196,7 +186,31 @@ static ULONG64 getCurrentTime(void) {
 
 #endif /* WIN32 */
     
+static int format_string(char *buffer, size_t buflen, char *format, ...) {
+    va_list args;
+
+    assert(format != NULL);
+
+    /* prepare buffer */
+    buffer[0] = '\0';
+    buffer[buflen - 1] = '\0';
+
+    va_start(args, format);
+
+#ifdef WIN32 
     
+    _vsnprintf(buffer, buflen - 1, format, args);
+
+#else /* !win32 */ 
+    
+    vsnprintf(buffer, buflen - 1, format, args);
+    
+#endif
+
+    va_end(args);
+    
+    return strlen(buffer);
+}
 
 /* Report an error condition and exit */
 static void error(char *s, ...) {
@@ -204,6 +218,8 @@ static void error(char *s, ...) {
     va_start(args, s);
     vfprintf(stderr, s, args);
     va_end(args);
+    
+    EndLime();
     exit(1);
 }
 
@@ -241,60 +257,83 @@ static int getEnvironmentInteger(const char *key, int defaultValue) {
     }
 }
 /* return a pointer to a new alloced string: name+process ID */ 
-static char * concatNameProcID(char *name, const char *procid){
-    char *tmp = (char *)malloc(strlen(name) + strlen(procid) + 1);
-    assert(tmp); 
+static char * concatNameProcID(const char *name, const char *procid){
+    char *tmp = (char *) malloc(strlen(name) + strlen(procid) + 1);
+    if (tmp == NULL) {
+        return NULL;
+    }
+
     tmp = strcpy(tmp, name); 
     tmp = strcat(tmp, procid); 
     return tmp; 
+}
+
+static SharedBuffer* OpenSharedBufferForProcID(const char *prefix, 
+                                               const char *procid) {
+    SharedBuffer* sharedBuffer;
+    char *fullBufferName = concatNameProcID(prefix, procid);
+    if (fullBufferName == NULL) {
+        return NULL;
+    }
+    
+    sharedBuffer = OpenSharedBuffer(fullBufferName);
+    free(fullBufferName);
+    
+    return sharedBuffer;
 }
 
 /* Connect to a SUBLIME server */
 LIMEEXPORT void StartLime(void) {
     char *name0, *name1;
     char* prID;
+
     if (callSharedBuffer != NULL){
         return;
     }
+
     networkByteOrder = isNetworkByteorder(); 
     /* this environment var was created by Sublime.java */ 
     prID = getenv("SUBLIME_PROC_ID"); 
-    if (prID == NULL){
-        error("Could not read environment variable SUBLIME_PROC_ID\n"); 
+    if (prID == NULL) {
+        error("Could not read environment variable SUBLIME_PROC_ID\n");
     }
+
     debug = getEnvironmentInteger(LIME_TRACE_FLAG, 0);
     synchronous = getEnvironmentInteger(LIME_SYNCH_FLAG, 0);
-    name0 = concatNameProcID(SUBLIME_SHARED_BUFFER_NAME0, prID);
-    name1 = concatNameProcID(SUBLIME_SHARED_BUFFER_NAME1, prID); 
-    /* the shared buffers were created by sublimeBridge initialization */ 
-    callSharedBuffer = OpenSharedBuffer(name0); 
-    returnSharedBuffer = OpenSharedBuffer(name1);
-    /* the name is duplicated in OpenSharedBuffer */ 
-    free(name0);
-    free(name1); 
 
-    if (callSharedBuffer == NULL || returnSharedBuffer == NULL){
-        error("SUBLIME: Could not open shared buffers\n"); 
+    callSharedBuffer = OpenSharedBufferForProcID(SUBLIME_SHARED_BUFFER_NAME0,
+                                                 prID);
+    if (callSharedBuffer == NULL) {
+        error("SUBLIME: Could not open call shared buffer\n");
     }
-      
-    event0 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT0, prID));
-    event1 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT1, prID));
-    event2 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT2, prID));
-    event3 = LimeCreateEvent(NULL, FALSE, FALSE, concatNameProcID(EVENT3, prID));
 
-    if (event0 == NULL || event1 == NULL || event2 == NULL || event3 == NULL){
-        error("SUBLIME: Could not create events\n"); 
+    returnSharedBuffer = OpenSharedBufferForProcID(SUBLIME_SHARED_BUFFER_NAME1,
+                                                   prID);
+    if (returnSharedBuffer == NULL) {
+        error("SUBLIME: Could not open return shared buffer\n");
     }
+    
+    callMutex = LimeCreateMutex(NULL, FALSE, NULL);
+    if (callMutex == NULL) {
+        error("SUBLIME: Could not create call synchronization mutex\n");
+    }
+    
+    callRetvalProcessedEvent = LimeCreateEvent(NULL, FALSE, FALSE, NULL);
+    if (callRetvalProcessedEvent == NULL) {
+        error("SUBLIME: Could not create call retval event\n");
+    }
+    
     threadMapMutex = LimeCreateMutex(NULL, FALSE, NULL); 
     if (threadMapMutex == NULL) { 
-        error("SUBLIME: Could not create mutex\n"); 
+        error("SUBLIME: Could not create thread map mutex\n"); 
     }
+
     listener = NewLimeThread(waitForResults, NULL); 
-    if (listener == NULL){
+    if (listener == NULL) {
         error("SUBLIME: Could not create listener thread\n"); 
     }
-    listener->start(listener); 
 
+    listener->start(listener); 
 }
 
 /* Disconnects from the SUBLIME server */
@@ -303,30 +342,31 @@ LIMEEXPORT void EndLime(void) {
         DeleteSharedBuffer(callSharedBuffer); 
         callSharedBuffer = NULL; 
     }
+    
     if (returnSharedBuffer != NULL ){
         DeleteSharedBuffer(returnSharedBuffer); 
         returnSharedBuffer = NULL; 
     }
-#ifdef WIN32 
-    if (event0 != NULL){
-        CloseHandle(event0); 
-        event0 = NULL; 
+    
+    if (callMutex != NULL) {
+        LimeDestroyMutex(callMutex);
+        callMutex = NULL;
     }
-    if (event1 != NULL){
-        CloseHandle(event1); 
-        event1 = NULL;
+    
+    if (callRetvalProcessedEvent != NULL) {
+        LimeDestroyEvent(callRetvalProcessedEvent);
+        callRetvalProcessedEvent = NULL;
     }
-    if (event2 != NULL){
-        CloseHandle(event2); 
-        event2 = NULL; 
-    }
-    if (event3 != NULL){
-        CloseHandle(event3); 
-        event3 = NULL; 
-    }
-#endif /* !WIN32 */
-// No implementation for Linux - this function never being called anyway. 
 
+    if (threadMapMutex != NULL) {
+        LimeDestroyMutex(threadMapMutex);
+        threadMapMutex = NULL;
+    } 
+
+    if (listener != NULL) {
+        DeleteLimeThread(listener);
+        listener = NULL;
+    }
 }
 
 /*
@@ -492,21 +532,15 @@ static int32_t read_array(SharedBuffer *sb, int type, void **pvalue) {
         size_t elementSize;
         int i;
         char *p;
-        int readBytes, lenBytes;
+        int lenBytes;
         elementSize = LimeSizes[type];
         arrayLength = rc;
         lenBytes = elementSize * arrayLength;
-        readBytes = 0;
         buffer = getArrayBuffer();
         ensureBufferCapacity(buffer, elementSize * arrayLength);
         p = buffer->data;
 	   
-        /* Ensure that array is being read fully */
-        while (readBytes < lenBytes) 
-            {
-                sb->read(sb, p+readBytes, lenBytes-readBytes, &rc);
-                readBytes += rc;
-            }
+        sb->readAll(sb, p, lenBytes);
 	   
         if (type != LIME_TYPE_BYTE)
             {
@@ -680,6 +714,7 @@ static void lime_call(LimeFunction *f, void *result, ...) {
     ArrayBuffer *buffer, *argBuffer;
     char *bufferData, *argBufferData;
     int threadID = getThreadUniqueId(); 
+    uint32_t resultSize;    
     /* this event will be signaled when the return value is placed in returnSharedBuffer */ 
     EVENT_HANDLE event; 
     if (debug) {
@@ -747,20 +782,33 @@ static void lime_call(LimeFunction *f, void *result, ...) {
     }
     va_end(args);
 
-    /* lock local mutex */ 
-    callSharedBuffer->lock(callSharedBuffer); 
-    callSharedBuffer->stampID(callSharedBuffer); 
-    callSharedBuffer->write(callSharedBuffer, buffer->data, commandLength);
-    /* notify JVM process (sublimeBridge) that a call has been placed in callSharedBuffer */ 
-    LimeSetEvent(event0);
-    /* wait until the JVM process signals that the buffer is free */ 
-    WaitForEvent(event1);
-    /* the buffer is no longer needed. from now on the relevant buffer is returnSharedBuffer */ 
-    callSharedBuffer->reset(callSharedBuffer); 
-    callSharedBuffer->unlock(callSharedBuffer);
-    /* Wait for the result and read the return data */
+    WaitForMutex(callMutex);
 
+    if (callSharedBuffer->writeInt32(callSharedBuffer, threadID) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write call threadID\n");
+    }
+    
+    if (callSharedBuffer->writeInt32(callSharedBuffer, commandLength) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write command length\n");
+    }
+    
+    if (callSharedBuffer->writeAll(callSharedBuffer, 
+                                   buffer->data, commandLength) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write call data\n");
+    }
+    
+    callSharedBuffer->flush(callSharedBuffer);
+    
+    LimeReleaseMutex(callMutex);
+
+    /* Wait for the result and read the return data */
     WaitForEvent(event); 
+
+    /* read the result size */
+    returnSharedBuffer->readInt32(returnSharedBuffer, &resultSize);
 
     arrayLength = read_value(returnSharedBuffer, f->data->returnType, result);
     /* process the return data from the SubLime server */
@@ -779,9 +827,8 @@ static void lime_call(LimeFunction *f, void *result, ...) {
         fflush(stdout);
     }
     
-    /* reset the buffer */ 
-    returnSharedBuffer->reset(returnSharedBuffer); 
-    LimeSetEvent(event3);
+    LimeSetEvent(callRetvalProcessedEvent);
+    
     /* context switch - notify the JVM process that returnSharedBuffer is now free to use */ 
     yield();
 }
@@ -797,6 +844,10 @@ LIMEEXPORT LimeFunction *NewLimeFunction(const char *packageName,
     InternalLimeData *d = (InternalLimeData *)
         MALLOC( sizeof(InternalLimeData) );
     int threadID = getThreadUniqueId(); 
+    int lookupLength;
+    uint32_t resultSize;    
+    char lookupBuffer[1024];
+    
     /* this event will be signaled when the return value is placed in returnSharedBuffer */ 
     EVENT_HANDLE event; 
     assert(packageName != NULL);
@@ -827,23 +878,45 @@ LIMEEXPORT LimeFunction *NewLimeFunction(const char *packageName,
                packageName, className, methodName);
         fflush(stdout);
     } 
-    
-    callSharedBuffer->lock(callSharedBuffer); 
-    callSharedBuffer->writeInt32(callSharedBuffer, LIME_LOOKUP);
-    callSharedBuffer->stampID(callSharedBuffer); 
-    callSharedBuffer->printf(callSharedBuffer, "%s\n%s\n%s\n",
-					    packageName, className, methodName);
-    
-    /* notify the JVM side that a call has been placed in callSharedBuffer */ 
-    LimeSetEvent(event0);
-    /* waiting for the JVM process to finish reading the call */ 
-    
-    WaitForEvent(event1); 
-    callSharedBuffer->reset(callSharedBuffer);
-    callSharedBuffer->unlock(callSharedBuffer);
-    /* Wait for the result and read the return data */
 
+    lookupLength = format_string(lookupBuffer, 
+                                 sizeof(lookupBuffer) / sizeof(*lookupBuffer), 
+                                 "%s\n%s\n%s\n", 
+                                 packageName, className, methodName);
+
+    WaitForMutex(callMutex);
+
+    if (callSharedBuffer->writeInt32(callSharedBuffer, threadID) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write call threadID\n");
+    }
+    
+    if (callSharedBuffer->writeInt32(callSharedBuffer, 
+                                     lookupLength + sizeof(int32_t)) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write method lookup length\n");
+    }
+    
+    if (callSharedBuffer->writeInt32(callSharedBuffer, LIME_LOOKUP) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write LIME_LOOKUP request type\n");
+    }
+    
+    if (callSharedBuffer->writeAll(callSharedBuffer, 
+                                   lookupBuffer, lookupLength) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write lookup data\n");
+    }
+
+    callSharedBuffer->flush(callSharedBuffer);
+    
+    LimeReleaseMutex(callMutex);
+
+    /* Wait for the result and read the return data */
     WaitForEvent(event); 
+
+    /* read the result size */
+    returnSharedBuffer->readInt32(returnSharedBuffer, &resultSize);
 
     /* the target buffer is now returnSharedBuffer */ 
     returnSharedBuffer->readInt32(returnSharedBuffer, &d->functionID);
@@ -863,8 +936,9 @@ LIMEEXPORT LimeFunction *NewLimeFunction(const char *packageName,
     }
     
     returnSharedBuffer->readInt32(returnSharedBuffer, &d->returnType);
-    returnSharedBuffer->reset(returnSharedBuffer); 
-    LimeSetEvent(event3); 
+    
+    LimeSetEvent(callRetvalProcessedEvent);
+    
     /* context switch - notify the JVM process that returnSharedBuffer is now free to use */ 
     //    sleep(0); 
     yield();
@@ -1212,15 +1286,16 @@ LIMEEXPORT void LimeUnlock(void) {
 void waitForResults(void *p){
     EVENT_HANDLE event; 
     int32_t tID; 
-    while(1) { 
-        /* wait for a result to be placed at returnSharedBuffer */ 
-        WaitForEvent(event2); 
-        tID = returnSharedBuffer->getThreadID(returnSharedBuffer); 
+    while (1) {
+        if (returnSharedBuffer->readInt32(returnSharedBuffer, &tID) != 0) {
+            break;
+        }
+
         event = acquireEvent(tID); 
         /* set the event for the specific thread 
            that is waiting for this result */ 
-        LimeSetEvent(event); 
-   
+        LimeSetEvent(event);
+        WaitForEvent(callRetvalProcessedEvent);
     }
 }
 
@@ -1334,7 +1409,8 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
     long64 sendTime;
     ArrayBuffer *buffer;
     char *bufferData, *argBufferData;
-    int threadID = getThreadUniqueId(); 
+    uint32_t threadID = getThreadUniqueId(); 
+    uint32_t resultSize;    
     /* this event will be signaled when the return value is placed in returnSharedBuffer */ 
     EVENT_HANDLE event; 
     LimeFunction *f = (LimeFunction *) limeFunction;
@@ -1395,20 +1471,34 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
         printf(")\n");
     }
 
-    /* lock local mutex */ 
-    callSharedBuffer->lock(callSharedBuffer); 
-    callSharedBuffer->stampID(callSharedBuffer);
-    callSharedBuffer->write(callSharedBuffer, buffer->data, commandLength);
-    /* notify JVM process (sublimeBridge) that a call has been placed in callSharedBuffer */ 
-    LimeSetEvent(event0);
-    /* wait until the JVM process signals that the buffer is free */ 
-    WaitForEvent(event1);
-    /* the buffer is no longer needed. from now on the relevant buffer is returnSharedBuffer */ 
-    callSharedBuffer->reset(callSharedBuffer); 
-    callSharedBuffer->unlock(callSharedBuffer);
-    /* Wait for the result and read the return data */
+    
+    WaitForMutex(callMutex);
 
+    if (callSharedBuffer->writeInt32(callSharedBuffer, threadID) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write call threadID\n");
+    }
+
+    if (callSharedBuffer->writeInt32(callSharedBuffer, commandLength) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write command length\n");
+    }
+    
+    if (callSharedBuffer->writeAll(callSharedBuffer, 
+                                   buffer->data, commandLength) != 0) {
+        LimeReleaseMutex(callMutex);
+        error("SUBLIME: Failed to write call data\n");
+    }
+    
+    callSharedBuffer->flush(callSharedBuffer);
+    
+    LimeReleaseMutex(callMutex);
+
+    /* Wait for the result and read the return data */
     WaitForEvent(event); 
+
+    /* read the result size */
+    returnSharedBuffer->readInt32(returnSharedBuffer, &resultSize);
 
     /* process the return data from the SubLime server */
     if (f->data->returnType & LIME_TYPE_ARRAY) {
@@ -1455,9 +1545,8 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
         }
     }
     
-    /* reset the buffer */ 
-    returnSharedBuffer->reset(returnSharedBuffer); 
-    LimeSetEvent(event3);
+    LimeSetEvent(callRetvalProcessedEvent);
+
     /* context switch - notify the JVM process that returnSharedBuffer is now free to use */ 
     yield();
     return result;

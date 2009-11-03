@@ -57,6 +57,9 @@ MUTEX_HANDLE LimeCreateMutex(void* sa, int initialState, char * name);
 void LimeSetEvent(EVENT_HANDLE event);
 void LimeReleaseMutex(MUTEX_HANDLE fd); 
 
+void LimeDestroyEvent(EVENT_HANDLE eventHandle);
+void LimeDestroyMutex(MUTEX_HANDLE mutexHandle);
+
 void itoa(int num, char *buf, int radix);
 
 int GetLastError(); 
@@ -74,9 +77,11 @@ char* getTempDirLocation(void);
 #define LimeCreateEvent(A, B, C, D) CreateEvent((A), (B), (C), (D))
 #define LimeCreateMutex(A, B, C) CreateMutex((A), (B), (C))
 
+#define LimeDestroyEvent(A) CloseHandle(A)
+#define LimeDestroyMutex(A) CloseHandle(A)
+
 #define LimeSetEvent(A) SetEvent(A)
 #define LimeReleaseMutex(A) ReleaseMutex(A)
-
 #endif 
 
 int get_current_process_id(void);
