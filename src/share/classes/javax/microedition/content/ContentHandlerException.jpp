@@ -56,7 +56,7 @@ public class ContentHandlerException extends IOException {
      */
     public final static int AMBIGUOUS = 3;
 
-// #ifdef ENABLE_CLDC_111 [
+// #ifndef USE_CLDC_11 [
     /**
      * The reason is <code>CAPACITY_EXCEEDED</code> in a ContentHandlerException
      * when the implementation does not support longer IDs, or more actions,
@@ -87,7 +87,7 @@ public class ContentHandlerException extends IOException {
             case NO_REGISTERED_HANDLER:
             case TYPE_UNKNOWN:
             case AMBIGUOUS:
-// #ifdef USE_CLDC_111 [
+// #ifndef USE_CLDC_11 [
             case CAPACITY_EXCEEDED:
 // #endif ]
                 break;
