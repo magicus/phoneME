@@ -1109,8 +1109,8 @@ CVMgcScanRoots(CVMExecEnv *ee, CVMGCOptions* gcOpts,
          * The java.lang.Class in SE 1.5 and later version has non-static
          * reference fields.
          */
-        /*CVMpreloaderScanPreloadedClassObjects(ee, gcOpts,
-                                              callback, callbackData);*/
+        CVMpreloaderScanPreloadedClassObjects(ee, gcOpts,
+                                              callback, callbackData);
 #endif
     }
 
