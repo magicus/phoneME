@@ -106,64 +106,50 @@ copyFromSharedBufferToJavaArray(JNIEnv *env, jbyteArray jarray,
                                 SharedBuffer *sharedBuffer,
                                 uint32_t threadID, 
                                 uint32_t payloadSize) {
-    if (prepareLocalBuffer(payloadSize + FIELDS_LENGTH) != 0) {
-        sublimeBridgeError("Could not allocate memory\n"); 
+    int retval;
+    jbyte *data;
+    
+    data = (jbyte *) (*env)->GetPrimitiveArrayCritical(env, jarray, NULL);
+    if (data == NULL) {
         return -1;
     }
     
-    *((uint32_t *) localBuffer) = htonl(threadID);
-    *((uint32_t *) localBuffer + 1) = htonl(payloadSize);
+    *((uint32_t *) data) = htonl(threadID);
+    *((uint32_t *) data + 1) = htonl(payloadSize);
 
-    if (sharedBuffer->readAll(sharedBuffer, 
-                              localBuffer + FIELDS_LENGTH, 
-                              payloadSize) != 0) {
-        return -2;
-    }
+    retval = sharedBuffer->readAll(sharedBuffer, data + FIELDS_LENGTH, 
+                                   payloadSize);
 
-    (*env)->SetByteArrayRegion(env, jarray, 0, 
-                               payloadSize + FIELDS_LENGTH,
-                               localBuffer);
+    (*env)->ReleasePrimitiveArrayCritical(env, jarray, data, 0);
 
-    return 0;
+    return retval;
 }
 
 static int
 copyFromJavaArrayToSharedBuffer(JNIEnv *env, jbyteArray jarray,
                                 SharedBuffer *sharedBuffer) {
+    int retval;
+    jbyte *data;
     uint32_t threadID;
     uint32_t payloadSize;
     int fullSize = (*env)->GetArrayLength(env, jarray);
 
-    if (prepareLocalBuffer(fullSize) != 0) {
-        sublimeBridgeError("Could not allocate memory\n");
+    data = (jbyte *) (*env)->GetPrimitiveArrayCritical(env, jarray, NULL);
+    if (data == NULL) {
         return -1;
     }
 
-    /* Result buffer format: 
-     * 4 bytes  - C thread ID
-     * 4 bytes  - size of message(not including the first 8 bytes) 
-     * the rest - the result data
-     */
-    (*env)->GetByteArrayRegion(env, jarray, 0, fullSize, localBuffer); 
+    threadID = ntohl(*((uint32_t *) data));
+    payloadSize = ntohl(*((uint32_t *) data + 1));
+    
+    retval = ((sharedBuffer->writeInt32(sharedBuffer, threadID) == 0)
+                && (sharedBuffer->writeInt32(sharedBuffer, payloadSize) == 0)
+                && (sharedBuffer->writeAll(sharedBuffer, data + FIELDS_LENGTH,
+                                           payloadSize) == 0)) ? 0 : -1;
 
-    threadID = ntohl(*((uint32_t *) localBuffer));
-    payloadSize = ntohl(*((uint32_t *) localBuffer + 1));
+    (*env)->ReleasePrimitiveArrayCritical(env, jarray, data, 0);
     
-    if (sharedBuffer->writeInt32(sharedBuffer, threadID) != 0) {
-        return -2;
-    }
-    
-    if (sharedBuffer->writeInt32(sharedBuffer, payloadSize) != 0) {
-        return -2;
-    }
-    
-    if (sharedBuffer->writeAll(sharedBuffer, 
-                               (char*) localBuffer + FIELDS_LENGTH,
-                               payloadSize) != 0) {
-        return -2;
-    }
-    
-    return 0;
+    return retval;
 }
 
 /* return a pointer to a new alloced string: name+process ID */ 
