@@ -713,11 +713,15 @@ Java_sun_misc_Unsafe_compareAndSwapObject(
     
     CVMD_gcUnsafeExec(ee, {
 	CVMObject* directObj = CVMID_icellDirect(ee, o);
+	CVMObject* expectedObj = 
+	    (expectedObj == NULL ? NULL : CVMID_icellDirect(ee, expected));
+	CVMObject* xObj = 
+	    (x == NULL ? NULL : CVMID_icellDirect(ee, x));
 	CVMJavaLong addr_long = CVMlongAdd(CVMvoidPtr2Long(directObj),
 					   offset * sizeof(CVMAddr));
 	CVMAddr* addr = CVMlong2VoidPtr(addr_long);
 	previous = (jobject)
-	    CVMatomicCompareAndSwap(addr, (CVMAddr)x, (CVMAddr)expected);
+	    CVMatomicCompareAndSwap(addr, (CVMAddr)xObj, (CVMAddr)expectedObj);
     });
 
     return previous == expected;
