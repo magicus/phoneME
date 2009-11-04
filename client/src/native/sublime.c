@@ -284,7 +284,6 @@ static SharedBuffer* OpenSharedBufferForProcID(const char *prefix,
 
 /* Connect to a SUBLIME server */
 LIMEEXPORT void StartLime(void) {
-    char *name0, *name1;
     char* prID;
 
     if (callSharedBuffer != NULL){

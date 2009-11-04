@@ -101,6 +101,71 @@ sublimeBridgeFatal(const char * format, ...) {
     exit(1);
 }
 
+static int
+copyFromSharedBufferToJavaArray(JNIEnv *env, jbyteArray jarray,
+                                SharedBuffer *sharedBuffer,
+                                uint32_t threadID, 
+                                uint32_t payloadSize) {
+    if (prepareLocalBuffer(payloadSize + FIELDS_LENGTH) != 0) {
+        sublimeBridgeError("Could not allocate memory\n"); 
+        return -1;
+    }
+    
+    *((uint32_t *) localBuffer) = htonl(threadID);
+    *((uint32_t *) localBuffer + 1) = htonl(payloadSize);
+
+    if (sharedBuffer->readAll(sharedBuffer, 
+                              localBuffer + FIELDS_LENGTH, 
+                              payloadSize) != 0) {
+        return -2;
+    }
+
+    (*env)->SetByteArrayRegion(env, jarray, 0, 
+                               payloadSize + FIELDS_LENGTH,
+                               localBuffer);
+
+    return 0;
+}
+
+static int
+copyFromJavaArrayToSharedBuffer(JNIEnv *env, jbyteArray jarray,
+                                SharedBuffer *sharedBuffer) {
+    uint32_t threadID;
+    uint32_t payloadSize;
+    int fullSize = (*env)->GetArrayLength(env, jarray);
+
+    if (prepareLocalBuffer(fullSize) != 0) {
+        sublimeBridgeError("Could not allocate memory\n");
+        return -1;
+    }
+
+    /* Result buffer format: 
+     * 4 bytes  - C thread ID
+     * 4 bytes  - size of message(not including the first 8 bytes) 
+     * the rest - the result data
+     */
+    (*env)->GetByteArrayRegion(env, jarray, 0, fullSize, localBuffer); 
+
+    threadID = ntohl(*((uint32_t *) localBuffer));
+    payloadSize = ntohl(*((uint32_t *) localBuffer + 1));
+    
+    if (sharedBuffer->writeInt32(sharedBuffer, threadID) != 0) {
+        return -2;
+    }
+    
+    if (sharedBuffer->writeInt32(sharedBuffer, payloadSize) != 0) {
+        return -2;
+    }
+    
+    if (sharedBuffer->writeAll(sharedBuffer, 
+                               (char*) localBuffer + FIELDS_LENGTH,
+                               payloadSize) != 0) {
+        return -2;
+    }
+    
+    return 0;
+}
+
 /* return a pointer to a new alloced string: name+process ID */ 
 static char * concatNameProcID(const char *name, const char *procid){
     char *tmp = (char *) malloc(strlen(name) + strlen(procid) + 1);
@@ -129,7 +194,6 @@ static SharedBuffer* CreateSharedBufferForProcID(const char *prefix,
 
 static int initializeLimeBridge() {
     int32_t pid;
-    int retval;
     char *pidstr;
     
     pidstr = (char*) malloc(12 * sizeof(char));
@@ -240,8 +304,7 @@ BufferPool_freeBuffer(JNIEnv * env, BUFFER_POOL * bufferPool, jbyteArray jarr) {
  * waits for methods calls, and transfer them to J2SE implementation 
  */
 static void process(JNIEnv *env, jclass classSublime) {
-    jint messageSize;
-    jbyteArray jbuffer = NULL; 
+    jbyteArray jarray; 
     jmethodID mid_call; 
 
     mid_call = (*env)->GetStaticMethodID(env, classSublime, 
@@ -267,42 +330,27 @@ static void process(JNIEnv *env, jclass classSublime) {
 
         WaitForMutex(bridgeMutex);
 
-        if (prepareLocalBuffer(requestSize + FIELDS_LENGTH) != 0) {
-            LimeReleaseMutex(bridgeMutex);
-
-            sublimeBridgeError("Could not allocate memory\n"); 
-            break;
-        }
-        
-        *((uint32_t *) localBuffer) = htonl(requestThreadID);
-        *((uint32_t *) localBuffer + 1) = htonl(requestSize);
-
-        if (callSharedBuffer->readAll(callSharedBuffer, 
-                                      localBuffer + FIELDS_LENGTH,
-                                      requestSize) != 0) {
-            LimeReleaseMutex(bridgeMutex);
-            break;
-        }
-
         /* 8 = place for C thread ID and request size  */  
-        jbuffer = BufferPool_getBuffer(env, bufferPool, 
-                                       requestSize + FIELDS_LENGTH);
-        (*env)->SetByteArrayRegion(env, jbuffer, 0, 
-                                   requestSize + FIELDS_LENGTH,
-                                   localBuffer);
+        jarray = BufferPool_getBuffer(env, bufferPool, 
+                                      requestSize + FIELDS_LENGTH);
 
-        LimeReleaseMutex(bridgeMutex);    
+        if (copyFromSharedBufferToJavaArray(env, jarray,
+                                            callSharedBuffer,
+                                            requestThreadID, 
+                                            requestSize) != 0) {
+            LimeReleaseMutex(bridgeMutex);
+            break;
+        }
 
-        (*env)->CallStaticVoidMethod(env, classSublime, mid_call, jbuffer);    
-        (*env)->DeleteLocalRef(env, jbuffer);
+        LimeReleaseMutex(bridgeMutex);
+
+        (*env)->CallStaticVoidMethod(env, classSublime, mid_call, jarray);    
+        (*env)->DeleteLocalRef(env, jarray);
     }
 }
 
 JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(
-        JNIEnv *e, jclass clz, jbyteArray jarr) {
-    int size = (*e)->GetArrayLength(e, jarr);
-    uint32_t resultThreadID, resultSize; 
-
+        JNIEnv *env, jclass clz, jbyteArray jarray) {
     WaitForMutex(bridgeMutex);
     
     if (returnSharedBuffer == NULL) {
@@ -313,31 +361,11 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(
         return;
     } 
 
-    if (prepareLocalBuffer(size) != 0) {
-        LimeReleaseMutex(bridgeMutex);
-        
-        sublimeBridgeError("Could not allocate memory\n");
-        return;
+    if (copyFromJavaArrayToSharedBuffer(env, jarray, returnSharedBuffer) == 0) {
+        returnSharedBuffer->flush(returnSharedBuffer);
     }
 
-    /* Result buffer format: 
-     * 4 bytes  - C thread ID
-     * 4 bytes  - size of message(not including the first 8 bytes) 
-     * the rest - the result data
-     */
-    (*e)->GetByteArrayRegion(e, jarr, 0, size, localBuffer); 
-    resultThreadID = ntohl(*((uint32_t *) localBuffer));
-    resultSize = ntohl(*((uint32_t *) localBuffer + 1));
-    
-    returnSharedBuffer->writeInt32(returnSharedBuffer, resultThreadID);
-    returnSharedBuffer->writeInt32(returnSharedBuffer, resultSize);
-    returnSharedBuffer->writeAll(returnSharedBuffer, 
-                                 (char*) localBuffer + FIELDS_LENGTH,
-                                 resultSize);
-
-    BufferPool_freeBuffer(e, bufferPool, jarr);
-
-    returnSharedBuffer->flush(returnSharedBuffer);
+    BufferPool_freeBuffer(env, bufferPool, jarray);
 
     LimeReleaseMutex(bridgeMutex);
 
@@ -405,3 +433,4 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_stopProcess(JNIEnv *env,
 
     LimeReleaseMutex(bridgeMutex);    
 }
+
