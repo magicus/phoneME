@@ -35,9 +35,6 @@
 #include "com_sun_kvem_Sublime.h"
 
 static SharedBuffer *callSharedBuffer, *returnSharedBuffer; 
-
-static unsigned char *localBuffer;
-static size_t localBufferCapacity;
  
 /* 4 bytes for C thread ID and 4 bytes for message length field */ 
 #define FIELDS_LENGTH 8 
@@ -52,25 +49,6 @@ static MUTEX_HANDLE bridgeMutex;
 static BUFFER_POOL * bufferPool;
 
 static void finalizeLimeBridge();
-
-static int
-prepareLocalBuffer(size_t minCapacity) {
-    unsigned char *newLocalBuffer;
-    
-    if (minCapacity <= localBufferCapacity) {
-        return 0;
-    }
-
-    newLocalBuffer = (unsigned char *) realloc(localBuffer, minCapacity);
-    if (newLocalBuffer == NULL) {
-        return -1;
-    }
-    
-    localBuffer = newLocalBuffer;
-    localBufferCapacity = minCapacity;
-    
-    return 0;
-}
 
 static void
 sublimeBridgeErrorImpl(const char * format, va_list argptr) {
@@ -215,13 +193,7 @@ static void finalizeLimeBridge() {
     if (returnSharedBuffer != NULL) {
         DeleteSharedBuffer(returnSharedBuffer);
         returnSharedBuffer = NULL;
-    }
-    
-    if (localBuffer != NULL) {
-        free(localBuffer);
-        localBuffer = NULL;
-        localBufferCapacity = 0;
-    }
+    }    
 }
 
 static BUFFER_POOL * 
@@ -314,8 +286,6 @@ static void process(JNIEnv *env, jclass classSublime) {
             break;
         }
 
-        WaitForMutex(bridgeMutex);
-
         /* 8 = place for C thread ID and request size  */  
         jarray = BufferPool_getBuffer(env, bufferPool, 
                                       requestSize + FIELDS_LENGTH);
@@ -324,11 +294,9 @@ static void process(JNIEnv *env, jclass classSublime) {
                                             callSharedBuffer,
                                             requestThreadID, 
                                             requestSize) != 0) {
-            LimeReleaseMutex(bridgeMutex);
+            (*env)->DeleteLocalRef(env, jarray);
             break;
         }
-
-        LimeReleaseMutex(bridgeMutex);
 
         (*env)->CallStaticVoidMethod(env, classSublime, mid_call, jarray);    
         (*env)->DeleteLocalRef(env, jarray);
