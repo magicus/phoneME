@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+<!--
+Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+<project name="Build and run Push JUnit tests" default="run-tests" basedir=".">
+    <description>Build and run Push JUnit tests
+    </description>
+
+    <property name="midp.root"          location="midp"/>
+    <property name="midpclasses"        value="midpclasses.zip"/>
+    <property name="midp.push.test.dir" location="${midp.root}/src/push/cdc_application/share/tests"/>
+
+    <property name="junit.jar"          location="junit.jar"/>
+
+    <property name="out.root"           location="out"/>
+    <property name="out.classes"        location="${out.root}/classes"/>
+
+
+    <target name="javac">
+        <description>Compiles unit test classes
+        </description>
+
+        <!-- Build unit tests -->
+        <mkdir dir="${out.classes}"/>
+        <javac  srcdir="${midp.push.test.dir}"
+                destdir="${out.classes}"
+                classpath="${midpclasses}:${junit.jar}"
+                debug="true">
+            <include name="**/*.java"/>
+        </javac>
+    </target>
+
+
+    <target name="run-tests" depends="javac">
+        <description>Runs unit tests
+        </description>
+
+        <!-- Run all push unit tests -->
+        <junit  printsummary="on"
+                filtertrace="off"
+                showoutput="on"
+                tempdir="${out.root}">
+            <classpath>
+                <pathelement path="${midpclasses}"/>
+                <pathelement path="${out.classes}"/>
+            </classpath>
+
+            <formatter type="plain"/>
+            <test todir="${out.root}" name="com.sun.midp.push.reservation.impl.AllTests"/>
+            <test todir="${out.root}" name="com.sun.midp.push.persistence.AllTests"/>
+            <test todir="${out.root}" name="com.sun.midp.push.controller.AllTests"/>
+        </junit>
+    </target>
+</project>

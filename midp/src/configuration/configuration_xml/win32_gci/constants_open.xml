@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+          
+
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
+  <constant Type="int"
+            Name="MAX_ISOLATES"
+            Value="4"
+            Comment="MAX_ISOLATES"/>
+
+  <constant Type="int"
+            Name="SUITE_MEMORY_RESERVED"
+            Value="100"
+            Comment="Default MIDletSuite memory reserved."/>
+  <constant Type="int"
+            Name="SUITE_MEMORY_LIMIT"
+            Value="-1"
+            Comment="Default MIDletSuite Memory Limit."/>
+
+  <constant Type="int"
+            Name="TCP_CLI_GLOBAL_LIMIT"
+            Value="16"
+            Comment="Global resource limit for TCP client sockets"/>
+  <constant Type="int"
+            Name="TCP_CLI_AMS_RESERVED"
+            Value="2"
+            Comment="Per suite resource limit for TCP client sockets"/>
+  <constant Type="int"
+            Name="TCP_CLI_AMS_LIMIT"
+            Value="(TCP_CLI_GLOBAL_LIMIT)"
+            Comment="Per suite resource limit for TCP client sockets"/>
+  <constant Type="int"
+            Name="TCP_CLI_SUITE_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for TCP client sockets"/>
+  <constant Type="int"
+            Name="TCP_CLI_SUITE_LIMIT"
+            Value="(TCP_CLI_GLOBAL_LIMIT - TCP_CLI_AMS_RESERVED)"
+            Comment="Per suite resource limit for TCP client sockets"/>
+
+  <constant Type="int"
+            Name="TCP_SER_GLOBAL_LIMIT"
+            Value="12"
+            Comment="Global resource limit for TCP server sockets"/>
+  <constant Type="int"
+            Name="TCP_SER_AMS_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for TCP server sockets"/>
+  <constant Type="int"
+            Name="TCP_SER_AMS_LIMIT"
+            Value="(TCP_SER_GLOBAL_LIMIT)"
+            Comment="Per suite resource limit for TCP server sockets"/>
+  <constant Type="int"
+            Name="TCP_SER_SUITE_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for TCP server sockets"/>
+  <constant Type="int"
+            Name="TCP_SER_SUITE_LIMIT"
+            Value="(TCP_SER_GLOBAL_LIMIT - TCP_SER_AMS_RESERVED)"
+            Comment="Per suite resource limit for TCP server sockets"/>
+
+  <constant Type="int"
+            Name="UDP_GLOBAL_LIMIT"
+            Value="12"
+            Comment="Global resource limit for UDP sockets"/>
+  <constant Type="int"
+            Name="UDP_AMS_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for UDP sockets"/>
+  <constant Type="int"
+            Name="UDP_AMS_LIMIT"
+            Value="(UDP_GLOBAL_LIMIT)"
+            Comment="Per suite resource limit for UDP sockets"/>
+  <constant Type="int"
+            Name="UDP_SUITE_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for UDP sockets"/>
+  <constant Type="int"
+            Name="UDP_SUITE_LIMIT"
+            Value="(UDP_GLOBAL_LIMIT - UDP_AMS_RESERVED)"
+            Comment="Per suite resource limit for UDP sockets"/>
+
+  <constant Type="int"
+            Name="FILE_GLOBAL_LIMIT"
+            Value="30"
+            Comment="Global resource limit for File handlers"/>
+  <constant Type="int"
+            Name="FILE_AMS_RESERVED"
+            Value="6"
+            Comment="Per suite resource limit for File handlers"/>
+  <constant Type="int"
+            Name="FILE_AMS_LIMIT"
+            Value="(FILE_GLOBAL_LIMIT)"
+            Comment="Per suite resource limit for File handlers"/>
+  <constant Type="int"
+            Name="FILE_SUITE_RESERVED"
+            Value="4"
+            Comment="Per suite resource limit for File handlers"/>
+  <constant Type="int"
+            Name="FILE_SUITE_LIMIT"
+            Value="(FILE_GLOBAL_LIMIT - FILE_AMS_RESERVED)"
+            Comment="Per suite resource limit for File handlers"/>
+
+  <constant Type="int"
+            Name="AUDIO_CHA_GLOBAL_LIMIT"
+            Value="5"
+            Comment="Global resource limit for Audio channels"/>
+  <constant Type="int"
+            Name="AUDIO_CHA_AMS_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for Audio channels"/>
+  <constant Type="int"
+            Name="AUDIO_CHA_AMS_LIMIT"
+            Value="(AUDIO_CHA_GLOBAL_LIMIT)"
+            Comment="Per suite resource limit for Audio channels"/>
+  <constant Type="int"
+            Name="AUDIO_CHA_SUITE_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for Audio channels"/>
+  <constant Type="int"
+            Name="AUDIO_CHA_SUITE_LIMIT"
+            Value="(AUDIO_CHA_GLOBAL_LIMIT - AUDIO_CHA_AMS_RESERVED)"
+            Comment="Per suite resource limit for Audio channels"/>
+
+  <constant Type="int"
+            Name="IMAGE_MUT_GLOBAL_LIMIT"
+            Value="1200000"
+            Comment="Global resource limit for mutable images"/>
+  <constant Type="int"
+            Name="IMAGE_MUT_AMS_RESERVED"
+            Value="200000"
+            Comment="Per suite resource limit for mutable images"/>
+  <constant Type="int"
+            Name="IMAGE_MUT_AMS_LIMIT"
+            Value="(IMAGE_MUT_GLOBAL_LIMIT)"
+            Comment="Per suite resource limit for mutable images"/>
+  <constant Type="int"
+            Name="IMAGE_MUT_SUITE_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for mutable images"/>
+  <constant Type="int"
+            Name="IMAGE_MUT_SUITE_LIMIT"
+            Value="(IMAGE_MUT_GLOBAL_LIMIT - IMAGE_MUT_AMS_RESERVED)"
+            Comment="Per suite resource limit for mutable images"/>
+
+  <constant Type="int"
+            Name="IMAGE_IMMUT_GLOBAL_LIMIT"
+            Value="1300000"
+            Comment="Global resource limit for immutable images"/>
+  <constant Type="int"
+            Name="IMAGE_IMMUT_AMS_RESERVED"
+            Value="700000"
+            Comment="Per suite resource limit for immutable images"/>
+  <constant Type="int"
+            Name="IMAGE_IMMUT_AMS_LIMIT"
+            Value="(IMAGE_IMMUT_GLOBAL_LIMIT)"
+            Comment="Per suite resource limit for immutable images"/>
+  <constant Type="int"
+            Name="IMAGE_IMMUT_SUITE_RESERVED"
+            Value="0"
+            Comment="Per suite resource limit for immutable images"/>
+  <constant Type="int"
+            Name="IMAGE_IMMUT_SUITE_LIMIT"
+            Value="(IMAGE_IMMUT_GLOBAL_LIMIT - IMAGE_IMMUT_AMS_RESERVED)"
+            Comment="Per suite resource limit for immutable images"/>
+ </constant_class>
+</constants>
+</configuration>
