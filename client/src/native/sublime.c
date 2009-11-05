@@ -338,11 +338,25 @@ LIMEEXPORT void StartLime(void) {
 /* Disconnects from the SUBLIME server */
 LIMEEXPORT void EndLime(void) {
     if (callSharedBuffer != NULL) {
+        callSharedBuffer->close(callSharedBuffer);
+    }
+
+    if (returnSharedBuffer != NULL) {
+        returnSharedBuffer->close(returnSharedBuffer);
+    }
+
+    if (listener != NULL) {
+        listener->join(listener);
+        DeleteLimeThread(listener);
+        listener = NULL;
+    }
+
+    if (callSharedBuffer != NULL) {
         DeleteSharedBuffer(callSharedBuffer); 
         callSharedBuffer = NULL; 
     }
     
-    if (returnSharedBuffer != NULL ){
+    if (returnSharedBuffer != NULL) {
         DeleteSharedBuffer(returnSharedBuffer); 
         returnSharedBuffer = NULL; 
     }
@@ -361,11 +375,6 @@ LIMEEXPORT void EndLime(void) {
         LimeDestroyMutex(threadMapMutex);
         threadMapMutex = NULL;
     } 
-
-    if (listener != NULL) {
-        DeleteLimeThread(listener);
-        listener = NULL;
-    }
 }
 
 /*

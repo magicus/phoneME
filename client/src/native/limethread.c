@@ -53,6 +53,7 @@ static int thread_getError(LimeThread *t);
 static void thread_clearError(LimeThread *t);
 static void thread_setError(LimeThread *t, int errorCode);
 static void thread_checkError(LimeThread *t);
+static void thread_join(LimeThread *t);
 static void error(const char *format, ... );
 
 #ifdef WIN32
@@ -127,6 +128,7 @@ LimeThread *NewLimeThread(LimeRunnable f, void *parameter) {
     t->start = thread_start;
     t->getError = thread_getError;
     t->clearError = thread_clearError;
+    t->join = thread_join;
     return t;
 }
 
@@ -213,7 +215,7 @@ static int thread_start(LimeThread *t) {
     if (h == NULL) { 
 #else /* WIN32 */ 
 
-    res = pthread_create(&h, NULL, thread_run , copiedData);
+    res = pthread_create(&t->data->threadID, NULL, thread_run, copiedData);
     if (res != 0) {
 
 #endif
@@ -223,10 +225,20 @@ static int thread_start(LimeThread *t) {
         return 1;
     } else {
 #ifdef WIN32
-        t->data->handle = 0;
+        t->data->handle = h;
 #endif
         return 0;
     }
+}
+
+static void thread_join(LimeThread *t) {
+    assert(t != NULL);
+
+#ifdef WIN32
+    WaitForSingleObject(t->data->handle, INFINITE);
+#else
+    pthread_join(t->data->threadID, NULL);
+#endif
 }
 
 int LimeThreadRun(LimeRunnable f, void *parameter) {

@@ -60,6 +60,7 @@ typedef struct __Thread {
     int (*start) (struct __Thread *t);
     void (*clearError) (struct __Thread *s);
     int (*getError) (struct __Thread *s);
+    void (*join) (struct __Thread *s);
 } LimeThread;
 
 
