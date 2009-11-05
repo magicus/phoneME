@@ -114,6 +114,8 @@ typedef struct SharedBufferStruct {
                    void *buffer, int32_t numOfBytes);
     int (*readInt32)(struct SharedBufferStruct *sb, int32_t *result);
     int (*readLong64)(struct SharedBufferStruct *sb, long64 *result);
+    
+    void (*close)(struct SharedBufferStruct *sb);
 
     InternalSharedBufferData data;
 } SharedBuffer; 

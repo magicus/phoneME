@@ -389,7 +389,13 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_stopProcess(JNIEnv *env,
                                                              jclass clz) {
     WaitForMutex(bridgeMutex);
 
-    finalizeLimeBridge();    
+    if (callSharedBuffer != NULL) {
+        callSharedBuffer->close(callSharedBuffer);
+    }
+
+    if (returnSharedBuffer != NULL) {
+        returnSharedBuffer->close(returnSharedBuffer);
+    }
 
     LimeReleaseMutex(bridgeMutex);    
 }

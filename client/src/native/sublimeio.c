@@ -281,14 +281,8 @@ static int sharedBuffer_create(SharedBuffer* sb, char* bufferName){
     
 }  
 
-/* the shared buffer is really closed only after all ponters 
- * to the buffer are closed 
- */ 
-static int sharedBuffer_close(SharedBuffer* sb){
+static void sharedBuffer_close(SharedBuffer* sb){
     assert(sb != NULL); 
-
-    /* TODO: flush */ 
-    /* sharedBuffer_flush(sb); */
 
     WaitForMutex(sb->data.mutex);
     sb->data.dataBuffer->closed = htonl(1);
@@ -296,6 +290,13 @@ static int sharedBuffer_close(SharedBuffer* sb){
     
     LimeSetEvent(sb->data.bufferReadyEvent);
     LimeSetEvent(sb->data.dataReadyEvent);
+}
+
+/* the shared buffer is really closed only after all ponters 
+ * to the buffer are closed 
+ */ 
+static void sharedBuffer_destroy(SharedBuffer* sb){
+    assert(sb != NULL); 
 
 #ifdef WIN32
  
@@ -318,8 +319,6 @@ static int sharedBuffer_close(SharedBuffer* sb){
 
     sharedBuffer_destroyIpcObjects(sb);
     free(sb); 
-    
-    return 0; 
 }
 
 static int sharedBuffer_write(SharedBuffer *sb, 
@@ -438,8 +437,9 @@ static int sharedBuffer_read(SharedBuffer *sb,
     return numOfBytes;
 }
 
-void DeleteSharedBuffer(SharedBuffer *sb){
+void DeleteSharedBuffer(SharedBuffer *sb) {
     sharedBuffer_close(sb); 
+    sharedBuffer_destroy(sb); 
 }
 
 static int sharedBuffer_readAll(SharedBuffer *sb, 
@@ -535,6 +535,7 @@ static void sharedBuffer_initPointers(SharedBuffer *sb) {
     sb->readAll = sharedBuffer_readAll;
     sb->readInt32 = sharedBuffer_readInt32;
     sb->readLong64 = sharedBuffer_readLong64;
+    sb->close = sharedBuffer_close;
 }
 
 static int sharedBuffer_createIpcObjects(SharedBuffer *sb, char *bufferName) {
