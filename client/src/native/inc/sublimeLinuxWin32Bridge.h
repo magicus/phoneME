@@ -28,31 +28,19 @@
 
 #ifndef WIN32
 
-#include <pthread.h>
+typedef void *MUTEX_HANDLE;
+typedef void *EVENT_HANDLE;
 
-#define MUTEX_HANDLE pthread_mutex_t*
-#define EVENT_HANDLE sublimeEvent*
+/* fixme: is FALSE and TRUE required? */
 #define FALSE 0
 #define TRUE 1
-#define EVENT_CHAR 's' 
-#define EVENT_NAME_LENGTH 8
-
-
-/* The implementation of event is done with FIFO. 
-   setting an event is done by pushing a char to the stream, 
-   and waiting for event is done by blocking read of one char */ 
-
-typedef struct sublimeEventStruct { 
-  int pipeDescriptor; 
-  void (*waitForEvent) (struct sublimeEventStruct *es); 
-  void (*setEvent) (struct sublimeEventStruct *es);
-} sublimeEvent;  
-
 
 /* security attributes are void * because the windows version 
    uses this argument as null, so the type does not matter */ 
-EVENT_HANDLE LimeCreateEvent(void* sa,  int manualReset, int initialState, char * name); 
-MUTEX_HANDLE LimeCreateMutex(void* sa, int initialState, char * name); 
+EVENT_HANDLE LimeCreateEvent(void *sa,  int manualReset, int initialState, 
+                             const char* name); 
+MUTEX_HANDLE LimeCreateMutex(void *sa, int initialState, 
+                             const char* name); 
 
 void LimeSetEvent(EVENT_HANDLE event);
 void LimeReleaseMutex(MUTEX_HANDLE fd); 
