@@ -333,6 +333,12 @@ JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_returnResult(
 /* used by Sublime.java to create a unique named shared buffer */ 
 JNIEXPORT void JNICALL Java_com_sun_kvem_Sublime_setSublimeProcessId(
         JNIEnv * e, jclass c, jint pid) {
+#ifndef WIN32
+    char *processID = (char*) malloc(12);
+    itoa(pid, processID, 10);
+    setenv("SUBLIME_PROC_ID", processID, 0);
+    free(processID);
+#endif
     set_current_process_id(pid);
 }
 
