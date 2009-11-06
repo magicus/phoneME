@@ -85,7 +85,7 @@ static void error(const char *s, ...) {
 }
 
 static int getID(LimeThread *t) {
-    return (int) t->data->threadID;
+    return (int) (intptr_t) t->data->threadID;
 }
 
 static void thread_clearError(LimeThread *t) {
@@ -205,7 +205,7 @@ static int thread_start(LimeThread *t) {
 
 #endif
         error("LimeThread: Cannot start a thread that is already running"
-              " with ID %i\n", (int) t->data->threadID);
+              " with ID %i\n", (int) (intptr_t) t->data->threadID);
         return 1;
     }
 

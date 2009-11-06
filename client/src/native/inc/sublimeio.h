@@ -107,12 +107,14 @@ typedef struct SharedBufferStruct {
     int (*writeAll)(struct SharedBufferStruct *sb, 
                     const void *buffer, int32_t numOfBytes);
     int (*writeInt32)(struct SharedBufferStruct *sb, int32_t value);
+    int (*writeUInt32)(struct SharedBufferStruct *sb, uint32_t value);
     void (*flush)(struct SharedBufferStruct *sb);
     int (*read)(struct SharedBufferStruct *sb, 
                 void *buffer, int32_t numOfBytes);
     int (*readAll)(struct SharedBufferStruct *sb, 
                    void *buffer, int32_t numOfBytes);
     int (*readInt32)(struct SharedBufferStruct *sb, int32_t *result);
+    int (*readUInt32)(struct SharedBufferStruct *sb, uint32_t *result);
     int (*readLong64)(struct SharedBufferStruct *sb, long64 *result);
     
     void (*close)(struct SharedBufferStruct *sb);

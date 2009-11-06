@@ -148,7 +148,7 @@ static int sharedBuffer_attachBuffer(SharedBuffer* sb, int size ){
 #else /* !WIN32 */
   
     sb->data.dataBuffer = (DataBuffer*)shmat(*(sb->data.hMapFile), NULL, 0);
-    if ((int)sb->data.dataBuffer == -1) { 
+    if ((intptr_t) sb->data.dataBuffer == -1) { 
         switch(errno) { 
         case EACCES: {
             fprintf(stderr, "Operation permission is denied to the calling process, see IPC\n");
@@ -536,6 +536,11 @@ static void sharedBuffer_initPointers(SharedBuffer *sb) {
     sb->readInt32 = sharedBuffer_readInt32;
     sb->readLong64 = sharedBuffer_readLong64;
     sb->close = sharedBuffer_close;
+
+    sb->writeUInt32 = 
+            (int (*)(SharedBuffer *, uint32_t)) sharedBuffer_writeInt32;
+    sb->readUInt32 = 
+            (int (*)(SharedBuffer *, uint32_t *)) sharedBuffer_readInt32;
 }
 
 static int sharedBuffer_createIpcObjects(SharedBuffer *sb, char *bufferName) {

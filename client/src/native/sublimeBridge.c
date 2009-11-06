@@ -276,12 +276,12 @@ static void process(JNIEnv *env, jclass classSublime) {
     while (1) {
         uint32_t requestThreadID, requestSize; 
         
-        if (callSharedBuffer->readInt32(callSharedBuffer, &requestThreadID)
+        if (callSharedBuffer->readUInt32(callSharedBuffer, &requestThreadID)
                 != 0) {
             break;
         }
 
-        if (callSharedBuffer->readInt32(callSharedBuffer, &requestSize)
+        if (callSharedBuffer->readUInt32(callSharedBuffer, &requestSize)
                 != 0) {
             break;
         }

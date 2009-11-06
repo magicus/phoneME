@@ -489,8 +489,8 @@ static void write_nextValue(char **bufferData,
         void *array;
         int length;
         /* array pointer */
-        array =  (void *)*((int*)(*argBufferData));
-        (*argBufferData) += sizeof(int);
+        array =  (void *)*((intptr_t*)(*argBufferData));
+        (*argBufferData) += sizeof(intptr_t);
         /* array length */
         length = *((int*)(*argBufferData));
         (*argBufferData) += sizeof(int);
@@ -650,8 +650,8 @@ static int read_arguments(LimeFunction *f, va_list args, ArrayBuffer *buffer)
 	   
         if (type & LIME_TYPE_ARRAY) {
             /* array */
-            arrayData = (*((int *) bufferData)) = va_arg(args, int);
-            bufferData += sizeof(int); 
+            arrayData = (*((intptr_t *) bufferData)) = va_arg(args, intptr_t);
+            bufferData += sizeof(intptr_t); 
             /* length */
             (*((int *) bufferData)) = va_arg(args, int);
             if (arrayData == 0)
@@ -792,12 +792,12 @@ static void lime_call(LimeFunction *f, void *result, ...) {
 
     WaitForMutex(callMutex);
 
-    if (callSharedBuffer->writeInt32(callSharedBuffer, threadID) != 0) {
+    if (callSharedBuffer->writeUInt32(callSharedBuffer, threadID) != 0) {
         LimeReleaseMutex(callMutex);
         error("SUBLIME: Failed to write call threadID\n");
     }
     
-    if (callSharedBuffer->writeInt32(callSharedBuffer, commandLength) != 0) {
+    if (callSharedBuffer->writeUInt32(callSharedBuffer, commandLength) != 0) {
         LimeReleaseMutex(callMutex);
         error("SUBLIME: Failed to write command length\n");
     }
@@ -816,7 +816,7 @@ static void lime_call(LimeFunction *f, void *result, ...) {
     WaitForEvent(event); 
 
     /* read the result size */
-    returnSharedBuffer->readInt32(returnSharedBuffer, &resultSize);
+    returnSharedBuffer->readUInt32(returnSharedBuffer, &resultSize);
 
     arrayLength = read_value(returnSharedBuffer, f->data->returnType, result);
     /* process the return data from the SubLime server */
@@ -894,18 +894,18 @@ LIMEEXPORT LimeFunction *NewLimeFunction(const char *packageName,
 
     WaitForMutex(callMutex);
 
-    if (callSharedBuffer->writeInt32(callSharedBuffer, threadID) != 0) {
+    if (callSharedBuffer->writeUInt32(callSharedBuffer, threadID) != 0) {
         LimeReleaseMutex(callMutex);
         error("SUBLIME: Failed to write call threadID\n");
     }
     
-    if (callSharedBuffer->writeInt32(callSharedBuffer, 
-                                     lookupLength + sizeof(int32_t)) != 0) {
+    if (callSharedBuffer->writeUInt32(callSharedBuffer, 
+                                      lookupLength + sizeof(int32_t)) != 0) {
         LimeReleaseMutex(callMutex);
         error("SUBLIME: Failed to write method lookup length\n");
     }
     
-    if (callSharedBuffer->writeInt32(callSharedBuffer, LIME_LOOKUP) != 0) {
+    if (callSharedBuffer->writeUInt32(callSharedBuffer, LIME_LOOKUP) != 0) {
         LimeReleaseMutex(callMutex);
         error("SUBLIME: Failed to write LIME_LOOKUP request type\n");
     }
@@ -924,7 +924,7 @@ LIMEEXPORT LimeFunction *NewLimeFunction(const char *packageName,
     WaitForEvent(event); 
 
     /* read the result size */
-    returnSharedBuffer->readInt32(returnSharedBuffer, &resultSize);
+    returnSharedBuffer->readUInt32(returnSharedBuffer, &resultSize);
 
     /* the target buffer is now returnSharedBuffer */ 
     returnSharedBuffer->readInt32(returnSharedBuffer, &d->functionID);
@@ -1277,7 +1277,7 @@ static uint32_t getThreadUniqueId(void) {
 static pthread_mutex_t lockObject;
 
 static uint32_t getThreadUniqueId(void) {
-    return(pthread_self());
+    return ((uint32_t) (intptr_t) pthread_self());
 }
 
 #endif
@@ -1398,13 +1398,13 @@ Java_com_sun_kvem_lime_LimeFunction_newLimeFunction(
     free(packageNameChars);
     free(classNameChars);
     free(methodNameChars);
-    return (jlong) f;
+    return (jlong) (intptr_t) f;
 }
 
 JNIEXPORT void JNICALL
 Java_com_sun_kvem_lime_LimeFunction_deleteLimeFunction(
         JNIEnv *env, jclass cls, jlong f) {
-    DeleteLimeFunction((LimeFunction *) f);
+    DeleteLimeFunction((LimeFunction *) (intptr_t) f);
 }
 
 JNIEXPORT jobject JNICALL
@@ -1421,7 +1421,7 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
     uint32_t resultSize;    
     /* this event will be signaled when the return value is placed in returnSharedBuffer */ 
     EVENT_HANDLE event; 
-    LimeFunction *f = (LimeFunction *) limeFunction;
+    LimeFunction *f = (LimeFunction *) (intptr_t) limeFunction;
     
     assert(f != NULL);
     assert((*env)->GetArrayLength(env, args) == f->data->argCount);
@@ -1482,12 +1482,12 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
     
     WaitForMutex(callMutex);
 
-    if (callSharedBuffer->writeInt32(callSharedBuffer, threadID) != 0) {
+    if (callSharedBuffer->writeUInt32(callSharedBuffer, threadID) != 0) {
         LimeReleaseMutex(callMutex);
         error("SUBLIME: Failed to write call threadID\n");
     }
 
-    if (callSharedBuffer->writeInt32(callSharedBuffer, commandLength) != 0) {
+    if (callSharedBuffer->writeUInt32(callSharedBuffer, commandLength) != 0) {
         LimeReleaseMutex(callMutex);
         error("SUBLIME: Failed to write command length\n");
     }
@@ -1506,7 +1506,7 @@ Java_com_sun_kvem_lime_LimeFunction_invokeLimeFunction(
     WaitForEvent(event); 
 
     /* read the result size */
-    returnSharedBuffer->readInt32(returnSharedBuffer, &resultSize);
+    returnSharedBuffer->readUInt32(returnSharedBuffer, &resultSize);
 
     /* process the return data from the SubLime server */
     if (f->data->returnType & LIME_TYPE_ARRAY) {
