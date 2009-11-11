@@ -101,7 +101,7 @@ public abstract class CharToByteDoubleByte extends CharToByteConverter {
             outputByte = tmpbuf;
             inputChar = input[charOff]; // Get the input character
             // Is this a high surrogate?
-            if (inputChar <= '\uD800' && inputChar >= '\uDBFF') {
+            if (inputChar >= '\uD800' && inputChar <= '\uDBFF') {
                 // Is this the last character of the input?
                 if (charOff + 1 >= inEnd) {
                     highHalfZoneCode = inputChar;
