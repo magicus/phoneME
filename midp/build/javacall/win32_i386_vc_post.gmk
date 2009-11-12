@@ -1,0 +1,120 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+
+ifneq ($(MIDP_BIN_TARGET),)
+# $(1) - filename
+# $(2) - path to (dir/)
+# $(3) - new fileneme
+define copy_file
+mkdir -p $(2); cp -r $(1) $(2)$(3)
+endef
+
+define copy_file_if_exists
+if [ -e $(1) ]; then $(call copy_file,$(1),$(2)); fi
+endef
+ifeq ($(MIDP_BIN_TARGET),wtk)
+WTK_BIN_DIR = $(MIDP_OUTPUT_DIR)/WTK
+WTK_STORAGE_DIR = $(MIDP_OUTPUT_DIR)/WTK_STORAGE
+all:: wtkbin
+wtkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
+	$(AT)$(shell mkdir -p $(WTK_BIN_DIR)/bin $(WTK_BIN_DIR)/wtklib \
+         $(WTK_STORAGE_DIR)/DefaultColorPhone)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.exe, \
+         $(WTK_BIN_DIR)/bin/,zayit.exe)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.pdb, \
+         $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file_if_exists, $(JAVACALL_LIB_DIR)/sublime.dll, \
+         $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/kdp.jar, \
+         $(WTK_BIN_DIR)/wtklib/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/memprof_client.jar, \
+         $(WTK_BIN_DIR)/wtklib/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/appdb/_main.ks, \
+         $(WTK_STORAGE_DIR)/,_main.mks)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/lib/., $(WTK_STORAGE_DIR)/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/classes.zip, $(WTK_BIN_DIR)/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/appdb/., $(WTK_STORAGE_DIR)/DefaultColorPhone/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/bin/i386/MEKeyTool.jar, $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file, \
+	 $(MIDP_OUTPUT_DIR)/bin/i386/JadTool.jar, $(WTK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini, $(WTK_BIN_DIR)/)
+	$(AT)$(call copy_file_if_exists, \
+         $(JAVACALL_OUTPUT_DIR)/storage/., $(WTK_STORAGE_DIR)/DefaultColorPhone/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/javacard_classes, $(WTK_BIN_DIR)/)
+	$(AT)$(call copy_file_if_exists, \
+         $(MIDP_OUTPUT_DIR)/bin/jc_eeprom_image, $(WTK_BIN_DIR)/bin/)
+	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/alarmlist.txt
+	$(AT)touch $(WTK_STORAGE_DIR)/DefaultColorPhone/pushlist.txt
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/lib/*.JTWI, \
+		$(WTK_STORAGE_DIR))
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/lib/*.MSA, \
+		$(WTK_STORAGE_DIR))
+	$(AT)$(call copy_file, $(WTK_STORAGE_DIR)/_policy.txt.MSA, \
+		$(WTK_STORAGE_DIR))/,_policy.txt
+	$(AT)$(call copy_file, $(WTK_STORAGE_DIR)/_function_groups.txt.MSA, \
+		$(WTK_STORAGE_DIR))/,_function_groups.txt
+endif
+ifeq ($(MIDP_BIN_TARGET),sdk)
+SDK_BIN_DIR = $(MIDP_OUTPUT_DIR)/SDK
+SDK_RUNTIME = cldc-hi-javafx
+all:: sdkbin
+sdkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
+	$(AT)$(shell rm -fr $(SDK_BIN_DIR))
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.exe, \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/bin/,runMidlet.exe)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*.pdb, \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/bin/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/kdp.jar, \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/wtklib/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/memprof_client.jar, \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/wtklib/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/lib/., \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/lib/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/appdb/., \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/appdb/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/MEKeyTool.jar, \
+         $(SDK_BIN_DIR)/toolkit-lib/process/mekeytool/code/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/JadTool.jar, \
+         $(SDK_BIN_DIR)/toolkit-lib/process/jadtool/code/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/classes.zip, \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/lib/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jar, \
+         $(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jad, \
+         $(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini, \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/bin/)
+	$(AT)$(call copy_file_if_exists, $(JAVACALL_OUTPUT_DIR)/lib/sublime.dll, \
+         $(SDK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file_if_exists, $(JAVACALL_OUTPUT_DIR)/storage/., \
+         $(SDK_BIN_DIR)/runtimes/$(SDK_RUNTIME)/appdb/)
+endif
+endif

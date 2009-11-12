@@ -1,0 +1,284 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+#####################################################################
+#
+# GLOBAL defines. This file should not contain rules.
+#
+# The following variables must be defined prior to including this
+# file:
+#
+# JDK_DIR        - Directory containing the Java Development Kit
+# EXTRA_INCLUDES - Additional search directories for .h files
+# EXTRA_CFLAGS   - Additional arguments for compiler
+# CMDLINE_CFLAGS - Compiler arguments that are defined on the 
+#                  makefile command-line. This must not be set
+#                  or modified directly within the makefiles.
+# USE_MIDP_MALLOC  - Use internal memory management for native
+#                    heap allocations. (default value is false)
+# USE_IMAGE_CACHE  - At MIDlet install time, search the jar for images, 
+#                    convert them to a platform native representation, 
+#                    and cache the converted image for faster loading
+#                    at runtime of the MIDlet.
+# USE_FONT_CACHE   - At MIDlet install time, search the jar for fonts, 
+#                    and cache the fonts.
+# USE_ICON_CACHE   - Store icons of all installed midlet suites in one
+#                    file that will be read during the system startup
+#                    to speed up displaying the icons in the AMS.
+# USE_JAVA_DEBUGGER - Include the CLDC debugger hooks to communicate
+#                  with an external proxy agent. (default value is false)
+# USE_JAVA_PROFILER  - Compile MIDP with the VMs Java profiler
+#                      enbabled. The VM must support this feature.
+#                      (default is false )
+# USE_NATIVE_PROFILER  - Compile MIDP so that it is profiler enabled
+#                        currently for GCC only
+#                        (default is false )
+# USE_CLDC_RELEASE - In the case of non-debug build link MIDP with 
+#                    release version of CLDC (default is false)
+#####################################################################
+
+ifndef _libdefs_gmk_
+_libdefs_gmk_ = defined
+
+include $(JWC_WORK_SPACE)/build/$(JWC_CONFIG)/Platform.gmk
+include $(JWC_WORK_SPACE)/build/$(JWC_CONFIG)/Options.gmk
+include $(JWC_WORK_SPACE)/build/common/TopDefs.gmk
+
+# This default is redefined during a release build.
+#
+RELEASE      := $(shell echo `$(WHOAMI)`:`date '+%m.%d.%y-%H:%M'`)
+FULL_VERSION := $(shell echo `$(WHOAMI)`:`date '+%m.%d.%y-%H:%M'`)
+
+# Java tools
+#
+JAR_CMD      = $(JDK_DIR)/bin/jar$(JVM_EXE_SUFFIX)
+JAVA_CMD     = $(JDK_DIR)/bin/java$(JVM_EXE_SUFFIX)
+JAVAC_CMD    = $(JDK_DIR)/bin/javac$(JVM_EXE_SUFFIX)
+JAVADOC_CMD  = $(JDK_DIR)/bin/javadoc$(JVM_EXE_SUFFIX)
+
+# MIDP tools
+#
+PREVERIFY_CMD = $(CLDC_DIST_DIR)/bin/preverify$(EXE)
+KDP_CMD       = $(CLDC_DIST_DIR)/bin/kdp.jar
+
+# Make options
+#
+ifeq ($(USE_MIDP_MALLOC), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_MIDP_MALLOC=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_MIDP_MALLOC=0
+endif
+
+ifeq ($(USE_IMAGE_CACHE), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=0
+endif
+
+ifeq ($(USE_FONT_CACHE), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_FONT_CACHE=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_FONT_CACHE=0
+endif
+
+ifeq ($(USE_ICON_CACHE), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_ICON_CACHE=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_ICON_CACHE=0
+endif
+
+ifeq ($(USE_I3_TEST), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_I3_TEST=1
+   JPP_DEFS     += -DENABLE_I3_TEST
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_I3_TEST=0   
+endif
+
+ifeq ($(USE_NUTS_FRAMEWORK), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NUTS_FRAMEWORK=1
+   override NUTS_CMD = $(BINDIR)/nuts_main$(g)$(p)$(EXE)
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_NUTS_FRAMEWORK=0   
+   override NUTS_CMD =
+endif
+
+ifeq ($(USE_NETWORK_INDICATOR), true)
+    LIB_EXTRA_CFLAGS += -DENABLE_NETWORK_INDICATOR=1
+else
+    LIB_EXTRA_CFLAGS += -DENABLE_NETWORK_INDICATOR=0
+endif
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_MULTIPLE_ISOLATES=1
+   JPP_DEFS	+= -DENABLE_MULTIPLE_ISOLATES
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_MULTIPLE_ISOLATES=0
+endif
+
+ifeq ($(USE_MULTIPLE_DISPLAYS), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_MULTIPLE_DISPLAYS=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_MULTIPLE_DISPLAYS=0
+endif
+
+ifeq ($(USE_JAVA_DEBUGGER), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_JAVA_DEBUGGER=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_JAVA_DEBUGGER=0
+endif
+
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_APP_MANAGER=1
+
+ifeq ($(USE_NAMS_TEST_SERVICE), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=0
+endif
+   
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_APP_MANAGER=0 -DENABLE_NAMS_TEST_SERVICE=0
+endif
+
+ifeq ($(USE_PUBLIC_AMS_API), true)
+   JPP_DEFS	+= -DENABLE_PUBLIC_AMS_API
+endif
+
+ifeq ($(USE_NATIVE_INSTALLER), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_INSTALLER=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_INSTALLER=0
+endif
+
+ifeq ($(USE_NATIVE_SUITE_STORAGE), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_SUITE_STORAGE=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_SUITE_STORAGE=0
+endif
+
+ifeq ($(USE_NATIVE_RMS), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_RMS=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_RMS=0
+endif
+
+ifeq ($(USE_NATIVE_PTI), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_PTI=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_NATIVE_PTI=0
+endif
+
+ifeq ($(USE_MESSAGE_STRINGS), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_MESSAGE_STRINGS=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_MESSAGE_STRINGS=0
+endif
+
+ifeq ($(USE_CLDC_11), true)
+    JPP_DEFS	 += -DENABLE_CLDC_11
+endif
+
+ifeq ($(USE_SERVER_SOCKET), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_SERVER_SOCKET=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_SERVER_SOCKET=0
+endif
+
+ifeq ($(USE_JPEG), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_JPEG=1
+else
+   LIB_EXTRA_CFLAGS += -DENABLE_JPEG=0
+endif
+
+ifeq ($(USE_NATIVE_PROFILER), true)
+   p = _p
+else
+   p =
+endif
+
+ifeq ($(USE_CLDC_RELEASE), true)
+   r = _r
+else 
+   r = 
+endif 
+
+ifeq ($(USE_DEBUG), true)
+    LIB_EXTRA_CFLAGS += -DAZZERT=1 -DENABLE_DEBUG=1
+    JPP_DEFS	 += -DENABLE_DEBUG
+    g = _g
+    r = 
+else
+    ifneq ($(USE_CLDC_RELEASE), true)
+        LIB_EXTRA_CFLAGS += -DPRODUCT
+    endif
+    LIB_EXTRA_CFLAGS += -DENABLE_DEBUG=0
+    g = 
+endif
+
+UNAME = $(shell uname)
+
+# For Cygwin
+#
+ifeq ($(findstring CYGWIN, $(UNAME)), CYGWIN)
+    define fixcygpath
+    cygpath -w $(1)
+    endef
+    # Line join in generated commands
+    NL=\\\\
+else
+    define fixcygpath
+    echo $(1)
+    endef
+    # Line join in generated commands
+    NL=\\
+endif
+
+include $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r).make
+
+# Default compile flags
+#
+LIB_EXTRA_CFLAGS += \
+    -DRELEASE='"$(RELEASE)"' \
+    -DIMPL_VERSION='"$(VERSION)"' \
+    -DFULL_VERSION='"$(FULL_VERSION)"'
+
+LD_FLAGS       += ${JVM_LINK_FLAGS}
+LIB_EXTRA_CFLAGS   += ${JVM_CC_FLAGS} -I$(CLDC_DIST_DIR)/include
+LIB_EXTRA_CPPFLAGS += ${JVM_CPP_FLAGS}
+
+CFLAGS = $(LIB_EXTRA_CFLAGS)
+CPPFLAGS = $(LIB_EXTRA_CPPFLAGS) $(CFLAGS)
+LIB_INCLUDE_PATH += -I$(CLDC_DIST_DIR)/include -I$(PCSL_DIST_DIR)/inc
+
+LIB_INCLUDE_PATH += -I$(MIDP_OUTPUT_DIR)/generated
+
+# used to be verbose on what make is really doing
+ifndef VERBOSE_BUILD
+A = @
+else
+A =
+endif
+
+endif
