@@ -2523,8 +2523,11 @@ CVMJITPMIcalleeTableFindRecord(CVMMethodBlock* calleeMb, CVMUint32* indexPtr)
     CVMJITPMICalleeRecord* calleeRec;
     CVMBool result = CVM_FALSE; /* assume not found */
     int chainLen = 0; /* used to track how long a search takes */
+    CVMMethodTypeID tid = CVMmbNameAndTypeID(calleeMb);
     CVMUint32 hashIdx =
-	(CVMmbNameAndTypeID(calleeMb) + (int)calleeMb) %
+	(CVMtypeidGetToken(CVMtypeidGetMemberName(tid)) +
+	 CVMtypeidGetToken(CVMtypeidGetMemberType(tid)) +
+	 (int)calleeMb) %
 	jgs->pmiNumCalleeRecords;
     CVMassert(jgs->pmiEnabled);
 
@@ -2551,7 +2554,9 @@ CVMJITPMIcalleeTableFindRecord(CVMMethodBlock* calleeMb, CVMUint32* indexPtr)
     {
 	int firstDeletedHashIdx;
 	int secondaryHashPrimesIdx = 
-	    (CVMmbNameAndTypeID(calleeMb) + (int)calleeMb) %
+	    (CVMtypeidGetToken(CVMtypeidGetMemberName(tid)) +
+	     CVMtypeidGetToken(CVMtypeidGetMemberType(tid)) +
+	     (int)calleeMb) %
 	    CVMJITPMI_NUM_SECONDARY_HASH_PRIMES;
 	int secondaryHashPrime =
 	    CVMJITPMIsecondaryHashPrimes[secondaryHashPrimesIdx];
