@@ -2703,6 +2703,20 @@ void KillExpressionClosure::store_local(BasicType kind,
   }
 }
 
+void KillExpressionClosure::increment_local_int(int index, 
+                                                jint offset JVM_TRAPS) {
+  if (index >= BitsPerWord) {
+    return;
+  }
+
+  ExpressionStream es(frame());
+  for ( ; !es.eos() ; es.next()) {
+    if (es.has_local_index(index)) {
+      es.kill();
+    }
+  }
+}
+
 void KillExpressionClosure::store_array(BasicType kind JVM_TRAPS) {
   ExpressionStream es(frame());
   for ( ; !es.eos() ; es.next()) {

@@ -161,6 +161,8 @@ class KillExpressionClosure : public BytecodeClosure {
 
   virtual void store_local(BasicType kind, int index JVM_TRAPS);
 
+  virtual void increment_local_int(int index, jint offset JVM_TRAPS);
+
   virtual void store_array(BasicType kind JVM_TRAPS);
 
   virtual void put_field(int index JVM_TRAPS);
