@@ -1126,10 +1126,11 @@ public final class Security {
 	    // java.security.<type>.Spi is a system class, therefore
 	    // Class.forName() always works
 	    Class typeClass;
-	    if (type.equals("CertificateFactory") ||
-		type.equals("CertPathBuilder") ||
-		type.equals("CertPathValidator") ||
-		type.equals("CertStore")) {
+            if (type.equals("CertPathBuilder") || type.equals("CertStore")) {
+		typeClass = Class.forName("com.sun.security.cert." + type
+					  + "Spi");
+            } else if (type.equals("CertificateFactory") ||
+		type.equals("CertPathValidator")) {
 		typeClass = Class.forName("java.security.cert." + type
 					  + "Spi");
 	    } else {
