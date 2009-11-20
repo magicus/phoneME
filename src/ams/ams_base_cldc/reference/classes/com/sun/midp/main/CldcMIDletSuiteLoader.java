@@ -128,6 +128,9 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
         /* Listens for incoming notices */
         NoticeManager.initCommon(eventQueue);
+
+        /* NoticeManager client for notice representation.*/
+        NoticeVisualizer.init(lcduiEnvironment, internalSecurityToken);
     }
 
     /** Final actions to finish a MIDlet suite loader */

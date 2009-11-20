@@ -164,4 +164,12 @@ public interface DisplayAccess {
      * @return true when display is foreground
      */
     public boolean isDisplayForeground();
+
+    /**
+     * Show popup screen.
+     * 
+     * 
+     * @param popup screen to show as popup
+     */
+    public void showPopup(Object popup);
 }

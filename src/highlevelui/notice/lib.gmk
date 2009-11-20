@@ -34,10 +34,14 @@
 NOTICE_NAME = notice
 LIB_SET += $(NOTICE_NAME)
 
-ifeq ($(USE_NOTIFICATION), true)
-NOTICE_IMPL_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(NOTICE_NAME)/reference
+
+ifeq ($(USE_MIDP3), true)
 NOTICE_API_DIR = $(PROJECT_SUBSYSTEM_DIR)/highlevelui/notification
 include $(NOTICE_API_DIR)/lib.gmk
+endif
+
+ifeq ($(USE_NOTIFICATION), true)
+NOTICE_IMPL_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(NOTICE_NAME)/reference
 else
 NOTICE_IMPL_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(NOTICE_NAME)/stubs
 endif

@@ -30,10 +30,9 @@
 ######################################################################
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(NOTICE_TARGET_IMPL_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(NOTICE_WIDGET_IMPL_DIR)/classes
 
 # Java files
 SUBSYSTEM_NOTICE_JAVA_FILES += \
-	$(NOTICE_TARGET_IMPL_DIR)/classes/com/sun/midp/lcdui/Notice.java \
-	$(NOTICE_TARGET_IMPL_DIR)/classes/com/sun/midp/lcdui/NoticeVisualizer.java \
-	$(NOTICE_TARGET_IMPL_DIR)/classes/com/sun/midp/main/NoticeManager.java
+	$(NOTICE_WIDGET_IMPL_DIR)/classes/com/sun/midp/chameleon/NoticePopup.java
+

@@ -3273,6 +3273,17 @@ public class Display {
             Display.this.lSetMode(m);
             }
         }
+
+        /**
+         * Show popup screen.
+         * 
+         * @param popup screen to show as popup
+         */
+        public void showPopup(Object popup) {
+            // #ifdef ENABLE_CHAMELEON
+            Display.this.showPopup((PopupLayer)popup);
+            // #endif
+        }
     } // END DisplayAccessImpl Class
 
 

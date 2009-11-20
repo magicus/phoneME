@@ -476,7 +476,7 @@ public class MIDletPeer implements MIDletEventConsumer {
      * Pause a MIDlet.
      * MIDletEventConsumer I/F method.
      */
-    public void handleMIDletPauseEvent() {
+    public synchronized void handleMIDletPauseEvent() {
         setState(MIDletPeer.PAUSE_PENDING);
     }
 
@@ -484,7 +484,7 @@ public class MIDletPeer implements MIDletEventConsumer {
      * Activate a MIDlet.
      * MIDletEventConsumer I/F method.
      */
-    public void handleMIDletActivateEvent() {
+    public synchronized void handleMIDletActivateEvent() {
         setState(MIDletPeer.ACTIVE_PENDING);
     }
 
@@ -492,7 +492,7 @@ public class MIDletPeer implements MIDletEventConsumer {
      * Destroy a MIDlet.
      * MIDletEventConsumer I/F method.
      */
-    public void handleMIDletDestroyEvent() {
+    public synchronized void handleMIDletDestroyEvent() {
         setState(MIDletPeer.DESTROY_PENDING);
     }
 }

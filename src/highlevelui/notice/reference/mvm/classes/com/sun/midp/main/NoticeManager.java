@@ -203,7 +203,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
                     }
                     return;
                 }
-                notifyNew(notice);
+                notifyNew(notice, false);
             }
         } else if (Notice.REMOVED == ev.intParam2) {
             notifyRemoved(notice, ev.intParam3);
@@ -315,9 +315,9 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
      * 
      * @param notice new notice
      */
-    private synchronized void notifyNew(Notice notice) {
-        notices.addElement(notice);
-        if (listeners.size() > 0) {
+    private synchronized void notifyNew(Notice notice, boolean owner) {
+        if (listeners.size() > 0 || owner) {
+            notices.addElement(notice);
             Enumeration enm = listeners.elements();
             while (enm.hasMoreElements()) {
                 NoticeManagerListener l = (NoticeManagerListener)enm.nextElement();
@@ -385,11 +385,11 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         DataOutputStream dataOut = new DataOutputStream(byteStream);
         try {
             notice.serialize(dataOut);
-            dataOut.close();// closes byteStream also
+            dataOut.close();// closes byteStream as well
             // IMPL_NOTE: will be redesigned when new NativeEvent is arrived
             event.stringParam2 = new String(byteStream.toByteArray());
-            // IMPL_NOTE: replace to broadcast address
-            queue.sendNativeEventToIsolate(event, VMUtils.getAmsIsolateId());
+            // broadcast
+            queue.sendNativeEventToIsolate(event, -1);
         } catch (IOException e) {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                 Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI, 
@@ -398,7 +398,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
             throw e;
         }
         // repost (if broadcast doesn't include current task)
-        notifyNew(notice);
+        notifyNew(notice, true);
     }
 
     /**
@@ -413,15 +413,15 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
     public void remove(Notice notice, int reason) {
         notifyRemoved(notice, reason);
         if (Notice.TIMEOUT == reason) {
-            // every task handles timer separately
+            // every task handles timeout separately
             return;
         }
         NativeEvent event = new NativeEvent(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT);
         event.intParam1 = notice.getUID();
         event.intParam2 = Notice.REMOVED;
         event.intParam3 = reason;
-        // no need to send whole data, the result will notice discarding
-        queue.sendNativeEventToIsolate(event, notice.getOriginatorID());
+        // no need to send whole data, the result is  notice discarding
+        queue.sendNativeEventToIsolate(event, -1);
     }
 
     /**

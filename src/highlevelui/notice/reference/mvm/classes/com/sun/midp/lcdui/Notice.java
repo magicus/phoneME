@@ -181,6 +181,7 @@ public class Notice extends NoticeBase {
      *        the stream
      */
     public void serialize(DataOutputStream out) throws IOException {
+        out.writeInt(uid);
         out.writeInt(origID);
         out.writeInt(type.getType());
         out.writeBoolean(selectable);
@@ -196,11 +197,12 @@ public class Notice extends NoticeBase {
             out.writeInt(w);
             out.writeInt(h);
             if (w > 0 && h > 0) {
-                int[] buf = new int[image.getWidth() * image.getHeight()];
-                image.getRGB(buf, 0, 0, 0, image.getWidth(), image.getWidth(), image.getHeight());
+                int[] buf = new int[w * h];
+                image.getRGB(buf, 0, w, 0, 0, w, h);
                 int i = 0;
-                while (i++<buf.length) {
+                while (i<buf.length) {
                     out.writeInt(buf[i]);
+                    i++;
                 }
             }
         } else {
@@ -219,6 +221,7 @@ public class Notice extends NoticeBase {
      * @throw IOException if one of the field can be restored
      */
     public void deserialize(DataInputStream in) throws IOException {
+        uid = in.readInt();
         origID = in.readInt();
         int typeUID = in.readInt();
         if (null == type || typeUID != type.getType()) {
@@ -238,10 +241,11 @@ public class Notice extends NoticeBase {
         /* Workaround: nulls at the end of serialized bytearray are skipped during converting to a string.
            Shell be restored to original values when byte array be introduced as Event field. */
         if (w > 1 && h > 1) {
-            int[] buf = new int[image.getWidth() * image.getHeight()];
+            int[] buf = new int[w * h];
             int i = 0;
-            while (i++<buf.length) {
+            while (i<buf.length) {
                 buf[i] = in.readInt();
+                i++;
             }
             image = Image.createRGBImage(buf, w, h, true);
         } else {
