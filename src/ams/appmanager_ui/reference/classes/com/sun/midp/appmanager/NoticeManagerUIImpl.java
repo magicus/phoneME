@@ -117,7 +117,7 @@ class NoticeManagerUIImpl extends Form implements CommandListener, ItemCommandLi
      * @param s suite info the notices belong to.
      */
     private NoticeManagerUIImpl(Display d, Displayable p, RunningMIDletSuiteInfo s) {
-        super(Resource.getString(ResourceConstants.NOTICE_POPUP_TITLE)
+        super(Resource.getString(ResourceConstants.NOTICE_LIST_WINDOW_TITLE)
                   + s.displayName);
         manager = NoticeManager.getInstance();
         manager.addListener(this);

@@ -1227,7 +1227,7 @@
             Name="AMS_GRA_INTLR_FILE_NOT_FOUND"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
-            Name="NOTICE_POPUP_TITLE"
+            Name="NOTICE_LIST_WINDOW_TITLE"
             Comment="Notice: com.sun.midp.appmanager.NoticeManagerUIImpl"/>
   <constant Type="int"
             Name="NOTIFICATION_SMS_LABEL"
@@ -1247,6 +1247,9 @@
   <constant Type="int"
             Name="NOTIFICATION_REMINDER_LABEL"
             Comment="Default REMINDER notification label"/>
+  <constant Type="int"
+            Name="NOTIFICATION_POPUP_TITLE"
+            Comment="Notification popup window title"/>
 
 </constant_class>
 </constants>

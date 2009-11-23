@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
-        Stylesheet for presenting nicely formatted content of this skin XML 
-        file in Web browser. That is, just open this skin file in your Web 
+<!--
+        Stylesheet for presenting nicely formatted content of this skin XML
+        file in Web browser. That is, just open this skin file in your Web
         browser to get more visual view of it.
 -->
 <?xml-stylesheet type="text/xsl" href="../share/chameleon/skin.xsl"?>
@@ -9,22 +9,22 @@
 <!--
         Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
-        
+
         This program is free software; you can redistribute it and/or
         modify it under the terms of the GNU General Public License version
         2 only, as published by the Free Software Foundation.
-        
+
         This program is distributed in the hope that it will be useful, but
         WITHOUT ANY WARRANTY; without even the implied warranty of
         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
         General Public License version 2 for more details (a copy is
         included at /legal/license.txt).
-        
+
         You should have received a copy of the GNU General Public License
         version 2 along with this work; if not, write to the Free Software
         Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
         02110-1301 USA
-        
+
         Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
         Clara, CA 95054 or visit www.sun.com if you need additional
         information or have any questions.
@@ -158,11 +158,11 @@
   <integer
         Key="SCROLL_COLOR_FRAME"
       Value="0"/>
-      
+
   <integer
         Key="SCROLL_COLOR_UP_ARROW"
       Value="0"/>
-      
+
   <integer
         Key="SCROLL_COLOR_DN_ARROW"
       Value="0xFFFFFF"/>
@@ -1501,6 +1501,54 @@
          Key="DATEEDITOR_IMAGE_TIME_HE_BG"
        Value="dateeditor.image_time_he_bg"
      Romized="true"/>
+
+  <!-- notice popup rectangle  -->
+  <integer Key="NOTICE_POPUP_WIDTH"
+           Value="200"/>
+  <integer Key="NOTICE_POPUP_HEIGHT"
+           Value="125"/>
+  <integer Key="NOTICE_POPUP_MARGIN"
+           Value="10"/>
+  <integer Key="NOTICE_POPUP_BG_COLOR" 
+            Value="0xFFCC33"/>
+  <integer  Key="NOTICE_POPUP_PAD"
+            Value="5"/> 
+
+  <!-- notice image -->
+  <integer
+        Key="NOTICE_POPUP_IMG_WIDTH" 
+        Value="32"/> 
+  <integer Key="NOTICE_POPUP_IMG_HEIGHT" 
+        Value="32"/>
+  <integer
+        Key="NOTICE_POPUP_IMAGE_BG_COLOR"
+        Value="0x808080"/>
+
+
+  <!-- notice title string -->
+  <font Key="NOTICE_POPUP_TITLE_FONT"
+      Value="FontResources.SYS_B_S"/>
+  <integer
+        Key="NOTICE_POPUP_TITLE_COLOR"
+        Value="0x0F0F0F"/>
+  <integer
+        Key="NOTICE_POPUP_TITLE_ALIGN"
+        Value="Graphics.HCENTER | Graphics.TOP "/>
+
+  <!-- notice application name -->
+  <font Key="NOTICE_POPUP_APP_NAME_FONT"
+      Value="FontResources.PROP_P_M"/>
+  <integer
+        Key="NOTICE_POPUP_APP_NAME_COLOR"
+        Value="0x000000"/>
+
+   <!-- notice label -->
+  <font Key="NOTICE_POPUP_LABEL_FONT"
+      Value="FontResources.PROP_I_S"/>
+  <integer
+        Key="NOTICE_POPUP_LABEL_COLOR"
+        Value="0x000000"/>
+
 </skin_properties>
 </skin>
 </configuration>

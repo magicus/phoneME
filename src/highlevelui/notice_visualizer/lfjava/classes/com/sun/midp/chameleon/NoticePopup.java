@@ -1,3 +1,29 @@
+/*
+ *
+ *
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
 package com.sun.midp.chameleon;
 
 import javax.microedition.lcdui.Command;
@@ -9,6 +35,7 @@ import javax.microedition.lcdui.Image;
 
 import com.sun.midp.chameleon.CWindow;
 import com.sun.midp.chameleon.layers.PopupLayer;
+import com.sun.midp.chameleon.skins.NoticePopupSkin;
 import com.sun.midp.lcdui.Notice;
 import com.sun.midp.lcdui.NoticeVisualizer;
 
@@ -18,6 +45,7 @@ public class NoticePopup extends PopupLayer implements CommandListener {
     private Image img;
     private Notice notice;
     private NoticeVisualizer parent;
+    private NoticePopupSkin skin;
 
     public NoticePopup(Notice n, NoticeVisualizer p) {
         super();
@@ -35,6 +63,9 @@ public class NoticePopup extends PopupLayer implements CommandListener {
 
         setCommands(cmds);
         setCommandListener(this);
+
+        skin = new NoticePopupSkin(notice.getOriginator(), 
+                                   notice.getLabel(), notice.getImage());
     }
 
 
@@ -60,6 +91,10 @@ public class NoticePopup extends PopupLayer implements CommandListener {
         }
     }
 
+    /**
+     * Semitransparent window
+     * 
+     */
     public void paintBackground(Graphics g) {
         int w = bounds[W] - bounds[X];
         int h = bounds[H] - bounds[Y];
@@ -73,26 +108,7 @@ public class NoticePopup extends PopupLayer implements CommandListener {
     }
 
     public void paintBody(Graphics g) {
-        int x = bounds[X] + bounds[W]/3;
-        int y = bounds[Y] + bounds[H]/3;
-        int w =  bounds[W]/3;
-        int h =  bounds[H]/3;
-
-        g.setColor(0xFFFFFF);
-        g.fillRect(x, y, w, h);
-        if (null != img) {
-            g.setClip(x, y, w / 2, h / 2);
-            g.drawImage(img, x, y, Graphics.LEFT|Graphics.TOP);
-        }
-        g.setColor(0);
-        g.setClip(x + w/2, y, w/2, h/2);
-        Font header = Font.getFont(Font.FACE_MONOSPACE, Font.STYLE_BOLD, Font.SIZE_SMALL);
-        g.setFont(header);
-        g.drawString("Notice from " + notice.getOriginatorID(), x + w/2, y, Graphics.LEFT|Graphics.TOP);
-        Font body = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_PLAIN, Font.SIZE_SMALL);
-        g.setFont(body);
-        g.setClip(x, y + h/2, w, h/2);
-        g.drawString(txt, x, y + h/2,  Graphics.LEFT|Graphics.TOP);
+        skin.paint(g, bounds[X], bounds[Y], bounds[W], bounds[H]);
     }
 
     public void commandAction(Command c, Displayable d) {

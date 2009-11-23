@@ -33,6 +33,6 @@
 MIDP_JAVADOC_SOURCEPATH += $(NOTICE_WIDGET_IMPL_DIR)/classes
 
 # Java files
-SUBSYSTEM_NOTICE_JAVA_FILES += \
-	$(NOTICE_WIDGET_IMPL_DIR)/classes/com/sun/midp/chameleon/NoticePopup.java
-
+SUBSYSTEM_NOTICE_VISUALIZER_JAVA_FILES += \
+	$(NOTICE_WIDGET_IMPL_DIR)/classes/com/sun/midp/chameleon/NoticePopup.java \
+	$(NOTICE_WIDGET_IMPL_DIR)/classes/com/sun/midp/chameleon/skins/NoticePopupSkin.java 

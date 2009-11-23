@@ -33,15 +33,6 @@
 NOTICE_SHARED_IMPL_DIR = $(NOTICE_IMPL_DIR)/shared
 include $(NOTICE_SHARED_IMPL_DIR)/lib.gmk
 
-# Popup versions
-ifneq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
-NOTICE_WIDGET_IMPL_DIR = $(NOTICE_IMPL_DIR)/lfjava
-else
-$(error Platform widget is not supported)
-endif
-
-include $(NOTICE_WIDGET_IMPL_DIR)/lib.gmk
-
 # Target specific implementation
 ifeq ($(TARGET_VM), cldc_vm)
 ifeq ($(USE_MULTIPLE_ISOLATES), true)

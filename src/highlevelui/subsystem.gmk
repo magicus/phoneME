@@ -122,6 +122,13 @@ include $(SUBSYSTEM_HIGHUI_DIR)/virtual_keyboard/lib.gmk
 #####################################################################
 include $(SUBSYSTEM_HIGHUI_DIR)/notice/lib.gmk
 #####################################################################
+# Notice visualization subsystem
+# Description: Notification service
+#####################################################################
+include $(SUBSYSTEM_HIGHUI_DIR)/notice_visualizer/lib.gmk
+
+
+#####################################################################
 # Application specific Subsystem
 # Description: qte_application, fb_application, win32_app or armsd_app
 #####################################################################
@@ -233,6 +240,11 @@ SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES)
 #
 SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_NOTICE_JAVA_FILES)
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_NOTICE_NATIVE_FILES)
+
+# Notice visualizer
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_NOTICE_VISUALIZER_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_NOTICE_VISUALIZER_NATIVE_FILES)
 
 # LFPPORT or LFJPORT
 #

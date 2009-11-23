@@ -824,7 +824,7 @@
                 Value="Loading the application file..."/>
 <localized_string Key="AMS_GRA_INTLR_FILE_NOT_FOUND"
                 Value="File not found in the current path"/>
-<localized_string Key="NOTICE_POPUP_TITLE"
+<localized_string Key="NOTICE_LIST_WINDOW_TITLE"
                 Value="A message from "/>
 <localized_string Key="NOTIFICATION_SMS_LABEL"
                 Value="New SMS message received."/>
@@ -837,6 +837,8 @@
 <localized_string Key="NOTIFICATION_MMS_LABEL"
                 Value="New MMS message received "/>
 <localized_string Key="NOTIFICATION_REMINDER_LABEL"
-                Value="New REMINDER message received "/>
+                Value="New reminder received"/>
+<localized_string Key="NOTIFICATION_POPUP_TITLE"
+                Value="Notification from"/>
 </localized_strings>
 </configuration>
