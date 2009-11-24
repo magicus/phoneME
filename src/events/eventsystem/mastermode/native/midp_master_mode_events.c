@@ -139,6 +139,10 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         midpStoreEventAndSignalAms(newMidpEvent);
         break;
 
+    case UI_ALL_SIGNAL:
+        StoreMIDPEventInVmThread(newMidpEvent, -1);
+        break;
+
     case UI_SIGNAL:
         if (newMidpEvent.type == CHANGE_LOCALE_EVENT) {
             StoreMIDPEventInVmThread(newMidpEvent, -1);

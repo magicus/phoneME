@@ -546,6 +546,10 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             midpStoreEventAndSignalAms(newMidpEvent);
             break;
 
+        case UI_ALL_SIGNAL:
+            StoreMIDPEventInVmThread(newMidpEvent, -1);
+            break;
+
         case UI_SIGNAL:
             if (newMidpEvent.type == CHANGE_LOCALE_EVENT) {
                 StoreMIDPEventInVmThread(newMidpEvent, -1);
@@ -700,6 +704,14 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             }
             break;
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_NOTICE
+        case MIDP_JC_NOTICE_ANNOUNCEMENT_EVENT:
+            pNewSignal->waitingFor = UI_ALL_SIGNAL;
+            pNewMidpEvent->type    = MIDP_NOTICE_ANNOUNCEMENT_EVENT;
+            pNewMidpEvent->intParam1 = event->data.noticeEvent.UID;
+            pNewMidpEvent->intParam2 =  event->data.noticeEvent.operation;
+            pNewMidpEvent->intParam3 = event->data.noticeEvent.status;;
+#endif /*ENABLE_NOTICE*/
 #endif /* !ENABLE_CDC */
         case NETWORK_STATUS_SIGNAL:
             if (MIDP_NETWORK_UP == newSignal.status) {

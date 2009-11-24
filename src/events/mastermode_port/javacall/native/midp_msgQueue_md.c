@@ -55,6 +55,7 @@ extern void notifyDisksChanged();
 #include <javacall_memory.h>
 #endif /* ENABLE_JSR_290 */
 
+
 /*
  * This function is called by the VM periodically. It has to check if
  * system has sent a signal to MIDP and return the result in the
@@ -587,6 +588,14 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
 #endif /* ENABLE_JSR_256 */
+#ifdef ENABLE_NOTICE
+    case MIDP_JC_NOTICE_ANNOUNCEMENT_EVENT:
+        pNewSignal->waitingFor = UI_ALL_SIGNAL;
+        pNewMidpEvent->type    = MIDP_NOTICE_ANNOUNCEMENT_EVENT;
+        pNewMidpEvent->intParam1 = event->data.noticeEvent.UID;
+        pNewMidpEvent->intParam2 =  event->data.noticeEvent.operation;
+        pNewMidpEvent->intParam3 = event->data.noticeEvent.status;
+#endif
 #endif /* !ENABLE_CDC */
 #ifdef ENABLE_API_EXTENSIONS
 case MIDP_JC_EVENT_VOLUME:

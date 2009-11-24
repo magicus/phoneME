@@ -493,7 +493,7 @@ public final class EventTypes {
 
 
     /**
-     * Notification announcement event 
+     * Notice announcement event 
      */
-    public static final int NOTIFICATION_ANNOUNCEMENT_EVENT = 81;
+    public static final int NOTICE_ANNOUNCEMENT_EVENT = 81;
 }

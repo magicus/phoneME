@@ -94,6 +94,9 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
         /* Cleanups all ntoification belongs to destroyed app */
         NoticeManager.initWithAMS(midletProxyList);
+
+        /* NoticeManager client. Native handler peer.*/
+        NativeNoticeListener.init();
     }
 
     /**

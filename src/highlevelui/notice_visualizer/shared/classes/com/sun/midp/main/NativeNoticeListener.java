@@ -30,11 +30,16 @@ import javax.microedition.lcdui.Image;
 import com.sun.midp.lcdui.Notice;
 
 /**
- * NAMS {@link NoticeManagerListener} implementation.
+ * {@link NoticeManagerListener} implementation.
  * Forwards incoming notifications to native AMS.
  * 
  */
 class NativeNoticeListener implements NoticeManagerListener {
+
+    /** Notice operation types */
+    private static final int ADDED      = 1;
+    private static final int UPDATED    = 2;
+    private static final int REMOVED    = 3;
 
     /**
      * <code>NativeNoticeListener</code> singletone
@@ -46,7 +51,7 @@ class NativeNoticeListener implements NoticeManagerListener {
      * <code>NativeNoticeListener</code> initializator
      * 
      */
-    public static init() {
+    public static void init() {
         if (null == singleton) {
             singleton = new NativeNoticeListener();
         }
@@ -89,10 +94,10 @@ class NativeNoticeListener implements NoticeManagerListener {
     /**
      * Extracts nd forwards notification data to NAMS
      *  
-     * @param note incoming note
+     * @param notice incoming note
      * @param operation status
      */
-    private noticeUpdate(Notice note, int operation) {
+    private void noticeUpdate(Notice notice, int operation) {
         int uid = notice.getUID();
         int type = notice.getType().getType();
         String label = notice.getLabel();

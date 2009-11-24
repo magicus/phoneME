@@ -1,24 +1,24 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -41,7 +41,7 @@
  * @ingroup events_queue
  *
  * @brief Interface to the event queue.
- * These functions are NOT to be ported. They are implemented in 
+ * These functions are NOT to be ported. They are implemented in
  * shared layer already. Platform dependent layer should call them
  * to send events to Java platform system.
  */
@@ -126,7 +126,7 @@ extern "C" {
 /* JSR-135 event */
 #define MMAPI_EVENT                     45
 
-/** JSR-234 event */ 
+/** JSR-234 event */
 #define AMMS_EVENT                      46
 
 /** The event to repaint entire screen */
@@ -210,7 +210,7 @@ extern "C" {
 /**
  * This event is used for change current locale
  */
-#define CHANGE_LOCALE_EVENT				62
+#define CHANGE_LOCALE_EVENT       62
 
 /**
  * JSR290 Fluid listener notification event
@@ -261,7 +261,7 @@ extern "C" {
  */
 #define CONTACTLESS_EVENT      71
 
-/** 
+/**
  * Events added for focus integration with native applications
  */
 #define NATIVE_WINDOW_LOST_FOCUS 72
@@ -307,6 +307,11 @@ extern "C" {
  * out of memory was received.
  */
 #define MIDP_OUT_OF_MEMORY_HANDLED 80
+
+/**
+ * Notice announcement event
+ */
+#define MIDP_NOTICE_ANNOUNCEMENT_EVENT 81
 
 /** @} */
 
@@ -354,7 +359,7 @@ extern "C" {
  * Enqueues an event to be processed by the Java event thread for a given
  * Isolate, or all isolates if isolateId is -1.
  * Only safe to call from VM thread.
- * Any other threads should call StoreMIDPEvent. 
+ * Any other threads should call StoreMIDPEvent.
  *
  *   MidpEvent event;
  *
@@ -368,7 +373,7 @@ extern "C" {
  *
  * @param event      The event to enqueue.
  *
- * @param isolateId  ID of an Isolate 
+ * @param isolateId  ID of an Isolate
  *                   -1 for broadcast to all isolates
  *                   0 for SVM mode
  */
