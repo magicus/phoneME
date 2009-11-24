@@ -90,7 +90,6 @@ public class NoticePopupSkin {
         y += (h - NOTICE_POPUP_HEIGHT)/2;
         w = NOTICE_POPUP_WIDTH;
         h = NOTICE_POPUP_HEIGHT;
-
         // body drawing
         g.setColor(NOTICE_POPUP_BG_COLOR);
         g.fillRect(x, y, w, h);
@@ -99,7 +98,7 @@ public class NoticePopupSkin {
 
         // title drawing
         int tmpw = w - NOTICE_POPUP_MARGIN * 2;
-        int tmph = h - NOTICE_POPUP_MARGIN * 2;
+        int tmph = titleFont.getHeight();
         int tmpy = y + NOTICE_POPUP_MARGIN;
         int tmpx = x + NOTICE_POPUP_MARGIN;
         g.setClip(tmpx, tmpy, tmpw, tmph);
@@ -111,7 +110,7 @@ public class NoticePopupSkin {
         // up-left side image
         tmpx = x + NOTICE_POPUP_MARGIN;
         tmpw = NOTICE_POPUP_IMG_WIDTH;
-        tmpy = NOTICE_POPUP_MARGIN + titleFont.getHeight() + NOTICE_POPUP_PAD;
+        tmpy = y + NOTICE_POPUP_MARGIN + titleFont.getHeight() + NOTICE_POPUP_PAD;
         tmph = NOTICE_POPUP_IMG_HEIGHT;
         g.setClip(tmpx, tmpy, tmpw, tmph);              
         if (null != img) {
@@ -136,7 +135,9 @@ public class NoticePopupSkin {
         Text.paint(g, appName, appNameFont, 
                    NOTICE_POPUP_LABEL_COLOR, NOTICE_POPUP_LABEL_COLOR, 
                    tmpw, tmph, 0, Text.TRUNCATE, null); 
-        g.translate(0, 0);
+        g.translate(-tmpx, -tmpy);
+
+/*
         int[] size = new int[Text.HEIGHT + 1];
         Text.getSizeForWidth(size, tmpw, appName, labelFont, 0);
         // blur right side if string length greater than drawing area
@@ -152,21 +153,22 @@ public class NoticePopupSkin {
             Image blur = Image.createRGBImage(rgb, tmpw, tmph, true);
             g.drawImage(blur, tmpx, tmpy, Graphics.TOP | Graphics.LEFT);
         }
+*/
 
         // bottom side app message
         tmpx = x + NOTICE_POPUP_MARGIN;
         tmpy +=  NOTICE_POPUP_IMG_HEIGHT + NOTICE_POPUP_PAD;
         tmpw = w - NOTICE_POPUP_MARGIN * 2;
-        tmph = h - tmpy - NOTICE_POPUP_PAD;
+        tmph = h - (tmpy - y);
         g.setClip(tmpx, tmpy, tmpw, tmph);
         g.setFont(labelFont);
         g.setColor(NOTICE_POPUP_LABEL_COLOR);
         g.translate(tmpx, tmpy);
         Text.paint(g, label, labelFont, 
-                   NoticePopupSkin.NOTICE_POPUP_LABEL_COLOR, NoticePopupSkin.NOTICE_POPUP_LABEL_COLOR, 
+                   NOTICE_POPUP_LABEL_COLOR, NOTICE_POPUP_LABEL_COLOR, 
                    tmpw, tmph, 0, Text.TRUNCATE, null); 
-        g.translate(0, 0);
-
+        g.translate(-tmpx, -tmpy);
+/*
         Text.getSizeForWidth(size, tmpw, label, labelFont, 0);
         if (size[Text.HEIGHT] > tmph) {
             // blur bottom
@@ -181,5 +183,6 @@ public class NoticePopupSkin {
             Image blur = Image.createRGBImage(rgb, tmpw, tmph, true);
             g.drawImage(blur, tmpx, tmpy, Graphics.TOP | Graphics.LEFT);
         }
+*/
     }
 }

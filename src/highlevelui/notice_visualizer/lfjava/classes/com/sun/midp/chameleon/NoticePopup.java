@@ -54,6 +54,7 @@ public class NoticePopup extends PopupLayer implements CommandListener {
         notice = n;
         visible = true;
         parent = p;
+        opaque = false;
         transparent = false;
 
         Command[] cmds = new Command[] {
@@ -119,8 +120,12 @@ public class NoticePopup extends PopupLayer implements CommandListener {
         }
     }
 
-    public void removeNotify(CWindow owner) {
-        parent.removeNotify(this);
+    public void addNotify() {
+ //        ((MIDPWindow) owner).paintWash(true);
     }
 
+    public void removeNotify(CWindow owner) {
+ //       ((MIDPWindow) owner).paintWash(false);
+        parent.removeNotify(this);
+    }
 }

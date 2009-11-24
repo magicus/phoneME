@@ -1,15 +1,19 @@
 package com.sun.midp.lcdui;
 
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.sun.midp.ams.VMUtils;
+import com.sun.midp.chameleon.NoticePopup;
 import com.sun.midp.lcdui.DisplayContainer;
 import com.sun.midp.lcdui.LCDUIEnvironment;
+import com.sun.midp.main.Configuration;
 import com.sun.midp.main.NoticeManager;
 import com.sun.midp.main.NoticeManagerListener;
 import com.sun.midp.midlet.MIDletEventConsumer;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.chameleon.NoticePopup;
 
 /**
  * 
@@ -19,24 +23,19 @@ public class NoticeVisualizer implements NoticeManagerListener  {
 
     // current popup
     NoticePopup popup;
-    private LCDUIEnvironment env;
-    private SecurityToken token;
+    private DisplayContainer dc;
+    private MIDletEventConsumer mec;
+    private boolean enableInterruption;
 
     private static NoticeVisualizer singleton;
 
     /* -------------------------- NoticeManagerListener interface ------------------ */
     public void notifyNotice(Notice notice) {
-        DisplayContainer dc = env.getDisplayContainer();
         DisplayAccess da = dc.findForegroundDisplay();
-
         if (null != da) {
-            // IMPL_NOTE: add relax timer to be unobtrusive
-            if (null == popup) {
+            if (null == popup && enableInterruption) {
                 popup = new NoticePopup(notice, this);
-                if (VMUtils.getIsolateId() != VMUtils.getAmsIsolateId()) {
-                    MIDletStateHandler handler = MIDletStateHandler.getMidletStateHandler();
-                    String midlet = handler.getFirstRunningMidlet();
-                    MIDletEventConsumer mec = handler.getMIDletEventConsumer(token, midlet);
+                if (null != mec) {
                     mec.handleMIDletPauseEvent();
                 }
                 da.showPopup(popup);
@@ -58,12 +57,42 @@ public class NoticeVisualizer implements NoticeManagerListener  {
     /* ------------------------------------------------------------------------------ */
     public void removeNotify(NoticePopup np) {
         popup = null;
+
+        Notice n = NoticeManager.getInstance().pop();
+        DisplayAccess da = dc.findForegroundDisplay();
+        if (null != n && null != da) {
+            popup = new NoticePopup(n, this);
+            da.showPopup(popup);
+
+        } else {
+            // disable popup, don't annoy user
+            enableInterruption = false;
+            /* Replace duration value with more conform value*/
+            int timeout = 
+                Configuration.getIntProperty("NOTIFICATION.INTERRUPTION_TIME", 10000);
+            new Timer().schedule(new PauseTask(), timeout); 
+
+            if (null != mec) {
+                mec.handleMIDletActivateEvent();
+            }
+        }
+
     }
+
+
+    /* ------------------------------------------------------------------------------ */
 
     private NoticeVisualizer(LCDUIEnvironment lcduienv, SecurityToken  t) {
         NoticeManager.getInstance().addListener(this);
-        env = lcduienv;
-        token = t;
+        dc = lcduienv.getDisplayContainer();
+
+        if (VMUtils.getIsolateId() != VMUtils.getAmsIsolateId()) {
+            MIDletStateHandler handler = MIDletStateHandler.getMidletStateHandler();
+            String midlet = handler.getFirstRunningMidlet();
+            mec = handler.getMIDletEventConsumer(t, midlet);
+        }
+
+        enableInterruption = true;
     }
 
     public static void init(LCDUIEnvironment lcduienv, SecurityToken t) {
@@ -74,4 +103,15 @@ public class NoticeVisualizer implements NoticeManagerListener  {
         }
     }
 
+
+    /* ------------------------------------------------------------------------------ */
+    class PauseTask extends TimerTask {
+        /**
+         * The action to be performed by this timer task.
+         */
+        public void run() {
+            enableInterruption = true;
+        }
+    }
 }
+

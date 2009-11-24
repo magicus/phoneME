@@ -476,5 +476,18 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
         return null;
     }
 
+    /**
+     * Finds first notices in the list.
+     * 
+     * 
+     * @return null if no notice was found.
+     */
+    public Notice pop() {
+        if (notices.size() > 0) {
+            return (Notice)notices.elementAt(0);
+        }
+        return null;
+    }
+
 }
 
