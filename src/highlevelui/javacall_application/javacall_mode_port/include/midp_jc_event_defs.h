@@ -194,9 +194,9 @@ typedef enum {
     JSR257_JC_MIDP_EVENT,
     JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED, 
 #endif /*ENABLE_JSR_257*/
-#ifdef ENABLE_NOTICE
+#ifdef ENABLE_NOTIFICATION
     MIDP_JC_NOTICE_ANNOUNCEMENT_EVENT,
-#endif /*ENABLE_NOTICE*/
+#endif /*ENABLE_NOTIFICATION*/
 } midp_jc_event_type;
 
  
@@ -431,12 +431,13 @@ typedef struct {
 } jsr257_jc_event_contactless;
 #endif /* ENABLE_JSR_257 */
 
-#ifdef ENABLE_NOTICE
+#ifdef ENABLE_NOTIFICATION
 typedef struct {
     int uid;
+    int operation;
     int status;
 }midp_jc_notice_event;
-#endif
+#endif /*ENABLE_NOTIFICATION*/
 
 typedef struct {
     char* phoneNumber;
@@ -520,7 +521,7 @@ typedef struct {
 #endif /* ENABLE_JSR_257 */
 
         midp_jc_event_menu_selection    menuSelectionEvent;
-#ifdef  ENABLE_NOTICE 
+#ifdef  ENABLE_NOTIFICATION
         midp_jc_notice_event    noticeEvent;
 #endif
 

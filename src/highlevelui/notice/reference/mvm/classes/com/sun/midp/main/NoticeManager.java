@@ -89,7 +89,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
 
     /**
      * Common initialization function. Registers 
-     * NOTIFICATION_ANNOUNCEMENT_EVENT handler. Used by every task 
+     * NOTICE_ANNOUNCEMENT_EVENT handler. Used by every task 
      * initializers. 
      * 
      * 
@@ -129,7 +129,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
      * @param queue current task event queue.
      */
     private NoticeManager(EventQueue queue) {
-        queue.registerEventListener(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT, this);
+        queue.registerEventListener(EventTypes.NOTICE_ANNOUNCEMENT_EVENT, this);
         // home indicator and notice visualizer
         listeners = new Vector(2);
 
@@ -377,7 +377,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
      * @see NoticeBase for reason codes. 
      */
     public void post(Notice notice) throws IOException {
-        NativeEvent event = new NativeEvent(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT);
+        NativeEvent event = new NativeEvent(EventTypes.NOTICE_ANNOUNCEMENT_EVENT);
         event.intParam1 = notice.getUID();
         event.intParam2 = Notice.AVAILABLE;
         event.stringParam1 = notice.getClass().getName();
@@ -416,7 +416,7 @@ public class NoticeManager implements EventListener, MIDletProxyListListener {
             // every task handles timeout separately
             return;
         }
-        NativeEvent event = new NativeEvent(EventTypes.NOTIFICATION_ANNOUNCEMENT_EVENT);
+        NativeEvent event = new NativeEvent(EventTypes.NOTICE_ANNOUNCEMENT_EVENT);
         event.intParam1 = notice.getUID();
         event.intParam2 = Notice.REMOVED;
         event.intParam3 = reason;

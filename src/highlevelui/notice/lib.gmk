@@ -38,6 +38,9 @@ LIB_SET += $(NOTICE_NAME)
 ifeq ($(USE_MIDP3), true)
 NOTICE_API_DIR = $(PROJECT_SUBSYSTEM_DIR)/highlevelui/notification
 include $(NOTICE_API_DIR)/lib.gmk
+ifneq ($(USE_NOTIFICATION), true)
+$(error MIDP3 Notification API is based on Notice API. Set USE_NOTIFICATION=true)
+endif
 endif
 
 ifeq ($(USE_NOTIFICATION), true)

@@ -1,22 +1,22 @@
 /*
  * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -41,7 +41,7 @@ extern void notifyDisksChanged();
 #endif
 
 #ifdef ENABLE_JSR_177
-/* define needed signal constants from carddevice.h */ 
+/* define needed signal constants from carddevice.h */
 #include <carddevice.h>
 #endif /* ENABLE_JSR_177 */
 
@@ -76,7 +76,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     static unsigned char binaryBuffer[BINARY_BUFFER_MAX_LEN];
     javacall_bool res;
     int outEventLen;
-    
+
 #if !ENABLE_CDC
     res = javacall_event_receive((long)timeout, binaryBuffer,
                                  BINARY_BUFFER_MAX_LEN, &outEventLen);
@@ -88,7 +88,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     if (!JAVACALL_SUCCEEDED(res)) {
         return;
     }
-    
+
     event = (midp_jc_event_union *) binaryBuffer;
 
     switch (event->eventType) {
@@ -104,7 +104,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->ACTION  = event->data.penEvent.type;
         pNewMidpEvent->X_POS   = event->data.penEvent.x;
         pNewMidpEvent->Y_POS   = event->data.penEvent.y;
-	break;
+  break;
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
         pNewSignal->descriptor = (int)event->data.socketEvent.handle;
@@ -116,7 +116,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type    = SHUTDOWN_EVENT;
         break;
 #if !ENABLE_CDC
-     case MIDP_JC_EVENT_PAUSE: 
+     case MIDP_JC_EVENT_PAUSE:
         /*
          * IMPL_NOTE: if VM is running, the following call will send
          * PAUSE_ALL_EVENT message to AMS; otherwise, the resources
@@ -124,7 +124,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
          */
         midp_suspend();
         break;
-#endif	
+#endif
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
@@ -149,7 +149,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam2 = event->data.displayDeviceEvent.state;
         break;
 
-	case MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED:
+  case MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT;
         pNewMidpEvent->intParam1 = event->data.clamshellEvent.state;
@@ -210,12 +210,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         /* SYSTEM_VOLUME_CHANGED event must be sent to all players.             */
         /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
         if( JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED == event->data.multimediaEvent.mediaType )
-            pNewMidpEvent->MM_ISOLATE = -1; 
+            pNewMidpEvent->MM_ISOLATE = -1;
 
         REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
-                pNewMidpEvent->type, 
-                event->data.multimediaEvent.appId, 
-                pNewMidpEvent->MM_PLAYER_ID, 
+                pNewMidpEvent->type,
+                event->data.multimediaEvent.appId,
+                pNewMidpEvent->MM_PLAYER_ID,
                 pNewMidpEvent->MM_DATA);
 #endif
         break;
@@ -247,9 +247,9 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         }
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
-            pNewMidpEvent->type, 
-            event->data.multimediaEvent.appId, 
-            pNewMidpEvent->MM_PLAYER_ID, 
+            pNewMidpEvent->type,
+            event->data.multimediaEvent.appId,
+            pNewMidpEvent->MM_PLAYER_ID,
             pNewMidpEvent->MM_DATA);
 
         break;
@@ -457,7 +457,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam4 = (int)((jlong)(event->data.jsr290HandleEventRequest.request_handle));
         pNewMidpEvent->intParam5 = (int)((jlong)(event->data.jsr290HandleEventRequest.request_handle) >> 32);
         pNewMidpEvent->intParam1 = JSR290_HANDLE_EVENT;
-    	break;
+      break;
     case JSR290_JC_EVENT_DISPLAY_BOX:
         pNewSignal->waitingFor   = JSR290_FLUID_EVENT_SIGNAL;
         pNewSignal->descriptor   = (int)event->data.jsr290FluidEvent.fluid_image;
@@ -494,7 +494,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                                            &pNewMidpEvent->stringParam2);
         }
         javacall_free(event->data.jsr290FluidEvent.text1);
-    	break;
+      break;
 #endif /* ENABLE_JSR_290 */
 
 #ifdef ENABLE_JSR_177
@@ -519,7 +519,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewSignal->pResult    = NULL;
             break;
         default:    /* just ignore invalid event type */
-            REPORT_ERROR1(LC_CORE,"Invalid carddevice event type: %d\n", 
+            REPORT_ERROR1(LC_CORE,"Invalid carddevice event type: %d\n",
                 event->data.carddeviceEvent.eventType);
             break;
         }
@@ -532,11 +532,11 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewSignal->waitingFor = JSR257_CONTACTLESS_SIGNAL;
             pNewSignal->descriptor = event->data.jsr257Event.eventType;
         } else {
-            REPORT_ERROR1(LC_CORE,"Invalid contactless event type: %d\n", 
+            REPORT_ERROR1(LC_CORE,"Invalid contactless event type: %d\n",
                 event->data.jsr257Event.eventType);
         }
         break;
-         
+
     case JSR257_JC_MIDP_EVENT:
       printf("\n DEBUG: midp_msgQueue_md.c(): data.jsr257Event.eventType = %d\n",
         event->data.jsr257Event.eventType);
@@ -549,13 +549,13 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewMidpEvent->intParam3 = (int)(event->data.jsr257Event.eventData[0]);
             pNewMidpEvent->intParam4 = (int)(event->data.jsr257Event.eventData[1]);
             pNewMidpEvent->intParam5 = (int)(event->data.jsr257Event.eventData[2]);
-            
+
        } else {
-            REPORT_ERROR1(LC_CORE,"Invalid contactless MIDP event type: %d\n", 
+            REPORT_ERROR1(LC_CORE,"Invalid contactless MIDP event type: %d\n",
                 event->data.jsr257Event.eventType);
        }
        break;
-       
+
     case JSR257_JC_PUSH_NDEF_RECORD_DISCOVERED:
         pNewSignal->waitingFor   = JSR257_PUSH_SIGNAL;
         pNewSignal->descriptor = event->data.jsr257Event.eventData[0];
@@ -588,7 +588,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
         break;
 #endif /* ENABLE_JSR_256 */
-#ifdef ENABLE_NOTICE
+#ifdef ENABLE_NOTIFICATION
     case MIDP_JC_NOTICE_ANNOUNCEMENT_EVENT:
         pNewSignal->waitingFor = UI_ALL_SIGNAL;
         pNewMidpEvent->type    = MIDP_NOTICE_ANNOUNCEMENT_EVENT;
@@ -599,12 +599,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 #endif /* !ENABLE_CDC */
 #ifdef ENABLE_API_EXTENSIONS
 case MIDP_JC_EVENT_VOLUME:
-		pNewSignal->waitingFor = VOLUME_SIGNAL;
-		pNewSignal->status     = JAVACALL_OK;
-	
-	break;
+    pNewSignal->waitingFor = VOLUME_SIGNAL;
+    pNewSignal->status     = JAVACALL_OK;
+
+  break;
 #endif /* ENABLE_API_EXTENSIONS */
-	default:
+  default:
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;
     };

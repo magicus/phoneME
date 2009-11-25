@@ -28,7 +28,7 @@
 #include <kni.h>
 
 #include "midp_jc_event_defs.h"
-#include "javacall_lcdui_notice.h"
+#include "javacall_notice.h"
 
 /* Need to be synchronized with Notice.REMOVED */
 #define NOTICE_REMOVED 	1
@@ -50,7 +50,7 @@ Java_com_sun_midp_main_NativeNoticeListener_noticeUpdate0(void) {
  * @param uid 		ID of the notice
  * @param status 	its status (selected, dismissed)
  */
-void javanotify_lcdui_notice_status(javacall_int uid, javacall_notice_status status) {
+void javanotify_notice_status(javacall_int32 uid, javacall_notice_status status) {
 	midp_jc_event_union event;
 	event.eventType = MIDP_JC_NOTICE_ANNOUNCEMENT_EVENT;
 	event.data.noticeEvent.uid = uid;

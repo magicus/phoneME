@@ -86,17 +86,16 @@ public abstract class NoticeBase {
     public static final int SELECTED  = 2;
 
     /**
-     * A notice was removed by originator.
-     * 
-     */
-    public static final int DELETED   = 3;
-
-    /**
      * A notice was expired.
      * 
      */
-    public static final int TIMEOUT   = 4;
+    public static final int TIMEOUT   = 3;
 
+    /**
+     * A notice was removed by originator.
+     * 
+     */
+    public static final int DELETED   = 4;
 
     /**
      * A time when the Notice was last posted.

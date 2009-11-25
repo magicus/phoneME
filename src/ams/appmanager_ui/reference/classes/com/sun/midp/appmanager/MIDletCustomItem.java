@@ -358,6 +358,14 @@ class MIDletCustomItem extends CustomItem {
                         Graphics.TOP | Graphics.RIGHT);
                     g.setClip(cX, cY, cW, cH);
                 }
+                
+                /*if (hasMessage())*/ {
+                    int c = g.getColor();
+                    g.setColor(0xFF0000);
+                    g.drawString("1", w - bgIconW + ICON_PAD, anchorY + ICON_PAD, Graphics.TOP | Graphics.RIGHT);
+                    g.setColor(c);
+                }
+
                 // Draw special icon if user attention is requested and
                 // that midlet needs to be brought into foreground by the user
                 if (isAnyAlertWaiting()) {
@@ -404,7 +412,17 @@ class MIDletCustomItem extends CustomItem {
                         (bgIconW - DISABLED_IMAGE.getWidth())/2,
                         anchorY + (bgIconH - DISABLED_IMAGE.getHeight())/2,
                         Graphics.TOP | Graphics.LEFT);
+
+                    }
+                /*if (hasMessage())*/ {
+                    int c = g.getColor();
+                    g.setColor(0xFF0000);
+                    g.drawString("1", 0, anchorY, Graphics.TOP | Graphics.LEFT);
+                    g.drawArc(0, anchorY, g.getFont().getHeight(),g.getFont().getHeight(), 0, 360);
+                    g.setColor(c);
+
                 }
+
             }
         }
 

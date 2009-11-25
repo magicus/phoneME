@@ -196,6 +196,11 @@ else
    LIB_EXTRA_CFLAGS += -DENABLE_MESSAGE_STRINGS=0
 endif
 
+ifeq ($(USE_NOTIFICATION), true)
+   LIB_EXTRA_CFLAGS += -DENABLE_NOTIFICATION=1
+endif
+
+
 ifeq ($(USE_CLDC_11), true)
     JPP_DEFS	 += -DENABLE_CLDC_11
 endif

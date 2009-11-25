@@ -499,7 +499,6 @@ class AppManagerUIImpl extends Form
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
-System.out.println(c.getLabel());
         if (c == exitCmd) {
             if ((s == this) || s == folderList) {
                 manager.shutDown();
@@ -1570,7 +1569,6 @@ System.out.println(c.getLabel());
             MIDletProxy proxy = msi.getFirstProxy();
             if (null != proxy) {
                 if (null != NoticeManager.getInstance().pop(proxy.getIsolateId())) {
-            System.out.println("added showMessageCmd");
                     addCommand(showMessageCmd);
                 }
             }
@@ -1585,7 +1583,6 @@ System.out.println(c.getLabel());
          * unused command 
          */
         protected void traverseOut() {
-            System.out.println("removed showMessageCmd");
             removeCommand(showMessageCmd);
             super.traverseOut();
         }

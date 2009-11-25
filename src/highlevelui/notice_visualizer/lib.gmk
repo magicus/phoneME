@@ -52,6 +52,8 @@ else
 $(error Platform widget is not supported)
 endif
 
+include $(NOTICE_WIDGET_IMPL_DIR)/lib.gmk
+
 # Target specific implementation
 ifeq ($(TARGET_VM), cldc_vm)
 NOTICE_VISUALIZER_IMPL_DIR=$(NOTICE_VISUALIZER_DIR)/cldc_application
@@ -65,7 +67,9 @@ else
 
 # just forward all messages to platform
 NOTICE_VISUALIZER_IMPL_DIR = $(NOTICE_VISUALIZER_DIR)/lfnative
+
 endif
+
 include $(NOTICE_VISUALIZER_IMPL_DIR)/lib.gmk
 
 endif

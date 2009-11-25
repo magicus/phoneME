@@ -181,8 +181,8 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     if (timeout > 0x7FFFFFFF) {
         timeTowaitInMillisec = -1;
     } else if (timeout < 0) {
-    	 timeTowaitInMillisec = -1;
-    }	else {
+       timeTowaitInMillisec = -1;
+    } else {
         timeTowaitInMillisec = (long)(timeout&0x7FFFFFFF);
     }
 
@@ -195,7 +195,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     event = (midp_jc_event_union *) binaryBuffer;
 
     switch (event->eventType) {
-    case MIDP_JC_EVENT_KEY:		
+    case MIDP_JC_EVENT_KEY:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type    = MIDP_KEY_EVENT;
         pNewMidpEvent->CHR     = event->data.keyEvent.key;
@@ -207,7 +207,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->ACTION  = event->data.penEvent.type;
         pNewMidpEvent->X_POS   = event->data.penEvent.x;
         pNewMidpEvent->Y_POS   = event->data.penEvent.y;
-	break;
+  break;
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
         pNewSignal->descriptor = (int)event->data.socketEvent.handle;
@@ -254,7 +254,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type = MIDP_ENABLE_ODD_EVENT;
         break;
 #endif
-	case MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED:
+  case MIDP_JC_EVENT_CLAMSHELL_STATE_CHANGED:
         pNewSignal->waitingFor = DISPLAY_DEVICE_SIGNAL;
         pNewMidpEvent->type    = DISPLAY_CLAMSHELL_STATE_CHANGED_EVENT;
         pNewMidpEvent->intParam1 = event->data.clamshellEvent.state;
@@ -306,7 +306,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
         pNewSignal->status     = event->data.multimediaEvent.status;
         pNewSignal->pResult    = (void *)event->data.multimediaEvent.data.num32;
-        
+
         /* Create Java driven event */
         if (event->data.multimediaEvent.mediaType > 0 &&
                 event->data.multimediaEvent.mediaType <
@@ -317,29 +317,29 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
             pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
             pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
             pNewMidpEvent->MM_EVT_STATUS= event->data.multimediaEvent.status;
-    
+
             /* SYSTEM_VOLUME_CHANGED event must be sent to all players.             */
             /* MM_ISOLATE = -1 causes broadcast by StoreMIDPEventInVmThread() */
-            if(JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED == 
+            if(JAVACALL_EVENT_MEDIA_SYSTEM_VOLUME_CHANGED ==
                     event->data.multimediaEvent.mediaType) {
                 pNewMidpEvent->MM_ISOLATE = -1;
             }
         }
-        
+
         /* This event should simply unblock waiting thread. No Java event is needed */
-        if (event->data.multimediaEvent.mediaType > 
+        if (event->data.multimediaEvent.mediaType >
                                     JAVACALL_EVENT_MEDIA_JAVA_EVENTS_MARKER) {
             pNewSignal->descriptor =
                 MAKE_PLAYER_DESCRIPTOR(event->data.multimediaEvent.appId,
                                        event->data.multimediaEvent.playerId,
                                        event->data.multimediaEvent.mediaType);
-                
+
         /* In case of error or end-of-media unblock all awaiting threads */
-        } else if (event->data.multimediaEvent.mediaType == 
+        } else if (event->data.multimediaEvent.mediaType ==
                             JAVACALL_EVENT_MEDIA_END_OF_MEDIA ||
-                   event->data.multimediaEvent.mediaType == 
+                   event->data.multimediaEvent.mediaType ==
                             JAVACALL_EVENT_MEDIA_RECORD_ERROR ||
-                   event->data.multimediaEvent.mediaType == 
+                   event->data.multimediaEvent.mediaType ==
                             JAVACALL_EVENT_MEDIA_ERROR) {
             pNewSignal->descriptor =
                 (MAKE_PLAYER_DESCRIPTOR(event->data.multimediaEvent.appId,
@@ -389,13 +389,13 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         }
 
         /* This event should simply unblock waiting thread. No Java event is needed */
-        if (event->data.multimediaEvent.mediaType > 
+        if (event->data.multimediaEvent.mediaType >
                                     JAVACALL_EVENT_AMMS_JAVA_EVENTS_MARKER) {
             pNewSignal->descriptor =
                 MAKE_PLAYER_AMMS_DESCRIPTOR(event->data.multimediaEvent.appId,
                                        event->data.multimediaEvent.playerId,
                                        event->data.multimediaEvent.mediaType);
-                
+
         } else {
             pNewSignal->descriptor = 0;
         }
@@ -413,7 +413,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->descriptor = (int)event->data.jsr179LocationEvent.provider;
         pNewSignal->status = event->data.jsr179LocationEvent.operation_result;
         REPORT_CALL_TRACE2(LC_NONE, "[jsr179 event] JSR179_LOCATION_SIGNAL %d %d\n", pNewSignal->descriptor, pNewSignal->status);
-        break; 
+        break;
 #endif /*ENABLE_JSR_179*/
 
 #ifdef ENABLE_JSR_211
@@ -493,7 +493,7 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
     case JSR256_JC_EVENT_SENSOR_OPEN_CLOSE:
         pNewSignal->waitingFor = JSR256_SIGNAL;
         pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
-		break;
+    break;
 #endif /* ENABLE_JSR_256 */
 #endif /* !ENABLE_CDC */
     default:
@@ -516,8 +516,8 @@ javacall_result checkForSystemSignal(MidpReentryData* pNewSignal,
  *         <tt>JAVACALL_FAIL</tt> or if failed or no messages are avaialable
  */
 static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_threads,
-		       int blocked_threads_count,
-		       jlong timeout) {
+           int blocked_threads_count,
+           jlong timeout) {
     int ret = -1;
     static MidpReentryData newSignal;
     static MidpEvent newMidpEvent;
@@ -569,9 +569,9 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             break;
 
         case DISPLAY_DEVICE_SIGNAL:
-	  // broadcast event, send it to all isolates to all displays
-	    StoreMIDPEventInVmThread(newMidpEvent, -1);
-	    break;
+    // broadcast event, send it to all isolates to all displays
+      StoreMIDPEventInVmThread(newMidpEvent, -1);
+      break;
 
         case NETWORK_READ_SIGNAL:
             if (eventUnblockJavaThread(blocked_threads,
@@ -633,8 +633,8 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
                 if (pThreadReentryData != NULL &&
                     pThreadReentryData->waitingFor == newSignal.waitingFor &&
                     (pThreadReentryData->descriptor == newSignal.descriptor ||
-                        (pThreadReentryData->descriptor & 
-                            PLAYER_DESCRIPTOR_EVENT_MASK) == 
+                        (pThreadReentryData->descriptor &
+                            PLAYER_DESCRIPTOR_EVENT_MASK) ==
                                                       newSignal.descriptor)) {
                     pThreadReentryData->status = newSignal.status;
                     pThreadReentryData->pResult = newSignal.pResult;
@@ -659,8 +659,8 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
                 if (pThreadReentryData != NULL &&
                     pThreadReentryData->waitingFor == newSignal.waitingFor &&
                     (pThreadReentryData->descriptor == newSignal.descriptor ||
-                        (pThreadReentryData->descriptor & 
-                            PLAYER_AMMS_DESCRIPTOR_EVENT_MASK) == 
+                        (pThreadReentryData->descriptor &
+                            PLAYER_AMMS_DESCRIPTOR_EVENT_MASK) ==
                                                       newSignal.descriptor)) {
                     pThreadReentryData->status = newSignal.status;
                     pThreadReentryData->pResult = newSignal.pResult;
@@ -699,12 +699,12 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
             if (newMidpEvent.type == SENSOR_EVENT) {
                 StoreMIDPEventInVmThread(newMidpEvent, -1);
             } else {
-    		midp_thread_signal_list(blocked_threads, blocked_threads_count,
-    			newSignal.waitingFor, newSignal.descriptor, newSignal.status);
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+          newSignal.waitingFor, newSignal.descriptor, newSignal.status);
             }
             break;
 #endif /* ENABLE_JSR_256 */
-#ifdef ENABLE_NOTICE
+#ifdef ENABLE_NOTIFICATION
         case MIDP_JC_NOTICE_ANNOUNCEMENT_EVENT:
             pNewSignal->waitingFor = UI_ALL_SIGNAL;
             pNewMidpEvent->type    = MIDP_NOTICE_ANNOUNCEMENT_EVENT;
@@ -734,7 +734,7 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
                 midp_thread_signal_list(blocked_threads,
                                         blocked_threads_count, HOST_NAME_LOOKUP_SIGNAL, 0,
                                         PCSL_NET_IOERROR);
- 
+
                 REPORT_INFO(LC_PROTOCOL, "midp_slavemode_handle_events:"
                             "network down\n");
             } else {
@@ -812,7 +812,7 @@ void midp_slavemode_schedule_vm_timeslice(void){
 
 /** Runs the platform-specific event loop. */
 void midp_slavemode_event_loop(void) {
-    REPORT_INFO(LC_CORE, 
+    REPORT_INFO(LC_CORE,
         "midp_slavemode_event_loop() is not "
         "implemented for JavaCall platform\n");
     return;
