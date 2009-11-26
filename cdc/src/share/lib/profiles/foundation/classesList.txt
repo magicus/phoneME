@@ -1,0 +1,135 @@
+#
+# @(#)classesList.txt	1.5 06/10/25
+# 
+# Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+#
+# Classes that can be pre-initialized for sharing. From running 
+# SpecJvm, eembc, embedded CaffeineMark, KBench, HelloWorld.
+#
+# Following classes are commented out because they are initialized 
+# as part of the server VM initialization. So no need to initialize
+# them specifically by sending the SOURCE message.
+#
+#java.lang.Class
+#java.io.ObjectStreamClass
+#java.lang.ref.ReferenceQueue
+#java.lang.ref.ReferenceQueue$Null
+#java.util.HashMap
+#java.lang.Float
+#java.lang.String
+#sun.misc.ThreadRegistry
+#java.lang.Shutdown
+#java.lang.ClassLoader
+#java.lang.ClassLoader$NativeLibrary
+#java.lang.Thread
+#java.lang.System
+#java.security.AccessController
+#java.security.AccessControlContext
+#java.lang.StringBuffer
+#java.util.Hashtable
+#java.util.Properties
+#java.io.FileInputStream
+#java.lang.ref.Reference
+#java.lang.ref.Finalizer
+#java.lang.ref.Reference$ReferenceHandler
+#java.lang.ref.Finalizer$FinalizerThread
+#java.io.FileDescriptor
+#java.io.FileOutputStream
+#java.io.BufferedInputStream
+#sun.io.Converters
+#java.lang.reflect.AccessibleObject
+#java.lang.ref.SoftReference
+#java.lang.reflect.Constructor
+#java.io.BufferedWriter
+#java.util.Collections
+#
+java.lang.StringCoding
+#The static field nextHashCode can change:
+java.lang.ThreadLocal
+java.lang.ThreadLocal$ThreadLocalMap$Entry
+sun.io.ByteToCharASCII
+sun.io.CharToByteASCII
+sun.misc.Launcher
+sun.misc.Launcher$Factory
+java.security.SecureClassLoader
+sun.misc.Launcher$AppClassLoader
+sun.security.util.Debug
+java.io.File
+java.io.FileSystem
+#This is a platform specific class:
+java.io.UnixFileSystem
+java.io.ExpiringCache
+java.io.ExpiringCache$Entry
+sun.net.www.protocol.file.Handler
+java.net.URL
+java.util.Locale
+java.lang.Character
+java.lang.CharacterDataLatin1
+java.util.HashSet
+sun.misc.URLClassPath
+sun.net.www.protocol.jar.Handler
+java.lang.SecurityManager
+java.security.Security
+java.io.BufferedReader
+java.lang.Integer
+java.lang.Integer$1
+#Some of the static field may change, such as cachePolicy,
+#negativeCachePolicy:
+sun.net.InetAddressCachePolicy
+java.security.Policy
+sun.security.util.SecurityConstants
+java.net.SocketPermission
+java.lang.Boolean
+java.security.Permissions
+#Some of the static fileds may change, such as defaultAllowUserInteraction:
+java.net.URLConnection
+sun.net.www.ParseUtil
+java.util.BitSet
+sun.net.www.protocol.file.FileURLConnection
+sun.net.www.MessageHeader
+java.io.FilePermissionCollection
+java.security.BasicPermissionCollection
+java.lang.Byte
+java.lang.Long
+java.lang.Long$1
+java.lang.Double
+java.lang.Short
+java.lang.Package
+java.lang.Void
+sun.security.provider.PolicyFile
+java.util.WeakHashMap
+java.net.URI
+#The static field randomNumberGenerator is lazily initialized:
+java.lang.Math
+sun.security.provider.PolicyParser
+sun.io.CharacterEncoding
+sun.io.ByteToCharUTF8
+java.net.SocketPermissionCollection
+java.util.PropertyPermissionCollection
+java.util.WeakHashMap$Entry
+java.lang.Runtime
+#The static field randomNumberGenerator is lazily initialized:
+java.lang.StrictMath
+java.lang.FloatingDecimal
+java.lang.FloatingDecimal$1
+#Additional classes from running embedded CaffeineMark
+java.util.jar.JarFile
+java.util.Date
+#Additional classes from running kBench
+java.util.zip.ZipEntry
+java.util.jar.JarFile$JarFileEntry
+java.util.zip.Inflater
+java.util.jar.Attributes$Name
+java.util.jar.JarVerifier
+sun.net.www.protocol.jar.JarURLConnection
+#This is a platform specific class:
+sun.net.www.protocol.jar.JarFileFactory
+sun.net.www.protocol.jar.URLJarFile
+sun.net.www.protocol.jar.URLJarFile$URLJarFileEntry
+sun.security.util.ManifestEntryVerifier
+java.security.Provider
+sun.security.provider.Sun
+sun.misc.BASE64Decoder
+##
+java.lang.reflect.Field
+sun.pmvm.Listener$ListenerThread
