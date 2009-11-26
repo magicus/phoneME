@@ -1,0 +1,196 @@
+#
+#  
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# LCDUI API Library
+#
+######################################################################
+
+# Name of the library
+LCDUI_NAME = lcdui
+LCDUI_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(LCDUI_NAME)
+LCDUI_CLASSES_DIR = $(LCDUI_DIR)/reference
+
+# Add to library set for this build
+LIB_SET += $(LCDUI_NAME)
+
+# Export include files
+# SUBSYSTEM_LCDUI_EXTRA_INCLUDES += -I$(LCDUI_DIR)/include
+
+# Source code path for the library
+#
+vpath % $(LCDUI_DIR)/reference/native
+
+# Native files for the library
+#
+SUBSYSTEM_LCDUI_NATIVE_FILES += \
+    lcdui_game.c \
+    lcdui_indicators.c \
+    lcdui_input.c \
+    lcdui_display.c \
+    lcdui_vibrate.c
+
+ifneq ($(TARGET_VM), cldc_vm)
+SUBSYSTEM_LCDUI_NATIVE_FILES += \
+    lcdui_audio.c
+endif
+
+# Jpp files that need pre-processing
+#
+$(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java: \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Display.jpp
+	@$(call runjpp,$^,$@)
+
+$(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java: \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.jpp
+	@$(call runjpp,$^,$@)
+
+$(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java: \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.jpp
+	@$(call runjpp,$^,$@)
+
+# Java files for the library
+#
+SUBSYSTEM_LCDUI_JAVA_FILES += \
+    $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
+    $(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CommandAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TextPolicy.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/EventConstants.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEvent.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventProducer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventConsumer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundEventProducer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundEventConsumer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundEventListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEvent.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEventProducer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEventListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironment.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/PhoneDial.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DefaultDisplayIdPolicy.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDevice.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayContainer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceContainer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandler.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayIdPolicy.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ItemEventConsumer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandlerFactory.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DynamicCharacterArray.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundController.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/SystemAlert.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayStaticAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayFactory.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/FontAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/OEMFont.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationFactory.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationHandler.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/orientation/OrientationListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/LayerManager.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameCanvas.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameAccessImpl.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/Layer.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/KeyConverter.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Canvas.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Form.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Command.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/AlertType.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/CommandListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Choice.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/DateField.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/List.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Displayable.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Spacer.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Gauge.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/ImageItem.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/ItemStateListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Ticker.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Item.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/StringItem.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Screen.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/TextBox.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/TextField.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/ChoiceGroup.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/LayoutManager.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Alert.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/CustomItem.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/ItemCommandListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/DisplayEventHandlerImpl.java
+
+# I3 Test file for this library
+#
+# IMPL NOTE:
+# The following test classes have problems building with the current
+# redesign of the Display classes and so have been removed:
+#
+# $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/CustomItemTest.java
+# $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/DisplayManagerTest.java
+# $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/DisplayTestUtils.java
+#
+# Note also that the test case classes must be renamed to begin with 'Test'.
+#
+# IMPL NOTE:
+# The following test classes have beeen removed from default test build
+# because they depend to too many subsystems to operate, 
+# and as the result there are too many reasons for these tests to fail.
+# However they compile and pass.
+#
+#    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestDisplayPreempt.java \
+#
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES += \
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/StubDisplay.java \
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestOne.java \
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestTwo.java \
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestThree.java \
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestKeyConverter.java \
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/game/TestSprite.java \
+    $(LCDUI_CLASSES_DIR)/i3test/com/sun/midp/lcdui/TestDisplayFactory.java
+
+  ifeq ($(TARGET_VM), cldc_vm)
+    SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES += \
+      $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestNewSetCurrent.java
+  endif
+endif
+
+# Define Jpp
+ifeq ($(USE_DIRECTDRAW), true)
+  JPP_DEFS += -DENABLE_DIRECT_DRAW
+endif
+
+ifeq ($(USE_MULTIPLE_DISPLAYS), true)
+   JPP_DEFS     += -DENABLE_MULTIPLE_DISPLAYS
+endif
