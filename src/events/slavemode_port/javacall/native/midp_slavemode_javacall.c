@@ -708,7 +708,7 @@ static int midp_slavemode_handle_events(JVMSPI_BlockedThreadInfo *blocked_thread
         case MIDP_JC_NOTICE_ANNOUNCEMENT_EVENT:
             pNewSignal->waitingFor = UI_ALL_SIGNAL;
             pNewMidpEvent->type    = MIDP_NOTICE_ANNOUNCEMENT_EVENT;
-            pNewMidpEvent->intParam1 = event->data.noticeEvent.UID;
+            pNewMidpEvent->intParam1 = event->data.noticeEvent.uid;
             pNewMidpEvent->intParam2 =  event->data.noticeEvent.operation;
             pNewMidpEvent->intParam3 = event->data.noticeEvent.status;;
 #endif /*ENABLE_NOTICE*/
