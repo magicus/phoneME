@@ -1,0 +1,85 @@
+#
+#  
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+LOG_BASE_LIB = log_base
+LIB_SET += $(LOG_BASE_LIB)
+
+LOG_BASE_DIR = $(SUBSYSTEM_CORE_DIR)/$(LOG_BASE_LIB)
+
+# Javadoc source path
+SUBSYSTEM_LOG_SOURCEPATH += $(LOG_BASE_DIR)/reference/classes
+
+SUBSYSTEM_LOG_PACKAGES += \
+    com.sun.midp.log
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_LOG_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_LOG_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+        -group "Logging service" \
+	$(shell echo $(SUBSYSTEM_LOG_PACKAGES)|tr ' ' $(PATHSEP))
+
+# There are no modules for subsystem ( log_base )
+#
+
+# Java files for the ( log ) subsystem
+#
+SUBSYSTEM_LOG_JAVA_FILES += \
+    $(LOG_BASE_DIR)/reference/classes/com/sun/midp/log/LoggingBase.java
+
+# Native files for the ( log_base ) subsystem
+#
+ifeq ($(USE_JAVAUTIL_LOG_IMPLEMENTATION), false)
+# vpath for ( log_base ) subsystem
+#
+vpath % $(LOG_BASE_DIR)/reference/native  
+
+INTERNAL_LOG_BASE_NATIVE_FILES += \
+    midp_logging.c \
+    midp_logging_kni.c
+
+endif
+
+
+############################################################
+# Native files under LOG subsystem
+############################################################
+SUBSYSTEM_LOG_NATIVE_FILES += \
+    $(INTERNAL_LOG_BASE_NATIVE_FILES)
+
+ifeq ($(USE_JAVAUTIL_LOG_IMPLEMENTATION),false)
+SUBSYSTEM_LOG_EXTRA_INCLUDES += \
+    -I$(LOG_BASE_DIR)/include
+endif    

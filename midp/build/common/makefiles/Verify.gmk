@@ -1,0 +1,840 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Rules to verify that the Makefile variables are set properly.
+#
+######################################################################
+
+define verify_directory
+    if [ -z "$($@)" ]; then \
+        echo "ERROR: $@ must be set"; \
+        exit -1; \
+    else \
+        if [ ! -d "$($@)" ]; then \
+            echo "ERROR: $@ ($($@)) does not point to a valid directory"; \
+            exit -1; \
+        fi \
+    fi
+endef
+
+define verify_satsa_directory
+    if [ "$(USE_JSR_177)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_211_directory
+    if [ "$(USE_JSR_211)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_82_directory
+    if [ "$(USE_JSR_82)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_75_directory
+    if [ "$(USE_JSR_75)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_172_directory
+    if [ "$(USE_JSR_172)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_226_directory
+    if [ "$(USE_JSR_226)" = "true" ]; then \
+        $(verify_directory); \
+       if [ "$(USE_PISCES)" = "false" ]; then \
+           echo "ERROR: USE_PISCES should be "true""; \
+           exit -1; \
+       fi; \
+       if [ "$(USE_JSR_172)" = "false" ]; then \
+           echo "ERROR: USE_JSR_172 should be "true""; \
+           exit -1; \
+       fi; \
+    fi
+endef
+
+# IMPL_NOTE: NYI
+define verify_jsr_280_directory
+    if [ "$(USE_JSR_280)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_pisces_directory
+    if [ "$(USE_PISCES)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_179_directory
+    if [ "$(USE_JSR_179)" = "true" ]; then \
+        $(verify_directory) ; \
+    fi
+endef
+define verify_jsr_293_directory
+    if [ "$(USE_JSR_293)" = "true" ]; then \
+        $(verify_directory) ; \
+    fi
+endef
+
+define verify_jsr_180_directory
+    if [ "$(USE_JSR_180)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_184_directory
+    if [ "$(USE_JSR_184)" = "true" ]; then \
+        $(verify_directory); \
+    fi
+endef
+
+define verify_jsr_205_directory
+    if [ "$(USE_JSR_205)" = "true" ] ; then \
+        $(verify_directory) ; \
+        if [ "$(USE_JSR_120)" = "false" ]; then \
+            echo "ERROR: USE_JSR_120 should be "true" if USE_JSR_205 is set to true"; \
+            exit -1; \
+        fi; \
+    fi
+endef
+
+define verify_jsr_120_directory
+    if [ "$(USE_JSR_120)" = "true" ] ; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_229_directory
+    if [ "$(USE_JSR_229)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_230_directory
+    if [ "$(USE_JSR_230)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_234_directory
+    if [ "$(USE_JSR_234)" = "true" ]; then \
+        $(verify_directory) ; \
+    fi
+endef
+
+define verify_jsr_256_directory
+    if [ "$(USE_JSR_256)" = "true" ]; then \
+        $(verify_directory); \
+    fi
+endef
+
+define verify_jsr_257_directory
+    if [ "$(USE_JSR_257)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+ 
+define verify_jsr_258_directory
+    if [ "$(USE_JSR_258)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+ 
+define verify_jsr_281_directory
+    if [ "$(USE_JSR_281)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+ 
+define verify_jsr_290_directory
+    if [ "$(USE_JSR_290)" = "true" ]; then \
+        $(verify_directory); \
+    fi
+endef
+
+define verify_midp_abb_directory
+    if [ "$(USE_MIDP_ABB)" = "true" ]; then \
+        $(verify_directory) ; \
+    fi
+endef
+
+define verify_jsr_135_directory
+    if [ "$(USE_JSR_135)" = "true" ]; then \
+        $(verify_directory) ; \
+    fi
+endef
+
+define verify_jsr_238_directory
+    if [ "$(USE_JSR_238)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_jsr_239_directory
+    if [ "$(USE_JSR_239)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_abstractions_directory
+    if [ "$(USE_ABSTRACTIONS)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_restricted_crypto_directory
+#    if [ ! "$(USE_BINARY_CRYPTO)" = "true" ]; then \
+      if [ "$(USE_RESTRICTED_CRYPTO)" = "true" ]; then \
+          $(verify_directory) ; \
+#      fi; \
+    fi
+endef
+
+define verify_crypto_output_directory
+    if [ "$(USE_BINARY_CRYPTO)" = "true" ]; then \
+        $(verify_directory) ; \
+    fi
+endef
+
+define verify_jpeg_directory
+    if [ "$(USE_JPEG)" = "true" ]; then \
+        $(verify_directory) \
+    fi
+endef
+
+define verify_tools_directory
+    $(verify_directory) ; \
+    if [ ! -f "$(TOOLS_DIR)/tools.gmk" ]; then \
+        echo "ERROR: $@ ($($@)) does not contain tools.gmk"; \
+        exit -1; \
+    fi
+endef
+
+define verify_cms_directory
+    if [ "$(USE_CMS)" = "true" ]; then \
+        $(verify_directory); \
+    fi
+endef
+
+define verify_boolean
+    if [ "$($@)" != "true" -a "$($@)" != "false" ]; then \
+        echo "ERROR: $@ ($($@)) is not set to a boolean value"; \
+        exit -1; \
+    fi
+endef
+
+# The JDK is considered valid if it is v1.3.1 or later
+#
+define verify_jdk
+    if [ -x "$(JDK_DIR)/bin/java$(EXE)" ]; then \
+        jdk_ver="`$(JDK_DIR)/bin/java -version 2>&1`"; \
+        jdk_ver=`echo $$jdk_ver | awk -F'"' '{ print $$2 }'`; \
+        jdk_maj=`echo $$jdk_ver | cut -d. -f1`; \
+        jdk_min=`echo $$jdk_ver | cut -d. -f2`; \
+        if [ "$$jdk_maj" -ne "1" -o \( "$$jdk_min" -lt "3" \) ]; then \
+            echo "ERROR: JDK_DIR points to invalid JDK directory"; \
+            exit -1; \
+        fi; \
+    else \
+        echo "ERROR: JDK_DIR points to invalid JDK directory"; \
+        exit -1; \
+    fi
+endef
+
+# Verify if PCSL defines macro corresponding to MIDP boolean option
+# verify_pcsl_boolean <midp_option_value> <pcsl_macro_name>
+#
+define verify_pcsl_boolean
+    @if [ "$(1)" = "true" ]; then \
+      if ! grep "^\#define $(2)\b" \
+	    $(PCSL_TARGET_DIR)/inc/pcsl_config.h > /dev/null; then \
+	echo 'ERROR: $(2) should be defined'; \
+	exit -1; \
+      fi; \
+    fi    	    
+endef
+
+# Verify if PCSL network module matches target platform
+# verify_pcsl_network_module <platform> <network_module>
+#
+define verify_pcsl_network_module
+    if [ "$(TARGET_PLATFORM)" = "$(1)" ]; then \
+	if ! grep "^\#define NETWORK_MODULE[[:space:]]\+$(2)" \
+		  $(PCSL_TARGET_DIR)/inc/pcsl_config.h > /dev/null; then \
+	    echo 'ERROR: Mismatching PCSL networking module, should be "$(2)"'; \
+			exit -1; \
+	fi; \
+    fi    	    
+endef
+
+# Verify if PCSL networking settings are consistent with MIDP settings
+#
+define verify_pcsl_networking
+    @$(call verify_pcsl_network_module,linux_fb,bsd/generic)
+    @$(call verify_pcsl_network_module,linux_qte,bsd/qte)
+    @$(call verify_pcsl_boolean,true,PCSL_DATAGRAM)
+endef
+
+# Used in cygwin build to ensure that /tmp directory exists,
+# which may be not the case if Sun's cyg4me package is used
+define ensure_cygwin_tmp
+    if [ ! -d "/tmp" ]; then \
+        mkdir /tmp; \
+        chmod a+rwx /tmp; \
+    fi
+endef
+
+# Verify that USE_STATIC_PROPERTIES setting is consistent between MIDP and JavaCall
+#
+define verify_javacall_properties
+    if [ "$(USE_STATIC_PROPERTIES)" = "true" ]; then \
+        if [ ! -f "$(JAVACALL_OUTPUT_DIR)/javacall_static_properties.c" ]; then \
+            echo "ERROR: No javacall_static_properties.c found in JAVACALL_OUTPUT_DIR while USE_STATIC_PROPERTIES=true"; \
+            exit -1; \
+        fi; \
+    else \
+        if [ ! -f "$(JAVACALL_OUTPUT_DIR)/jwc_properties.ini" ]; then \
+            echo "ERROR: No jwc_properties.ini found in JAVACALL_OUTPUT_DIR while USE_STATIC_PROPERTIES=false"; \
+            exit -1; \
+        fi; \
+    fi
+endef
+
+#
+# The master list of boolean options.
+#
+# IMPL NOTE: The following options are used in various places around the
+# makefile system but they don't seem to be set by default, which would
+# cause an error if they were included here.  These should either be set to
+# default values and added to the list, or they should be removed entirely.
+#
+#	ENABLE_CYGWIN
+#	USE_JSR_172
+#	USE_MESSAGE_STRINGS
+#	USE_PORTING_DEMOS
+#	USE_ROMIZED_DEMOS
+#
+BOOLEAN_OPTIONS = \
+	USE_NATIVE_APP_MANAGER \
+	USE_NATIVE_INSTALLER \
+	USE_NATIVE_SUITE_STORAGE \
+	USE_NATIVE_RMS \
+	USE_NAMS_TEST_SERVICE \
+	USE_RAW_AMS_IMAGES \
+	USE_RESTRICTED_CRYPTO \
+	USE_SSL \
+	USE_BINARY_CRYPTO \
+	USE_FIXED \
+	USE_CLDC_11 \
+	USE_MONET \
+	USE_STATIC_PROPERTIES \
+	USE_GCC \
+	USE_I3_TEST \
+	USE_IMAGE_CACHE \
+	USE_FONT_CACHE \
+	USE_ICON_CACHE \
+	USE_JAVA_DEBUGGER \
+	USE_JAVA_PROFILER \
+	USE_MIDP_MALLOC \
+	USE_MULTIPLE_ISOLATES \
+	USE_DEBUG \
+	USE_GCOV \
+	USE_CLDC_RELEASE \
+	USE_NATIVE_PROFILER \
+	USE_NETWORK_INDICATOR \
+	USE_NUTS_FRAMEWORK \
+	USE_RMS_TREE_INDEX \
+	USE_MIDP_ABB \
+	USE_JSR_177 \
+	USE_JSR_75 \
+	USE_JSR_82 \
+	USE_JSR_120 \
+	USE_JSR_172 \
+	USE_JSR_226 \
+	USE_PISCES \
+	USE_JSR_179 \
+	USE_JSR_293 \
+	USE_JSR_180 \
+	USE_JSR_184 \
+	USE_JSR_205 \
+	USE_JSR_211 \
+	USE_JSR_229 \
+	USE_JSR_230 \
+	USE_JSR_234 \
+	USE_JSR_135 \
+	USE_JSR_238 \
+	USE_JSR_239 \
+	USE_JSR_280 \
+	USE_JSR_256 \
+	USE_JSR_257 \
+	USE_JSR_258 \
+	USE_JSR_281 \
+	USE_JSR_290 \
+	USE_CMS \
+	USE_ABSTRACTIONS \
+	USE_VERBOSE_MAKE \
+	USE_CONTROL_ARGS_FROM_JAD \
+	USE_JPEG \
+	USE_GCI \
+	USE_DIRECTDRAW \
+	USE_FILE_SYSTEM \
+	USE_NATIVE_PTI \
+	USE_MULTIPLE_DISPLAYS \
+	USE_VERIFY_ONCE \
+	USE_EXTENDED_ATTRIBUTES \
+	USE_VM_PROFILES \
+	USE_SERVER_SOCKET \
+	USE_ON_DEVICE_DEBUG \
+	USE_WTK_DEBUG \
+	USE_SYSTEM_CLASSES_DEBUG \
+	USE_OCSP \
+	USE_DYNAMIC_COMPONENTS \
+	USE_AMS_FOLDERS \
+	USE_AUTOTESTER \
+	USE_PUBLIC_AMS_API
+
+$(BOOLEAN_OPTIONS)::
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_boolean) $(LOG)
+
+USE_NATIVE_APP_MANAGER::
+	@if [ "$(USE_NATIVE_APP_MANAGER)" = "true" ]; then \
+	  if [ "$(USE_I3_TEST)" = "true" ]; then \
+	    if [ "$(USE_NAMS_TEST_SERVICE)" = "false" ]; then \
+	      echo "ERROR: USE_NAMS_TEST_SERVICE must be set to true when building"\
+	           "with USE_NATIVE_APP_MANAGER=true and USE_I3_TEST=true"; \
+	      exit -1; \
+	    fi; \
+	  fi; \
+	fi;
+
+USE_NATIVE_INSTALLER::
+	@if [ "$(USE_NATIVE_INSTALLER)" = "true" ]; then \
+	  if [ ! "$(TARGET_PLATFORM)" = "javacall" ]; then \
+	    echo "ERROR: USE_NATIVE_INSTALLER option is meaningless when TARGET_PLATFORM is not javacall"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_NATIVE_SUITE_STORAGE::
+	@if [ "$(USE_NATIVE_SUITE_STORAGE)" = "true" ]; then \
+	  if [ ! "$(TARGET_PLATFORM)" = "javacall" ]; then \
+	    echo "ERROR: USE_NATIVE_SUITE_STORAGE option is meaningless when TARGET_PLATFORM is not javacall"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_NATIVE_RMS::
+	@if [ "$(USE_NATIVE_RMS)" = "true" ]; then \
+	  if [ ! "$(TARGET_PLATFORM)" = "javacall" ]; then \
+	    echo "ERROR: USE_NATIVE_RMS option is meaningless when TARGET_PLATFORM is not javacall"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_VERIFY_ONCE::
+	@if [ "$(USE_VERIFY_ONCE)" = "true" ]; then \
+	  if [ "$(USE_MONET)" = "true" ]; then \
+	    echo "ERROR: USE_VERIFY and USE_MONET options are mutually exclusive"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_ON_DEVICE_DEBUG::
+	@if [ "$(USE_ON_DEVICE_DEBUG)" = "true" ]; then \
+	  if [ "$(PRECOMPILED_ODD)" = "true" ]; then \
+	    if [ -z "$(ODD_JAR)" ]; then \
+	      echo "ERROR: ODD_JAR must be set when USE_ON_DEVICE_DEBUG and PRECOMPILED_ODD are true"; \
+	      exit -1; \
+	    fi; \
+	  else \
+	    if [ -z "$(SDK_ODD_DIR)" ] && [ -z "$(SDK_ODD_JAR)" ]; then \
+	      echo "ERROR: SDK_ODD_DIR or SDK_ODD_JAR must be set when USE_ON_DEVICE_DEBUG is true and PRECOMPILED_ODD is false"; \
+	      exit -1; \
+	    fi; \
+	  fi; \
+	fi
+
+USE_WTK_DEBUG::
+	@if [ "$(USE_WTK_DEBUG)" = "true" ]; then \
+	  if [ "$(USE_JAVA_DEBUGGER)" = "false" ]; then \
+	    echo "ERROR: USE_JAVA_DEBUGGER must be true when USE_WTK_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_SYSTEM_CLASSES_DEBUG::
+	@if [ "$(USE_SYSTEM_CLASSES_DEBUG)" = "true" ]; then \
+	  if [ "$(USE_JAVA_DEBUGGER)" = "false" ]; then \
+	    echo "ERROR: USE_JAVA_DEBUGGER must be true when USE_SYSTEM_CLASSES_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_OCSP::
+	@if [ "$(USE_OCSP)" = "true" ]; then \
+	  if [ ! "$(USE_RESTRICTED_CRYPTO)" = "true" ]; then \
+	    echo "ERROR: USE_RESTRICTED_CRYPTO must be true when USE_OCSP is true"; \
+	    exit -1; \
+	  fi; \
+	fi
+
+USE_SERVER_SOCKET::
+	@$(call verify_pcsl_boolean,$(USE_SERVER_SOCKET),PCSL_SERVER_SOCKET)
+
+USE_RESTRICTED_CRYPTO::
+	@if [ ! "$(USE_BINARY_CRYPTO)" = "true" ]; then \
+	  if [ ! "$(USE_RESTRICTED_CRYPTO)" = "true" ]; then \
+	    if [ "$(USE_SSL)" = "true" ]; then \
+	      echo "Warning: USE_SSL=true when USE_RESTRICTED_CRYPTO=false"; \
+	    fi; \
+	    if [ "$(USE_JSR_229)" = "true" ]; then \
+	      echo \
+	        "Warning: USE_JSR_229=true when USE_RESTRICTED_CRYPTO=false"; \
+	    fi; \
+	  fi; \
+	fi
+
+JSR_177_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_satsa_directory) $(LOG)
+
+JSR_211_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_211_directory) $(LOG)
+
+JSR_75_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_75_directory) $(LOG)
+
+JSR_82_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_82_directory) $(LOG)
+
+JSR_172_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_172_directory) $(LOG)
+
+JSR_226_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_226_directory) $(LOG)
+
+PISCES_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_pisces_directory) $(LOG)
+
+JSR_179_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_179_directory) $(LOG)
+
+JSR_293_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_293_directory) $(LOG)
+
+JSR_180_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_180_directory) $(LOG)
+
+JSR_184_DIR::
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_184_directory) $(LOG)
+
+JSR_120_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_120_directory) $(LOG)
+
+JSR_205_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_205_directory) $(LOG)
+
+JSR_229_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_229_directory) $(LOG)
+
+JSR_230_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_230_directory) $(LOG)
+
+JSR_234_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_234_directory) $(LOG)
+
+JSR_256_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_256_directory) $(LOG)
+
+JSR_257_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_257_directory) $(LOG)
+
+JSR_258_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_258_directory) $(LOG)
+
+JSR_281_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_281_directory) $(LOG)
+
+JSR_290_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_290_directory) $(LOG)
+
+JSR_135_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_135_directory) $(LOG)
+
+# IMPL_NOTE: NYI
+JSR_280_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_280_directory) $(LOG)
+
+MIDP_ABB_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_midp_abb_directory) $(LOG)
+
+JSR_238_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_238_directory) $(LOG)
+
+JSR_239_DIR::
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_239_directory) $(LOG)
+
+CMS_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_cms_directory) $(LOG)
+
+ABSTRACTIONS_DIR::
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_abstractions_directory) $(LOG)
+
+PCSL_OUTPUT_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_directory) $(LOG)
+	@$(verify_pcsl_networking) $(LOG)
+
+RESTRICTED_CRYPTO_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_restricted_crypto_directory) $(LOG)
+
+CRYPTO_OUTPUT_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_crypto_output_directory) $(LOG)
+
+JPEG_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jpeg_directory) $(LOG)
+
+MIDP_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_directory) $(LOG)
+
+JDK_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_directory) $(LOG)
+	@$(verify_jdk) $(LOG)
+
+CLDC_DIST_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_directory) $(LOG)
+	@$(verify_cldc) $(LOG)
+
+TOOLS_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_tools_directory) $(LOG)
+
+# Target for ensuring that /tmp directory exists in cygwin build,
+# which may be not the case if Sun's cyg4me package is used
+ifeq ($(USE_CYGWIN),true)
+CYGWIN_TMP_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(ensure_cygwin_tmp) $(LOG)
+else
+CYGWIN_TMP_DIR: ;
+endif
+
+ifeq ($(USE_JAVACALL),true)
+define INVALID_JAVACALL_OUTPUT_DIR
+	echo ===================================================================== ; \
+	echo Please set JAVACALL_OUTPUT_DIR \($(JAVACALL_OUTPUT_DIR)\)             ; \
+	echo such that it is possible to access                                    ; \
+	echo \$${JAVACALL_OUTPUT_DIR}/inc and \$${JAVACALL_OUTPUT_DIR}/lib         ; \
+	echo directories.                                                          ; \
+	echo ===================================================================== ; \
+	exit 1
+endef
+
+JAVACALL_OUTPUT_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_directory) $(LOG)
+	@if [ ! -d "$(JAVACALL_OUTPUT_DIR)/inc" ]; then $(INVALID_JAVACALL_OUTPUT_DIR); fi
+	@if [ ! -d "$(JAVACALL_OUTPUT_DIR)/lib" ]; then $(INVALID_JAVACALL_OUTPUT_DIR); fi
+	@$(verify_javacall_properties) $(LOG)
+else
+JAVACALL_OUTPUT_DIR:
+endif
+
+MIDP_OUTPUT_DIR:
+	$(A)mkdir -p $(MIDP_OUTPUT_DIR)
+
+verify: MIDP_OUTPUT_DIR CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_DIR \
+	RESTRICTED_CRYPTO_DIR JPEG_DIR MIDP_ABB_DIR JSR_177_DIR PCSL_OUTPUT_DIR CLDC_DIST_DIR \
+	JSR_75_DIR JSR_82_DIR JSR_135_DIR JSR_172_DIR JSR_226_DIR PISCES_DIR JSR_179_DIR \
+	JSR_180_DIR JSR_184_DIR JSR_205_DIR JSR_211_DIR JSR_229_DIR \
+	JSR_230_DIR JSR_234_DIR JSR_238_DIR JSR_239_DIR JSR_256_DIR JSR_257_DIR JSR_258_DIR \
+	JSR_280_DIR JSR_281_DIR JSR_290_DIR JSR_293_DIR CMS_DIR ABSTRACTIONS_DIR JAVACALL_OUTPUT_DIR $(BOOLEAN_OPTIONS)
+
+######################################################################
+#
+# Rules to display Makefile variables.
+#
+######################################################################
+tmplogfile = /tmp/tmplogfile.$$
+display:
+	@echo   "" $(LOG)
+	@echo   "========================" $(LOG)
+	@echo   "MIDP Build Configuration" $(LOG)
+	@echo   "========================" $(LOG)
+	@echo   "" $(LOG)
+	@echo   "VAR_IMPORT_FROM       = ""$(VAR_IMPORT_FROM)" $(LOG)
+	@echo   "" $(LOG)
+	@$(shell rm -f $(tmplogfile))
+	@$(foreach v, $(BOOLEAN_OPTIONS), \
+		$(shell printf "%-21s = %s\n" "$(v)" "$($(v))" >> $(tmplogfile))) cat $(tmplogfile); rm -f $(tmplogfile) $(LOG)
+	@echo   "" $(LOG)
+	@echo   "CFLAGS                = ""$(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(CMDLINE_CFLAGS)" $(LOG)
+	@echo   "" $(LOG)
+	@echo   "CPPFLAGS              = ""$(EXTRA_CPPFLAGS) $(DEBUG_CFLAGS) $(EXTRA_CFLAGS) $(CMDLINE_CFLAGS)" $(LOG)
+	@echo   "" $(LOG)
+	@echo   "LD_FLAGS              = ""$(LD_FLAGS)" $(LOG)
+	@echo   "" $(LOG)
+	@echo   "C compiler            = ""$(DISPLAY_CC_VERSION)" $(LOG)
+	@echo   "C++ compiler          = ""$(DISPLAY_CPP_VERSION)" $(LOG)
+	@echo   "USE_WEAK_GCC_WARNINGS = ""$(USE_WEAK_GCC_WARNINGS)" $(LOG)
+	@printf "JDK_DIR               = %s    (v%s)\n" \
+		"$(JDK_DIR)" `$(JDK_DIR)/bin/java -version < /dev/null 2>&1 | awk -F'"' '{ print $$2 }' | head -1` $(LOG)
+	@echo   "TARGET_VM             = ""$(TARGET_VM)" $(LOG)
+	@echo   "MIDP_DIR              = ""$(MIDP_DIR)" $(LOG)
+	@echo   "PROJECT_MIDP_DIR      = ""$(PROJECT_MIDP_DIR)" $(LOG)
+	@echo   "CLDC_DIST_DIR         = ""$(CLDC_DIST_DIR)" $(LOG)
+	@echo   "TOOLS_DIR             = ""$(TOOLS_DIR)" $(LOG)
+	@echo   "ABSTRACTIONS_DIR      = ""$(ABSTRACTIONS_DIR)" $(LOG)
+	@echo   "JSR_75_DIR            = ""$(JSR_75_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_75_DIR    = ""$(PROJECT_JSR_75_DIR)" $(LOG)
+	@echo   "JSR_82_DIR            = ""$(JSR_82_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_82_DIR    = ""$(PROJECT_JSR_82_DIR)" $(LOG)
+	@echo   "JSR_120_DIR           = ""$(JSR_120_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_120_DIR   = ""$(PROJECT_JSR_120_DIR)" $(LOG)
+	@echo   "JSR_135_DIR           = ""$(JSR_135_DIR)" $(LOG)
+	@echo   "JSR_172_DIR           = ""$(JSR_172_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_172_DIR   = ""$(PROJECT_JSR_172_DIR)" $(LOG)
+	@echo   "JSR_226_DIR           = ""$(JSR_226_DIR)" $(LOG)
+	@echo   "PISCES_DIR            = ""$(PISCES_DIR)" $(LOG)
+	@echo	"JSR_177_DIR           = ""$(JSR_177_DIR)" $(LOG)
+	@echo	"PROJECT_JSR_177_DIR   = ""$(PROJECT_JSR_177_DIR)" $(LOG)
+	@echo   "JSR_179_DIR           = ""$(JSR_179_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_179_DIR   = ""$(PROJECT_JSR_179_DIR)" $(LOG)
+	@echo   "JSR_180_DIR           = ""$(JSR_180_DIR)" $(LOG)
+	@echo   "JSR_184_DIR           = ""$(JSR_184_DIR)" $(LOG)
+	@echo   "JSR_205_DIR           = ""$(JSR_205_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_205_DIR   = ""$(PROJECT_JSR_205_DIR)" $(LOG)
+	@echo   "JSR_211_DIR           = ""$(JSR_211_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_211_DIR   = ""$(PROJECT_JSR_211_DIR)" $(LOG)
+	@echo   "JSR_229_DIR           = ""$(JSR_229_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_229_DIR   = ""$(PROJECT_JSR_229_DIR)" $(LOG)
+	@echo   "JSR_230_DIR           = ""$(JSR_230_DIR)" $(LOG)
+	@echo   "JSR_234_DIR           = ""$(JSR_234_DIR)" $(LOG)
+	@echo   "JSR_238_DIR           = ""$(JSR_238_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_238_DIR   = ""$(PROJECT_JSR_238_DIR)" $(LOG)
+	@echo   "JSR_239_DIR           = ""$(JSR_239_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_239_DIR   = ""$(PROJECT_JSR_239_DIR)" $(LOG)
+	@echo   "JSR_280_DIR           = ""$(JSR_280_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_280_DIR   = ""$(PROJECT_JSR_280_DIR)" $(LOG)
+	@echo	"JSR_256_DIR           = ""$(JSR_256_DIR)" $(LOG)
+	@echo	"PROJECT_JSR_256_DIR   = ""$(PROJECT_JSR_256_DIR)" $(LOG)
+	@echo	"JSR_257_DIR           = ""$(JSR_257_DIR)" $(LOG)
+	@echo	"JSR_258_DIR           = ""$(JSR_258_DIR)" $(LOG)
+	@echo	"JSR_281_DIR           = ""$(JSR_281_DIR)" $(LOG)
+	@echo	"JSR_290_DIR           = ""$(JSR_290_DIR)" $(LOG)
+	@echo   "JSR_293_DIR           = ""$(JSR_293_DIR)" $(LOG)
+	@echo	"PROJECT_JSR_290_DIR   = ""$(PROJECT_JSR_290_DIR)" $(LOG)
+	@echo	"CMS_DIR               = ""$(CMS_DIR)" $(LOG)
+	@echo	"PROJECT_CMS_DIR       = ""$(PROJECT_CMS_DIR)" $(LOG)
+	@echo   "JC_DIR                = ""$(JC_DIR)" $(LOG)
+	@echo   "RESTRICTED_CRYPTO_DIR = ""$(RESTRICTED_CRYPTO_DIR)" $(LOG)
+	@echo   "CRYPTO_OUTPUT_DIR     = ""$(CRYPTO_OUTPUT_DIR)" $(LOG)
+	@echo   "JPEG_DIR              = ""$(JPEG_DIR)" $(LOG)
+	@echo   "PCSL_OUTPUT_DIR       = ""$(PCSL_OUTPUT_DIR)" $(LOG)
+	@echo   "MIDP_OUTPUT_DIR       = ""$(MIDP_OUTPUT_DIR)" $(LOG)
+	@echo   "USE_MULTIPLE_DISPLAYS = ""$(USE_MULTIPLE_DISPLAYS)" $(LOG)
+	@echo "" $(LOG)
+	@echo "=======================================" $(LOG)
+	@echo "MIDP Subsystem and Module Configuration" $(LOG)
+	@echo "=======================================" $(LOG)
+	@echo "" $(LOG)
+	@echo "SUBSYSTEMS                   = $(SUBSYSTEMS)" $(LOG)
+	@echo "SUBSYSTEM_AMS_MODULES        = $(SUBSYSTEM_AMS_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_EVENTS_MODULES     = $(SUBSYSTEM_EVENTS_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_PUSH_MODULES       = $(SUBSYSTEM_PUSH_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_I18N_MODULES       = $(SUBSYSTEM_I18N_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_LCDUI_MODULES      = $(SUBSYSTEM_LCDUI_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_GRAPHICS_MODULES   = $(SUBSYSTEM_GRAPHICS_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_MMAPI_MODULES      = $(SUBSYSTEM_MMAPI_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_PTI_MODULES        = $(SUBSYSTEM_PTI_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_PROTOCOL_MODULES   = $(SUBSYSTEM_PROTOCOL_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_RMS_MODULES        = $(SUBSYSTEM_RMS_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_SECURITY_MODULES   = $(SUBSYSTEM_SECURITY_MODULES)" $(LOG)
+	@echo "SUBSYSTEM_TOOL_MODULES       = $(SUBSYSTEM_TOOL_MODULES)" $(LOG)
+	@echo "" $(LOG)
+
+
+#
+# The following is merely makefile scripting.  Use the 'foreach' command
+# recursively expand each subsystem's list of modules. Unfortunately
+# the subsystem name and variable names aren't completely consistent,
+# so we have to do a bit of substitution in the generation of the
+# SUBSYSTEMSUC variable.
+#
+
+SUBSYSTEMSUC = $(patsubst LOWLEVELUI,GRAPHICS,$(patsubst HIGHLEVELUI,LCDUI,$(shell echo $(SUBSYSTEMS) | tr a-z A-Z)))
+
+PRINTMODULESLIST = echo SUBSYSTEM_$(S)_MODULES = $(SUBSYSTEM_$(S)_MODULES) ;
+
+print-subsystem-module-list:
+	@echo SUBSYSTEMS=$(SUBSYSTEMS)
+	@echo SUBSYSTEMSUC=$(SUBSYSTEMSUC)
+	@$(foreach S, $(SUBSYSTEMSUC), $(PRINTMODULESLIST))
+
+
+.PHONY: verify display $(BOOLEAN_OPTIONS) CYGWIN_TMP_DIR MIDP_DIR JDK_DIR RESTRICTED_CRYPTO_DIR JSR_177_DIR JSR_211_DIR PCSL_OUTPUT_DIR  CLDC_DIST_DIR JAVACALL_OUTPUT_DIR
