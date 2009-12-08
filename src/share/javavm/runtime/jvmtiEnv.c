@@ -5383,6 +5383,23 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	    err = JVMTI_ERROR_INVALID_CLASS;
 	    goto cleanup;
 	}
+	if (loader != NULL) {
+	    /*
+	     * We don't want the class loader to have a reference to the 
+	     * new class so we make this call to remove it from its
+             * 'classes' vector which is used to keep it from being GC'd
+	     */
+	    loaderRemoveClass =
+		(*env)->GetMethodID(env,
+		CVMcbJavaInstance(CVMsystemClass(java_lang_ClassLoader)), 
+		"removeClass", "(Ljava/lang/Class;)V");
+
+	    (*env)->CallVoidMethod(env, loader,
+				   loaderRemoveClass, newKlass);
+	    if (CVMexceptionOccurred(ee)) {
+                (*env)->ExceptionClear(env);
+	    }
+	}
         if ((err = jvmtiCheckSchemas(oldcb, newcb)) != JVMTI_ERROR_NONE) {
             classes[i] = NULL; 
             free(className); 
