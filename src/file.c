@@ -67,6 +67,8 @@ extern char *progname;
 extern bool_t JARfile;
 extern bool_t tmpDirExists;
 
+extern struct StrIDhash *nameTypeHash;
+
 char *current_class_name = NULL;
 
 bool_t stack_map_on = TRUE;
@@ -82,6 +84,8 @@ int class_index;
 int last_not_utf8_index;
 
 #define INIT_CLASS_BUF_SIZE 256
+
+#define Str2IDFree_Local(localHashRoot) Str2IDFree(localHashRoot)
 
 void ensure_capacity(int sz)
 {
@@ -757,6 +761,7 @@ VerifyFile(char *fn)
                 }
             }
             WriteClass(cb);
+            Str2IDFree_Local(&nameTypeHash);
         }
     }
 }
