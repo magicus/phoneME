@@ -1,0 +1,89 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Generic compiler specific defines
+# MIDP specific directories and libraries defines are in ads-jtwi.gmk
+#
+######################################################################
+ifndef _ADS_GMK_
+_ADS_GMK_        =
+
+# Suffix
+LIB_SUFFIX      = .lib
+LIB_PREFIX      = 
+SHARED_LIB_SUFFIX = .lib
+OBJ_SUFFIX      = .o
+
+# GCC
+USE_GCC         = false
+
+# Same defines when used as either TARGET or HOST COMPILER
+CC              = armcc
+CPP             = armcpp
+CC_OUTPUT       = -o
+
+AR              = armar
+AR_FLAGS        = -crs
+AR_OUTPUT       =
+
+# commands for AR (lib) script
+MRI_ADD = 
+MRI_CREATE = -crs 
+MRI_SAVE = 
+MRI_OPT = -via 
+
+# refer to src/ams/objlib.gmk
+RANLIB = true
+
+LD              = armlink
+# THERE MUST BE A WHITESPACE AFTER the -o THE BUILD WILL FAIL OTHERWISE
+LD_OUTPUT       = -o 
+LINKER_OUTPUT   = $(LD_OUTPUT)
+LIBS            =
+
+
+LD_FLAGS        =
+
+ASM             = armasm
+ASM_FLAGS       =
+ASM_OUTPUT      = -o
+
+ifeq ($(USE_DEBUG), true)
+
+DEBUG_CFLAGS    = -g -gtp
+LD_FLAGS        =
+
+else
+
+# flags inherited from the VM
+EXTRA_CFLAGS   += -DUNDER_ADS=1 -O2 -Otime -c -W
+LD_FLAGS       += -map -symbols -list runMidlet$(g)$(p).map \
+		              -entry 0x00008000 \
+
+
+endif
+EXTRA_CFLAGS +=  -apcs /interwork
+
+endif
