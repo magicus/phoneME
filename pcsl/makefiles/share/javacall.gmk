@@ -1,0 +1,60 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for building and packaging.
+#
+######################################################################
+
+INVALID_JAVACALL_OUTPUT_DIR = (\
+echo ===================================================================== ; \
+echo JAVACALL_OUTPUT_DIR \(environment or GNUmake variable\) must be set.  ; \
+echo Please set it such that it is possible to access                      ; \
+echo \$${JAVACALL_OUTPUT_DIR}/inc and \$${JAVACALL_OUTPUT_DIR}/lib         ; \
+echo directories.                                                          ; \
+echo ===================================================================== )
+
+JAVACALL_OUTPUT_DIRS_TO_VERIFY=$(JAVACALL_OUTPUT_DIR)/inc $(JAVACALL_OUTPUT_DIR)
+
+define verify_javacall_output_dir 
+	if [ -z "$(JAVACALL_OUTPUT_DIR)" ]; then \
+		echo "ERROR: JAVACALL_OUTPUT_DIR must be set"; \
+		exit -1; \
+	fi;
+	for curr_dir in $(JAVACALL_OUTPUT_DIRS_TO_VERIFY); do \
+		if [ ! -d "$$curr_dir" ]; then \
+       			$(INVALID_JAVACALL_OUTPUT_DIR); \
+       			exit -1; \
+		fi; \
+	done;
+endef
+
+VER_JAVACALL_OUTPUT_DIR:
+	@$(verify_javacall_output_dir)
+
+verify :: VER_JAVACALL_OUTPUT_DIR 
+
+JAVACALL_INCLUDE_DIR=$(JAVACALL_OUTPUT_DIR)/inc
+
+CFLAGS += -I$(JAVACALL_INCLUDE_DIR) 

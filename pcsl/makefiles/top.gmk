@@ -1,0 +1,163 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Top level makefile to be included in every makefile
+# Prerequisites: variables that need to be defined in environment variables
+#                or on command line
+# PCSL_PLATFORM
+# PCSL_DIR (the top of the workspace.Can also be defined  in makefiles that include
+#           top.gmk, prior to the inclusion)
+# Prerequisites: variables defined in platform specific .gmk
+# PCSL_OS  (defined in PCSL_PLATFORM.gmk, included here)
+# PCSL_CPU (defined in PCSL_PLATFORM.gmk, included here)
+# Optional
+# PCSL_OUTPUT_DIR (optionally defined as an environment variable.
+#                  Default provided here)
+#
+######################################################################
+
+ifneq ($(USE_VERBOSE_MAKE), true)
+	AT=@
+	MAKE_NO_PRINT_DIRECTORY=--no-print-directory
+endif
+
+include $(PCSL_DIR)/makefiles/platforms/$(PCSL_PLATFORM).gmk
+
+ifndef PCSL_OUTPUT_DIR
+PCSL_OUTPUT_DIR=$(PCSL_DIR)/output
+endif
+
+OUTPUT_LIB_DIR=$(PCSL_OUTPUT_DIR)/$(PCSL_OS)_$(PCSL_CPU)/lib
+OUTPUT_INC_DIR=$(PCSL_OUTPUT_DIR)/$(PCSL_OS)_$(PCSL_CPU)/inc
+OUTPUT_OBJ_DIR=$(PCSL_OUTPUT_DIR)/$(PCSL_OS)_$(PCSL_CPU)/obj
+OUTPUT_BIN_DIR=$(PCSL_OUTPUT_DIR)/$(PCSL_OS)_$(PCSL_CPU)/bin
+OUTPUT_GEN_DIR=$(PCSL_OUTPUT_DIR)/$(PCSL_OS)_$(PCSL_CPU)/generated
+
+#define default modules
+
+#possible values are "heap", "malloc", "stubs"
+ifndef MEMORY_MODULE
+MEMORY_MODULE = malloc
+endif
+
+#possible values are "malloc", "javacall"
+ifndef MEMORY_PORT_MODULE
+MEMORY_PORT_MODULE=malloc
+endif
+
+# define chunk memory implementation and src directory
+ifndef PCSL_CHUNKMEM_IMPL
+PCSL_CHUNKMEM_IMPL=pcsl_chunkheap
+endif
+
+ifndef PCSL_CHUNKMEM_DIR
+PCSL_CHUNKMEM_DIR=$(PCSL_DIR)/memory/heap
+endif
+
+#possible values are "posix", "ram", "win32", "stubs"
+ifndef FILE_MODULE
+FILE_MODULE = posix
+endif
+
+#possible values are "radix16", "radix41", "radix64", "radix85", "testing"
+ifndef ESCFILENAMES_MODULE
+ESCFILENAMES_MODULE = radix41
+endif
+
+# possible values are "bsd/qte", "bsd/generic", "winsock", "stubs"
+# and "sos"
+ifndef NETWORK_MODULE
+NETWORK_MODULE = bsd/qte
+endif
+
+#possible values are "stdout", "file", "stubs"
+ifndef PRINT_MODULE
+PRINT_MODULE = stdout
+endif
+
+#possible values are "utf8", "utf16"
+ifndef STRING_MODULE
+STRING_MODULE = utf16
+endif
+
+# Datagram support is optional
+ifndef USE_DATAGRAM
+USE_DATAGRAM = true
+endif
+
+# Server sockets support is optional
+ifndef USE_SERVER_SOCKET
+USE_SERVER_SOCKET = true
+endif
+
+#default modules
+MEMORY_DIR=$(PCSL_DIR)/memory
+MEMORY_PORT_DIR=$(MEMORY_DIR)/memory_port
+FILE_DIR=$(PCSL_DIR)/file
+ESCFILENAMES_DIR=$(PCSL_DIR)/escfilenames
+NETWORK_DIR=$(PCSL_DIR)/network
+PRINT_DIR=$(PCSL_DIR)/print
+DONUTS_DIR=$(PCSL_DIR)/donuts
+TYPES_DIR=$(PCSL_DIR)/types
+TYPES_MD_DIR=$(PCSL_DIR)/types/$(PCSL_PLATFORM)
+STRING_DIR=$(PCSL_DIR)/string
+
+MEMORY_SELECT_DIR=$(MEMORY_DIR)/$(MEMORY_MODULE)
+MEMORY_PORT_SELECT_DIR=$(MEMORY_PORT_DIR)/$(MEMORY_PORT_MODULE)
+FILE_SELECT_DIR=$(FILE_DIR)/$(FILE_MODULE)
+ESCFILENAMES_SELECT_DIR=$(ESCFILENAMES_DIR)/$(ESCFILENAMES_MODULE)
+NETWORK_SELECT_DIR=$(NETWORK_DIR)/$(NETWORK_MODULE)
+PRINT_SELECT_DIR=$(PRINT_DIR)/$(PRINT_MODULE)
+STRING_SELECT_DIR=$(STRING_DIR)/$(STRING_MODULE)
+
+# QA Test modules
+# Must be included after default module directories definition to allow
+# overriding.
+ifeq ($(USE_QA_TESTS),true)
+include $(QA_TESTS_DIR)/pcsl/makefiles/share/pcsl.gmk
+endif
+
+# For Cygwin
+#
+ifeq ($(USE_CYGWIN),true)
+define fixcygpath
+echo $(1) | xargs -n1 cygpath -w
+endef
+else
+define fixcygpath
+echo $(1)
+endef
+endif
+
+ifeq ($(USE_SERVER_SOCKET), true)
+CFLAGS += -DENABLE_SERVER_SOCKET=1
+endif
+
+all:
+
+types print memory file network string: FORCE
+	cd $(PCSL_DIR)/$@; $(MAKE) all
+
+FORCE:
