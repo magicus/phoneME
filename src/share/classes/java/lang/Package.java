@@ -196,6 +196,32 @@ public class Package {
     public boolean isSealed(URL url) {
 	return url.equals(sealBase);
     }
+    
+    /**
+     * Splits a string by the delimiter.
+     *
+     * @param s the string to be splitted
+     * @param d the delimiter character
+     * @return string array
+     */
+    private static String[] splitString(String s, char d) {
+        int parts = 0, begin = 0;
+        do {
+            begin = s.indexOf(d, begin) + 1;
+            parts++;
+        } while (begin > 0);
+        String[] result = new String[parts];
+        int end = s.indexOf(d), i = 0;
+        begin = 0;
+        if (end >= 0) do {
+            result[i] = s.substring(begin, end);
+            begin = end + 1;
+            end = s.indexOf(d, begin);
+            i++;
+        } while (end >= 0);
+        result[i] = s.substring(begin);
+        return result;
+    }
 
     /**
      * Compare this package's specification version with a
@@ -227,7 +253,7 @@ public class Package {
 	}
 
 	//String [] sa = specVersion.split("\\.", -1);
-	String [] sa = new String[0];
+	String [] sa = splitString(specVersion, '.');
         
 	int [] si = new int[sa.length];
 	for (int i = 0; i < sa.length; i++) {
@@ -237,7 +263,7 @@ public class Package {
 	}
 
 	//String [] da = desired.split("\\.", -1);
-	String [] da = new String[0];
+	String [] da = splitString(desired, '.');
 	int [] di = new int[da.length];
 	for (int i = 0; i < da.length; i++) {
 	    di[i] = Integer.parseInt(da[i]);
@@ -366,6 +392,23 @@ public class Package {
     }
 
     /**
+     * Returns specification version of the stack for system packages.
+     *
+     * @param pkgName the name of the package
+     * @return the specification version if it is a system package.
+     *         And null otherwise.
+     */
+    private static String getSystemPackageSpecVersion(String pkgName) {
+        if (pkgName.startsWith("java.")  ||
+            pkgName.startsWith("javax.") ||
+            pkgName.startsWith("sun.")   ||
+            pkgName.startsWith("com.sun.")) {
+            return System.getProperty("com.sun.package.spec.version");
+        }
+        return null;
+    }
+
+    /**
      * Construct a package instance with the specified version
      * information.
      * @param pkgName the name of the package
@@ -390,6 +433,9 @@ public class Package {
 	specVersion = specversion;
 	specVendor = specvendor;
 	sealBase = sealbase;
+	if (specVersion == null) {
+		specVersion = getSystemPackageSpecVersion(name);
+	}
     }
 
     /*
@@ -435,6 +481,9 @@ public class Package {
 	    if (sealed == null) {
 		sealed = attr.getValue(Name.SEALED);
 	    }
+	}
+	if (specVersion == null) {
+		specVersion = getSystemPackageSpecVersion(name);
 	}
 	if ("true".equalsIgnoreCase(sealed)) {
 	    sealBase = url;
