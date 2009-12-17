@@ -1,0 +1,263 @@
+#
+#  
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEM_HIGHUI = highlevelui
+
+SUBSYSTEMS += $(SUBSYSTEM_HIGHUI)
+
+SUBSYSTEM_HIGHUI_DIR = $(SUBSYSTEM_DIR)/highlevelui
+
+ifndef SUBSYSTEM_LCDUI_MODULES
+    SUBSYSTEM_LCDUI_MODULES = chameleon
+endif
+
+#####################################################################
+# Annunciator Subsystem
+# Description: Uninstrusive user notification
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/annunciator/lib.gmk
+
+#####################################################################
+# Key Mapping Subsystem
+# Description: Optional for certain platforms
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/keymap/lib.gmk
+
+#####################################################################
+# LCDUI API Subsystem
+# Description: LCDUI API
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/lcdui/lib.gmk
+
+#####################################################################
+# LCDUI Look and Feel Subsystem
+# Description: LCDUI Look and Feel
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/lcdlf/lib.gmk
+
+#####################################################################
+# LCDUI Platform Look and Feel Port Subsystem
+# Description: Optional for certain platforms
+#####################################################################
+
+ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
+    include $(SUBSYSTEM_HIGHUI_DIR)/lfpport/lib.gmk
+else
+
+    include $(SUBSYSTEM_HIGHUI_DIR)/lfjport/lib.gmk
+
+    ####################################################
+    # This specifies the option you choose for this build 
+    #
+    # javapti - predictive text input java implementation
+    # nativepush - external native predictive text input implementation
+    #
+
+    ifeq ($(USE_NATIVE_PTI), true)
+        SUBSYSTEM_PTI_MODULES = nativepti
+    else
+        SUBSYSTEM_PTI_MODULES = javapti
+    endif
+
+    include $(SUBSYSTEM_HIGHUI_DIR)/pti_api/lib.gmk
+
+    ifeq ($(USE_NATIVE_PTI), true)
+       include $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port/lib.gmk
+
+    endif
+    # nim -- Native Input Mode support
+    include $(SUBSYSTEM_HIGHUI_DIR)/nim_port/lib.gmk
+
+endif
+
+#####################################################################
+# Virtual keyboard Subsystem
+# Description: Optional for certain platforms
+#####################################################################
+
+include $(SUBSYSTEM_HIGHUI_DIR)/virtual_keyboard/lib.gmk
+
+
+#####################################################################
+# Application specific Subsystem
+# Description: qte_application, fb_application, win32_app or armsd_app
+#####################################################################
+
+ifeq ($(PLATFORM), linux_fb)
+   ifeq ($(USE_DIRECTFB), true)
+	include $(SUBSYSTEM_HIGHUI_DIR)/directfb_application/lib.gmk
+   endif
+   include $(SUBSYSTEM_HIGHUI_DIR)/fb_application/lib.gmk
+   include $(SUBSYSTEM_HIGHUI_DIR)/fb_port/lib.gmk
+else 
+
+    ifeq ($(PLATFORM), armsd)
+        include $(SUBSYSTEM_HIGHUI_DIR)/armsd_application/lib.gmk
+    else
+
+        ifeq ($(PLATFORM), linux_qte)
+             include $(SUBSYSTEM_HIGHUI_DIR)/qte_application/lib.gmk
+        else
+             ifeq ($(PLATFORM), win32)
+                  include $(SUBSYSTEM_HIGHUI_DIR)/win32_application/lib.gmk
+             else
+                  ifeq ($(PLATFORM), wince)
+                      include $(SUBSYSTEM_HIGHUI_DIR)/wince_application/lib.gmk
+                  else
+                       ifeq ($(PLATFORM), javacall)
+                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/subsystem.gmk
+                       endif                  
+                  endif             
+             endif
+        endif
+    endif
+endif
+
+#####################################################################
+# LCDUI for CDC Subsystem
+# Description: CDC UI
+#####################################################################
+
+ifeq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_HIGHUI_DIR)/cdcui/lib.gmk
+endif
+
+########################################################################
+# Javadoc
+########################################################################
+
+MIDP_JAVADOC_SOURCEPATH +=  $(SUBSYSTEM_HIGHUI_DIR)/lcdui/classes$(PATHSEP)$(SUBSYSTEM_HIGHUI_DIR)/lcdui/reference/classes$(PATHSEP)$(SUBSYSTEM_HIGHUI_DIR)/lcdlf/classes
+
+LCDUI_PACKAGES = \
+    javax.microedition.lcdui \
+    javax.microedition.lcdui.game \
+    com.sun.midp.lcdui
+
+ifeq ($(SUBSYSTEM_LCDUI_MODULES), chameleon)
+    MIDP_JAVADOC_SOURCEPATH += \
+        $(SUBSYSTEM_HIGHUI_DIR)/pti_api/$(SUBSYSTEM_PTI_MODULES)/classes$(PATHSEP)$(SUBSYSTEM_HIGHUI_DIR)/lcdlf/lfjava/classes
+
+
+    LCDUI_PACKAGES += \
+        com.sun.midp.chameleon \
+        com.sun.midp.chameleon.input \
+        com.sun.midp.chameleon.skins.resources \
+        com.sun.midp.chameleon.skins \
+        com.sun.midp.chameleon.layers 
+
+endif
+
+MIDP_JAVADOC_PACKAGES += $(LCDUI_PACKAGES)
+MIDP_JAVADOC_ALL += \
+        -group "High Level UI" \
+	 $(shell echo $(LCDUI_PACKAGES) |tr ' ' $(PATHSEP))
+
+###########################################################################
+
+# Annunciator
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_ANNUNCIATOR_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_ANNUNCIATOR_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_ANNUNCIATOR_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES)
+
+# KEYMAP
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_KEYMAP_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_KEYMAP_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_KEYMAP_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_KEYMAP_EXTRA_INCLUDES)
+
+# LCDUI
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_LCDUI_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_LCDUI_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_LCDUI_EXTRA_INCLUDES)
+
+# LCDLF
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_LCDLF_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_LCDLF_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_LCDLF_EXTRA_INCLUDES)
+
+# Virtual keyboard
+#
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_VIRTUAL_KEYBOARD_JAVA_FILES)
+
+# LFPPORT or LFJPORT
+#
+ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
+
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_LFPPORT_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_LFPPORT_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_LFPPORT_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_LFPPORT_EXTRA_INCLUDES)
+
+else 
+
+SUBSYSTEM_HIGHUI_JAVA_FILES += $(SUBSYSTEM_LFJPORT_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_LFJPORT_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_LFJPORT_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_LFJPORT_EXTRA_INCLUDES)
+
+SUBSYSTEM_HIGHUI_JAVA_FILES += $(SUBSYSTEM_PTI_JAVA_FILES)
+SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_PTI_I3TEST_JAVA_FILES)
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_PTI_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_PTI_EXTRA_INCLUDES)
+
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_NIM_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_NIM_EXTRA_INCLUDES)
+
+endif
+
+# Application
+#
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_APP_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_APP_EXTRA_INCLUDES)
+
+# CDC UI
+#
+ifeq ($(TARGET_VM), cdc_vm)
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_CDCUI_JAVA_FILES)
+endif
+

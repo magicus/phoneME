@@ -1,0 +1,132 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+include $(SUBSYSTEM_DIR)/ams/ams_common.gmk
+
+SUBSYSTEM_AMS_PACKAGES += \
+    com.sun.midp.midlet \
+    com.sun.midp.midletsuite \
+    com.sun.midp.installer 
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_AMS_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES += $(SUBSYSTEM_AMS_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "AMS Libraries" \
+    $(shell echo $(SUBSYSTEM_AMS_PACKAGES) | tr ' ' $(PATHSEP))
+
+include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
+
+CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
+OTA_DIR = $(SUBSYSTEM_AMS_DIR)/ota/reference
+OTA_CONTROL_DIR = $(SUBSYSTEM_AMS_DIR)/ota_control/reference
+INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/installer/reference
+JUMP_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/jump_application
+MIDLET_API_DIR = $(SUBSYSTEM_AMS_DIR)/ams_api/reference
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += \
+			$(CDC_AMS_DIR)/classes \
+			$(OTA_DIR)/classes \
+			$(OTA_CONTROL_DIR)/classes \
+			$(INSTALLER_DIR)/classes \
+			$(JUMP_AMS_DIR)/classes \
+			$(MIDLET_API_DIR)/classes
+
+# Java files for the sub-system
+#
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallListener.java \
+    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallState.java \
+    $(INSTALLER_DIR)/classes/com/sun/midp/installer/InvalidJadException.java \
+    $(INSTALLER_DIR)/classes/com/sun/midp/installer/JadProperties.java \
+    $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
+    $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java \
+    $(MIDLET_API_DIR)/classes/javax/microedition/midlet/MIDletStateChangeException.java \
+    $(MIDLET_API_DIR)/classes/javax/microedition/midlet/MIDlet.java \
+    $(MIDLET_API_DIR)/classes/javax/microedition/midlet/MIDletTunnelImpl.java \
+    $(MIDLET_API_DIR)/classes/com/sun/midp/midlet/MIDletLoader.java \
+    $(MIDLET_API_DIR)/classes/com/sun/midp/midlet/MIDletStateListener.java \
+    $(MIDLET_API_DIR)/classes/com/sun/midp/midlet/MIDletSuite.java \
+    $(MIDLET_API_DIR)/classes/com/sun/midp/midlet/MIDletTunnel.java \
+    $(MIDLET_API_DIR)/classes/com/sun/midp/midlet/PlatformRequest.java \
+    $(MIDLET_API_DIR)/classes/com/sun/midp/midlet/Scheduler.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CDCInit.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcAccessControlContext.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/JumpInit.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/MIDletApplication.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/InstallStateImpl.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/JUMPFileInstaller.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/JUMPInstaller.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/JUMPInstallerInterface.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/MIDLETInstallerImpl.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/StorageAccessInterface.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/isolate/MIDletContainer.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/isolate/MidletSuiteContainer.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletPeer.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletStateHandler.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/midletsuite/MIDletSuiteStorageAccessor.java 
+
+
+# vpath for sub-system
+#
+vpath % \
+   $(SUBSYSTEM_AMS_DIR)/ams_base/reference/native \
+   $(INSTALLER_DIR)/native \
+   $(JUMP_AMS_DIR)/native
+
+# Include path for the sub-system
+#
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/ams_base/include \
+    -I$(INSTALLER_DIR)/../include
+
+# Native files for common module
+#
+SUBSYSTEM_AMS_NATIVE_FILES += \
+  MIDletContainer.c \
+  listeners_intern.c \
+  imageCache.c \
+  fileCache.c \
+  fontCache.c \
+  midp_foreground_id.c \
+  midpInflate.c \
+  midpInit.c \
+  JumpInit.c

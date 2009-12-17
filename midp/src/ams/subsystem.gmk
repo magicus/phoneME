@@ -1,0 +1,179 @@
+
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+include $(SUBSYSTEM_DIR)/ams/ams_common.gmk
+
+# A make rule  for (jams/nams) module
+# Importent 
+SUBSYSTEM_AMS_LAZY_MAKEFILES += $(SUBSYSTEM_AMS_DIR)/objlib.gmk
+
+SUBSYSTEM_AMS_PACKAGES += \
+    com.sun.midp.main \
+    com.sun.midp.midlet \
+    com.sun.midp.midletsuite \
+    com.sun.midp.installer \
+    com.sun.midp.appmanager
+
+
+#Add additional packages if supplied
+SUBSYSTEM_AMS_PACKAGES += $(AMS_ADDITIONAL_PACKAGES)
+
+# echo $(MIDP_JAVADOC_PACKAGES) | tr ' ' '\n' | sort | uniq
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_AMS_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES += $(SUBSYSTEM_AMS_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "AMS Libraries" \
+    $(shell echo $(SUBSYSTEM_AMS_PACKAGES) | tr ' ' $(PATHSEP))
+
+ifeq ($(USE_NATIVE_APP_MANAGER), true)
+SUBSYSTEM_AMS_MODULES = nams
+else
+SUBSYSTEM_AMS_MODULES = jams
+endif
+
+# AppManagerUI depends on jams (AppManager)
+
+ifndef SUBSYSTEM_AMS_COMPONENTS 
+    SUBSYSTEM_AMS_COMPONENTS = $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_base_cldc/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/app_image_gen/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ota_control/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/platform_request/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk \
+        $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/midlet_selector_base/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/midlet_selector/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_folders/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_debug/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/dynamic_components/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/dynamic_component_manager/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/vm_utils/lib.gmk \
+        $(SUBSYSTEM_AMS_DIR)/ams_exceptions_cldc/lib.gmk
+ 
+# Auto tester
+        ifeq ($(USE_AUTOTESTER), true)
+            SUBSYSTEM_AMS_COMPONENTS += \
+                $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk \
+                $(SUBSYSTEM_AMS_DIR)/autotester/lib.gmk
+
+            # SVM autotester needs stubs
+            ifneq ($(USE_MULTIPLE_ISOLATES), true)
+                SUBSYSTEM_AMS_COMPONENTS += \
+                    $(SUBSYSTEM_AMS_DIR)/autotester_stubs/lib.gmk
+            endif
+        else
+            SUBSYSTEM_AMS_COMPONENTS += \
+                $(SUBSYSTEM_AMS_DIR)/autotester_stubs/lib.gmk
+        endif
+
+# On device debugging
+        ifeq ($(USE_ON_DEVICE_DEBUG), true)
+            ifeq ($(PRECOMPILED_ODD), true)
+                SUBSYSTEM_AMS_COMPONENTS += \
+                    $(SUBSYSTEM_AMS_DIR)/on_device_debug_precompiled/lib.gmk
+            else
+                SUBSYSTEM_AMS_COMPONENTS += \
+                    $(PROJECT_MIDP_DIR)/src/ams/on_device_debug_base/lib.gmk \
+                    $(PROJECT_MIDP_DIR)/src/ams/on_device_debug/lib.gmk
+            endif
+        else
+            SUBSYSTEM_AMS_COMPONENTS += \
+                    $(SUBSYSTEM_AMS_DIR)/on_device_debug_stubs/lib.gmk
+        endif
+
+# Add VM mode specific common files
+    ifeq ($(USE_MULTIPLE_ISOLATES), true)
+        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
+    endif
+
+# nams/jams
+    SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
+
+# libraries for nams/jams    
+    ifeq ($(USE_NATIVE_APP_MANAGER), false)
+        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk \
+            $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk \
+            $(SUBSYSTEM_AMS_DIR)/appmanager_base/lib.gmk
+    else    
+        ifeq ($(TARGET_PLATFORM), javacall)
+            SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/nams_javacall/lib.gmk
+    
+            ifeq ($(USE_NATIVE_SUITE_STORAGE), false)
+                SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/suitestore_javacall/lib.gmk
+            endif
+
+            ifeq ($(USE_NATIVE_INSTALLER), false)
+                SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/installer_javacall/lib.gmk
+            endif
+        endif
+    endif
+
+# Examples
+    ifneq ($(TARGET_PLATFORM), stubs)
+        SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
+    else
+        ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
+            SUBSYSTEM_AMS_COMPONENTS += $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
+        endif
+    endif
+
+
+# END of ifndef SUBSYSTEM_AMS_COMPONENTS 
+endif
+
+#Add more subsystem/libraries if supplied
+# Used to extend the default components list
+SUBSYSTEM_AMS_COMPONENTS += $(AMS_ADDITIONAL_COMPONENTS)
+
+# Include subsystem libraries
+include $(SUBSYSTEM_AMS_COMPONENTS)
+
+ifeq ($(USE_PUBLIC_AMS_API), true)
+# Public AMS API (for CMS)
+AMS_SERVICE_DIR = $(PROJECT_MIDP_DIR)/src/ams/ams_service
+include $(AMS_SERVICE_DIR)/lib.gmk
+else
+AMS_SERVICE_DIR=$(SUBSYSTEM_AMS_DIR)/ams_service_stubs
+include $(AMS_SERVICE_DIR)/lib.gmk
+endif
