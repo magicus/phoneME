@@ -3939,6 +3939,7 @@ JVM_InitProperties(JNIEnv *env, jobject props, java_props_t* sprops)
     /* Note: java.vm.info is not required by the spec, 
      * but used in the '-version' string */
     PUTPROP(props, "java.vm.info",			CVM_PROP_JAVA_VM_INFO);
+    PUTPROP(props, "com.sun.package.spec.version",	CVM_PROP_COM_SUN_PACKAGE_SPEC_VERSION);
 
 #ifdef CVM_CLASSLOADING
     PUTPROP_ForPlatformCString(props, "sun.boot.class.path",
