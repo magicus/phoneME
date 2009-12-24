@@ -1,0 +1,46 @@
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+# Adds to local variable and  to global SUBSYSTEMS list
+#
+SUBSYSTEM_NAME = ams
+SUBSYSTEMS += $(SUBSYSTEM_NAME)
+
+SUBSYSTEM_AMS_DIR = $(SUBSYSTEM_DIR)/ams
+PROJECT_SUBSYSTEM_AMS_DIR = $(PROJECT_SUBSYSTEM_DIR)/ams
+
+SUBSYSTEM_AMS_PACKAGES = \
+    javax.microedition.midlet
+
+# Initialize a variable containing a list of Java files for the module
+SUBSYSTEM_AMS_JAVA_FILES =
+
+# Initialize a variable containing a list of directories where to find
+# AMS-specific include files
+SUBSYSTEM_AMS_EXTRA_INCLUDES =
+
+# i3 tests
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AMS_I3TEST_JAVA_FILES =
+endif

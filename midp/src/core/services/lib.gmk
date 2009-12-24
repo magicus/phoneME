@@ -1,0 +1,100 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+SERVICES_LIB = services
+LIB_SET += $(SERVICES_LIB)
+
+SERVICES_DIR = $(SUBSYSTEM_CORE_DIR)/$(SERVICES_LIB)
+
+
+# Javadoc source path
+SUBSYSTEM_SERVICES_SOURCEPATH += $(SERVICES_DIR)/classes
+
+SUBSYSTEM_SERVICES_PACKAGES = \
+    com.sun.midp.services
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_SERVICES_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_SERVICES_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "System Services Framework Package" \
+    $(shell echo $(SUBSYSTEM_SERVICES_PACKAGES)|tr ' ' $(PATHSEP))
+
+
+SUBSYSTEM_SERVICES_JAVA_FILES += \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceUtil.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemService.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnection.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionListener.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceManager.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceMessage.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceDataMessage.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceLinkMessage.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceRequestor.java \
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionClosedException.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkPortal.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestProtocolClient.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestProtocolAMS.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestListener.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceConnectionLinks.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/IsolateSystemServiceRequestHandler.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestHandler.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceConnectionImpl.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestorRemote.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestorLocal.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceManagerImpl.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceReadMessage.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceWriteMessage.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkReadMessage.java \
+    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceLinkWriteMessage.java
+
+ifeq ($(USE_I3_TEST), true)
+
+SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
+    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestServiceRequestProtocol.java \
+    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemServiceRequest.java \
+    $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceRequestIsolate.java \
+    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemServiceManager.java \
+    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemService.java \
+    $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceIsolate.java \
+    $(SERVICES_DIR)/i3test/com/sun/midp/services/SecurityTokenProvider.java
+#    $(SERVICES_DIR)/i3test/com/sun/midp/links/TestNamedLinkPortal.java \
+
+else
+
+SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES =
+
+endif # USE_I3_TEST
+
