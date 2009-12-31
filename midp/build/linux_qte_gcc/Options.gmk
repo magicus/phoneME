@@ -1,0 +1,137 @@
+#
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+# 
+# This source file is specific for Qt-based configurations.
+#
+######################################################################
+#
+# Build options customed to this platform
+# Always specify a value of true or false. Don't use blank value.
+######################################################################
+
+# the VM
+USE_CLDC_11             = true
+USE_MONET               = false
+USE_VM_PROFILES         = false
+
+# SSL
+USE_SSL                 = false
+USE_RESTRICTED_CRYPTO   = false
+
+# JSRs
+USE_JSR_75              = false
+USE_JSR_82              = false
+USE_JSR_120             = false
+USE_JSR_135             = false
+USE_JSR_172             = false
+USE_JSR_177             = false
+USE_JSR_179             = false
+USE_JSR_180             = false
+USE_JSR_184             = false
+USE_JSR_205             = false
+USE_JSR_211             = false
+USE_JSR_226             = false
+USE_PISCES              = false
+USE_JSR_229             = false
+USE_JSR_230             = false
+USE_JSR_234             = false
+USE_JSR_238             = false
+USE_JSR_239             = false
+USE_JSR_280             = false
+USE_JSR_256             = false
+USE_JSR_257             = false
+USE_JSR_258             = false
+USE_JSR_281             = false
+USE_JSR_290             = false
+USE_JSR_293             = false
+USE_ABSTRACTIONS        = false
+USE_CMS			= false
+
+# MIDP
+USE_MULTIPLE_ISOLATES   = false
+USE_STATIC_PROPERTIES   = true
+USE_IMAGE_CACHE         = true
+USE_FONT_CACHE          = false
+USE_ICON_CACHE          = true
+USE_RMS_TREE_INDEX      = false
+USE_NETWORK_INDICATOR   = true
+USE_CLDC_RELEASE        = false
+USE_NATIVE_APP_MANAGER  = false
+USE_NATIVE_INSTALLER    = false
+USE_NATIVE_SUITE_STORAGE  = false
+USE_NATIVE_RMS          = false
+USE_NAMS_TEST_SERVICE   = false
+USE_RAW_AMS_IMAGES      = true
+USE_NATIVE_PTI          = false
+USE_MULTIPLE_DISPLAYS   = false
+USE_GCI                 = false
+USE_DIRECTDRAW          = false
+USE_FILE_SYSTEM         = true
+USE_ON_DEVICE_DEBUG     = false
+USE_WTK_DEBUG           = false
+USE_SYSTEM_CLASSES_DEBUG = false
+USE_AMS_FOLDERS         = false
+USE_AMS_EXECUTABLE      = true
+USE_OCSP                = false
+USE_DYNAMIC_COMPONENTS  = false
+USE_JAVA_VIRTUAL_KEYBOARD   = false
+USE_NATIVE_VIRTUAL_KEYBOARD = false
+USE_FINGER_TOUCH        = false
+USE_PUBLIC_AMS_API	= false
+
+# DEBUG
+USE_DEBUG               = false
+USE_MIDP_MALLOC         = true
+USE_JAVA_DEBUGGER       = false
+USE_JAVA_PROFILER       = false
+USE_NATIVE_PROFILER     = false
+USE_NUTS_FRAMEWORK      = false
+USE_VERBOSE_MAKE        = false
+USE_I3_TEST             = false
+USE_PORTING_DEMOS       = false
+USE_CONTROL_ARGS_FROM_JAD       = false
+USE_GCOV                = false
+
+# USE_SERVER_SOCKET
+USE_SERVER_SOCKET       = true
+
+# JPEG decoding for putpixel
+USE_JPEG=false
+
+# RESOURCE MANAGEMENT POLICY
+USE_FIXED               = false
+
+# OPTIMIZATIONS
+USE_VERIFY_ONCE         = false
+
+# EXTENDED MIDLET ATTRIBUTES
+USE_EXTENDED_ATTRIBUTES = false
+
+# ABB
+USE_MIDP_ABB            = false
+
+# Auto tester
+USE_AUTOTESTER          = true
+
