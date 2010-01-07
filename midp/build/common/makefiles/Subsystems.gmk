@@ -1,0 +1,576 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+#####################################################################
+#
+# SUBSYSTEM and MODULES LEVEL CONFIGRATION
+#
+# Content:
+# This configration file contains the definations
+# of BOTH subsystem/libraries and module levels
+#
+# Note:
+# - Some subsystems are REQUIRED to be presented
+#
+#####################################################################
+
+# Define the file name which is used all over
+# the directory to pinpoint what (and how)
+# the module and its configuration should
+# be used.
+#
+SUBSYSTEM_MAKE_FILE       = subsystem.gmk
+LIB_MAKE_FILE             = lib.gmk
+
+#####################################################################
+# SUBSYSTEMS
+#####################################################################
+
+#####################################################################
+# Configurator Subsystem
+# Description: Config the whole system
+#####################################################################
+
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    include $(SUBSYSTEM_DIR)/configuration/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+  endif
+endif
+
+#####################################################################
+# AMS Subsystem
+# Description: Application Manager System
+#####################################################################
+
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/ams/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    ifeq ($(CVM_INCLUDE_JUMP), true)
+      include $(SUBSYSTEM_DIR)/ams/jump_application/$(SUBSYSTEM_MAKE_FILE)
+    else
+      ifeq ($(USE_OEM_AMS), true)
+        include $(OEM_AMS_DIR)/$(SUBSYSTEM_MAKE_FILE)
+      else
+        include $(SUBSYSTEM_DIR)/ams/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+      endif
+    endif
+  endif
+endif
+
+#####################################################################
+# Core Group
+# Description: crc32, global_status, javautil, log, native_thread,
+#              resource management, kni_util libraries
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/core/$(SUBSYSTEM_MAKE_FILE)
+
+#####################################################################
+# I18N Subsystem
+# Description: It is the converter (native or Java)
+# that will be used through out the whole system
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/i18n/$(SUBSYSTEM_MAKE_FILE)
+
+#####################################################################
+# Hightlevel ui Subsystem
+# Description: Look and Feel
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/highlevelui/$(SUBSYSTEM_MAKE_FILE)
+
+
+#####################################################################
+# Low level ui Subsystem
+# Description: graphics functions
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/lowlevelui/$(SUBSYSTEM_MAKE_FILE)
+
+#####################################################################
+# RMS Subsystem
+# Description: Record Management System
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/rms/$(SUBSYSTEM_MAKE_FILE)
+
+#####################################################################
+# Exportable Security Subsystems
+# Description: Security
+#####################################################################
+
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/security/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    ifeq ($(USE_OEM_SECURITY), true)
+      include $(OEM_SECURITY_DIR)/$(SUBSYSTEM_MAKE_FILE)
+    else
+      include $(SUBSYSTEM_DIR)/security/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+    endif
+  endif
+endif
+
+#####################################################################
+# Protocol Subsystem
+# Description: includes support for Generic Connection Framework
+# and available protocols
+#####################################################################
+ifeq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_DIR)/protocol/cdc_application/lib.gmk
+else 
+include $(SUBSYSTEM_DIR)/protocol/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# Push Subsystem
+# Description: Push Registry, Push Listener, Push db and resource
+# manipulation logic
+#####################################################################
+
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/push/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    ifeq ($(USE_OEM_PUSH), true)
+      include $(OEM_PUSH_DIR)/$(SUBSYSTEM_MAKE_FILE)
+    else
+      include $(SUBSYSTEM_DIR)/push/$(SUBSYSTEM_MAKE_FILE)
+    endif
+  endif
+endif
+
+#####################################################################
+# Events Subsystem
+# Description: Modules that are shared among other sub-systems
+#####################################################################
+
+ifeq ($(USE_AUTOMATION), true)
+    USE_EVENT_SPYING = true
+endif
+
+include $(SUBSYSTEM_DIR)/events/$(SUBSYSTEM_MAKE_FILE)
+
+
+#####################################################################
+# Tool Subsystem
+# Description: External tools
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/tool/$(SUBSYSTEM_MAKE_FILE)
+
+#####################################################################
+# MMAPI Subsystem stub
+# Description: JSR-234; JSR-135 Multimedia
+#              (include only if USE_JSR_234 = false & JSR_135 = false)
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/mmapi/$(SUBSYSTEM_MAKE_FILE)
+
+#####################################################################
+# EXTRA
+#####################################################################
+
+#####################################################################
+# (Extra) Nuts Subsystem
+# Description: Native unit tests (NUTS)
+#####################################################################
+
+ifeq ($(USE_NUTS_FRAMEWORK), true)
+include $(SUBSYSTEM_DIR)/nuts/$(LIB_MAKE_FILE)
+endif
+
+
+#####################################################################
+# (Extra) Automation API Library
+# Description: External tools
+#####################################################################
+
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/automation/$(LIB_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) I3 Test Subsystem
+# Description: Integrated Internal Interface (I3) tests
+#####################################################################
+
+ifeq ($(USE_I3_TEST), true)
+include $(SUBSYSTEM_DIR)/test/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Links Library
+# Description: Cross-Isolate Communications API
+#####################################################################
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+include $(SUBSYSTEM_DIR)/links/$(LIB_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) JSR75 Subsystem
+# Description: JSR 75
+#####################################################################
+
+ifeq ($(USE_JSR_75), true)
+JPP_DEFS += -DENABLE_JSR_75
+include $(JSR_75_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Bluetooth Subsystem
+# Description: JSR 82
+#####################################################################
+
+ifeq ($(USE_JSR_82), true)
+JPP_DEFS += -DENABLE_JSR_82
+include $(JSR_82_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) XML api for Java ME
+# Description: JSR 280
+#####################################################################
+
+ifeq ($(USE_JSR_280), true)
+JPP_DEFS += -DENABLE_JSR_280
+include $(JSR_280_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) QA TESTS Subsystem
+# Description: like portability tests
+#####################################################################
+
+ifeq ($(USE_QA_TESTS), true)
+include $(QA_TESTS_DIR)/portingsupportimpl/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) ROMUL Subsystem
+# Description: ROMUL implementation
+#####################################################################
+
+ifeq ($(USE_ROMUL), true)
+include $(ROMUL_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+
+#####################################################################
+# (Extra) Demos Subsystem
+# Description: ROMized demos
+#####################################################################
+
+ifeq ($(USE_ROMIZED_DEMOS), true)
+include $(SUBSYSTEM_DIR)/demos/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) WMA 1.1 Subsystem
+# Description: JSR 120
+#####################################################################
+
+ifeq ($(USE_JSR_120), true)
+include $(JSR_120_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Web Services Subsystem
+# Description: JSR 172
+#####################################################################
+ifeq ($(USE_JSR_172), true)
+JPP_DEFS += -DENABLE_JSR_172
+include $(JSR_172_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Scalable Vector Graphics Subsystem
+# Description: JSR 226
+#####################################################################
+ifeq ($(USE_JSR_226), true)
+JPP_DEFS += -DENABLE_JSR_226
+include $(JSR_226_DIR)/perseus2/platform.releases/midp20/resources/build/$(SUBSYSTEM_MAKE_FILE)
+USE_PISCES=true
+endif
+
+#####################################################################
+# (Extra) Pisces 2D Renderer Subsystem
+# Description: Pisces 2D Renderer
+#####################################################################
+ifeq ($(USE_PISCES), true)
+PISCES_DIR ?= $(COMPONENTS_DIR)/pisces
+include $(PISCES_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Mobile Sensor
+# Description: JSR 256
+#####################################################################
+ifeq ($(USE_JSR_256), true)
+JPP_DEFS += -DENABLE_JSR_256
+EXTRA_CFLAGS += -DENABLE_JSR_256=1
+include $(JSR_256_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Contactless Communication
+# Description: JSR 257
+#####################################################################
+ifeq ($(USE_JSR_257), true)
+JPP_DEFS += -DENABLE_JSR_257
+EXTRA_CFLAGS += -DENABLE_JSR_257=1
+include $(JSR_257_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+ 
+#####################################################################
+# (Extra) Mobile User Interface Customization
+# Description: JSR 258
+#####################################################################
+ifeq ($(USE_JSR_258), true)
+JPP_DEFS += -DENABLE_JSR_258
+EXTRA_CFLAGS += -DENABLE_JSR_258=1
+include $(JSR_258_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+ 
+#####################################################################
+# (Extra) IMS
+# Description: JSR 281
+#####################################################################
+ifeq ($(USE_JSR_281), true)
+JPP_DEFS += -DENABLE_JSR_281
+EXTRA_CFLAGS += -DENABLE_JSR_281=1
+include $(JSR_281_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif 
+
+#####################################################################
+# (Extra) XML & HTML
+# Description: JSR 290
+#####################################################################
+ifeq ($(USE_JSR_290), true)
+JPP_DEFS += -DENABLE_JSR_290
+EXTRA_CFLAGS += -DENABLE_JSR_290=1
+include $(JSR_290_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) SATSA Subsystem
+# Description: JSR 177
+#####################################################################
+ifeq ($(USE_JSR_177), true)
+include $(JSR_177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Location Subsystem
+# Description: JSR 179, 293
+#####################################################################
+ifeq ($(USE_JSR_179), true)
+JPP_DEFS += -DENABLE_JSR_179
+include $(JSR_179_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+ifeq ($(USE_JSR_293), true)
+include $(JSR_293_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) SIP Subsystem
+# Description: JSR 180
+#####################################################################
+ifeq ($(USE_JSR_180), true)
+EXTRA_CFLAGS += -DENABLE_JSR_180=1
+include $(JSR_180_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) M3G Subsystem
+# Description: JSR 184: Mobile 3D Graphics
+#####################################################################
+ifeq ($(USE_JSR_184), true)
+include $(JSR_184_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) WMA 2.0 Subsystem
+# Description: JSR 205
+#####################################################################
+ifeq ($(USE_JSR_205), true)
+include $(JSR_205_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) CHAPI Subsystem
+# Description: JSR211
+#####################################################################
+ifeq ($(USE_JSR_211), true)
+JPP_DEFS += -DENABLE_JSR_211
+-include $(JSR_211_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Payment Subsystem
+# Description: JSR 229
+#####################################################################
+ifeq ($(USE_JSR_229), true)
+JPP_DEFS += -DENABLE_JSR_229
+include $(JSR_229_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) DataSync Subsystem
+# Description: JSR 230
+#####################################################################
+ifeq ($(USE_JSR_230), true)
+include $(JSR_230_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Advanced Multimedia Subsystem
+# Description: JSR 234
+#####################################################################
+ifeq ($(USE_JSR_234), true)
+include $(JSR_234_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# Multimedia Subsystem
+# Description: JSR 135
+#####################################################################
+ifeq ($(USE_JSR_135), true)
+ifeq ($(PROJECT_JSR_135_DIR),)
+JSROP_JSR135_DIR = $(JSR_135_DIR)
+else
+JSROP_JSR135_DIR = $(PROJECT_JSR_135_DIR)
+endif
+include $(JSROP_JSR135_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# Multimedia Subsystem
+# Description: ABB
+#####################################################################
+ifeq ($(USE_MIDP_ABB), true)
+PROJECT_MIDP_ABB_DIR ?= $(MIDP_ABB_DIR)
+include $(PROJECT_MIDP_ABB_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Mobile I18N Subsystem
+# Description: JSR 238
+#####################################################################
+ifeq ($(USE_JSR_238), true)
+JPP_DEFS += -DENABLE_JSR_238
+include $(JSR_238_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) OpenGL ES Subsystem
+# Description: JSR 239
+#####################################################################
+ifeq ($(USE_JSR_239), true)
+JPP_DEFS += -DENABLE_JSR_239
+include $(JSR_239_DIR)/src/cldc-oi/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+#####################################################################
+# (Extra) API_EXTENSIONS Subsystem
+# Description: API_EXTENSIONS
+####################################################################
+ifeq ($(USE_API_EXTENSIONS), true)
+JPP_DEFS += -DENABLE_API_EXTENSIONS
+ifeq ($(PROJECT_API_EXTENSIONS_DIR),)
+include $(API_EXTENSIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+else
+include $(PROJECT_API_EXTENSIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+endif
+#####################################################################
+# (Extra) Abstractions Subsystem
+# Description: Abstractions for optional packages
+#####################################################################
+
+ifeq ($(USE_ABSTRACTIONS),true)
+ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
+include $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+else
+include $(PROJECT_ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+endif
+
+#####################################################################
+# (Extra) Memory monitoring
+# Description: 
+#####################################################################
+ifeq ($(USE_MEMMON), true)
+EXTRA_CFLAGS += -DENABLE_MEMMON=1
+endif
+
+#####################################################################
+# (Extra) Porting Demos Subsystem
+# Description: ROMized Porting Demos
+#####################################################################
+ifeq ($(USE_PORTING_DEMOS), true)
+include $(SUBSYSTEM_DIR)/porting_demos/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# Media stuff, included if no external mmapi-pp bundle is used,
+# i.e. none of USE_MIDP_ABB,USE_JSR_135,USE_JSR_234 is set.
+# Description: Media stuff from ABB,JSR135,JSR234
+#              but necessary to be in MIDP
+#####################################################################
+ifneq ($(TARGET_VM),cdc_vm)
+ifneq ($(USE_JSR_234), true)
+ifneq ($(USE_JSR_135), true)
+ifneq ($(USE_MIDP_ABB), true)
+include $(SUBSYSTEM_DIR)/media/$(LIB_MAKE_FILE)
+endif
+endif
+endif
+endif
+
+#####################################################################
+# (Extra) JPEG lib
+# Description: JPEG
+#####################################################################
+ifeq ($(USE_JPEG), true)
+include $(JPEG_DIR)/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+# xmlparser component
+ifeq ($(USE_XMLPARSER),true)
+include $(XMLPARSER_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) CMS
+# Description: Content Management System
+#####################################################################
+ifeq ($(USE_CMS), true)
+JPP_DEFS += -DENABLE_CMS
+EXTRA_CFLAGS += -DENABLE_CMS=1
+include $(CMS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif

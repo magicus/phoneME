@@ -1,0 +1,116 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+#
+# Generic compiler specific defines
+# MIDP specific directories and libraries defines are in vc-jtwi.gmk
+#
+######################################################################
+ifndef _VC_GMK_
+_VC_GMK_	=
+
+# Suffix
+LIB_SUFFIX      = .lib
+LIB_PREFIX      = 
+SHARED_LIB_SUFFIX = .dll
+OBJ_SUFFIX      = obj
+
+# GCC 
+USE_GCC		= false
+
+# Same defines when used as either TARGET or HOST COMPILER
+CC		= cl
+CPP		= cl
+CC_OUTPUT	= -Fo
+
+LD 		= link
+
+ifeq ($(CREATE_MIDP_SHARED_LIB),true)
+LD_FLAGS 	+= -DLL
+ifeq ($(USE_VS2005),true)
+# The ;2 in -outputresource is a DLL ID
+VC_MANIFEST_EMBED_DLL = mt.exe -manifest `$(call fixcygpath, $@.manifest)` -outputresource:`$(call fixcygpath, $@)`\;2
+else
+VC_MANIFEST_EMBED_DLL = true
+endif
+endif
+
+LD_OUTPUT	= -out:
+LINKER_OUTPUT	= $(LD_OUTPUT)
+LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib
+
+
+LD_FLAGS 	+= -nologo -subsystem:console -machine:i386 -MAP \
+		  -incremental:no -verbose:LIB -nodefaultlib:libc.lib
+
+CREATE_LIB      = lib
+LIB_OUTPUT      = -OUT:
+
+AR = lib
+AR_OUTPUT = -OUT:
+# commands for AR (lib) script
+MRI_ADD = 
+MRI_CREATE = -OUT:
+MRI_SAVE = 
+MRI_OPT = -NOLOGO @
+
+# IMPORTANT: the following line does not mean what it could look like from first sight
+# actually it is substitution of unnecessary call t ranlib with true which effectively
+# does nothing
+RANLIB = true
+
+ASM		= "$(_MASM_DIR$(MASM_DIR))$(MASM_DIR)/ml"
+ASM_FLAGS	+= -nologo -c -coff -Zi
+ASM_OUTPUT	= -Fo
+
+ifeq ($(TARGET_VM), cdc_vm)
+  ifeq ($(CVM_DLL), true)
+    LD_FLAGS += -DLL
+  endif
+endif
+
+ifeq ($(USE_DEBUG), true)
+
+ifneq ($(TARGET_VM), cdc_vm)
+DEBUG_CFLAGS 	+= -Zi -Od -MDd
+endif
+LD_FLAGS 	+= -debug 
+# Force use of debug libraries
+LD_FLAGS	+= -nodefaultlib:msvcrt.lib msvcrtd.lib
+
+else
+
+ifneq ($(TARGET_VM), cdc_vm)
+# flags inherited from the VM : -Ox -Os -Gy -GF
+EXTRA_CFLAGS    += -nologo -DWIN32 -D_WINDOWS 
+EXTRA_CFLAGS 	+= -MD
+endif
+LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
+		   -opt:REF -opt:ICF,8
+# Force use of non-debug libraries
+LD_FLAGS 	+= -nodefaultlib:msvcrtd.lib msvcrt.lib
+
+endif
+
+endif
