@@ -166,6 +166,7 @@ CVM_BUILDTIME_CLASSES += \
    sun.security.x509.SubjectKeyIdentifierExtension \
    sun.security.x509.URIName \
    sun.security.x509.UniqueIdentity \
+   sun.security.x509.UnparseableExtension \
    sun.security.x509.X500Name$1 \
    sun.security.x509.X500Name \
    sun.security.x509.X509AttributeName \

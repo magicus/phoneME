@@ -1,7 +1,6 @@
 /*
- * @(#)CertificateExtensions.java	1.26 06/10/10
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -35,8 +34,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.security.cert.CertificateException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.ArrayList;
 
 import sun.security.util.*;
 
@@ -61,6 +63,7 @@ public class CertificateExtensions implements CertAttrSet {
 
     private Hashtable map = new Hashtable(11);
     private boolean unsupportedCritExt = false;
+    private List unparseableExtensions;
 
     /**
      * Default constructor.
@@ -127,10 +130,31 @@ public class CertificateExtensions implements CertAttrSet {
                 throw new IOException("Duplicate extensions not allowed");
 
         } catch (InvocationTargetException invk) {
-	    Throwable e = invk.getTargetException();
-            throw (IOException)new IOException(e.toString()).initCause(e);
+            Throwable e = invk.getTargetException();
+            if (ext.isCritical() == false) {
+                // ignore errors parsing non-critical extensions
+                // remember extension for toString()
+                if (unparseableExtensions == null) {
+                    unparseableExtensions = new ArrayList();
+                }
+                unparseableExtensions.add(new UnparseableExtension(ext, e));
+                return;
+            }
+            if (e instanceof IOException) {
+                throw (IOException)e;
+            } else {
+                throw (IOException)new IOException(e.toString()).initCause(e);
+            }
 	} catch (Exception e) {
             throw (IOException)new IOException(e.toString()).initCause(e);
+        }
+    }
+
+    public List getUnparseableExtensions() {
+        if (unparseableExtensions == null) {
+            return Collections.EMPTY_LIST;
+        } else {
+            return unparseableExtensions;
         }
     }
 
@@ -290,7 +314,8 @@ public class CertificateExtensions implements CertAttrSet {
             if (! thisExt.equals(otherExt))
                 return false;
         }
-        return true;
+        return this.getUnparseableExtensions().equals(
+                ((CertificateExtensions)other).getUnparseableExtensions());
     }
 
     /**
@@ -299,7 +324,7 @@ public class CertificateExtensions implements CertAttrSet {
      * @return the hashcode value.
      */
     public int hashCode() {
-        return map.hashCode();
+        return map.hashCode() + getUnparseableExtensions().hashCode();
     }
 
     /**

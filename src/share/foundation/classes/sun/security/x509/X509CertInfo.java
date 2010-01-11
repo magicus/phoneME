@@ -1,7 +1,6 @@
 /*
- * @(#)X509CertInfo.java	1.30 06/10/10
  *
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -35,6 +34,8 @@ import java.security.cert.*;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 
 import sun.security.util.*;
 import sun.misc.HexDumpEncoder;
@@ -362,6 +363,19 @@ public class X509CertInfo implements CertAttrSet {
                         sb.append(ext.toString()); //sub-class exists
                 } catch (Exception e) {
                     sb.append(", Error parsing this extension");
+                }
+            }
+            List invalid = extensions.getUnparseableExtensions();
+            if (invalid.isEmpty() == false) {
+                sb.append("\nUnparseable certificate extensions: "
+                          + invalid.size());
+                int i = 1;
+                for (Iterator t = invalid.iterator(); t.hasNext();) {
+                    Extension ext = (Extension)t.next();
+                    sb.append("\n[" + (i++) + "]: ");
+                    sb.append(ext);
+                    HexDumpEncoder enc = new HexDumpEncoder();
+                    sb.append(enc.encodeBuffer(ext.getExtensionValue()));
                 }
             }
         }
