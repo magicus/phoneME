@@ -1,0 +1,74 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+
+ifneq ($(MIDP_BIN_TARGET),)
+define copy_file
+    cp -r $(1) $(2)
+endef
+
+define copy_file_if_exists
+    if [ -e $(1) ]; then cp -r $(1) $(2); fi
+endef
+
+ifeq ($(MIDP_BIN_TARGET),sdk)
+SDK_BIN_DIR = $(MIDP_OUTPUT_DIR)/SDK
+all:: sdkbin
+sdkbin: $(SUBSYSTEM_AMS_EXECUTABLES)
+	$(AT)$(shell mkdir -p $(SDK_BIN_DIR)/bin \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi/bin/ \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi/lib/ \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi/wtklib/ \
+	$(SDK_BIN_DIR)/runtimes/cldc-hi/appdb/ \
+	$(SDK_BIN_DIR)/toolkit-lib/process/mekeytool/code \
+	$(SDK_BIN_DIR)/toolkit-lib/process/jadtool/code \
+	$(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/runMidlet*, \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/bin/runMidlet)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/kdp.jar, \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/wtklib/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/memprof_client.jar, \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/wtklib/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/lib/., \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/lib/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/appdb/., \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/appdb/)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/MEKeyTool.jar, \
+         $(SDK_BIN_DIR)/toolkit-lib/process/mekeytool/code)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/bin/i386/JadTool.jar, \
+         $(SDK_BIN_DIR)/toolkit-lib/process/jadtool/code)
+	$(AT)$(call copy_file, $(MIDP_OUTPUT_DIR)/classes.zip, \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/lib/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jar, \
+         $(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/NCISlave.jad, \
+         $(SDK_BIN_DIR)/toolkit-lib/tck-support/wma-nci/)
+	$(AT)$(call copy_file_if_exists, $(MIDP_OUTPUT_DIR)/bin/i386/jwc_properties.ini, \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/bin/)
+	$(AT)$(call copy_file_if_exists, $(JAVACALL_OUTPUT_DIR)/lib/sublime.dylib, \
+         $(SDK_BIN_DIR)/bin/)
+	$(AT)$(call copy_file_if_exists, $(JAVACALL_OUTPUT_DIR)/storage/., \
+         $(SDK_BIN_DIR)/runtimes/cldc-hi/appdb/)
+endif
+endif

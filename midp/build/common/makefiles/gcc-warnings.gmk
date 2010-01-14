@@ -1,0 +1,55 @@
+#
+#
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# GCC warnings
+#
+######################################################################
+#
+# Newer GCC versions usually issue more warnings about suspicious
+# places in the code. Often it is easy to modify the code
+# so that the warning disappears, while sometimes the code is correct,
+# but a serious refactoring is required to avoid the warning.
+# Because of the "warnings as errors" policy of the project,
+# we need a way to selectively disable some warnings.
+# In particular, we need to disable -Wuninitialized because we
+# do not want to add unnecessary initialization of arrays
+# in the code that affects performance.
+
+# all warnings by default
+USE_WEAK_GCC_WARNINGS = false
+
+ifneq ($(USE_WEAK_GCC_WARNINGS), true)
+  # just all+extra warnings
+  GCC_WARNING_FLAGS = -W -Wall
+else
+  # deselect warnings that cause problems with GCC version >= 4.2
+  # !!! the order is important: -Wno-something *after* -Wall
+  GCC_WARNING_FLAGS = -W -Wall -Wno-uninitialized
+endif
+
+EXTRA_CFLAGS += $(GCC_WARNING_FLAGS)
+
