@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "./configuration.dtd">
+<!--
+		Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+		DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+		
+		This program is free software; you can redistribute it and/or
+		modify it under the terms of the GNU General Public License version
+		2 only, as published by the Free Software Foundation.
+		
+		This program is distributed in the hope that it will be useful, but
+		WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+		General Public License version 2 for more details (a copy is
+		included at /legal/license.txt).
+		
+		You should have received a copy of the GNU General Public License
+		version 2 along with this work; if not, write to the Free Software
+		Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+		02110-1301 USA
+		
+		Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+		Clara, CA 95054 or visit www.sun.com if you need additional
+		information or have any questions.
+-->
+<!-- Properties file common for all platforms -->
+<configuration>
+<properties>
+<!-- INTERNAL PROPERTIES -->
+<!-- Visible from Configuration.getProperty() -->
+  <!-- System tunable parameters -->
+
+  <property Key="destroyMIDletTimeout"
+	  Value="5000"
+	  Scope="internal"
+	  Comment="Timeout in milliseconds to destroy a running MIDlet"/>
+
+  <property Key="suspendAppTimeout"
+	  Value="2000"
+	  Scope="internal"
+	  Comment="Timeout in milliseconds for MIDlets to complete 
+                   pauseApp() execution within java stack pause"/>
+
+  <property Key="suspendAlertTime"
+      Value="900"
+      Scope="internal"
+      Comment="Time in milliseconds for minimal duration of java suspension.
+        It is required to let a user see alert of java suspending. If the
+        time is too short, the alert will not be not shown possibly. If set
+        to 0 the alert will not be shown definitely."/>
+
+  <property Key="system.i18n.lang"
+	  Value="en"
+	  Scope="internal"
+	  Comment="Default language for I18N processing."/>      
+  <property Key="system.i18n.encoding"
+	  Value="ISO8859_1"
+	  Scope="internal"
+	  Comment="Default encoding for I18N processing."/>
+      
+  <!-- serial port buffering is on by default to support available() -->
+  <property Key="com.sun.midp.io.j2me.comm.buffersize"
+				Value="256"
+				Scope="internal"/>
+
+  <!-- TCP buffering is off by default -->
+  <!-- property Key="com.sun.midp.io.j2me.socket.buffersize"
+				Value="0"
+				Scope="internal"/> -->
+
+  <property Key="com.sun.midp.lcdui.eventHandler"
+	  Value="com.sun.midp.lcdui.DefaultEventHandler"
+	  Scope="internal"
+	  Comment="Default event handler class."/>
+  <property Key="com.sun.midp.lcdui.inputHandler"
+	  Value="com.sun.midp.lcdui.DefaultInputMethodHandler"
+	  Scope="internal"
+	  Comment="Default input handler class."/>
+
+  <!-- property Key="com.sun.midp.io.http.proxy" 
+				Value="webcache:8080" 
+				Scope="internal"/ -->
+  <!-- property Key="com.sun.midp.io.http.force_non_persistent" 
+				Value="false" 
+				Scope="internal"/ -->
+  <!-- property Key="com.sun.midp.io.http.persistent_connection_linger_time" 
+				Value="60000" 
+				Scope="internal"/ -->
+  <!-- property Key="com.sun.midp.io.http.input_buffer_size" 
+				Value="256" 
+				Scope="internal"/ -->
+  <!-- property Key="com.sun.midp.io.http.output_buffer_size" 
+				Value="2048" 
+				Scope="internal"/ -->
+  <!-- property Key="com.sun.midp.io.http.max_persistent_connections" 
+				Value="4" 
+				Scope="internal"/ -->
+
+  <!-- Event queue dispatch table tuning -->
+  <!-- property Key="com.sun.midp.events.dispatchTableInitSize" 
+				Value="16" 
+				Scope="internal"/ -->
+      
+  <property Key="VmDebuggerPort"
+	  Value="2808"
+	  Scope="internal"
+	  Comment="VM debugger port number."/>
+      
+      
+  <property Key="DisableStartupErrorAlert"
+	  Value="0"
+	  Scope="internal"
+	  Comment="If not 0, don't display start up errors in a
+                  Java Alert."/>
+
+  <property Key="LaunchJustInstalledMidlet"
+	  Value="-1"
+	  Scope="internal"
+	  Comment="After a MIDlet suite is successfully installed,
+              if 1, launch the suite without a question,
+              if 0, silently do nothing,
+              if -1, ask the user whether or not to launch the suite."/>
+      
+  <!-- Parser class names for push supported protocols -->
+  <property Key="btl2cap"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="btspp"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="btgoep"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="socket"
+	    Value="com.sun.midp.io.j2me.socket.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="datagram"
+	    Value="com.sun.midp.io.j2me.datagram.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="sip"
+	    Value="gov.nist.core.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="sips"
+	    Value="gov.nist.core.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="sms"
+	    Value="com.sun.midp.wma.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="cbs"
+	    Value="com.sun.midp.wma.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="mms"
+	    Value="com.sun.midp.io.j2me.mms.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="ndef"
+        Value="com.sun.contactless.ProtocolPushImpl"
+        Scope="internal"/>
+        
+  <property Key="AMS_MEMORY_RESERVED_MVM"
+            Value="1024"
+            Scope="internal"
+            Comment="Default AMS memory reserved in MVM mode"/>
+  <property Key="AMS_MEMORY_LIMIT_MVM"
+            Value="-1"
+            Scope="internal"
+            Comment="Default AMS memory limit in MVM mode"/>
+
+  <!-- OCSP (Online Certificate Status Protocol) properties: example values -->
+  <property Key="ocsp.responderURL"
+	    Value="http://127.0.0.1:80"
+	    Scope="internal"/>
+
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+  <property Key="microedition.hostname" 
+		Value="" 
+		Scope="system"
+		Callout="getLocalHostName"
+		Comment="The local hostname."/>
+  <property Key="microedition.profiles" 
+		Value="MIDP-2.1" 
+		Scope="system"
+		Comment="Profile information."/>
+  <property Key="microedition.locale" 
+		Value="en-US"
+		Scope="system"
+		Comment="System locale."/>
+  <property Key="microedition.platform" 
+		Value="j2me" 
+		Scope="system"
+		Comment="Platform name."/>
+  <!-- property Key="microedition.encoding" 
+		Value="ISO8859_1" 
+		Scope="system"/ -->
+  <property Key="microedition.commports" 
+	    Value="COM1" 
+		Scope="system"/>
+  <property Key="microedition.jtwi.version" 
+		Value="1.0" 
+		Scope="system"
+		Comment="JWTI version number."/>
+  <property Key="microedition.msa.version"
+                Value="1.1"
+                Scope="system"
+                Comment="Specification version number."/>
+
+  <!-- CLDC implementation parameters -->
+  <!-- use MIDP protocol implementations -->
+  <property Key="javax.microedition.io.Connector.protocolpath" 
+		Value="com.sun.midp.io"
+		Scope="system"
+		Comment=""/>
+  <!-- property Key="java.lang.Character.caseConverter" 
+		Value="com.sun.cldc.i18n.uclc.DefaultCaseConverter" 
+		Scope="system"/ -->
+  <!-- property Key="com.sun.cldc.i18n.Helper.i18npath" 
+		Value="com.sun.cldc.i18n.j2me" 
+		Scope="system"/ -->
+  <!-- property Key="microedition.implpath"
+		Value="com.sun.cldc" 
+		Scope="system"/ -->
+  <property Key="com.sun.cldc.util.j2me.TimeZoneImpl.timezone" 
+		Value="" 
+		Scope="system"
+		Callout="getLocalTimeZone"
+		Comment="System function of getting local time zone."/>
+</properties>
+</configuration>
