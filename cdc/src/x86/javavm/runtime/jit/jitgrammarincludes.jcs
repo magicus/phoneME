@@ -1,0 +1,69 @@
+//
+// @(#)jitgrammarincludes.jcs	1.4 06/10/09
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License version
+// 2 only, as published by the Free Software Foundation.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// General Public License version 2 for more details (a copy is
+// included at /legal/license.txt).
+//
+// You should have received a copy of the GNU General Public License
+// version 2 along with this work; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+// 02110-1301 USA
+//
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+// Clara, CA 95054 or visit www.sun.com if you need additional
+// information or have any questions.
+//
+
+//
+// converting CVM IR subset to x86 assembler
+//
+
+%{
+
+#include "javavm/include/defs.h"
+#include "javavm/include/objects.h"
+#include "javavm/include/classes.h"
+#include "javavm/include/utils.h"
+#include "javavm/include/ccm_runtime.h"
+#include "javavm/include/globals.h"
+#include "javavm/include/basictypes.h"
+#include "javavm/include/jit/jitir.h"
+#include "javavm/include/jit/jit_defs.h"
+#include "javavm/include/jit/jitcontext.h"
+#include "javavm/include/jit/jitirnode.h"
+#include "javavm/include/jit/jitirblock.h"
+#include "javavm/include/ccee.h"
+#include "javavm/include/jit/jitarchemitter.h"
+#include "javavm/include/jit/jitregman.h"
+#include "javavm/include/jit/ccmcisc.h"
+#include "javavm/include/jit/jitstackman.h"
+#include "javavm/include/jit/jitgrammar.h"
+#include "javavm/include/jit/jitopcodes.h"
+#include "javavm/include/jit/jitstackmap.h"
+#include "javavm/include/jit/jitfixup.h"
+#include "javavm/include/jit/jitconstantpool.h"
+#include "javavm/include/jit/jitcodebuffer.h"
+#include "javavm/include/jit/jitintrinsic.h"
+#include "javavm/include/jit/jitutils.h"
+#include "javavm/include/jit/jitstats.h"
+#include "javavm/include/jit/jitcomments.h"
+#include "javavm/include/jit/jitmemory.h"
+#include "generated/javavm/include/jit/jitcodegen.h"
+#include "generated/javavm/include/gc_config.h"
+
+#include "javavm/include/clib.h"
+#include "javavm/include/porting/ansi/setjmp.h"
+#include "javavm/include/porting/jit/jit.h"
+#include "javavm/include/porting/doubleword.h"
+#include "javavm/include/porting/endianness.h"
+%}
