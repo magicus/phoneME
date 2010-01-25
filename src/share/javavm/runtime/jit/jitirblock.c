@@ -326,6 +326,10 @@ markJsrTargets(CVMJITCompilationContext* con,
 
     CVMJITirblockAddFlags(jsrTargetBk, CVMJITIRBLOCK_IS_JSR_HANDLER);
     CVMJITirblockAddFlags(jsrRetBk, CVMJITIRBLOCK_IS_JSR_RETURN_TARGET);
+	
+    /* Don't let JSR targets be tagged at backward branch targets since 
+       letting them be gc checkpoints will cause problems. */
+    jsrTargetBk->flags &= ~CVMJITIRBLOCK_IS_BACK_BRANCH_TARGET;
 
     /* Create a new entry for jsr return target */
     entry = (CVMJITJsrRetEntry*)CVMJITmemNew(con, 
