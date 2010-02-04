@@ -1,0 +1,107 @@
+# @(#)jvm.jcov.txt	1.7 06/10/25
+#
+# Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+#
+
+		JCOV support in JDK1.3 and later
+
+Up to JDK1.2.x Jcov runtime support has been an integral part of the
+debug version of the Javasoft's JVM, therefore it could not work with
+any other JVMs. In JDK1.3 all Jcov support was isolated in a separate
+library and implemented basing upon the Java Virtual Machine Profiler
+Interface (JVMPI), so it theoretically can work with any JVM that
+support JVMPI. This library is loaded by a JVM at its startup, if the
+-Xrunjcov option is specified. For more information about how JVM finds
+and loads libraries passed via the -Xrun<libname> JVM's option, please
+consult JVMPI docs.
+
+usage:
+
+java [other java options] -Xrunjcov[:][help]|[<option>=<value>, ...] classname
+
+where <option> is the name of an option, <value> is its value. The
+recognized options are :
+
+include(i)=<class name prefix>
+    makes Jcov profile only those classes whose names begin with given
+    class name prefix. This option may be specified multiple times - in
+    this case class name must satisfy at least one of the class name
+    prefixes to be profiled.
+exclude(e)=<class name prefix>
+    tells Jcov not to profile classes whose names begin with given
+    class name prefix. This option may be given multiple times - if a
+    class name satisfies at least one of the class name prefixes then
+    it will not be profiled.
+type(t)=<value>
+    value can be either B or M. Sets jcov data gathering mode : in B
+    mode method/block/branch coverage data is gathered, in M only
+    method coverage data is gathered. Default value is B.
+file(f)=<filename>
+    specifies savefile name, default - java.jcov.
+caller_include(ci)=<class name prefix>
+    gather coverage data only for methods invoked from the specified
+    class or classes beloning to the specified package;
+    the option can be used multiple times;
+    class or package names should use '.' as a package separator
+caller_exclude(ce)=<class name prefix>
+    gather coverage data only for methods invoked *not* from the specified
+    class or classes *not* beloning to the specified package;
+    the option can be used multiple times;
+    class or package names should use '.' as a package separator
+abstract_methods(am)=<on|off>
+    store/do not store jcov data for abstract methods; default is 'off'
+overwrite(o)=<on|off>
+    overwrite jcov data file; default is 'off' (jcov data is merged)
+options_file(of)=<filename>
+    specifies where to read options from; (caller_)include/(caller_)exclude
+    options values read from the file are added to those, specified in the
+    command line
+
+
+Example 1.
+(JDK 1.3.0 ):
+	N/A
+
+(JDK 1.3.1 - 1.4.0 only)
+	> java -XX:+EnableJVMPIInstructionStartEvent -Xrunjcov <class>
+
+This command will make Jcov profile all loaded classes which have the
+CoverageTable class attribute (i.e. all loaded classes which had been
+compiled with the -Xjcov compiler option) and save method/block/branch
+coverage data to a file named java.jcov in current directory.
+
+Example 2.
+(JDK 1.4.0 only, in earlier JDKs full option names must be used)
+	> java -Xrunjcov:i=java,e=java.lang,e=java.io,type=M,file=/tmp/sys.jcov <class>
+
+This command will make Jcov profile all classes from the java package
+and its subpackages except java.lang and java.io, only method coverage
+statistics will be gathered and saved to a file named sys.jcov' in the
+/tmp directory.
+
+Notes:
+
+  1.JVM must not be run in debug mode (-Xdebug option must not be
+    specified), since Jcov cannot work correctly in this
+    JVM's mode.  
+  2.When gathered data is saved to an existing Jcov data
+    file, then it is merged (on per-class basis) with the corresponding
+    data found in the file. If the data types of two classes being
+    merged don't match, then both classes are saved in the resulting
+    jcov data file.
+  3.(JDK 1.2.x and earlier) For Jcov to work correctly any JIT compiler
+    must be turned off (for example, by specifying the -Djava.compiler=NONE
+    JVM's option)
+  4.If a class or an interface contains only abstract methods then it will
+    not be profiled at all (i.e. no code coverage data will be gathered
+    for it).
+  5.Only non-abstract methods are profiled.
+  6.If data gathering mode is set to B then those classes, having no
+    CoverageTable or CharacterRangeTable class attribute, will not be profiled.
+  7.For Jcov to be able to gather block/branch coverage data for a certain
+    class, this class must have CoverageTable class attribute. This can be
+    achived by compiling this class with the -prof=jcov (JDK1.1 - JDK
+    1.1.x) option or the -Xjcov (JDK1.2 - JDK 1.2.x, JDK 1.4) option. With
+    JDK 1.3.0-1.3.1 'oldjavac -Xjcov' command should be used.
+  8.-XX:+EnableJVMPIInstructionStartEvent JVM option has to be specified in
+    JDK
