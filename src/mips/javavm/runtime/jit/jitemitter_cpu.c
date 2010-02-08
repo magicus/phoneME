@@ -4245,6 +4245,7 @@ CVMCPUemitMoveFrom64BitRegister(CVMJITCompilationContext* con,
 
 #if CVMCPU_MAX_ARG_REGS != 8
 
+#ifdef CVMJIT_INTRINSICS
 /* Purpose: Gets the registers required by a C call.  These register could be
             altered by the call being made. */
 extern CVMJITRegsRequiredType
@@ -4285,6 +4286,7 @@ CVMMIPSCCALLgetRequired(CVMJITCompilationContext *con,
     }
     return result;
 }
+#endif /* CVMJIT_INTRINSICS */
 
 /* Purpose: Pins an arguments to the appropriate register or store it into the
             appropriate stack location. */

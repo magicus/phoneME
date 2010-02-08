@@ -3252,6 +3252,7 @@ CVMJITemitLoadConstantAddress(CVMJITCompilationContext* con,
  * convention support functions required by the RISC emitter porting layer.
  **************************************************************/
 
+#ifdef CVMJIT_INTRINSICS
 /* Purpose: Gets the registers required by a C call.  These register could be
             altered by the call being made. */
 extern CVMJITRegsRequiredType
@@ -3291,6 +3292,7 @@ CVMARMCCALLgetRequired(CVMJITCompilationContext *con,
     }
     return result;
 }
+#endif /* CVMJIT_INTRINSICS */
 
 /* Purpose: Pins an arguments to the appropriate register or store it into the
             appropriate stack location. */
