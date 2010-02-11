@@ -1,0 +1,98 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+JUMP_PUSH_LIB = jump
+LIB_SET += $(JUMP_PUSH_LIB)
+
+# Common settings
+#
+
+JUMP_PUSH_DIR = $(SUBSYSTEM_PUSH_DIR)/cdc_application/$(JUMP_PUSH_LIB)
+JUMP_PUSH_CLASSES_DIR = $(JUMP_PUSH_DIR)/classes
+JUMP_PUSH_TESTS_DIR = $(JUMP_PUSH_DIR)/tests
+
+JUMP_PUSH_PACKAGE = com.sun.midp.jump.push
+
+JUMP_PUSH_PACKAGE_DIR = $(JUMP_PUSH_CLASSES_DIR)/$(shell echo $(JUMP_PUSH_PACKAGE) | tr '.' '/')
+
+# Classes and files
+#
+
+# No native files so far
+SUBSYSTEM_JUMP_PUSH_NATIVE_FILES =
+SUBSYSTEM_JUMP_PUSH_EXTRA_INCLUDES =
+
+# Javadoc settings
+#
+LIB_JAVA_PUSH_SOURCEPATH = $(JUMP_PUSH_CLASSES_DIR)
+
+SUBSYSTEM_JUMP_PUSH_PACKAGES = \
+    $(JUMP_PUSH_PACKAGE).executive \
+    $(JUMP_PUSH_PACKAGE).executive.ota \
+    $(JUMP_PUSH_PACKAGE).executive.persistence \
+    $(JUMP_PUSH_PACKAGE).executive.remote \
+    $(JUMP_PUSH_PACKAGE).share
+
+MIDP_JAVADOC_ALL += \
+    -group "JUMP Push implementation" \
+    $(shell echo $(SUBSYSTEM_JUMP_PUSH_PACKAGES) | tr ' ' $(PATHSEP))
+
+SUBSYSTEM_JUMP_PUSH_JAVA_FILES = \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/JUMPPushModule.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/JUMPPushModuleFactory.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/MIDPContainerInterfaceImpl.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/PushRegistryModuleFactoryImpl.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/persistence/AppSuiteDataStore.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/persistence/JUMPStoreImpl.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/persistence/StoreOperationManager.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/executive/remote/MIDPContainerInterface.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/share/Configuration.java \
+    $(JUMP_PUSH_PACKAGE_DIR)/share/JUMPReservationDescriptor.java
+
+ifeq ($(USE_JUNIT_TEST), true)
+    SUBSYSTEM_JUMP_PUSH_JUNIT_JAVA_FILES = \
+        $(JUMP_PUSH_TESTS_DIR)/com/sun/jump/module/contentstore/InMemoryContentStore.java \
+        $(JUMP_PUSH_TESTS_DIR)/com/sun/jump/module/contentstore/InMemoryStore.java \
+        $(JUMP_PUSH_TESTS_DIR)/com/sun/midp/jump/push/executive/persistence/AppSuiteDataStoreTest.java \
+        $(JUMP_PUSH_TESTS_DIR)/com/sun/midp/jump/push/executive/persistence/JUMPStoreImplTest.java \
+        $(JUMP_PUSH_TESTS_DIR)/com/sun/midp/jump/push/executive/persistence/StoreUtils.java
+endif
+
+ifeq ($(USE_I3_TEST), true)
+    SUBSYSTEM_JUMP_PUSH_I3TEST_JAVA_FILES =
+endif

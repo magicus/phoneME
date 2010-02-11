@@ -1,0 +1,300 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEM_CORE = core
+
+SUBSYSTEMS += $(SUBSYSTEM_CORE)
+
+SUBSYSTEM_CORE_DIR = $(SUBSYSTEM_DIR)/$(SUBSYSTEM_CORE)
+
+
+#####################################################################
+# CRC32 library
+# Description: CRC32 checksum algorithm
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/crc32/$(LIB_MAKE_FILE)
+
+#####################################################################
+# JARUTIL library
+# Description: functions for reading and iterating through the
+#              jar entries
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/jarutil/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Global status library
+# Description: Global status
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/global_status/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Javautil library
+# Description: Java utilities
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/javautil/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Javacall Utilities library
+# Description: Javacall utilities
+#####################################################################
+
+ifneq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_CORE_DIR)/javacall_util/$(LIB_MAKE_FILE)
+endif
+
+#####################################################################
+# Kni util library
+# Description: Kni utilities
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/kni_util/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Libc extension library
+# Description: ANSI C extensions
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/libc_ext/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Logging Base library
+# Description: Common functions for all implementations of Logging
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/log_base/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Logging library
+# Description: Logging service
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/log/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Native thread library
+# Description: Native thread support
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/native_thread/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Resource handler library
+# Description: Resource handler service
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/resource_handler/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Resource manager library
+# Description: Resource manager
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/resource_manager/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Timer Queue Library
+# Description: Timer queue utility for master mode timers support
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/timer_queue/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Timezone library
+# Description: Timezone service
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/timezone/$(LIB_MAKE_FILE)
+
+#####################################################################
+# VM Services Library
+# Description: VM Services
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/vm_services/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Memory library
+# Description: Memory service
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/memory/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Storage library
+# Description: Storage service
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/storage/$(LIB_MAKE_FILE)
+
+#####################################################################
+# String library
+# Description: String utility
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/string/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Suspend/Resume library
+# Description: Java stack suspend/resume functionality
+#####################################################################
+ifneq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_CORE_DIR)/suspend_resume/subsystem.gmk
+endif
+
+#####################################################################
+# Services library
+# Description: Services Framework
+#####################################################################
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+include $(SUBSYSTEM_CORE_DIR)/services/$(LIB_MAKE_FILE)
+endif
+
+#####################################################################
+# Inter-Isolate mutex library
+# Description: Provides simple Isolates synchronization
+#####################################################################
+
+ifneq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_CORE_DIR)/interisolate_mutex/$(LIB_MAKE_FILE)
+endif
+
+
+####################################################################
+
+SUBSYSTEM_CORE_JAVA_FILES += \
+    $(SUBSYSTEM_CRC32_JAVA_FILES) \
+    $(SUBSYSTEM_JARUTIL_JAVA_FILES) \
+    $(SUBSYSTEM_GLOBAL_JAVA_FILES) \
+    $(SUBSYSTEM_JAVAUTIL_JAVA_FILES) \
+    $(SUBSYSTEM_JAVACALL_UTIL_JAVA_FILES) \
+    $(SUBSYSTEM_KNIUTIL_JAVA_FILES) \
+    $(SUBSYSTEM_LIBCEXT_JAVA_FILES) \
+    $(SUBSYSTEM_LOG_JAVA_FILES) \
+    $(SUBSYSTEM_NATIVETHREAD_JAVA_FILES) \
+    $(SUBSYSTEM_RESHANDLER_JAVA_FILES) \
+    $(SUBSYSTEM_RESMANAGER_JAVA_FILES) \
+    $(SUBSYSTEM_TIMER_QUEUE_JAVA_FILES) \
+    $(SUBSYSTEM_TIMEZONE_JAVA_FILES) \
+    $(SUBSYSTEM_VMSERVICES_JAVA_FILES) \
+    $(SUBSYSTEM_MEMORY_JAVA_FILES) \
+    $(SUBSYSTEM_STORAGE_JAVA_FILES) \
+    $(SUBSYSTEM_STRING_JAVA_FILES) \
+    $(SUBSYSTEM_SERVICES_JAVA_FILES) \
+    $(SUBSYSTEM_INTERISOLATE_MUTEX_JAVA_FILES)
+
+SUBSYSTEM_CORE_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_CRC32_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_JARUTIL_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_GLOBAL_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_JAVAUTIL_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_JAVACALL_UTIL_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_KNIUTIL_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_LIBCEXT_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_LOG_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_NATIVETHREAD_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_RESHANDLER_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_RESMANAGER_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_TIMER_QUEUE_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_TIMEZONE_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_VMSERVICES_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_MEMORY_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_STORAGE_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_STRING_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_INTERISOLATE_MUTEX_I3TEST_JAVA_FILES)
+ 
+SUBSYSTEM_CORE_NATIVE_FILES += \
+    $(SUBSYSTEM_CRC32_NATIVE_FILES) \
+    $(SUBSYSTEM_JARUTIL_NATIVE_FILES) \
+    $(SUBSYSTEM_GLOBAL_NATIVE_FILES) \
+    $(SUBSYSTEM_JAVAUTIL_NATIVE_FILES) \
+    $(SUBSYSTEM_JAVACALL_UTIL_NATIVE_FILES) \
+    $(SUBSYSTEM_KNIUTIL_NATIVE_FILES) \
+    $(SUBSYSTEM_LIBCEXT_NATIVE_FILES) \
+    $(SUBSYSTEM_LOG_NATIVE_FILES) \
+    $(SUBSYSTEM_NATIVETHREAD_NATIVE_FILES) \
+    $(SUBSYSTEM_RESHANDLER_NATIVE_FILES) \
+    $(SUBSYSTEM_RESMANAGER_NATIVE_FILES) \
+    $(SUBSYSTEM_TIMER_QUEUE_NATIVE_FILES) \
+    $(SUBSYSTEM_TIMEZONE_NATIVE_FILES) \
+    $(SUBSYSTEM_VMSERVICES_NATIVE_FILES) \
+    $(SUBSYSTEM_MEMORY_NATIVE_FILES) \
+    $(SUBSYSTEM_STORAGE_NATIVE_FILES) \
+    $(SUBSYSTEM_STRING_NATIVE_FILES) \
+    $(SUBSYSTEM_INTERISOLATE_MUTEX_NATIVE_FILES)
+
+SUBSYSTEM_CORE_EXTRA_INCLUDES += \
+    $(SUBSYSTEM_CRC32_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_JARUTIL_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_GLOBAL_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_JAVAUTIL_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_JAVACALL_UTIL_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_KNIUTIL_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_LIBCEXT_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_LOG_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_NATIVETHREAD_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_RESHANDLER_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_RESMANAGER_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_TIMER_QUEUE_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_TIMEZONE_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_VMSERVICES_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_MEMORY_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_STORAGE_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_STRING_EXTRA_INCLUDES)
+
+SUBSYSTEM_CORE_EXTRA_CFLAGS += \
+    $(SUBSYSTEM_CRC32_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_JARUTIL_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_GLOBAL_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_JAVAUTIL_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_JAVACALL_UTIL_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_KNIUTIL_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_LIBCEXT_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_LOG_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_NATIVETHREAD_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_RESHANDLER_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_RESMANAGER_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_TIMER_QUEUE_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_TIMEZONE_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_VMSERVICES_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_MEMORY_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_STORAGE_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_STRING_EXTRA_CFLAGS)
