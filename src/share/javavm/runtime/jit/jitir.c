@@ -1604,6 +1604,41 @@ storePCValueToLocal(CVMJITCompilationContext* con, CVMJITIRBlock* curbk,
 }
 
 static void
+checkInitialLocal(CVMJITCompilationContext *con,
+    CVMJITIRBlock *curbk, int mappedLocalNo)
+{
+    if (mappedLocalNo < curbk->numInitialLocals) {
+	CVMJITIRNode *initialLocalNode =
+	    curbk->initialLocals[mappedLocalNo];
+	if (initialLocalNode != NULL) {
+	    /* Maybe there is a more effective way to tell that this initial
+	       local value is useless, but now we just go ahead and evaluate
+	       it first to be conservative: */
+	    CVMJITirForceEvaluation(con, curbk, initialLocalNode);
+
+	    /* The initial local has been evaluated */
+	    curbk->initialLocals[mappedLocalNo] = NULL;
+	}
+	/* 2nd word of double-word local? */
+	if (mappedLocalNo > 0) {
+	    CVMJITIRNode *initialLocalNode =
+		curbk->initialLocals[mappedLocalNo - 1];
+	    if (initialLocalNode != NULL &&
+		CVMJITirnodeIsDoubleWordType(initialLocalNode))
+	    {
+		/* Maybe there is a more effective way to tell that this initial
+		   local value is useless, but now we just go ahead and evaluate
+		   it first to be conservative: */
+		CVMJITirForceEvaluation(con, curbk, initialLocalNode);
+
+		/* The initial local has been evaluated */
+		curbk->initialLocals[mappedLocalNo - 1] = NULL;
+	    }
+	}
+    }
+}
+
+static void
 mcStoreValueToLocal(CVMJITCompilationContext* con, CVMJITIRBlock* curbk,
                     CVMUint16 localNo,
                     CVMUint16 typeTag, CVMJITMethodContext* mc,
@@ -1645,19 +1680,10 @@ mcStoreValueToLocal(CVMJITCompilationContext* con, CVMJITIRBlock* curbk,
            because those are all computed.  Only the initial local value must
            be fetched from the local storage location first: */
 
-	if (mappedLocalNo < curbk->numInitialLocals) {
-	    CVMJITIRNode *initialLocalNode =
-		curbk->initialLocals[mappedLocalNo];
-	    if (initialLocalNode != NULL) {
-		/* Maybe there is a more effective way to tell that this initial
-		   local value is useless, but now we just go ahead an evaluate
-		   it first to be conservative: */
-		CVMJITirForceEvaluation(con, curbk, initialLocalNode);
-
-		/* The initial local has been evaluated */
-		curbk->initialLocals[mappedLocalNo] = NULL;
-	    }
-        }
+	checkInitialLocal(con, curbk, mappedLocalNo);
+	if (CVMJITirIsDoubleWordTypeTag(typeTag)) {
+	    checkInitialLocal(con, curbk, mappedLocalNo + 1);
+	}
 
         localNode = CVMJITirnodeNewLocal(con, CVMJIT_ENCODE_LOCAL(typeTag),
                                          mappedLocalNo);
@@ -1714,6 +1740,9 @@ mcStoreValueToLocal(CVMJITCompilationContext* con, CVMJITIRBlock* curbk,
 
     /* Now cache the new local value: */
     CVMassert(mc->locals != NULL);
+    if (CVMJITirIsDoubleWordTypeTag(typeTag)) {
+	mc->locals[localNo + 1] = NULL;
+    }
     mc->locals[localNo] = valueNode;
 
     /* Now invalidate the null check and other checks: */
@@ -1787,6 +1816,11 @@ CVMJITirFlushOutBoundLocals(CVMJITCompilationContext* con,
 	    /* Flush the local if not already flushed: */
 	    if ((value != NULL) && (value != mc->physLocals[localNo])) {
 		count++;
+#ifdef CVM_DEBUG_ASSERTS
+		if (CVMJITirnodeIsDoubleWordType(value)) { 
+		    CVMassert(mc->locals[localNo + 1] == NULL);
+		}
+#endif
 	    }
 	}
     }
@@ -1804,12 +1838,15 @@ CVMJITirFlushOutBoundLocals(CVMJITCompilationContext* con,
 		    mcStoreValueToLocal(con, curbk, localNo,
 					CVMJITgetTypeTag(value), mc, CVM_TRUE);
 		} else {
+#ifndef CVM_DEBUG_ASSERTS
 		    /* leave a couple of assigns for later */
 		    return;
+#endif
 		}
 	    }
 	}
     }
+    CVMassert(count == 0);
 }
 
 /* 
