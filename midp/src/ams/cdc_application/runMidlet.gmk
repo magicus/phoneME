@@ -1,0 +1,52 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+#
+# Create runMidlet script
+#
+ifneq ($(CVM_STATICLINK_LIBS), true)
+MIDP_LIBRARY_NAME_PROP = "-Dsun.midp.library.name=midp$(p)"
+$(BINDIR)/runMidlet: $(MIDP_SHARED_LIB)
+else
+$(BINDIR)/runMidlet: $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+endif
+	@rm -f $@
+	@echo " ... creating script $@ " $(LOG)
+	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
+	$(MIDP_LIBRARY_NAME_PROP) \
+	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
+	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
+	sun.misc.MIDPLauncher \
+	'$$*' > $@
+	$(A)chmod a+x $@

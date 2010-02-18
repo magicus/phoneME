@@ -1,0 +1,74 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+include $(SUBSYSTEM_DIR)/configuration/configuration_common.gmk
+
+#####################################################################
+# Configurator Subsystem
+# Description: Config the whole system
+#####################################################################
+
+include $(SUBSYSTEM_CONFIG_DIR)/configuration_xml/lib.gmk
+
+#####################################################################
+# Properties Library
+# Description: Java API for system properties access
+#####################################################################
+
+include $(SUBSYSTEM_CONFIG_DIR)/properties/lib.gmk
+
+#####################################################################
+# Properties Port Library
+# Description: Native API for system properties access
+#####################################################################
+
+include $(SUBSYSTEM_CONFIG_DIR)/properties_port/lib.gmk
+
+#####################################################################
+
+
+SUBSYSTEM_CONFIGURATION_JAVA_FILES +=  \
+    $(SUBSYSTEM_PROPERTIES_JAVA_FILES) \
+    $(SUBSYSTEM_PROPERTIES_PORT_JAVA_FILES)
+
+
+SUBSYSTEM_CONFIGURATION_NATIVE_FILES +=  \
+    $(SUBSYSTEM_PROPERTIES_NATIVE_FILES) \
+    $(SUBSYSTEM_PROPERTIES_PORT_NATIVE_FILES)
+
+SUBSYSTEM_CONFIGURATION_EXTRA_INCLUDES +=  \
+    $(SUBSYSTEM_PROPERTIES_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_PROPERTIES_PORT_EXTRA_INCLUDES)
