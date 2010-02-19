@@ -442,16 +442,12 @@ getLocal(CVMJITCompilationContext* con,
 	loc->decorationData.successorBlocksIdx =
 	    mc->currBlock->successorBlocksCount;
 #endif
-    }
 #ifdef CVM_DEBUG_ASSERTS
-    {
-	CVMJITIRNode* value = CVMJITirnodeValueOf(loc);
-	if (CVMJITirnodeIsLocalNode(value) && typeTag == CVM_TYPEID_OBJ) {
-	    CVMInt32 l = CVMJITirnodeGetLocal(value)->localNo;
-	    CVMassert(CVMJITlocalrefsIsRef(&con->curRefLocals, l));
+	if (typeTag == CVM_TYPEID_OBJ) {
+	    CVMassert(CVMJITlocalrefsIsRef(&con->curRefLocals, mappedLocalNo));
 	}
-    }
 #endif
+    }
 
     return loc;
 }
