@@ -1,0 +1,257 @@
+/*
+        Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+*/
+
+/* CSS FILE FOR UNSTRUCTURED BOOKS FOR UNIX */
+
+/* DEFAULT VALUES */
+body { background-color: #FFFFFF;
+           font-family: Arial, Helvetica, sans-serif;
+       border-top-width: 0px; border-right-width: 0px; 
+       border-bottom-width: 0px; border-left-width: 0px;
+       color: Black; font-size: 12px; font-style: normal;
+       font-variant: normal; font-weight: normal;
+       text-align: left; text-decoration: none;
+       text-indent: 0em; text-transform: none; }
+    
+/* CHAPTER AND TITLE FORMATTING */
+.ChapTitle 
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  color: #3E647E; font-size: 25px; font-style: normal;
+  font-variant: normal; font-weight: bold;
+  margin-left: 0em; margin-right: 0em; text-align: left;
+  text-decoration: none; text-indent: 0em;
+  text-transform: none; }
+.Head1
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  color: #3E647E; font-size: 20px; font-style: normal;
+  font-variant: normal; font-weight: bold;
+  margin-left: 0em; margin-right: 0em; text-align: left;
+  text-decoration: none; text-indent: 0em;
+  text-transform: none; }
+.Head2
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  color: #3E647E; font-size: 18px; font-style: normal;
+  font-variant: normal; text-indent: 0em;
+  font-weight: normal; margin-left: 0em; margin-right: 0em;
+  text-align: left; text-decoration: none; 
+  text-transform: none }        
+.Head3
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  color: #3E647E; font-size: 14px; font-style: normal;
+  font-weight: bold; margin-left: 0em; margin-right: 0em;
+  text-align:left; text-decoration: none; text-indent: 0em;
+  font-variant: normal; text-transform: none }
+.Head4
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  color: #3E647E; font-size: 12px; font-style: italic;
+  font-variant: normal; font-weight: bold; margin-left:0em;
+  text-align:left; text-decoration: none; text-indent: 0em;
+  margin-right: 0em; text-transform: none }
+
+/* TOC (Modules.html) FORMATTING */
+.ChapTitleTOC
+{ margin-left: 40px; margin-bottom: 5px; margin-top: 25px;
+  font-style: normal; font-size: 16px; font-weight: normal;
+  font-family: Arial, Verdana, Helvetica, sans-serif;
+}
+.Head1TOC
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  font-size:14px; font-style: normal; font-weight: normal;
+  margin-left: 70px;  margin-bottom: 5px; margin-top: 10px;
+  text-align:left; text-decoration: none; text-indent: 0em;
+  color: Black; text-transform: none; 
+}
+.Head2TOC
+{ margin-left: 100px; margin-bottom: 5px; margin-top: 7px;
+  font-size: 12px; font-weight: normal; font-style: normal;
+  font-family: arial, helvetica, sans-serif; 
+}
+.Head3TOC
+{ margin-left: 130px; margin-bottom: 5px; margin-top: 5px;
+  font-size: 12px; font-weight: normal; font-style: normal;
+  font-family: arial, helvetica, sans-serif;
+}
+
+/* TABLE FORMATTING */
+table
+{ font-family: Arial, Helvetica, sans-serif;
+        background-color: #FFFFFF;
+        margin-top: 0px; padding-top: 0px;
+        border-top-width: 0px; border-right-width: 0px;
+        border-bottom-width: 0px; border-left-width: 0px;
+        margin-bottom: 10px; margin-left: 0px; 
+        padding-bottom: 5px; padding-left: 5px }
+th
+{ font-family: Arial, Helvetica, sans-serif;
+  text-align: left; vertical-align: bottom;
+  padding-top: 5px; padding-right: 10px; 
+  padding-left: 10px; white-space: nowrap
+  border-top-width: 0px; border-right-width: 0px;
+  border-bottom-width: 0px; border-left-width: 0px;
+  padding-bottom: 5px; font-size: 12px; }
+td
+{ font-family: Arial, Helvetica, sans-serif;
+  padding-right:10px; padding-left: 10px; padding-top: 7px;
+  padding-bottom: 7px; border-top-width: 0px;
+  border-bottom-width: 0px; border-left-width: 0px;
+  border-right-width: 0px; vertical-align: top;
+  font-size: 12px; }
+td p 
+{ font-family: Arial, Helvetica, sans-serif;
+  padding-right:10px; padding-left: 10px; padding-top: 10px
+ border-top-width: 0px; border-right-width: 0px;
+ border-bottom-width: 0px; border-left-width: 0px;
+ vertical-align: top; font-size: 12px; }
+td h1
+{  text-align: center }
+td h2
+{  text-align: center; padding-top: 0px }
+td h3
+{  text-align: center; padding-top: 0px }
+td h4
+{  text-align: center; padding-top: 0px }
+
+/* FONT FORMATTING */
+.Filename-Command
+{ font-family: Courier, fixed-width; }
+.Codeline
+{ font-family: Courier, fixed-width; white-space: pre; 
+  margin-left:35px; margin-top: 0; margin-bottom: 0; }
+.UserInput, .UserType 
+{ font-family: Courier, fixed-width; font-weight: bold;
+  font-style: normal; white-space: pre; }
+.FnName
+{ font-family: Courier, fixed-width; white-space: pre; 
+  margin-top: 0; margin-bottom: 3pt; font-size: 140% }
+.Variable 
+{ font-family:Times; font-weight:normal; font-style:italic; }
+.Title
+{ font-weight: normal; font-style: italic; }
+.Strong
+{ font-style: normal; font-weight: bold; }
+
+.Centered
+{ text-align: center }
+
+/* LISTS */
+li
+{ margin-bottom: 3px; margin-top: 3px; }
+.Tight
+{ margin-bottom: 3px; }
+.ItemDescr
+{ margin-top: 0;  font-weight: normal; 
+  font-family: Arial, Verdana, Helvetica, sans-serif;
+  font-style: italic; }
+.EnumMember
+{ margin-top: 2px; margin-bottom: 0; font-weight: normal; 
+  font-family: Arial, Verdana, Helvetica, sans-serif;
+  margin-left: 20px; }
+.List1, .List1-
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  font-size:12px; font-style: normal; font-variant: normal;
+  font-weight:normal; text-align:left; text-decoration: none;
+  text-indent: 0em; color: Black; text-transform: none;
+  margin-left: 22px; margin-right: 0em;}
+.List2, .List2- 
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  font-size:12px; font-style: normal; font-variant: normal;
+  font-weight:normal; text-align:left; text-decoration: none;
+  text-indent: 0em; color: Black; text-transform: none;
+  margin-left: 65px; margin-right: 0em; }
+.List3, .List3- 
+{ font-family: Arial, Verdana, Helvetica, sans-serif;
+  font-size:12px; font-style: normal; font-variant: normal;
+  font-weight:normal; text-align:left; text-decoration: none;
+  text-indent: 0em; color: Black; text-transform: none;
+  margin-left:115px; margin-right: 0em; }
+
+.ParaIndent1
+{ margin-left: 39px; }
+.ParaIndent2
+{ margin-left: 80px; }
+.ParaIndent3
+{ margin-left: 127px; }
+
+/* Odds and Ends */
+.Footnote
+{ font-size: small; vertical-align: super }
+.Linebreak
+{ line-height: 0.5em; }
+
+/* CMSG Stuff */
+.sun-darkblue
+{ font-family: Arial, Helvetica, sans-serif ;
+  color: #FFFFFF; background-color: #587993 }
+.sun-lightblue
+{ background-color: #3E647E }
+.sun-verylightblue
+{  background-color: #A5B8C9 }
+
+.copyright 
+{ font-family:Arial, Helvetica, sans-serif; font-size:10px}
+.go-right
+{  text-align: right }
+.go-left
+{  text-align: left }
+
+.full-width
+{ width: 100% }
+.pTableHr
+{ color: #3E647E; background-color: #3E647E }
+
+
+.pHr
+{ color: #3E647E; background-color: #3E647E }
+
+/* Doxygen Stuff */
+.TableIndent
+{ margin-left: 39px; }
+.el
+{ font-weight: bold; font-family: Courier, fixed-width; }
+.elRef
+{ font-weight: bold }
+.code
+{ text-decoration: none; font-weight: normal; color: #4444ee }
+.codeRef
+{ font-weight: normal; color: #4444ee }
+A:hover
+{ text-decoration: none; background-color: #f2f2ff }
+.fragment
+{ width: 100%; border: none; background-color: #eeeeee }
+.ah
+{ background-color: black; font-weight: bold;
+  color: #ffffff; margin-bottom: 3px; margin-top: 3px }
+.md
+{ background-color: #f2f2ff; font-weight: bold; }
+.mdname1
+{ background-color: #f2f2ff; font-weight: bold; color: #602020; }
+.mdname
+{ background-color: #f2f2ff; font-weight: bold; color: #602020; width: 600px; }
+.groupHeader
+{ margin-left: 16px; margin-top: 12px; margin-bottom: 6px; font-weight: bold }
+.groupText
+{ margin-left: 16px; font-style: italic; font-size: smaller }
+.indexkey
+{ background-color: #eeeeff; font-weight: bold; padding-right: 10px; 
+  padding-top: 2px; padding-left: 10px; padding-bottom: 2px; 
+   margin-left: 0px; margin-right: 0px;  margin-top: 2px; margin-bottom: 2px }
+.indexvalue
+{ background-color: #eeeeff; font-style: italic; padding-right: 10px; 
+   padding-top: 2px; padding-left: 10px; padding-bottom: 2px; 
+   margin-left: 0px; margin-right: 0px; margin-top: 2px; margin-bottom: 2px }
+
+.keyword
+{ color: #008000 }
+.keywordtype
+{ color: #604020 }
+.keywordflow
+{ color: #e08000 }
+.comment
+{ color: #800000 }
+.preprocessor
+{ color: #806020 }
+.stringliteral
+{ color: #002080 }
+.charliteral
+{ color: #008080 }
