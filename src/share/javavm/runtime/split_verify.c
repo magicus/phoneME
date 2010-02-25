@@ -1040,10 +1040,11 @@ Cls_lookupFieldByName(CLASS context, CLASS target, CVMFieldTypeID field);
  * @param index         The index to be accessed
  * @return              The CLASS of the CONSTANT_Class at that index
  */
-/* This only works if the entry is unresolved */
-#define Pol_getClassKey(vPool, index)                       \
-	CVMcpGetClassTypeID(vPool, index)
-
+#define Pol_getClassKey(vPool, index)		\
+    (CVMcpIsResolved(vPool, index)		\
+     ? CVMcbClassName(CVMcpGetCb(vPool, index))	\
+     : CVMcpGetClassTypeID(vPool, index))
+    
 /* For CONSTANT_FieldRef_info, CONSTANT_MethodRef_info, 
  * CONSTANT_InterfaceMethodRef_info 
  */
@@ -1810,7 +1811,7 @@ vIsProtectedAccess(
     CVMConstantPool* constPool = Cls_getPool(thisClass);
     int memberClassIndex =
         CVMcpGetMemberRefClassIdx(constPool, index);
-    CVMClassTypeID tClass = CVMcpGetClassTypeID(constPool, memberClassIndex);
+    CVMClassTypeID tClass = Pol_getClassKey(constPool, memberClassIndex);
     CLASS memberClass;
     int nameTypeIndex;
 
