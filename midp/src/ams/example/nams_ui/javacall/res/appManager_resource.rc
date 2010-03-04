@@ -1,0 +1,155 @@
+/*
+ *
+ *
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
+/*======================================================================*/
+#include "windows.h"                 /* Windows stuff */
+#include "appManager_resource.h"     /* Program-specific stuff */
+#include "commctrl.h"
+
+
+ID_MENU_MAIN MENU
+BEGIN
+    POPUP "Suite"
+    BEGIN
+        MENUITEM "Info...", IDM_SUITE_INFO
+        MENUITEM "Settings...", IDM_SUITE_SETTINGS
+        MENUITEM SEPARATOR
+        MENUITEM "Install...", IDM_SUITE_INSTALL
+        MENUITEM "Remove...", IDM_SUITE_REMOVE
+        MENUITEM "Update...", IDM_SUITE_UPDATE
+        MENUITEM SEPARATOR
+        MENUITEM "Exit", IDM_SUITE_EXIT
+    END
+
+    POPUP "MIDlet"
+    BEGIN
+        MENUITEM "Launch", IDM_MIDLET_START_STOP
+        MENUITEM "To Foreground", IDM_MIDLET_TO_FOREGROUND, GRAYED
+        MENUITEM "Info...", IDM_MIDLET_INFO
+    END
+
+    POPUP "Window"
+    BEGIN
+        MENUITEM "App Manager", IDM_WINDOW_APP_MANAGER, CHECKED
+    END
+
+    POPUP "Help"
+    BEGIN
+        MENUITEM "About...", IDM_HELP_ABOUT
+    END
+END
+
+ID_MENU_POPUP_MIDLET MENU DISCARDABLE
+BEGIN
+    POPUP "MIDletPopupMenu"
+    BEGIN
+        MENUITEM "Launch", IDM_MIDLET_START_STOP
+        MENUITEM "Info...", IDM_MIDLET_INFO
+    END
+END
+
+ID_MENU_POPUP_SUITE MENU DISCARDABLE
+BEGIN
+    POPUP "SuitePopupMenu"
+    BEGIN
+        MENUITEM "Info...", IDM_SUITE_INFO
+        MENUITEM "Remove...", IDM_SUITE_REMOVE
+        MENUITEM "Update", IDM_SUITE_UPDATE
+        MENUITEM "Settings...", IDM_SUITE_SETTINGS
+        MENUITEM "Cut", IDM_SUITE_CUT
+    END
+END
+
+ID_MENU_POPUP_FOLDER MENU DISCARDABLE
+BEGIN
+    POPUP "FolderPopupMenu"
+    BEGIN
+        MENUITEM "Info...", IDM_FOLDER_INFO
+        MENUITEM "Remove All...", IDM_FOLDER_REMOVE_ALL, GRAYED
+        MENUITEM "Install Into...", IDM_FOLDER_INSTALL_INTO
+        MENUITEM "Paste", IDM_FOLDER_PASTE, GRAYED
+    END
+END
+
+IDD_INFO DIALOGEX 0, 0, 240, 320
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    CONTROL "", IDC_TREEVIEW, WC_TREEVIEW, WS_CHILD | WS_BORDER | WS_TABSTOP, 0, 16, 160, 150
+    DEFPUSHBUTTON "OK", IDOK, 140, 170, 15, 15
+END
+
+IDD_PERMISSIONS DIALOGEX 0, 0, 240, 320
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    CONTROL "", IDC_TREEVIEW, WC_TREEVIEW, WS_CHILD | WS_BORDER | WS_TABSTOP | TVS_HASLINES, 0, 16, 160, 150
+    DEFPUSHBUTTON "OK", IDOK, 140, 170, 15, 15
+    PUSHBUTTON "Cancel", IDCANCEL, 0, 170, 15, 15
+END
+
+IDD_INSTALL_PATH DIALOGEX 0, 0, 240, 320
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT "Enter URL to install from:", IDC_STATIC_URL, 2, 10, 240, 10
+    EDITTEXT IDC_EDIT_URL, 0, 20, 160, 30, ES_MULTILINE /*| ES_AUTOHSCROLL*/, WS_EX_ACCEPTFILES
+    LTEXT "or press 'Browse...' to choose a file:", IDC_STATIC_BROWSE, 2, 55, 200, 15
+    PUSHBUTTON "Browse...", IDC_BUTTON_FILE, 120, 55, 40, 15, WS_DISABLED
+    LTEXT "Install to the folder:", IDC_STATIC_FOLDER, 2, 90, 180, 15
+    COMBOBOX IDC_COMBO_FOLDER, 70, 90, 90, 50, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON "OK", IDOK, 140, 170, 15, 15, WS_DISABLED
+    PUSHBUTTON "Cancel", IDCANCEL, 0, 170, 15, 15
+END
+
+IDD_INSTALL_PROGRESS DIALOGEX 0, 0, 240, 320
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT "Total Progress:", IDC_STATIC_TOTAL, 0, 10, 200, 15
+    CONTROL "", IDC_PROGRESS_TOTAL, PROGRESS_CLASS,  WS_CHILD | WS_VISIBLE, 0, 20, 160, 10
+    LTEXT "Operation Progress:", IDC_STATIC_OPERATION, 0, 50, 200, 15
+    CONTROL "", IDC_PROGRESS_OPERATION, PROGRESS_CLASS,  WS_CHILD | WS_VISIBLE, 0, 60, 160, 10
+    LTEXT "Details:", IDC_STATIC_DETAILS, 0, 90, 200, 15
+    EDITTEXT IDC_EDIT_INFO, 0, 100, 160, 40, ES_MULTILINE | ES_READONLY
+    DEFPUSHBUTTON "Cancel", IDCANCEL, 0, 170, 15, 15
+END
+
+
+IDB_DEF_MIDLET_ICON    ICON "midlet1.ico"
+IDB_DEF_MIDLET_ICON_1  ICON "midlet2.ico"
+IDB_DEF_MIDLET_ICON_2  ICON "midlet3.ico"
+IDB_DEF_MIDLET_ICON_3  ICON "midlet4.ico"
+
+IDB_DEF_SUITE_ICON ICON "suite.ico"
+IDB_FOLDER_ICON    ICON "folder.ico"
+
+IDB_MAIN_TOOLBAR_BUTTONS BITMAP "toolbar.bmp"
+
+IDI_PERMISSON_DENY     ICON "permission_deny.ico"
+IDI_PERMISSON_ONESHOT  ICON "permission_oneshot.ico"
+IDI_PERMISSON_SESSION  ICON "permission_session.ico"
+IDI_PERMISSON_ALLOW    ICON "permission_allow.ico"
