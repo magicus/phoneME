@@ -1,0 +1,219 @@
+#
+# @(#)README	1.13 06/10/26
+#
+
+# 
+# Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+# 
+
+Some notes on the MIDlet-on-CDC demo:
+
+The goals of the design:
+========================
+- isolate the CLDC/MIDP programs (MIDlets) from CDC/FP classes and methods that
+  should not be visible to them
+- allow the CLDC/MIDP programs to use CLDC APIs which are not part
+  of CDC/FP (because of version differences), as well as MIDP APIs
+  which are not part of CDC/FP at all
+- to isolate CDC/FP/PP code (applications and applets) from these
+  additional interfaces, allowing one to run multiple threads requiring
+  different APIs at the same time.
+- the sharing of the implementation of java.* package classes.
+
+The goals of this demo:
+======================
+
+This set of classes is a demo of how a MIDP stack and AMS could be implemented
+on CDC/FP, using class loaders.
+This is a very simple example using console input/ output without
+any graphical user interface at all. It also does not show how
+Java Threads and ThreadGroups could be used to manage multiple
+MIDlets or MIDlet suites operating concurrently. It also does not
+show concurrent operation of MIDlets and any CDC/FP/PP code, other
+than the demo AMS.
+
+This demo contains a demo AMS, contained in the classes
+com.sun.javax.microedition.midlet.AMSmain and
+com.sun.javax.microedition.midlet.AMS.
+It also contains some demo MIDP implementation code, including
+javax.microedition.midlet.MIDlet and
+javax.microedition.midlet.MIDletStateChangeException.
+Finally, there are a few small classes which subclass the
+demo MIDlet class provided. They are contained in the midlets directory.
+
+These classes are only provided to show how AMS, class loaders
+and MIDlets can interact.
+
+We also provide a much simpler way to run CLDC applications under
+control of the class loaders provided. THIS IS IN ORDER TO RUN
+THE CLDC TCK. See below.
+
+Relationships between classes, class loaders, and packages.
+==========================================================
+
+- The main body of the demo AMS, com.sun.javax.microedition.midlet.AMSmain
+  is loaded by the application or null class loader, and is a regular CDC/FP
+  program. It has one command-line parameter,  which is the
+  name of the JAR file containing the midlet suite.
+  It also expects a property that names the JAR file containing
+  the rest of the AMS as well as the MIDP implementation. 
+  This property is com.sun.javax.microedition.implementation.
+  AMSmain will start a MIDPImplementationClassLoader and use it
+  to load classes from the named JAR. It then instantiates
+  the rest of the AMS, which is a class called
+  com.sun.javax.microedition.midlet.AMS, and starts it.
+
+- The JAR file loaded by the MIDPImplementationClassLoader,
+  in addition to the rest of the demo AMS, contains
+  classes in package javax.microedition.midlet.*.
+  Note that all code that manipulates anything in this package
+  must also be loaded by the implementation loader.
+
+  The AMS will instantiate an instance of sun.misc.MIDletClassLoader
+  and use it to load MIDlets from the JAR named as the command line
+  argument as mentioned above.
+
+- The demo model is to instantiate one AMS object per midlet suite. This is not
+  necessary of course, and depends on what your desired user experience is.
+
+Java Security
+=============
+
+In order to help prevent MIDlets from doing impermissible operations
+(such as calling System.exit()), you will need to use a Java SecurityManager.
+To make this demo reasonably simple, it uses a standard
+java.lang.SecurityManager. Unfortunately, the default permissions
+described in {java.home}/lib/security/java.policy is applet permissions,
+which is far too strict to allow the demo AMS to operate. In order to
+allow the example AMS code to operate with all permissions, we
+pass in an additional permission file on the command line when
+running the demo AMS. This will work as long as you are using the
+default values for your java.security file for
+policy.allowSystem.Property and policy.expandProperties.
+
+To make your real system work you have a couple of other choices:
+- define a subclass of java.lang.SecurityManager with desired non-standard
+  behavior and instantiate that instead; or
+- install all your AMS and MIDP implementation software in standard places,
+  if necessary modifying the standard java.policy file to accomodate.
+  The source of this file is in <workspace>/src/share/lib/security/java.policy
+
+
+The midlets
+===========
+
+This demo includes a suite of very simple midlets which were used to test
+the limits of the implementation. The midlet JAR file also contains
+a minimal manifest describing them. This is read by the demo AMS.
+The format should be a subset of the one described in the MIDlet
+definition.
+
+How Classloaders implement API hiding
+=====================================
+
+MIDP API hiding is implemented using two special-purpose class loaders:
+sun.misc.MIDletClassLoader and sun.misc.MIDPImplementationClassLoader.
+Their exact parameters are established by sun.misc.MIDPConfig.
+
+These class loaders implement hiding on two levels:
+- references by MIDlets to illegal members of otherwise legal classes
+  are caught by the MIDletClassLoader when the offending class is loaded.
+- references by MIDlets to classes not part of CLDC/MIDP are caught
+  by the MIDPImplementationClassLoader lazily, when the class lookup occurs.
+
+The MIDletClassLoader.
+---------------------
+MIDletClassLoader loads MIDlets from JARs. Most of the work is done by its
+superclass, sun.net.URLClassLoader. It will prevent loading of
+certain packages from the JAR (such as java.lang), as required by
+the MIDP specification. It also prevents the loading of any class
+which contains a reference to a class member such that:
+    - the class is in both CDC/FP and in CLDC/MIDP, but
+    - the particular member is in CDC/FP but not in CLDC/MIDP
+It does this with the assistance of an instance of class sun.misc.MemberFilter.
+The MemberFilter code (much of it native) will inspect a class's constant
+pool during class loading, and report on any illegal member references
+found. The MIDletClassLoader throws a ClassNotFoundException if an illegal
+reference is found. The MemberFilter is also configured by the MIDPConfig
+class.
+
+The MIDletClassLoader also restricts which resources are available
+to the MIDlet: items out of its own JAR which are not .class files.
+
+The MIDPImplementationClassLoader.
+---------------------------------
+The MIDPImplementationClassLoader should be set up as the parent
+class loader of the MIDletClassLoader. The application or null
+class loader should be set up as the parent class loader of the
+MIDPImplementationClassLoader. The MIDPImplementationClassLoader is
+also a subclass of the URLClassLoader.
+
+When the MIDletClassLoader delegates to the MIDPImplementationClassLoader,
+it calls loadClass with an extra flag indicating that a restricted 
+namespace is to be used. 
+
+When the MIDPImplementationClassLoader is called to load a class:
+    - it looks for the requested class in its own JAR. If the class is present
+      it can be loaded successfully.
+    - if this is not a restricted lookup (such as a request from within
+      the implementation JAR itself) then the request is passed to the
+      parent class loader.
+    - but if the restricted flag is set (meaning the request started in a
+      MIDlet), then a list of allowed classes is consulted. If the requested
+      class is not on the allowed list, the lookup fails (ClassNotFoundException
+      will be thrown). If the class is on the allowed list, the request
+      is passed to the parent class loader.
+
+Notes on Classloaders and Sharing
+=================================
+
+If a single MIDPImplementationClassLoader is shared by the whole MIDP
+implementation, global state can be easily shared, and there will be
+no duplication of class representation in memory. This is absolutely the
+preferred method.
+
+If a single MIDletClassLoader is shared by all the members of a MIDlet
+suite, then they can easily share global state, but MIDlet suites will
+not contaminate one another. This is the desired, if not required, behavior.
+
+HOW TO RUN THE DEMOS
+====================
+1) Build a CVM with the CVM_DUAL_STACK=true option.
+3) Parameterize the scripts in this directory using the location of that CVM 
+   and of your java compiler: most of this is in the script SetCvmHome, which
+   is sourced by the other scripts.
+4) Compile the demo source files and build JAR files using the Build script.
+5) Run the demo AMS using RunMidlet. It will repeatedly prompt you for a small number
+   to choose which demo midlet to run.
+6) Each of the demo midlets also has a static "main" method, so it can be run
+   as a stand-alone app. This this only to demonstrate that some of them
+   behave differently when running this way. They can be run using the
+   RunApp script.
+
+WORKING WITH THE CLDC TCK
+=========================
+The CLDC TCK is structured as one or more 'main' programs.
+The application com.sun.javax.microedition.CLDCmain is used to
+parse parameters, construct class loaders, and invoke the named
+class' main method with a list of parameters. It is derived from
+AMSmain.
+
+The native application called "jam" is a client-side program that accepts
+commands over an HTTP connection and repeatedly invokes a VM. It can
+be used to invoke RunCldc. The script BuildJam will help you build it.
+The script RunJam will help you run it.
+
+The driver for the TCK is javatest. It is run on a server, not necessarily
+on your target device. By default it will open a socket at port 8080.
+You want jam to connect to this port and accept commands.
+
+CHANGES
+========
+- added the mechanism, including "jam" for running the CLDC TCK.
+- centralized script localization in a single file included by the
+  others. It is called SetCvmHome
+- moved midlet.jar to midlets/midlet.jar. The former location was
+  causing some difficulty on systems employing JDK 1.4-style dynamic
+  permissions, which were granting too many permissions to any jar
+  file in this directory (as per AMSPolicyFile). The other alternative
+  would be to make the Policy file more explicit.
