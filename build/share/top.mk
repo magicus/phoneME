@@ -262,7 +262,7 @@
 #     UnsupportedOperationException. See the description of CVM_SERIALIZATION
 #     for more information.
 #
-#     NOTE: setting this option true will result in a VM that is not
+#     NOTE: setting this option false will result in a VM that is not
 #     compliant with the J2ME CDC and Foundation specifications.
 #
 # CVM_SERIALIZATION default: true
@@ -273,7 +273,7 @@
 #     depends on reflection, so if CVM_SERIALIZATION is true, CVM_REFLECT will
 #     be set to true as well.
 #
-#     NOTE: setting this option true will result in a vm that is not
+#     NOTE: setting this option false will result in a vm that is not
 #     compliant with the J2ME CDC and Foundation specifications.
 #
 # CVM_TRACE_JIT default: $(CVM_TRACE)
