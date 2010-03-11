@@ -1,0 +1,93 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Automation API MVM
+#
+######################################################################
+
+AUTOMATION_MVM_NAME = mvm
+AUTOMATION_MVM_DIR = $(SUBSYSTEM_AUTOMATION_DIR)/$(AUTOMATION_MVM_NAME)
+
+# Javadoc source path
+SUBSYSTEM_AUTOMATION_SOURCEPATH += $(AUTOMATION_DIR_MVM)/classes
+
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDlet.java \
+	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDletDescriptor.java \
+	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoSuiteStorage.java \
+	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDletForegroundState.java \
+	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoMIDletLifeCycleState.java \
+	$(AUTOMATION_MVM_DIR)/classes/com/sun/midp/automation/AutoSuiteDescriptor.java \
+	\
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoSuiteStorageImpl.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoSuiteDescriptorImpl.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoMIDletImpl.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoMIDletInfo.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoMIDletInfoList.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoMIDletDescriptorImpl.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoMIDletStateController.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoForegroundStateController.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoExternalSuiteDescriptorImpl.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoInternalSuiteDescriptorImpl.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/installer/AutoGetInstallerTunnel.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/automation/AutoStateTracker.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/main/AutoDisplayController.java \
+	$(AUTOMATION_MVM_DIR)/reference/classes/com/sun/midp/main/AutoDisplayControllerListener.java 
+
+# I3test files for the automation subsystem
+#
+# Note that the test case classes must be named to begin with 'Test'.
+# The following i3tests have hardcoded references to the sample midlets.
+# If you want to try it, change these references to the valid locations
+# and uncomment the following block.
+
+ifeq ($(USE_I3_TEST), true)
+#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
+#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES += \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestHardwareEventListening.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestPenEventSimulation.java \
+#$(AUTOMATION_MVM_DIR)/reference/i3test/com/sun/midp/automation/TestKeyEventSimulation.java
+endif
+
+ifeq ($(USE_AUTOMATION_EXAMPLE), true)
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/player/Player.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Expression.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Constant.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Variable.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Instructions.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/ScriptExtension.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Instructions.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Routines.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/ScriptParser.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/ScriptDebugger.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/Script.java \
+	$(AUTOMATION_MVM_DIR)/example/classes/com/sun/midp/automation/example/scripting/runner/ScriptWrapper.java
+endif
+
