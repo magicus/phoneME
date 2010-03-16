@@ -178,7 +178,7 @@ public abstract class GCFPermission extends Permission {
 
     // Handle empty host names - server connections
     if ("".equals(thisHost) || "".equals(thatHost)) {
-      return equal;
+      return true;
     }
 
     if (thisHost.startsWith("*")) {
