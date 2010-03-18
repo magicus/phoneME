@@ -1,0 +1,19 @@
+# 
+# @(#)deltaBlueItems.txt	1.6 06/10/25
+#
+#  Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+#
+
+java.util.Vector.elementAt(I)
+COM.sun.labs.kanban.DeltaBlue.BinaryConstraint
+COM.sun.labs.kanban.DeltaBlue.Constraint
+COM.sun.labs.kanban.DeltaBlue.DeltaBlue
+COM.sun.labs.kanban.DeltaBlue.EditConstraint
+COM.sun.labs.kanban.DeltaBlue.EqualityConstraint
+COM.sun.labs.kanban.DeltaBlue.Plan
+COM.sun.labs.kanban.DeltaBlue.Planner
+COM.sun.labs.kanban.DeltaBlue.ScaleConstraint
+COM.sun.labs.kanban.DeltaBlue.StayConstraint
+COM.sun.labs.kanban.DeltaBlue.Strength
+COM.sun.labs.kanban.DeltaBlue.UnaryConstraint
+COM.sun.labs.kanban.DeltaBlue.Variable
