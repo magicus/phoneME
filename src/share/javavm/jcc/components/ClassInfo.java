@@ -665,8 +665,7 @@ class ClassInfo
         // now try to resolve miranda methods.
         MethodInfo thisMethodtable[] = null;
         MethodInfo thisMethods[] = null;
-        if ((this.access&Const.ACC_ABSTRACT) != 0 &&
-            (this.access&Const.ACC_INTERFACE) == 0 ) {
+        if ((this.access&Const.ACC_ABSTRACT) != 0 ) {
             int i;
             int methodsnumber = methods.length;
             for (i = 0; i < interfaces.length; i++) {
