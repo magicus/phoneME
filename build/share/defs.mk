@@ -103,15 +103,6 @@ ifeq ($(HOST_OS),)
 $(error Invalid host. "$(UNAME_OS)" not recognized.)
 endif
 
-# locate the tools component
-export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
-ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
-$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
-endif
-
-# include tools component makefile. Don't do this until after HOST_OS is setup
-include $(TOOLS_DIR)/tools.gmk
-
 TOOL_WHICH	?= PATH="$(PATH)" which "$(1)"
 
 #
@@ -484,6 +475,16 @@ CVM_BUILD_TOP_ABS := $(call ABSPATH,$(CVM_BUILD_TOP))
 CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
 PROFILE_DIR       ?= $(CDC_DIR)
+
+# locate the tools component
+export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
+ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
+$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
+endif
+
+# include tools component makefile. Don't do this until after HOST_OS is setup
+TOOLS_OUTPUT_DIR=$(CVM_BUILD_TOP)/tools.output
+include $(TOOLS_DIR)/tools.gmk
 
 # Optional Package names
 ifneq ($(strip $(OPT_PKGS)),)
