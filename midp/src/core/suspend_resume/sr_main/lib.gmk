@@ -1,0 +1,75 @@
+#
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+SR_MAIN_LIB = sr_main
+LIB_SET += $(SR_MAIN_LIB)
+
+SR_MAIN_DIR = $(SUSPEND_RESUME_DIR)/$(SR_MAIN_LIB)
+
+SUBSYSTEM_SUSPEND_RESUME_EXTRA_INCLUDES += \
+    -I$(SR_MAIN_DIR)/include
+
+vpath % $(SR_MAIN_DIR)/default/native
+
+SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
+    suspend_resume.c suspend_resume_lcdui.c
+
+SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/Subsystem.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/AbstractSubsystem.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendSystem.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendSystemListener.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendDependency.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/StateTransitionException.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendTimer.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/NetworkSubsystem.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendResumeUI.java
+
+ifeq ($(USE_I3_TEST), true)
+ifneq ($(TARGET_PLATFORM), javacall)
+
+    vpath % $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend
+    SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
+        native.c
+
+    SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
+        $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend/test/TestUtil.java
+
+    SUBSYSTEM_SUSPEND_RESUME_I3TEST_JAVA_FILES += \
+        $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend/TestDummy.java \
+        $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend/TestConnectionSuspend.java
+endif
+endif
+
