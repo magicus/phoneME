@@ -114,7 +114,7 @@
  */
 #define CVMJITcbufEmit_n(con, instr, size, castType)			\
 {									\
-    if ((con)->curPhysicalPC >= (con)->codeBufEnd) {			\
+    if (((con)->curPhysicalPC + size) > (con)->codeBufEnd) {            \
         /* Fail to compile. We will retry with a larger buffer */	\
         CVMJITerror((con), CODEBUFFER_TOO_SMALL,			\
                     "Estimated code buffer too small");			\
@@ -139,7 +139,7 @@
 #ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
 #define CVMJITcbufEmitPC_n(con, pc, instr, size, castType)             \
 {                                                                      \
-   if (CVMJITcbufLogicalToPhysical(con, pc) >= (con)->codeBufEnd) {    \
+    if ((CVMJITcbufLogicalToPhysical(con, pc) + size) > (con)->codeBufEnd) { \
        CVMJITerror((con), CODEBUFFER_TOO_SMALL,                        \
                   "Estimated code buffer too small");                  \
    }                                                                   \

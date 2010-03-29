@@ -90,6 +90,7 @@ getWideString(UINT codePage, char* str, int len, int *pwlen)
         return NULL;
     }
     if (MultiByteToWideChar(codePage, 0, str, len, wstr, wlen) == 0) {
+        free(wstr);
         UTF_ERROR(("Can't get WIDE string"));
         return NULL;
     }

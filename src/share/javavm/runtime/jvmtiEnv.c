@@ -1314,9 +1314,8 @@ jvmti_SuspendThread(jvmtiEnv* jvmtienv,
 	    if (CVMeeThreadIsSuspended(targetEE)) {
 		err = JVMTI_ERROR_THREAD_SUSPENDED;
 	    } else {
-                CVMlocksForThreadSuspendRelease(ee);
 		JVM_SuspendThread(env, (jobject)thread);
-		return JVMTI_ERROR_NONE;
+		err = JVMTI_ERROR_NONE;
 	    }
 	}
 	CVMlocksForThreadSuspendRelease(ee);

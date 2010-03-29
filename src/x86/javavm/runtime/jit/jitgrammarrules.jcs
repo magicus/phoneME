@@ -1592,7 +1592,7 @@ effect:  VENDINLINING : 0 : : : : {
     endInlining(con, $$);
 };
 
-regObj: EXCEPTION_OBJECT : 0 : SET_AVOID($$, ARG1); : : : {
+regObj: EXCEPTION_OBJECT : 0 : : : : {
 	/* it appears in ARG1, so we initially bind it to ARG1. */
 	CVMRMResource* dest =
 	    CVMRMgetResourceSpecific(CVMRM_INT_REGS(con), CVMCPU_ARG1_REG, 1);
@@ -5060,10 +5060,8 @@ relinquishIntrinsicArgs(CVMJITCompilationContext *con,
     }
 }
 
-#if defined(_WIN32) || defined(WIN32)
 static void
 extendSmallTypeTo32Bits(CVMJITCompilationContext *con, int reg, char sig);
-#endif 
 
 static void
 invokeIntrinsicMethod(CVMJITCompilationContext *con,
@@ -5225,7 +5223,11 @@ invokeIntrinsicMethod(CVMJITCompilationContext *con,
                 dest = CVMRMgetResourceSpecific(CVMRM_INT_REGS(con),
 						CVMCPU_RESULT1_REG,
                                                 resultWords);
-#if defined(_WIN32) || defined(WIN32)
+                /* This code used to be just emitted for MS compiler. 
+                 * However, newer gcc's also can put 8/16 bit return 
+                 * values into 8/16 bit register so we need to  
+                 * extend correctly. 
+                 */ 
                 /* The microsoft compiler only uses as little register
                  * space (al, ax, eax, edx:eax) as necessary to store
                  * the return value.  So we have to pad types less
@@ -5233,7 +5235,6 @@ invokeIntrinsicMethod(CVMJITCompilationContext *con,
                  */
 		extendSmallTypeTo32Bits(con, CVMRMgetRegisterNumber(dest), 
 					config->methodSignature[strlen(config->methodSignature)-1]);
-#endif          
                 }
                 CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con),
 					    dest, intrinsicNode);
@@ -7568,7 +7569,6 @@ inlineNewArray(CVMJITCompilationContext *con)
    }
 #endif /* CVM_JIT_INLINE_NEWARRAY */
 
-#if defined(_WIN32) || defined(WIN32)
 static void
 extendSmallTypeTo32Bits(CVMJITCompilationContext *con, int reg, char sig)
 {
@@ -7581,7 +7581,6 @@ extendSmallTypeTo32Bits(CVMJITCompilationContext *con, int reg, char sig)
    else if( sig == CVM_SIGNATURE_CHAR)
       CVMX86movzxw_reg_reg(con,reg,reg);
 }
-#endif /* _WIN32 */
 
 #ifdef CVM_JIT_INLINE_CHECKINIT
 static void
@@ -7635,12 +7634,12 @@ inlineCheckInit(CVMJITCompilationContext *con, CVMClassBlock *cb)
 //                 registers, this information is inherited to the children from the
 //                 root node. In this case: arguments are expected in EAX and ECX.
 // No specific version for ICONST_32 provided because of bytewise emitting.
-reg32: IDIV32  reg32 reg32 : 40 : SET_AVOID($$, (1U << CVMX86_EDX)|(1U << CVMX86_ECX)); : 
+reg32: IDIV32  reg32 reg32 : 40 : : 
   SET_TARGET2($$, (1U << CVMX86_EAX), (1U << CVMX86_ECX)); : : {
   doIDivOrIRem(con, CVMCPU_DIV_OPCODE, $$);
 };
 
-reg32: IREM32  reg32 reg32 : 40 : SET_AVOID($$, (1U<<CVMX86_EAX)|(1U<<CVMX86_ECX)); : 
+reg32: IREM32  reg32 reg32 : 40 : : 
   SET_TARGET2($$, (1U << CVMX86_EAX), (1U << CVMX86_ECX)); : : {
   doIDivOrIRem(con, CVMCPU_REM_OPCODE, $$);
 };

@@ -198,8 +198,8 @@ ENTRY(CVMJITfixupFrames)
 #define CFP	A2  /* holds frame */
 #define PREV    A3  /* killed ...see FIXUP_FRAMES_0|1|2|3*/
 #define PREVb   A3b /* killed ...see FIXUP_FRAMES_0|1|2|3*/
-	movl	A3, -4(%esp)					# A3 == ebx is callee saved after c convention
-	movl	4(%esp), CFP
+	pushl   A3		# A3 == ebx is callee saved after c convention
+	movl	8(%esp), CFP
 	movl	OFFSET_CVMFrame_prevX(CFP), PREV
 CVMJITfixupFrames_recurse:
 	movb	$CONSTANT_CVM_FRAMETYPE_COMPILED, OFFSET_CVMFrame_type(CFP)
@@ -209,7 +209,7 @@ CVMJITfixupFrames_recurse:
 	movl	OFFSET_CVMFrame_prevX(CFP), PREV
 	testb	$CONSTANT_CVM_FRAME_MASK_ALL, PREVb
 	je	CVMJITfixupFrames_recurse
-	movl	-4(%esp), A3
+	popl    A3
 	retl
 #undef CFP
 #undef PREV

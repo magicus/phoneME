@@ -276,6 +276,10 @@ CVMJITcbufCommit(CVMJITCompilationContext* con)
     cbufEnd = CVMJITcbufAlignAddress(con->curPhysicalPC);
     bufSize = cbufEnd - cbuf;    
 
+    /*
+     * Assert that the code did not overrun the actual end of the code buffer
+     */
+    CVMassert(((CVMInt32)(origBufSize - bufSize)) >= 0);
     CVMassert(CVMsysMutexIAmOwner(con->ee, &CVMglobals.jitLock));
     
     /* If there is enough extra at the end of this buffer, then free it */

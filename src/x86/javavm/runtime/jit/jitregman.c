@@ -1848,6 +1848,10 @@ CVMRMpinResource0(
 	pref, strict, rp->nregs);
     CVMassert(regNo != -1);
     pinToRegister(con, rp, regNo);
+#ifdef CVM_TRACE_JIT
+    rp->name = NULL;
+    CVMJITresetSymbolName(con->compilationContext);
+#endif
     reloadRegister(cc, con, rp);
     CVMJITpushCodegenComment(cc, comment);
 }
