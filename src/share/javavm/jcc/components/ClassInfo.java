@@ -549,7 +549,7 @@ class ClassInfo
     //
     // Jdk 1.4 javac does not insert miranda methods
     // into a class if the class is abstract and does not 
-    // declare all the methods of its direct superinterfaces,
+    // declare all the methods of its superinterfaces,
     // like older versions of javac. So we are doing it.
     public
     void buildMethodtable() {
@@ -665,11 +665,15 @@ class ClassInfo
         // now try to resolve miranda methods.
         MethodInfo thisMethodtable[] = null;
         MethodInfo thisMethods[] = null;
-        if ((this.access&Const.ACC_ABSTRACT) != 0 ) {
+        if ((this.access&Const.ACC_ABSTRACT) != 0 &&
+            (this.access&Const.ACC_INTERFACE) == 0) {
             int i;
             int methodsnumber = methods.length;
-            for (i = 0; i < interfaces.length; i++) {
-                 ClassInfo superinterface = interfaces[i].find();
+            if (allInterfaces == null) {
+		findAllInterfaces();
+            }
+            for (i = 0; i < allInterfaces.size(); i++) {
+		 ClassInfo superinterface = (ClassInfo)allInterfaces.get(i);
                  superinterface.buildMethodtable();
 
                  MethodInfo interfaceMethodtable[] = superinterface.methodtable;
