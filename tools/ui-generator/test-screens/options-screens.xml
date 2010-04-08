@@ -1,0 +1,117 @@
+<?xml version="1.0" ?>
+<!--
+Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+
+<screens>
+    <screen name="SimpleOptionsScreen">
+        <options>
+            <option id="ID1">One</option>
+            <option id="ID2">%two%</option>
+            <option id="ID3">Hey,\nthis is N3 option after all!</option>
+        </options>
+    </screen>
+
+    <screen name="LargeLabelOptionsScreen">
+        <options>
+            <label>Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+\n
+This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License version
+ 2 only, as published by the Free Software Foundation.
+\n
+This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ General Public License version 2 for more details (a copy is
+ included at /legal/license.txt).
+\n
+You should have received a copy of the GNU General Public License
+ version 2 along with this work; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ 02110-1301 USA
+\n
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ Clara, CA 95054 or visit www.sun.com if you need additional
+ information or have any questions.</label>
+            <option id="ID1">One</option>
+            <option id="ID2">Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+\n
+This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License version
+ 2 only, as published by the Free Software Foundation.
+\n
+This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ General Public License version 2 for more details (a copy is
+ included at /legal/license.txt).
+\n
+You should have received a copy of the GNU General Public License
+ version 2 along with this work; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ 02110-1301 USA
+\n
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ Clara, CA 95054 or visit www.sun.com if you need additional
+ information or have any questions.</option>
+        </options>
+    </screen>
+
+    <screen name="MultipleOptionsScreen">
+        <options>
+            <label>Options N1</label>
+            <option id="ID1">One</option>
+            <option id="ID2">%two%</option>
+            <option id="ID3">Hey,\nthis is N3 option after all!</option>
+        </options>
+        <options>
+            <option id="ID4">The quick brown fox jumps over the lazy dog</option>
+            <option id="ID5">In vino veritas!</option>
+        </options>
+    </screen>
+
+    <screen name="FullscreenOptionsScreen">
+        <options style="fullscreen">
+            <label>Options N1\nSecond line!</label>
+            <option id="ID1">One</option>
+            <option id="ID2">%two%</option>
+            <option id="ID3">Hey,\nthis is N3 option after all!</option>
+        </options>
+    </screen>
+
+    <screen name="DynamicOptionsScreen">
+        <options>
+            <label>Dynamic Options!</label>
+            <option id="ID1">One</option>
+            <dynamic-option id="IDD1"/>
+            <option id="ID2">%two%</option>
+            <option id="ID3">Hey,\nthis is N3 option after all!</option>
+            <dynamic-option id="IDD2"/>
+            <dynamic-option id="IDD3"/>
+        </options>
+    </screen>
+
+</screens>
