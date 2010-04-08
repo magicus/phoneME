@@ -1,0 +1,63 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# compiler specific designs
+#
+######################################################################
+
+CC=cl
+AR=lib -NOLOGO
+CPP=cl
+LD=link
+
+# Flag descriptions:
+#
+# /WX     treats all compiler warnings as errors
+# /c      compile w/o linking
+# /W3     warnings level
+# -Zi     produces a program database (PDB)
+# -Od     disables optimization
+# -MDd    debug on
+#
+
+
+ifeq ($(USE_DEBUG), true)
+DEBUG_CFLAGS= -Zi -Od
+VC_DEBUG_POSTFIX=d
+LD_FLAGS= -debug
+else
+LD_FLAGS=
+endif
+CFLAGS = -WX -c -W3 -nologo -MD$(VC_DEBUG_POSTFIX) $(DEBUG_CFLAGS)
+
+ifeq ($(USE_VS2005), true)
+CFLAGS += -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -wd4819
+endif
+
+CC_OUTPUT=-Fo
+AR_OUTPUT=-OUT:
+LD_OUTPUT=-OUT:
+
+LIB_EXT=.lib
