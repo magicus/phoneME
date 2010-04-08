@@ -1,0 +1,117 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitfloatgrammarrules.jcs	1.7 06/10/10
+//
+//
+// Optional floating-point grammar rules for
+// RISC processors having floating-point hardware.
+// 
+// Unfortunately, these operations are not done uniformly
+// between processors, so we must place them in processor-specific
+// files.
+
+//
+// To move values between float and int registers, PowerPC must
+// move through the temp area. Some processor can do better.
+//
+
+%{
+static void
+moveIntToFPRegs(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest;
+    /*
+     * For the time being, assume we don't know how
+     * to move int-type values. It is a little tricky
+     */
+	CVMassert( (src->size == 2)
+		||  (CVMJITgetOpcode(thisNode) == 
+		    (CVMJIT_CONST_JAVA_NUMERIC32 << CVMJIT_SHIFT_OPCODE))
+		|| (CVMJITgetTypeTag(thisNode) == CVM_TYPEID_FLOAT)
+		|| (CVMJITgetTypeTag(thisNode) == CVMJIT_TYPEID_32BITS));
+
+    dest = CVMRMcloneResource(CVMRM_INT_REGS(con), src,
+			      CVMRM_FP_REGS(con), target, avoid);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+    /*
+     * unpin without occupying
+     * to occupy would cause big trouble if the thing is an
+     * IDENT.
+     */
+    CVMRMunpinResource(CVMRM_FP_REGS(con), dest);
+    pushResource(con, dest);
+}
+
+static void
+moveFPToIntRegs(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest;
+    /*
+     * For the time being, assume we don't know how
+     * to move int-type values. It is a little tricky
+     */
+	CVMassert( (src->size == 2)
+		||  (CVMJITgetOpcode(thisNode) == 
+		    (CVMJIT_CONST_JAVA_NUMERIC32 << CVMJIT_SHIFT_OPCODE))
+		|| (CVMJITgetTypeTag(thisNode) == CVM_TYPEID_FLOAT));
+    /* will cloneResource pin or not? Yes */
+    dest = CVMRMcloneResource(CVMRM_FP_REGS(con), src, CVMRM_INT_REGS(con),
+			      target, avoid);
+    CVMRMrelinquishResource(CVMRM_FP_REGS(con), src);
+    /*
+     * unpin without occupying
+     * to occupy would cause big trouble if the thing is an
+     * FIDENT.
+     */
+    CVMRMunpinResource(CVMRM_INT_REGS(con), dest);
+    pushResource(con, dest);
+}
+%}
+
+reg32: freg32 : 20  : : : : {
+	moveFPToIntRegs(con, $$, GET_REGISTER_GOALS);
+    };
+
+freg32: reg32 : 20  : : : : {
+	moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+    };
+
+reg64: freg64 : 20  : : : : {
+	moveFPToIntRegs(con, $$, GET_REGISTER_GOALS);
+    };
+
+freg64: reg64 : 20  : : : : {
+	moveIntToFPRegs(con, $$, GET_FLOAT_REGISTER_GOALS);
+    };
+
