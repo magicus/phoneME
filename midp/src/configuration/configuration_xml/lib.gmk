@@ -1,0 +1,449 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+# There are ALWAYS 2 parts for config: properties and constants
+######################################################################
+
+
+INT_SUBSYSTEM_CONFIGURATION_NAME = configuration_xml
+LIB_SET += $(INT_SUBSYSTEM_CONFIGURATION_NAME)
+
+# The name of the file containing names of configuration xml files
+# (all names listed there are relative to this file directory)
+SUBSYSTEM_CONFIGURATION_FILES_LIST = files.lst
+
+SUBSYSTEM_CONFIGURATION_DEVICE_FILES_LIST = files_$(TARGET_DEVICE).lst
+
+
+# directory containing XSL files used to transform XML files 
+# into .c, .h, and .java files
+INT_XSL_DIR = \
+	$(CONFIGURATOR_DIR)/xsl
+
+# directory containing XML files listed in SUBSYSTEM_CONFIGURATION_FILES_LIST 
+INT_XML_DIR = \
+	$(SUBSYSTEM_CONFIG_DIR)/$(INT_SUBSYSTEM_CONFIGURATION_NAME)/$(PLATFORM)
+
+# directory containing XML files common for all platfroms
+INT_COMMON_XML_DIR = \
+	$(SUBSYSTEM_CONFIG_DIR)/$(INT_SUBSYSTEM_CONFIGURATION_NAME)/share
+
+# directory containing XML files common for all platfroms
+PROJECT_INT_COMMON_XML_DIR = \
+	$(PROJECT_SUBSYSTEM_CONFIG_DIR)/$(INT_SUBSYSTEM_CONFIGURATION_NAME)/share
+
+# path to results of merging passes 
+INT_MERGED_XML_FILE_PASS1 = $(GENERATED_DIR)/merged_pass1.xml
+INT_MERGED_XML_FILE_PASS2 = $(GENERATED_DIR)/merged_pass2.xml
+INT_MERGED_XML_FILE_PASS3 = $(GENERATED_DIR)/merged_pass3.xml
+INT_MERGED_XML_FILE = $(GENERATED_DIR)/merged.xml
+
+# path to file with list of packages to generate
+INT_PACKAGES_LIST_FILE = $(GENERATED_DIR)/packages.lst
+
+# path to file with list of non romized Chameleon images to generate
+INT_CHAMROM_LIST_FILE = $(GENERATED_DIR)/chamrom.lst
+
+# path to XML files list
+INT_FILES_LIST = $(INT_XML_DIR)/$(SUBSYSTEM_CONFIGURATION_FILES_LIST)
+INT_DEVICE_FILES_LIST = $(wildcard $(INT_XML_DIR)/$(SUBSYSTEM_CONFIGURATION_DEVICE_FILES_LIST))
+
+# Configurator input files from list file
+INT_XML_FILES_BASE_NAMES := $(shell grep -v ^\# $(INT_FILES_LIST))
+
+ifneq ($(INT_DEVICE_FILES_LIST), )
+INT_XML_FILES_BASE_NAMES += \
+        $(shell grep -v ^\# $(INT_DEVICE_FILES_LIST))
+endif
+
+INT_XML_FILES := $(addprefix $(INT_XML_DIR)/, $(INT_XML_FILES_BASE_NAMES))
+
+# Input files common for all platfroms
+INT_XML_FILES += \
+	$(INT_COMMON_XML_DIR)/constants.xml \
+	$(INT_COMMON_XML_DIR)/i18n_constants.xml \
+	$(INT_COMMON_XML_DIR)/l10n/en-US.xml \
+	$(INT_COMMON_XML_DIR)/chameleon/skin_constants.xml \
+	$(INT_COMMON_XML_DIR)/suitestore_constants.xml \
+	$(INT_COMMON_XML_DIR)/alert_type_constants.xml
+
+ifeq ($(TARGET_VM), cdc_vm)
+INT_XML_FILES += \
+    $(INT_COMMON_XML_DIR)/ams_cdc/storage_constants.xml
+else
+INT_XML_FILES += \
+    $(INT_COMMON_XML_DIR)/ams_cldc/storage_constants.xml
+endif
+
+# Project specific xml files
+INT_XML_FILES += \
+	$(PROJECT_INT_COMMON_XML_DIR)/l10n/project_en-US.xml
+
+# Optimization options input files
+ifeq ($(USE_MONET), true)
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/monet_enabled.xml
+else
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/monet_disabled.xml
+endif
+
+# Optimization options input files
+ifeq ($(USE_VERIFY_ONCE), true)
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/verify_once_enabled.xml
+else
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/verify_once_disabled.xml
+endif
+
+# Extended MIDlet attributes files
+ifeq ($(USE_EXTENDED_ATTRIBUTES), true)
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/extended_attrs_enabled.xml
+else
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/extended_attrs_disabled.xml
+endif
+
+# Chech finger touch support
+ ifeq ($(USE_FINGER_TOUCH), true)
+ INT_XML_FILES += $(INT_COMMON_XML_DIR)/finger_touch_enabled.xml
+ else
+ INT_XML_FILES += $(INT_COMMON_XML_DIR)/finger_touch_disabled.xml
+ endif
+
+# Resource policy input file
+ifeq ($(USE_FIXED), true)
+INT_XML_FILES += $(INT_XML_DIR)/constants_fixed.xml
+else
+INT_XML_FILES += $(INT_XML_DIR)/constants_open.xml
+endif
+
+# Over rides from PROJECT_MIDP_DIR
+ifeq ($(USE_MIDP_COM), true)
+INT_XML_FILES += $(PROJECT_MIDP_DIR)/src/configuration/configuration_xml/share/properties.xml
+else
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/properties.xml 
+endif
+
+SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE = $(INT_XML_DIR)/skin.xml
+
+# Skin description input file
+INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE)
+
+ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
+SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE = $(INT_XML_DIR)/keyboard_skin.xml
+
+# Skin description input file
+INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_KEYBOARD_SKIN_XML_FILE)
+endif
+
+# Command for invoking transformer
+INT_INVOKE_TRANSFORMER = \
+	$(JAVA_CMD) -jar $(CONFIGURATOR_JAR_FILE)
+
+# Command for invoking localized strings generator
+INT_INVOKE_L10N_GENERATOR = \
+	$(JAVA_CMD) -jar $(L10N_GENERATOR_JAR_FILE)
+
+
+# Generating configuration consists of following steps:
+# - Merge all XML files into single XML file
+# - Obtain packages names from merged XML file
+
+# All Configurator's input files
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+	$(INT_XML_FILES) \
+	$(PERMISSION_EXTENSIONS_LIST)
+    
+# All Configurator's input files with path fixed for Win32 build
+INT_INPUT_FILES_FIXED = \
+	$(shell $(call fixcygpath, $(SUBSYSTEM_CONFIGURATION_INPUT_FILES)))
+
+# Command to generate Configurator XML file with constants
+# overrides from the list specified on command line
+ifdef CONFIGURATION_OVERRIDE
+GENERATE_OVERRIDES_FILE = \
+	$(INT_INVOKE_TRANSFORMER) \
+	-xml $(INT_XSL_DIR)/cldc/generateOverrides.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/generateOverrides.xsl \
+	-params constantsList '$(CONFIGURATION_OVERRIDE)' \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/overrides.xml)`
+
+override CONFIGURATION_OVERRIDE_FILE += $(GENERATED_DIR)/overrides.xml	
+else
+GENERATE_OVERRIDES_FILE = 
+endif
+
+# - merge all Configurator input files into one
+# - gnerate list of the packages 
+# - generate constant's auto values
+# - override specified constant's values with user supplied ones
+define merge_configurations
+	@echo " ... merging configurations"
+	
+	@$(GENERATE_OVERRIDES_FILE)
+	
+	@$(foreach overrideFile, $(CONFIGURATION_OVERRIDE_FILE),\
+        if [ ! -f `$(call fixcygpath, $(overrideFile))` ]; then \
+            echo "ERROR: CONFIGURATION_OVERRIDE_FILE: file $(overrideFile) does not exist"; \
+			echo "(Did you forget to specify absolute path to the file?)"; \
+            exit -1; \
+        fi
+	)
+
+	@$(INT_INVOKE_TRANSFORMER) \
+	$(foreach inputFile, $(INT_INPUT_FILES_FIXED),\
+		-validate \
+		-xml '$(inputFile)' \
+		-xsl $(INT_XSL_DIR)/share/validate.xsl \
+		-out '') \
+	\
+	-xml $(INT_COMMON_XML_DIR)/empty.xml \
+	-xsl $(INT_XSL_DIR)/share/merge_pass1.xsl \
+	-params filesList '$(INT_INPUT_FILES_FIXED)' \
+	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS1))` \
+	\
+	-xml `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS1))` \
+	-xsl $(INT_XSL_DIR)/share/merge_pass2.xsl \
+	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS2))` \
+	\
+	-xml `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS2))` \
+	-xsl $(INT_XSL_DIR)/share/merge_pass3.xsl \
+	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS3))` \
+	\
+	-xml `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS3))` \
+	-xsl $(INT_XSL_DIR)/share/merge_pass4.xsl \
+	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE))` \
+	\
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/listPackages.xsl \
+	-out `$(call fixcygpath, $(INT_PACKAGES_LIST_FILE))` \
+	\
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/listRomizedChamImages.xsl \
+	-out `$(call fixcygpath, $(INT_CHAMROM_LIST_FILE))` \
+	\
+	$(foreach overrideFile, $(CONFIGURATION_OVERRIDE_FILE),\
+		-xml $(INT_MERGED_XML_FILE) \
+		-xsl $(INT_XSL_DIR)/cldc/override.xsl \
+		-params overrideFile `$(call fixcygpath, $(overrideFile))` \
+		-out `$(call fixcygpath, $(INT_MERGED_XML_FILE))`)
+endef
+
+
+# Then apply number of XSL transformation to merged XML file:
+# - Generate .h file with constants
+# - Generate .java files with constants
+# - Generate .config files with properties
+# Then if USE_STATIC_PROPERTIES is set to 'true', apply additional 
+# transformations: 
+# - Generate .h file with properties
+# After that
+# - Append names of generated .java files with constants to
+#	$(GENERATED_JAVA_LIST) file
+
+# transformation for generating .h file with constants
+GENERATE_CONSTANTS_H = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/constantsNative.xsl \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_constants_data.h)`
+
+# transformation for generating .c file with String constants
+GENERATE_CONSTANTS_C = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/stringConstantsNative.xsl \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_constants_data.c)`
+
+# transformation for generating Java files with constants
+INT_PACKAGES_NAMES = $(shell cat $(INT_PACKAGES_LIST_FILE))
+GENERATE_CONSTANTS_JAVA = \
+	$(foreach package,$(INT_PACKAGES_NAMES),\
+		-xml $(INT_MERGED_XML_FILE) \
+		-xsl $(INT_XSL_DIR)/cldc/constantsJava.xsl \
+		-params packageName $(package) \
+		-out `$(call fixcygpath, $(GENERATED_DIR)/classes/$(subst .,/,$(package)).java)`)
+
+# transformation for generating .h file with property callouts
+GENERATE_PROPERTIES_CALLOUTS = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/propertyCallouts.xsl \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_property_callouts.h)`
+
+ifeq ($(USE_JAVA_VIRTUAL_KEYBOARD), true)
+# transformation for generating .h file with property callouts
+GENERATE_KEYBOARDS_SOURCE = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/keyboardJava.xsl \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java)`
+
+
+ifndef GENERATE_KEYBOARDS_SOURCE
+  GENERATE_KEYBOARDS_SOURCE = $(GENERATED_DIR)/classes/com/sun/midp/chameleon/keyboards/Keyboards.java
+endif
+endif
+
+ifeq ($(USE_STATIC_PROPERTIES), true)
+# transformation for generating .c file with properties 
+GENERATE_PROPERTIES_STATIC = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesNative.xsl \
+	-params arrayNamePrefix midp \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/properties_static_data.c)`
+else
+ifeq ($(USE_JAVACALL_PROPERTIES), true)
+# transformation for generating stub .c file
+GENERATE_PROPERTIES_STATIC = \
+	-xml $(INT_COMMON_XML_DIR)/empty.xml \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesNative.xsl \
+	-params arrayNamePrefix midp \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/properties_static_data.c)`
+
+# transformation for generating .ini file with properties
+GENERATE_PROPERTIES_DYNAMIC = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesIni.xsl \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/jwc_properties.ini)`
+else
+# transformation for generating .config files with properties
+GENERATE_PROPERTIES_DYNAMIC = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesConfig.xsl \
+	-params propsScope internal \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/lib/internal.config)` \
+	\
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesConfig.xsl \
+	-params propsScope system \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/lib/system.config)`
+endif
+endif
+
+# transformation for generating additional permissions
+ifndef PERMISSIONS_XSL_FILE
+  PERMISSIONS_XSL_FILE = $(INT_XSL_DIR)/cldc/permissions.xsl
+endif
+
+ifndef PERMISSIONS_GENERATED_JAVA_FILE
+  PERMISSIONS_GENERATED_JAVA_FILE = $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsStrings.java
+endif
+
+ifndef PERMISSIONS_GENERATED_NATIVE_FILE
+  PERMISSIONS_GENERATED_NATIVE_FILE = $(GENERATED_DIR)/perm_number.h
+endif
+
+GENERATE_PERMISSIONS_JAVA_SOURCE = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(PERMISSIONS_XSL_FILE) \
+	-params output java \
+	-out `$(call fixcygpath, $(PERMISSIONS_GENERATED_JAVA_FILE))`
+
+GENERATE_PERMISSIONS_NATIVE_SOURCE = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(PERMISSIONS_XSL_FILE) \
+	-params output native \
+	-out `$(call fixcygpath, $(PERMISSIONS_GENERATED_NATIVE_FILE))`
+
+# transformation for genrating the i18n tables (both Java and C files).
+GENERATE_L10N_STRINGS = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/l10n)`
+
+ifeq ($(GENERATE_CHAMELEON_ELEMENTS), true)
+# transformation for generating .java file with chameleon to elements mapping
+GENERATE_CHAMELEMENT_SOURCE = \
+      -xml $(INT_MERGED_XML_FILE) \
+      -xsl $(INT_XSL_DIR)/cldc/chameleonElements.xsl \
+      -out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/ChameleonVsElements.java)`
+endif
+
+define generate_configuration
+	@echo " ... generating configuration files"
+	@$(INT_INVOKE_TRANSFORMER) \
+		$(GENERATE_CONSTANTS_H) \
+		$(GENERATE_CONSTANTS_C) \
+		$(GENERATE_CONSTANTS_JAVA) \
+		$(GENERATE_PROPERTIES_DYNAMIC) \
+		$(GENERATE_PROPERTIES_STATIC) \
+		$(GENERATE_PROPERTIES_CALLOUTS) \
+		$(GENERATE_PERMISSIONS_JAVA_SOURCE) \
+		$(GENERATE_PERMISSIONS_NATIVE_SOURCE) \
+		$(GENERATE_KEYBOARDS_SOURCE) \
+		$(GENERATE_CHAMELEMENT_SOURCE)
+	@echo " ... generating localized strings"
+	@$(INT_INVOKE_L10N_GENERATOR) \
+		$(GENERATE_L10N_STRINGS)
+	@echo $(foreach package, $(INT_PACKAGES_NAMES),\
+		"$(GENERATED_DIR)/classes/$(subst .,/,$(package)).java") \
+		>> $(GENERATED_JAVA_LIST)
+endef
+
+# Include files
+# 
+INT_CONFIGURATION_EXTRA_INCLUDES += \
+-I$(GENERATED_DIR) 
+
+# Native files
+#
+INT_CONFIGURATION_NATIVE_FILES += \
+	midp_constants_data.c
+
+$(OBJ_DIR)/midp_constants_data.o: $(GENERATED_DIR)/midp_constants_data.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)	
+
+# Publish the variables to global Makefile
+#
+SUBSYSTEM_CONFIGURATION_MERGED_FILE = \
+	$(INT_MERGED_XML_FILE)
+
+SUBSYSTEM_CONFIGURATION_CHAMROM_LIST_FILE = \
+	$(INT_CHAMROM_LIST_FILE)
+
+SUBSYSTEM_CONFIGURATION_JAVA_FILES = \
+	$(INT_CONFIGURATION_JAVA_FILES)
+
+SUBSYSTEM_CONFIGURATION_NATIVE_FILES = \
+	$(INT_CONFIGURATION_NATIVE_FILES)
+
+SUBSYSTEM_CONFIGURATION_EXTRA_INCLUDES = \
+	$(INT_CONFIGURATION_EXTRA_INCLUDES)
+
+SUBSYSTEM_CONFIGURATION_EXTRA_CFLAGS =
+
+SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
+	$(INT_CONFIGURATION_CONFIG_FILES)
+
+SUBSYSTEM_CONFIGURATION_DEP_FILES += \
+	$(INT_XSL_DIR)/share/merge.xsl \
+	$(INT_XSL_DIR)/cldc/constantsNative.xsl \
+	$(INT_XSL_DIR)/cldc/constantsJava.xsl \
+	$(INT_XSL_DIR)/cldc/propertiesNative.xsl \
+	$(INT_XSL_DIR)/cldc/propertiesConfig.xsl
+SUBSYSTEM_CONFIGURATION_DEP_FILES += $(INT_FILES_LIST)
+SUBSYSTEM_CONFIGURATION_DEP_FILES += $(INT_XML_FILES)

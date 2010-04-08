@@ -1,0 +1,256 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# exporting values of build variables
+#
+######################################################################
+
+# directory whose subdirectories are considered internal;
+# other directories are considered external and are not exported.
+LIMITDIR =$(MIDP_DIR)/../../../..
+
+# Specify which AWK to use.
+# You will need NAWK or GAWK or another dialect that supports functions.
+export AWK =gawk
+
+# The .gmk file name
+# Override it with either an environment variable or a command line switch.
+ifndef SETTINGS_EXPORT_FNAME
+SETTINGS_EXPORT_FNAME=Settings.gmk
+endif
+
+# the file where variables & values are written
+VLF=$(MIDP_OUTPUT_DIR)/$(SETTINGS_EXPORT_FNAME)
+
+# the script that converts path to a relative form
+RELDIR=$(MIDP_DIR)/build/common/reldir
+
+ifndef FN_SEP
+# file/directory name separator ( / or \\\\ )
+# if the file separator is backslash, double-quoting is needed,
+# that is, you need to write "\\\\" (four backslashes) for "\" (one backslash)
+FN_SEP =$(if $(findstring win,$(HOST_OS)),\\\\,/)
+endif
+
+# build variables that contain a path
+
+######################################################################
+
+PATHVARLIST = $(sort \
+  CLDC_DIST_DIR \
+  PCSL_OUTPUT_DIR \
+  RESTRICTED_CRYPTO_DIR \
+  CRYPTO_OUTPUT_DIR \
+  TOOLS_OUTPUT_DIR \
+  JSR_75_DIR  \
+  JSR_82_DIR  \
+  JSR_120_DIR \
+  JSR_135_DIR \
+  JSR_172_DIR \
+  JSR_177_DIR \
+  JSR_179_DIR \
+  JSR_180_DIR \
+  JSR_184_DIR \
+  JSR_205_DIR \
+  JSR_211_DIR \
+  JSR_226_DIR \
+  JSR_229_DIR \
+  JSR_230_DIR \
+  JSR_234_DIR \
+  JSR_238_DIR \
+  JSR_239_DIR \
+  JSR_256_DIR \
+  JSR_257_DIR \
+  JSR_258_DIR \
+  JSR_272_DIR \
+  JSR_281_DIR \
+  JSR_290_DIR \
+  JSR_293_DIR \
+  CMS_DIR \
+  ABSTRACTIONS_DIR \
+  PROJECT_JSR_75_DIR  \
+  PROJECT_JSR_82_DIR  \
+  PROJECT_JSR_120_DIR \
+  PROJECT_JSR_135_DIR \
+  PROJECT_JSR_172_DIR \
+  PROJECT_JSR_177_DIR \
+  PROJECT_JSR_179_DIR \
+  PROJECT_JSR_180_DIR \
+  PROJECT_JSR_184_DIR \
+  PROJECT_JSR_205_DIR \
+  PROJECT_JSR_211_DIR \
+  PROJECT_JSR_226_DIR \
+  PROJECT_JSR_229_DIR \
+  PROJECT_JSR_230_DIR \
+  PROJECT_JSR_234_DIR \
+  PROJECT_JSR_238_DIR \
+  PROJECT_JSR_239_DIR \
+  PROJECT_JSR_256_DIR \
+  PROJECT_JSR_257_DIR \
+  PROJECT_JSR_258_DIR \
+  PROJECT_JSR_272_DIR \
+  PROJECT_JSR_280_DIR \
+  PROJECT_JSR_290_DIR \
+  PROJECT_JSR_293_DIR \
+  PROJECT_CMS_DIR \
+  PROJECT_MIDP_DIR \
+  PISCES_DIR \
+  SWERVE_DIR  \
+  JC_DIR      \
+  JPEG_DIR    \
+  TOOLS_DIR   \
+  )
+
+# build variables that contain a value
+
+#  JDK_DIR
+#  GNU_TOOLS_DIR
+
+VARLIST = $(sort \
+  CONFIGURATION_OVERRIDE \
+  EXTRA_ROMGEN_CFG_FILES \
+  )
+
+
+OPTIONVARLIST = $(sort \
+  CPU \
+  GCC_VERSION \
+  USE_MIDP_ABB \
+  SUBSYSTEM_LCDUI_MODULES \
+  TARGET_CPU \
+  TARGET_DEVICE \
+  USE_AUTOMATION \
+  USE_BINARY_CRYPTO \
+  USE_CLDC_11 \
+  USE_CLDC_RELEASE \
+  USE_DEBUG \
+  USE_DIRECTDRAW \
+  USE_EXTENDED_ATTRIBUTES \
+  USE_FILE_SYSTEM \
+  USE_ON_DEVICE_DEBUG \
+  USE_WTK_DEBUG \
+  USE_SYSTEM_CLASSES_DEBUG \
+  USE_AMS_FOLDERS \
+  USE_OCSP \
+  USE_DYNAMIC_COMPONENTS \
+  USE_FIXED \
+  USE_GCC \
+  USE_GCI \
+  USE_I3_TEST \
+  USE_IMAGE_CACHE \
+  USE_FONT_CACHE \
+  USE_ICON_CACHE \
+  USE_JAVA_DEBUGGER \
+  USE_JAVA_PROFILER \
+  USE_JPEG \
+  USE_JSR_75 \
+  USE_JSR_82 \
+  USE_JSR_120 \
+  USE_JSR_135 \
+  USE_JSR_172 \
+  USE_JSR_177 \
+  USE_JSR_179 \
+  USE_JSR_180 \
+  USE_JSR_184 \
+  USE_JSR_205 \
+  USE_JSR_211 \
+  USE_JSR_226 \
+  USE_JSR_229 \
+  USE_JSR_230 \
+  USE_JSR_234 \
+  USE_JSR_238 \
+  USE_JSR_239 \
+  USE_JSR_256 \
+  USE_JSR_257 \
+  USE_JSR_258 \
+  USE_JSR_272 \
+  USE_JSR_280 \
+  USE_JSR_281 \
+  USE_JSR_290 \
+  USE_JSR_293 \
+  USE_CMS \
+  USE_ABSTRACTIONS \
+  USE_MIDP_MALLOC \
+  USE_MONET \
+  USE_MULTIPLE_ISOLATES \
+  USE_NATIVE_APP_MANAGER \
+  USE_NATIVE_INSTALLER \
+  USE_NATIVE_SUITE_STORAGE \
+  USE_NATIVE_RMS \
+  USE_NAMS_TEST_SERVICE \
+  USE_NATIVE_PROFILER \
+  USE_NATIVE_PTI \
+  USE_NETWORK_INDICATOR \
+  USE_NUTS_FRAMEWORK \
+  USE_PISCES \
+  USE_PORTING_DEMOS \
+  USE_RAW_AMS_IMAGES \
+  USE_RESTRICTED_CRYPTO \
+  USE_RMS_TREE_INDEX \
+  USE_SERVER_SOCKET \
+  USE_SSL \
+  USE_STATIC_PROPERTIES \
+  USE_SWERVE_22 \
+  USE_VERBOSE_MAKE \
+  USE_VERIFY_ONCE \
+  USE_VM_PROFILES \
+  USE_MULTIPLE_DISPLAYS \
+  USE_AUTOTESTER \
+  USE_PUBLIC_AMS_API \
+  )
+
+######################################################################
+
+XOPTIONVARLIST = $(foreach X,$(OPTIONVARLIST),$(X)=$($(X)))
+XSETVARLIST = $(foreach X,$(VARLIST),$(X)=$($(X)))
+XSETPATHVARLIST = $(foreach X,$(PATHVARLIST),$(X)=$($(X)))
+
+varexport: $(MIDP_OUTPUT_DIR)
+	@echo exporting parameter values to $(VLF) ...
+	@#echo ======================================================
+	$(A)echo >$(VLF)
+	$(A)echo "# Build settings. Generated file." >>$(VLF)
+	$(A)echo "# current directory: `$(RELDIR) $(CURDIR) - $(MIDP_DIR) $(LIMITDIR) $(FN_SEP) MIDP_DIR`" >>$(VLF)
+	$(A)#
+	$(A)#
+	$(A)for I in $(XOPTIONVARLIST); do echo $$I >>$(VLF); done
+	$(A)echo "# =====================================================" >>$(VLF)
+	$(A)#
+	$(A)#
+	$(A)for I in $(XSETVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; echo ifndef $$N >>$(VLF); echo $$I >>$(VLF); echo endif >>$(VLF); done
+	$(A)echo "# =====================================================" >>$(VLF)
+	$(A)#
+	$(A)#
+	$(A)for I in $(XSETPATHVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; P=`echo $$I | sed "s/\([^\=]*\)=\(.*\)/\2/"`; echo ifndef $$N >>$(VLF); echo $$N=`$(RELDIR) $$P - $(MIDP_DIR) $(LIMITDIR) $(FN_SEP) MIDP_DIR` >>$(VLF); echo endif >>$(VLF); done
+	@echo created $(VLF)
+	@#echo ======================================================
+
+all:: varexport
+
+parallel_all::varexport
+
+.PHONY: varexport
+
