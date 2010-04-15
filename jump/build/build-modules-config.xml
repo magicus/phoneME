@@ -1,0 +1,184 @@
+<?xml version="1.0"?>
+<!--
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+<project basedir="." default="compile-executive" name="generates ">
+
+<property 
+    name="modules-config-file" 
+    value="${d.gen.dir}/com/sun/jumpimpl/process/JUMPModulesConfig.java"/>
+
+<target name="gen-modules-config.tmp">
+    <loadproperties srcFile="modules-config.properties">
+        <filterchain>
+            <prefixlines prefix="@modules-config."/>
+        </filterchain>
+    </loadproperties>
+
+    <propertyset id="modules-config-propertyset">
+        <propertyref prefix="@modules-config."/>
+        <mapper type="glob" from="@modules-config.*" to="&#10;*"/>
+    </propertyset>
+
+    <property name="modules-config.raw" refid="modules-config-propertyset"/>
+    <property name="ant-property-separator" value=", "/>
+
+    <concat destfile="${modules-config-file}.tmp"><![CDATA[
+/* This file contains information determined at a build time */
+/* AUTO-GENERATED - DO NOT EDIT */
+
+package com.sun.jumpimpl.process;
+
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Properties;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.IOException;
+
+public class JUMPModulesConfig {
+    private static Hashtable config;
+
+    private static String
+    getBuildProperty(String buildPropertyValue, String buildPropertyName) {
+        // if ant property is not defined the expression ${prop} is expanded
+        // to itself
+        if(buildPropertyValue.equals("${" + buildPropertyName + "}")) {
+            return null;
+        }
+        return buildPropertyValue;
+    }
+    
+    private static void
+    setMIDPHomeProperty(Hashtable cfg) {
+        String value = (String)cfg.get("sun.midp.home.path");
+        if(value == null) {
+            value = getBuildProperty("${midp_output_dir}", "midp_output_dir");
+        }
+        
+        if(value != null) {
+            if (!new File(value).isAbsolute()) {
+               value = System.getProperty("java.home") + "/" + value;        
+            }
+            cfg.put("sun.midp.home.path", value);
+        }
+    }
+
+    private static void
+    setContentStoreRootProperty(Hashtable cfg) {
+        String value = (String)cfg.get("contentstore.root");
+
+        if(value != null) {
+            return;
+        }
+        
+        value = getBuildProperty("${contentstore.root.default}", 
+                                 "contentstore.root.default");
+
+        if (!new File(value).isAbsolute()) {
+            value = System.getProperty("java.home") + "/" + value;        
+        }
+
+        cfg.put("contentstore.root", value);
+    }
+
+
+    private static void
+    setRuntimeProperties(Hashtable cfg) {
+        setMIDPHomeProperty(cfg);
+        setContentStoreRootProperty(cfg);
+    }
+
+    public static void
+    overrideDefaultConfig(String fname) {
+        Properties props = new Properties();
+
+        InputStream in = null;
+        try {
+            in = new BufferedInputStream(new FileInputStream(fname));
+            props.load(in);
+        } catch(IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if(in != null) {
+                    in.close();
+                }
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        setRuntimeProperties(props);
+        config.putAll(props);
+    }
+
+    public static Map
+    getProperties() {
+        return config;
+    }
+
+    static {
+        config = new Hashtable();
+]]></concat>
+    <concat destfile="${modules-config-file}.tmp" append="true">
+${modules-config.raw}${ant-property-separator}
+#
+        <filterchain>
+            <tokenfilter>
+                <stringtokenizer delims="&#10;" suppressdelims="true"/>
+                <replacestring from="\" to="\\"/>
+                <replacestring from="'" to="\'"/>
+                <replacestring from="&quot;" to="\&quot;"/>
+                <containsregex
+                    pattern="^([^#=]+)=(.*)${ant-property-separator}$$"
+                    replace="        config.put(&quot;\1&quot;, &quot;\2&quot;);&#10;"/>
+            </tokenfilter>
+        </filterchain>
+    </concat>
+    <concat destfile="${modules-config-file}.tmp" append="true">
+        setRuntimeProperties(config);
+    }
+}
+</concat>
+
+    <condition property="update-modules-config.file">
+        <not>
+            <filesmatch
+                file1="${modules-config-file}.tmp"
+                file2="${modules-config-file}"/>
+        </not>
+    </condition>
+</target>
+
+<target
+    name="gen-modules-config"
+    depends="gen-modules-config.tmp"
+    if="update-modules-config.file">
+
+    <move file="${modules-config-file}.tmp" tofile="${modules-config-file}"/>
+</target>
+
+</project>
