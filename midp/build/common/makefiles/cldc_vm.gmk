@@ -1,0 +1,286 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+
+ifndef _CLDC_VM_GMK_
+_CLDC_VM_GMK_	=
+
+#----------------------------------------------------------------------
+# CLDC_DIST_DIR --
+#
+# This variable points to this VM binary distribution directory
+# from which we obtain the VM library, CLDC class library, and other
+# build tools supplied by the VM.
+#
+#----------------------------------------------------------------------
+define cldc_dist_dir_help
+	echo 'ERROR: CLDC_DIST_DIR points to invalid directory:'; \
+	echo '=========================================================='; \
+	echo 'Setting CLDC_DIST_DIR:'; \
+	echo ''; \
+	echo 'If you build the VM yourself, you need to specify'; \
+	echo 'CLDC_DIST_DIR as something like:'; \
+	echo '    CLDC_DIST_DIR=$${JVMWorkSpace}/build/linux_i386/dist'; \
+	echo '    CLDC_DIST_DIR=$${JVMWorkSpace}/build/linux_arm/dist'; \
+	echo ''; \
+	echo 'If you are building with the VM promoted binaries,'; \
+	echo 'use the following settings:'; \
+	echo '    CLDC_DIST_DIR=<promoted_dir>/latest/binaries/linux_i386'; \
+	echo '    CLDC_DIST_DIR=<promoted_dir>/latest/binaries/linux_arm_z'; \
+	echo '=========================================================='
+endef
+
+# SPECIAL CASE for ads build only
+# cldc uses ads as the target_os whereas midp uses armsd
+cldc_target_os = $(TARGET_OS)
+
+ifeq ($(TARGET_OS), armsd)
+    cldc_target_os = ads
+endif
+
+define verify_cldc
+    if [ ! -f "$(CLDC_DIST_DIR)/include/jvmconfig.h" ] ; then \
+        echo missing $(CLDC_DIST_DIR)/include/jvmconfig.h; \
+	$(cldc_dist_dir_help); \
+	exit -1; \
+    fi; \
+    if [ "$(USE_MONET)" = "true" ] && \
+        grep "^\#define ENABLE_MONET[[:space:]]\+0" \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: VM MONET setting mismatches.'; \
+        exit -1; \
+    fi; \
+    if [ "$(USE_VERIFY_ONCE)" = "true" ] && \
+        grep "^\#define ENABLE_VERIFY_ONLY[[:space:]]\+0" \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: VM VERIFY ONCE setting mismatches.'; \
+        exit -1; \
+    fi; \
+    if [ "$(USE_VM_PROFILES)" = "true" ] && \
+        grep "^\#define ENABLE_MULTIPLE_PROFILES_SUPPORT[[:space:]]\+0" \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: ENABLE_MULTIPLE_PROFILES_SUPPORT setting mismatches.'; \
+        exit -1; \
+    fi; \
+    if [ "$(USE_JAVA_PROFILER)" = "true" ] && \
+        grep "^\#define ENABLE_WTK_PROFILER[[:space:]]\+0" \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: VM WTK_PROFILER setting mismatches.'; \
+        exit -1; \
+    fi; \
+    if [ "$(USE_JAVA_DEBUGGER)" = "true" ] && \
+        grep "^\#define ENABLE_JAVA_DEBUGGER[[:space:]]\+0" \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: VM JAVA_DEBUGGER setting mismatches.'; \
+        exit -1; \
+    fi; \
+    if grep "^\#define ENABLE_PCSL[[:space:]]\+0" \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: VM PCSL not enabled.'; \
+        exit -1; \
+    fi; \
+    if [ "$(USE_MULTIPLE_ISOLATES)" = "true" ] && \
+        grep "^\#define ENABLE_ISOLATES[[:space:]]\+0" \
+	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: VM ISOLATES setting mismatches.'; \
+        exit -1; \
+    fi; \
+    \
+    makfile=$(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r).make; \
+    if grep "VM_arch.*=.*\($(TARGET_CPU)\|c\)" $$makfile > /dev/null; then \
+       true; \
+    else \
+        echo "ERROR: TARGET_CPU ($(TARGET_CPU)) mismatch with VM_arch in $$makfile"; \
+        exit -1; \
+    fi; \
+    if grep "VM_os.*=.*$(cldc_target_os)" $$makfile > /dev/null; then \
+       true; \
+    else \
+        echo "ERROR: cldc_target_os ($(cldc_target_os)) mismatch with VM_os in $$makfile"; \
+        exit -1; \
+    fi;
+endef
+
+# Specify romizer options
+# Native function table generator; for use with the ROMizer
+JCC_CMD      = $(CLDC_DIST_DIR)/bin/NativesTableGen.jar
+ROMGEN_CMD   = $(CLDC_DIST_DIR)/bin/romgen$(EXE)
+
+ROMGEN_CFG_LST = $(GENERATED_DIR)/rom_configs.lst
+
+ROMGEN_CFG_FILES = rom.config $(EXTRA_ROMGEN_CFG_FILES)
+ROMGEN_INCLUDE_PATHS +=  $(CLDC_DIST_DIR)/lib
+ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config
+
+ROMGEN_ARGS += -romconfig $(ROMGEN_CFG_LST)
+ROMGEN_ARGS += +GenerateROMStructs
+ROMGEN_ARGS += +EnableROMCompilation
+
+ifeq ($(USE_SYSTEM_CLASSES_DEBUG), true)
+    ROMGEN_ARGS += +MakeROMDebuggable
+else
+    ifeq ($(USE_DEBUG), true)
+        ifeq ($(USE_JAVA_DEBUGGER), true)
+            ROMGEN_ARGS += +MakeROMDebuggable
+        endif
+    endif
+endif
+
+ifneq ($(USE_DEBUG), true)
+    ifneq ($(USE_SYSTEM_CLASSES_DEBUG), true)
+        ifneq ($(USE_I3_TEST), true)
+            # ROM optimizations do not work with DEBUG, WTK_DEBUG or I3_TEST
+            ROMGEN_ARGS += +EnableAllROMOptimizations
+            ifeq ($(USE_JAVA_PROFILER), true)
+                ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+            endif
+            ifeq ($(TARGET_OS), armsd)
+                ROMGEN_ARGS += -RenameNonPublicROMClasses -RenameNonPublicROMSymbols
+            endif
+	endif
+    endif
+endif
+
+# Generated code
+JTWI_NATIVE_FILES += ROMImage.cpp nativeFunctionTable.cpp
+
+# Needs to define to build ROMImage.cpp
+EXTRA_CFLAGS += -DROMIZING
+
+CLDC_CLASSES_ZIP = $(CLDC_DIST_DIR)/lib/cldc_classes.zip
+CLDCTEST_CLASSES_ZIP = $(CLDC_DIST_DIR)/lib/cldctest_classes.zip
+
+# The K Debug Proxy executable
+#
+CLDC_KDP_CMD = $(CLDC_DIST_DIR)/bin/kdp.jar
+
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+# The memory profiler client
+#
+CLDC_MEMPROF_CMD = $(CLDC_DIST_DIR)/bin/memprof_client.jar
+endif
+
+# CLDC preverifier executable
+#
+CLDC_PREVERIFY_CMD = $(CLDC_DIST_DIR)/bin/preverify$(EXE)
+
+# the VM exported include directory
+#
+VM_INCLUDES += -I$(CLDC_DIST_DIR)/include
+
+# Copy the CLDC preverifier executable into MIDP bin directory
+#
+$(PREVERIFY_CMD): $(CLDC_PREVERIFY_CMD)
+	@if [ '!' -d $(BINDIR) ]; then \
+		mkdir -p $(BINDIR); \
+	fi
+	@cp -f $< $@ $(LOG)
+	@chmod a+x $@ $(LOG)
+
+# Copy the CLDC K debug proxy executable into MIDP bin directory
+#
+$(KDP_CMD): $(CLDC_KDP_CMD)
+	@cp -f $< $@ $(LOG)
+	@chmod a+x $@ $(LOG)
+
+ifeq ($(ENABLE_MEMORY_PROFILER), true)
+# Copy the CLDC memory profile client into MIDP bin directory
+#
+$(MEMPROF_CMD): $(CLDC_MEMPROF_CMD)
+	@cp -f $< $@ $(LOG)
+	@chmod a+x $@ $(LOG)
+endif
+
+$(MIDP_OUTPUT_DIR)/nativeFunctionTable.cpp: $(MIDP_CLASSES_ZIP) \
+					    $(JCC_CMD)
+	@echo " ... generating $@" $(LOG)
+	@echo +++ $(JAVA_CMD) -Xmx128m -jar $(JCC_CMD) \
+		-writer CLDC_HI_Natives -o $@ \
+		$(MIDP_CLASSES_ZIP) $(LOG_ONLY)
+	@cd $(MIDP_OUTPUT_DIR); \
+	$(JAVA_CMD) -Xmx128m -jar $(JCC_CMD) \
+		-writer CLDC_HI_Natives -o $@ \
+		$(MIDP_CLASSES_ZIP) $(LOG)
+
+$(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_CLASSES_ZIP) \
+				 $(ROMGEN_CMD) \
+                                 $(MIDP_DIR)/build/common/config/rom.config
+	@echo " ... generating $@" $(LOG)
+
+	@rm -f $(ROMGEN_CFG_LST);
+	@for f in $(ROMGEN_CFG_FILES); do \
+		echo "Include $$f" >> $(ROMGEN_CFG_LST); \
+	 done
+
+	@echo	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
+		-cp $(MIDP_CLASSES_ZIP) \
+		-romize =HeapCapacity128M \
+		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
+		-romincludepath $(path)) $(LOG)
+
+	@cd $(MIDP_OUTPUT_DIR); \
+	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
+		-cp $(MIDP_CLASSES_ZIP) \
+		-romize =HeapCapacity128M \
+		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
+		-romincludepath $(path)) $(LOG)
+
+
+CLDC_JAVA_LANG_OBJECT_CLASS = $(CLASSBINDIR)/java/lang/Object.class
+CLDC_TEST_REFLECT_CLASS     = $(CLASSBINDIR)/com/sun/cldchi/test/Reflect.class
+
+
+
+UNCOMPRESSED_VM_CLASSES += $(CLDC_JAVA_LANG_OBJECT_CLASS)
+
+ifeq ($(USE_MULTIPLE_ISOLATES)+$(USE_I3_TEST), true+true)
+UNCOMPRESSED_VM_CLASSES += $(CLDC_TEST_REFLECT_CLASS)
+endif
+
+# Uncompress cldc_classes.zip to $(MIDP_OUTPUT_DIR)/classes/ directory
+# to include CLDC classes in $(MIDP_CLASSES_ZIP)
+$(CLDC_JAVA_LANG_OBJECT_CLASS): $(CLDC_CLASSES_ZIP)
+	@if [ '!' -d $(CLASSBINDIR) ]; then \
+		mkdir -p $(CLASSBINDIR); \
+	fi
+	@echo " ... uncompressing CLDC classes" $(LOG)
+	$(AT)(cd $(CLASSBINDIR); $(JAR_CMD) xf $(CLDC_CLASSES_ZIP); touch -r $< $@) $(LOG)
+
+$(CLDC_TEST_REFLECT_CLASS): $(CLDCTEST_CLASSES_ZIP)
+	@if [ '!' -d $(CLASSBINDIR) ]; then \
+		mkdir -p $(CLASSBINDIR); \
+	fi
+	@echo " ... uncompressing CLDC test classes" $(LOG)
+	$(AT)(cd $(CLASSBINDIR); $(JAR_CMD) xf $(CLDCTEST_CLASSES_ZIP); touch -r $< $@) $(LOG)
+
+# Include C and LD flags exported by the VM build process. This is
+# important in configuring the word ordering of double precision floating point
+# variables in the ROM image, among other things.
+-include $(CLDC_DIST_DIR)/lib/cldc_vm$(cldc_g)$(cldc_r).make
+LD_FLAGS       += ${JVM_LINK_FLAGS}
+EXTRA_CFLAGS   += ${JVM_CC_FLAGS}
+EXTRA_CPPFLAGS += ${JVM_CPP_FLAGS}
+
+# ifndef _CLDC_VM_GMK_
+endif

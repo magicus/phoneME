@@ -1,0 +1,92 @@
+#
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += netmon
+
+# Javadoc source path
+
+SUBSYSTEM_NETMON_SOURCEPATH=$(NETMON_DIR)/src/classes
+
+SUBSYSTEM_NETMON_PACKAGES = \
+   com.sun.kvem.netmon
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_NETMON_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_NETMON_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+        -group "NETMON netmon" \
+	$(shell echo $(SUBSYSTEM_NETMON_PACKAGES) | tr ' ' $(PATHSEP))
+
+# Java files for the ( netmon ) module
+#
+MODULE_NETMON_JAVA_FILES = \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/HttpAgent.java \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/InputStreamStealer.java \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/NetMonProxy.java \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/OutputStreamStealer.java \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/StreamAgent.java \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/StreamConnectionStealer.java
+
+ifeq ($(USE_SSL), true)
+MODULE_NETMON_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/HttpsAgent.java \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/SSLInputAgent.java \
+    $(SUBSYSTEM_DIR)/protocol/netmon/classes/com/sun/kvem/netmon/SSLOutputAgent.java
+endif
+
+#
+# Native files for netmon subsystem
+vpath % $(SUBSYSTEM_DIR)/protocol/netmon/native
+
+#
+
+SUBSYSTEM_NETMON_NATIVE_FILES = \
+    emuNetmon.c
+
+SUBSYSTEM_NETMON_EXTRA_INCLUDES = \
+    -I$(COMPONENTS_DIR)/lime/client/src/native/inc
+
+# Determines what option we have made and set it
+# to some variable that global makefile recognize
+#
+SUBSYSTEM_NETMON_JAVA_FILES   = \
+    $(MODULE_NETMON_JAVA_FILES)
+
+
+
+

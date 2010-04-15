@@ -1,0 +1,66 @@
+#
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#######################################################################
+#
+# JTWI specific defines for compiler
+# Generic defines are in vc.gmk
+# This file should be included after common/makefiles/Defs.gmk
+#
+######################################################################
+ifndef _VC8CE_JTWI_GMK_
+_VC8CE_JTWI_GMK_ =
+
+# CLDC HI library
+LIBS		+= $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r)$(LIB_SUFFIX)
+MIDP_DEPS	+= $(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r)$(LIB_SUFFIX)
+
+# SSL library
+#ifeq ($(USE_SSL), true)
+#ifneq ($(BUILD_SSL), true)
+#LIBS        += $(SSL_OUTPUT_MAKE_DIR)/libssl_arm.lib
+#endif
+#endif
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+ifeq ($(USE_I3_TEST), true)
+LIBS		+= $(CLDC_DIST_DIR)/lib/cldc_hitest$(g)$(r)$(LIB_SUFFIX)
+MIDP_DEPS   += $(CLDC_DIST_DIR)/lib/cldc_vmtest$(g)$(r)$(LIB_SUFFIX)
+endif
+endif
+
+PCSL_TARGET_DIR  = $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
+LD_FLAGS	    += -libpath:$(PCSL_TARGET_DIR)/lib
+
+EXTRA_INCLUDES	+= -I$(PCSL_TARGET_DIR)/inc
+LIBS		    += libpcsl_escfilenames.lib libpcsl_file.lib libpcsl_memory.lib libpcsl_print.lib \
+                   libpcsl_string.lib libpcsl_network.lib
+
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_escfilenames.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_file.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_memory.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_print.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_string.lib
+MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_network.lib
+
+endif
