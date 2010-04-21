@@ -6043,7 +6043,7 @@ translateRange(CVMJITCompilationContext* con,
 		CVMInt32 lowEntry, highEntry;
 		CVMInt32 low, high;
 		CVMInt32 matchValue = CVMgetAlignedInt32(&lpc[2+2*gapEntry]);
-		CVMUint16 pcOffset = CVMgetAlignedInt32(&lpc[3+2*gapEntry]);
+		CVMInt32 pcOffset = CVMgetAlignedInt32(&lpc[3+2*gapEntry]);
 		CVMJITIRBlock* targetbk = mc->pcToBlock[pc + pcOffset];
 		/* Create Constant node for the value to add */
 		CVMJITIRNode* constNode =
