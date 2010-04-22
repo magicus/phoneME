@@ -2182,7 +2182,7 @@ CVM_JAVA		?= $(CVM_JAVA_TOOLS_PREFIX)java
 CVM_JAVADOC		?= $(CVM_JAVA_TOOLS_PREFIX)javadoc
 CVM_JAR			?= $(CVM_JAVA_TOOLS_PREFIX)jar
 
-JAVAC_OPTIONS +=  -J-Xms32m -J-Xmx128m -encoding iso8859-1
+JAVAC_OPTIONS +=  -encoding iso8859-1
 ifeq ($(CDC_10),true)
 JAVAC_SOURCE_TARGET_OPTIONS ?= -target 1.3
 else
