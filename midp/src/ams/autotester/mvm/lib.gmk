@@ -1,0 +1,65 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# AutoTester Library
+#
+######################################################################
+
+# Name of the library
+AUTOTESTER_MVM_NAME = autotester/mvm
+AUTOTESTER_MVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_MVM_NAME)
+PROJECT_AUTOTESTER_MVM_DIR = $(PROJECT_SUBSYSTEM_AMS_DIR)/$(AUTOTESTER_MVM_NAME)
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(AUTOTESTER_MVM_DIR)/classes
+
+#AUTOTESTER_MVM_PACKAGES = \
+#    com.sun.midp.installer
+
+#MIDP_JAVADOC_PACKAGES += $(AUTOTESTER_MVM_PACKAGES)
+#MIDP_JAVADOC_ALL += \
+#        -group "AutoTester" \
+#    $(shell echo $(AUTOTESTER_MVM_PACKAGES) |tr ' ' $(PATHSEP))
+
+# Java files for the library
+#
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTester.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelperBaseMVM.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterMulti.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterMultiHelper.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterService.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterServiceProtocolAMS.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterServiceProtocolClient.java \
+    $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/service/AutoTesterServiceInitializer.java
+
+ifeq ($(USE_ON_DEVICE_DEBUG), true)
+    SUBSYSTEM_AMS_JAVA_FILES += $(PROJECT_AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelper.java
+else
+    SUBSYSTEM_AMS_JAVA_FILES += $(AUTOTESTER_MVM_DIR)/classes/com/sun/midp/installer/AutoTesterHelper.java
+endif
+
