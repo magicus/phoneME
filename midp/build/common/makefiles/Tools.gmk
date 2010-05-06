@@ -1,0 +1,315 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Makefile for tools built that are 100% J2SE Java. To be included
+# into the top level makefile.
+#
+######################################################################
+
+# Guarantee existence of the directory for tools classes
+#
+define verify_tools_class_directory
+    @if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
+	mkdir -p $(TOOLS_CLASS_DIR); \
+    fi
+endef
+
+TOOL_DIR = $(SUBSYSTEM_DIR)/tool
+KEYTOOL_KEYSTORE_FILE = \
+    $(TOOL_DIR)/mekeytool/classes/com/sun/midp/mekeytool/j2se_test_keystore.bin
+KEYTOOL_README_FILE   = \
+    $(TOOL_DIR)/mekeytool/classes/com/sun/midp/mekeytool/readme.txt
+
+TOOLS_CLASS_DIR = $(MIDP_OUTPUT_DIR)/tools_classes
+TOOLS_CLASSPATH = $(TOOLS_CLASS_DIR)
+
+# Main keystore for HTTPS and secure provisioning
+#
+CA_KEYSTORE=$(STORAGEDIR)/_main.ks
+
+# Variables used by targets
+#
+KEYTOOL_MAIN_CLASS    = com.sun.midp.mekeytool.MEKeyTool
+KEYTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/MEKeyTool.manifest
+KEYTOOL_JAR_FILE      = $(BINDIR)/MEKeyTool.jar
+
+JADTOOL_MAIN_CLASS    = com.sun.midp.jadtool.JadTool
+JADTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/JadTool.manifest
+JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
+
+include $(TOOLS_DIR)/tools.gmk
+
+# Localized strings generator settings
+#
+L10N_GENERATOR_MAIN_CLASS    = com.sun.midp.l10n.generator.LocalizedStringsGenerator
+L10N_GENERATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/l10nGenerator.manifest
+L10N_GENERATOR_JAR_FILE      = $(TOOLS_CLASS_DIR)/l10nGenerator.jar
+
+
+ifneq ($(USE_JSR_258), true)
+
+# Skin romization tool jar and manifest file names
+#
+SKINROMIZATION_MAIN_CLASS    = com.sun.midp.skinromization.SkinRomizer
+SKINROMIZATION_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/SkinRomizationTool.manifest
+SKINROMIZATION_JAR_FILE = $(BINDIR)/SkinRomizationTool.jar
+
+# Image to raw converter jar file name
+#
+IMAGE2RAW_MAIN_CLASS    = com.sun.midp.imageutil.ImageToRawTool
+IMAGE2RAW_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/ImageToRawTool.manifest
+IMAGE2RAW_JAR_FILE = $(BINDIR)/ImageToRawTool.jar
+
+endif
+
+
+# Romizer jar and manifest file names
+#
+ROMIZER_MAIN_CLASS    = com.sun.midp.romization.Romizer
+ROMIZER_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Romizer.manifest
+ROMIZER_JAR_FILE = $(BINDIR)/Romizer.jar
+
+ifeq ($(TARGET_VM), cdc_vm)
+  IDENTIFIED_DOMAIN_NAME = identified
+else
+  IDENTIFIED_DOMAIN_NAME = identified_third_party
+endif
+
+# Targets
+#
+all_tools:: $(STORAGEDIR) $(CA_KEYSTORE) $(BINDIR)/j2se_test_keystore.bin \
+            $(JADTOOL_JAR_FILE) $(CONFIGURATOR_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
+	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(ROMIZER_JAR_FILE)
+
+$(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
+	@echo " ... building MEKeyTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_KEYTOOL_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@mkdir -p $(BINDIR) $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) cfm MEKeyTool.jar\
+		MEKeyTool.manifest \
+		com/sun/midp/publickeystore com/sun/midp/mekeytool $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm MEKeyTool.jar \
+		MEKeyTool.manifest \
+		com/sun/midp/publickeystore com/sun/midp/mekeytool) $(LOG)
+	@(cp -f $(TOOLS_CLASS_DIR)/MEKeyTool.jar $(KEYTOOL_JAR_FILE)) $(LOG)
+
+$(KEYTOOL_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: com.sun.midp.mekeytool.MEKeyTool" > $@) $(LOG)
+
+$(CA_KEYSTORE): $(KEYTOOL_JAR_FILE) $(KEYTOOL_KEYSTORE_FILE)
+	@echo " ... $@ " $(LOG)
+	@if [ -f $(CA_KEYSTORE) ]; then rm $(CA_KEYSTORE); fi $(LOG)
+	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias publicca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) $(LOG_ONLY)
+	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias publicca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE)) $(LOG)
+	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
+		-domain $(IDENTIFIED_DOMAIN_NAME) $(LOG_ONLY)
+	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias suntestca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
+		-domain $(IDENTIFIED_DOMAIN_NAME)) $(LOG)
+	@echo +++ $(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias dummyca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
+		-domain operator $(LOG_ONLY)
+	@($(JAVA_CMD) -jar $(KEYTOOL_JAR_FILE) -import -keystore \
+		$(KEYTOOL_KEYSTORE_FILE) -alias dummyca \
+		-storepass keystorepwd -MEkeystore $(CA_KEYSTORE) \
+		-domain operator) $(LOG)
+
+$(BINDIR)/j2se_test_keystore.bin: $(KEYTOOL_KEYSTORE_FILE)
+	@echo " ... $@ " $(LOG)
+	@(cp -f $(KEYTOOL_KEYSTORE_FILE) $(BINDIR)) $(LOG)
+	@(cp -f $(KEYTOOL_README_FILE) $(BINDIR)) $(LOG)
+
+$(JADTOOL_JAR_FILE): $(MODULE_TOOL_JADTOOL_JAVA_FILES) $(JADTOOL_MANIFEST_FILE)
+	@echo " ... building JadTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_JADTOOL_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_JADTOOL_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@(mkdir -p $(BINDIR)) $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) cfm JadTool.jar \
+		JadTool.manifest com/sun/midp/installer \
+		com/sun/midp/util/Properties.class com/sun/midp/jadtool $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm JadTool.jar \
+		JadTool.manifest com/sun/midp/installer \
+		com/sun/midp/util/Properties.class com/sun/midp/jadtool) $(LOG)
+	@(cp -f $(TOOLS_CLASS_DIR)/JadTool.jar $(JADTOOL_JAR_FILE)) $(LOG)
+
+$(JADTOOL_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: com.sun.midp.jadtool.JadTool" > $@) $(LOG)
+
+$(L10N_GENERATOR_JAR_FILE): $(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES) $(L10N_GENERATOR_MANIFEST_FILE)
+	@echo " ... building l10n generator " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR) \; $(JAR_CMD) cfm $(L10N_GENERATOR_JAR_FILE) \
+		$(L10N_GENERATOR_MANIFEST_FILE) com/sun/midp/l10n/generator $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(L10N_GENERATOR_JAR_FILE) \
+		$(L10N_GENERATOR_MANIFEST_FILE) com/sun/midp/l10n/generator) $(LOG)
+
+$(L10N_GENERATOR_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: $(L10N_GENERATOR_MAIN_CLASS)" > $@) $(LOG)
+
+
+ifneq ($(USE_JSR_258), true)
+
+# Skin romization tool (jar rules)
+#
+$(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(SKINROMIZATION_MANIFEST_FILE)
+	@echo " ... building SkinRomizationTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@mkdir -p $(BINDIR) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_SKINROMIZATION_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
+		cfm $(SKINROMIZATION_JAR_FILE) $(SKINROMIZATION_MANIFEST_FILE) \
+		com/sun/midp/skinromization $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(SKINROMIZATION_JAR_FILE) \
+		$(SKINROMIZATION_MANIFEST_FILE) com/sun/midp/skinromization) $(LOG)
+
+$(SKINROMIZATION_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: com.sun.midp.skinromization.SkinRomizer" > $@) $(LOG)
+
+# Image to raw converter (jar rules)
+#
+$(IMAGE2RAW_JAR_FILE): $(MODULE_TOOL_IMAGE2RAW_JAVA_FILES) $(IMAGE2RAW_MANIFEST_FILE)
+	@echo " ... building ImageToRawTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@mkdir -p $(BINDIR) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_IMAGE2RAW_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_IMAGE2RAW_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
+		cfm $(IMAGE2RAW_JAR_FILE) \
+		ImageToRawTool.manifest \
+		com/sun/midp/imageutil $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(IMAGE2RAW_JAR_FILE) \
+		ImageToRawTool.manifest \
+		com/sun/midp/imageutil) $(LOG)
+
+$(IMAGE2RAW_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: com.sun.midp.imageutil.ImageToRawTool" > $@) $(LOG)
+
+# Macro for converting PNG images into raw format
+# convert_images_to_raw <images_directory>
+define convert_images_to_raw
+        -@(echo $(foreach convert_images_folder_name,$(1),$(wildcard $(convert_images_folder_name)/*.png)) | xargs \
+	    $(JAVA_CMD) -Djava.awt.headless=true \
+		-classpath $(TOOLS_CLASSPATH) \
+		$(IMAGE2RAW_MAIN_CLASS) \
+		-format $(GENERATED_DIR)/merged.xml \
+		-out $(STORAGEDIR)) $(LOG)
+endef									    
+
+endif
+
+
+# Romizer tool (jar rules)
+#
+$(ROMIZER_JAR_FILE): $(MODULE_TOOL_ROMIZER_JAVA_FILES) $(ROMIZER_MANIFEST_FILE)
+	@echo " ... building Romizer " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@mkdir -p $(BINDIR) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_ROMIZER_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_ROMIZER_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
+		cfm $(ROMIZER_JAR_FILE) $(ROMIZER_MANIFEST_FILE) \
+		com/sun/midp/romization $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(ROMIZER_JAR_FILE) \
+		$(ROMIZER_MANIFEST_FILE) com/sun/midp/romization) $(LOG)
+
+$(ROMIZER_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: com.sun.midp.romization.Romizer" > $@) $(LOG)
+
+
+# Java Pre-processor
+#
+jpp: $(JPP_CLASS_FILES)
+
+# For Cygwin
+#
+ifeq ($(USE_CYGWIN),true)
+define fixcygpath
+echo $(1) | xargs -n1 cygpath -w
+endef
+else
+define fixcygpath
+echo $(1)
+endef
+endif
+
+# Phonies to avoid accidents.
+#
+.PHONY: jpp keystore all_tools
