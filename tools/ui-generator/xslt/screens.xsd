@@ -1,0 +1,214 @@
+<?xml version="1.0" ?>
+<!--
+Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="screens">
+        <xs:complexType>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element ref="screen"/>
+                <xs:element ref="include"/>
+            </xs:choice>
+        </xs:complexType>
+        <xs:unique name="name_attr_should_be_unique">
+            <xs:selector xpath="screen"/>
+            <xs:field xpath="@name"/>
+        </xs:unique>
+    </xs:element>
+
+
+    <xs:element name="include">
+        <xs:complexType>
+            <xs:attribute name="href" type="xs:anyURI" use="required"/>
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="screen">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="title" minOccurs="0" maxOccurs="1"/>
+                <xs:choice minOccurs="0" maxOccurs="unbounded">
+                    <xs:element ref="filler"/>
+                    <xs:element ref="text"/>
+                    <xs:element ref="options"/>
+                    <xs:element ref="command"/>
+                    <xs:element ref="dynamic-command"/>
+                    <xs:element ref="progress"/>
+                    <xs:element ref="text-field"/>
+                </xs:choice>
+            </xs:sequence>
+            <xs:attribute name="name" use="required">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
+                        <xs:pattern value="[a-zA-Z0-9_]+"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+        <xs:unique name="id_attr_should_be_unique_across_all_descendant_elements_of_a_screen_element">
+            <xs:selector xpath="options/option|options/dynamic-option|command|dynamic-command|progress|text-field"/>
+            <xs:field xpath="@id"/>
+        </xs:unique>
+    </xs:element>
+
+
+    <xs:element name="title">
+        <xs:complexType mixed="true"/>
+    </xs:element>
+
+
+    <xs:element name="filler">
+        <xs:complexType/>
+    </xs:element>
+
+
+    <xs:element name="text">
+        <xs:complexType mixed="true">
+            <xs:attribute name="align">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
+                        <xs:enumeration value='left'/>
+                        <xs:enumeration value='right'/>
+                        <xs:enumeration value='center'/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="options">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="label" minOccurs="0" maxOccurs="1"/>
+                <xs:choice minOccurs="1" maxOccurs="unbounded">
+                    <xs:element ref="option"/>
+                    <xs:element ref="dynamic-option"/>
+                </xs:choice>
+            </xs:sequence>
+            <xs:attribute name="style">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
+                        <xs:enumeration value='fullscreen'/>
+                        <xs:enumeration value='dropdown'/>
+                        <xs:enumeration value='plain'/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="item-style">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
+                        <xs:enumeration value='numbered'/>
+                        <xs:enumeration value='plain'/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="option">
+        <xs:complexType mixed="true">
+            <xs:attribute name="id" type="id-type" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="dynamic-option">
+        <xs:complexType>
+            <xs:attribute name="id" type="id-type" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="command">
+        <xs:complexType mixed="true">
+            <xs:attribute name="id" type="id-type" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="dynamic-command">
+        <xs:complexType>
+            <xs:attribute name="id" type="id-type" use="required"/>
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="progress">
+        <xs:complexType>
+            <xs:all minOccurs="0">
+                <xs:element ref="label"/>
+            </xs:all>
+            <xs:attribute name="id" type="id-type" use="required"/>
+            <xs:attribute name="align">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
+                        <xs:enumeration value='left'/>
+                        <xs:enumeration value='right'/>
+                        <xs:enumeration value='center'/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="text-field">
+        <xs:complexType>
+            <xs:all minOccurs="0">
+                <xs:element ref="label"/>
+            </xs:all>
+            <xs:attribute name="id" type="id-type" use="required"/>
+            <xs:attribute name="style">
+                <xs:simpleType>
+                    <xs:restriction base='xs:string'>
+                        <xs:enumeration value='plain'/>
+                        <xs:enumeration value='password'/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="maxchars" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:integer">
+                        <xs:minInclusive value="1"/>
+                        <xs:maxInclusive value="10000"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="label">
+        <xs:complexType mixed="true"/>
+    </xs:element>
+
+
+    <xs:simpleType name="id-type">
+        <xs:restriction base='xs:string'>
+            <xs:pattern value="[A-Z0-9_]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>
