@@ -941,7 +941,7 @@ CVMstackDisableReserved(CVMStack *curStack);
  * Is the address in the given stack chunk?
  */
 #define CVMaddressInStackChunk(address_, chunk_)		\
-    (((CVMStackVal32*)(address_) < (chunk_)->end_data) &&	\
+    (((CVMStackVal32*)(address_) <= (chunk_)->end_data) &&	\
      ((CVMStackVal32*)(address_) >= &(chunk_)->data[0]))
 
 /*
