@@ -433,6 +433,7 @@ $(error USE_JDBC=true requires at least J2ME_CLASSLIB=foundation)
 endif
 export JDBC_DIR ?= $(COMPONENTS_DIR)/jdbc
 JDBC_DEFS_FILE = $(JDBC_DIR)/build/share/defs_jdbc_pkg.mk
+JDBC_RULES_FILE = $(JDBC_DIR)/build/share/rules_jdbc_pkg.mk
 ifeq ($(wildcard $(JDBC_DEFS_FILE)),)
 $(error JDBC_DIR must point to a directory containing JDBC sources: $(JDBC_DIR))
 endif
@@ -449,6 +450,7 @@ $(error USE_RMI=true requires at least J2ME_CLASSLIB=foundation)
 endif
 export RMI_DIR ?= $(COMPONENTS_DIR)/rmi
 RMI_DEFS_FILE = $(RMI_DIR)/build/share/defs_rmi_pkg.mk
+RMI_RULES_FILE = $(RMI_DIR)/build/share/rules_rmi_pkg.mk
 ifeq ($(wildcard $(RMI_DEFS_FILE)),)
 $(error RMI_DIR must point to a directory containing RMI sources: $(RMI_DIR))
 endif

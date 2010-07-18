@@ -288,3 +288,11 @@ ifneq ($(JSROP_JAVACALL_DEPENDENTS),)
 $(JSROP_JAVACALL_DEPENDENTS): $(JAVACALL_LIBRARY)
 endif
 endif
+
+ifeq ($(USE_JDBC), true)
+  include $(JDBC_RULES_FILE)
+endif
+
+ifeq ($(USE_RMI), true)
+  include $(RMI_RULES_FILE)
+endif
