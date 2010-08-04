@@ -6251,10 +6251,11 @@ CVMJITcheckGC(CVMJITCompilationContext* con, CVMJITIRBlock* b)
 #endif /* CVM_JIT_GENERATE_GC_RENDEZVOUS */
 
 static void
-branchToBlock(
+branchToBlockX(
     CVMJITCompilationContext* con,
     CVMCPUCondCode condcode,
-    CVMJITIRBlock* target)
+    CVMJITIRBlock* target,
+    CVMBool isPatchableBranch)
 {
 
     int logicalAddress = target->logicalAddress;
@@ -6309,7 +6310,12 @@ branchToBlock(
 
         if (!(target->flags & CVMJITIRBLOCK_ADDRESS_FIXED)) {
             /* This must be a forward branch. */
-            CVMCPUemitBranchNeedFixup(con, logicalAddress, condcode, fixupList);
+            if (isPatchableBranch) {
+                CVMCPUemitPatchableBranchNeedFixup(
+                            con, logicalAddress, condcode, fixupList);
+            } else {
+                CVMCPUemitBranchNeedFixup(con, logicalAddress, condcode, fixupList);
+            }
             patchedInstructions[con->gcCheckPcsIndex] = 0;
             con->gcCheckPcs->pcEntries[con->gcCheckPcsIndex++] = 0;
         } else {
@@ -6356,15 +6362,33 @@ branchToBlock(
 		con->gcCheckPcs->pcEntries[con->gcCheckPcsIndex++] = 0;
                 CVMJITaddCodegenComment((con, "branch to block L%d, skip GC",
                                         CVMJITirblockGetBlockID(target)));
-	        CVMCPUemitBranch(con, logicalAddress, condcode);
+                if (isPatchableBranch) {
+		    CVMCPUemitPatchableBranch(con, logicalAddress, condcode);
+                } else {
+	            CVMCPUemitBranch(con, logicalAddress, condcode);
+                }
             }		
         }
     } else {
         CVMJITaddCodegenComment((con, "branch to block L%d",
                                 CVMJITirblockGetBlockID(target)));
-        CVMCPUemitBranchNeedFixup(con, logicalAddress, condcode, fixupList);
+        if (isPatchableBranch) {
+	    CVMCPUemitPatchableBranchNeedFixup(con, logicalAddress,
+					       condcode, fixupList);
+        } else {
+            CVMCPUemitBranchNeedFixup(con, logicalAddress, condcode, fixupList);
+        }
     }
 #endif /* CVMJIT_PATCH_BASED_GC_CHECKS */
+}
+
+static void
+branchToBlock(
+    CVMJITCompilationContext* con,
+    CVMCPUCondCode condcode,
+    CVMJITIRBlock* target)
+{
+    branchToBlockX(con, condcode, target, CVM_FALSE);
 }
 
 static void
@@ -6389,6 +6413,7 @@ root:	TABLESWITCH reg32 : 40 : : : : {
   int high = ts->high;
   CVMRMResource* key = popResource(con);
   int keyRegNo;
+  CVMBool patchableBranch = CVM_FALSE;
   
   CVMJITprintCodegenComment(("tableswitch"));
   CVMRMsynchronizeJavaLocals(con);
@@ -6444,15 +6469,25 @@ root:	TABLESWITCH reg32 : 40 : : : : {
       
       /* emit branch for the default target */
       branchToBlock(con, CVMCPU_COND_HI, ts->defaultTarget);
-      
-      CVMCPUemitTableSwitchBranch(con, keyRegNo);
+     
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
+      for (i = 0; i < ts->nElements; i++) {
+          CVMJITIRBlock* target = ts->tableList[i];
+          if (CVMJITirblockIsBackwardBranchTarget(target) &&
+              (target->flags & CVMJITIRBLOCK_ADDRESS_FIXED)) {
+              patchableBranch = CVM_TRUE;
+              break;
+          }
+      }
+#endif 
+      CVMCPUemitTableSwitchBranch(con, keyRegNo, patchableBranch);
       CVMRMrelinquishResource(CVMRM_INT_REGS(con), key);
 
       /* emit branches for each table element. Each of these branches
          takes 6 bytes. */
       for (i = 0; i < ts->nElements; i++) {
 	CVMJITIRBlock* target = ts->tableList[i];
-	branchToBlock(con, CVMCPU_COND_AL, target);
+	branchToBlockX(con, CVMCPU_COND_AL, target, patchableBranch);
       }
     }
 };

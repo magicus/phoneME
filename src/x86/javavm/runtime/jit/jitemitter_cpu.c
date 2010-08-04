@@ -3992,12 +3992,13 @@ CVMCPUemitRegisterBranch(CVMJITCompilationContext* con, int regno)
  * any instructions that are generated here.
  */
 void
-CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int indexRegNo)
+CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int indexRegNo,
+                            CVMBool patchableBranch)
 {
     /* This is implemented as:
      *
-     * !tmpreg = key * CVMCPU_INSTRUCTION_SIZE  ! each branch in the table has same size
-     * imull tmpReg, indexReg, 6
+     * !tmpreg = key * branch_size  ! each branch in the table has same size
+     * imull tmpReg, indexReg, branch_size
      * ! basePC = CVMJITcbufGetPhysicalPC() + 8 ! two instructions in between
      * addl tmpReg, (CVMJITcbufGetPhysicalPC() + 2 * CVMCPU_INSTRUCTION_SIZE)
      * ! jump to tmpReg
@@ -4011,8 +4012,19 @@ CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int indexRegNo)
     tmpResource = CVMRMgetResource(CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
     tmpReg = CVMRMgetRegisterNumber(tmpResource);
 
-    /* The size of each branch in the branch table is 5 bytes. */
-    CVMX86imull_reg_reg_imm32(con, tmpReg, indexRegNo, 5);
+    /*
+     * Normally the size of each branch in the branch table is 5 bytes (the
+     * size of jmp instruction). When CVMJIT_PATCH_BASED_GC_CHECKS is used if
+     * there is backwards branch in the branch table, all branches are emitted
+     * as patchable, all jmps are padded out to CVMCPU_INSTRUCTION_SIZE with
+     * nops.
+     */
+    if (!patchableBranch) {
+        CVMX86imull_reg_reg_imm32(con, tmpReg, indexRegNo, 5);
+    } else {
+        CVMX86imull_reg_reg_imm32(con, tmpReg, indexRegNo,
+                                  CVMCPU_INSTRUCTION_SIZE);
+    }
 
     /* Compute table basePC and load it into a register. */  
     basePC = (CVMInt32)CVMJITcbufGetPhysicalPC(con) + 6 /* sizeof(add reg, imm32) */ + 2 /* sizeof(jmp *reg) */;
@@ -4186,26 +4198,41 @@ CVMCPUemitBranchNeedFixup(CVMJITCompilationContext* con,
     return fixupLogialPC;
 }
 
+static void
+CVMX86emitPatchableBranchPadding(CVMJITCompilationContext* con, int branchPC)
+{
+    int size = CVMJITcbufGetLogicalPC(con) - branchPC;
+    int i;
+    int limit = CVMCPU_INSTRUCTION_SIZE - size;
+    
+    CVMassert(CVMCPU_INSTRUCTION_SIZE == 8); /* for atomic patching */
+    if (limit > 0) {
+	CVMJITaddCodegenComment((con, "padding nops"));
+	for (i = 0; i < limit; i++) {
+	    CVMCPUemitNop(con);
+	}
+    }
+}
+
 void
 CVMCPUemitPatchableBranch(CVMJITCompilationContext* con,
 			  int logicalPC, CVMCPUCondCode condCode)
 {
-  int size = CVMJITcbufGetLogicalPC(con);
-  CVMassert(CVMCPU_INSTRUCTION_SIZE == 8); /* for atomic patching */
-
+  int branchPC = CVMJITcbufGetLogicalPC(con);
   CVMX86emitBranch(con, logicalPC, condCode);
+  CVMX86emitPatchableBranchPadding(con, branchPC);
+}
 
-  size = CVMJITcbufGetLogicalPC(con) - size;
-  {
-    int i;
-    int limit = CVMCPU_NUM_NOPS_FOR_GC_PATCH - size;
-    if (limit > 0) {
-      CVMJITaddCodegenComment((con, "padding nops"));
-      for (i = 0; i < limit; i++) {
-	CVMCPUemitNop(con);
-      }
-    }
-  }
+int
+CVMCPUemitPatchableBranchNeedFixup(CVMJITCompilationContext* con,
+                                   int logicalPC, CVMCPUCondCode condCode,
+                                   CVMJITFixupElement** fixupList)
+{
+    int branchPC = CVMJITcbufGetLogicalPC(con);
+    int fixupLogicalPC = 
+        CVMCPUemitBranchNeedFixup(con, logicalPC, condCode, fixupList);
+    CVMX86emitPatchableBranchPadding(con, branchPC);
+    return fixupLogicalPC;
 }
 
 static void

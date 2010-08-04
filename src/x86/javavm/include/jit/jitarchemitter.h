@@ -752,7 +752,8 @@ CVMCPUemitRegisterBranch(CVMJITCompilationContext* con, int regno);
  * we just need to fall through to the default case.
  */
 void
-CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int indexRegNo);
+CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int indexRegNo,
+                            CVMBool patchableBranch);
 
 /*
  * Emit code to do a gc rendezvous.
@@ -792,6 +793,11 @@ CVMCPUemitBranchNeedFixup(CVMJITCompilationContext* con,
 extern void
 CVMCPUemitBranchLinkNeedFixup(CVMJITCompilationContext* con, int logicalPC,
                               CVMJITFixupElement** fixupList);
+
+extern int
+CVMCPUemitPatchableBranchNeedFixup(CVMJITCompilationContext* con,
+                                   int logicalPC, CVMCPUCondCode condCode,
+                                   CVMJITFixupElement** fixupList);
 
 enum CVMCPUFrameReferenceType { 
     CVMCPU_FRAME_LOCAL, CVMCPU_FRAME_TEMP, CVMCPU_FRAME_CSTACK
