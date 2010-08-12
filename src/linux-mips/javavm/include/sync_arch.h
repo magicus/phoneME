@@ -59,11 +59,11 @@
         atomicSwap((n), (a))
 
 extern
-CVMAddr atomicCmpSwap(CVMAddr new, volatile CVMAddr *addr,
-		      CVMAddr old);
+CVMAddr atomicCmpSwap(CVMAddr new_value, volatile CVMAddr *addr,
+		      CVMAddr old_value);
 
 extern
-CVMAddr atomicSwap(CVMAddr new, volatile CVMAddr *addr);
+CVMAddr atomicSwap(CVMAddr new_value, volatile CVMAddr *addr);
 
 #endif /* !_ASM */
 #endif
