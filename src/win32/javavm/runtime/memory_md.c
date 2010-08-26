@@ -167,8 +167,8 @@ void *CVMmemMap(size_t requestedSize, size_t *mappedSize)
 	    "CVMmemMap: 0x%x bytes at 0x%x (request: 0x%x bytes)\n",
 	    *mappedSize, mappedAddr, requestedSize);
     } else {
-	CVMconsolePrintf("CVMmemMap failed: (request: 0x%x bytes)\n",
-			 requestedSize);
+	CVMconsolePrintf("CVMmemMap failed: Error %d, (request: 0x%x bytes)\n",
+			 GetLastError(), requestedSize);
     }
 #endif
     return mappedAddr;
@@ -212,8 +212,8 @@ void *CVMmemUnmap(void *requestedAddr, size_t requestedSize,
 	    "CVMmemUnmap: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
             *unmappedSize, unmappedAddr, requestedSize, requestedAddr);
     } else {
-	CVMconsolePrintf("CVMmemUnmap failed: (request: 0x%x bytes at 0x%x)\n",
-	     requestedSize, requestedAddr);
+	CVMconsolePrintf("CVMmemUnmap failed: Error %d, (request: 0x%x bytes at 0x%x)\n",
+                         GetLastError(), requestedSize, requestedAddr);
     }
 #endif
     return unmappedAddr;
@@ -235,6 +235,10 @@ void *CVMmemUnmap(void *requestedAddr, size_t requestedSize,
  * a pointer to the beginning of the page operates on that page.
  */
 
+#define CONST_32MB      (0x02000000)
+#define CONST_32MB_MASK (0xFE000000)
+#define ROUND_UP_32MB(x) (((DWORD)(x) & CONST_32MB_MASK) + CONST_32MB)
+
 /* Purpose: Commits a range of memory which was previously reserved using
             CVMmemMap().  The memory range may be a subset of the range
 	    returned by CVMmemMap().  The range to commit is specified by
@@ -255,18 +259,77 @@ void *CVMmemCommit(void *requestedAddr, size_t requestedSize,
 		   size_t *committedSize)
 {
     void *committedAddr = NULL;
+    MEMORY_BASIC_INFORMATION mb;
 
     CVMassert(requestedSize == roundUpToGrain(requestedSize));
     CVMassert(requestedAddr ==
 	      (void *)roundDownToGrain((CVMAddr)requestedAddr));
 
     if (requestedSize != 0) {
-	committedAddr = VirtualAlloc(requestedAddr, requestedSize, MEM_COMMIT,
-				     PAGE_READWRITE);
+        committedAddr = VirtualAlloc(requestedAddr, requestedSize, MEM_COMMIT,
+                                     PAGE_READWRITE);
+#ifdef WINCE
+        if (committedAddr == NULL && ((DWORD)requestedAddr + requestedSize) >=
+            ROUND_UP_32MB(requestedAddr)) {
+            /* hitting/crossing 32MB boundary, need to break up the commit */
+            size_t origSize = requestedSize;
+            void *newAddr = requestedAddr;
+            size_t pageSize = CVMmemPageSize();
+
+            while(((DWORD)newAddr + origSize) >= ROUND_UP_32MB(newAddr)) {
+                size_t newSize = ROUND_UP_32MB(newAddr) - (DWORD)newAddr;
+                if (newSize >= pageSize * 2) {
+                    /* Sometimes, for whatever reason, if you
+                     * allocate right up to the 32MB boundary it returns
+                     * INVALID PARAMETER error. So, back off a page 
+                     */
+                    newSize -= pageSize;
+                }
+                committedAddr = VirtualAlloc(newAddr, newSize, MEM_COMMIT,
+                                             PAGE_READWRITE);
+                if (committedAddr == NULL) {
+                    break;
+                }
+                newAddr = (void*)((DWORD)newAddr + newSize);
+                origSize -= newSize;
+            }
+
+#if _WIN32_WCE < 600
+            while(committedAddr != NULL && origSize > 0) {
+                /* Some residual pages to commit */
+                /* WinCE < 6.0 fails on commits that are too big, where too big
+                 * is some unknown value I can't seem to pin down. So just do
+                 * it a page at a time.
+                 */
+                committedAddr = VirtualAlloc(newAddr, pageSize, MEM_COMMIT,
+                                             PAGE_READWRITE);
+                origSize -= pageSize;
+                newAddr = (void *)((DWORD)newAddr + pageSize);
+            }
+#else
+            if (committedAddr != NULL) {
+                committedAddr = VirtualAlloc(newAddr, origSize, MEM_COMMIT,
+                                             PAGE_READWRITE);
+            }
+#endif
+            if (committedAddr != NULL) {
+                committedAddr = requestedAddr;
+            }
+        }
+#endif
     }
     *committedSize = (committedAddr != NULL) ?
 	(CVMassert(committedAddr == requestedAddr), requestedSize) : 0;
 
+#ifdef WINCE
+    if (committedAddr == NULL) {
+        /* Must have had an error committing, attempt to decommit anything we
+         * committed
+         */
+        size_t decommittedSize;
+        CVMmemDecommit(requestedAddr, requestedSize, &decommittedSize);
+    }
+#endif
 #ifdef DEBUG_MMAP
     if (committedAddr != NULL) {
 	CVMconsolePrintf(
@@ -274,8 +337,14 @@ void *CVMmemCommit(void *requestedAddr, size_t requestedSize,
 	    *committedSize, committedAddr, requestedSize, requestedAddr);
     } else {
 	CVMconsolePrintf(
-	    "CVMmemCommit failed: (request: 0x%x bytes at 0x%x)\n",
-	    requestedSize, requestedAddr);
+	    "CVMmemCommit failed: Error %d, (request: 0x%x bytes at 0x%x)\n",
+	    GetLastError(), requestedSize, requestedAddr);
+        CVMconsolePrintf("CVMmemCommit: State:\n");
+        VirtualQuery(requestedAddr, &mb, sizeof(mb));
+        CVMconsolePrintf("  Base: 0x%x\n  AllocBase: 0x%x\n  AllocProtect: 0x%x\n  Size: 0x%x\n  State: 0x%x\n  Protect: 0x%x\n  Type: 0x%x\n",
+                         (int)mb.BaseAddress, mb.AllocationBase,
+                         mb.AllocationProtect, mb.RegionSize, mb.State,
+                         mb.Protect, mb.Type);
     }
 #endif
 
@@ -308,7 +377,30 @@ void *CVMmemDecommit(void *requestedAddr, size_t requestedSize,
     CVMassert(requestedAddr == (void *)roundUpToGrain((CVMAddr)requestedAddr));
 
     if (requestedSize != 0) {
-	success = VirtualFree(requestedAddr, requestedSize, MEM_DECOMMIT);
+        success = VirtualFree(requestedAddr, requestedSize, MEM_DECOMMIT);
+#ifdef WINCE
+        if (!success && ((DWORD)requestedAddr + requestedSize) >=
+            ROUND_UP_32MB(requestedAddr)) {
+            /* crossing 32MB boundary, need to break up the decommit */
+            size_t origSize = requestedSize;
+            void *newAddr = requestedAddr;
+
+            while(((DWORD)newAddr + origSize) >= ROUND_UP_32MB(newAddr)) {
+                size_t newSize = ROUND_UP_32MB(newAddr) - (DWORD)newAddr;
+                success = VirtualFree(newAddr, newSize, MEM_DECOMMIT);
+                if (!success) {
+                    break;
+                }
+                newAddr = (void*)((DWORD)newAddr + newSize);
+                origSize -= newSize;
+            }
+
+            if (success && origSize > 0) {
+                /* Some residual pages to decommit */
+                success = VirtualFree(newAddr, origSize, MEM_DECOMMIT);
+            }
+        }
+#endif
     }
     if (success) {
 	decommittedAddr = requestedAddr;
