@@ -1159,7 +1159,7 @@ CVMMIPSemitJump(CVMJITCompilationContext* con,
         }
     } else {
         /* Target is not within the current 256 region. */
-        CVMCPUemitLoadConstant(con, CVMMIPS_t7, physicalPC);
+        CVMMIPSemitMakeConstant32(con, CVMMIPS_t7, physicalPC);
         CVMMIPSemitJumpRegister(con, CVMMIPS_t7, link,
                                 delaySlot /* fill delay slot */);
     }
