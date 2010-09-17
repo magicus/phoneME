@@ -62,7 +62,7 @@
 	 */
 	stmfd sp!, {r7} 	
         ldr r7, =0x000f0002
-	swi 0x009f0002
+	swi 0x0
 	ldmfd sp!, {r7}
 #else
 	swi 0x009f0002
