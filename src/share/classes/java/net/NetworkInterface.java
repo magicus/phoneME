@@ -324,11 +324,10 @@ public final class NetworkInterface {
     }
 
     public int hashCode() {
-	int count = 0;
-	if (addrs != null) {
-	    for (int i = 0; i < addrs.length; i++) {
-		count += addrs[i].hashCode();
-	    }
+	int count = (name == null) ? 0 : name.hashCode();
+	Enumeration addrs = getInetAddresses();
+	while (addrs.hasMoreElements()) {
+	    count += addrs.nextElement().hashCode();
 	}
 	return count;
     }

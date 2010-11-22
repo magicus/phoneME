@@ -302,6 +302,37 @@ class MessageHeader {
 	    values = nv;
 	}
     }
+    
+    /**
+    * Remove the key from the header. If there are multiple values under
+    * the same key, they are all removed.
+    * Nothing is done if the key doesn't exist.
+    * After a remove, the other pairs' order are not changed.
+    * @param k the key to remove
+    */
+    public synchronized void remove(String k) {
+	if(k == null) {
+	    for (int i = 0; i < nkeys; i++) {
+		while (keys[i] == null && i < nkeys) {
+		    for(int j=i; j<nkeys-1; j++) {
+		        keys[j] = keys[j+1];
+		        values[j] = values[j+1];
+		    }
+		    nkeys--;
+		}
+	    }
+	} else {
+	    for (int i = 0; i < nkeys; i++) {
+		while (k.equalsIgnoreCase(keys[i]) && i < nkeys) {
+		    for(int j=i; j<nkeys-1; j++) {
+		        keys[j] = keys[j+1];
+		        values[j] = values[j+1];
+		    }
+		    nkeys--;
+		}
+	    }
+	}
+    }
 
     /** Sets the value of a key.  If the key already
 	exists in the header, it's value will be

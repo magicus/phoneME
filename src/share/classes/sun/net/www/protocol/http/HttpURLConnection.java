@@ -40,6 +40,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.HashSet;
+import java.util.Set;
 import sun.net.*;
 import sun.net.www.*;
 import sun.net.www.http.HttpClient;
@@ -69,6 +71,54 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     static final boolean validateProxy;
     static final boolean validateServer;
 
+    /*
+     * Restrict setting of request headers through the public api
+     * consistent with JavaScript XMLHttpRequest2 with a few
+     * exceptions. Disallowed headers are silently ignored for
+     * backwards compatibility reasons rather than throwing a
+     * SecurityException. For example, some applets set the
+     * Host header since old JREs did not implement HTTP 1.1.
+     * Additionally, any header starting with Sec- is
+     * disallowed.
+     *
+     * The following headers are allowed for historical reasons:
+     *
+     * Accept-Charset, Accept-Encoding, Cookie, Cookie2, Date,
+     * Referer, TE, User-Agent, headers beginning with Proxy-.
+     *
+     * The following headers are allowed in a limited form:
+     *
+     * Connection: close
+     *
+     * See http://www.w3.org/TR/XMLHttpRequest2.
+     */
+    private static final boolean allowRestrictedHeaders;
+    private static final Set restrictedHeaderSet;
+    private static final String[] restrictedHeaders = {
+	/* Restricted by XMLHttpRequest2 */
+	//"Accept-Charset",
+	//"Accept-Encoding",
+	"Access-Control-Request-Headers",
+	"Access-Control-Request-Method",
+	"Connection", /* close is allowed */
+	"Content-Length",
+	//"Cookie",
+	//"Cookie2",
+	"Content-Transfer-Encoding",
+	//"Date",
+	"Expect",
+	"Host",
+	"Keep-Alive",
+	"Origin",
+	// "Referer",
+	// "TE",
+	"Trailer",
+	"Transfer-Encoding",
+	"Upgrade",
+	//"User-Agent",
+	"Via"
+    };
+
     static {
 	maxRedirects = ((Integer)java.security.AccessController.doPrivileged(
 		new sun.security.action.GetIntegerAction("http.maxRedirects", 
@@ -89,6 +139,17 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 	validateServer = ((Boolean)java.security.AccessController.doPrivileged(
 		new sun.security.action.GetBooleanAction(
 		    "http.auth.digest.validateServer"))).booleanValue();
+	allowRestrictedHeaders = ((Boolean)java.security.AccessController.doPrivileged(
+	        new sun.security.action.GetBooleanAction(
+	            "sun.net.http.allowRestrictedHeaders"))).booleanValue();
+	if(!allowRestrictedHeaders) {
+	   restrictedHeaderSet = new HashSet(restrictedHeaders.length);
+	   for (int i=0; i < restrictedHeaders.length; i++) {
+	        restrictedHeaderSet.add(restrictedHeaders[i].toLowerCase());
+	   }
+	}
+	else
+	   restrictedHeaderSet=null;
     }
 
     static final String httpVersion = "HTTP/1.1";
@@ -176,6 +237,41 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 				       host, addr, port, protocol, prompt, scheme);
 		}
 	    });
+    }
+
+    private boolean isRestrictedHeader(String key, String value) {
+	if (allowRestrictedHeaders) {
+	    return false;
+	}
+ 
+	key = key.toLowerCase();
+	if (restrictedHeaderSet.contains(key)) {
+	    /*
+	     * Exceptions to restricted headers:
+	     *
+	     * Allow "Connection: close".
+	     */
+	    if (key.equals("connection") && value.equalsIgnoreCase("close")) {
+		return false;
+	    }
+	    return true;
+	} else if (key.startsWith("sec-")) {
+	    return true;
+	}
+	return false;
+    }
+
+    /*
+     * Checks the validity of http message header and whether the header
+     * is restricted and throws IllegalArgumentException if invalid or
+     * restricted.
+     */
+    private boolean isExternalMessageHeaderAllowed(String key, String value) {
+	checkMessageHeader(key, value);
+	if (!isRestrictedHeader(key, value)) {
+	    return true;
+	}
+	return false;
     }
 
     /* 
@@ -300,6 +396,10 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 		}
 	    }
 	    setRequests=true;
+	    // Chunked encoding not supported
+	    if (requests.findValue("Transfer-Encoding") != null) {
+		requests.remove("Transfer-Encoding");
+	    }
 	}
 	http.writeRequests(requests, poster);
 	if (ps.checkError()) {
@@ -1485,8 +1585,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
      */
     public void setRequestProperty(String key, String value) {
 	super.setRequestProperty(key, value);
-	checkMessageHeader(key, value);
-	requests.set(key, value);
+	if (isExternalMessageHeaderAllowed(key, value)) {
+	    requests.set(key, value);
+	}
     }
 
     /**
@@ -1502,8 +1603,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
      */
     public void addRequestProperty(String key, String value) {
 	super.addRequestProperty(key, value);
-	checkMessageHeader(key, value);
-	requests.add(key, value);
+	if (isExternalMessageHeaderAllowed(key, value)) { 
+	    requests.add(key, value);
+	}
     }
 
     //
