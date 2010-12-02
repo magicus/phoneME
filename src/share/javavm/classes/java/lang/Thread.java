@@ -214,6 +214,10 @@ class Thread implements Runnable {
      */
     public final static int MAX_PRIORITY = 10;
 
+    /* Whether or not the Thread has been completely constructed;
+     * init or clone method has successfully completed */
+    private Thread me;    // null
+
     /**
      * Returns a reference to the currently executing thread object.
      *
@@ -334,17 +338,49 @@ class Thread implements Runnable {
 	this.group = g;
 	this.daemon = parent.isDaemon();
 	this.name = name.toCharArray();
-        this.priority = parent.getPriority();
+	this.priority = parent.getPriority();
 	this.contextClassLoader = parent.contextClassLoader;
 	this.inheritedAccessControlContext = AccessController.getContext();
 	this.target = target;
 	setPriority(priority);
-        if (parent.inheritableThreadLocals != null)
-          this.inheritableThreadLocals = 
-            ThreadLocal.createInheritedMap(parent.inheritableThreadLocals);
+	if (parent.inheritableThreadLocals != null)
+	    this.inheritableThreadLocals = 
+		ThreadLocal.createInheritedMap(parent.inheritableThreadLocals);
 
-        /* Stash the specified stack size in case the VM cares */
-        this.stackSize = stackSize;
+	/* Stash the specified stack size in case the VM cares */
+	this.stackSize = stackSize;
+	synchronized(this) {
+	    this.me = this;
+	}
+    }
+
+    /**
+     * Returns a clone if the class of this object is {@link Cloneable Cloneable}.
+     *
+     * @return  a clone if the class of this object is {@code Cloneable}
+     *
+     * @throws  CloneNotSupportedException
+     *          if this method is invoked on a class that does not
+     *          support {@code Cloneable}
+     */
+    protected Object clone() throws CloneNotSupportedException {
+	Thread t;
+	synchronized(this) {
+	    t = (Thread) super.clone();
+
+	    /* t.blocker = null; */
+	    t.threadLocals = null;
+
+	    group.checkAccess();
+	    t.setPriority(priority);
+
+	    final Thread current = Thread.currentThread();
+	    if (current.inheritableThreadLocals != null)
+		t.inheritableThreadLocals =
+		    ThreadLocal.createInheritedMap(current.inheritableThreadLocals);
+	    t.me = t;
+	}
+	return t;
     }
 
     private void init(ThreadGroup g, Runnable target, String name) {
@@ -640,7 +676,7 @@ class Thread implements Runnable {
      */
     public void start() {
 	synchronized (lock) {
-	    if (alive || hasStartedOnce) {
+	    if (this != me || alive || hasStartedOnce) {
 		throw new IllegalThreadStateException();
 	    }
 	    if (!stillborn) {
