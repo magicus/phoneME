@@ -27,4 +27,7 @@
 include $(CDC_DIR)/build/share/id_cdc.mk
 
 J2ME_PROFILE_NAME		= Foundation Profile
-J2ME_PROFILE_SPEC_VERSION	= 1.1
+###J2ME_PROFILE_SPEC_VERSION	= 1.1
+J2ME_PROFILE_SPEC_VERSION      = \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 1.1.2_02 (Specification 1.1.2) \nOptional Pkg: Security Optional Package 1.0.1_05 (Specification 1.0.1)
+
+
