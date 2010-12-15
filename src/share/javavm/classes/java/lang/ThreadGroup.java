@@ -56,7 +56,7 @@ import java.io.PrintStream;
  */
 public
 class ThreadGroup {
-    ThreadGroup parent;
+    private final ThreadGroup parent;
     String name;
     int maxPriority;
     boolean destroyed;
@@ -77,6 +77,8 @@ class ThreadGroup {
     ThreadGroup() {	// called from Thread.initMainThread()
 	this.name = "system";
 	this.maxPriority = Thread.MAX_PRIORITY;
+        // the system thread group is the only group to have this as its parent.
+        this.parent = this;
     }
 
     /**
@@ -153,8 +155,14 @@ class ThreadGroup {
      * @since   JDK1.0
      */
     public final ThreadGroup getParent() {
-	if (parent != null)
-	    parent.checkAccess();
+        if (parent == null) {
+            throw new SecurityException("Uninitialised ThreadGroup");
+        }
+        if (parent == this) {
+            // system thread group
+            return null;
+        }
+        parent.checkAccess();
 	return parent;
     }
 
@@ -280,10 +288,16 @@ class ThreadGroup {
      * @since   JDK1.0
      */
     public final boolean parentOf(ThreadGroup g) {
-	for (; g != null ; g = g.parent) {
+        while (g != null) {
 	    if (g == this) {
 		return true;
 	    }
+            ThreadGroup parent = g.parent;
+            if (g == parent) {
+                // system/root thread group
+                break;
+            }
+            g = parent;
 	}
 	return false;
     }
@@ -741,7 +755,7 @@ class ThreadGroup {
 	    } else {
 		groupsSnapshot = null;
 	    }
-	    if (parent != null) {
+	    if (parent != this) {
 		destroyed = true;
 		ngroups = 0;
 		groups = null;
@@ -752,7 +766,7 @@ class ThreadGroup {
 	for (int i = 0 ; i < ngroupsSnapshot ; i += 1) {
 	    groupsSnapshot[i].destroy();
 	}
-	if (parent != null) {
+	if (parent != null && parent != this) {
 	    parent.remove(this);
 	}
     }
@@ -954,7 +968,7 @@ class ThreadGroup {
      * @since   JDK1.0
      */
     public void uncaughtException(Thread t, Throwable e) {
-	if (parent != null) {
+	if (parent != null && parent != this) {
 	    parent.uncaughtException(t, e);
 	} else if (!(e instanceof ThreadDeath)) {
 	    if (System.err != null) { /* can be null at startup */
