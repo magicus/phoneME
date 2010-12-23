@@ -1105,6 +1105,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         if (connected) {
             return;
         }
+        if (streamConnection == null) {
+            getStreamConnection();
+        }
+
         sendRequest();
         try {
             readResponseMessage();
