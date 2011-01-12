@@ -29,7 +29,7 @@ J2ME_PROFILE_NAME		= CDC
 J2ME_PROFILE_SPEC_VERSION	= 1.1
 
 CVM_BUILD_ID 		= b100
-CVM_BUILD_NAME		= CDC
+CVM_BUILD_NAME		= CVM
 CVM_BUILD_VERSION	= phoneme_advanced_mr2
 
 # NOTE: the build/<os>-<cpu>-<device>/id_personal.mk file can be used
