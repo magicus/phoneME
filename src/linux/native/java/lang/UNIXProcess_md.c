@@ -38,6 +38,7 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
 
 #ifdef JDK
 /* path in the environment */
