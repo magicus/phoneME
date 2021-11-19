@@ -6,6 +6,12 @@ Background
 This repository contains the archived source code of the old [Sun
 phoneME](https://en.wikipedia.org/wiki/PhoneME) project, converted to git.
 
+Additional links:
+ * [Java ME on Wikipedia](https://en.wikipedia.org/wiki/Java_Platform,_Micro_Edition)
+ * [Archive of the java.net phoneME project](https://web.archive.org/web/20170410014909/http://java.net/projects/phoneme)
+ * [Archive of the java.net phoneME wiki](https://web.archive.org/web/20070824053825/http://wiki.java.net/bin/view/Mobileandembedded/WebHome)
+ * [Archive of phoneme.dev.java.net](https://web.archive.org/web/20070610234355/https://phoneme.dev.java.net/)
+
 Conversion Notes
 ---
 The original source was published as Subversion at
@@ -35,7 +41,7 @@ I chose to put the individual components directly in the root directory (like
 latter had better matched the original layout, the method I choose makes it easy
 to checkout a tag from `builds` or `releases` and get a similar layout.
 
-Conversion methodology
+Conversion Methodology
 ---
 Initially, I created a separate git repository for each component, using `git
 svn` for `trunk`, `tags` and `branches`, like this:
