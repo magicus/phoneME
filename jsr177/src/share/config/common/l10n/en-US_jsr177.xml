@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE configuration SYSTEM "../../common/configuration.dtd">
+<!--
+
+    Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+    
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License version
+    2 only, as published by the Free Software Foundation.
+    
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License version 2 for more details (a copy is
+    included at /legal/license.txt).
+    
+    You should have received a copy of the GNU General Public License
+    version 2 along with this work; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+    02110-1301 USA
+    
+    Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+    Clara, CA 95054 or visit www.sun.com if you need additional
+    information or have any questions.
+    
+-->
+<configuration>
+<localized_strings 
+    Package="com.sun.midp.l10n" 
+    Name="LocalizedStringsBase" 
+    KeysClass="com.sun.midp.i18n.ResourceConstants" >
+
+    <localized_string 
+        Key="JSR177_WIM_NOT_FOUND"
+        Value="WIM application not found."/>
+                
+    <localized_string 
+        Key="JSR177_CONFIRM_SIGNATURE"
+        Value="Confirmation"/>
+                
+    <localized_string 
+        Key="JSR177_STRING_TO_SIGN"
+        Value="This string will be signed:&#010;"/>
+                
+    <localized_string 
+        Key="JSR177_WIM_PIN_BLOCKED"
+        Value="PIN is blocked"/>
+                
+    <localized_string
+        Key="JSR177_WIM_PIN_NOT_VERIFIED"
+        Value="PIN verification failed."/>
+                
+    <localized_string 
+        Key="JSR177_CERTIFICATE_USED"
+        Value="This certificate will be used:&#010;"/>
+                
+    <localized_string 
+        Key="JSR177_SELECT_CERTIFICATE"
+        Value="Select the certificate"/>
+                
+    <localized_string 
+        Key="JSR177_CERTIFICATES_AVAILABLE"
+        Value="These certificates can be used:"/>
+                
+    <localized_string 
+        Key="JSR177_CERTIFICATE_GENERATED"
+        Value="Certificate enrollment request will be generated:"/>
+                
+    <localized_string 
+        Key="JSR177_CERTIFICATE_STORED"
+        Value="This certificate will be stored:&#010;"/>
+                
+    <localized_string 
+        Key="JSR177_CERTIFICATE_DELETED"
+        Value="This certificate will be deleted:&#010;"/>
+                
+    <localized_string 
+        Key="JSR177_CERTIFICATE_SUBJECT"
+        Value="Subject"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_KEYUSAGE"
+        Value="Key usage"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_KEYUSAGE_AUTH"
+        Value="authentication"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_KEYUSAGE_NR"
+        Value="non-repudiation"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_ALGORITHM"
+        Value="Algorithm"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_KEYLENGTH"
+        Value="Key length"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_LABEL"
+        Value="Label"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_ISSUER"
+        Value="Issuer"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_SN"
+        Value="Serial Number"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_VALIDFROM"
+        Value="Valid from"/>
+
+    <localized_string
+        Key="JSR177_CERTIFICATE_VALIDTILL"
+        Value="through"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_TITLE_NEWPIN"
+        Value="New PIN"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_LABEL"
+        Value="PIN label"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_ENTERPIN"
+        Value="Enter new PIN"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_CONFIRMPIN"
+        Value="Confirm new PIN"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_TITLE_VERIFY"
+        Value="PIN verification"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_TITLE_CHANGE"
+        Value="Change PIN"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_TITLE_DISABLE"
+        Value="Disable PIN"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_TITLE_ENABLE"
+        Value="Enable PIN"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_TITLE_UNBLOCK"
+        Value="Unblock PIN"/>
+
+    <localized_string
+        Key="JSR177_PINDIALOG_NEWVALUE"
+        Value="new value"/>
+
+
+</localized_strings>
+</configuration>

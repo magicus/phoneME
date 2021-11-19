@@ -1,0 +1,96 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Include jsr 177 common properties in Configuration
+#
+ifeq ($(JSR_177_PACKAGE), full)
+JSR_CONFIGURATION_INPUT_FILES += \
+	$(JSR_177_DIR)/src/share/config/common/l10n/en-US_jsr177.xml \
+	$(JSR_177_DIR)/src/share/config/common/i18n_constants_jsr177.xml
+endif
+
+# Source files for the ( satsa ) module
+#
+ifeq ($(JSR_177_PACKAGE), full)
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_DIR)/src/cdc_share/common/classes/com/sun/satsa/security/SecurityInitializer.java \
+    $(JSR_177_DIR)/src/cdc_share/common/classes/com/sun/j2me/dialog/PinMessageDialog.java
+endif
+
+# Definition for the build directory
+#
+JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
+
+ifeq ($(JSR_177_PACKAGE), full)
+JSR_177_GENERATED_DIR   = $(JSR_177_BUILD_DIR)/generated
+endif
+
+# Generating initializer
+#
+ifeq ($(JSR_177_PACKAGE), full)
+JSR_177_INIT_PACKAGE  = $(JSR_INIT_PACKAGE).jsr177
+JSR_177_INITIALIZER   = $(JSR_177_GENERATED_DIR)/classes/$(subst .,/,$(JSR_177_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
+
+JSR_INITIALIZER_LIST += $(JSR_177_INIT_PACKAGE).$(JSR_INIT_CLASS)
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_INITIALIZER)
+
+$(JSR_177_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
+	$(call generateJSRInitializer,$(JSR_177_PROPERTY_FILES),$(JSR_177_GENERATED_DIR),$(JSR_177_INIT_PACKAGE),$@,$(JSR_177_LIB_NAME))
+endif
+
+JSR_177_LIB_NAME        = jsr177
+JSR_177_JAR             = $(JSROP_JAR_DIR)/$(JSR_177_LIB_NAME).jar
+
+SUBSYSTEM_JSR_177_JAVA_FILES = $(SUBSYSTEM_SATSA_JAVA_FILES)
+
+JSR_177_API_CLASSLIST = $(JSR_177_DIR)/build/cdc_share/satsa_api.txt
+JSR_177_API_CLASSES   = $(call readClassList, $(JSR_177_API_CLASSLIST))
+JSR_177_EXTRA_JAR     = $(JSROP_JAR_DIR)/$(JSR_177_LIB_NAME)_extras.jar
+JSROP_EXTRA_JARS     += $(JSR_177_EXTRA_JAR)
+
+ifeq ($(USE_JSR_172), true)
+$(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
+	$(call compileJSRClasses,177,$(PS)$(JSROP_JAR_DIR)/jsr172.jar)
+else
+$(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
+	$(call compileJSRClasses,177)
+endif
+
+$(JSR_177_EXTRA_JAR): $(JSR_177_JAR)
+	$(call makeJSRExtraJar,177)
+
+# Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
+satsa_source_bundle:: $(JSR_177_DIR)
+	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), build/cdc_share src/cdc_share)	

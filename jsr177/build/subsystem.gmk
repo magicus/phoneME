@@ -1,0 +1,264 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+ifeq ($(JSR_177_DIR),)
+$(error JSR_177_DIR is not set.)
+endif
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += satsa
+
+# Abstractions component is used
+USE_ABSTRACTIONS=true
+
+# Add my verify and display commands
+verify: jsr177_verify
+display: jsr177_display
+
+# Way to specify an space as an argument  for subst
+# Copied from genlibrary.make
+JSR177_EMPTY=
+JSR177_SPACECHAR=$(JSR177_EMPTY) $(JSR177_EMPTY)
+
+# Variable for config errors
+JSR_177_ERRORS :=
+
+# Default values for options
+#
+# ACL from another implementation text files={true|false}
+USE_JSR_177_ACL_TEXT ?= false
+
+# APDUManager={carddevice|simple}
+JSR_177_APDU_MANAGER ?= carddevice
+
+# CardDevice={platformcarddevice}
+JSR_177_APDU_CARDDEVICE ?= platformcarddevice
+
+# Does SAT applications for testing emulator have to be generated={true|false}
+JSR_177_USE_EMULATOR ?= true
+
+# Set of packages to build={full|crypto}
+JSR_177_PACKAGE ?= full
+
+# What specification of IC cards is supported={iso|etsi}
+# iso - ISO/IEC 7816-4 : "Information technology - Identification cards - 
+# Integrated circuit(s) cards with contacts - Part 4: Interindustry commands for 
+# interchange"
+# etsi - ETSI TS 102 221: "Smart Cards; UICC-Terminal interface; Physical and 
+# logical characteristics"
+JSR_177_SPEC_SUPPORT ?= iso
+
+# Javadoc source path
+#
+SUBSYSTEM_SATSA_SOURCEPATH = $(JSR_177_DIR)/src/share/satsa/classes
+ifeq ($(JSR_177_PACKAGE), full)
+SUBSYSTEM_SATSA_SOURCEPATH += $(JSR_177_DIR)/src/share/protocol/acl/common/classes \
+  $(JSR_177_DIR)/src/share/common/classes
+endif
+
+ifeq ($(JSR_177_PACKAGE), full)
+ifeq ($(USE_JSR_177_ACL_TEXT), true)
+SUBSYSTEM_SATSA_SOURCEPATH += \
+  $(JSR_177_DIR)/src/share/protocol/acl/text_file/classes
+else
+SUBSYSTEM_SATSA_SOURCEPATH += \
+  $(JSR_177_DIR)/src/share/protocol/acl/octet_file/classes
+endif
+endif
+
+ifeq ($(JSR_177_PACKAGE), full)
+SUBSYSTEM_SATSA_PACKAGES += \
+  com.sun.satsa.acl \
+  com.sun.satsa.util.pkcs15
+endif
+
+SUBSYSTEM_SATSA_PACKAGES += \
+  com.sun.satsa.util
+  
+# Source files for the ( satsa ) module
+#
+JSR_177_COMMON = $(JSR_177_DIR)/src/share/common
+
+MODULE_SATSA_COMMON_JAVA_FILES = \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Utils.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLV.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/TLVException.java
+        
+ifeq ($(JSR_177_PACKAGE), full)
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/PKCS15File.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/AODF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DODF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/ODF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DIRF.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Connection.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/FileSystemAbstract.java \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/util/Location.java
+    
+ifeq ($(JSR_177_SPEC_SUPPORT), etsi)
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_COMMON)/etsi/classes/com/sun/satsa/util/Constants.java
+else
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_COMMON)/iso/classes/com/sun/satsa/util/Constants.java
+endif
+
+JSR_177_ACL_COMMON_DIR = $(JSR_177_DIR)/src/share/protocol/acl/common
+JSR_177_ACL_CLASSES_DIR = classes/com/sun/satsa/acl
+JSR_177_ACL_TEXT_DIR = $(JSR_177_DIR)/src/share/protocol/acl/text_file
+JSR_177_ACL_OCTET_DIR = $(JSR_177_DIR)/src/share/protocol/acl/octet_file
+ifeq ($(USE_JSR_177_ACL_TEXT), true)
+JSR_177_ACL_IMPL_DIR = $(JSR_177_ACL_TEXT_DIR)
+MODULE_SATSA_ACL_JAVA_FILES = \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACLFileReader.java
+else
+JSR_177_ACL_IMPL_DIR = $(JSR_177_ACL_OCTET_DIR)
+MODULE_SATSA_ACL_JAVA_FILES = \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/AclFileSystem.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACIF.java
+endif
+
+MODULE_SATSA_ACL_JAVA_FILES += \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACEntry.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACList.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACSlot.java \
+    $(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/PINAttributes.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/JCRMIPermission.java \
+	$(JSR_177_ACL_IMPL_DIR)/$(JSR_177_ACL_CLASSES_DIR)/AccessControlManager.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/ACLPermissions.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/APDUPermissions.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/JCRMIPermissions.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/PINData.java \
+	$(JSR_177_ACL_COMMON_DIR)/$(JSR_177_ACL_CLASSES_DIR)/PINEntryDialog.java
+endif
+
+ifneq ($(TARGET_VM), cldc_vm)
+include $(JSR_177_DIR)/build/cdc_share/subsystem.gmk
+else
+include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
+endif
+
+ifeq ($(JSR_177_PACKAGE), full)
+include $(JSR_177_DIR)/build/share/apdu.gmk
+include $(JSR_177_DIR)/build/share/jcrmi.gmk
+include $(JSR_177_DIR)/build/share/crypto.gmk
+include $(JSR_177_DIR)/build/share/pki.gmk
+include $(JSR_177_DIR)/build/share/tools.gmk
+else
+include $(JSR_177_DIR)/build/share/crypto.gmk
+endif
+
+JAVADOC_ALL_SOURCEPATH += \
+    $(subst $(JSR177_SPACECHAR),$(PATHSEP),$(SUBSYSTEM_SATSA_SOURCEPATH))
+
+JAVADOC_ALL_PACKAGES +=  $(SUBSYSTEM_SATSA_PACKAGES)
+
+GROUP_DOC_ALL += \
+	-group "JSR177 SATSA" \
+    $(subst $(JSR177_SPACECHAR),$(PATHSEP),$(SUBSYSTEM_SATSA_PACKAGES)) 
+
+# Determines what option we have made and set it
+# to some variable that global makefile recognize
+#
+SUBSYSTEM_SATSA_JAVA_FILES   += $(MODULE_SATSA_COMMON_JAVA_FILES)
+			       
+ifeq ($(JSR_177_PACKAGE), full)
+SUBSYSTEM_SATSA_JAVA_FILES   += $(MODULE_SATSA_ACL_JAVA_FILES)
+endif
+	
+# Properties
+ifeq ($(JSR_177_PACKAGE), full)		       
+# JSR 177 internal paths
+INTERNAL_JSR_177_CONFIG_DIR = $(JSR_177_DIR)/src/share/config
+
+# Include jsr 177 common properties in Configuration
+#
+JSR_177_PROPERTY_FILES += \
+	$(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177.xml
+	
+# Include properties that depend on build options
+ifeq ($(JSR_177_USE_EMULATOR),true)
+    JSR_177_PROPERTY_FILES += \
+        $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
+else
+    JSR_177_PROPERTY_FILES += \
+        $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_real.xml
+endif
+endif
+
+ifeq ($(JSR_177_PACKAGE), full)
+EXTRA_CFLAGS += -DENABLE_JSR_177
+JPP_DEFS += -DENABLE_JSR_177
+endif
+
+# Append SATSA source bundle creation to target
+source_bundle:: satsa_source_bundle
+
+# Create SATSA source in subdir 'jsr177/'
+SATSA_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr177
+
+# Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
+satsa_source_bundle:: $(JSR_177_DIR)
+	@echo " ... JSR 177 source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), build/share src/share)
+	$(AT)cp -f $(JSR_177_DIR)/build/subsystem.gmk $(SATSA_SOURCE_OUTPUT_DIR)/build/subsystem.gmk
+
+# Subsystem verify rules
+#
+ifeq ($(JSR_177_ERRORS),)
+jsr177_verify:
+else
+jsr177_verify:
+	@$(JSR_177_ERRORS)
+	$(AT)exit -1
+endif
+
+# Display subsystem information
+#
+jsr177_display:
+	@echo   "" $(LOG)
+	@echo   "==========================" $(LOG)
+	@echo   "JSR177 Build Configuration" $(LOG)
+	@echo   "==========================" $(LOG)
+	@echo   "" $(LOG)
+	@echo   "TARGET_PLATFORM             = ""$(TARGET_PLATFORM)" $(LOG)
+	@echo   "JSR_177_DIR                 = ""$(JSR_177_DIR)" $(LOG)
+	@echo   "JC_DIR                      = ""$(JC_DIR)" $(LOG)
+	@echo   "USE_JSR_177_ACL_TEXT        = ""$(USE_JSR_177_ACL_TEXT)" $(LOG)
+	@echo   "JSR_177_APDU_MANAGER        = ""$(JSR_177_APDU_MANAGER)" $(LOG)
+	@echo   "JSR_177_APDU_CARDDEVICE     = ""$(JSR_177_APDU_CARDDEVICE)" $(LOG)
+	@echo   "JSR_177_USE_EMULATOR        = ""$(JSR_177_USE_EMULATOR)" $(LOG)
+	@echo   "JSR_177_PACKAGE             = ""$(JSR_177_PACKAGE)" $(LOG)
+	@echo   "" $(LOG)
