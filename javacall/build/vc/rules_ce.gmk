@@ -1,0 +1,68 @@
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+ifeq ($(VC_PATH),)
+$(error VC_PATH for Microsoft Visual C is not set.)
+endif
+
+ifeq ($(CE_VERSION),)
+$(error CE_VERSION for version of Windows CE is not set.)
+endif
+
+PLATFORM_FLAGS += -DUNDER_CE=$(CE_VERSION) -D_WIN32_WCE=$(CE_VERSION) -DUNICODE \
+    -D_CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA /GS-
+
+include $(JAVACALL_DIR)/build/vc/rules.gmk
+
+
+ifeq ($(USE_JSR_120),true)
+
+LINK=link.exe
+LINK_FLAGS=/nologo /dll /subsystem:windowsce,5.01 /NODEFAULTLIB:"oldnames.lib"
+LINK_LIBS=aygshell.lib cemapi.lib coredll.lib ole32.lib oleaut32.lib uuid.lib
+LIBPATH_WIN += `$(call fixcygpath, "$(VC_DIR)/ce/lib/armv4i")`
+LIBPATH += /LIBPATH:"$(LIBPATH_WIN)"
+
+JSMS_SRC_PATH=$(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR)/dll
+JSMS_SOURCES=$(JSMS_SRC_PATH)/jsms.cpp
+JSMS_OBJECTS=`$(call fixcygpath, $(JAVACALL_OUTPUT_OBJ_DIR)/jsms.obj)`
+JSMS_DEF=`$(call fixcygpath, $(JSMS_SRC_PATH)/jsms.def)`
+
+JSMS_OUTPUT_OPTION=-Fo$(JSMS_OBJECTS) \
+                   -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/jsms \
+                   -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/jsms
+
+$(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll: $(JSMS_SOURCES)
+	@echo -n "...compiling: "
+	@$(COMPILE.c) $(JSMS_OUTPUT_OPTION) `$(call fixcygpath, $(JSMS_SOURCES))`
+	@echo "...Generating Library: $@"
+	@$(LINK) $(LINK_FLAGS) $(LIBPATH) \
+            $(JSMS_OBJECTS) \
+            /def:$(JSMS_DEF) \
+            /OUT:`$(call fixcygpath, $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll)` \
+            $(LINK_LIBS) /entry:DllMain
+
+local_vc:: $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll
+
+endif

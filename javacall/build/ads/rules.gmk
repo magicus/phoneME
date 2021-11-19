@@ -1,0 +1,106 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+.PHONY: all pre_target local_ads post_target
+
+all: 
+	$(MAKE) pre_target
+	$(MAKE) javacall_common
+	$(MAKE) local_ads
+	$(MAKE) post_target
+
+NUM_JOBS ?= 2
+parallel_all: # non debug only
+	$(MAKE) -j $(NUM_JOBS) all
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+include $(JAVACALL_DIR)/build/common.gmk
+
+TEMP_PORTING_SOURCE=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP_PORTING_SOURCE))
+else # ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(TEMP_PORTING_SOURCE)
+endif # ifneq ($(FILTER_OBJECTS)x,x)
+
+NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
+
+ifneq ($(NOTIFIER_OBJECTS)x,x)
+NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
+EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
+endif
+
+local_ads: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
+    $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj
+
+CC=armcc
+
+ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
+    define fixcygpath
+    echo $(1)
+    endef
+else
+    define fixcygpath
+    cygpath -m $(1)
+    endef
+endif
+
+LOCAL_CFLAGS_debug = -g -gtp -O0
+LOCAL_CFLAGS_nodebug = -g- -O2 -Otime
+
+CFLAGS += -c $(LOCAL_CFLAGS_$(BUILD))
+CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
+CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
+
+AR=armar
+ARFLAGS=--create
+
+LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)
+OUTPUT_OPTION=-o`$(call fixcygpath, $@)` \
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
+	@echo "...compiling: $<"
+	$(AT)$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
+	@echo "...compiling: $<"
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+
+$(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	$(AT)$(AR) $(ARFLAGS) `$(call fixcygpath, $@)` `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+
+$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	$(AT)$(AR) $(ARFLAGS) `$(call fixcygpath, $@)` `$(call fixcygpath, $^)`
+
+$(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj: $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj
+	@echo "...Coping stubs to lib directory ..."
+	$(AT)cp $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj $(JAVACALL_OUTPUT_LIB_DIR)

@@ -1,0 +1,46 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+#Common part
+vpath %.c $(JPEG_JC_DIR)/common
+PORTING_SOURCE += $(notdir $(wildcard $(JPEG_JC_DIR)/common/*.c))
+SPECIFIC_DEFINITIONS+=-I$(JPEG_JC_DIR)/common
+
+#Encoder part
+ifeq ($(USE_JC_JPEG_ENCODER),true)
+vpath %.c $(JPEG_JC_DIR)/encoder
+PORTING_SOURCE += $(notdir $(wildcard $(JPEG_JC_DIR)/encoder/*.c))
+SPECIFIC_DEFINITIONS+=-I$(JPEG_JC_DIR)/encoder
+SPECIFIC_DEFINITIONS+=-I$(JPEG_JC_DIR)/encoder/inc
+endif
+
+#Decoder part
+ifeq ($(USE_JC_JPEG_DECODER),true)
+vpath %.c $(JPEG_JC_DIR)/decoder
+PORTING_SOURCE += $(notdir $(wildcard $(JPEG_JC_DIR)/decoder/*.c))
+SPECIFIC_DEFINITIONS+=-I$(JPEG_JC_DIR)/decoder
+SPECIFIC_DEFINITIONS+=-I$(JPEG_JC_DIR)/decoder/inc
+endif
+
+JAVACALL_SOURCE_OUTPUT_LIST += implementation/share/jpeg

@@ -1,0 +1,174 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+.PHONY: all pre_target local_vc post_target
+
+all:
+	$(MAKE) pre_target
+	$(MAKE) local_vc
+	$(MAKE) post_target
+
+NUM_JOBS ?= 2
+parallel_all: # non debug only
+	$(MAKE) -j $(NUM_JOBS) all
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
+    define fixcygpath
+    echo $(1)
+    endef
+else
+    USE_CYGWIN = true
+    HOST_OS = win32
+    define fixcygpath
+    cygpath -m $(1)
+    endef
+endif
+
+include $(JAVACALL_DIR)/build/common.gmk
+
+ifneq ($(FILTER_OUT_SOURCES)x,x)
+PORTING_SOURCE:=$(filter-out $(FILTER_OUT_SOURCES),$(PORTING_SOURCE))
+endif
+temp_objects:=$(patsubst %.c,%.obj,$(patsubst %.cpp,%.obj,$(PORTING_SOURCE)))
+ifneq ($(FILTER_OBJECTS)x,x)
+temp_objects:=$(filter-out $(FILTER_OBJECTS),$(temp_objects))
+endif
+PORTING_OBJECTS += $(temp_objects)
+
+NOTIFIER_OBJECTS:=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
+ifneq ($(NOTIFIER_OBJECTS)x,x)
+NOTIFIERS_LIB:=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
+$(NOTIFIERS_LIB): $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
+
+local_vc:: $(NOTIFIERS_LIB)
+endif
+
+TARGET_VM ?= cldc
+
+local_vc:: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib \
+	output_properties_files
+
+ifeq ($(VC8CE_ARCH_PATH),)
+CC=cl.exe
+CXX=cl.exe
+RC=rc.exe
+else
+CC=$(VC8CE_ARCH_PATH)/cl.exe
+CXX=$(VC8CE_ARCH_PATH)/cl.exe
+RC=$(VC8CE_ARCH_PATH)/../../../bin/rc.exe
+CE_CFLAGS = -D_WIN32_WCE=$(CE_VERSION) -DUNDER_CE=$(CE_VERSION) -D_CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA
+CE_CFLAGS += -I"$(WINCE_INCLUDE_PATH)"
+CE_CFLAGS += -I$(WMSDK10_INCLUDE_PATH)
+CE_CFLAGS += -I$(VC8CE_ATLMFC_INCLUDE_PATH)
+CE_CFLAGS += -I$(VC8CE_INCLUDE_PATH)
+CE_CFLAGS += /D $(CE_PLATFORM)
+ifeq ($(TARGET_WINCE_PLATFORM), WM5_PPC)
+CE_CFLAGS += /D WM_PPC_ONLY
+else
+ifeq ($(TARGET_WINCE_PLATFORM), WM6_PPC)
+CE_CFLAGS += /D WM_PPC_ONLY
+endif
+endif
+endif
+
+DEBUG_CFLAGS = -Zi -Gm -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall
+LOCAL_CFLAGS_debug   = -MDd -EHsc -D_LIB -W3 -Od $(DEBUG_CFLAGS) -D_DEBUG
+LOCAL_CFLAGS_nodebug = -MD  -EHsc -D_LIB -W3 -O2
+
+CXXFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
+CFLAGS+= -nologo $(LOCAL_CFLAGS_$(BUILD))
+CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
+CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
+
+ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR)
+RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),-i`$(call fixcygpath, $(dir))`)
+
+ifeq ($(VC8CE_ARCH_PATH),)
+AR=lib.exe
+else
+AR=$(VC8CE_ARCH_PATH)/lib.exe
+endif
+ifeq ($(TARGET_CPU),arm)
+ifeq ($(VC8CE_ARCH_PATH),)
+ARFLAGS=-nologo -MACHINE:ARM
+else
+ARFLAGS=-nologo -MACHINE:ARM
+endif
+else
+ARFLAGS=-nologo -MACHINE:X86
+ifeq ($(USE_VS2005), true)
+LOCAL_CFLAGS_$(BUILD) += -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
+LOCAL_CFLAGS_debug += -RTC1
+else
+LOCAL_CFLAGS_debug += -GZ
+endif
+endif
+
+LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)
+OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)`
+
+jc_common_dep:=$(JAVACALL_OUTPUT_OBJ_DIR)/.jc_common_dep
+$(jc_common_dep) : $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
+	$(AT)mkdir -p $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) \
+	$(JAVACALL_OUTPUT_LIB_DIR) $(JAVACALL_OUTPUT_OBJ_DIR) $(JAVACALL_OUTPUT_EXT_LIB_DIR)
+	$(AT)cp -f $(JAVACALL_INCLUDE_SOURCE_FILES_SET) $(JAVACALL_OUTPUT_INCLUDE_DIR)
+	$(AT)touch $@
+
+$(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc $(jc_common_dep)
+	@echo "...compiling resources ... "
+	$(AT)$(RC) $(RCFLAGS) -l 0x409 -d "NDEBUG" -fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp $(jc_common_dep)
+	@echo -n "...compiling: "
+	$(AT)$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c $(jc_common_dep)
+	@echo -n "...compiling: "
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C) $(jc_common_dep)
+	@echo -n "...compiling: "
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+
+$(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	$(AT)$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+
+ifeq ($(TARGET_VM), cldc)
+
+$(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj: $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj
+	@echo "...Coping stubs to lib directory ..."
+	$(AT)cp $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.obj $(JAVACALL_OUTPUT_LIB_DIR)
+
+local_vc:: $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.obj
+
+endif

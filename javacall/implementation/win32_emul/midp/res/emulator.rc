@@ -1,0 +1,359 @@
+/*
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.   See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 9,9,9,9
+ PRODUCTVERSION 9,9,9,9
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", " Sun Microsystems, Inc."
+            VALUE "FileDescription", "runMidlet"
+            VALUE "FileVersion", "9, 9, 9, 9"
+            VALUE "InternalName", "runMidlet"
+            VALUE "LegalCopyright", "Copyright © 2008"
+            VALUE "OriginalFilename", "runMidlet.exe"
+            VALUE "ProductName", " phoneME Feature "
+            VALUE "ProductVersion", "0, 3, 0, 0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "emulator.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP_PHONE        BITMAP                  "phone.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG_START_TCK DIALOG  0, 0, 283, 61
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Start TCK"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "Start TCK",IDOK,159,40,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,215,40,50,14
+    CONTROL         "Trusted domain",IDC_CHECK_TRUSTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,28,37,65,10
+    EDITTEXT        IDC_EDIT_TCK_URL,28,14,248,14,ES_AUTOHSCROLL
+    LTEXT           "URL:",IDC_STATIC,7,17,18,8
+END
+
+IDD_DIALOG_MAIN_ARGS DIALOG  0, 0, 330, 122
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "phoneME Feature. Midlet main arguments"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,165,101,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,233,101,50,14
+    LTEXT           "URL",IDC_STATIC_URL,100,7,16,8
+    EDITTEXT        IDC_EDIT_URL,100,17,221,12,ES_AUTOHSCROLL
+    LTEXT           "Local file",IDC_STATIC_LOCAL_FILE,100,65,29,8
+    EDITTEXT        IDC_EDIT_LOCAL_FILE,100,74,200,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BUTTON_BROWSE,304,74,17,12
+    LTEXT           "Mode",IDC_STATIC,7,8,19,8
+    CONTROL         "Enable Java debug",IDC_CHECK_DEBUG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,97,77,10
+    COMBOBOX        IDC_COMBO_TRUST_HOST,100,44,63,64,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Trust domain:",IDC_STATIC_TRUST_DOMAIN,100,36,44,8
+    LISTBOX         IDC_LIST_MODE,7,17,84,69,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DIALOG_SHOW_APP_MANAGER DIALOGEX 0, 0, 170, 223
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Application manager"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,129,204,34,14
+    PUSHBUTTON      "Cancel",IDCANCEL,5,204,33,14
+    PUSHBUTTON      "Install",IDC_BUTTON_INSTALL_APP,47,204,33,14
+    PUSHBUTTON      "Remove",IDC_BUTTON_REMOVE_APP,88,204,33,14
+    LTEXT           "Installed application:",IDC_STATIC,7,6,95,11
+    LISTBOX         IDC_LIST_APP,7,17,156,178,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DIALOG_SHOW_MIDLET_LIST DIALOGEX 0, 0, 170, 223
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Choose a midlet"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,95,202,29,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,202,29,14
+    LTEXT           "Choose a midlet:",IDC_STATIC,7,6,81,8
+    COMBOBOX        IDC_COMBO_MIDLET_ACTION,7,203,74,64,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LISTBOX         IDC_LIST_MIDLET,7,18,154,166,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose an action:",IDC_STATIC,7,190,83,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG_START_TCK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 276
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 54
+    END
+
+    IDD_DIALOG_MAIN_ARGS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 321
+        VERTGUIDE, 100
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 115
+        HORZGUIDE, 86
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Hebrew resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_HEB)
+#ifdef _WIN32
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+#pragma code_page(1255)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG_DEBUG_LEVELS DIALOGEX 0, 0, 291, 207
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,220,174,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,18,174,50,14
+    LTEXT           "Set Debug Levels",IDC_STATIC,109,14,64,15
+    LTEXT           "None",IDC_STATIC,19,33,30,9
+    LTEXT           "AMS",IDC_STATIC,18,46,30,10
+    LTEXT           "CORE",IDC_STATIC,18,57,30,10
+    CONTROL         "INFO",IDC_RADIO_INFO,"Button",BS_AUTORADIOBUTTON | WS_GROUP,79,33,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN,"Button",BS_AUTORADIOBUTTON,114,33,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR,"Button",BS_AUTORADIOBUTTON,152,33,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL,"Button",BS_AUTORADIOBUTTON,186,33,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED,"Button",BS_AUTORADIOBUTTON,222,33,55,8
+    CONTROL         "INFO",IDC_RADIO_INFO2,"Button",BS_AUTORADIOBUTTON | WS_GROUP,79,46,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN2,"Button",BS_AUTORADIOBUTTON,114,46,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR2,"Button",BS_AUTORADIOBUTTON,152,46,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL2,"Button",BS_AUTORADIOBUTTON,186,46,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED2,"Button",BS_AUTORADIOBUTTON,222,46,55,8
+    CONTROL         "INFO",IDC_RADIO_INFO3,"Button",BS_AUTORADIOBUTTON | WS_GROUP,79,57,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN3,"Button",BS_AUTORADIOBUTTON,114,57,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR3,"Button",BS_AUTORADIOBUTTON,152,57,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL3,"Button",BS_AUTORADIOBUTTON,186,57,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED3,"Button",BS_AUTORADIOBUTTON,222,57,55,8
+    LTEXT           "LOWUI",IDC_STATIC,18,69,30,10
+    CONTROL         "INFO",IDC_RADIO_INFO4,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,69,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN4,"Button",BS_AUTORADIOBUTTON,114,69,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR4,"Button",BS_AUTORADIOBUTTON,152,69,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL4,"Button",BS_AUTORADIOBUTTON,186,69,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED4,"Button",BS_AUTORADIOBUTTON,222,69,55,8
+    LTEXT           "HIGHUI",IDC_STATIC,18,80,30,10
+    CONTROL         "INFO",IDC_RADIO_INFO5,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,80,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN5,"Button",BS_AUTORADIOBUTTON,114,80,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR5,"Button",BS_AUTORADIOBUTTON,152,80,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL5,"Button",BS_AUTORADIOBUTTON,186,80,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED5,"Button",BS_AUTORADIOBUTTON,222,80,55,8
+    LTEXT           "PROTOCOL",IDC_STATIC,18,90,48,10
+    CONTROL         "INFO",IDC_RADIO_INFO6,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,90,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN6,"Button",BS_AUTORADIOBUTTON,114,90,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR6,"Button",BS_AUTORADIOBUTTON,152,90,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL6,"Button",BS_AUTORADIOBUTTON,186,90,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED6,"Button",BS_AUTORADIOBUTTON,222,90,55,8
+    LTEXT           "RMS",IDC_STATIC,18,99,30,10
+    CONTROL         "INFO",IDC_RADIO_INFO7,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,99,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN7,"Button",BS_AUTORADIOBUTTON,114,99,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR7,"Button",BS_AUTORADIOBUTTON,152,99,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL7,"Button",BS_AUTORADIOBUTTON,186,99,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED7,"Button",BS_AUTORADIOBUTTON,222,99,55,8
+    LTEXT           "SECURITY",IDC_STATIC,18,108,38,10
+    CONTROL         "INFO",IDC_RADIO_INFO8,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,108,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN8,"Button",BS_AUTORADIOBUTTON,114,108,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR8,"Button",BS_AUTORADIOBUTTON,152,108,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL8,"Button",BS_AUTORADIOBUTTON,186,108,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED8,"Button",BS_AUTORADIOBUTTON,222,108,55,8
+    LTEXT           "SERVICES",IDC_STATIC,18,117,40,10
+    CONTROL         "INFO",IDC_RADIO_INFO9,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,117,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN9,"Button",BS_AUTORADIOBUTTON,114,117,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR9,"Button",BS_AUTORADIOBUTTON,152,117,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL9,"Button",BS_AUTORADIOBUTTON,186,117,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED9,"Button",BS_AUTORADIOBUTTON,222,117,55,8
+    LTEXT           "STORAGE",IDC_STATIC,18,127,40,10
+    CONTROL         "INFO",IDC_RADIO_INFO10,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,127,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN10,"Button",BS_AUTORADIOBUTTON,114,127,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR10,"Button",BS_AUTORADIOBUTTON,152,127,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL10,"Button",BS_AUTORADIOBUTTON,186,127,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED10,"Button",BS_AUTORADIOBUTTON,222,127,55,8
+    LTEXT           "PUSH",IDC_STATIC,18,136,30,10
+    CONTROL         "INFO",IDC_RADIO_INFO11,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,136,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN11,"Button",BS_AUTORADIOBUTTON,114,136,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR11,"Button",BS_AUTORADIOBUTTON,152,136,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL11,"Button",BS_AUTORADIOBUTTON,186,136,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED11,"Button",BS_AUTORADIOBUTTON,222,136,55,8
+    LTEXT           "MMAPI",IDC_STATIC,18,145,30,10
+    CONTROL         "INFO",IDC_RADIO_INFO12,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,145,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN12,"Button",BS_AUTORADIOBUTTON,114,145,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR12,"Button",BS_AUTORADIOBUTTON,152,145,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL12,"Button",BS_AUTORADIOBUTTON,186,145,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED12,"Button",BS_AUTORADIOBUTTON,222,145,55,8
+    LTEXT           "VSCL",IDC_STATIC,18,154,30,10
+    CONTROL         "INFO",IDC_RADIO_INFO13,"Button",BS_AUTORADIOBUTTON | WS_GROUP,80,153,34,8
+    CONTROL         "WARN",IDC_RADIO_WARN13,"Button",BS_AUTORADIOBUTTON,114,153,34,8
+    CONTROL         "ERR",IDC_RADIO_ERROR13,"Button",BS_AUTORADIOBUTTON,152,153,34,8
+    CONTROL         "CRIT",IDC_RADIO_CRITICAL13,"Button",BS_AUTORADIOBUTTON,186,153,34,8
+    CONTROL         "DISABLED",IDC_RADIO_DISABLED13,"Button",BS_AUTORADIOBUTTON,222,153,55,8
+    DEFPUSHBUTTON   "Print Stack Trace",IDPSS,73,174,66,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG_DEBUG_LEVELS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 283
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 200
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Hebrew resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -1,0 +1,128 @@
+#   
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+.PHONY: all pre_target javacall_lib post_target
+
+all: pre_target javacall_common javacall_lib post_target
+
+ifneq ($(GNU_TOOLS_DIR),)
+    GNU_TOOLS_BINDIR?=$(GNU_TOOLS_DIR)/bin/
+endif
+
+CC=$(GNU_TOOLS_BINDIR)gcc$(GCC_VERSION)
+CPP=$(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
+LD=$(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
+RANLIB=$(GNU_TOOLS_BINDIR)ranlib
+ASM=$(GNU_TOOLS_BINDIR)as
+AR=$(GNU_TOOLS_BINDIR)ar
+
+ifeq ($(JAVACALL_SHARED_LIB),true)
+LIB_EXTENSION = so
+else
+LIB_EXTENSION = a
+endif
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+define fixcygpath
+echo $(1)
+endef
+
+include $(JAVACALL_DIR)/build/common.gmk
+
+TEMP_OBJECTS1=$(patsubst %.c,%.o,$(PORTING_SOURCE))
+TEMP_OBJECTS=$(patsubst %.cpp,%.o,$(TEMP_OBJECTS1))
+ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP_OBJECTS))
+else # ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(TEMP_OBJECTS)
+endif # ifneq ($(FILTER_OBJECTS)x,x)
+
+NOTIFIER_OBJECTS=$(patsubst %.c,%.o,$(NOTIFIER_SOURCE))
+
+AR_EXTRACT_VERBOSE = xv
+
+CFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
+CFLAGS+= $(SPECIFIC_DEFINITIONS)
+
+CPPFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
+CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
+
+LOCAL_CFLAGS_debug= -g 
+LOCAL_CPPFLAGS_debug= -g 
+
+LOCAL_CFLAGS_nodebug=
+LOCAL_CPPFLAGS_nodebug=
+
+CXXFLAGS+= $(LOCAL_CFLAGS_$(BUILD))
+CFLAGS+= $(LOCAL_CFLAGS_$(BUILD))
+
+ifneq ($(NOTIFIER_OBJECTS)x,x)
+EXTRA_LDFLAGS+=-lnotifiers$(BUILD_EXT) -L$(JAVACALL_OUTPUT_LIB_DIR)
+NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).$(LIB_EXTENSION)
+endif
+
+javacall_lib: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION) \
+    $(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.o
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.o: %.cpp
+	@echo "...compiling: $@"
+	$(AT)$(COMPILE.cc) $(OUTPUT_OPTION) $<
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.o: %.c
+	@echo "...compiling: $@"
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) $<
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.o: $(STATIC_PROPERTIES_C)
+	@echo -n "...compiling: $@"
+	$(AT)$(COMPILE.c) $(OUTPUT_OPTION) $<
+
+$(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).so: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	$(AT)$(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -shared -o $@ $^
+
+$(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).a: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	$(AT)$(AR) $(ARFLAGS) $@ $^
+	$(AT)$(RANLIB) $@
+
+$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).so: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	$(AT)$(CC) $(LDFLAGS) -shared -o $@ $^
+
+$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).a: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	$(AT)$(AR) $(ARFLAGS) $@ $^
+
+$(JAVACALL_OUTPUT_LIB_DIR)/cldc_javanotify_stubs.o: $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.o
+	@echo "...Coping stubs to lib directory ..."
+	$(AT)cp $(JAVACALL_OUTPUT_OBJ_DIR)/cldc_javanotify_stubs.o $(JAVACALL_OUTPUT_LIB_DIR)
