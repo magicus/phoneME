@@ -1,0 +1,123 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+############################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+############################################################
+
+SUBSYSTEM_SECURITY_MODULES += restricted_crypto
+
+CRYPTO_REF_DIR = $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/reference
+
+CRYPTO_PACKAGE_DIR = $(CRYPTO_CLASSES_DIR)/com/sun/midp/crypto
+
+#
+# Javadoc source path, note this module does not add a new java package.
+#
+SUBSYSTEM_RESTRICTED_CRYPTO_SOURCEPATH=$(CRYPTO_REF_DIR)/classes
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_RESTRICTED_CRYPTO_SOURCEPATH)
+
+#
+# Java files for the library
+#
+R_CRYPTO_JAVA_FILES = \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/BlockCipherBase.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/DES.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/DESEDE.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/DES_ECB.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/DES_CBC.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/AES.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/AES_ECB.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/AES_CBC.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RSA.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/ARC4.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RSASig.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RsaMd2Sig.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RsaMd5Sig.java \
+  $(CRYPTO_REF_DIR)/classes/com/sun/midp/crypto/RsaShaSig.java
+
+SUBSYSTEM_SECURITY_JAVA_FILES += $(R_CRYPTO_JAVA_FILES)
+
+#
+# Native files for the library
+#
+vpath % $(CRYPTO_REF_DIR)/native
+
+R_CRYPTO_NATIVE_FILES += \
+    nativecrypto.c \
+    bnlib.c
+
+SUBSYSTEM_SECURITY_NATIVE_FILES += $(R_CRYPTO_NATIVE_FILES)
+
+SUBSYSTEM_SECURITY_EXTRA_INCLUDES += \
+    -I$(CRYPTO_REF_DIR)/native
+
+
+# Specify romizer configuration file for the ciphers
+# and path where the file is located
+#
+ROMGEN_INCLUDE_PATHS += $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/
+ROMGEN_CFG_FILES     += $(CRYPTO_ROMGEN_FILE)
+
+# Build output directories
+
+$(CRYPTO_PACKAGE_DIR):
+	@mkdir -p $(CRYPTO_PACKAGE_DIR)
+
+CRYPTO_CLASSES += $(patsubst %.java, %.class, \
+  $(subst $(CRYPTO_REF_DIR), $(MIDP_OUTPUT_DIR), $(R_CRYPTO_JAVA_FILES)))
+
+CRYPTO_OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o, \
+  $(filter %.c,$(R_CRYPTO_NATIVE_FILES)))
+
+$(CRYPTO_LIB): $(CRYPTO_OBJS) $(CRYPTO_LIB_DIR)
+	@$(CREATE_LIB) $(LIB_OUTPUT)$(CRYPTO_LIB) \
+                `$(call fixcygpath, $(CRYPTO_OBJS))`
+
+crypto_binaries:: $(CRYPTO_PACKAGE_DIR) $(CRYPTO_CLASSES) $(CRYPTO_LIB) \
+  $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/$(CRYPTO_ROMGEN_FILE)  
+	@cp -f $(CRYPTO_CLASSES) $(CRYPTO_PACKAGE_DIR)
+	@cp -f \
+         $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/$(CRYPTO_ROMGEN_FILE) \
+         $(CRYPTO_OUTPUT_DIR)
+
+clean_crypto:
+	-@rm -fr $(CRYPTO_OUTPUT_DIR)
+
+# Append restricted crypto source bundle creation to target
+source_bundle:: restricted_crypto_source
+
+RESTRICTED_CRYPTO_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/restricted_crypto
+
+# Copy and filter SSL source source in to RESTRICTED_CRYPTO_SOURCE_OUTPUT_DIR
+restricted_crypto_source: $(RESTRICTED_CRYPTO_DIR)
+	@echo " ... restricted source bundle" $(LOG)
+	$(AT)$(call re_src_filter,$(RESTRICTED_CRYPTO_DIR),$(RESTRICTED_CRYPTO_SOURCE_OUTPUT_DIR),src)
