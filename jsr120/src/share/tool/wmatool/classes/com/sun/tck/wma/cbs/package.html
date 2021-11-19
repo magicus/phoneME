@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<!--
+
+   Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+-->
+<HTML>
+  <HEAD>
+    <TITLE>J2SE CBS Message Connection Implementation</TITLE>
+  </HEAD>
+
+  <BODY>
+    <H1>J2SE CBS Message Connection Implementation</H1>
+    <P>
+      Implementation classes for the CBS Message Connection layered
+      on a <code>DatagramPacket</code> low level transport.
+    </P>
+
+    <P>
+      A single class is shared by the J2ME client and the J2SE service to allow
+      formatted messages to be transmitted across platforms.
+    </P>
+    <P>
+      <code>com.sun.midp.io.j2me.cbs.CBSPacket</code> provides the interfaces to
+      get/set fielded data packed into a binary datagram message.
+    </P>
+
+    <H2>Configuration File</H2>
+    <P>
+      Properties can be set in a configuration file called "connections.prop" in
+      the current working directory to override the built-in default values.
+      Such values include the phone number of the device and the input/output
+      port numbers for receiving datagrams, respectively. A phone number
+      may also configured in order to identify the address of the "device.".
+    </P>
+    <P>
+      These are the default CBS configurations in <code>connections.prop</code>:
+    </P>
+    <PRE>
+#
+# The datagram host is the name of the client or /target device. Messages are
+# sent to and/or received from this client. The host can be an alias that maps
+# in /etc/hosts (UNIX/Linux systems) to a a real client device name. The alias
+# can also be mapped to the IP address of the device under test.
+#
+DatagramHost=wmadatagramhost
+#
+# The phone number starts with "+" and is followed by a number of digits
+# (e.g.: +5551234). The phone number represents the number of a device that
+# would contact the MIDP code under test. The phone number is the same across
+# all protocols.
+#
+PhoneNumber=+5551234
+
+#
+# CBS properties -- These properties are used by CBSMessageConnector.
+#
+# The "out" port is used for broadcasting CBS messages. The CBS client can only
+# receive the messages sent by the host. The port represents a physical
+# transport-layer port number and may not match a port number of a CBS address.
+#
+CBSDatagramPortOut=22200
+    </PRE>
+
+  </BODY>
+</HTML>
+

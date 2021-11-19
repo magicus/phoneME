@@ -1,0 +1,98 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+$(WMATOOL_JAR_FILE): $(JSR_120_TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES) $(WMATOOL_MANIFEST_FILE)
+	@echo " ... building WMATool " $(LOG)
+	@echo +++ $(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
+		-classpath "$(JSR_120_TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_WMATOOL_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
+		-classpath "$(JSR_120_TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_WMATOOL_JAVA_FILES)) $(LOG)
+	@(mkdir -p $(WMATOOL_CLASS_OUTPUT_DIRS)) $(LOG)
+	#@(cp $(JSR_120_CLASSBINDIR)/com/sun/midp/io/j2me/sms/TextEncoder.class \
+	#	$(JSR_120_TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@(mkdir -p $(JSR_120_BINDIR)) $(LOG)
+	@echo +++ cd $(JSR_120_TOOLS_CLASS_DIR)\; $(JAR_CMD) cfm WMATool.jar \
+		WMATool.manifest \
+		$(WMATOOL_CLASS_DIRS) $(LOG_ONLY)
+	@(cd $(JSR_120_TOOLS_CLASS_DIR); $(JAR_CMD) cfm WMATool.jar \
+		WMATool.manifest $(WMATOOL_CLASS_DIRS)) $(LOG)
+	@(cp -f $(JSR_120_TOOLS_CLASS_DIR)/WMATool.jar $(WMATOOL_JAR_FILE)) $(LOG)
+
+$(WMATOOL_MANIFEST_FILE): $(JSR_120_TOOLS_CLASS_DIR)
+	@echo " ... $@ " $(LOG)
+	@(echo "Main-Class: $(WMATOOL_MAIN_CLASS)" > $@) $(LOG)
+
+#################################################################
+
+$(JSR_120_NCITOOL_CLASS_DIR) :
+	mkdir $(JSR_120_NCITOOL_CLASS_DIR)
+
+$(JSR_120_NCISLAVE_CLASS_DIR) :
+	mkdir $(JSR_120_NCISLAVE_CLASS_DIR)
+
+$(TCK_NCI_TOOL): $(JSR_120_NCITOOL_CLASS_DIR) 
+	@echo " ... building NCI TCK tool" $(LOG)
+	$(JAVAC_CMD) \
+		-g:none \
+		-d $(JSR_120_NCITOOL_CLASS_DIR) \
+		$(MODULE_JSR_120_TCK_NCI_TOOL_JAVA_FILES)
+	cd $(JSR_120_NCITOOL_CLASS_DIR); $(JAR_CMD) cf $(TCK_NCI_TOOL) com/sun/tck com/sun/midp
+
+$(TCK_NCI_SLAVE_JAR): $(JSR_120_NCISLAVE_CLASS_DIR) 
+	@echo " ... building NCISlave midlet" $(LOG)
+	$(JAVAC_CMD) \
+		-g:none \
+		-d $(JSR_120_NCISLAVE_CLASS_DIR) \
+		-classpath $(MIDP_OUTPUT_DIR)/classes.zip \
+		$(MODULE_JSR_120_TCK_NCI_SLAVE_JAVA_FILES) 
+	$(PREVERIFY_CMD) \
+		-classpath $(MIDP_OUTPUT_DIR)/classes.zip \
+		-d $(JSR_120_NCISLAVE_CLASS_DIR_PREVERIFIED) \
+		$(JSR_120_NCISLAVE_CLASS_DIR)
+	cd $(JSR_120_NCISLAVE_CLASS_DIR_PREVERIFIED); \
+	$(JAR_CMD) cfm \
+		$(TCK_NCI_SLAVE_JAR) \
+		$(MODULE_JSR_120_TCK_NCI_SLAVE_MANIFEST) .
+
+$(TCK_NCI_SLAVE_JAD): $(TCK_NCI_SLAVE_JAR) 
+	cp $(MODULE_JSR_120_TCK_NCI_SLAVE_JAD) $(TCK_NCI_SLAVE_JAD)
+	sed "s/MIDlet-Jar-Size: .*/MIDlet-Jar-Size: `cat $(TCK_NCI_SLAVE_JAR) | wc -c`/" \
+		$(TCK_NCI_SLAVE_JAD) >$(TCK_NCI_SLAVE_JAD).tmp
+	rm $(TCK_NCI_SLAVE_JAD)
+	mv $(TCK_NCI_SLAVE_JAD).tmp $(TCK_NCI_SLAVE_JAD) 
+
+#################################################################
+
+all_tools :: $(TCK_NCI_SLAVE_JAR) $(TCK_NCI_SLAVE_JAD) $(TCK_NCI_TOOL)
+
+clean_tools::
+	-@(rm -fr $(WMATOOL_JAR_FILE)) $(LOG)
+
+# Append JSR 120 source bundle creation to target
+source_bundle:: jsr_120_source_bundle
+
+

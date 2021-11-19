@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Created-By: Sun Microsystems Inc.
+MIDlet-1: NCISlave, NCISlave.png, NCISlave
+MIDlet-Permissions: javax.microedition.io.Connector.mms, javax.microedition.io.Connector.sms, javax.wireless.messaging.sms.receive, javax.wireless.messaging.sms.send, javax.wireless.messaging.cbs.receive, javax.wireless.messaging.mms.receive, javax.wireless.messaging.mms.send, javax.microedition.io.Connector.cbs, javax.microedition.io.Connector.http, javax.microedition.io.Connector.socket, javax.microedition.io.Connector.datagram, javax.microedition.io.Connector.datagramreceiver
+MIDlet-Vendor: Unknown
+MicroEdition-Profile: MIDP-2.0
+MIDlet-Name: NCISlave
+MicroEdition-Configuration: CLDC-1.1
+MIDlet-Jar-URL: NCISlave.jar
+MIDlet-Version: 1.0
+

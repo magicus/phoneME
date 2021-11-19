@@ -1,0 +1,79 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+#
+# Common properties -- These properties are used for all protocols
+#
+# The datagram host is the name of the client or /target device. Messages are
+# sent to and/or received from this client. The host can be an alias that maps
+# in /etc/hosts (UNIX/Linux systems) to a a real client device name. The alias
+# can also be mapped to the IP address of the device under test.
+#
+DatagramHost=wmadatagramhost
+#
+# The phone number starts with "+" and is followed by a number of digits
+# (e.g.: +5551234). The phone number represents the number of a device that
+# would contact the MIDP code under test. The phone number is the same across
+# all protocols.
+#
+PhoneNumber=+5551234
+
+#
+# SMS properties -- These properties are used by SMSMessageConnector.
+#
+# The "out" port is used for sending messages. The "in" port is used for
+# receiving messages and acknowledgements. The ports represent physical
+# transport-layer port numbers and may not match a port number in an SMS
+# address.
+#
+SMSDatagramPortOut=11100
+SMSDatagramPortIn=11101
+
+#
+# CBS properties -- These properties are used by CBSMessageConnector.
+#
+# The "out" port is used for broadcasting CBS messages. The CBS client can only
+# receive the messages sent by the host. The port represents a physical
+# transport-layer port number and may not match a port number of a CBS address.
+#
+CBSDatagramPortOut=22200
+
+#
+# MMS properties -- These properties are used by MMSMessageConnector.
+#
+# The port numbers represent the server-side datagram ports. These values
+# will be opposite to the "in" and "out" ports in the XML properties file
+# of the client (MIDP) code.
+#
+# The "reply-to" application ID is not real, but simply representative of
+# a real-world application ID string. Normally, this would be the path to
+# the application that would process the message data sent to the server
+# (or, in this case, to the tool code.).
+#
+MMSDatagramPortOut=33300
+MMSDatagramPortIn=33301
+MMSReplyToAppID=com.sun.mms.MMSTest
+

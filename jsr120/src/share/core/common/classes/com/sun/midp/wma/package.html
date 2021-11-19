@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<!--
+
+    
+
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+<html>
+  <head>
+    <title>JSR 205/120 cleanup on midlet removal</title>
+  </head>
+
+  <body>
+    This package notifies the Wireless Messaging Subsystem (JSR 205 or 120)
+    when a midlet is removed, so that it can perform any cleanup, 
+    like deleteing messages.
+
+    <ul>
+      <li>com.sun.midp.wma.WMACleanupMonitor</li>
+
+    </ul>
+   <p> The function of this class is to call a native function,
+       when a MIDletSuite terminates. The native function will
+       perform any cleanup that is required, eg: delete any messages
+       left unread by the MIDletSuite.
+       This class implements the 
+       {@link com.sun.midp.main.MIDletProxyListListener} interface and is
+       thus notified whenever a MIDletSuite is installed or removed.
+       The methods here are called at appropriate times. 
+   </p>
+   <p>
+       At startup <code>init</code> is called by
+       {@link com.sun.midp.main.MIDletSuiteLoader} to initialize any
+       necessary cleanup handling when the application exits. 
+   </p>
+   <p>
+       When a MIDlet is about to created the
+       <code>midletAdded</code> method is called, but it is a no-op here. 
+   </p>
+   <p>
+       When a MIDlet state is updated the
+       <code>midletUpdated</code> method is called, but it is a no-op here. 
+   </p>
+   <p>
+       When an error occurs while starting a  MIDlet the
+       <code>midletStartError</code> method is called, but it is a no-op here. 
+   </p>
+   <p>
+       When a MIDlet has been destroyed the
+       <code>midletRemoved</code> method is called and it calls a native
+       method to delete any unread messages in the inbox.
+   </p>
+   Note: The JSR 205 specification requires that unread messages not be
+   deleted. The deletion will happen only if built with DELETE_WMA_MSGS = true.
+  </body>
+</html>
+

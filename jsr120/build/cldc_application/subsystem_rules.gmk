@@ -1,0 +1,33 @@
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+include $(JSR_120_DIR)/build/share/common_rules.gmk
+
+# Add java files to classes.zip
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_120_JAVA_FILES)
+	$(appendjavafiles)
+
+# Copy and filter JSR120 source in JSR_120_SOURCE_OUTPUT_DIR
+jsr_120_source_bundle:: $(SOURCE_OUTPUT_DIR)
+	$(AT)$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src/share src/cldc_application build/share build/cldc_application)
