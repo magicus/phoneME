@@ -1,0 +1,279 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+JSR_CONFIGURATION_INPUT_FILES += \
+    $(ABSTRACTIONS_DIR)/src/share/config/i18n_constants_abstractions.xml \
+    $(ABSTRACTIONS_DIR)/src/share/config/l10n/en-US_abstractions.xml
+
+# start dirs for java source trees
+ABSTRACTIONS_CDC_JAVASRCDIRS = \
+        $(ABSTRACTIONS_DIR)/src/cdc_share/classes
+
+# dirs containing native header files (.h)
+ABSTRACTIONS_INCLUDE_DIRS += \
+    $(ABSTRACTIONS_DIR)/src/cdc_share/native/include
+
+# dirs containing native source files
+ABSTRACTIONS_SRCDIRS += \
+	$(ABSTRACTIONS_DIR)/src/cdc_share/native
+
+ABSTRACTIONS_NATIVES += \
+    internal_props.c \
+	exceptions.c \
+	kni_utils.c \
+	push_utils.c
+
+# classes
+ABSTRACTIONS_CLASSES += \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/Token.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SecurityTokenInitializer.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/log/LogChannels.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/log/Logging.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStore.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordFilter.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordComparator.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordEnumeration.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/InvalidRecordIDException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotOpenException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreFullException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotFoundException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreInvocationHandler.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/PIMPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SensorPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/BluetoothPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/OBEXPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SIPPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/MMAPIPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/AMMSPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/ConnectorPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/ContactlessPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/l10n/LocalizedStrings.java \
+
+ifeq ($(USE_JSR_177), true)
+# names of native source files (like 'file.c')
+ABSTRACTIONS_NATIVES += \
+	native_crypto.c \
+    bnlib.c
+
+# classes
+ABSTRACTIONS_CLASSES += \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidKeyException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/BadPaddingException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/IllegalBlockSizeException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DES.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/AES_ECB.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DES_ECB.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/ARC4.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DES_CBC.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/RSA.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/RSAKey.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPrivateKey.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPublicKey.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/SecretKey.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/BlockCipherBase.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DESEDE.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/AES.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/AES_CBC.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Padder.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/PKCS5Padding.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/IvParameter.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/CryptoParameter.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/PRand.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java
+
+CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
+                   com.sun.j2me.crypto.RSA
+
+ifeq ($(JSR_177_PACKAGE), full)
+ABSTRACTIONS_CLASSES += \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java
+endif
+
+endif
+
+ABSTRACTIONS_WRAPPER_CLASSES += \
+    -package com.sun.j2me.proxy.lcdui \
+        -i javax.microedition.lcdui.CustomItem \
+        javax.microedition.lcdui.Display \
+        javax.microedition.lcdui.Graphics \
+        -i javax.microedition.lcdui.Canvas \
+        com.sun.midp.lcdui.DisplayIdPolicy \
+    -package com.sun.j2me.proxy.security \
+        com.sun.midp.security.SecurityToken \
+        com.sun.midp.security.SecurityInitializer \
+        com.sun.midp.security.ImplicitlyTrustedClass \
+        com.sun.midp.security.Permissions \
+        com.sun.midp.security.PermissionGroup \
+        com.sun.j2me.security.AccessController \
+        -e com.sun.j2me.security.AccessControlContext \
+     -package com.sun.j2me.proxy.i18n \
+        com.sun.midp.i18n.ResourceConstants \
+        com.sun.midp.i18n.Resource \
+        com.sun.midp.i18n.ResourceBundle \
+     -package com.sun.j2me.proxy.l10n \
+        com.sun.midp.l10n.LocalizedStrings \
+        com.sun.midp.l10n.LocalizedStringsBase
+
+#####################################################
+ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))
+ABSTRACTIONS_LIB_NAME        = abstractions
+ABSTRACTIONS_BUILD_DIR       = $(CVM_BUILD_TOP)/$(ABSTRACTIONS_LIB_NAME)
+ABSTRACTIONS_CLASSDIR        = $(ABSTRACTIONS_BUILD_DIR)/classes
+ABSTRACTIONS_JAR             = $(JSROP_JAR_DIR)/$(ABSTRACTIONS_LIB_NAME).jar
+ABSTRACTIONS_NATIVE_LIBRARY  = $(CVM_LIBDIR)/$(LIB_PREFIX)$(ABSTRACTIONS_LIB_NAME)$(LIB_POSTFIX)
+
+ifneq ($(CVM_STATICLINK_LIBS), true)
+JSROP_LINKLIBS += -l$(ABSTRACTIONS_LIB_NAME)$(DEBUG_POSTFIX)
+endif
+
+CVM_SRCDIRS  += $(ABSTRACTIONS_SRCDIRS)
+JSROP_INCLUDE_DIRS += $(ABSTRACTIONS_INCLUDE_DIRS)
+JSROP_NATIVE_OBJS  += $(ABSTRACTIONS_NATIVE_OBJS)
+JSROP_NATIVE_LIBS  += $(ABSTRACTIONS_NATIVE_LIBRARY)
+
+#Generating property initializer
+#
+ABSTRACTIONS_CONFIG_DIR = $(ABSTRACTIONS_DIR)/src/cdc_share/config
+
+ABSTRACTIONS_GENERATED_DIR = $(ABSTRACTIONS_BUILD_DIR)/generated
+ABSTRACTIONS_INIT_PACKAGE  = $(JSR_INIT_PACKAGE).abstractions
+ABSTRACTIONS_INITIALIZER   = $(ABSTRACTIONS_GENERATED_DIR)/classes/$(subst .,/,$(ABSTRACTIONS_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
+
+ABSTRACTIONS_PROPERTY_FILES = \
+    $(ABSTRACTIONS_CONFIG_DIR)/properties_abstractions.xml
+
+JSR_INITIALIZER_LIST += $(ABSTRACTIONS_INIT_PACKAGE).$(JSR_INIT_CLASS)
+ABSTRACTIONS_CLASSES += \
+    $(ABSTRACTIONS_INITIALIZER)
+
+$(ABSTRACTIONS_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
+	$(call generateJSRInitializer,$(ABSTRACTIONS_PROPERTY_FILES),$(ABSTRACTIONS_GENERATED_DIR),$(ABSTRACTIONS_INIT_PACKAGE),$@,$(ABSTRACTIONS_LIB_NAME))
+
+$(ABSTRACTIONS_JAR): $(ABSTRACTIONS_CLASSES) $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes
+	@echo "Compiling JSROP abstractions classes..."
+	$(AT)mkdir -p $(ABSTRACTIONS_CLASSDIR)
+	$(AT)$(JAVAC_CMD)						\
+		-d $(ABSTRACTIONS_CLASSDIR)			\
+		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
+		-classpath $(JAVACLASSES_CLASSPATH) \
+		$(ABSTRACTIONS_CLASSES) \
+        `cat $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes`
+	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_CLASSDIR) .
+
+JSROP_JAVACALL_DEPENDENTS += $(ABSTRACTIONS_NATIVE_OBJS)
+
+$(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
+	@echo "Linking $@"
+	$(SO_LINK_CMD) $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+
+MKSTUBS_TOOL_DIR = $(ABSTRACTIONS_GENERATED_DIR)/mkstubs
+MKSTUBS_TOOL = $(MKSTUBS_TOOL_DIR)/mkstubs.jar
+MKSTUBS_TOOL_SRC = $(ABSTRACTIONS_DIR)/src/cdc_share/classes/com/sun/utils/mkstubs/MkStubs.java
+MKSTUBS_TOOL_LOG = $(ABSTRACTIONS_GENERATED_DIR)/mkstubs_log.txt
+
+$(MKSTUBS_TOOL): $(MKSTUBS_TOOL_SRC)
+	@echo "Building MkStubs tool: $@"
+	$(AT)mkdir -p $(MKSTUBS_TOOL_DIR)/mkstubs_classes
+	$(AT)$(JAVAC_CMD) \
+        -d "$(MKSTUBS_TOOL_DIR)/mkstubs_classes" \
+        $(MKSTUBS_TOOL_SRC)
+	$(AT)echo "Main-Class: com.sun.utils.mkstubs.MkStubs" >$(MKSTUBS_TOOL_DIR)/manifest.txt
+	$(AT)$(CVM_JAR) cfm $@ $(MKSTUBS_TOOL_DIR)/manifest.txt -C $(MKSTUBS_TOOL_DIR)/mkstubs_classes .
+
+ABSTRACTIONS_AGENT_JAR = $(JSROP_LIB_DIR)/abstractions_agent.jar
+JSROP_AGENT_JARS += $(ABSTRACTIONS_AGENT_JAR)
+
+ABSTRACTIONS_BOOTCLASSPATH_DEPS = $(CVM_BUILDTIME_CLASSESZIP)
+ifneq ($(CVM_PRELOAD_LIB),true)
+ABSTRACTIONS_BOOTCLASSPATH_DEPS += $(LIB_CLASSESJAR)
+endif
+ABSTRACTIONS_BOOTCLASSPATH = $(subst $(space),$(PS),$(ABSTRACTIONS_BOOTCLASSPATH_DEPS))
+
+$(ABSTRACTIONS_AGENT_JAR): $(ABSTRACTIONS_BOOTCLASSPATH_DEPS) $(MIDP_CLASSES_ZIP) \
+			   $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
+	@echo "Compiling JSROP abstractions' agent classes..."
+	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/agent_classes
+	$(AT)if test "`cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`" != ""; then \
+    $(JAVAC_CMD) \
+        -d $(ABSTRACTIONS_GENERATED_DIR)/agent_classes \
+        -bootclasspath $(ABSTRACTIONS_BOOTCLASSPATH) \
+	-classpath $(MIDP_CLASSES_ZIP)\
+        `cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`; \
+    fi
+	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_GENERATED_DIR)/agent_classes .
+
+$(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes: \
+                             $(ABSTRACTIONS_BOOTCLASSPATH_DEPS) $(MIDP_CLASSES_ZIP) $(MKSTUBS_TOOL)
+	@echo "Generating JSROP abstractions' proxy&agent classes..."
+	$(AT)rm -rf $(ABSTRACTIONS_GENERATED_DIR)/proxy_java
+	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/proxy_java
+	$(AT)rm -rf $(ABSTRACTIONS_GENERATED_DIR)/agent_java
+	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/agent_java
+	$(AT)if $(JAVA_CMD) -Xbootclasspath/a:$(ABSTRACTIONS_BOOTCLASSPATH) \
+        -jar $(MKSTUBS_TOOL) \
+        -jarpath $(MIDP_CLASSES_ZIP) \
+        -d $(ABSTRACTIONS_GENERATED_DIR)/proxy_java \
+        -ad $(ABSTRACTIONS_GENERATED_DIR)/agent_java \
+        $(ABSTRACTIONS_WRAPPER_CLASSES) >$(MKSTUBS_TOOL_LOG) 2>&1; then \
+            echo "...successfully finished"; \
+        else \
+            echo "MkStubs tool log:"; \
+            cat $(MKSTUBS_TOOL_LOG); \
+            rm -f $(MKSTUBS_TOOL_LOG); \
+            exit 1; \
+        fi
+	$(AT)find $(ABSTRACTIONS_GENERATED_DIR)/proxy_java -type f -name '*.java' \
+        >$(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes
+	$(AT)find $(ABSTRACTIONS_GENERATED_DIR)/agent_java -type f -name '*.java' \
+        >$(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
+
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/cdc_share build/cdc_share )
+
+clean::
+	rm -rf $(ABSTRACTIONS_BUILD_DIR)

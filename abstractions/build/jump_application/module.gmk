@@ -1,0 +1,59 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+# dirs containing native source files
+ABSTRACTIONS_SRCDIRS = \
+	$(ABSTRACTIONS_DIR)/src/jump_application/native/share \
+  	$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
+
+# names of native source files (like 'file.c')
+ABSTRACTIONS_NATIVES = \
+	KNIAppIsolate.c \
+	shared_memory.c \
+	shared_memory_md.c \
+	jump_events_impl.c
+
+# dirs containing hative header files (.h)
+ABSTRACTIONS_INCLUDE_DIRS += \
+    $(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
+
+# start dirs for java source trees
+ABSTRACTIONS_JAVASRCDIRS = \
+        $(ABSTRACTIONS_DIR)/src/jump_application/classes
+
+# classes
+ABSTRACTIONS_CLASSES = \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/main/Configuration.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamWriter.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamReader.java
+    
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/jump_application build/jump_application )
+
