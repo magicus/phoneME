@@ -35,6 +35,71 @@ I chose to put the individual components directly in the root directory (like
 latter had better matched the original layout, the method I choose makes it easy
 to checkout a tag from `builds` or `releases` and get a similar layout.
 
+Conversion methodology
+---
+Initially, I created a separate git repository for each component, using `git
+svn` for `trunk`, `tags` and `branches`, like this:
+
+```
+git svn clone file://.../phoneME-svn --no-metadata -bcomponents/$1/branches -tcomponents/$1/tags -Tcomponents/$1/trunk $1
+```
+
+Similarly, I created repositories for `build` and `release`, but for these, I
+interpreted the subdirectories as git tags:
+
+```
+git svn clone file:///.../phoneME-svn --no-metadata -t$1 $1
+```
+
+Finally, I created `legal`, and the main trunk (containing `www`) using just the
+trunk import argument:
+
+```
+git svn clone file:///.../phoneME-svn --no-metadata -T$1 $1
+```
+
+For some reason I could not fully understand, `git svn` did not create proper
+tags and branches, but instead only populated `.git/info/refs`. I could not
+figure out a proper git way of converting these to real branches and tags, so I
+ran this script for each mini-repo:
+
+```
+addtag () {
+  git show-ref | grep refs/remotes/origin/tags/$1 | cut -d " " -f1 > .git/refs/tags/$1
+}
+
+addbranch () {
+  git show-ref | grep refs/remotes/origin/$1 | cut -d " " -f1 > .git/refs/heads/$1
+}
+
+git show-ref | grep refs/remotes/origin/ | grep -v refs/remotes/origin/tags/ | cut -d " " -f 2 | cut -d "/" -f 4- > BRANCHNAMES
+git show-ref | grep refs/remotes/origin/tags/ | cut -d " " -f 2 | cut -d "/" -f 5-  > TAGNAMES
+
+while read p; do
+  addtag $p
+done < TAGNAMES
+
+while read p; do
+  addbranch $p
+done < BRANCHNAMES
+```
+
+After this, I re-joined all these separate git repos into one. I did this by
+starting out with the `trunk` repo, and then importing commits, tags and
+branches from each individual mini-repo. I also merged the master (trunk) of
+each individual mini-repo into the master of the consolidated repository,
+placing it in a suitable location using `git read-tree`. In effect, this is what
+I did per mini-repo:
+
+```
+git remote add $1 /.../$1
+git fetch $1
+git fetch $1 --tags
+git merge -s ours --no-commit $1/master --allow-unrelated-histories
+git read-tree --prefix=$1/ -u $1/master
+git commit -m "Merge in $1/"
+```
+
 Missing References
 ---
 
