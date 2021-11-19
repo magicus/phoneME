@@ -1,0 +1,176 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+######################################################################
+#
+# Module's Component Configuration file
+#
+######################################################################
+
+TARGET_VM=cldc_vm
+
+JSR_172_LIB_NAME        = jsr172
+JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(JSR_172_LIB_NAME)/build
+ifneq ($(GENERATED_DIR),)
+JSR_172_GENERATED_DIR   = $(GENERATED_DIR)/classes
+else
+JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/../generated
+endif
+JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
+JSR_172_SG_JAR          = $(JSROP_JAR_DIR)/jsr172__stub-generator.jar
+JSR_172_BUILD_EXTRA_DIR = $(JSR_172_BUILD_DIR)/../jsr172-extra
+JSR_172_PREVERIFYOUT_DIR = $(JSR_172_BUILD_DIR)/../preverify-out
+
+include $(JSR_172_DIR)/build/subsystem_defs.gmk
+
+INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/RemoteException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/Remote.java
+
+# JSR 172 stub generator definitions
+JSR_172_OUTPUT_DIR ?= $(JSR_172_DIR)/output
+
+INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES += \
+	$(ABSTRACTIONS_DIR)/src/cldc_application/classes/com/sun/j2me/io/Base64.java
+
+INTERNAL_JSR_172_DEPENDENCIES += \
+	$(JSROP_JAR_DIR)/xmlparser.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/cldcapi11.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/midpapi21.jar \
+
+INTERNAL_JSR_172_SG_RI_DEPENDENCIES += \
+	$(MOBILITY_PACK_JARS_DIR)/bin/schema2beansdev.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-api.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-impl.jar \
+	$(MOBILITY_PACK_JARS_DIR)/bin/jaxrpc-spi.jar \
+	$(MOBILITY_PACK_JARS_DIR)/lib/j2me-xmlrpc.jar \
+
+# separate Jars building support
+
+INTERNAL_JSR_172_SG_RI_PACKAGE = com.sun.j2mews.sg
+INTERNAL_JSR_172_SG_PATH = $(INTERNAL_JSR_172_RI_DIR)/sg/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))
+INTERNAL_JSR_172_SG_RI_FILES += \
+        $(INTERNAL_JSR_172_SG_PATH)/AbstractGenerator.java \
+        $(INTERNAL_JSR_172_SG_PATH)/CompileTool172.java \
+        $(INTERNAL_JSR_172_SG_PATH)/MakeCldc1_0.java \
+        $(INTERNAL_JSR_172_SG_PATH)/NullProcessorAction.java \
+        $(INTERNAL_JSR_172_SG_PATH)/RemoteInterfaceGenerator.java \
+        $(INTERNAL_JSR_172_SG_PATH)/StubGenerator.java \
+        $(INTERNAL_JSR_172_SG_PATH)/WSCompile.java \
+
+space?=$(empty) $(empty)
+INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST = \
+    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES))))
+
+INTERNAL_JSR_172_DEPENDENCIES_CPLIST = \
+    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(INTERNAL_JSR_172_DEPENDENCIES))))
+
+include $(TOOLS_DIR)/tools.gmk
+
+include $(JSR_172_DIR)/build/subsystem_rules.gmk
+
+# Copy and filter JSR 172 source in JSR_172_SOURCE_OUTPUT_DIR
+jsr_172_source_bundle:: $(JSR_172_DIR)
+	$(AT)$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR), build/cldc_application)	
+
+$(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_EXTRA_DIR):
+	$(AT)mkdir -p $@
+
+# JSR 172 stub generator rules
+
+jsr172__stub-generator: $(JSR_172_SG_JAR)
+$(JSR_172_SG_JAR): $(JSR_172_BUILD_DIR) $(INTERNAL_JSR_172_SG_RI_FILES)
+	@echo "build $@ ..."
+	$(AT)$(shell mkdir -p $(dir $@))
+	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR),$(INTERNAL_JSR_172_SG_RI_FILES), \
+		-classpath $(INTERNAL_JSR_172_SG_RI_DEPENDENCIES_CPLIST))
+	$(AT)cp $(INTERNAL_JSR_172_SG_PATH)/*.properties $(JSR_172_BUILD_DIR)/$(subst .,/,$(INTERNAL_JSR_172_SG_RI_PACKAGE))
+	$(AT)$(call createJarFile,$@,$(JSR_172_BUILD_DIR),.)
+
+jsr172_property_files : $(JSR_172_BUILD_DIR)/jwc_properties.ini
+$(JSR_172_BUILD_DIR)/jwc_properties.ini: $(CONFIGURATOR_JAR_FILE)
+	@echo "build $@ ..."
+	$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+		-xml $(JSR_172_PROPERTY_FILE) \
+		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
+		-out $@)
+
+INT_JSR_172_COMPONENT_STRING = "Component"
+$(JSR_172_GENERATED_DIR)/manifest.mf : $(JSR_172_GENERATED_DIR)
+	@echo "build $@ ..."
+	@echo "Manifest-Version: 1.0" > $@
+	@echo "$(INT_JSR_172_COMPONENT_STRING)-Vendor: Sun Microsystems, Inc." >> $@
+	@echo "$(INT_JSR_172_COMPONENT_STRING)-Name: jsr172" >> $@
+	@echo "$(INT_JSR_172_COMPONENT_STRING)-Version: 1.0" >> $@
+	@echo "MicroEdition-Configuration: CLDC-1.1" >> $@
+	@echo "MicroEdition-Profile: MIDP-2.1" >> $@
+
+INTERNAL_JSR_172_PREVERIFY.EXE = $(MOBILITY_PACK_JARS_DIR)/bin/preverify.exe
+JSR_172_PREVERIFY_DEPENDENCIES = \
+	$(INTERNAL_JSR_172_DEPENDENCIES) \
+
+JSR_172_PREVERIFY_CPLIST = \
+    $(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(JSR_172_PREVERIFY_DEPENDENCIES))))
+
+jsr172_jar : $(JSR_172_JAR)
+$(JSR_172_JAR) : $(JSR_172_BUILD_DIR) $(JSR_172_GENERATED_DIR) $(JSR_172_BUILD_EXTRA_DIR) $(CONFIGURATOR_JAR_FILE) \
+		$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES) \
+		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
+		$(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
+		$(JSROP_JAR_DIR)/xmlparser.jar \
+		jsr172_property_files \
+		$(JSR_172_GENERATED_DIR)/manifest.mf 
+	$(AT)$(shell mkdir -p $(dir $@))
+	@echo "build $@ ..."
+	$(AT)$(call generateConstantClasses, $(JSR_172_GENERATED_DIR), $(JSR_172_CONSTANT_FILE))
+	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_EXTRA_DIR),$(INTERNAL_JSR_172_REQUIRED_EXTERNAL_FILES), \
+		-classpath $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST))
+	$(AT)$(call compileJavaClasses,$(JSR_172_BUILD_DIR), \
+		$(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
+		$(foreach class, $(shell cat $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))), \
+		$(JSR_172_GENERATED_DIR)/$(subst .,/,$(class)).java) , \
+		-classpath $(INTERNAL_JSR_172_DEPENDENCIES_CPLIST)$(PS)$(JSR_172_BUILD_DIR)$(PS)$(JSR_172_BUILD_EXTRA_DIR) )
+	$(AT)$(INTERNAL_JSR_172_PREVERIFY.EXE) -classpath $(JSR_172_PREVERIFY_CPLIST) -d $(JSR_172_PREVERIFYOUT_DIR) $(JSR_172_BUILD_DIR)
+	$(AT)cp -R $(JSR_172_PREVERIFYOUT_DIR)/* $(JSR_172_BUILD_DIR)
+	$(AT)$(call createJarFileWithManifest,$@,$(JSR_172_BUILD_DIR),.,$(call POSIX2HOST,$(JSR_172_GENERATED_DIR)/manifest.mf))
+
+# Generate constant classes
+# generateConstantClasses(generatedDirectory, constantsXmlFile)
+define generateConstantClasses
+    $(foreach class, $(shell \
+        $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+            -out $(call constantClassesListFile, $(1));) \
+        cat $(call constantClassesListFile, $(1))), \
+	    $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
+            -params fullClassName $(class) \
+            -out $(1)/$(subst .,/,$(class)).java;))
+endef
+
+# Returns the name of a file which contains a list of classes generated from an XML constant file
+# constantClassesListFile(generatedDirectory)
+define constantClassesListFile
+    $(1)/.constant.class.list
+endef

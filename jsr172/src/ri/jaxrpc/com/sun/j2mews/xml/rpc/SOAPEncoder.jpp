@@ -1,0 +1,482 @@
+/*
+ *  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
+package com.sun.j2mews.xml.rpc;
+
+import javax.microedition.xml.rpc.*;
+import javax.xml.rpc.*;
+
+import java.io.*;
+import java.util.Hashtable;
+
+public class SOAPEncoder {
+
+    /** Temporary buffer to write the message to so that debugging
+     * is possible before the message gets sent to the server
+     */
+    StringBuffer buffer;
+
+    /** An internal string used to compact the SOAP request message
+     * by establishing a default namespace for elements of the request
+     */
+    String defaultNS;
+
+    /** An internal string set to provide meaningful info for an
+     * error condition
+     */
+    String errString;
+    
+    final static private Hashtable specialsMap = new Hashtable();
+    static {
+    	specialsMap.put(new Double(Double.POSITIVE_INFINITY).toString(), "INF");
+    	specialsMap.put(new Double(Double.NEGATIVE_INFINITY).toString(), "-INF");
+    }
+
+    /**
+     * Empty constructor
+     */
+    public SOAPEncoder() {;}
+
+    /**
+     * Encode the given value using the Type map, sending the
+     * SOAP request out on the given stream using the encoding.
+     *
+     * @param value the Object value to encode
+     * @param type the Type map for the value
+     * @param stream the output stream to send the request on
+     * @param encoding the encoding value to use
+     */
+    public synchronized void encode(Object value,
+                                    Type type,
+                                    OutputStream stream,
+                                    String encoding) throws JAXRPCException
+    {
+        this.buffer = new StringBuffer();
+        this.errString = null;
+
+        buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
+        buffer.append(
+"<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+"\txmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n" +
+"\txmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"");
+
+        try {
+            if (type != null) {
+                Element op = (Element)type;
+                defaultNS = op.name.getNamespaceURI();
+                buffer.append("\n\txmlns:tns=\"" + defaultNS + "\">\n");
+                buffer.append("<soap:Body>\n");
+                encode((Element)type, value);
+            } else {
+                buffer.append(">\n<soap:Body/>\n");
+            }
+        } catch (RuntimeException re) {
+        } catch (Throwable t) {
+            throw new JAXRPCException("Could not encode request");
+        }
+
+        if (errString != null) {
+            throw new JAXRPCException(errString);
+        }
+
+        if (type != null) {
+            buffer.append("</soap:Body>\n");
+        }
+        buffer.append("</soap:Envelope>\n");
+        
+        try { 
+            if (encoding != null) {
+                stream.write(buffer.toString().getBytes(encoding));
+            } else {
+                stream.write(buffer.toString().getBytes());
+            }
+        } catch (IOException e) {
+            this.buffer = null;
+            throw new JAXRPCException(e.getMessage());
+        }
+
+        this.buffer = null;
+    }
+
+    /**
+     * Encode the given value using the parent Element
+     *
+     * @param parent the Element representing the map for the value
+     * @param value the value to encode
+     */
+    private void encode(Element parent, Object value) {
+        // Decide on the namespace
+        String id;
+        if (parent.name.getNamespaceURI().equals(defaultNS)) {
+            id = "tns:" + parent.name.getLocalPart();
+        } else {
+            id = parent.name.getLocalPart() +
+                " xmlns=\"" + parent.name.getNamespaceURI() + "\"";
+        }
+
+        if (value == null) {
+            if (parent.isNillable && !parent.isArray) {
+                buffer.append("<" + id + " xsi:nil=\"true\"/>\n");
+            } else if (!parent.isOptional) {
+                errString = "Null value for non-nillable/optional element: " +
+                            parent.name.getLocalPart();
+                throw new RuntimeException();
+            }
+            // NOTE: if the element was optional and we were given a null
+            // value we simply return without writing anything
+            return;
+        }
+
+        // We handle every element as if it were an array
+        // of just 1 element
+        int count = 1;
+        Object[] values = new Object[] { value };
+
+        // If the element really is an array, we replace our
+        // values above with the real deals
+        if (parent.isArray) {
+            if (value instanceof Object[]) {
+                count = ((Object[])value).length;
+                values = (Object[])value;
+            } else if (isPrimitiveArray(parent.contentType, value)) {
+                encodePrimitiveArray(id, parent, value);
+                return;
+            } else {
+                errString = "Type mismatch: elements of an " +
+                            "array must be an array.";
+                throw new RuntimeException();
+            }
+            // Error check that we have a valid # of array elements
+            checkArraySize(parent, values.length);
+        }
+
+        // We loop through, encoding each value of the "array"
+        for (int i = 0; i < count; i++) {
+            if (values[i] == null) {
+                // If its not nillable, throw a RE
+                if (!parent.isNillable) {
+                    errString = "Null value for non-nillable/optional element: " +
+                                parent.name.getLocalPart();
+                    throw new RuntimeException();
+                }
+                // null-valued nillable
+                buffer.append("<" + id + " xsi:nil=\"true\"/>\n");
+            } else {
+                buffer.append("<" + id + ">");
+
+                if (parent.contentType.value < 8) {
+                    encodeSimpleType(parent.contentType, values[i]);
+                } else if (parent.contentType.value == 8) {
+                    if (values[i] instanceof Object[]) {
+                        buffer.append("\n");
+                        encodeComplexType((ComplexType)parent.contentType,
+                                          (Object[])values[i]);
+                    } else {
+                        errString = "Type mismatch: element of " +
+                                    "ComplexType must be an array.";
+                        throw new RuntimeException();
+                    }
+                } else if (parent.contentType.value == 9) {
+                    // This is an error, in that we'll get
+                    // a doubly-wrapped value in the encoding
+                    errString = "Encoding error - unable to encode " +
+                                "indirected Elements of Elements";
+                    throw new RuntimeException();
+                    // encode((Element)parent.contentType, values[i]);
+                }
+                
+                if (parent.name.getNamespaceURI().equals(defaultNS)) {
+                    buffer.append("</" + id + ">\n");
+                } else {
+                    buffer.append("</" + parent.name.getLocalPart() + ">\n");
+                }
+            }
+        }
+    }
+
+    /**
+     * Encode a simple type
+     *
+     * @param contentType the type of the value to encode ([0-8])
+     * @param value the value to encode
+     */
+    private void encodeSimpleType(Type contentType, Object value) {
+        if (!checkSimpleType(contentType, value)) {
+            errString = "Simple Type Mismatch";
+            throw new RuntimeException();
+        }
+        switch(contentType.value) {
+        	case 5: // float
+        	case 6: // double
+        		String v = value.toString();
+        		String sv = (String)specialsMap.get(v);
+        		buffer.append( (sv == null)? v : sv );
+        		break;
+        	case 7:
+                // value is String data and needs to be escaped
+                // properly per XML
+                xmlIzeString(value.toString());
+        		break;
+        	default:
+	            // value can be string encoded by its Java wrapper,
+	            // ie. Boolean, Byte, Long, etc.
+	            buffer.append(value.toString());
+        }
+    }
+
+
+    /**
+     * Encode a Complex Type
+     *
+     * @param type the ComplexType to encode
+     * @param values the array of Objects representing the values of the
+     *               elements of this complex type
+     */
+    private void encodeComplexType(ComplexType type, Object[] values) {
+        Element[] elements = type.elements;
+
+        if (elements.length != values.length) {
+            errString = "Wrong number of values passed for complex type";
+            throw new RuntimeException();
+        }
+        
+        // Encode each of the elements
+        for (int i = 0; i < elements.length; i++) {
+            encode(elements[i], values[i]);
+        }
+    }
+
+    /**
+     * Encode an array of primitive types.
+     *
+     * @param id the name of the element being encoded
+     * @param parent the parent Element describing the array
+     * @param value the actual primitive array to encode
+     */
+    private void encodePrimitiveArray(String id, Element parent, Object value)
+    {
+        switch (parent.contentType.value) {
+        case 0:
+            if (value instanceof boolean[]) {
+                boolean[] values = (boolean[])value;
+                checkArraySize(parent, values.length);
+                for (int i = 0; i < values.length; i++) {
+                    buffer.append(
+                        "<" + id + ">" + values[i] + "</" + id + ">\n");
+                }
+                return;
+            }
+            break;
+        case 1:
+            if (value instanceof byte[]) {
+                byte[] values = (byte[])value;
+                checkArraySize(parent, values.length);
+                for (int i = 0; i < values.length; i++) {
+                    buffer.append(
+                        "<" + id + ">" + values[i] + "</" + id + ">\n");
+                }
+                return;
+            }
+            break;
+        case 2:
+            if (value instanceof short[]) {
+                short[] values = (short[])value;
+                checkArraySize(parent, values.length);
+                for (int i = 0; i < values.length; i++) {
+                    buffer.append(
+                        "<" + id + ">" + values[i] + "</" + id + ">\n");
+                }
+                return;
+            }
+            break;
+        case 3:
+            if (value instanceof int[]) {
+                int[] values = (int[])value;
+                checkArraySize(parent, values.length);
+                for (int i = 0; i < values.length; i++) {
+                    buffer.append(
+                        "<" + id + ">" + values[i] + "</" + id + ">\n");
+                }
+                return;
+            }
+            break;
+        case 4:
+            if (value instanceof long[]) {
+                long[] values = (long[])value;
+                checkArraySize(parent, values.length);
+                for (int i = 0; i < values.length; i++) {
+                    buffer.append(
+                        "<" + id + ">" + values[i] + "</" + id + ">\n");
+                }
+                return;
+            }
+            break;
+        case 5:
+// #ifndef ENABLE_CLDC_10
+            if (value instanceof float[]) {
+                float[] values = (float[])value;
+                checkArraySize(parent, values.length);
+                for (int i = 0; i < values.length; i++) {
+                    buffer.append(
+                        "<" + id + ">" + values[i] + "</" + id + ">\n");
+                }
+                return;
+            }
+// #endif ENABLE_CLDC_10
+            break;
+        case 6:
+// #ifndef ENABLE_CLDC_10
+			if (value instanceof double[]) {
+	            double[] values = (double[])value;
+	            checkArraySize(parent, values.length);
+	            for (int i = 0; i < values.length; i++) {
+	                buffer.append(
+	                    "<" + id + ">" + values[i] + "</" + id + ">\n");
+	            }
+	            return;
+	        }
+// #endif ENABLE_CLDC_10
+            break;
+        }
+        errString = "Invalid values for primitive array for " +
+            parent.name.getLocalPart();
+        throw new RuntimeException();
+    }
+
+    /**
+     * Check the length of an array against an Element's array
+     * properties. The Element should be an array.
+     *
+     * @param parent the Element to test the bounds
+     * @param len the length of the given array
+     * @throws RuntimeException if the length passed in does not
+     *                          lie in a valid range for the Element
+     */
+    private void checkArraySize(Element parent, int len) {
+        // Error check that we have a valid # of array elements
+        if (len < parent.minOccurs) {
+            errString = "Not enough array elements for: " +
+                        parent.name.getLocalPart();
+            throw new RuntimeException();
+        } else if (parent.maxOccurs > 0 &&
+            len > parent.maxOccurs)
+        {
+            errString = "Too many array elements for: " +
+                        parent.name.getLocalPart();
+            throw new RuntimeException();
+        }
+    }
+
+    /**
+     * Take the given string and convert any illegal xml characters
+     * to their escaped values (ie '<' becomes '&lt;' and append it
+     * to the buffer.
+     *
+     * @param input the String to escape characters in
+     */
+    private void xmlIzeString(String input) {
+        char[] chars = input.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == '<') {
+                buffer.append("&lt;");
+            } else if (chars[i] == '>') {
+                buffer.append("&gt;");
+            } else if (chars[i] == '&') {
+                buffer.append("&amp;");
+            } else if (chars[i] == '\'') {
+                buffer.append("&apos;");
+            } else if (chars[i] == '\"') {
+                buffer.append("&quot;");
+            } else {
+                buffer.append(chars[i]);
+            }
+        }
+    }
+
+    /**
+     * Determine if the Object passed in is a simple type
+     *
+     * @param contentType the simple Type value the Object is expected to be
+     * @param value the Object to test, should be the wrapper object of the
+     *              corresponding primitive type (ie Boolean for boolean)
+     * @return true if the Object is the expected type
+     */
+    private boolean checkSimpleType(Type contentType, Object value) {
+        switch (contentType.value) {
+        case 0:
+            return (value instanceof Boolean);
+        case 1:
+            return (value instanceof Byte);
+        case 2:
+            return (value instanceof Short);
+        case 3:
+            return (value instanceof Integer);
+        case 4:
+            return (value instanceof Long);
+// #ifndef ENABLE_CLDC_10
+        case 5:
+            return (value instanceof Float);
+        case 6:
+	        return (value instanceof Double);
+// #endif ENABLE_CLDC_10
+        case 7:
+            return (value instanceof String);
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Determine if the Object passed in is a primitive array
+     * of the given type.
+     *
+     * @param contentType the Type value of the primitive array,
+     *                    should be in the range [0..6] inclusive
+     * @param value the Object which should represent the primitive array
+     * @return true if the Object is an array of the expected primitive type
+     */
+    private boolean isPrimitiveArray(Type contentType, Object value) {
+        switch (contentType.value) {
+        case 0:
+            return (value instanceof boolean[]);
+        case 1:
+            return (value instanceof byte[]);
+        case 2:
+            return (value instanceof short[]);
+        case 3:
+            return (value instanceof int[]);
+        case 4:
+            return (value instanceof long[]);
+// #ifndef ENABLE_CLDC_10
+        case 5:
+            return (value instanceof float[]);
+        case 6:
+            return (value instanceof double[]);
+// #endif ENABLE_CLDC_10
+        default:
+            return false;
+        }
+    }
+}

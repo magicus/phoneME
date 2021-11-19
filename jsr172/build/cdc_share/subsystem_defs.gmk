@@ -1,0 +1,64 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+######################################################################
+#
+# Module's Component Configuration file
+#
+######################################################################
+
+JSR_172_LIB_NAME        = jsr172
+JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(JSR_172_LIB_NAME)
+JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/generated
+JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
+JSR_172_INIT_PACKAGE    = $(JSR_INIT_PACKAGE).jsr172
+JSR_172_INITIALIZER     = $(JSR_172_GENERATED_DIR)/classes/$(subst .,/,$(JSR_172_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
+
+JSR_172_JAXP_CLASSLIST  = $(JSR_172_DIR)/build/cdc_share/jaxp_api.txt
+JSR_172_RPC_CLASSLIST   = $(JSR_172_DIR)/build/cdc_share/jax_rpc_api.txt
+JSR_172_API_CLASSES     = $(call readClassList, $(JSR_172_JAXP_CLASSLIST))
+JSR_172_API_CLASSES    += $(call readClassList, $(JSR_172_RPC_CLASSLIST))
+JSR_172_EXTRA_JAR       = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME)_extras.jar
+
+JSR_INITIALIZER_LIST += $(JSR_172_INIT_PACKAGE).$(JSR_INIT_CLASS)
+
+USE_XMLPARSER=true
+JSR_172_DEPS+=$(PS)$(XMLPARSER_JAR)
+
+SUBSYSTEM_JSR172_PACKAGES += \
+   com.sun.ukit.jaxp \
+   org.xml.sax \
+   org.xml.sax.helpers
+
+ifeq ("$(filter basis personal, $(J2ME_CLASSLIB))", "")
+INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/RemoteException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/Remote.java
+else
+	JSROP_EXTRA_JARS       += $(JSR_172_EXTRA_JAR)
+endif
+
+SUBSYSTEM_JSR_172_JAVA_FILES += \
+    $(JSR_172_INITIALIZER)
+
+JSR_172_CONSTANT_CLASSES_LST = $(call constantClassesListFile, $(JSR_172_GENERATED_DIR))
+JSR_172_CONSTANT_CLASS_JAVA_FILES = $(call getConstantClassFileList, $(JSR_172_GENERATED_DIR))

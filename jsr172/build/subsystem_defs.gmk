@@ -1,0 +1,111 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+######################################################################
+#
+# Module's Component Configuration file
+#
+######################################################################
+
+# depends on 
+#
+# SOURCE_OUTPUT_DIR
+# JSR_172_DIR
+# JSR_172_GENERATED_DIR
+# MOBILITY_PACK_JARS_DIR
+
+# Add to global SUBSYSTEMS list
+#
+SUBSYSTEMS += jsr_172
+
+# Abstractions component is used
+USE_ABSTRACTIONS=true
+USE_XMLPARSER=true
+
+ifneq ($(TARGET_VM), cldc_vm)
+include $(JSR_172_DIR)/build/cdc_share/subsystem_defs.gmk
+endif
+
+# Javadoc source path
+SUBSYSTEM_JSR172_SOURCEPATH += $(JSR_172_DIR)/src/ri/jaxrpc$(PATHSEP)$(JSR_172_DIR)/src/ri/sg
+
+ifneq ($(USE_JSR_177), true)
+SUBSYSTEM_JSR172_SOURCEPATH += $(PATHSEP)$(JSR_172_DIR)/src/ri/rmi
+endif
+
+SUBSYSTEM_JSR172_PACKAGES += \
+   com.sun.j2mews.sg \
+   com.sun.j2mews.xml.rpc \
+   javax.microedition.xml.rpc \
+   javax.xml.namespace \
+   javax.xml.parsers \
+   javax.xml.rpc
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_JSR172_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_JSR172_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+	-group "JSR172 Web Services" \
+	$(shell echo $(SUBSYSTEM_JSR172_PACKAGES) | tr ' ' $(PATHSEP))
+
+# Java files for the ( jsr_172 ) module
+#
+INTERNAL_JSR_172_RI_DIR    = $(JSR_172_DIR)/src/ri
+INTERNAL_JSR_172_CONFIG_DIR = $(JSR_172_DIR)/src/config
+
+JSR_172_PROPERTY_FILE = $(INTERNAL_JSR_172_CONFIG_DIR)/properties_jsr172.xml
+JSR_172_CONSTANT_FILE = $(INTERNAL_JSR_172_CONFIG_DIR)/constants_jsr172.xml
+
+# Include JSR_172 system properties in Configuration
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+	$(JSR_172_PROPERTY_FILE) \
+	$(JSR_172_CONSTANT_FILE) \
+
+# ri_jaxrpc
+#
+INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/JAXRPCException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/NamespaceConstants.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/Stub.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/namespace/QName.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/Operation.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/Type.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/Element.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/ComplexType.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailHandler.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/OperationImpl.java \
+        $(JSR_172_GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java \
+        $(JSR_172_GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java \
+
+# rmi (for ri_jaxrpc)
+INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/ServerException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java \
+
+# All of them together to provide to main makefile
+SUBSYSTEM_JSR_172_JAVA_FILES += \
+    $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
+    $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES) \
+
+# Create JSR 172 source in subdir 'jsr172/'
+JSR_172_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr172
