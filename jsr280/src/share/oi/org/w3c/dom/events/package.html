@@ -1,0 +1,381 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+<!--
+
+   Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+
+-->
+    <title>package.html</title>
+  </head>
+
+  <body>
+
+The org.w3c.dom.events package provides the Java ME DOM Events API subset
+      defined by JSR 280.  The API is derived from the W3 DOM2 Events API 
+      Java bindings source
+      (http://www.w3.org/TR/2000/REC-DOM-Level-2-Events-20001113/java-binding.zip), 
+      and the DOM3 Events API Java bindings source
+      (http://www.w3.org/TR/2006/WD-DOM-Level-3-Events-20060413/java-binding.zip).
+      The initial version of the JSR 280 modifications was published in October
+      2006. 
+
+
+<h2 >Complete list of supported event types</h2>
+JSR 280 supports all event types defined by DOM level 3. The only
+exception are event types related to MutationNameEvent which are not supported.
+
+<br>
+<br>
+The following table provides a summary of the event types that are
+required to be supported by the implementation. All events will
+accomplish the capture and target phases, but not all of them will
+accomplish the bubbling phase (see also <a
+href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-flow">DOM
+event flow</a>). Some events are not <a
+href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#dt-cancelable-event">cancelable</a>
+(see <a
+href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-flow-cancelation">Default
+actions and cancelable events</a>). Some events will only be
+dispatched to a specific set of possible targets, specified using node
+types. Contextual information related to the event type is accessible
+using DOM interfaces.</p>
+<br>
+<br>
+
+
+<table summary="This table contains the complete list of event types
+defined by DOM Level 3 Events. The first column contains the local
+name of the event type. The second column indicates if the event
+accomplish the bubbling phase or not (all events accomplish the
+capture and target phases). The third column indicates if the default
+action associated with the event can be canceled. The fourth column
+indicates the nodes that can be target of the event. the fifth (and
+last) column indicates the DOM interface implemented by the event
+object." border="1" cellpadding="0" cellspacing="0" width="100%">
+<tbody><tr>
+<th rowspan="1" colspan="1">type</th>
+<th rowspan="1" colspan="1">Bubbling phase</th>
+<th rowspan="1" colspan="1">Cancelable</th>
+<th rowspan="1" colspan="1">Target node types</th>
+<th rowspan="1" colspan="1">DOM interface</th>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMActivate">DOMActivate</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-UIEvent"><code>UIEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMFocusIn">DOMFocusIn</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-UIEvent"><code>UIEvent</code></a></td>
+
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMFocusOut">DOMFocusOut</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-UIEvent"><code>UIEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-focus">focus</a></td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-UIEvent"><code>UIEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-blur">blur</a></td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-UIEvent"><code>UIEvent</code></a></td>
+
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-textInput">textInput</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-TextEvent"><code>TextEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-click">click</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MouseEvent"><code>MouseEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-mousedown">mousedown</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MouseEvent"><code>MouseEvent</code></a></td>
+
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-mouseup">mouseup</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MouseEvent"><code>MouseEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-mouseover">mouseover</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MouseEvent"><code>MouseEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-mousemove">mousemove</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MouseEvent"><code>MouseEvent</code></a></td>
+
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-mouseout">mouseout</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MouseEvent"><code>MouseEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-keydown">keydown</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-KeyboardEvent"><code>KeyboardEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-keyup">keyup</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-KeyboardEvent"><code>KeyboardEvent</code></a></td>
+
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMSubtreeModified">DOMSubtreeModified</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Document</code>, <code>DocumentFragment</code>, <code>Element</code>, <code>Attr</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MutationEvent"><code>MutationEvent</code></a></td>
+
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMNodeInserted">DOMNodeInserted</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code>, <code>Attr</code>, <code>Text</code>, <code>Comment</code>, <code>CDATASection</code>, <code>DocumentType</code>, <code>EntityReference</code>, <code>ProcessingInstruction</code></td>
+
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MutationEvent"><code>MutationEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMNodeRemoved">DOMNodeRemoved</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code>, <code>Attr</code>, <code>Text</code>, <code>Comment</code>, <code>CDATASection</code>, <code>DocumentType</code>, <code>EntityReference</code>, <code>ProcessingInstruction</code></td>
+
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MutationEvent"><code>MutationEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMNodeRemovedFromDocument">DOMNodeRemovedFromDocument</a></td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code>, <code>Attr</code>, <code>Text</code>, <code>Comment</code>, <code>CDATASection</code>, <code>DocumentType</code>, <code>EntityReference</code>, <code>ProcessingInstruction</code></td>
+
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MutationEvent"><code>MutationEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMNodeInsertedIntoDocument">DOMNodeInsertedIntoDocument</a></td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code>, <code>Attr</code>, <code>Text</code>, <code>Comment</code>, <code>CDATASection</code>, <code>DocumentType</code>, <code>EntityReference</code>, <code>ProcessingInstruction</code></td>
+
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MutationEvent"><code>MutationEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMAttrModified">DOMAttrModified</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MutationEvent"><code>MutationEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-DOMCharacterDataModified">DOMCharacterDataModified</a></td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Text</code>, <code>Comment</code>, <code>CDATASection</code>, <code>ProcessingInstruction</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-MutationEvent"><code>MutationEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-load">load</a></td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Document</code>, <code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-unload">unload</a></td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Document</code>, <code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-abort">abort</a></td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-error">error</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-select">select</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-change">change</a></td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-submit">submit</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-reset">reset</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-Event"><code>Event</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-resize">resize</a></td>
+
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Document</code>, <code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-UIEvent"><code>UIEvent</code></a></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-scroll">scroll</a></td>
+<td rowspan="1" colspan="1" valign="top">Yes</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+
+<td rowspan="1" colspan="1" valign="top"><code>Document</code>, <code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#Events-UIEvent"><code>UIEvent</code></a></td>
+</tr>
+</tbody></table>
+
+<i>Extracted from the <a href="http://www.w3.org/TR/DOM-Level-3-Events">W3C
+DOM3 Events specification</a></i><br>
+
+<p>The Progress Event 1.0 specification defines the following event types
+in addition:</p>
+
+<table summary="This table contains the list of event types defined by
+the Progress Event Specification. The first column contains the local
+name of the event type. The second column indicates if the event
+accomplish the bubbling phase or not (all events accomplish the
+capture and target phases). The third column indicates if the default
+action associated with the event can be canceled. The fourth column
+indicates the nodes that can be target of the event. the fifth (and
+last) column indicates the DOM interface implemented by the event
+object." border="1" cellpadding="0" cellspacing="0" width="100%">
+<tbody><tr>
+<th rowspan="1" colspan="1">type</th>
+<th rowspan="1" colspan="1">Bubbling phase</th>
+<th rowspan="1" colspan="1">Cancelable</th>
+<th rowspan="1" colspan="1">Target node types</th>
+<th rowspan="1" colspan="1">DOM interface</th>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top">loadstart</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><code>ProgressEvent</code></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top">progress</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><code>ProgressEvent</code></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top">error</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><code>ProgressEvent</code></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top">abort</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><code>ProgressEvent</code></td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" valign="top">load</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top">No</td>
+<td rowspan="1" colspan="1" valign="top"><code>Element</code></td>
+<td rowspan="1" colspan="1" valign="top"><code>ProgressEvent</code></td>
+</tr>
+
+</tbody></table>
+<i>Compiled from the <a href="http://www.w3.org/TR/progress-events/">W3C
+Progress Event 1.0 specification</a></i><br>
+
+<p><i>Clarification:</i> The purpose of listing the possible event
+targets here is to say that an implementation of only 
+DOM Level 3 Events will not dispatch certain event types to certain
+event targets unless requested to by a DOM application. These listings 
+are not meant to otherwise constrain implementations, applications, 
+or specifications.</p>
+
+<p>As an example, the event <a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-load">load</a> will trigger event listeners attached on <code>Element</code> nodes for that event and on the capture and target phases. This event cannot be cancelled. If an event listener for the <a href="http://www.w3.org/TR/DOM-Level-3-Events/events.html#event-load">load</a> event is attached to a node other than <code>Document</code> or <code>Element</code> nodes, or if it is attached to the bubbling phase only, this event listener cannot be triggered.</p>
+
+<p>The event objects associated with the event types described above
+may contain context information. Refer to the description of the DOM
+interfaces for further information.</p>
+
+  </body>
+</html>
