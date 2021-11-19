@@ -1,0 +1,83 @@
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+######################################################################
+#
+# Module's Component Configuration file
+#
+######################################################################
+
+XMLPARSER_SRC_DIR = $(XMLPARSER_DIR)/src
+
+ORG_PACKAGE = org.xml.sax
+JAVAX_PACKAGE = javax.xml.parsers
+SUN_PACKAGE = com.sun.ukit.xml
+
+ORG_PATH = $(subst .,/,$(ORG_PACKAGE))
+JAVAX_PATH = $(subst .,/,$(JAVAX_PACKAGE))
+SUN_PATH = $(subst .,/,$(SUN_PACKAGE))
+
+XMLPARSER_IO_DIR = $(XMLPARSER_SRC_DIR)/com/sun/ukit/io
+
+XMLPARSER_JPP_FILES = \
+	$(ORG_PATH)/helpers/DefaultHandler.jpp \
+	$(JAVAX_PATH)/SAXParser.jpp \
+	$(JAVAX_PATH)/SAXParserFactory.jpp \
+	$(SUN_PATH)/Attrs.jpp \
+	$(SUN_PATH)/SAX.jpp \
+
+XMLPARSER_GENERATED_JAVA_FILES = \
+	$(foreach file,$(XMLPARSER_JPP_FILES),$(XMLPARSER_GENERATED_DIR)/$(subst .jpp,.java,$(file)))
+
+XMLPARSER_JAVA_FILES = \
+	$(XMLPARSER_SRC_DIR)/$(ORG_PATH)/InputSource.java \
+	$(XMLPARSER_SRC_DIR)/$(ORG_PATH)/Attributes.java \
+	$(XMLPARSER_SRC_DIR)/$(ORG_PATH)/Locator.java \
+	$(XMLPARSER_SRC_DIR)/$(ORG_PATH)/SAXNotRecognizedException.java \
+	$(XMLPARSER_SRC_DIR)/$(ORG_PATH)/SAXParseException.java \
+	$(XMLPARSER_SRC_DIR)/$(ORG_PATH)/SAXException.java \
+	$(XMLPARSER_SRC_DIR)/$(ORG_PATH)/SAXNotSupportedException.java \
+	\
+	$(XMLPARSER_SRC_DIR)/$(JAVAX_PATH)/FactoryConfigurationError.java \
+	$(XMLPARSER_SRC_DIR)/$(JAVAX_PATH)/ParserConfigurationException.java \
+	\
+    $(XMLPARSER_SRC_DIR)/$(SUN_PATH)/Parser.java \
+    $(XMLPARSER_SRC_DIR)/$(SUN_PATH)/Pair.java \
+    $(XMLPARSER_SRC_DIR)/$(SUN_PATH)/Input.java \
+    $(XMLPARSER_IO_DIR)/ReaderUTF8.java \
+    $(XMLPARSER_IO_DIR)/ReaderUTF16.java \
+	\
+	$(XMLPARSER_GENERATED_JAVA_FILES) \
+
+ifeq ($(SAX_280), true)
+XMLPARSER_JAVA_FILES += \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/XMLReader.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/ContentHandler.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/DTDHandler.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/ErrorHandler.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/EntityResolver.java \
+    $(XMLPARSER_SRC_DIR)/$(ORG_PATH)/ext/Attributes2.java \
+
+endif
+
+XMLPARSER_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/xmlparser
+# end
