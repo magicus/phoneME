@@ -1,0 +1,111 @@
+Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+             KVM Mapping Layer Limitations
+
+SCCS ID:   
+
+Draft
+
+[1] pushLong and popLong:
+
+    64-bit long integers are declared as "long64" in KVM-based native
+    code. In KNI-based native code, they are declared as
+    "jlong". In your port, "long64" and "jlong" must be the same data
+    type.
+
+[2] Pop macros must match argument type:
+
+    + popLong macros can be used only if the current top-of-stack
+      contains a long argument.
+    + pushDouble can be used only if the current top-of-stack is a
+      double-argument. 
+    + popStack and popStackAsType can be used only if the current 
+      top-of-stack is a 32-bit value (i.e., int and object; note that
+      boolean, byte, char and short arguments are internally
+      represented as 32-bit values on the stack).
+
+[3] The order of pop and push:
+
+    If the return type of your native method is "void", it must not
+    use the pushXXX macros.
+
+    Otherwise, you must completely pop all arguments first, and then
+    use pushXXX exactly once to indicate the return value. You cannot
+    return a value by "leaving it on the stack". For example, given
+    this native function:
+
+        static native returnA(int a, int dummy);
+
+    In KVM, you can do this:
+
+        void Java_myclass_returnA(void) {
+            popStack(); /* pop Dummy */
+            /* a is left on the stack, and will be the return value */
+        }
+
+    With this VM, you must rewrite this function to be:
+
+        void Java_myclass_returnA(void) {
+            int dummy = popStack();
+            int a = popStack();
+            pushStack(a);
+        }
+
+[4] If you build this VM in DEBUG mode, the VM would check the
+    order of the pop/push macros in run-time, and will warn you of:
+
+    - incorrect types of arguments popped from the stack (see [2])
+    - pushing onto the stack before all arguments are popped.
+    - not pushing onto the stack before returning from a function that
+      must return a value.
+
+
+[5] instantiateArray
+
+    Only primitive arrays are supported. You cannot instantiate an
+    array that contains objects. (Also see [6] below).
+
+[6] You must not modify contents of object arrays:
+
+    IMPORTANT:
+    Please note that this restriction cannot be checked
+    programmatically by the VM. You must analyze all of your native
+    code that accepts an object array as an argument, and check that
+    this restriction is not violated.
+
+    In KVM, you can modify the content of an object array by doing
+    this:
+
+        ARRAY dst = popStackAsType(ARRAY);
+        dst->data[i].cellp = (cell *)item;
+
+    Such direct assignment is unsafe in this VM, because it fails to
+    update the write barrier (which would indicate that <dst> contains a
+    pointer to <item>). This would cause subtle GC crashes that are
+    hard to debug.
+
+    (On the other hand, reading the content of an object array is
+    safe. For example, you can write a native method that returns the
+    first element in an object array).
+
+[7] createCharArray:
+
+    The isPermanent argument to this function is ignored. We do not
+    support permanent allocation inside this VM.
+
+[8] getClass() can return instance classes only
+
+    You cannot use getClass() to return a CLASS that represents an
+    array class. For example:
+
+        getClass("java/lang/Object")      is supported
+        getClass("[I")                    is NOT supported
+        getClass("[[Ljava/lang/Object;")  is NOT supported
+
+    Also, in the KVM, the CLASS variable returned by getClass() is in
+    permanent memory so its value will not be changed by GC. However,
+    inside this VM, CLASS object may be moved during GC. Therefore, if
+    your KVM-style native code holds a CLASS variable across object
+    allocation (which may cause garbage collection), the CLASS
+    variable must be protected using START_TEMPORARY_ROOTS.
+

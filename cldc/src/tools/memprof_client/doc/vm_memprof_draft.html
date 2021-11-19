@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1251">
+	<TITLE></TITLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<P><FONT SIZE=6>VM Memory
+Profiler </FONT>
+</P>
+<PRE>
+Copyright  2008  Sun Microsystems, Inc. All rights reserved.
+</PRE>
+
+<H3 CLASS="western">Overview</H3>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>Memory profiler
+is a tool for getting detailed information about the Java heap
+contents during the VM execution. It allows to track memory leaks and
+optimize memory usage. </FONT>
+</P>
+<H3 CLASS="western">Feature list</H3>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>Overview
+	of heap, old generation, new generation and unused heap space sizes
+	and layouts.</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>View
+	loaded classes</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>View
+	locations of all objects of given class(including array classes)</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>View some
+	path from some root to the given object (to help detect memory
+	leaks)</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>View heap
+	usage statistics(percentage of heap used by objects of given class
+	f.e.)</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>Possibility
+	to pause/resume VM</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>View of
+	heap utilization (percentage of live objects in given heap block)</FONT></P>
+</UL>
+<H3 CLASS="western">Design</H3>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">The design of the memory
+profiler support is the same as the design of the java-level debugger
+support in the VM. Moreover, they are using the same transport layer,
+so memory profiler and java debugger couldn't be used together for
+now. 
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">Memory profiler allows to
+take heap snapshot at any point during the VM execution. The VM is
+suspended while the profiler collects the snapshot information. 
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>Memory profiler
+support implementation consists of two parts:</FONT></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>The actual
+	code in the virtual machine to provide data about heap</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>The proxy
+	that transmits information to the client.</FONT></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">The memory profiler support
+in the VM provides all the information about object addresses,
+classes, sizes and references. The proxy propagates it to an
+arbitrary client. Existing prototype includes Swing UI client which
+presents gathered data to the user and performs analysis of the data,
+such as looking for live objects, calculating statistics and so on.
+Such design allows writing plugins for existing IDE's, which would
+allow to work java debugger and memory profiler together.</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>The current
+interface contains the following functions:</FONT></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>getting
+	global pointers(bounds of heap, old generation, used heap)</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>getting
+	all objects data(classes, sizes, addresses, references)</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>getting
+	addresses of all roots</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3>getting
+	names of all classes</FONT></P>
+</UL>
+<H3 CLASS="western">Usage</H3>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><FONT SIZE=3><B>Building the
+VM with memory profiler support</B></FONT></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: medium"><FONT SIZE=3>set
+	ENABLE_MEMORY_PROFILER, ENABLE_JAVA_DEBUGGER and
+	ENABLE_ROM_JAVA_DEBUGGER system varaibles to true</FONT></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: medium"><FONT SIZE=3>make
+	clean VM build</FONT></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal"><B>Starting
+the server part</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	Start the VM 
+	</P>
+	<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	The command line is following: cldc_vm -memory_profiler -port
+	&lt;port_number&gt; class 
+	</P>
+	<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	The -memory_profiler indicates that memory profiler support are
+	enabled. The VM would be suspended awaiting connection from a
+	client. The &lt;port_number&gt; is the port on which the VM will
+	await connection from a client.</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	Start the debug agent</P>
+	<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	java -classpath &lt;path&gt; kdp.KVMDebugProxy -l &lt;localport&gt;
+	-p -r &lt;vm_host&gt; &lt;vm_port&gt; , where &lt;localport&gt; is
+	the port to which a client will connect, -p indicates to run as a
+	debug proxy, &lt;vm_host&gt; is host where the VM runs, &lt;vm_port&gt;
+	is the port on which the VM awaits connection.</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-weight: medium"><SPAN STYLE="font-style: normal">Now
+you can connect to the VM. Below process of using standart Client
+tool.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal"><B>Using
+the client tool</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-weight: medium"><SPAN STYLE="font-style: normal">The
+following command line is used to run Client tool is &ldquo;java
+view.Client -host &lt;hostname&gt; -port &lt;portname&gt;&rdquo;
+where hostname and postname are the parameters of running debug
+agent. The default values are &ldquo;localhost&rdquo; and 5000.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+The main screen contains the following elements:</P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	memory panel for displaying the heap, the bounds of old generation,
+	used heap e.t.c., displaying heap utilizaion(percentage of space
+	used by live objects in each heap block), displaying objects
+	locations. Click on a block shows all the objects from the block.</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><IMG SRC="vm_memprof_draft_html_69d13b5c.gif" NAME="Graphic1" ALIGN=LEFT WIDTH=519 HEIGHT=221 BORDER=0><BR CLEAR=LEFT><BR>
+</P>
+<UL>
+	<LI VALUE=1><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	In the bottom left corner there is a List which contains all loaded
+	classes. Choosing single class will show locations of all object of
+	the class on the memory panel and on the panel to the right of the
+	list. For the description of the panel see the next item</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-weight: medium"><SPAN STYLE="font-style: normal">Panel
+	for working with the objects of a single class. It contains list
+	with the addresses of the objects of the selected class. A single
+	object, when selected, is shown in details. Address of the object,
+	its type, all objects which have references to it and all objects
+	referred by this object are displayed. Also, if this is live object,
+	&ldquo;Show path from the root&rdquo; button is enabled. It opens
+	&ldquo;Show path from the root&rdquo; dialog, which shows what
+	prevents this object from being collected. This feature is described
+	in the next item.</SPAN></SPAN></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<IMG SRC="vm_memprof_draft_html_m412a8b3b.gif" NAME="Graphic2" ALIGN=LEFT WIDTH=561 HEIGHT=267 BORDER=0><BR CLEAR=LEFT><BR>
+</P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	Show path from the Root dialog. The dialog displays some path to the
+	object from some root. It has the similar interface to the panel
+	from the previous item. The list contains objects which lays on the
+	path. The topmost object is root object. 
+	</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<IMG SRC="vm_memprof_draft_html_18823b43.gif" NAME="Graphic3" ALIGN=LEFT WIDTH=558 HEIGHT=324 BORDER=0><BR CLEAR=LEFT><BR>
+</P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	Observing objects from a single block. Click on a block on the
+	memory panel opens the dialog similar to the one from the previous
+	item, but which contains all objects from the block.</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	Controlling VM execution.There is &ldquo;Pause/Resume&rdquo; button
+	in the bottom right corner of the main screen. 
+	</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+	Observing statistics. There is the button &ldquo;Statistics&rdquo;
+	on the main screen. it opens the &ldquo;Statistics&rdquo; dialog. It
+	contains table which shows the following information for each
+	class(including VM intenal objects): number of objects in heap, size
+	of all objects in heap, average size of object, percentage of heap
+	used by objects of the class, percentage of live object of the given
+	class, percentage of object of the given class which are inside old
+	generation</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><IMG SRC="vm_memprof_draft_html_206782f8.gif" NAME="Graphic4" ALIGN=LEFT WIDTH=469 HEIGHT=479 BORDER=0><BR CLEAR=LEFT><BR>
+</P>
+<P ALIGN=LEFT><BR><BR>
+</P>
+<DIV TYPE=FOOTER>
+	<P ALIGN=CENTER STYLE="margin-top: 0.2in; margin-bottom: 0in"><BR>
+	</P>
+</DIV>
+</BODY>
+</HTML>

@@ -1,0 +1,17 @@
+Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+       C Interpreter Loop
+
+ This is simple replacement for generated ASM interpreter loop written in 
+pure C++, although in ASM-style way, to make ASM interpreter studing simpler.
+We barely use any objects in it at all.
+
+ Overall design is very similar to ASM interpreter, and the only serious difference is somewhat different thread model (we use lightweight threads but
+have separate Java and C stacks). Due threading, it's not pure C, but has
+minor ASM stubs (see AsmStubs_*.*). 
+
+ Speedwise it's not optimized, and is about 3 times slower comparion to x86 ASM
+interpreter loop.
+
+ It's pretty functional now, passes minTCK1.1, and contains MVM and profiler support. The only major feature missed (and not planned to be added) is Java
+debugger support.

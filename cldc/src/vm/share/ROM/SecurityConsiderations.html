@@ -1,0 +1,79 @@
+<!--
+
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<HTML LANG="en">
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<TITLE>In-Place Execution Security Considerations</TITLE>
+</HEAD>
+
+<H2>In-Place Execution Security Considerations</H2>
+
+Special security considerations exist when using the in-place execution feature. Because the verifications normally performed by the Java class loader are bypassed in the fast class loader, application image files must be maintained on a secured file system that cannot be modified by users or by untrusted applications. The manufacturing processes by which these image files are transferred to product ROM or flash memory must also be securely controlled.
+
+<H3>1   Storing Application Image Files</H3>
+
+The verifier is an important part of the Java virtual machine that ensures the integrity and safety of MIDlets. The verifier must be run before a MIDlet is run through the application image converter. After conversion, the application image files must be stored in a secured storage device, inaccessible by untrusted applications and by the phone's user. <B><EM>This must be done with extreme care</EM></B>.
+<P> 
+Because the verifications normally performed by the Java class loader are bypassed by the Java class loading enhancement feature, if an application image file is altered by malicious parties, the security safeguards of the verifier are circumvented. In such cases, invalid Java programs might be allowed to execute on the phone and gain access to arbitrary memory locations. The results can include, but are not limited to, the following: 
+<UL>
+<LI>The phone might crash. 
+<LI>Sensitive information might be stolen from the phone. 
+<LI>The phone might be used in a coordinated denial-of-service attack of the cellular network. 
+</UL>
+Different phones may have different ways of storing secured information, so we are not able to recommend how to store the verification results without specific information about your devices. However, following are examples where verification must <EM>not</EM> be stored because the storage device is <EM>not</EM> secured: 
+<UL>
+<LI>The results are stored in a removable storage device (such as an SD card) that the user can modify using a Personal Computer. 
+<LI>The results are stored in a file in the phone's internal file system, but the user can modify the file (for example, by connecting the phone to a personal computer or by using a built-in application on the phone). 
+<LI>The phone allows the user to download arbitrary native applications that are able to modify the verification results. 
+</UL>
+<H3>2   Warning Message</H3>
+The code provided in this implementation contains a special mechanism that is invoked when you create an application image file: the following warning message is printed. This message is to remind you of the security requirements. Remove the code that prints this warning message <EM CLASS="Emphasis">after</EM> you implement the required security mechanisms.
+<PRE>****warning***</PRE>
+<PRE>****Binary ROM Images must be created in secured file system.</PRE>
+<PRE>****Please refer to src/vm/share/ROM/SecurityConsiderations.html for more information***</PRE>
+<PRE>****warning***</PRE>
+</BODY>
+</HTML>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<HTML LANG="en">
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<TITLE>In-Place Execution Security Considerations</TITLE>
+</HEAD>
+
+<H2>In-Place Execution Security Considerations</H2>
+
+Special security considerations exist when using the in-place execution feature. Because the verifications normally performed by the Java class loader are bypassed in the fast class loader, application image files must be maintained on a secured file system that cannot be modified by users or by untrusted applications. The manufacturing processes by which these image files are transferred to product ROM or flash memory must also be securely controlled.
+
+<H3>1   Storing Application Image Files</H3>
+
+The verifier is an important part of the Java virtual machine that ensures the integrity and safety of MIDlets. The verifier must be run before a MIDlet is run through the application image converter. After conversion, the application image files must be stored in a secured storage device, inaccessible by untrusted applications and by the phone's user. <B><EM>This must be done with extreme care</EM></B>.
+<P> 
+Because the verifications normally performed by the Java class loader are bypassed by the Java class loading enhancement feature, if an application image file is altered by malicious parties, the security safeguards of the verifier are circumvented. In such cases, invalid Java programs might be allowed to execute on the phone and gain access to arbitrary memory locations. The results can include, but are not limited to, the following: 
+<UL>
+<LI>The phone might crash. 
+<LI>Sensitive information might be stolen from the phone. 
+<LI>The phone might be used in a coordinated denial-of-service attack of the cellular network. 
+</UL>
+Different phones may have different ways of storing secured information, so we are not able to recommend how to store the verification results without specific information about your devices. However, following are examples where verification must <EM>not</EM> be stored because the storage device is <EM>not</EM> secured: 
+<UL>
+<LI>The results are stored in a removable storage device (such as an SD card) that the user can modify using a Personal Computer. 
+<LI>The results are stored in a file in the phone's internal file system, but the user can modify the file (for example, by connecting the phone to a personal computer or by using a built-in application on the phone). 
+<LI>The phone allows the user to download arbitrary native applications that are able to modify the verification results. 
+</UL>
+<H3>2   Warning Message</H3>
+The code provided in this implementation contains a special mechanism that is invoked when you create an application image file: the following warning message is printed. This message is to remind you of the security requirements. Remove the code that prints this warning message <EM CLASS="Emphasis">after</EM> you implement the required security mechanisms.
+<PRE>****warning***</PRE>
+<PRE>****Binary ROM Images must be created in secured file system.</PRE>
+<PRE>****Please refer to src/vm/share/ROM/SecurityConsiderations.html for more information***</PRE>
+<PRE>****warning***</PRE>
+</BODY>
+</HTML>

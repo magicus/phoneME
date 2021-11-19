@@ -1,0 +1,62 @@
+Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+----------------------------------------------------------------------
+
+
+
+
+   RVDS 2.2 VFP Support
+
+
+
+
+   This document describes how to build and run the VM with Vector
+   Floating Point (VFP) with RVDS 2.2.
+
+1. Download the VFP support code from ARM   
+
+   http://www.arm.com/support/vfp_support_code.html
+   http://www.arm.com/pdfs/AN133A_RVDS_VFP.zip
+
+2. The VFP support source files can be found in the Examples/vfp_init
+   and Examples/vfp_support directories. Copy the list of file below
+   into ${JVMWorkSpace}/src/vm/os/ads/vfp/
+
+   controlbuffer.c
+   fpinit.c
+   sldummy.s
+   vfpfptrap.s
+   vfpsubarch.s
+   controlbuffer.h
+   slundef.h
+   vfpinit.s
+   vfpundef.c
+   controlbuffer_h.s
+   tlundef.s
+   vfpsubarch.h
+   vfpwrapper.s
+
+3. Note that this VM source code package already contains the
+   file $(JVMWorkSpace)/src/vm/os/ads/vfp/setup_vfp.script with the
+   following content:
+
+   $vector_catch = %RusPDAifE
+  
+   This is the script to set up the FPU when you run the VM on the
+   ARMulator.
+
+4. Building the VM with VFP support
+
+   cd ${JVMWorkSpace}/build/ads_arm
+   make ENABLE_SOFT_FLOAT=false ENABLE_RVDS=true \
+        JVM_FPU_FLAGS="--fpmode ieee_no_fenv --fpu vfpv2"
+
+   There are various options that you can use the setup the fpu. See
+   section 2.1 in the ARM Application Note 133 for more information.
+
+5. Running the VM in RVDS2.2 ARMulator:
+
+   armsd -cpu ARM10200E \
+       -SC ${JVMWorkSpace}/src/vm/os/ads/vfp/setupvfp.script \
+       -exec cldc_vm.axf +FlushCache -cp <classpath> <mainclass>
+
+  
