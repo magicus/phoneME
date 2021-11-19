@@ -1,0 +1,83 @@
+Copyright 1990-2009 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara, 
+California 95054, U.S.A. All rights reserved.
+
+Sun Microsystems, Inc. has intellectual property rights relating to technology
+embodied in the product that is described in this document. In particular, and
+without limitation, these intellectual property rights may include one or more
+of the U.S. patents listed at http://www.sun.com/patents and one or more
+additional patents or pending patent applications in the U.S. and in other
+countries.
+
+U.S. Government Rights - Commercial software. Government users are subject to
+the Sun Microsystems, Inc. standard license agreement and applicable provisions
+of the FAR and its supplements.
+
+Use is subject to license terms.
+
+This distribution may include materials developed by third parties.
+
+Sun, Sun Microsystems, the Sun logo, Java, Solaris, phoneME, HotSpot, J2ME,
+J2SE, Java Card, JavaCall and JDK are trademarks or registered trademarks of
+Sun Microsystems, Inc. or its subsidiaries in the U.S. and other countries.
+
+Parts of the product may be derived from Berkeley BSD systems, licensed from
+the University of California. UNIX is a registered trademark in the U.S. and
+other countries, exclusively licensed through X/Open Company, Ltd.
+
+Intel is a trademark or registered trademark of Intel Corporation or its
+subsidiaries in the United States and other countries.
+
+OpenGL is a registered trademark of Silicon Graphics, Inc.
+
+This product is covered and controlled by U.S. Export Control laws and may be
+subject to the export or import laws in other countries. Nuclear, missile,
+chemical biological weapons or nuclear maritime end uses or end users, whether
+direct or indirect, are strictly prohibited. Export or reexport to countries
+subject to U.S. embargo or to entities identified on U.S. export exclusion
+lists, including, but not limited to, the denied persons and specially
+designated nationals lists is strictly prohibited.
+
+French:
+
+Copyright 1990-2009 Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+California 95054, États-Unis. Tous droits réservés.
+
+Sun Microsystems, Inc. détient les droits de propriété intellectuelle relatifs
+à la technologie incorporée dans le produit qui est décrit dans ce document.
+En particulier, et ce sans limitation, ces droits de propriété intellectuelle
+peuvent inclure un ou plusieurs brevets américains listés à l'adresse suivante:
+http://www.sun.com/patents et un ou plusieurs brevets supplémentaires ou les
+applications de brevet en attente aux États-Unis et dans d'autres pays.
+
+Droits du gouvernement des États-Unis - logiciel commercial. Les droits des
+utilisateur du gouvernement des États-Unis sont soumis aux termes de la licence
+standard Sun Microsystems et aux conditions appliquées de la FAR et de ces
+compléments.
+
+L'utilisation est soumise aux termes du contrat de licence.
+
+Cette distribution peut inclure des elements développés par des tiers.
+
+Sun, Sun Microsystems, le logo Sun, Java, Solaris, phoneME, HotSpot, J2ME, J2SE,
+Java Card, JavaCall et JDK sont des marques de fabrique ou des marques déposées
+de Sun Microsystems, Inc., ou ses filiales, aux États-Unis et dans d'autres pays.
+
+Des parties de ce produit pourront être dérivées des systèmes Berkeley BSD
+licenciés par l'Université de Californie. UNIX est une marque déposée aux
+États-Unis et dans d'autres pays sous licence exclusive de X/Open Company, Ltd.
+
+Intel est une marque de fabrique ou une marque déposée de Intel Corporation ou
+ses filiales aux États-Unis et dans d'autres pays.
+
+OpenGL est une marque déposée de Silicon Graphics, Inc.
+
+Ce produit est soumis à la législation américaine en matière de contrôle des
+exportations et peut être soumis à la réglementation en vigueur dans d'autres
+pays dans le domaine des exportations et importations. Les utilisations finales,
+ou utilisateurs finaux, pour des armes nucléaires, des missiles, des armes
+biologiques et chimiques ou du nucléaire maritime, directement ou indirectement,
+sont strictement interdites. Les exportations ou réexportations vers les pays
+sous embargo américain, ou vers des entités figurant sur les listes d'exclusion
+d'exportation des produits ou des services qui sont régis par la législation
+américaine sur le contrôle des exportations et la liste de ressortissants
+spécifiquement désignés, sont rigoureusement interdites.
