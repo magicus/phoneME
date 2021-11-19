@@ -1,0 +1,46 @@
+#
+# Copyright  1990-2009 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+USE_LIME_SHARED ?= true
+
+SPECIFIC_DEFINITIONS+=-I$(LIME_DIR)/client/src/native/inc -I$(JDK_DIR)/include
+SOURCE_OUTPUT_LIST+=$(LIME_DIR)/client lime
+vpath %.c $(LIME_DIR)/client/src/native
+
+ifneq ($(SUBLIME_BUFFER_SIZE), )
+SPECIFIC_DEFINITIONS += -DSUBLIME_BUFFER_SIZE=$(SUBLIME_BUFFER_SIZE)
+endif
+
+ifeq ($(USE_LIME_SHARED),true)
+
+LIME_SHARED_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/sublime$(SHARED_LIB_SUFFIX)
+LIME_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/sublime.lib
+LIME_OBJECTS=$(patsubst %.c,%.obj,$(notdir $(wildcard $(LIME_DIR)/client/src/native/*.c)))
+LIME_OUTPUT_OBJ_DIR=$(JAVACALL_OUTPUT_OBJ_DIR)/lime/obj$(BUILD_EXT)
+
+else
+
+#compile and link lime statically
+PORTING_SOURCE += $(notdir $(wildcard $(LIME_DIR)/client/src/native/*.c))
+
+endif
