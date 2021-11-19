@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "configuration.dtd">
+<!--
+   
+
+  Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+  
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License version
+  2 only, as published by the Free Software Foundation.
+  
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License version 2 for more details (a copy is
+  included at /legal/license.txt).
+  
+  You should have received a copy of the GNU General Public License
+  version 2 along with this work; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301 USA
+  
+  Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+  Clara, CA 95054 or visit www.sun.com if you need additional
+  information or have any questions.
+
+-->
+<configuration>
+<properties>
+<!-- System  properties (visible via System.getProperty() -->
+  <property Key="microedition.khronos.egl.version"
+      Value="1.1"
+      Scope="system"
+      Comment="The version of EGL API."/>
+      
+  <property Key="microedition.khronos.opengles.version"
+      Value="1.1"
+      Scope="system"
+      Comment="The version of OpenGL ES API."/>
+
+<!-- Internal properties (visible via Configuration.getProperty() -->
+  <property Key="jsr239.noqueue"
+      Value="false"
+      Scope="internal"
+      Comment="Flush queue after each command."/>
+      
+  <property Key="jsr239.supportsEGL11"
+      Value="true"
+      Scope="internal"
+      Comment="Whether native library supports EGL 1.1."/>
+
+  <property Key="jsr239.supportsGL11"
+      Value="true"
+      Scope="internal"
+      Comment="Whether native library supports GL 1.1."/>
+
+  <property Key="jsr239.supports_OES_query_matrix"
+      Value="true"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+      
+  <property Key="jsr239.supports_OES_draw_texture"
+      Value="true"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_matrix_palette"
+      Value="true"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_texture_cube_map"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_texture_env_crossbar"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_texture_mirrored_repeat"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+      
+  <property Key="jsr239.supports_OES_blend_subtract"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_blend_func_separate"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_blend_equation_separate"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+      
+  <property Key="jsr239.supports_OES_stencil_wrap"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_extended_matrix_palette"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+  <property Key="jsr239.supports_OES_framebuffer_object"
+      Value="false"
+      Scope="internal"
+      Comment="Whether the extension is supported."/>
+
+</properties>
+</configuration>

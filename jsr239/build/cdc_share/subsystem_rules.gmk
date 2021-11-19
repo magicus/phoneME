@@ -1,0 +1,53 @@
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+JSR_239_DEPS=$(PS)$(MIDP_OUTPUT_DIR)/classes
+
+# TCK signature tests for CDC-MIDP build uses classes.zip 
+# from cldc1.1 project, these classes does not contain 
+# java.lang.Comparable and java.lang.UnsupportedOperationException. 
+# JSR 239 does not provide these classes for CDC-MIDP build 
+# because they are already provided by CDC. So jsr239_ext.jar is
+# prepared to include missing classes and satisfy signature test.
+#
+JSR_239_EXT_JAR=$(JSROP_JAR_DIR)/$(JSR_239_LIB_NAME)_ext.jar
+JSR_239_EXT_JAVA_FILES=$(NIO_IMPL_OO_API_JAVA_FILES_CLDC_ONLY)
+
+$(JSR_239_EXT_JAR): $(JSR_239_EXT_JAVA_FILES) 
+	$(call compileJSROP,jsr239,$(JSR_239_BUILD_DIR)/classes_ext,$(JSR_239_EXT_JAVA_FILES),$(JSR_239_DEPS))
+	$(call makeJSROPJar,$(JSR_239_EXT_JAR),$(JSR_239_BUILD_DIR)/classes_ext)
+
+$(JSR_239_JAR): $(SUBSYSTEM_JSR_239_JAVA_FILES) $(JSR_239_EXT_JAR)
+	$(call compileJSROP,jsr239,$(JSR_239_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_239_JAVA_FILES),$(JSR_239_DEPS))
+	$(call makeJSROPJar,$(JSR_239_JAR),$(JSR_239_BUILD_DIR)/classes)
+
+$(JSR_239_NATIVE_LIB): $(JSR_239_NATIVE_OBJS)
+	@echo "Linking $@"
+	$(AT)$(call makeSharedLibrary, $(JSR_239_NATIVE_OBJS))
+
+# Copy and filter JSR 239 source in JSR_239_SOURCE_OUTPUT_DIR
+jsr_239_source_bundle:: $(JSR_239_DIR)
+	@echo " ... JSR 239 source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(JSR_239_DIR),$(JSR_239_SOURCE_OUTPUT_DIR),build/share build/cdc_share)
+
