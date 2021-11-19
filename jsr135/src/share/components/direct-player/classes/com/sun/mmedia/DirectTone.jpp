@@ -1,0 +1,384 @@
+ /*
+ * 
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+ 
+package com.sun.mmedia;
+
+import com.sun.mmedia.DefaultConfiguration;
+import com.sun.j2me.app.AppPackage;
+
+import javax.microedition.media.*;
+import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import javax.microedition.media.control.*;
+import java.util.*;
+
+import com.sun.mmedia.DefaultConfiguration;
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+import com.sun.mmedia.control.DualToneControl; 
+/**
+ * Java Tone Sequence Player
+ * it implements ToneControl
+ */
+final class DirectTone extends DirectPlayer {
+
+    private DirectToneControl toneCtl     = null;
+    private DirectToneControl dualToneCtl = null;
+
+    /**
+     * It does not need data source
+     */
+    public DirectTone( HighLevelPlayer owner ) {
+        super( owner );
+    }
+
+    /**
+     * Read header information from media data and determine media Format     *
+     * @exception  MediaException  Description of the Exception     */
+    protected void doRealize() throws MediaException {
+        // if no source stream, player is created from TONE_DEVICE_LOCATOR
+        // simply return it.
+        if ( getOwner().stream != null) {
+            long contLength = getOwner().stream.getContentLength();
+            if (contLength == getOwner().stream.tell()) {
+                return;
+            } else {
+                // read the whole sequence from the source stream
+                int chunksize = 128;
+                byte[] tmpseqs = new byte[chunksize];
+                byte[] seqs = null;
+                // make use of BAOS, since it takes care of growing buffer
+                ByteArrayOutputStream baos = new ByteArrayOutputStream(chunksize);
+
+                try {
+                    int read;
+
+                    while ((read = getOwner().stream.read(tmpseqs, 0, chunksize)) != -1) {
+                        baos.write(tmpseqs, 0, read);
+                    }
+
+                    seqs = baos.toByteArray();
+                    baos.close();
+                    tmpseqs = null;
+
+                    try {
+                        ToneControl t = new DirectToneControl(this, false);
+                        t.setSequence(seqs);
+                    } catch (Exception e) {
+                        throw new MediaException("unable to realize: " + e.getMessage());
+                    }
+
+                } catch (IOException ex) {
+                    throw new MediaException("unable to realize: fail to read from source");
+                }
+            }        
+        }
+        state = Player.REALIZED;
+    }
+
+    /**
+     * the worker method to prefetch the player
+     *
+     * @exception  MediaException  Description of the Exception
+     */
+    protected void doPrefetch() throws MediaException {
+        int hNative = getOwner().getNativeHandle();
+        /* prefetch native player */
+        if (!nPrefetch(hNative)) {
+            throw new MediaException("Can not prefetch");
+        }
+        if(!nAcquireDevice(hNative)) {
+            throw new MediaException("Can not acquire device");
+        }
+        state = Player.PREFETCHED;
+    }
+
+    /**
+     * The worker method to actually obtain the control.
+     *
+     * @param  type  the class name of the <code>Control</code>.
+     * @return       <code>Control</code> for the class or interface
+     * name.
+     */
+    protected Control doGetNewControl(String type) {
+        Control c = super.doGetNewControl(type);
+        if (c != null) {
+            return c;
+        }
+
+        if (getOwner().getState() >= Player.REALIZED) {
+            if (type.equals("javax.microedition.media.control.ToneControl") ||
+                type.equals("ToneControl")) {
+                if( null == toneCtl ) toneCtl = new DirectToneControl(this, false);
+                return toneCtl;
+            }
+            if (type.equals("com.sun.mmedia.control.DualToneControl")) {
+                if (null == dualToneCtl) dualToneCtl = new DirectToneControl(this, true);
+                return dualToneCtl;
+            }
+        }
+
+        return null;
+    }
+
+
+    protected String doGetContentType()
+    {
+        return DefaultConfiguration.MIME_AUDIO_TONE;
+    }
+
+    /**
+     * Sets the tone sequence.<p>
+     * 
+     * @param sequence The sequence to set.
+     * @exception IllegalArgumentException Thrown if the sequence is 
+     * <code>null</code> or invalid.
+     * @exception IllegalStateException Thrown if the <code>Player</code>
+     * that this control belongs to is in the <i>PREFETCHED</i> or
+     * <i>STARTED</i> state.
+     */
+    void setSequence(byte[] sequence)
+    {
+        if (getOwner().getState() >= Player.PREFETCHED)
+            throw new IllegalStateException("cannot set seq after prefetched");
+
+        int hNative = getOwner().getNativeHandle();
+        nFlushBuffer(hNative);
+
+        long contentSize = sequence.length;
+        if (contentSize > 0) {
+            MediaDownload.nSetWholeContentSize(hNative, contentSize);
+        }
+
+        MediaDownload.nBuffering(hNative, sequence,  0, sequence.length);
+        MediaDownload.nBuffering(hNative, null, 0, 0);
+
+        getOwner().hasToneSequenceSet = true;
+    }
+
+    /**
+     * Java Tone Sequence Control
+     * it implements ToneControl
+     */
+    public final class DirectToneControl implements ToneControl, DualToneControl {
+        private DirectTone _player;
+        private boolean dualTone;
+
+        DirectToneControl(DirectTone player, boolean dualTone) {
+            _player = player;
+            this.dualTone = dualTone;
+        }
+
+        /** 
+         * array index for sequence check procedures
+         */
+        private int pos;
+
+        /** Array elements are set to true when block
+         * with corresponding index is defined.
+         * Used by sequence check procedures.
+         */
+        boolean blk_defined[] = new boolean[ 128 ];
+
+        /** Validates single sequence_event;
+         * If succeeded, after return 'pos' points to next byte after
+         * validated event
+         * @return null if success, error message otherwize
+         */
+        private String checkSequenceEvent( byte[] seq ) {
+
+            byte evt = seq[ pos ];
+            byte blk, dur, vol, rep;
+
+            switch( evt ) {
+            case ToneControl.PLAY_BLOCK:
+                blk = seq[ pos + 1 ];
+                if( blk < 0 ) return "invalid block number '" + blk + "'";
+                if( !blk_defined[ blk ] ) return "block #" + blk + " undefined";
+                pos += 2;
+                break;
+            case ToneControl.SET_VOLUME:
+                vol = seq[ pos + 1 ];
+                if( vol < 0 || vol > 100 ) return "invalid volume '" + vol + "'";
+                pos += 2;
+                break;
+            case ToneControl.REPEAT:
+                rep = seq[ pos + 1 ];
+                evt = seq[ pos + 2 ];
+                dur = seq[ pos + 3 ];
+                if( rep < 2 ) return "invalid repeat count '" + rep + "'";
+                if( evt == ToneControl.SILENCE || evt >= 0 ) {
+                    if( dur < 1 ) return "invalid duration '" + dur + "'";
+                } else {
+                    return "invalid repeated event '" + evt + "'";
+                }
+                pos += 4;
+                break;
+            case DualToneControl.DUALTONE:
+                if( !dualTone ) return "dualtones not supported";
+                if( seq[ pos + 1 ] < 0 ) return "invalid dualtone 1st param '" + seq[ pos + 1 ] + "'";
+                if( seq[ pos + 2 ] < 0 ) return "invalid dualtone 2nd param '" + seq[ pos + 2 ] + "'";
+                if( seq[ pos + 3 ] < 0 ) return "invalid dualtone 3rd param '" + seq[ pos + 3 ] + "'";
+                pos += 4;
+                break;
+            default: // note or SILENCE
+                if( evt == ToneControl.SILENCE || evt >= 0 ) {
+                    dur = seq[ pos + 1 ];
+                    if( dur < 1 ) return "invalid duration '" + dur + "'";
+                    pos += 2;
+                } else {
+                    return "invalid sequence event '" + evt + "'";
+                }
+            }
+
+            return null;
+        }
+
+        /** Validates tone sequence
+         * @return null if success, error message otherwize
+         */
+        private String checkSequence( byte[] seq ) {
+
+            for( int i = 0; i < 128; i++ ) {
+                blk_defined[ i ] = false;
+            }
+
+            // version
+            if( seq.length < 2 || ToneControl.VERSION != seq[ 0 ] ) {
+                return "missing version information";
+            }
+
+            if( 1 != seq[ 1 ] ) {
+                return "incompatible version '" + seq[ 1 ] + "'";
+            }
+
+            pos = 2;
+
+            // *1 tempo_definition
+            if( pos < seq.length && ToneControl.TEMPO == seq[ pos ] ) {
+                if( seq[ pos + 1 ] < 5 ) {
+                    return "invalid tempo value '" + seq[ pos + 1 ] + "'";
+                }
+                pos += 2;
+            }
+
+            // *1 resolution_definition
+            if( pos < seq.length && ToneControl.RESOLUTION == seq[ pos ] ) {
+                if( seq[ pos + 1 ] < 1 ) {
+                    return "invalid resolution value '" + seq[ pos + 1 ] + "'";
+                }
+                pos += 2;
+            }
+
+            // * block_definition
+            byte    blk;
+            int     blk_len;
+
+            // BLOCK_START
+            while( pos < seq.length && ToneControl.BLOCK_START == seq[ pos ] ) {
+                // block_number
+                blk = seq[ pos + 1 ];
+                if( blk < 0 ) {
+                    return "invalid block number '" + blk + "'";
+                }
+                pos += 2;
+                blk_len = 0;
+
+                // 1*sequence_event BLOCK_END
+                while( ToneControl.BLOCK_END != seq[ pos ] ) {
+                    String estr = checkSequenceEvent( seq );
+                    if( null != estr ) {
+                        return estr;
+                    }
+                    blk_len++;
+                }
+                if( 0 == blk_len ) {
+                    return "block #" + blk + " is empty.";
+                }
+
+                // block_number
+                if( blk != seq[ pos + 1 ] ) {
+                    return "block #" + blk +
+                        ": mismatching closing block number '" + seq[ pos + 1 ] + "'";
+                }
+                blk_defined[ blk ] = true;
+                pos += 2;
+            }
+
+            // 1* sequence_event
+            int evt_count = 0;
+            while( pos < seq.length ) {
+                String estr = checkSequenceEvent( seq );
+                if( null != estr ) {
+                    return estr;
+                }
+                evt_count++;
+            }
+            if( 0 == evt_count ) {
+                return "sequence contains no sequence events";
+            }
+
+            return null;
+        }
+
+        /**
+         * Sets the tone sequence.<p>
+         * 
+         * @param sequence The sequence to set.
+         * @exception IllegalArgumentException Thrown if the sequence is 
+         * <code>null</code> or invalid.
+         * @exception IllegalStateException Thrown if the <code>Player</code>
+         * that this control belongs to is in the <i>PREFETCHED</i> or
+         * <i>STARTED</i> state.
+         */
+        public void setSequence(byte[] sequence)
+        {
+            String estr;
+
+            if (sequence == null) {
+                throw new IllegalArgumentException("null tone sequence");
+            }
+
+            try {
+                estr = checkSequence( sequence );
+            } catch ( ArrayIndexOutOfBoundsException e ) {
+                estr = "unexpected end of sequence";
+            }
+
+            if( null != estr ) {
+                throw new IllegalArgumentException("Tone sequence check failed at offset " +
+                    pos + ": " + estr );
+            }
+
+            _player.setSequence(sequence);
+        }
+    }
+    // native finalizer 
+// #ifdef ENABLE_CDC [    
+    protected native void finalize();
+    // #else ][
+    private native void finalize();
+// #endif ]    
+}
