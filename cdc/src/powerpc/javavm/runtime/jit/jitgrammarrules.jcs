@@ -1,0 +1,221 @@
+//
+// Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
+//
+// @(#)jitgrammarrules.jcs	1.16 06/10/10
+//
+// converting CVM IR subset to PowerPC assembler
+//
+
+//
+// By default the DIV instruction is assumed to not be supported.
+// Adding this rule adds support for the powerpc divw instruction.
+// NOTE: By providing a cost of 40, the default "reg32 reg32" rules
+// are overridden, but the "reg32 ICONST_32" rules are not.
+//
+reg32: IDIV32 reg32 reg32 : 40 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVMPPC_DIV_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+reg32: IREM32 reg32 reg32 : 40 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVMPPC_REM_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+
+//
+// Take advantage of the powerpc "subtract from immediate" instruction.
+//
+reg32: ISUB32 ICONST_32 reg32 : 15 : : : : {
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetLeftSubtree($$))->j.i;
+	if (CVMCPUalurhsIsEncodableAsImmediate(CVMPPC_SUBFIC_OPCODE,
+					       constValue)) {
+	    pushALURhsConstant(con, constValue);
+	    wordBinaryOp(con, CVMPPC_SUBFIC_OPCODE, $$, GET_REGISTER_GOALS);
+	} else {
+	    CVMRMResource *rhs = popResource(con);
+	    const2Reg32(con, CVMRM_INT_REGS(con),
+			CVMJITirnodeGetLeftSubtree($$), GET_REGISTER_GOALS);
+	    pushALURhsResource(con, rhs);
+	    wordBinaryOp(con, CVMCPU_SUB_OPCODE, $$, GET_REGISTER_GOALS);
+	}
+    };
+
+//
+// Take advantage of the ALU instructions that will <<16 a 16-bit constant.
+// This includes addis, andis, oris, and xoris.
+//
+// The following rules all overide rules of the form:
+//   reg32: XXX32 reg32 alurhs
+// with rules of the form:
+//   reg32: XXX32 reg32 ICONST_32
+//
+// This allows the rule to inspect the constant and see if it is one that
+// will work with one of the shifted instructions. If so, the shifted opcode
+// is used and the constant is >>16. It will also encode XOR, OR, SUB, and
+// ADD of 32-bit constants as two ALU instructions rather than building
+// the 32-bit constant.
+//
+
+%{
+static void
+shiftedWordBinaryOp(
+    CVMJITCompilationContext* con,
+    int opcode, int shiftOpcode,
+    CVMJITIRNodePtr thisNode,
+    CVMInt32 constValue,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMInt16 lo16 = constValue & 0xffff;
+    CVMUint16 hi16 = (constValue >> 16) & 0xffff;
+    if (opcode != CVMCPU_AND_OPCODE) {
+	/* if lo16 is negative and we are doing an ADD, the we must add 1 to
+	   hi16 to undo the "borrow". */
+	if (opcode == CVMCPU_ADD_OPCODE && lo16 < 0) {
+	    hi16++;
+	}
+	/* Perform the alu operation with the lower 16 bits if necessary. */
+	if (lo16 != 0) {
+	    if (opcode == CVMCPU_ADD_OPCODE) {
+		pushALURhsConstant(con, lo16);
+	    } else {
+		pushALURhsConstant(con, (CVMUint16)lo16);
+	    }
+	    wordBinaryOp(con, opcode, thisNode, target, avoid);
+	}
+	/* Perform the alu operation with the upper 16 bits if necessary. */
+	if (hi16 != 0) {
+	    /*CVMconsolePrintf("shifted add/or/xor constant 0x%x: 0x%x 0x%x\n",
+	                        constValue, lo16, hi16);*/
+	    pushALURhsConstant(con, hi16);
+	    wordBinaryOp(con, shiftOpcode, thisNode, target, avoid);
+	}
+    } else {  /* CVMCPU_AND_OPCODE */
+	/*
+	 * If the constant can be encoded by doing a << 16 of a 16 bit value,
+	 * then >> 16 the constant and use the opcode that will shift it back.
+	 */
+	if (lo16 == 0) {
+	    /*CVMconsolePrintf("shifted and constant 0x%x\n",
+	                        constValue);*/
+	    constValue = hi16;
+	    opcode = shiftOpcode;
+	}
+	pushALURhsConstant(con, constValue);
+	wordBinaryOp(con, opcode, thisNode, target, avoid);
+    }
+}
+%}
+
+reg32: ISUB32 reg32 ICONST_32 : 9 : : : : {
+        /* NOTE: we convert SUB of constValue to ADD of -constValue */
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        shiftedWordBinaryOp(con, CVMCPU_ADD_OPCODE, CVMPPC_ADDIS_OPCODE,
+			    $$, -constValue, GET_REGISTER_GOALS);
+    };
+
+reg32: IADD32 reg32 ICONST_32 : 9 : : : : {
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        shiftedWordBinaryOp(con, CVMCPU_ADD_OPCODE, CVMPPC_ADDIS_OPCODE,
+			    $$, constValue, GET_REGISTER_GOALS);
+    };
+
+reg32: AND32 reg32 ICONST_32 : 9 : : : : {
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+	CVMUint8 maskBegin, maskEnd;
+	CVMBool isEncodable =
+	    CVMCPUalurhsIsEncodableAsImmediate(CVMCPU_AND_OPCODE, constValue);
+	if (!isEncodable &&
+	    CVMPPCgetEncodableRLWINM(&maskBegin, &maskEnd, constValue))
+	{
+	    /*
+	     * We can't encode constValue with an AND instruction, but we
+	     * can with RLWINM, so change the opcode to RLWINM and change
+	     * the constant to encode the MB and ME values.
+	     */
+	    pushALURhsConstant(con, maskBegin << 8 | maskEnd);
+	    wordBinaryOp(con, CVMPPC_RLWINM_OPCODE, $$, GET_REGISTER_GOALS);
+	} else {
+	    shiftedWordBinaryOp(con, CVMCPU_AND_OPCODE, CVMPPC_ANDIS_OPCODE,
+				$$, constValue, GET_REGISTER_GOALS);
+	}
+    };
+
+reg32: OR32 reg32 ICONST_32 : 9 : : : : {
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        shiftedWordBinaryOp(con, CVMCPU_OR_OPCODE, CVMPPC_ORIS_OPCODE,
+			    $$, constValue, GET_REGISTER_GOALS);
+    };
+
+reg32: XOR32 reg32 ICONST_32 : 9 : : : : {
+        CVMInt32 constValue =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        shiftedWordBinaryOp(con, CVMCPU_XOR_OPCODE, CVMPPC_XORIS_OPCODE,
+			    $$, constValue, GET_REGISTER_GOALS);
+    };
+
+// Purpose: value32 = (value32 << (const32 & 0x1f)) >> (const32 & 0x1f).
+//
+// This rule is somewhat overkill. It's goal is to catch a left shift
+// followed by a right shift of the same amount. For example ((x << 16) >> 16).
+// This is the same as masking with an AND. If the mask is encodable, then
+// we can accomplish with one AND rather than two shifts. The only reason
+// this rule was added was to catch an occurance of this in the compress
+// benchmark, which results in about a 1% performance improvment. The mask
+// in this case is encodable on powerpc, but not sparc or arm, so there's not
+// much point in making this a shared rule.
+//
+// NOTE: We use UNARY_UNARY_reg_INHERITANCE/SYNTHESIS because for inheritance 
+//       and synthesis actions we ignore ICONST_32 nodes, since they
+//       are not present on the semantic stack.
+//
+reg32: SRL32 SLL32 reg32 ICONST_32 ICONST_32 : 20 :
+    UNARY_UNARY_reg_SYNTHESIS(con, $$); :
+    UNARY_UNARY_reg_INHERITANCE(con, $$); : CVM_NEED_DO_INT_SHIFT_HELPER : {
+        CVMInt32 srlConst =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree($$))->j.i;
+        CVMInt32 sllConst =
+	    CVMJITirnodeGetConstant32(CVMJITirnodeGetRightSubtree(
+                CVMJITirnodeGetLeftSubtree($$)))->j.i;
+	/*
+	 * If we are shifting left the same amount we are shifting right,
+	 * then this is just masking off the high bits. If the mask is
+	 * encodeable, then we can do this with one AND instruction
+	 * rather than two shifts.
+	 */
+	int numbits = 32-srlConst;
+	int mask = (1 << numbits) - 1;
+	if (srlConst < 32 && srlConst == sllConst &&
+	    CVMCPUalurhsIsEncodableAsImmediate(CVMCPU_AND_OPCODE, mask))
+	{
+	    /*CVMconsolePrintf("folding SRL32 SLL32 into AND 0x%x\n",mask);*/
+	    pushALURhsConstant(con, mask);
+	    wordBinaryOp(con, CVMCPU_AND_OPCODE, $$, GET_REGISTER_GOALS);
+	} else {
+	    doIntShift(con, CVMCPU_SLL_OPCODE,
+		       CVMJITirnodeGetLeftSubtree($$), GET_REGISTER_GOALS);
+	    doIntShift(con, CVMCPU_SRL_OPCODE, $$, GET_REGISTER_GOALS);
+	}
+};
