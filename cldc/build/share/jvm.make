@@ -2017,7 +2017,7 @@ ifeq ($(LINK_PTHREAD), true)
 LINK_FLAGS             += -lpthread
 endif
 
-# We want to build for 32-bit systems
+# We want to link for 32-bit systems
 LINK_FLAGS             += -m32
 
 ifeq ($(ENABLE_PCSL), true)
@@ -2053,6 +2053,9 @@ ifeq ($(PROFILING), true)
 CPP_FLAGS              += -pg
 LINK_FLAGS             += -pg
 endif
+
+# We want 32-bit assembly
+ASM_FLAGS              += --32
 
 ifeq ($(ENABLE_XSCALE_WMMX_INSTRUCTIONS)-$(IsTarget)-$(arch), true-true-arm)
 ASM_FLAGS              += -mcpu=iwmmxt
