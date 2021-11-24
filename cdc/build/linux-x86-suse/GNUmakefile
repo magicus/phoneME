@@ -31,14 +31,14 @@
 #
 # platform specific architecture flags
 #
-ASM_ARCH_FLAGS		= -march=i686
-CC_ARCH_FLAGS   	= -march=i686
+ASM_ARCH_FLAGS		= -march=i686 -m32
+CC_ARCH_FLAGS   	= -march=i686 -m32
 # Fix gcc fp bug on x86 and avoid cvm problems
 CC_ARCH_FLAGS_FDLIB	= -ffloat-store
 # Don't inline the interpreter loop helper functions. This helps
 # reduce register pressure on x86 and improve generated code.
 CC_ARCH_FLAGS_LOOP 	= -fno-inline
-LINK_ARCH_FLAGS		=
+LINK_ARCH_FLAGS		= -m32
 LINK_ARCH_LIBS  	= -lm
 
 CVM_JIT_USE_FP_HARDWARE = false

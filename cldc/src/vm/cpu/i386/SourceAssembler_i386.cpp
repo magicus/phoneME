@@ -129,7 +129,7 @@ void SourceAssembler::start() {
       emit("\t.MODEL flat, C\n\n");
     }
   } else {
-    emit("\t.arch i486\n");
+    emit("\t.arch i686\n");
   }
   start_code_segment();
 }

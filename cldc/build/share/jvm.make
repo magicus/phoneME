@@ -1971,10 +1971,10 @@ CPLUSPLUS_FLAGS         += -fno-exceptions
 CPLUSPLUS_FLAGS         += -fno-optional-diags
 CPLUSPLUS_FLAGS         += -fno-rtti
 
-CPP_DEF_FLAGS_i386       = -Di386
+CPP_DEF_FLAGS_i386       = -Di386 -m32
 CPP_DEF_FLAGS_arm	 =
 CPP_DEF_FLAGS_win32      = -DWIN32 -D_WINDOWS
-CPP_DEF_FLAGS_linux      = -DLINUX
+CPP_DEF_FLAGS_linux      = -DLINUX -m32
 ifeq ($(target_platform), linux_javacall)
 CPP_DEF_FLAGS_javacall   = -DLINUX
 endif
@@ -2017,6 +2017,9 @@ ifeq ($(LINK_PTHREAD), true)
 LINK_FLAGS             += -lpthread
 endif
 
+# We want to link for 32-bit systems
+LINK_FLAGS             += -m32
+
 ifeq ($(ENABLE_PCSL), true)
 PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.a  \
                           $(PCSL_DIST_DIR)/lib/libpcsl_print.a   \
@@ -2050,6 +2053,9 @@ ifeq ($(PROFILING), true)
 CPP_FLAGS              += -pg
 LINK_FLAGS             += -pg
 endif
+
+# We want 32-bit assembly
+ASM_FLAGS              += --32
 
 ifeq ($(ENABLE_XSCALE_WMMX_INSTRUCTIONS)-$(IsTarget)-$(arch), true-true-arm)
 ASM_FLAGS              += -mcpu=iwmmxt
@@ -2246,7 +2252,7 @@ endif
 # If JNI is enabled, romgen writes KNI-to-JNI wrappers for all JNI native
 # methods to JniAdapters.cpp.
 # Otherwise it writes stubs for all JNI native methods to JniAdapters.cpp.
-ifeq ($(IsTarget), true)
+ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
 
 JNI_ADAPTERS = JniAdapters.cpp
 JNI_ADAPTERS_OBJ = JniAdapters$(OBJ_SUFFIX)

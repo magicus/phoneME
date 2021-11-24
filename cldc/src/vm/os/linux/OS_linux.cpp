@@ -968,7 +968,7 @@ void Os::initialize() {
 # define ALT_STACK_SIZE (MINSIGSTKSZ + 2048)
 # endif
 
-  static char alt_stack_buf[ALT_STACK_SIZE];
+  static char* alt_stack_buf = (char*)malloc(ALT_STACK_SIZE);
   stack_t alt_stack;
   alt_stack.ss_sp = alt_stack_buf;
   alt_stack.ss_size = ALT_STACK_SIZE;
