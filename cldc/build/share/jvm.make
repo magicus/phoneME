@@ -1971,10 +1971,10 @@ CPLUSPLUS_FLAGS         += -fno-exceptions
 CPLUSPLUS_FLAGS         += -fno-optional-diags
 CPLUSPLUS_FLAGS         += -fno-rtti
 
-CPP_DEF_FLAGS_i386       = -Di386
+CPP_DEF_FLAGS_i386       = -Di386 -m32
 CPP_DEF_FLAGS_arm	 =
 CPP_DEF_FLAGS_win32      = -DWIN32 -D_WINDOWS
-CPP_DEF_FLAGS_linux      = -DLINUX
+CPP_DEF_FLAGS_linux      = -DLINUX -m32
 ifeq ($(target_platform), linux_javacall)
 CPP_DEF_FLAGS_javacall   = -DLINUX
 endif
