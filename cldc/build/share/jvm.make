@@ -2252,7 +2252,7 @@ endif
 # If JNI is enabled, romgen writes KNI-to-JNI wrappers for all JNI native
 # methods to JniAdapters.cpp.
 # Otherwise it writes stubs for all JNI native methods to JniAdapters.cpp.
-ifeq ($(IsTarget), true)
+ifeq ($(IsTarget)+$(ENABLE_JNI), true+true)
 
 JNI_ADAPTERS = JniAdapters.cpp
 JNI_ADAPTERS_OBJ = JniAdapters$(OBJ_SUFFIX)
