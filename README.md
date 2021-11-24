@@ -150,3 +150,24 @@ sdk-tt-cf1
 ui_service
 ```
 
+Build Instructions
+---
+
+For compiling the components on a Linux AMD64 system, you need a GCC able to emit i686 code as well as a JDK capable of emitting Java 1.4 bytecode such as JDK6.
+
+Additionally you need the equivalents of the following dependencies for your distribution (the packages here are listed for Fedora 35):
+
+* glibc-static.i686
+* libstdc++-static.i686
+* binutils.i686
+* musl-devel.i686
+* glibc-devel.i686
+* gcc-c++.i686
+
+To build the CDC VM follow these steps:
+
+1. Change to cdc/build/linux-x86-suse.
+2. Ensure the correct javac is on the $PATH, see comment above.
+3. Run `make`.
+
+You will find the `cvm` VM executable in the bin/ subfolder.
