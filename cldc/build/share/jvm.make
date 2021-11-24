@@ -2017,6 +2017,9 @@ ifeq ($(LINK_PTHREAD), true)
 LINK_FLAGS             += -lpthread
 endif
 
+# We want to build for 32-bit systems
+LINK_FLAGS             += -m32
+
 ifeq ($(ENABLE_PCSL), true)
 PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.a  \
                           $(PCSL_DIST_DIR)/lib/libpcsl_print.a   \
