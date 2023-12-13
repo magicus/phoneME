@@ -893,7 +893,7 @@ CPP_DEF_FLAGS_release   =
 CPP_DEF_FLAGS_product   = -DPRODUCT
 
 CPP_DEF_FLAGS          += -D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE
-CPP_DEF_FLAGS          += -DWIN32 -D_WINDOWS
+CPP_DEF_FLAGS          += -DWIN32 -D_WINDOWS /Zc:preprocessor
 CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
 CPP_DEF_FLAGS          += -W3 -nologo  \
                           $(SAVE_TEMPS_CFLAGS) \
@@ -1020,7 +1020,7 @@ else
 $(LOOP_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ $(Obj_Files) \
-		   InterpreterSkeleton.obj OopMapsSkeleton.obj
+		   InterpreterSkeleton.obj OopMapsSkeleton.obj $(BUILD_PCH)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 endif
@@ -1058,13 +1058,13 @@ else
 $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) InterpreterSkeleton.obj \
                                             OopMapsSkeleton.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ $(Obj_Files) \
-		InterpreterSkeleton.obj OopMapsSkeleton.obj
+		InterpreterSkeleton.obj OopMapsSkeleton.obj $(BUILD_PCH)
 	$(A)$(ROM_GENERATOR) $(LOOP_GEN_ARG)
 	$(A)$(ROM_GENERATOR) +GenerateOopMaps
 	$(A)$(MAKE) Interpreter_$(arch).obj
 	$(A)$(MAKE) OopMaps.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) -out:$@ \
-		$(Obj_Files) Interpreter_$(arch).obj OopMaps.obj
+		$(Obj_Files) Interpreter_$(arch).obj OopMaps.obj $(BUILD_PCH)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 
@@ -1085,7 +1085,7 @@ $(DIST_LIB_DIR)/$(JVM_LOG_NAME)::
 #     - LIBX_OBJS: the ones that are exported privately in $(JVMX_LIB)
 #     - LIBTEST_OBJS: the ones that are exported privately in $(JVMTEST_LIB)
 #     - EXE_OBJS:  the ones that are used only by $(JVM_EXE)
-LIB_OBJS := $(Obj_Files) OopMaps.obj
+LIB_OBJS := $(Obj_Files) OopMaps.obj $(BUILD_PCH)
 LIB_OBJS := $(subst BSDSocket.obj,,$(LIB_OBJS))
 LIBX_OBJS +=        BSDSocket.obj
 LIB_OBJS := $(subst ReflectNatives.obj,,$(LIB_OBJS))
@@ -1188,7 +1188,7 @@ $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
 $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVM_LIB) $(JVMTEST_LIB) \
 	    $(EXE_OBJS)
 	$(A)$(LINK) $(LINK_FLAGS) $(JC_STUBS_OBJ) -out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
-		$(JVMTEST_LIB) $(PCSL_LIBS)
+		$(JVMTEST_LIB) $(PCSL_LIBS) $(BUILD_PCH)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 
