@@ -975,6 +975,13 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 }
 
 /**
+ * Get display device capabilities
+ */
+int win32app_get_display_capabilities(int hardwareId) {
+  return 255;
+}
+
+/**
  * Return screen width
  */
 int win32app_get_screen_width() {

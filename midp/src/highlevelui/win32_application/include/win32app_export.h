@@ -100,6 +100,11 @@ extern void win32app_finalize();
 extern void win32app_refresh(int x, int y, int w, int h);
 
 /**
+ * Get display device capabilities
+ */
+extern int win32app_get_display_capabilities(int hardwareId);
+
+/**
  * Return screen width
  */
 extern int win32app_get_screen_width();
