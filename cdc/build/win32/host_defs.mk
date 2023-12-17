@@ -123,7 +123,9 @@ endif
 
 LINKLIBS_JCS    =
 
-LINKALL_LIBS 	+= $(LINK_ARCH_LIBS) $(LIBPATH)
+ifeq ($(USE_VS2005), true)
+LINKALL_LIBS 	+= $(LINK_ARCH_LIBS) # $(LIBPATH)
+endif
 
 # setup flags and libs used to link every exe.
 LINKEXE_LIBS	+= $(LINKALL_LIBS)

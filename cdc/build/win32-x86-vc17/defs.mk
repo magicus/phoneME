@@ -21,33 +21,13 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-# @(#)defs.mk	1.20 06/10/24
-#
-# defs for win32-x86 target
+# @(#)defs.mk	1.2 06/10/10
 #
 
-CVM_DEFINES	+= -D_X86_ -Dx86
-TARGET_CC	= CL.EXE
-TARGET_AS	= gcc
-ASM_FLAGS += -m32
+TARGET_CC		= cl.exe
+TARGET_LINK		= link.exe
 
-CVM_TARGETOBJS_OTHER +=	\
-	invokeNative_i386.o  \
-	x86_double_divmul.o
+export USE_VS2005=true
 
-CVM_TARGETOBJS_SPEED +=	\
-	x86_float_cpu2.o \
-
-CVM_SRCDIRS   += \
-	$(CVM_TOP)/src/win32-x86/javavm/runtime \
-
-CVM_INCLUDE_DIRS  += \
-	$(CVM_TOP)/src/win32-x86
-
-# JIT related options
-ifeq ($(CVM_JIT), true)
-
-CVM_SRCDIRS += \
-        $(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/javavm/runtime/jit
-
-endif
+# get some vc specific defs
+include ../win32/vc_defs.mk
