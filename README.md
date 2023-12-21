@@ -190,4 +190,5 @@ application classpath. You can find it in cldc/build/classes. Currently it is
 required to disable romizing and JNI due to build issues with these options
 enabled. The ENABLE_COMPILATION_WARNINGS option disables the use of -Werror
 which causes the build to fail with modern compilers.
-`
+
+Also see https://phonej2me.github.io/content/mr2/cldc_feature.html.
