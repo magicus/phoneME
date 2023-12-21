@@ -92,9 +92,11 @@ const jlong max_jlong = 0x7fffffffffffffffL;
 //----------------------------------------------------------------------------
 // Miscellaneous
 
+#if _MSC_VER < 1900
 inline int vsnprintf(char* buf, size_t count, const char* fmt, va_list argptr) {
   return _vsnprintf(buf, count, fmt, argptr);
 }
+#endif
 
 //----------------------------------------------------------------------------
 // Macros about compiler-specific behavior.

@@ -44,7 +44,7 @@
  */
 jboolean anc_start_vibrate()
 {
-    REPORT_CALL_TRACE1(LC_CORE, "LF:STUB:anc_start_vibrate(%d)\n", dur);
+    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:anc_start_vibrate()\n");
 
     /* Not yet implemented */
     return KNI_FALSE;

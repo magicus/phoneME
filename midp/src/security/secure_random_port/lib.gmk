@@ -47,7 +47,11 @@ else
  ifeq ($(TARGET_PLATFORM), wince)
   vpath % $(SECURE_RANDOM_PORT_DIR)/wince/native
  else
-  vpath % $(SECURE_RANDOM_PORT_DIR)/default/native
+  ifeq ($(TARGET_PLATFORM), win32)
+   vpath % $(SECURE_RANDOM_PORT_DIR)/win32/native
+  else
+   vpath % $(SECURE_RANDOM_PORT_DIR)/default/native
+  endif
  endif
  #vpath % $(SECURE_RANDOM_PORT_DIR)/stubs/native
 endif

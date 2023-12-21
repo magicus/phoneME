@@ -74,7 +74,7 @@ CVMgetGMTOffsetID()
 {
     time_t offset;
     char sign, buf[16];
-#ifdef WINCE
+#if defined(WINCE) || defined(_MSC_VER)
     int timezone = WIN32getGMTOffset();
 #endif
     if (timezone == 0) {
@@ -196,9 +196,9 @@ CVMtimezoneFindJavaTZ(const char *java_home_dir, const char *region)
     if (javatz == NULL) {
 	time_t offset;
 	char sign, buf[16];
-#ifdef WINCE
+// #ifdef WINCE
 	int timezone = WIN32getGMTOffset();
-#endif
+// #endif
 
 	/* Note that the time offset direction is opposite. */
 	if (timezone > 0) {

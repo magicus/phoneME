@@ -21,33 +21,24 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-# @(#)defs.mk	1.20 06/10/24
+# @(#)GNUmakefile	1.4 06/10/10
 #
-# defs for win32-x86 target
-#
+CVM_DEFINES 		+= -D_i386_ -D_386
+# Fix some annoying C4996 warnings introduced with VC8
+CVM_DEFINES 		+= \
+	-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
+ASM_ARCH_FLAGS		= -c
+CC_ARCH_FLAGS   	=
+CC_ARCH_FLAGS_FDLIB	= /Op
+# Looks like we still need /Od to disable optimization for fdlib. (Bug 6255783)
+CC_ARCH_FLAGS_FDLIB	+= /Od
+CC_ARCH_FLAGS_LOOP 	=
+LINK_ARCH_LIBS		=
+LINK_ARCH_FLAGS		=
 
-CVM_DEFINES	+= -D_X86_ -Dx86
-TARGET_CC	= CL.EXE
-TARGET_AS	= gcc
-ASM_FLAGS += -m32
+CVM_JIT_USE_FP_HARDWARE = false
 
-CVM_TARGETOBJS_OTHER +=	\
-	invokeNative_i386.o  \
-	x86_double_divmul.o
+# Disable CVM_JIT_REGISTER_LOCALS for x86 for now.
+CVM_JIT_REGISTER_LOCALS ?= false
 
-CVM_TARGETOBJS_SPEED +=	\
-	x86_float_cpu2.o \
-
-CVM_SRCDIRS   += \
-	$(CVM_TOP)/src/win32-x86/javavm/runtime \
-
-CVM_INCLUDE_DIRS  += \
-	$(CVM_TOP)/src/win32-x86
-
-# JIT related options
-ifeq ($(CVM_JIT), true)
-
-CVM_SRCDIRS += \
-        $(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/javavm/runtime/jit
-
-endif
+include ../share/top.mk
