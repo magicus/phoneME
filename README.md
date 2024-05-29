@@ -15,8 +15,8 @@ Additional links:
 Conversion Notes
 ---
 The original source was published as Subversion at
-https://svn.java.net/svn/phoneme~svn. This server is long defunct, but the SVN
-sources were saved to Archive.org as a SVN dump at
+https://svn.java.net/svn/phoneme~svn. This server is long defunct, since
+April 28, 2017, but the SVN sources were saved to Archive.org as a SVN dump at
 https://archive.org/details/phoneme-svn.dump. I have taken this dump and
 massaged it into a sort-of usable git repo. This was trickier than it sounds,
 due to the odd layout of the Subversion repo. For details on the repo layout,
